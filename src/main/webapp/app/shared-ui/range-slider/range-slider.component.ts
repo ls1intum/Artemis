@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 const DEFAULT_STEP = 1;
 const BASE_LABEL_MARGIN = 0.4;
@@ -17,7 +18,7 @@ const SLIDER_THUMB_LABEL_POSITION_ADJUSTMENT_FACTOR = 0.97;
     selector: 'jhi-range-slider',
     templateUrl: './range-slider.component.html',
     styleUrls: ['./range-slider.component.scss'],
-    imports: [FormsModule],
+    imports: [FormsModule, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RangeSliderComponent {

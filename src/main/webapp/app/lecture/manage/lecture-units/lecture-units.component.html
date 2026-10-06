@@ -10,7 +10,7 @@
         [editingUnitId]="editingUnitId()"
         [editorTemplate]="unitEditor"
         (onEditLectureUnitClicked)="startEditLectureUnit($event)"
-        (onSaveEditingClicked)="saveAndCloseEditor()"
+        (onDoneEditingClicked)="saveAndCloseEditor()"
         (lectureUnitsChange)="onLectureUnitsChange($event)"
         [showCreationCard]="false"
         [showCompetencies]="true"
@@ -70,7 +70,15 @@
                 <span jhiTranslate="artemisApp.lecture.splitPdf.otherPdf"></span>
             </button>
             <span class="lecture-units-hint text-sm" jhiTranslate="artemisApp.lecture.splitPdf.otherPdfHint"></span>
-            <input #otherPdfInput hidden type="file" accept="application/pdf,.pdf" data-testid="lecture-split-other-pdf-input" (change)="onOtherPdfChosen(otherPdfInput)" />
+            <input
+                #otherPdfInput
+                hidden
+                type="file"
+                accept="application/pdf,.pdf"
+                data-testid="lecture-split-other-pdf-input"
+                [attr.aria-label]="'artemisApp.lecture.splitPdf.otherPdf' | artemisTranslate"
+                (change)="onOtherPdfChosen(otherPdfInput)"
+            />
         </div>
     </section>
 </div>
@@ -173,6 +181,7 @@
     @if (isExerciseUnitFormOpen()) {
         <jhi-create-exercise-unit
             [shouldNavigateOnSubmit]="false"
+            [trackRequest]="trackExerciseCreation"
             (onExerciseUnitCreated)="onExerciseUnitCreated()"
             [lectureId]="lecture().id"
             [courseId]="lecture().course?.id"

@@ -36,7 +36,14 @@
                     <!-- Course icon -->
                     <div class="flex shrink-0 flex-col items-start gap-1.5">
                         <span class="course-form-label" jhiTranslate="artemisApp.course.courseIcon"></span>
-                        <input type="file" #fileInput class="hidden" accept="image/*" (change)="setCourseImage($event)" />
+                        <input
+                            type="file"
+                            #fileInput
+                            class="hidden"
+                            [attr.aria-label]="'artemisApp.course.courseIcon' | artemisTranslate"
+                            accept="image/*"
+                            (change)="setCourseImage($event)"
+                        />
                         @if (croppedImage(); as croppedImage) {
                             <div class="course-icon">
                                 <jhi-image class="course-icon-image" [src]="croppedImage" />
@@ -90,7 +97,16 @@
                                 controlId="field_title"
                                 [invalid]="showError('title')"
                             >
-                                <input type="text" tumAetUiInput class="w-full" name="title" id="field_title" formControlName="title" required />
+                                <input
+                                    type="text"
+                                    tumAetUiInput
+                                    class="w-full"
+                                    [attr.aria-label]="'artemisApp.course.title' | artemisTranslate"
+                                    name="title"
+                                    id="field_title"
+                                    formControlName="title"
+                                    required
+                                />
                                 <ng-container tumAetUiFormFieldError>
                                     @if (courseForm.get('title')?.hasError('required')) {
                                         <span jhiTranslate="artemisApp.course.form.title.required"></span>
@@ -128,6 +144,7 @@
                                 class="w-full"
                                 name="shortName"
                                 id="field_shortName"
+                                [attr.aria-label]="'artemisApp.course.shortName' | artemisTranslate"
                                 formControlName="shortName"
                                 [readOnly]="course.id"
                                 [attr.maxlength]="COURSE_SHORT_NAME_MAX_LENGTH"
@@ -148,7 +165,14 @@
                 </div>
 
                 <tumaet-ui-form-field [label]="'artemisApp.course.description' | artemisTranslate" controlId="field_description" [invalid]="showError('description')">
-                    <textarea id="field_description" tumAetUiTextarea class="w-full" rows="2" formControlName="description"></textarea>
+                    <textarea
+                        id="field_description"
+                        [attr.aria-label]="'artemisApp.course.description' | artemisTranslate"
+                        tumAetUiTextarea
+                        class="w-full"
+                        rows="2"
+                        formControlName="description"
+                    ></textarea>
                     <div
                         class="text-sm mt-1"
                         [class]="descriptionLength() > COURSE_DESCRIPTION_LIMIT ? 'text-state-danger' : 'text-muted-color'"
@@ -300,6 +324,7 @@
                             class="w-full"
                             name="maxPoints"
                             id="field_maxPoints"
+                            [attr.aria-label]="'artemisApp.course.maxPoints.title' | artemisTranslate"
                             min="1"
                             step="1"
                             [attr.max]="MAX_GRADING_POINTS"
@@ -333,6 +358,7 @@
                             class="w-full"
                             name="accuracyOfScores"
                             id="field_accuracyOfScores"
+                            [attr.aria-label]="'artemisApp.course.accuracyOfScores.title' | artemisTranslate"
                             min="1"
                             max="5"
                             formControlName="accuracyOfScores"
@@ -517,6 +543,7 @@
                                                         step="1"
                                                         name="debounceWindowSecondsOverride"
                                                         id="field_debounceWindowSecondsOverride"
+                                                        [attr.aria-label]="'artemisApp.course.autoOrchestration.debounceWindowSecondsOverride.label' | artemisTranslate"
                                                         formControlName="debounceWindowSecondsOverride"
                                                         [placeholder]="
                                                             debounceWindowSecondsDefault() !== undefined
@@ -542,6 +569,7 @@
                                                         step="1"
                                                         name="maxDailyOrchestrationOverride"
                                                         id="field_maxDailyOrchestrationOverride"
+                                                        [attr.aria-label]="'artemisApp.course.autoOrchestration.maxDailyOrchestrationOverride.label' | artemisTranslate"
                                                         formControlName="maxDailyOrchestrationOverride"
                                                         [placeholder]="
                                                             maxDailyOrchestrationDefault() !== undefined

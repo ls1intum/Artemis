@@ -185,4 +185,22 @@ class RepositoryServiceFileOperationsTest {
     void getFile_forAFileThatDoesNotExist_isReported() {
         assertThatExceptionOfType(FileNotFoundException.class).isThrownBy(() -> repositoryService.getFile(repository, "Missing.java"));
     }
+
+    @Test
+    void createFile_forARepositoryWithoutLocalPath_isRejected() {
+        ReflectionTestUtils.setField(repository, "localPath", null);
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> repositoryService.createFile(repository, "src/Main.java", content("x")))
+                .withMessageContaining("no local path");
+    }
+
+    @Test
+    void getFilesContentFromBareRepository_forACommitThatCannotBeResolved_returnsNoFiles() throws Exception {
+        assertThat(repositoryService.getFilesContentFromBareRepository(repository, "no-such-commit")).isEmpty();
+    }
+
+    @Test
+    void getFileContentFromBareRepository_forACommitThatCannotBeResolved_returnsEmpty() throws Exception {
+        assertThat(repositoryService.getFileContentFromBareRepository(repository, "no-such-commit", "src/Main.java")).isEmpty();
+    }
 }

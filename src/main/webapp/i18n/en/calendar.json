@@ -27,6 +27,8 @@
             "filterComponentPlaceholder": "Choose Event-Types",
             "subscribeButtonLabel": "Subscribe",
             "todayButtonLabel": "Today",
+            "previousButtonLabel": "Previous",
+            "nextButtonLabel": "Next",
             "weekButtonLabel": "Week",
             "monthButtonLabel": "Month",
             "eventsLoadingError": "The calendar events could not be loaded. Please try again by refreshing the page.",
@@ -35,6 +37,7 @@
                 "title": "iCalendar subscription",
                 "configurationExplanation": "To configure a subscription, please choose a language and select course contents for which you would like to include events:",
                 "copyExplanation": "You can use the following link to subscribe external calendar applications to the Artemis calendar.",
+                "copyButtonLabel": "Copy subscription link",
                 "languageOption": {
                     "german": "German",
                     "english": "English"

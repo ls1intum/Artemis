@@ -125,6 +125,7 @@
     <ng-container left-body>
         @if (state.ui === UIStates.SUBMISSION) {
             <textarea
+                [attr.aria-label]="'artemisApp.exampleSubmission.exampleSubmission' | artemisTranslate"
                 data-testid="example-text-submission-input"
                 [(ngModel)]="submission!.text"
                 (ngModelChange)="unsavedSubmissionChanges.set(true)"

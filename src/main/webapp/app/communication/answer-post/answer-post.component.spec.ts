@@ -8,13 +8,13 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { MockComponent, MockDirective, ngMocks } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
-import { metisPostExerciseUser1, metisResolvingAnswerPostUser1, post } from 'test/helpers/sample/metis-sample-data';
+import { communicationPostExerciseUser1, communicationResolvingAnswerPostUser1, post } from 'test/helpers/sample/communication-sample-data';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { DOCUMENT } from '@angular/common';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { MetisService } from 'app/communication/service/metis.service';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
@@ -31,8 +31,8 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -42,7 +42,7 @@ describe('AnswerPostComponent', () => {
     let fixture: ComponentFixture<AnswerPostComponent>;
     let debugElement: DebugElement;
     let mainContainer: HTMLElement;
-    let metisService: MetisService;
+    let communicationService: CommunicationService;
 
     beforeEach(async () => {
         mainContainer = document.createElement('div');
@@ -68,10 +68,10 @@ describe('AnswerPostComponent', () => {
                 provideHttpClientTesting(),
                 provideRouter([]),
                 { provide: DOCUMENT, useValue: document },
-                { provide: MetisService, useClass: MockMetisService },
+                { provide: CommunicationService, useClass: MockCommunicationService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: DialogService, useValue: { open: vi.fn() } },
             ],
@@ -83,7 +83,7 @@ describe('AnswerPostComponent', () => {
         fixture = TestBed.createComponent(AnswerPostComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        metisService = TestBed.inject(MetisService);
+        communicationService = TestBed.inject(CommunicationService);
     });
 
     afterEach(() => {
@@ -92,7 +92,7 @@ describe('AnswerPostComponent', () => {
 
     it('should contain the posting header when isConsecutive is false', () => {
         fixture.componentRef.setInput('isConsecutive', false);
-        component.posting.set(metisResolvingAnswerPostUser1);
+        component.posting.set(communicationResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const header = debugElement.query(By.css('jhi-posting-header'));
@@ -101,7 +101,7 @@ describe('AnswerPostComponent', () => {
 
     it('should not contain the posting header when isConsecutive is true', () => {
         fixture.componentRef.setInput('isConsecutive', true);
-        component.posting.set(metisResolvingAnswerPostUser1);
+        component.posting.set(communicationResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const header = debugElement.query(By.css('jhi-posting-header'));
@@ -109,14 +109,14 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should contain reference to container for rendering answerPostCreateEditModal component', () => {
-        component.posting.set(metisResolvingAnswerPostUser1);
+        component.posting.set(communicationResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         expect(component.containerRef).not.toBeNull();
     });
 
     it('should contain component to edit answer post', () => {
-        component.posting.set(metisResolvingAnswerPostUser1);
+        component.posting.set(communicationResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const answerPostCreateEditModal = debugElement.query(By.css('jhi-answer-post-create-edit-modal'));
@@ -124,7 +124,7 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should contain an answer post reactions bar', () => {
-        component.posting.set(metisResolvingAnswerPostUser1);
+        component.posting.set(communicationResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const reactionsBar = debugElement.query(By.css('jhi-posting-reactions-bar'));
@@ -132,13 +132,13 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should have correct content in posting-content component', () => {
-        component.posting.set(metisResolvingAnswerPostUser1);
+        component.posting.set(communicationResolvingAnswerPostUser1);
 
         fixture.changeDetectorRef.detectChanges();
         const postingContentDebugElement = debugElement.query(By.directive(PostingContentComponent));
         expect(postingContentDebugElement).not.toBeNull();
         const content = ngMocks.input(postingContentDebugElement, 'content');
-        expect(content).toEqual(metisResolvingAnswerPostUser1.content);
+        expect(content).toEqual(communicationResolvingAnswerPostUser1.content);
     });
 
     it('should close previous dropdown when another is opened', () => {
@@ -199,14 +199,14 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should update the posting when onPostingUpdated is called', () => {
-        const updatedPosting = { ...metisResolvingAnswerPostUser1, content: 'Updated content' };
+        const updatedPosting = { ...communicationResolvingAnswerPostUser1, content: 'Updated content' };
         component.onPostingUpdated(updatedPosting);
 
         expect(component.posting()).toEqual(updatedPosting);
     });
 
     it('should update reactions when onReactionsUpdated is called', () => {
-        component.posting.set(metisResolvingAnswerPostUser1);
+        component.posting.set(communicationResolvingAnswerPostUser1);
         const updatedReactions = [{ id: 1, emojiId: 'smile', userId: 2 } as Reaction];
         component.onReactionsUpdated(updatedReactions);
 
@@ -271,7 +271,7 @@ describe('AnswerPostComponent', () => {
 
     it('should display post-time span when isConsecutive() returns true', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting.set({ ...metisPostExerciseUser1, creationDate: fixedDate });
+        component.posting.set({ ...communicationPostExerciseUser1, creationDate: fixedDate });
 
         vi.spyOn(component, 'isConsecutive').mockReturnValue(true);
         fixture.changeDetectorRef.detectChanges();
@@ -287,7 +287,7 @@ describe('AnswerPostComponent', () => {
 
     it('should not display post-time span when isConsecutive() returns false', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting.set({ ...metisPostExerciseUser1, creationDate: fixedDate });
+        component.posting.set({ ...communicationPostExerciseUser1, creationDate: fixedDate });
 
         vi.spyOn(component, 'isConsecutive').mockReturnValue(false);
         fixture.changeDetectorRef.detectChanges();
@@ -310,19 +310,19 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should return true for isUnverifiedIris when posting is from a bot and unverified', () => {
-        const botPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: false });
+        const botPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: false });
         component.posting.set(botPost);
         expect(component.isUnverifiedIris()).toBe(true);
     });
 
     it('should return false for isUnverifiedIris when posting is from a human author', () => {
-        const humanPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, author: { id: 1, bot: false }, verified: false });
+        const humanPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, author: { id: 1, bot: false }, verified: false });
         component.posting.set(humanPost);
         expect(component.isUnverifiedIris()).toBe(false);
     });
 
     it('should return false for isUnverifiedIris when posting is verified', () => {
-        const verifiedBotPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: true });
+        const verifiedBotPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: true });
         component.posting.set(verifiedBotPost);
         expect(component.isUnverifiedIris()).toBe(false);
     });
@@ -332,15 +332,15 @@ describe('AnswerPostComponent', () => {
         expect(component.isUnverifiedIris()).toBe(false);
     });
 
-    it('should delegate mayVerify to metisService.metisUserIsAtLeastTutorInCourse', () => {
-        const spy = vi.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse').mockReturnValue(false);
+    it('should delegate mayVerify to communicationService.currentUserIsAtLeastTutorInCourse', () => {
+        const spy = vi.spyOn(communicationService, 'currentUserIsAtLeastTutorInCourse').mockReturnValue(false);
         expect(component.mayVerify).toBe(false);
         expect(spy).toHaveBeenCalled();
     });
 
     it('should render the PrimeNG verify actions for an unverified Iris reply a tutor may verify', () => {
-        vi.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse').mockReturnValue(true);
-        const botPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: false });
+        vi.spyOn(communicationService, 'currentUserIsAtLeastTutorInCourse').mockReturnValue(true);
+        const botPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: false });
         component.posting.set(botPost);
         fixture.changeDetectorRef.detectChanges();
 
@@ -357,8 +357,8 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should render the PrimeNG textarea and save/cancel buttons in Iris edit mode', () => {
-        vi.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse').mockReturnValue(true);
-        const botPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: false });
+        vi.spyOn(communicationService, 'currentUserIsAtLeastTutorInCourse').mockReturnValue(true);
+        const botPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: false });
         component.posting.set(botPost);
         component.isEditingIrisReply.set(true);
         fixture.changeDetectorRef.detectChanges();
@@ -382,11 +382,11 @@ describe('AnswerPostComponent', () => {
         expect(component.mayEdit()).toBe(false);
     });
 
-    it('should call metisService.verifyAnswerPost on approveAnswer and update posting on success', () => {
-        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: 1 });
+    it('should call communicationService.verifyAnswerPost on approveAnswer and update posting on success', () => {
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: 1 });
         const verifiedPost = Object.assign(new AnswerPost(), { ...answerPost, verified: true });
         component.posting.set(answerPost);
-        const verifySpy = vi.spyOn(metisService, 'verifyAnswerPost').mockReturnValue(of(verifiedPost));
+        const verifySpy = vi.spyOn(communicationService, 'verifyAnswerPost').mockReturnValue(of(verifiedPost));
 
         component.approveAnswer();
 
@@ -399,11 +399,11 @@ describe('AnswerPostComponent', () => {
     it('should preserve the parent post context after approval so later actions route to the messaging API', () => {
         // the posting carries a full parent post including its conversation
         const parentWithConversation = { id: 42, conversation: { id: 7 } as Conversation } as Post;
-        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: 1, post: parentWithConversation });
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: 1, post: parentWithConversation });
         // the server verify response drops the parent conversation (AnswerMessageDTO -> ParentPostDTO carries only the id)
         const verifiedResponse = Object.assign(new AnswerPost(), { ...answerPost, verified: true, post: { id: 42 } as Post });
         component.posting.set(answerPost);
-        vi.spyOn(metisService, 'verifyAnswerPost').mockReturnValue(of(verifiedResponse));
+        vi.spyOn(communicationService, 'verifyAnswerPost').mockReturnValue(of(verifiedResponse));
 
         component.approveAnswer();
 
@@ -414,9 +414,9 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should pass trimmed content to verifyAnswerPost when content is provided', () => {
-        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: 1 });
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: 1 });
         component.posting.set(answerPost);
-        const verifySpy = vi.spyOn(metisService, 'verifyAnswerPost').mockReturnValue(of(answerPost));
+        const verifySpy = vi.spyOn(communicationService, 'verifyAnswerPost').mockReturnValue(of(answerPost));
 
         component.approveAnswer('  edited content  ');
 
@@ -424,9 +424,9 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should reset isVerifying on approveAnswer error', () => {
-        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: 1 });
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: 1 });
         component.posting.set(answerPost);
-        vi.spyOn(metisService, 'verifyAnswerPost').mockReturnValue(throwError(() => new Error('network error')));
+        vi.spyOn(communicationService, 'verifyAnswerPost').mockReturnValue(throwError(() => new Error('network error')));
 
         component.approveAnswer();
 
@@ -434,9 +434,9 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should not call verifyAnswerPost when posting has no id', () => {
-        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: undefined });
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: undefined });
         component.posting.set(answerPost);
-        const verifySpy = vi.spyOn(metisService, 'verifyAnswerPost');
+        const verifySpy = vi.spyOn(communicationService, 'verifyAnswerPost');
 
         component.approveAnswer();
 
@@ -444,10 +444,10 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should not call verifyAnswerPost when already verifying', () => {
-        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: 1 });
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: 1 });
         component.posting.set(answerPost);
         component.isVerifying.set(true);
-        const verifySpy = vi.spyOn(metisService, 'verifyAnswerPost');
+        const verifySpy = vi.spyOn(communicationService, 'verifyAnswerPost');
 
         component.approveAnswer();
 
@@ -455,7 +455,7 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should set isEditingIrisReply and copy content on editAnswer', () => {
-        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, content: 'iris content' });
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, content: 'iris content' });
         component.posting.set(answerPost);
 
         component.editAnswer();
@@ -465,7 +465,7 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should use empty string in editAnswer when posting content is undefined', () => {
-        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, content: undefined });
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, content: undefined });
         component.posting.set(answerPost);
 
         component.editAnswer();
@@ -484,9 +484,9 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should call deleteAnswerPost on rejectAnswer', () => {
-        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: 1 });
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: 1 });
         component.posting.set(answerPost);
-        const deleteSpy = vi.spyOn(metisService, 'deleteAnswerPost');
+        const deleteSpy = vi.spyOn(communicationService, 'deleteAnswerPost');
 
         component.rejectAnswer();
 
@@ -495,9 +495,9 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should not call deleteAnswerPost when posting has no id', () => {
-        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: undefined });
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: undefined });
         component.posting.set(answerPost);
-        const deleteSpy = vi.spyOn(metisService, 'deleteAnswerPost');
+        const deleteSpy = vi.spyOn(communicationService, 'deleteAnswerPost');
 
         component.rejectAnswer();
 
@@ -505,10 +505,10 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should not call deleteAnswerPost when already verifying', () => {
-        const answerPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, id: 1 });
+        const answerPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, id: 1 });
         component.posting.set(answerPost);
         component.isVerifying.set(true);
-        const deleteSpy = vi.spyOn(metisService, 'deleteAnswerPost');
+        const deleteSpy = vi.spyOn(communicationService, 'deleteAnswerPost');
 
         component.rejectAnswer();
 
@@ -523,7 +523,7 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should clean up activeDropdownPost on ngOnDestroy when this component is active', () => {
-        component.posting.set(metisResolvingAnswerPostUser1);
+        component.posting.set(communicationResolvingAnswerPostUser1);
         fixture.changeDetectorRef.detectChanges();
         AnswerPostComponent.activeDropdownPost = component;
         component.showDropdown.set(true);

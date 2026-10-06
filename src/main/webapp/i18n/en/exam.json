@@ -49,6 +49,7 @@
                     "number": "Room Number",
                     "name": "Name",
                     "building": "Building",
+                    "registeredStudentsUnknown": "The number of registered students is not available yet, or it could not be loaded. You can distribute the students as soon as it is known; if this message stays, close the dialog and open it again.",
                     "enoughSeatsForStudents": "You can seat all {{ totalStudents }} students.",
                     "notEnoughSeatsForStudents": "You can only seat {{ usableCapacity }} of the {{ totalStudents }} students ({{ percentage }}%).",
                     "distribute": "Distribute",
@@ -584,6 +585,8 @@
                 "setup": "Create a Test Run",
                 "author": "Author",
                 "setWorkingTime": "Set a working time (minutes and seconds):",
+                "workingTimeMinutes": "Working time minutes",
+                "workingTimeSeconds": "Working time seconds",
                 "setupHint": "Select an exercise for every exercise group by clicking on it.\n<strong>Note:</strong> If you have already created a test run with one of the exercises, the exercise will already contain a submission and result.",
                 "assess": "Assess Your Test Runs",
                 "manage": "Manage Working Time",
@@ -660,10 +663,6 @@
                     "DidNotAttend": "Did not attend",
                     "AttendanceNotChecked": "Attendance check failed",
                     "AttendanceChecked": "Attendance check passed"
-                },
-                "filterGroup": {
-                    "progress": "Progress",
-                    "attendance": "Attendance"
                 },
                 "menu": {
                     "manageStudents": "Students",

@@ -20,6 +20,7 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCompactionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -199,6 +201,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             applyNonResultSideEffects(session, job, statusUpdate, sessionTitle, false);
             updatedJob = recordTokenUsage(session, job, statusUpdate, null);
         }
+        saveCompaction(session, statusUpdate.compaction());
 
         updateLatestSuggestions(session, statusUpdate.suggestions());
 
@@ -209,8 +212,13 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
 
     private TrackedSessionBasedPyrisJob handleIntermediateResultStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, S session,
             String sessionTitle) {
+        // Intermediate messages are persisted and, once the session is reloaded, get their citation metadata resolved just like final ones - so their citations become
+        // clickable and have to be pinned too. The run snapshot pins citations before they are persisted; stampCitationVersions returns
+        // immediately otherwise, which keeps the frequent citation-free intermediate updates off the database.
+        var result = irisCitationService.map(service -> service.stampCitationVersions(statusUpdate.result(), job.jobId())).orElse(statusUpdate.result());
+
         var message = new IrisMessage();
-        for (var content : parseResultContents(statusUpdate.result())) {
+        for (var content : parseResultContents(result)) {
             message.addContent(content);
         }
         message.setIntermediate(true);
@@ -232,11 +240,15 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
                 return trackedJob;
             }
 
+            // Pin every citation to the version of the material it was generated from, before the text is persisted. Once stored, the marker keeps that version forever,
+            // so a later re-upload of the PDF or a re-transcribed video can be detected when the citation is clicked.
+            var result = irisCitationService.map(service -> service.stampCitationVersions(statusUpdate.result(), job.jobId())).orElse(statusUpdate.result());
+
             var message = new IrisMessage();
-            for (var content : parseResultContents(statusUpdate.result())) {
+            for (var content : parseResultContents(result)) {
                 message.addContent(content);
             }
-            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(statusUpdate.result())).orElse(List.of());
+            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(result)).orElse(List.of());
             message.setAccessedMemories(statusUpdate.accessedMemories());
             message.setCreatedMemories(statusUpdate.createdMemories());
             message.setToolActivity(statusUpdate.activities());
@@ -273,6 +285,19 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         }
         irisChatWebsocketService.sendStatusUpdate(session, job.jobId(), statusUpdate.runState(), statusUpdate.error(), sessionTitle, statusUpdate.suggestions(),
                 statusUpdate.tokens(), statusUpdate.activities(), statusUpdate.activitySeq());
+    }
+
+    /**
+     * Stores a summary Iris wrote of the earlier conversation. Iris sends it in place of the messages it covers on later turns.
+     * The client hides it, so it is not pushed over the websocket.
+     */
+    private void saveCompaction(S session, @Nullable PyrisCompactionDTO compaction) {
+        if (compaction == null || compaction.summary() == null || compaction.summary().isBlank()) {
+            return;
+        }
+        var message = new IrisMessage();
+        message.addContent(new IrisJsonMessageContent(JsonObjectMapper.get().valueToTree(compaction)));
+        irisMessageService.saveMessage(message, session, IrisMessageSender.SUMMARY);
     }
 
     private TrackedSessionBasedPyrisJob recordTokenUsage(S session, TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, IrisMessage savedMessage) {

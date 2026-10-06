@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN" "https://checkstyle.org/dtds/configuration_1_3.dtd">
+<module name="Checker">
+    <property name="charset" value="UTF-8" />
+    <property name="severity" value="error" />
+    <property name="fileExtensions" value="java, properties, xml" />
+    <!--
+        The name of a JPA attribute is given to isLoaded (and Hibernate.isPropertyInitialized) as a string, and a name
+        that matches no attribute is not an error: JPA answers "loaded" whenever it cannot tell, so a misspelling makes
+        the check pass silently, and the code behind it then reads a lazy association that was never loaded. Take the
+        name from the generated static metamodel instead, for example Exercise_.PLAGIARISM_DETECTION_CONFIG, which is
+        checked by the compiler and follows a rename of the attribute.
+
+        Checked here rather than with ArchUnit on purpose, for the same reason as requireNonNull below: ArchUnit reads
+        bytecode, and javac inlines the metamodel constant, so in bytecode Exercise_.X and a typed-in "x" are the same
+        string and cannot be told apart. Checkstyle reads source, so it sees what was written. The expression spans
+        lines, hence a multiline rule, which is also why comments that quote such a call are matched.
+    -->
+    <module name="RegexpMultiline">
+        <property name="format" value="\b(?:isLoaded|isPropertyInitialized)\s*\([^;{}]*?,\s*&quot;" />
+        <property name="message" value="Do not pass the attribute name to isLoaded or isPropertyInitialized as a string literal: a misspelled name reports the attribute as loaded without an error. Use the constant of the generated JPA metamodel, for example Exercise_.PLAGIARISM_DETECTION_CONFIG." />
+        <property name="severity" value="error" />
+    </module>
+    <module name="TreeWalker">
+        <module name="JavadocMethod">
+            <property name="accessModifiers" value="public" />
+            <property name="tokens" value="METHOD_DEF,ANNOTATION_FIELD_DEF"/>
+            <property name="severity" value="error"/>
+            <property name="allowedAnnotations" value="Override,Test,ParameterizedTest,BeforeEach,AfterEach,BeforeAll,AfterAll"/>
+        </module>
+        <module name="MissingJavadocMethod">
+            <property name="scope" value="public" />
+            <property name="allowMissingPropertyJavadoc" value="true"/>
+            <property name="minLineCount" value="4" />
+            <property name="tokens" value="METHOD_DEF,ANNOTATION_FIELD_DEF"/>
+            <property name="severity" value="error"/>
+            <property name="allowedAnnotations" value="Override,Test,ParameterizedTest,BeforeEach,AfterEach,BeforeAll,AfterAll"/>
+        </module>
+        <module name="ModifierOrder"/>
+        <!--
+            Objects.requireNonNull asserts a contract at runtime, which is what a null does on its own: the next
+            dereference throws, and a helpful NullPointerException names the expression it could not resolve. The call
+            only adds a second place for the contract to live. State it at the declaration instead, with @NonNull or
+            @Nullable from org.jspecify.annotations, where a reader and a static analyser both see it.
+
+            Checked here rather than with ArchUnit on purpose. ArchUnit reads bytecode, and javac emits
+            Objects.requireNonNull for constructs nobody wrote: a method reference bound to an expression
+            (repository::delete) and a pattern-matching switch both compile to one. An ArchUnit rule reported 724 calls
+            where the source had 53. Checkstyle reads source, so it sees only what was written.
+
+            requireNonNullElse and requireNonNullElseGet are not matched: "Else" sits between the name and the
+            parenthesis, and they supply a default rather than assert a contract.
+        -->
+        <module name="RegexpSinglelineJava">
+            <property name="format" value="\brequireNonNull\s*\(" />
+            <property name="message" value="Objects.requireNonNull is not used in this project. Declare the contract with @NonNull or @Nullable from org.jspecify.annotations instead; a plain NullPointerException is a good enough runtime signal." />
+            <property name="ignoreComments" value="true" />
+            <property name="severity" value="error" />
+        </module>
+        <!-- Enforce braces for if/else/for/while/do -->
+        <module name="NeedBraces">
+            <property name="tokens" value="LITERAL_IF,LITERAL_ELSE,LITERAL_FOR,LITERAL_WHILE,LITERAL_DO"/>
+            <property name="allowSingleLineStatement" value="false"/>
+        </module>
+    </module>
+</module>
