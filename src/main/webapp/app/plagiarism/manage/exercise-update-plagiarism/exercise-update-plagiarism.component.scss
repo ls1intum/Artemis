@@ -1,9 +1,7 @@
 .label-row {
     display: inline-flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.4rem;
-    white-space: nowrap;
-    overflow: hidden;
     margin-bottom: 0.5rem;
     min-width: 0;
 }
@@ -11,9 +9,6 @@
 .label-row .form-control-label {
     flex: 1 1 0;
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     line-height: 1.1;
 }
 
@@ -25,12 +20,12 @@
     font-size: 0.95em;
 }
 
-.form-group.d-flex {
+.settings-field {
     padding-top: 0.6rem;
     padding-bottom: 0.6rem;
 }
 
-.form-group.d-flex .form-control {
+.settings-field .form-control {
     min-height: 42px;
 }
 
@@ -43,7 +38,7 @@
         display: inline-flex;
     }
 
-    .form-group.d-flex {
+    .settings-field {
         padding-top: 0.5rem;
         padding-bottom: 0.5rem;
     }
