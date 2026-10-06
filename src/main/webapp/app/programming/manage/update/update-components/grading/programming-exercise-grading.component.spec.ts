@@ -24,6 +24,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
+import { buildPointsPattern } from 'app/foundation/constants/input.constants';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 /**
@@ -203,6 +205,39 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
         expect(calculateFormStatusSpy).toHaveBeenCalledTimes(2);
         expect(comp.timelineStatus()).toEqual({ valid: false, empty: true, invalidItems: [] });
+    });
+
+    it('should restrict points and bonusPoints inputs to at most 2 decimal places when no course accuracy is available', () => {
+        fixture.detectChanges(false);
+
+        const pointsInput = fixture.debugElement.nativeElement.querySelector('#field_points') as HTMLInputElement;
+        const bonusPointsInput = fixture.debugElement.nativeElement.querySelector('#field_bonusPoints') as HTMLInputElement;
+
+        expect(pointsInput.pattern).toBe(buildPointsPattern());
+        expect(bonusPointsInput.pattern).toBe(buildPointsPattern());
+    });
+
+    it('should restrict points and bonusPoints inputs to the course accuracyOfScores', () => {
+        exercise.course = { id: 1, accuracyOfScores: 1 } as Course;
+        fixture.componentRef.setInput('programmingExercise', Object.assign(new ProgrammingExercise(undefined, undefined), exercise));
+        fixture.detectChanges(false);
+
+        const pointsInput = fixture.debugElement.nativeElement.querySelector('#field_points') as HTMLInputElement;
+        const bonusPointsInput = fixture.debugElement.nativeElement.querySelector('#field_bonusPoints') as HTMLInputElement;
+
+        expect(pointsInput.pattern).toBe(buildPointsPattern(1));
+        expect(bonusPointsInput.pattern).toBe(buildPointsPattern(1));
+    });
+
+    it('should restrict points and bonusPoints inputs to the exam course accuracyOfScores', () => {
+        exercise.course = undefined;
+        exercise.exerciseGroup = { exam: { course: { id: 2, accuracyOfScores: 3 } as Course } } as ProgrammingExercise['exerciseGroup'];
+        fixture.componentRef.setInput('programmingExercise', Object.assign(new ProgrammingExercise(undefined, undefined), exercise));
+        fixture.detectChanges(false);
+
+        const pointsInput = fixture.debugElement.nativeElement.querySelector('#field_points') as HTMLInputElement;
+
+        expect(pointsInput.pattern).toBe(buildPointsPattern(3));
     });
 
     it('should not require points when exercise is not included in the course score', () => {

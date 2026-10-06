@@ -51,6 +51,26 @@ export const ASSIGNMENT_REPO_NAME = 'assignment';
 export const TEST_REPO_NAME = 'tests';
 
 export const MAX_PENALTY_PATTERN = '^([0-9]|([1-9][0-9])|100)$';
+
+/** Maximum allowed value for an exercise's points and bonus points fields. */
+export const MAX_EXERCISE_POINTS = 9999;
+/** Minimum allowed points value when an exercise is not included in the overall score, and the default minimum for bonus points. */
+export const MIN_EXERCISE_POINTS = 0;
+/** Minimum points value required when an exercise is included in the overall score. */
+export const MIN_EXERCISE_POINTS_INCLUDED_IN_SCORE = 1;
+/**
+ * Fallback maximum decimal places for points/bonus points, used until the exercise's course has loaded (programming
+ * exercises use the course's `accuracyOfScores` setting instead once available).
+ * Keep in sync with MAX_POINTS_DECIMAL_PLACES in Constants.java.
+ */
+export const DEFAULT_MAX_POINTS_DECIMAL_PLACES = 2;
+
+/**
+ * Builds a pattern matching a non-negative number with at most `maxDecimalPlaces` decimal places.
+ */
+export function buildPointsPattern(maxDecimalPlaces: number = DEFAULT_MAX_POINTS_DECIMAL_PLACES): string {
+    return maxDecimalPlaces > 0 ? `^\\d+(\\.\\d{1,${maxDecimalPlaces}})?$` : '^\\d+$';
+}
 // No dots allowed for the blackbox project type, because the folder naming works slightly different here.
 export const PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX =
     '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*$';

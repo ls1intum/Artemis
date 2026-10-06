@@ -540,6 +540,10 @@ public class ProgrammingExerciseUpdateResource {
         update(updateDTO, programmingExercise, buildConfig);
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
 
+        // Validate the updated exercise (this endpoint applies maxPoints/bonusPoints from the DTO like the normal
+        // update path does, so it must not skip the checks that reject excessive decimal precision, negative points, etc.)
+        programmingExercise.validateGeneralSettings();
+
         // Verify that the build config text fields do not exceed their maximum allowed length
         programmingExerciseValidationService.validateBuildConfigSize(buildConfig);
 

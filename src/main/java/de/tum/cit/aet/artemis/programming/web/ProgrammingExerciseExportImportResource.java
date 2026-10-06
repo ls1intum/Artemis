@@ -232,12 +232,15 @@ public class ProgrammingExerciseExportImportResource {
         // Valid exercises have set either a course or an exerciseGroup
         newExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
+        final User user = userRepository.getUserWithAuthorities();
+        // Resolved before validation (not just for auth) so that the fully-populated course is attached to newExercise:
+        // validateGeneralSettings() reads the course's accuracyOfScores for programming exercises, which the bare
+        // id-only course reference deserialized from the request body does not carry.
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
+        log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, course.getId());
         newExercise.validateGeneralSettings();
         programmingExerciseValidationService.validateBuildConfigSize(newBuildConfig);
 
-        final User user = userRepository.getUserWithAuthorities();
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
-        log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, course.getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         // Validate course settings
