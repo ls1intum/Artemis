@@ -1,7 +1,9 @@
 import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -15,8 +17,6 @@ import dayjs from 'dayjs/esm';
 
 import { faCode, faExternalLink, faLaptopCode } from '@fortawesome/free-solid-svg-icons';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
-import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
-import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -36,6 +36,13 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { captureException } from '@sentry/angular';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { map } from 'rxjs/operators';
+
+const BREAKPOINTS = {
+    md: '(min-width: 768px)',
+    xl: '(min-width: 1200px)',
+} as const;
 
 export enum RepositoryAuthenticationMethod {
     Password = 'password',
@@ -48,8 +55,7 @@ export enum RepositoryAuthenticationMethod {
     templateUrl: './code-button.component.html',
     styleUrls: ['./code-button.component.scss'],
     imports: [
-        ExerciseActionButtonComponent,
-        FeatureToggleDirective,
+        TumAetUiButtonComponent,
         NgbPopover,
         TranslateDirective,
         NgbDropdown,
@@ -76,8 +82,9 @@ export class CodeButtonComponent implements OnInit {
     private alertService = inject(AlertService);
     private theiaService = inject(TheiaService);
     private router = inject(Router);
+    private breakpointObserver = inject(BreakpointObserver);
+    private featureToggleService = inject(FeatureToggleService);
 
-    protected readonly FeatureToggle = FeatureToggle;
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly RepositoryAuthenticationMethod = RepositoryAuthenticationMethod;
 
@@ -142,8 +149,12 @@ export class CodeButtonComponent implements OnInit {
         RepositoryAuthenticationMethod.SSH,
         RepositoryAuthenticationMethod.Password,
     ]);
+    private readonly matchesMediumBreakpoint = this.getMatchesBreakpointSignal(BREAKPOINTS.md);
+    private readonly matchesExtraLargeBreakpoint = this.getMatchesBreakpointSignal(BREAKPOINTS.xl);
+    readonly programmingExercisesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
 
     // Computed/Derived States
+    readonly displayLabel = computed(() => this.computeDisplayLabel());
     clonedHeadline = computed(() => {
         const participations = this.participations();
         if (!participations.length) return 'artemisApp.exerciseActions.cloneExerciseRepository';
@@ -214,6 +225,19 @@ export class CodeButtonComponent implements OnInit {
             }
             this.loadVcsAccessTokensForAllParticipations();
         });
+    }
+
+    private getMatchesBreakpointSignal(breakpoint: string) {
+        return toSignal(this.breakpointObserver.observe(breakpoint).pipe(map((result) => result.matches)), {
+            initialValue: this.breakpointObserver.isMatched(breakpoint),
+        });
+    }
+
+    private computeDisplayLabel(): boolean {
+        if (!this.hideLabelMobile()) {
+            return true;
+        }
+        return this.hideLabelBreakpoint() === 'md' ? this.matchesMediumBreakpoint() : this.matchesExtraLargeBreakpoint();
     }
 
     ngOnInit() {

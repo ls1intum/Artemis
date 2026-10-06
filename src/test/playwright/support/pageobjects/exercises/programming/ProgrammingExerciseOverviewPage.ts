@@ -194,7 +194,7 @@ export class ProgrammingExerciseOverviewPage {
     }
 
     getCodeButton() {
-        return this.page.locator('.code-button');
+        return this.page.getByTestId('code-button');
     }
 
     getExerciseDetails() {

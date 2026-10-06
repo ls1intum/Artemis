@@ -106,7 +106,7 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
             const gradedButton = modeButton(page, 'graded');
             await expect(practiceButton).toBeVisible();
             await expectModeSelected(practiceButton);
-            await expect(page.locator('.code-button')).toBeVisible();
+            await expect(page.getByTestId('code-button')).toBeVisible();
 
             // The graded mode stays reachable, so the student can recognize that they missed the due date
             await gradedButton.click();
@@ -121,7 +121,7 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
             await page.goto(`/courses/${course.id}/exercises/${exercise.id}`);
             await expect(modeButton(page, 'practice')).toBeVisible({ timeout: 15000 });
             await expect(modeButton(page, 'graded')).toBeVisible();
-            await expect(page.locator('.code-button')).toBeVisible();
+            await expect(page.getByTestId('code-button')).toBeVisible();
         });
 
         test('Shows the submission state when submitting in the practice mode code editor', async ({ login, page, programmingExerciseEditor }) => {

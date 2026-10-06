@@ -366,7 +366,7 @@ describe('CodeButtonComponent', () => {
         it('should display password warning nudge when password is selected and switch to token on click', () => {
             fixture.componentRef.setInput('participations', [participation]);
 
-            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
             fixture.detectChanges();
 
             const useHTTPSButton = fixture.debugElement.query(By.css('#useHTTPSButton'));
@@ -391,7 +391,7 @@ describe('CodeButtonComponent', () => {
             fixture.componentRef.setInput('participations', [participation]);
             component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Password]);
 
-            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
             fixture.detectChanges();
 
             expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.Password);
@@ -402,7 +402,7 @@ describe('CodeButtonComponent', () => {
             fixture.componentRef.setInput('participations', [participation]);
             component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
 
-            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
             fixture.detectChanges();
 
             expect(fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'))).toBeNull();
@@ -423,7 +423,7 @@ describe('CodeButtonComponent', () => {
             component.isInCourseManagement.set(true);
             fixture.detectChanges();
 
-            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
             fixture.detectChanges();
 
             expect(component.isBaseRepository()).toBe(true);
@@ -940,7 +940,7 @@ describe('CodeButtonComponent', () => {
 
         expect(component.useSsh()).toBeFalsy();
 
-        fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+        fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
         fixture.detectChanges();
 
         const useSSHButton = fixture.debugElement.query(By.css('#useSSHButton'));

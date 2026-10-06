@@ -1,21 +1,21 @@
 <ng-container>
-    <button
-        type="button"
-        jhi-exercise-action-button
-        [buttonIcon]="faCode"
-        class="code-button"
-        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-        [buttonLabel]="'artemisApp.exerciseActions.code' | artemisTranslate"
-        [buttonLoading]="loading()"
-        [smallButton]="smallButtons()"
-        [hideLabelMobile]="hideLabelMobile()"
-        [hideLabelBreakpoint]="hideLabelBreakpoint()"
+    <tumaet-ui-button
+        [icon]="faCode"
+        [ariaLabel]="'artemisApp.exerciseActions.code' | artemisTranslate"
+        [disabled]="!programmingExercisesEnabled()"
+        [loading]="loading()"
+        [size]="smallButtons() ? 'small' : 'default'"
         [ngbPopover]="popContent"
         [autoClose]="'outside'"
-        (click)="onClick()"
         placement="right auto"
         container="body"
-    ></button>
+        data-testid="code-button"
+        (click)="onClick()"
+    >
+        @if (displayLabel()) {
+            {{ 'artemisApp.exerciseActions.code' | artemisTranslate }}
+        }
+    </tumaet-ui-button>
     <ng-template #popContent>
         @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH && !doesUserHaveSSHkeys()) {
             <div class="alert alert-warning" data-testid="ssh-key-missing-alert" [innerHTML]="sshKeyMissingTip()"></div>
