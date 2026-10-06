@@ -251,6 +251,7 @@ describe('CourseRequestService', () => {
                 startDate: dayjs('2025-01-01'),
                 endDate: dayjs('2025-06-30'),
                 testCourse: false,
+                gradeRelevant: true,
                 reason: 'Edited reason',
             };
             const mockResponse = {
@@ -258,6 +259,7 @@ describe('CourseRequestService', () => {
                 title: 'Edited Course',
                 shortName: 'EC001',
                 testCourse: false,
+                gradeRelevant: true,
                 reason: 'Edited reason',
                 status: CourseRequestStatus.PENDING,
                 requester: { id: 1, login: 'instructor1' },
