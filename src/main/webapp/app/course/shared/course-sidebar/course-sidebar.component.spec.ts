@@ -235,4 +235,16 @@ describe('CourseSidebarComponent', () => {
         actionItem.nativeElement.click();
         expect(courseActionItemClickSpy).toHaveBeenCalledWith(mockActionItems[0]);
     });
+    it('should keep sidebar list items inside native lists', () => {
+        component.hiddenItems.set([mockSidebarItems[0]]);
+        component.anyItemHidden.set(true);
+        component.sidebarItemsBottom.set([mockSidebarItems[1]]);
+        fixture.detectChanges();
+
+        const items = fixture.nativeElement.querySelectorAll('li') as NodeListOf<HTMLLIElement>;
+        expect(items.length).toBeGreaterThan(0);
+        for (const item of items) {
+            expect(['UL', 'OL', 'MENU']).toContain(item.parentElement?.tagName);
+        }
+    });
 });
