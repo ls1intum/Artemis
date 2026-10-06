@@ -21,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.PublicFileUrl;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -254,8 +256,13 @@ public class FileUploadSubmissionService extends SubmissionService {
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository
                 .findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
 
-        if (fileUploadSubmission.getLatestResult() == null || fileUploadSubmission.getLatestResult().getAssessor() == null) {
-            checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        Result latestResult = fileUploadSubmission.getLatestResult();
+        if (latestResult == null || latestResult.getAssessor() == null) {
+            Course course = fileUploadExercise.getCourseViaExerciseGroupOrCourseMember();
+            if (course == null) {
+                throw new IllegalStateException("The course of exercise " + fileUploadExercise.getId() + " cannot be resolved");
+            }
+            checkSubmissionLockLimit(course.getId());
         }
 
         // correctionRound always defaults to 0, as fileUpload exercises currently are not supported within exams

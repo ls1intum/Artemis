@@ -4,9 +4,30 @@
             <h5><span jhiTranslate="artemisApp.studentExams.workingTime"></span></h5>
             <p jhiTranslate="artemisApp.examManagement.testRun.setWorkingTime"></p>
             <form class="flex items-center gap-1" [formGroup]="workingTimeForm">
-                <input formControlName="minutes" id="workingTimeMinutes" type="number" tumAetUiInput class="w-20" min="0" step="1" required />
+                <input
+                    formControlName="minutes"
+                    id="workingTimeMinutes"
+                    [attr.aria-label]="'artemisApp.examManagement.testRun.workingTimeMinutes' | artemisTranslate"
+                    type="number"
+                    tumAetUiInput
+                    class="w-20"
+                    min="0"
+                    step="1"
+                    required
+                />
                 :
-                <input formControlName="seconds" id="workingTimeSeconds" type="number" tumAetUiInput class="w-20" min="0" max="59" step="1" required />
+                <input
+                    formControlName="seconds"
+                    id="workingTimeSeconds"
+                    [attr.aria-label]="'artemisApp.examManagement.testRun.workingTimeSeconds' | artemisTranslate"
+                    type="number"
+                    tumAetUiInput
+                    class="w-20"
+                    min="0"
+                    max="59"
+                    step="1"
+                    required
+                />
             </form>
         </div>
         <div>
@@ -39,14 +60,19 @@
                                         <tbody>
                                             @for (exercise of exerciseGroup.exercises; track exercise) {
                                                 @let selected = isSelected(exercise, exerciseGroup);
-                                                <tr
-                                                    [class]="selected ? 'cursor-pointer bg-highlight!' : 'cursor-pointer'"
-                                                    [attr.aria-selected]="selected"
-                                                    [id]="'exercise-' + exercise.id"
-                                                    (click)="onSelectExercise(exercise, exerciseGroup)"
-                                                >
+                                                <tr [class]="selected ? 'bg-highlight!' : ''" [id]="'exercise-' + exercise.id">
                                                     <td>{{ exercise.id }}</td>
-                                                    <td>{{ exercise.title }}</td>
+                                                    <td>
+                                                        <button
+                                                            type="button"
+                                                            class="border-0 bg-transparent p-0 text-start text-inherit underline focus-visible:outline-2 focus-visible:outline-offset-2"
+                                                            [attr.aria-pressed]="selected"
+                                                            (click)="onSelectExercise(exercise, exerciseGroup)"
+                                                            [attr.data-testid]="'test-run-select-exercise-' + exercise.id"
+                                                        >
+                                                            {{ exercise.title }}
+                                                        </button>
+                                                    </td>
                                                     <td>{{ exercise.difficulty }}</td>
                                                     <td>{{ exercise.type }}</td>
                                                 </tr>

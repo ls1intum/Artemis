@@ -4,7 +4,9 @@
             <tbody>
                 @for (field of fields(); track field.key) {
                     <tr>
-                        <td class="font-mono text-xs align-top whitespace-nowrap w-1">{{ field.key }}</td>
+                        <th scope="row" class="font-mono text-xs font-normal text-start align-top whitespace-nowrap w-1 px-2 py-1.5 text-text border-b border-border">
+                            {{ field.key }}
+                        </th>
                         <td class="text-xs break-words whitespace-pre-wrap">{{ field.value }}</td>
                     </tr>
                 }

@@ -21,6 +21,7 @@ import { IngestionStatusBadgeComponent } from 'app/lecture/manage/lecture-units/
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import {
     IconDefinition,
@@ -53,6 +54,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PdfDropZoneComponent } from '../../pdf-drop-zone/pdf-drop-zone.component';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 
 @Component({
     selector: 'jhi-lecture-unit-management',
@@ -74,6 +76,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         PdfDropZoneComponent,
+        AtlasOrchestrationTriggerComponent,
     ],
 })
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
@@ -320,6 +323,24 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             case LectureUnitType.TEXT:
             case LectureUnitType.ONLINE:
                 return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Client mirror of the server's ContentExtractionService.isLectureUnitEligibleForOrchestration: only offer a manual
+     * Atlas run for units whose learning text the orchestrator can actually read, so a blank unit never gets a trigger
+     * that could only end as a no-op.
+     */
+    isOrchestrationAvailable(lectureUnit: LectureUnit): boolean {
+        switch (lectureUnit.type) {
+            case LectureUnitType.TEXT:
+                return !!(lectureUnit as TextUnit).content?.trim();
+            case LectureUnitType.ONLINE:
+                return true;
+            case LectureUnitType.ATTACHMENT_VIDEO:
+                return !!(lectureUnit as AttachmentVideoUnit).description?.trim();
             default:
                 return false;
         }

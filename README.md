@@ -10,6 +10,11 @@ their own infrastructure.
 [![CI](https://github.com/ls1intum/Artemis/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/ci.yml)
 [![Documentation](https://github.com/ls1intum/Artemis/actions/workflows/deploy-documentation.yml/badge.svg?event=push)](https://docs.artemis.tum.de)
 [![Code Quality Status](https://app.codacy.com/project/badge/Grade/89860aea5fa74d998ec884f1a875ed0c)](https://app.codacy.com/gh/ls1intum/Artemis/dashboard?branch=develop)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ls1intum_Artemis&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ls1intum_Artemis)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=ls1intum_Artemis&metric=reliability_rating)](https://sonarcloud.io/project/issues?id=ls1intum_Artemis&issueStatuses=OPEN%2CCONFIRMED&types=BUG)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=ls1intum_Artemis&metric=security_rating)](https://sonarcloud.io/project/issues?id=ls1intum_Artemis&issueStatuses=OPEN%2CCONFIRMED&types=VULNERABILITY)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=ls1intum_Artemis&metric=sqale_rating)](https://sonarcloud.io/summary/overall?id=ls1intum_Artemis)
+[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=ls1intum_Artemis&metric=duplicated_lines_density)](https://sonarcloud.io/summary/overall?id=ls1intum_Artemis)
 [![Coverage Status](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fls1intum%2FArtemis%2Fbadges%2Fcoverage.json)](https://github.com/ls1intum/Artemis/actions/workflows/ci.yml)
 [![Latest version](https://img.shields.io/github/v/tag/ls1intum/Artemis?label=%20Latest%20version&sort=semver)](https://github.com/ls1intum/Artemis/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
@@ -44,9 +49,9 @@ their own infrastructure.
 | Roadmap | https://docs.artemis.tum.de/about/roadmap |
 | Releases (minor release every two weeks) | https://github.com/ls1intum/Artemis/releases |
 | Release and support policy | https://docs.artemis.tum.de/about/releases |
-| Security policy | [SECURITY.md](./SECURITY.md) |
+| Security policy | [.github/SECURITY.md](.github/SECURITY.md) |
 | Trust and transparency | https://docs.artemis.tum.de/about/trust |
-| Contributing | [CONTRIBUTING.md](./CONTRIBUTING.md) |
+| Contributing | [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) |
 | Project governance | https://docs.artemis.tum.de/about/governance |
 | Research and publications | https://docs.artemis.tum.de/publications |
 | Platform comparison | https://docs.artemis.tum.de/compare |
@@ -61,8 +66,8 @@ published images for `amd64` and `arm64`:
 # Linux with a native Docker daemon only: the build agent needs your host's docker group to reach the
 # Docker socket, and Compose resolves it when it creates the container, so set it first.
 export ARTEMIS_DOCKER_GROUP_ID=$(getent group docker | cut -d: -f3)
-docker compose --env-file .env -f docker/artemis-dev-local-vc-local-ci-postgres.yml pull
-docker compose --env-file .env -f docker/artemis-dev-local-vc-local-ci-postgres.yml up
+docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml pull
+docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml up
 ```
 
 Then open [http://localhost:8080](http://localhost:8080) and sign in as `artemis_admin` / `artemis_admin`.
@@ -161,8 +166,24 @@ file into `build/libs` first; see the
 The following command automates deployment to a test server:
 
 ```shell
-./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-10.2.war
+./deployment/artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-10.2.war
 ```
+
+## Repository layout
+
+| Directory | Contents |
+| --- | --- |
+| `src/` | Application sources, resources, and tests |
+| `packages/` | Shared packages, including TUM UI |
+| `config/` | Quality-tool settings, client configs, dependency patches, and the OpenAPI specification |
+| `deployment/` | Docker Compose setups, Helm charts, deployment CLI, and Kubernetes runners |
+| `supporting_scripts/` | Developer tooling, CI helpers, client prebuild, and local E2E runners |
+| `gradle/` | Gradle build logic and wrapper |
+| `documentation/` | Documentation site |
+| `skills/` | Repository agent procedures |
+
+Build and workspace entry points remain at the repository root. Run commands from there unless a
+setup guide specifies another working directory.
 
 ## Architecture
 
@@ -179,7 +200,7 @@ server architecture, the deployment view, and the data model.
 ## Contributing
 
 Contributions are welcome, from bug reports and documentation fixes to new features. Start with
-[CONTRIBUTING.md](./CONTRIBUTING.md), which explains the contribution flow, the identity and
+[.github/CONTRIBUTING.md](.github/CONTRIBUTING.md), which explains the contribution flow, the identity and
 transparency policy, and where the detailed guidelines live.
 
 Development in Artemis follows a documented engineering process: feature request, feature proposal,
@@ -188,7 +209,7 @@ peer review, feature-maintainer approval, and a final review by an Artemis maint
 [Open-source development](https://docs.artemis.tum.de/developer/open-source) and the
 [development process](https://docs.artemis.tum.de/developer/development-process).
 
-Please also read the [Code of Conduct](./CODE_OF_CONDUCT.md).
+Please also read the [Code of Conduct](.github/CODE_OF_CONDUCT.md).
 
 ## Project governance
 
@@ -196,14 +217,14 @@ Artemis has named maintainers per goal area and per feature module, layered code
 automated quality gates that every change has to pass.
 [Project governance](https://docs.artemis.tum.de/about/governance) documents the roles, the maintainer
 tables, the decision path, and the gates.
-[`.github/CODEOWNERS`](./.github/CODEOWNERS) is the machine-readable counterpart.
+[`.github/CODEOWNERS`](.github/CODEOWNERS) is the machine-readable counterpart.
 
 Artemis is not a separate legal entity. It is developed at the Technical University of Munich under
 the MIT license, and every Artemis instance is operated by the institution running it.
 
 ## Security
 
-Please report suspected vulnerabilities privately as described in [SECURITY.md](./SECURITY.md), not as
+Please report suspected vulnerabilities privately as described in [.github/SECURITY.md](.github/SECURITY.md), not as
 a public issue. Confirmed issues are published as
 [GitHub Security Advisories](https://github.com/ls1intum/Artemis/security/advisories) once operators
 have had a chance to upgrade. The same document describes the supported versions, the security

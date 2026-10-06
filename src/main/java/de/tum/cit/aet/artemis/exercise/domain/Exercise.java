@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
 import static de.tum.cit.aet.artemis.core.util.DateUtil.validateStrictDateSequence;
 
 import java.time.ZonedDateTime;
@@ -13,7 +12,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.stream.Stream;
 
 import jakarta.persistence.CascadeType;
@@ -386,16 +384,46 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     /**
+     * Like {@link #getCourseViaExerciseGroupOrCourseMember()}, for fully loaded exercises that require a course.
+     *
+     * @return Course of the exercise, never null
+     */
+    @JsonIgnore
+    public Course getCourseViaExerciseGroupOrCourseMemberElseThrow() {
+        Course course = getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new IllegalStateException("The course of exercise " + getId() + " cannot be resolved");
+        }
+        return course;
+    }
+
+    /**
      * Utility method to get the exam. Get the exam over the exerciseGroup, if one was set, otherwise return null.
      *
      * @return exam, to which the exercise belongs
      */
+    @Nullable
     @JsonIgnore
     public Exam getExam() {
         if (isExamExercise()) {
             return this.getExerciseGroup().getExam();
         }
         return null;
+    }
+
+    /**
+     * Resolves the exam for operations that require an unmasked exam exercise.
+     *
+     * @return the exam of the exercise
+     * @throws IllegalStateException if the exercise has no accessible exam
+     */
+    @JsonIgnore
+    public Exam getExamElseThrow() {
+        Exam exam = getExam();
+        if (exam == null) {
+            throw new IllegalStateException("The exam of exercise " + getId() + " cannot be resolved");
+        }
+        return exam;
     }
 
     public Set<ExampleSubmission> getExampleSubmissions() {
@@ -780,7 +808,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnore
     public Integer getNumberOfCorrectionRounds() {
         if (isExamExercise()) {
-            return getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+            return getExamElseThrow().getNumberOfCorrectionRoundsInExam();
         }
         else {
             return 1;
@@ -934,23 +962,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private void validateExamExerciseIncludedInScoreCompletely() {
         if (isExamExercise() && includedInOverallScore == IncludedInOverallScore.NOT_INCLUDED) {
             throw new BadRequestAlertException("An exam exercise must be included in the score.", getTitle(), "examExerciseNotIncludedInScore");
-        }
-    }
-
-    /**
-     * Validate the exercise title.
-     * 1. Check presence and length of exercise title
-     * 2. Find forbidden patterns in exercise title
-     */
-    public void validateTitle() {
-        // Check if exercise title is set
-        if (getTitle() == null || getTitle().isBlank() || getTitle().length() < 3) {
-            throw new BadRequestAlertException("The title is not set or is too short.", "Exercise", "titleLengthInvalid");
-        }
-        // Check if the exercise title matches regex
-        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(getTitle());
-        if (!titleMatcher.matches()) {
-            throw new BadRequestAlertException("The title is invalid.", "Exercise", "titlePatternInvalid");
         }
     }
 

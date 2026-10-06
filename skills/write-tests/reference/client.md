@@ -15,7 +15,7 @@ runs.
 
 ## The type check CI runs is stricter than Vitest
 
-`pnpm run compile:tests` type-checks against `tsconfig.spec.json` and enforces member visibility.
+`pnpm run compile:tests` type-checks against `config/client/tsconfig.spec.json` and enforces member visibility.
 Vitest does not. A spec reaching a private member directly compiles under Vitest and fails in CI.
 
 ```typescript
@@ -108,7 +108,7 @@ development but shows an empty template in a spec after an awaited call, or the 
 ## Monaco
 
 Monaco is stubbed under Vitest. A spec cannot exercise real editor behaviour. There is a separate
-configuration, `vitest.monaco.config.ts`, run by `pnpm run vitest:monaco`, for the specs that need
+configuration, `config/testing/vitest.monaco.config.ts`, run by `pnpm run vitest:monaco`, for the specs that need
 the real thing.
 
 ## Template errors

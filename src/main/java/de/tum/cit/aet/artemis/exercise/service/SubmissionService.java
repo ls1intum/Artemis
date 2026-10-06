@@ -132,7 +132,7 @@ public class SubmissionService {
     public void checkSubmissionAllowanceElseThrow(Exercise exercise, Submission submission, User currentUser) {
         // The exercise was loaded from the database by the caller, so its course is a persisted entity and not something
         // the client could have tampered with. Re-reading it by id would only repeat a row we are already holding.
-        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        final var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         if (!authCheckService.isAtLeastStudentInCourse(course, currentUser)) {
             throw new AccessForbiddenException();
         }
@@ -628,8 +628,9 @@ public class SubmissionService {
      */
     public Result prepareTestRunSubmissionForAssessment(Submission submission) {
         Optional<Result> existingAutomaticResult = Optional.empty();
-        if (submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {
-            existingAutomaticResult = resultRepository.findByIdWithEagerFeedbacks(submission.getLatestResult().getId());
+        Result latestResult = submission.getLatestResult();
+        if (latestResult != null && AssessmentType.AUTOMATIC == latestResult.getAssessmentType()) {
+            existingAutomaticResult = resultRepository.findByIdWithEagerFeedbacks(latestResult.getId());
         }
 
         // we only support one correction round for test runs
