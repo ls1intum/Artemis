@@ -15,6 +15,12 @@ import irisChatViewImg from "./assets/communication/iris-chat-view.png";
 import tutorSuggestionsHistoryImg from "./assets/communication/tutor-suggestions-history.png";
 import channelSettingsImg from "./assets/communication/channel-settings.png";
 import channelCreationImg from "./assets/communication/channel-creation.png";
+import autonomousTutorResponseImg from "./assets/communication/autonomous-tutor-response.png";
+import autonomousTutorReviewImg from "./assets/communication/autonomous-tutor-review.png";
+import autonomousTutorNotificationTabImg from "./assets/communication/autonomous-tutor-notification-tab.png";
+import autonomousTutorVerificationDashboardImg from "./assets/communication/autonomous-tutor-verification-dashboard.png";
+import autonomousTutorMemorySavedImg from "./assets/communication/autonomous-tutor-memory-saved.png";
+import autonomousTutorMemoryReferenceImg from "./assets/communication/autonomous-tutor-memory-reference.png";
 
 Artemis enables students, tutors, and instructors to actively participate with its communication capabilities.
 Various communication features allow students to engage with peers and ask all kinds of questions whereas moderators
@@ -77,6 +83,78 @@ Tutor Suggestions are only available to users with the tutor role. The feature i
 </Callout>
 
 <TumLiveVideo src="61869" title="Tutor Suggestions" width={600} height={350} />
+
+### Autonomous Tutor
+
+*Iris automatically drafts a response to a student question and posts it directly in the thread when it is confident enough, without requiring a tutor to act first.*
+
+The Autonomous Tutor is triggered whenever a student posts a new message in a course communication channel. Iris analyzes the question, retrieves relevant course materials such as lecture slides, and searches the course's memory of previously tutor-verified answers. Based on this context, Iris generates a grounded response and evaluates how confident it is in its own answer. Unlike Tutor Suggestions, which only support a tutor while they compose a reply, the Autonomous Tutor can respond to the student directly.
+
+Depending on the confidence score, one of three things happens:
+
+* **High confidence**: Iris posts the response directly in the thread under the *Iris Bot* account, visible to all members of the channel immediately.
+* **Moderate confidence**: Iris drafts the response but does not post it to the student. It is held for tutor review and marked with an `Awaiting tutor review` badge, visible only to tutors.
+* **Low confidence**: The response is discarded, and the question remains open for a tutor to answer manually.
+
+Exemplary thread view with an autonomously posted response:
+
+<Image src={autonomousTutorResponseImg} alt={"A channel thread in which Iris answered a student question directly"} size={ImageSize.medium} />
+
+If a response requires tutor review, it appears in the thread with a yellow highlight and the `Awaiting tutor review` badge next to the Iris Bot sender name. Tutors can act on it directly from the thread using three buttons:
+
+* **Approve** – accepts the response as-is and posts it to the student.
+* **Edit** – lets the tutor correct the content before it is posted.
+* **Reject** – discards the response entirely.
+
+Reviewing an unverified response:
+
+<Image src={autonomousTutorReviewImg} alt={"An Iris draft with the Awaiting tutor review badge and the Approve, Edit and Reject buttons"} size={ImageSize.medium} />
+
+Once a tutor approves or edits a response, the badge disappears and the message becomes visible to the student, indistinguishable in structure from any other reply aside from the Iris icon and bot tag.
+
+To help tutors keep track of pending reviews, a dedicated `Iris Review` tab in the tutor notification panel lists all unverified responses with a preview and timestamp.
+
+The `Iris Review` notification tab:
+
+<Image src={autonomousTutorNotificationTabImg} alt={"The Iris Review tab in the notification panel with a list of pending Iris responses"} size={ImageSize.medium} />
+
+In addition, the `Iris to verify` filter in the course's message overview collects every thread with a pending response, giving tutors a single place to work through them.
+
+Threads awaiting verification in the message overview:
+
+<Image src={autonomousTutorVerificationDashboardImg} alt={"The message overview filtered by Iris to verify, with the threads that wait for review"} size={ImageSize.medium} />
+
+Every response that is approved or edited, as well as every thread that is marked as resolved, is distilled into a question-answer pair and stored in a persistent, course-scoped memory. Before generating a new response, Iris searches this memory for similar previously verified answers, so recurring questions receive consistent answers as the course progresses. Where possible, responses include a citation linking back to the source lecture slide or the earlier verified thread.
+
+The course memory follows the course:
+
+* Iris only stores and cites threads from channels every student of the course can read. A thread in a private channel, in an exam channel, in a tutorial lecture channel or in the channel of an exercise that is not released yet is never used. When a channel becomes private, Iris stops citing it immediately.
+* An answer counts as verified by a tutor only if a tutor approved it or marked it as resolving the thread. If someone without tutor rights later changes its text, it counts as resolved by the community again. Answers resolved by students are offered to Iris as hints only.
+* Editing or deleting a message updates or removes the stored answer. If Iris cannot be reached at that moment, a nightly check removes the outdated answer. An opt-out from AI interaction applies to everything stored from then on; answers stored before stay, because they hold condensed course knowledge rather than the student's own text.
+* A response that states organizational facts, such as exam dates, rooms, deadlines or grading rules, is only posted without review if answers verified by tutors state exactly these facts. Otherwise it is held for tutor review.
+
+Confirmation after resolving a thread:
+
+<Image src={autonomousTutorMemorySavedImg} alt={"The confirmation that a resolved thread was saved to the course memory"} size={ImageSize.medium} />
+
+An Iris response that refers to an earlier verified answer:
+
+<Image src={autonomousTutorMemoryReferenceImg} alt={"An Iris response with a link to an earlier verified answer"} size={ImageSize.medium} />
+
+The Autonomous Tutor answers in course channels, including private channels. Group chats and direct messages are excluded. Course Memory only stores answers from channels that every student of the course can read. The feature is disabled by default, and an administrator must enable it for the whole Artemis instance. It then runs in every course where Iris is enabled. Iris is enabled for a course unless an instructor disables it in the course's Iris settings. If any participant of the thread chose local AI, Iris answers with on-premise models. Otherwise it uses cloud models, which then also read the other messages of the thread and the stored answers that Iris uses. Stored answers can come from threads of students who chose local AI. For the search, questions and stored answers are turned into vectors with the embedding model of the Iris instance, independent of the AI choice, as in the rest of Iris. Iris never answers a student who has opted out of AI interaction, and the text of their messages is never sent to Iris, embedded or stored. In a thread that Iris answers, a reply of such a student is replaced by a placeholder that only contains its id, its author's id and whether it resolves the thread.
+
+<Callout variant={CalloutVariant.warning}>
+
+  <strong>Privacy and activation at a glance</strong>
+
+  <ul>
+    <li><strong>Model choice</strong>: If any participant of the thread chose local AI, the whole run uses on-premise models. Otherwise the thread and the stored answers that Iris uses can be sent to cloud providers; stored answers can come from threads of students who chose local AI. The search always uses the embedding model of the Iris instance.</li>
+    <li><strong>Activation</strong>: The feature is not active by default. An administrator enables it for the whole instance. Instructors can turn it off for their course by disabling Iris.</li>
+    <li><strong>Student opt-out</strong>: From the moment students opt out of AI interaction, their text is never sent to Iris, embedded or stored. Iris only receives a placeholder with the message id, the author id and whether the reply resolves the thread.</li>
+    <li><strong>Transparency</strong>: Every Iris-generated message carries the Iris icon and a bot tag. Responses awaiting tutor review remain hidden from students until a tutor approves or edits them.</li>
+    <li><strong>GDPR</strong>: Processing is purpose-limited to assisting with student support (purpose limitation, data minimisation). If your institution requires consent as the legal basis, activation must be preceded by explicit <strong>consent</strong> (Art. 6(1)(a) GDPR).</li>
+  </ul>
+</Callout>
 
 ## Features for Moderators
 
