@@ -17,6 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.model.ToolContext;
@@ -107,7 +110,9 @@ class AssignerToolsServiceTest {
         String result = service.assignExerciseToCompetency(5L, 20L, 1.0, JUSTIFICATION, toolContext);
 
         assertThat(result).contains("\"status\":\"ok\"").contains("\"weight\":1.0");
-        verify(competencyExerciseLinkRepository).save(any(CompetencyExerciseLink.class));
+        ArgumentCaptor<CompetencyExerciseLink> linkCaptor = ArgumentCaptor.forClass(CompetencyExerciseLink.class);
+        verify(competencyExerciseLinkRepository).save(linkCaptor.capture());
+        assertThat(linkCaptor.getValue().isGeneratedByAi()).isTrue();
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(exercise);
         assertThat(appliedActions).singleElement().satisfies(a -> {
             assertThat(a.type()).isEqualTo(AppliedActionDTO.ActionType.ASSIGN);
@@ -197,6 +202,23 @@ class AssignerToolsServiceTest {
         verify(competencyExerciseLinkRepository, never()).save(any(CompetencyExerciseLink.class));
         verify(competencyProgressApi, never()).updateProgressByLearningObjectAsync(any());
         assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void assignExerciseToCompetency_reweightPreservesExistingAuthorship() {
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(5L, "Target", "Desc", CompetencyTaxonomy.APPLY, course);
+        ProgrammingExercise exercise = exerciseInCourse(20L, "Implement Quicksort", course);
+        CompetencyExerciseLink existing = new CompetencyExerciseLink(competency, exercise, 0.5);
+        existing.setGeneratedByAi(true);
+        when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
+        when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(exercise);
+        when(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(20L, 5L)).thenReturn(Optional.of(existing));
+
+        service.assignExerciseToCompetency(5L, 20L, 1.0, JUSTIFICATION, toolContext);
+
+        assertThat(existing.getWeight()).isEqualTo(1.0);
+        assertThat(existing.isGeneratedByAi()).isTrue();
     }
 
     @Test
@@ -331,7 +353,9 @@ class AssignerToolsServiceTest {
         String result = service.assignLectureUnitToCompetency(COMPETENCY_ID, LECTURE_UNIT_ID, 0.5, JUSTIFICATION, toolContext);
 
         assertThat(result).contains("\"status\":\"ok\"").contains("\"weight\":0.5").contains("\"lectureUnitId\":30");
-        verify(competencyLectureUnitLinkRepository).save(any(CompetencyLectureUnitLink.class));
+        ArgumentCaptor<CompetencyLectureUnitLink> linkCaptor = ArgumentCaptor.forClass(CompetencyLectureUnitLink.class);
+        verify(competencyLectureUnitLinkRepository).save(linkCaptor.capture());
+        assertThat(linkCaptor.getValue().isGeneratedByAi()).isTrue();
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(unit);
         assertThat(appliedActions).singleElement().satisfies(a -> {
             assertThat(a.type()).isEqualTo(AppliedActionDTO.ActionType.ASSIGN);
@@ -341,12 +365,14 @@ class AssignerToolsServiceTest {
         });
     }
 
-    @Test
-    void assignLectureUnitToCompetency_reweightExistingLink_updatesWeight() {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void assignLectureUnitToCompetency_reweightExistingLink_preservesProvenance(boolean generatedByAi) {
         Course course = courseWithId(COURSE_ID);
         CourseCompetency competency = newCompetency(COMPETENCY_ID, "Target", "Desc", CompetencyTaxonomy.APPLY, course);
         TextUnit unit = lectureUnitInCourse(LECTURE_UNIT_ID, "Recursion basics", course);
         CompetencyLectureUnitLink existing = new CompetencyLectureUnitLink(competency, unit, 0.3);
+        existing.setGeneratedByAi(generatedByAi);
         when(courseCompetencyRepository.findById(COMPETENCY_ID)).thenReturn(Optional.of(competency));
         when(lectureUnitRepositoryApi.findWithLectureById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
         when(competencyLectureUnitLinkRepository.findByLectureUnitIdAndCompetencyId(LECTURE_UNIT_ID, COMPETENCY_ID)).thenReturn(Optional.of(existing));
@@ -356,6 +382,7 @@ class AssignerToolsServiceTest {
         assertThat(result).contains("\"status\":\"ok\"").contains("\"weight\":1.0");
         verify(competencyLectureUnitLinkRepository).save(existing);
         assertThat(existing.getWeight()).isEqualTo(1.0);
+        assertThat(existing.isGeneratedByAi()).isEqualTo(generatedByAi);
     }
 
     @Test
