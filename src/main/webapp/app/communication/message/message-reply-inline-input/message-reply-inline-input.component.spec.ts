@@ -228,7 +228,7 @@ describe('MessageReplyInlineInputComponent', () => {
 
     describe('content length validation', () => {
         beforeEach(() => {
-            component.posting.set({ ...metisPostToCreateUser1 });
+            component.posting.set({ ...communicationPostToCreateUser1 });
             fixture.detectChanges();
         });
 

@@ -349,7 +349,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         assertThat(notCreatedAnswerPost).isNull();
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -401,7 +401,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
                 AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
 
         assertThat(answerPostRepository.findById(answerPostId).orElseThrow().getContent()).isNotEqualTo(tooLongContent);
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
