@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.course.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -36,8 +37,11 @@ import de.tum.cit.aet.artemis.modeling.api.ModelingExerciseImportApi;
 import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
+import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
@@ -73,6 +77,8 @@ public class CourseMaterialImportService {
 
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
+    private final SubmissionPolicyRepository submissionPolicyRepository;
+
     private final GradingCriterionRepository gradingCriterionRepository;
 
     private final QuizExerciseImportService quizExerciseImportService;
@@ -101,8 +107,8 @@ public class CourseMaterialImportService {
     public CourseMaterialImportService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
             Optional<ExamRepositoryApi> examRepositoryApi, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            GradingCriterionRepository gradingCriterionRepository, QuizExerciseImportService quizExerciseImportService, QuizExerciseRepository quizExerciseRepository,
-            Optional<ModelingExerciseImportApi> modelingExerciseImportApi, Optional<ModelingRepositoryApi> modelingRepositoryApi,
+            SubmissionPolicyRepository submissionPolicyRepository, GradingCriterionRepository gradingCriterionRepository, QuizExerciseImportService quizExerciseImportService,
+            QuizExerciseRepository quizExerciseRepository, Optional<ModelingExerciseImportApi> modelingExerciseImportApi, Optional<ModelingRepositoryApi> modelingRepositoryApi,
             Optional<TextExerciseImportApi> textExerciseImportApi, Optional<FileUploadImportApi> fileUploadImportApi, Optional<LectureImportApi> lectureImportApi,
             Optional<ExamImportApi> examImportApi, Optional<CompetencyImportApi> competencyImportApi, Optional<TutorialGroupImportApi> tutorialGroupImportApi,
             FaqImportService faqImportService) {
@@ -113,6 +119,7 @@ public class CourseMaterialImportService {
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
+        this.submissionPolicyRepository = submissionPolicyRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.quizExerciseImportService = quizExerciseImportService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -246,7 +253,7 @@ public class CourseMaterialImportService {
                 }
             }
             catch (Exception e) {
-                log.error("Failed to import exercise {}: {}", exercise.getTitle(), e.getMessage());
+                log.error("Failed to import exercise {}", exercise.getTitle(), e);
                 errors.add("Failed to import exercise '" + exercise.getTitle() + "': " + e.getMessage());
             }
         }
@@ -284,16 +291,46 @@ public class CourseMaterialImportService {
         // Create new exercise for the target course
         ProgrammingExercise newExercise = new ProgrammingExercise();
         newExercise.setCourse(targetCourse);
-        newExercise.setTitle(originalExercise.getTitle());
+        copyImportOverrides(originalExercise, newExercise);
+        copyProgrammingSettings(originalExercise, newExercise);
+        // A copy, not the managed entity: the import service clears the id of whatever policy the skeleton carries.
+        SubmissionPolicy sourcePolicy = submissionPolicyRepository.findByProgrammingExerciseId(originalExercise.getId());
+        if (sourcePolicy != null) {
+            newExercise.setSubmissionPolicy(SubmissionPolicyDTO.of(sourcePolicy).withoutId().toEntity());
+        }
         newExercise.forceNewProjectKey();
 
-        try {
-            return Optional.of(programmingExerciseImportService.importProgrammingExercise(originalExercise, newExercise, false, false));
-        }
-        catch (Exception e) {
-            log.error("Failed to import programming exercise: {}", e.getMessage());
-            return Optional.empty();
-        }
+        // Not caught here: importExercises reports the failure to the caller instead of counting a failed import as skipped.
+        return Optional.of(programmingExerciseImportService.importProgrammingExercise(originalExercise, newExercise, false, false));
+    }
+
+    /**
+     * Copies the programming settings onto the skeleton. The exercise import form submits these with the request, but the course-material
+     * import has no form, and the programming import service only copies the build configuration and the entities that hang off the exercise.
+     * Without them the import fails on the missing short name and static code analysis flag, or it creates an exercise without a programming
+     * language that its build jobs cannot run.
+     *
+     * @param source   the source programming exercise being imported
+     * @param skeleton the fresh target skeleton to enrich in place
+     */
+    private static void copyProgrammingSettings(ProgrammingExercise source, ProgrammingExercise skeleton) {
+        skeleton.setShortName(source.getShortName());
+        skeleton.setProgrammingLanguage(source.getProgrammingLanguage());
+        skeleton.setProjectType(source.getProjectType());
+        skeleton.setPackageName(source.getPackageName());
+        skeleton.setAllowOnlineEditor(source.isAllowOnlineEditor());
+        skeleton.setAllowOfflineIde(source.isAllowOfflineIde());
+        skeleton.setAllowOnlineIde(source.isAllowOnlineIde());
+        skeleton.setStaticCodeAnalysisEnabled(source.isStaticCodeAnalysisEnabled());
+        skeleton.setMaxStaticCodeAnalysisPenalty(source.getMaxStaticCodeAnalysisPenalty());
+        skeleton.setShowTestNamesToStudents(source.getShowTestNamesToStudents());
+        skeleton.setReleaseTestsWithExampleSolution(source.isReleaseTestsWithExampleSolution());
+        skeleton.setAssessmentType(source.getAssessmentType());
+        skeleton.setAllowComplaintsForAutomaticAssessments(source.getAllowComplaintsForAutomaticAssessments());
+        skeleton.setSecondCorrectionEnabled(source.getSecondCorrectionEnabled());
+        skeleton.setDifficulty(source.getDifficulty());
+        skeleton.setGradingInstructions(source.getGradingInstructions());
+        skeleton.setCategories(new HashSet<>(source.getCategories()));
     }
 
     private Optional<QuizExercise> importQuizExercise(QuizExercise exercise, Course targetCourse) {
@@ -374,7 +411,7 @@ public class CourseMaterialImportService {
         skeleton.setGradingCriteria(null);
         // Note: mode is intentionally not copied here. A TEAM source would also need its teamAssignmentConfig, which the
         // course-material fetch does not load; preserving team mode + config for course-material import is left as a
-        // follow-up together with the categories / plagiarism-config fetch-graph expansion.
+        // follow-up together with the plagiarism-config fetch-graph expansion.
     }
 
     /**
