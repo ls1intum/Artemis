@@ -75,6 +75,7 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         seed();
 
         Course course = demoCourse().orElseThrow();
+        assertThat(course.getSemester()).as("demo course has a semester in the format the client expects").matches("SS\\d{2}|WS\\d{2}/\\d{2}");
         User student = userTestRepository.findOneByLogin(UserApi.DEMO_STUDENT_LOGIN).orElseThrow();
         User instructor = userTestRepository.findOneByLogin(UserApi.DEMO_INSTRUCTOR_LOGIN).orElseThrow();
 
@@ -95,11 +96,11 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     @Test
     void seedingTwiceCreatesNothingNew() {
         seed();
-        DemoDataCounts afterFirstRun = countDemoData();
+        DemoDataSnapshot afterFirstRun = snapshotDemoData();
 
         seed();
 
-        assertThat(countDemoData()).as("seeding an already seeded database must not create anything").isEqualTo(afterFirstRun);
+        assertThat(snapshotDemoData()).as("seeding an already seeded database must neither create nor replace anything").isEqualTo(afterFirstRun);
     }
 
     @Test
@@ -109,28 +110,28 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         demoLectures(course.getId()).forEach(lecture -> competencyLectureUnitLinkRepository.deleteAllByLectureId(lecture.getId()));
         competencyRepository.deleteAllByCourseId(course.getId());
 
-        DemoDataCounts withoutCompetency = countDemoData();
-        assertThat(withoutCompetency.competencies()).as("competency was removed for this test").isZero();
+        DemoDataSnapshot withoutCompetency = snapshotDemoData();
+        assertThat(withoutCompetency.competencyIds()).as("competency was removed for this test").isEmpty();
 
         seed();
 
-        DemoDataCounts afterReseeding = countDemoData();
-        assertThat(afterReseeding.competencies()).as("missing competency is recreated").isEqualTo(1);
-        assertThat(afterReseeding.competencyLinks()).as("missing competency is linked again").isEqualTo(1);
-        assertThat(afterReseeding).as("everything that still existed is left alone")
-                .isEqualTo(new DemoDataCounts(withoutCompetency.courses(), withoutCompetency.users(), withoutCompetency.lectures(), withoutCompetency.lectureUnits(), 1, 1));
+        DemoDataSnapshot afterReseeding = snapshotDemoData();
+        assertThat(afterReseeding.competencyIds()).as("missing competency is recreated").hasSize(1);
+        assertThat(afterReseeding.linkedLectureUnitIds()).as("missing competency is linked again").isEqualTo(withoutCompetency.lectureUnitIds());
+        assertThat(afterReseeding).as("everything that still existed is left alone").isEqualTo(new DemoDataSnapshot(withoutCompetency.courseIds(), withoutCompetency.userIds(),
+                withoutCompetency.lectureIds(), withoutCompetency.lectureUnitIds(), afterReseeding.competencyIds(), afterReseeding.linkedLectureUnitIds()));
     }
 
     @Test
     void seedsWithoutOptionalModules() {
         seed();
-        DemoDataCounts beforeRun = countDemoData();
+        DemoDataSnapshot beforeRun = snapshotDemoData();
 
         DemoDataSeedingService withoutOptionalModules = new DemoDataSeedingService(courseApi, userApi, Optional.empty(), Optional.empty());
         assertThatCode(() -> withoutOptionalModules.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent()))
                 .as("seeding must work when the lecture and atlas modules are disabled").doesNotThrowAnyException();
 
-        assertThat(countDemoData()).as("disabled modules must not change existing demo data").isEqualTo(beforeRun);
+        assertThat(snapshotDemoData()).as("disabled modules must not change existing demo data").isEqualTo(beforeRun);
     }
 
     private void seed() {
@@ -157,20 +158,24 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     /**
-     * Counts the demo data instead of naming it, so that the idempotency assertions keep working as the seeded demo content grows.
+     * Captures the identities of the demo data instead of naming it, so that the idempotency assertions detect replaced records and keep working as the seeded content grows.
      */
-    private DemoDataCounts countDemoData() {
-        long users = Stream.of(UserApi.DEMO_STUDENT_LOGIN, UserApi.DEMO_INSTRUCTOR_LOGIN).filter(login -> userTestRepository.findOneByLogin(login).isPresent()).count();
+    private DemoDataSnapshot snapshotDemoData() {
+        Set<Long> userIds = Stream.of(UserApi.DEMO_STUDENT_LOGIN, UserApi.DEMO_INSTRUCTOR_LOGIN).flatMap(login -> userTestRepository.findOneByLogin(login).stream())
+                .map(User::getId).collect(Collectors.toSet());
+        Set<Long> courseIds = courseRepository.findAllByShortName(CourseApi.DEMO_COURSE_SHORT_NAME).stream().map(Course::getId).collect(Collectors.toSet());
         Optional<Course> course = demoCourse();
         if (course.isEmpty()) {
-            return new DemoDataCounts(0, users, 0, 0, 0, 0);
+            return new DemoDataSnapshot(courseIds, userIds, Set.of(), Set.of(), Set.of(), Set.of());
         }
         long courseId = course.get().getId();
         Set<Competency> competencies = competencyRepository.findAllByCourseId(courseId);
-        return new DemoDataCounts(courseRepository.findAllByShortName(CourseApi.DEMO_COURSE_SHORT_NAME).size(), users, demoLectures(courseId).size(),
-                demoLectureUnits(courseId).size(), competencies.size(), linkedLectureUnitIds(competencies).size());
+        return new DemoDataSnapshot(courseIds, userIds, demoLectures(courseId).stream().map(Lecture::getId).collect(Collectors.toSet()),
+                demoLectureUnits(courseId).stream().map(LectureUnit::getId).collect(Collectors.toSet()), competencies.stream().map(Competency::getId).collect(Collectors.toSet()),
+                linkedLectureUnitIds(competencies));
     }
 
-    private record DemoDataCounts(int courses, long users, int lectures, int lectureUnits, int competencies, int competencyLinks) {
+    private record DemoDataSnapshot(Set<Long> courseIds, Set<Long> userIds, Set<Long> lectureIds, Set<Long> lectureUnitIds, Set<Long> competencyIds,
+            Set<Long> linkedLectureUnitIds) {
     }
 }
