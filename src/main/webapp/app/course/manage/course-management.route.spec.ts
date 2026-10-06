@@ -1,5 +1,54 @@
-import { describe, expect, it } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { HttpResponse } from '@angular/common/http';
+import { RouteReuseStrategy, Routes, provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { Subject, of } from 'rxjs';
+import { describe, expect, it, vi } from 'vitest';
 import { courseManagementRoutes } from 'app/course/manage/course-management.route';
+import { ArtemisRouteReuseStrategy } from 'app/core/config/artemis-route-reuse.strategy';
+import { PresentationAssessmentManagementComponent } from 'app/presentation/manage/presentation-assessment-management.component';
+import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+
+function presentationRoutes(routes: Routes): Routes {
+    return routes.flatMap((route) => (route.path?.startsWith('presentations') ? [route] : presentationRoutes(route.children ?? [])));
+}
+
+describe('presentation course navigation', () => {
+    it.each(['presentations', 'presentations/42', 'presentations/42/exercises/7'])('reloads the course and targets subsequent writes correctly for %s', async (path) => {
+        const findAllByCourseId = vi.fn((courseId: number) => of(new HttpResponse({ body: [{ id: 42, title: `Course ${courseId}`, courseId, exerciseId: 7, instances: [] }] })));
+        const create = vi.fn().mockReturnValue(of(new HttpResponse({ body: { id: 43 } })));
+        const findWithExercises = vi.fn((id: number) => of(new HttpResponse({ body: { id, exercises: [] } })));
+        const routes = presentationRoutes(courseManagementRoutes);
+        expect(routes).toHaveLength(3);
+        // Keep the real route data and component; isolate authorization and the surrounding course shell.
+        await TestBed.configureTestingModule({
+            providers: [
+                provideRouter([{ path: 'course-management/:courseId', children: routes.map((route) => ({ ...route, canActivate: [], resolve: {} })) }]),
+                { provide: RouteReuseStrategy, useClass: ArtemisRouteReuseStrategy },
+                { provide: PresentationAssessmentService, useValue: { findAllByCourseId, create } },
+                { provide: CourseManagementService, useValue: { findWithExercises } },
+                { provide: AlertService, useValue: { success: vi.fn(), addAlert: vi.fn() } },
+                { provide: TranslateService, useValue: { instant: (key: string) => key, onLangChange: new Subject(), onTranslationChange: new Subject() } },
+            ],
+        })
+            .overrideComponent(PresentationAssessmentManagementComponent, { set: { template: '' } })
+            .compileComponents();
+        const harness = await RouterTestingHarness.create();
+        const first = await harness.navigateByUrl(`/course-management/1/${path}`, PresentationAssessmentManagementComponent);
+        const second = await harness.navigateByUrl(`/course-management/2/${path}`, PresentationAssessmentManagementComponent);
+        expect(second).not.toBe(first);
+        expect(second.courseId()).toBe(2);
+        expect(second.presentationAssessments()[0].courseId).toBe(2);
+        expect(findAllByCourseId).toHaveBeenCalledWith(1);
+        expect(findAllByCourseId).toHaveBeenCalledWith(2);
+        expect(findWithExercises).toHaveBeenCalledWith(2);
+        second.handlePresentationDialogSave({ presentationAssessment: { title: 'New presentation', maxPoints: 10 } });
+        expect(create).toHaveBeenCalledWith(2, expect.objectContaining({ title: 'New presentation' }));
+    });
+});
 
 describe('courseManagementRoutes', () => {
     const containerRoute = courseManagementRoutes.find((route) => route.path === '' && !!route.children?.length);

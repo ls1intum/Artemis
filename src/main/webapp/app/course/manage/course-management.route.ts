@@ -19,6 +19,7 @@ function presentationAssessmentManagementRoute(path: string): Route {
             authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.presentationAssessment.home.title',
             transparentCourseBody: true,
+            dontReuseOnParamChange: true,
         },
         canActivate: [UserRouteAccessService, presentationAssessmentFeatureGuard],
     };
