@@ -1,0 +1,53 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Broker and Registry Docker Compose configuration file
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    jhipster-registry:
+        container_name: artemis-jhipster-registry
+        image: docker.io/jhipster/jhipster-registry:${JHIPSTER_REGISTRY_VERSION}
+        pull_policy: missing
+        volumes:
+            - ./registry:/central-config
+        # When run with the "dev" Spring profile, the JHipster Registry will
+        # read the config from the local filesystem (registry directory)
+        # When run with the "prod" Spring profile, it will read the configuration from a Git repository
+        # See https://www.jhipster.tech/jhipster-registry/#spring-cloud-config
+        environment:
+            _JAVA_OPTIONS: -Xmx512m -Xms256m
+            SPRING_PROFILES_ACTIVE: dev,openapi
+            SPRING_SECURITY_USER_PASSWORD: ${REGISTRY_PASSWORD:-admin}
+            JHIPSTER_REGISTRY_PASSWORD: ${REGISTRY_PASSWORD:-admin}
+            SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_TYPE: native
+            SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_SEARCH_LOCATIONS: file:./central-config/localhost-config/
+        ports:
+            - "8761:8761"
+        # expose the port to make it reachable docker internally even if the external port mapping changes
+        expose:
+            - "8761"
+        healthcheck:
+            test: wget -nv -t1 --spider http://localhost:8761/actuator/health || exit 1
+            start_period: 600s
+            interval: 1s
+
+    activemq-broker:
+        container_name: artemis-activemq-broker
+        image: docker.io/apache/artemis:${ACTIVEMQ_VERSION}${ACTIVEMQ_IMAGE_VARIANT}
+        pull_policy: missing
+        environment:
+            ARTEMIS_USER: ${BROKER_USER:-guest}
+            ARTEMIS_PASSWORD: ${BROKER_PASSWORD:-guest}
+            # "--http-host 0.0.0.0 --relax-jolokia" is the default
+            # "--nio" is apparently required to make it work on ARM CPUs
+            EXTRA_ARGS: --http-host 0.0.0.0 --relax-jolokia --nio
+        ports:
+            - "61613:61616"
+        healthcheck:
+            test: wget -nv -t1 --spider http://localhost:8161/ || exit 1
+            start_period: 600s
+            interval: 1s
+
+networks:
+  artemis:
+    driver: "bridge"
+    name: artemis

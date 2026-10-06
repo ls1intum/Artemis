@@ -1,0 +1,48 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Monitoring setup
+# ----------------------------------------------------------------------------------------------------------------------
+# This configuration is intended for development purpose, it's **your** responsibility to harden it for production
+#
+# Out of the box this setup just works with a non-containerized Artemis instances
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+  prometheus:
+    container_name: artemis-prometheus
+    image: docker.io/prom/prometheus:${PROMETHEUS_VERSION}
+    pull_policy: missing
+    volumes:
+        - ./monitoring/prometheus/:/etc/prometheus/
+    # If you want to expose these ports outside your dev PC,
+    # remove the "127.0.0.1:" prefix
+    ports:
+      - "127.0.0.1:9090:9090"
+    # expose the port to make it reachable docker internally even if the external port mapping changes
+    expose:
+        - "9090"
+    # On macOS, remove next line and replace localhost by host.docker.internal in prometheus/prometheus.yml and
+    # grafana/provisioning/datasources/datasource.yml
+    network_mode: 'host' # to test locally running service
+  grafana:
+    container_name: artemis-grafana
+    image: docker.io/grafana/grafana:${GRAFANA_VERSION}
+    pull_policy: missing
+    # Mount the two provisioning subdirectories individually rather than the whole provisioning
+    # directory: mounting the parent hides the image's own (empty) alerting/, plugins/, notifiers/
+    # and access-control/ directories, which Grafana then logs as read errors on every startup.
+    volumes:
+      - ./monitoring/grafana/provisioning/datasources/:/etc/grafana/provisioning/datasources/
+      - ./monitoring/grafana/provisioning/dashboards/:/etc/grafana/provisioning/dashboards/
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: "admin"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    # If you want to expose these ports outside your dev PC,
+    # remove the "127.0.0.1:" prefix
+    ports:
+      - "127.0.0.1:3000:3000"
+    # expose the port to make it reachable docker internally even if the external port mapping changes
+    expose:
+      - "3000"
+    # On macOS, remove next line and replace localhost by host.docker.internal in prometheus/prometheus.yml and
+    # grafana/provisioning/datasources/datasource.yml
+    network_mode: 'host' # to test locally running service
