@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.course.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -264,7 +264,7 @@ public class CourseMaterialImportService {
     /**
      * Import a single exercise based on its type.
      */
-    private Optional<? extends Exercise> importSingleExercise(Exercise exercise, Course targetCourse) {
+    private Optional<? extends Exercise> importSingleExercise(Exercise exercise, Course targetCourse) throws IOException {
         return switch (exercise.getExerciseType()) {
             case PROGRAMMING -> importProgrammingExercise((ProgrammingExercise) exercise, targetCourse);
             case QUIZ -> importQuizExercise((QuizExercise) exercise, targetCourse);
@@ -292,7 +292,8 @@ public class CourseMaterialImportService {
         ProgrammingExercise newExercise = new ProgrammingExercise();
         newExercise.setCourse(targetCourse);
         copyImportOverrides(originalExercise, newExercise);
-        copyProgrammingSettings(originalExercise, newExercise);
+        newExercise.setShortName(originalExercise.getShortName());
+        newExercise.copyImportSettingsFrom(originalExercise);
         // A copy, not the managed entity: the import service clears the id of whatever policy the skeleton carries.
         SubmissionPolicy sourcePolicy = submissionPolicyRepository.findByProgrammingExerciseId(originalExercise.getId());
         if (sourcePolicy != null) {
@@ -304,36 +305,7 @@ public class CourseMaterialImportService {
         return Optional.of(programmingExerciseImportService.importProgrammingExercise(originalExercise, newExercise, false, false));
     }
 
-    /**
-     * Copies the programming settings onto the skeleton. The exercise import form submits these with the request, but the course-material
-     * import has no form, and the programming import service only copies the build configuration and the entities that hang off the exercise.
-     * Without them the import fails on the missing short name and static code analysis flag, or it creates an exercise without a programming
-     * language that its build jobs cannot run.
-     *
-     * @param source   the source programming exercise being imported
-     * @param skeleton the fresh target skeleton to enrich in place
-     */
-    private static void copyProgrammingSettings(ProgrammingExercise source, ProgrammingExercise skeleton) {
-        skeleton.setShortName(source.getShortName());
-        skeleton.setProgrammingLanguage(source.getProgrammingLanguage());
-        skeleton.setProjectType(source.getProjectType());
-        skeleton.setPackageName(source.getPackageName());
-        skeleton.setAllowOnlineEditor(source.isAllowOnlineEditor());
-        skeleton.setAllowOfflineIde(source.isAllowOfflineIde());
-        skeleton.setAllowOnlineIde(source.isAllowOnlineIde());
-        skeleton.setStaticCodeAnalysisEnabled(source.isStaticCodeAnalysisEnabled());
-        skeleton.setMaxStaticCodeAnalysisPenalty(source.getMaxStaticCodeAnalysisPenalty());
-        skeleton.setShowTestNamesToStudents(source.getShowTestNamesToStudents());
-        skeleton.setReleaseTestsWithExampleSolution(source.isReleaseTestsWithExampleSolution());
-        skeleton.setAssessmentType(source.getAssessmentType());
-        skeleton.setAllowComplaintsForAutomaticAssessments(source.getAllowComplaintsForAutomaticAssessments());
-        skeleton.setSecondCorrectionEnabled(source.getSecondCorrectionEnabled());
-        skeleton.setDifficulty(source.getDifficulty());
-        skeleton.setGradingInstructions(source.getGradingInstructions());
-        skeleton.setCategories(new HashSet<>(source.getCategories()));
-    }
-
-    private Optional<QuizExercise> importQuizExercise(QuizExercise exercise, Course targetCourse) {
+    private Optional<QuizExercise> importQuizExercise(QuizExercise exercise, Course targetCourse) throws IOException {
         var optionalOriginal = quizExerciseRepository.findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(exercise.getId());
         if (optionalOriginal.isEmpty()) {
             return Optional.empty();
@@ -343,13 +315,8 @@ public class CourseMaterialImportService {
         newExercise.setCourse(targetCourse);
         copyImportOverrides(optionalOriginal.get(), newExercise);
 
-        try {
-            return Optional.of(quizExerciseImportService.importQuizExercise(newExercise, optionalOriginal.get(), null));
-        }
-        catch (Exception e) {
-            log.error("Failed to import quiz exercise: {}", e.getMessage());
-            return Optional.empty();
-        }
+        // Not caught here: importExercises reports the failure to the caller instead of counting a failed import as skipped.
+        return Optional.of(quizExerciseImportService.importQuizExercise(newExercise, optionalOriginal.get(), null));
     }
 
     private Optional<ModelingExercise> importModelingExercise(ModelingExercise exercise, Course targetCourse) {

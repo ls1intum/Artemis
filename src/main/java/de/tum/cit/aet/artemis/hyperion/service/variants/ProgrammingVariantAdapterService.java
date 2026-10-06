@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -417,24 +416,12 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         }
         newExercise.setMaxPoints(original.getMaxPoints());
         newExercise.setBonusPoints(original.getBonusPoints());
-        newExercise.setIncludedInOverallScore(original.getIncludedInOverallScore());
         newExercise.setMode(original.getMode());
-        newExercise.setDifficulty(request.targetDifficulty() != null ? request.targetDifficulty() : original.getDifficulty());
-        newExercise.setCategories(new HashSet<>(original.getCategories()));
         newExercise.setProblemStatement(plan.problemStatement());
-        newExercise.setGradingInstructions(original.getGradingInstructions());
-        newExercise.setProgrammingLanguage(original.getProgrammingLanguage());
-        newExercise.setProjectType(original.getProjectType());
-        newExercise.setPackageName(original.getPackageName());
-        newExercise.setAllowOnlineEditor(original.isAllowOnlineEditor());
-        newExercise.setAllowOfflineIde(original.isAllowOfflineIde());
-        newExercise.setAllowOnlineIde(original.isAllowOnlineIde());
-        newExercise.setStaticCodeAnalysisEnabled(original.isStaticCodeAnalysisEnabled());
-        newExercise.setMaxStaticCodeAnalysisPenalty(original.getMaxStaticCodeAnalysisPenalty());
-        newExercise.setShowTestNamesToStudents(original.getShowTestNamesToStudents());
-        newExercise.setReleaseTestsWithExampleSolution(original.isReleaseTestsWithExampleSolution());
-        newExercise.setAssessmentType(original.getAssessmentType());
-        newExercise.setAllowComplaintsForAutomaticAssessments(original.getAllowComplaintsForAutomaticAssessments());
+        newExercise.copyImportSettingsFrom(original);
+        if (request.targetDifficulty() != null) {
+            newExercise.setDifficulty(request.targetDifficulty());
+        }
         newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(original.getBuildAndTestStudentSubmissionsAfterDueDate());
         return newExercise;
     }
