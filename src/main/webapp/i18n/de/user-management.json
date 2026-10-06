@@ -92,8 +92,36 @@
                     "tutor": "Tutor:innen",
                     "student": "Studierende"
                 },
+                "immediateHint": "Änderungen an den Kursrollen werden sofort gespeichert, unabhängig von der Schaltfläche Speichern unten.",
+                "role": {
+                    "instructor": "Lehrende:r",
+                    "editor": "Editor:in",
+                    "tutor": "Tutor:in",
+                    "student": "Studierende:r"
+                },
+                "add": {
+                    "title": "Zu einem Kurs hinzufügen",
+                    "course": "Kurs",
+                    "coursePlaceholder": "Nach Titel oder Kurzname suchen",
+                    "noCourseFound": "Kein Kurs gefunden",
+                    "role": "Rolle",
+                    "alreadyHasRole": "Diese:r Nutzer:in hat diese Rolle im ausgewählten Kurs bereits.",
+                    "success": "{{ login }} hat jetzt die Rolle {{ role }} in {{ course }}."
+                },
+                "remove": {
+                    "label": "Rolle {{ role }} in {{ course }} entfernen",
+                    "header": "Kursrolle entfernen",
+                    "message": "Die Rolle {{ role }} von {{ login }} im Kurs {{ course }} entfernen? Diese:r Nutzer:in verliert den Zugriff, den diese Rolle im Kurs gewährt, und die globalen Rollen können sich entsprechend ändern.",
+                    "accept": "Entfernen",
+                    "success": "{{ login }} hat die Rolle {{ role }} in {{ course }} nicht mehr."
+                },
+                "syncFailed": "Die globalen Rollen konnten nach der letzten Änderung der Kursrollen nicht aktualisiert werden. Speichern ist gesperrt, bis sie geladen sind.",
+                "syncRetry": "Erneut laden",
                 "retry": "Erneut versuchen",
-                "courseCount": "Kurse: {{ count }}"
+                "courseCount": "Kurse: {{ count }}",
+                "globalRolesChanged": "Die globalen Rollen dieser Nutzer:in haben sich mit den Kursrollen geändert.",
+                "globalRolesAdded": "Hinzugefügt:",
+                "globalRolesRemoved": "Entfernt:"
             },
             "login": "Login",
             "firstName": "Vorname",

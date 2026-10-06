@@ -2,15 +2,17 @@
  * Vitest tests for UserCourseRolesComponent.
  * Verifies that the course roles of a user are loaded for the given login and rendered grouped by role.
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
 
 import { UserCourseRolesComponent } from 'app/admin/user-management/course-roles/user-course-roles.component';
 import { UserCourseRole } from 'app/account/user/shared/user-course-role.model';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('UserCourseRolesComponent', () => {
     let fixture: ComponentFixture<UserCourseRolesComponent>;
@@ -43,6 +45,10 @@ describe('UserCourseRolesComponent', () => {
                         courseCount: 'Courses: {{ count }}',
                         empty: { title: 'No course roles', description: 'No course.' },
                         roles: { instructor: 'Instructors', editor: 'Editors', tutor: 'Tutors', student: 'Students' },
+                        role: { instructor: 'Instructor', editor: 'Editor', tutor: 'Tutor', student: 'Student' },
+                        immediateHint: 'Saved immediately',
+                        add: { title: 'Add to a course' },
+                        remove: { label: 'Remove {{ role }} in {{ course }}', header: 'Remove', message: 'Remove {{ role }} of {{ login }} in {{ course }}?', accept: 'Remove' },
                     },
                 },
             },
@@ -205,5 +211,235 @@ describe('UserCourseRolesComponent', () => {
         fixture.detectChanges();
 
         expect(element().querySelectorAll('[data-testid="user-course-roles-course"]')).toHaveLength(1);
+    });
+
+    describe('when editable', () => {
+        let courseRolesChanged: number;
+        let inProgress: boolean[];
+
+        beforeEach(() => {
+            courseRolesChanged = 0;
+            inProgress = [];
+            fixture.componentInstance.changeInProgress.subscribe((state) => inProgress.push(state));
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentInstance.courseRolesChanged.subscribe(() => courseRolesChanged++);
+        });
+
+        function removeButtons(): HTMLElement[] {
+            return Array.from(element().querySelectorAll('[data-testid="user-course-roles-remove"] button'));
+        }
+
+        it('offers no way to change the roles when read only', async () => {
+            fixture.componentRef.setInput('editable', false);
+            await respondWith(courseRoles);
+
+            expect(removeButtons()).toHaveLength(0);
+            expect(element().querySelector('[data-testid="user-course-role-add"]')).toBeNull();
+        });
+
+        it('shows a remove button for every role and the form to add a role', async () => {
+            await respondWith(courseRoles);
+
+            expect(removeButtons()).toHaveLength(4);
+            expect(removeButtons()[0].getAttribute('aria-label')).toBe('Remove Instructor in Algorithms (ALGO)');
+            expect(element().querySelector('[data-testid="user-course-role-add"]')).not.toBeNull();
+        });
+
+        it('shows the add form below the empty state for a user without roles', async () => {
+            await respondWith([]);
+
+            expect(element().querySelector('[data-testid="user-course-roles-empty"]')).not.toBeNull();
+            expect(element().querySelector('[data-testid="user-course-role-add"]')).not.toBeNull();
+        });
+
+        it('asks for confirmation before it removes a role and removes nothing when the request is rejected', async () => {
+            await respondWith(courseRoles);
+
+            removeButtons()[0].click();
+
+            const request = fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined);
+            expect(request?.message).toBe('Remove Instructor of student1 in Algorithms (ALGO)?');
+            request?.reject?.();
+            httpMock.expectNone({ method: 'DELETE' });
+            expect(courseRolesChanged).toBe(0);
+        });
+
+        it('removes the role once confirmed and keeps its entry busy until the reloaded list answered', async () => {
+            const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+            await respondWith(courseRoles);
+
+            removeButtons()[0].click();
+            fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)?.accept();
+
+            httpMock.expectOne({ method: 'DELETE', url: 'api/course/courses/1/instructors/student1' }).flush(null);
+            fixture.detectChanges();
+            const reload = httpMock.expectOne({ method: 'GET', url: courseRolesUrl });
+            // The removed entry is still listed but cannot be used again, and the list does not flash a spinner.
+            expect(removeButtons()).toHaveLength(4);
+            expect(removeButtons().every((button) => button.hasAttribute('disabled'))).toBe(true);
+            expect(element().querySelector('[data-testid="user-course-roles-loading"]')).toBeNull();
+            reload.flush(courseRoles.slice(1));
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(successSpy).toHaveBeenCalledWith(
+                'artemisApp.userManagement.courseRoles.remove.success',
+                expect.objectContaining({ login: 'student1', course: 'Algorithms (ALGO)' }),
+            );
+            expect(courseRolesChanged).toBe(1);
+            expect(inProgress).toEqual([true, false]);
+            expect(element().querySelector('[data-testid="user-course-roles-group-INSTRUCTOR"]')).toBeNull();
+            expect(removeButtons().some((button) => button.hasAttribute('disabled'))).toBe(false);
+        });
+
+        it('looks at the server again and reports a change when the removal fails, because the role may be gone although the response got lost', async () => {
+            await respondWith(courseRoles);
+
+            removeButtons()[0].click();
+            fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)?.accept();
+            httpMock.expectOne({ method: 'DELETE' }).flush('error', { status: 504, statusText: 'Gateway Timeout' });
+            fixture.detectChanges();
+            httpMock.expectOne({ method: 'GET', url: courseRolesUrl }).flush(courseRoles);
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(courseRolesChanged).toBe(1);
+            expect(inProgress).toEqual([true, false]);
+            expect(removeButtons()).toHaveLength(4);
+            expect(removeButtons().some((button) => button.hasAttribute('disabled'))).toBe(false);
+        });
+
+        it('moves the focus to the next remove button after a removal, and to the course field when none is left', async () => {
+            document.body.appendChild(element());
+            await respondWith(courseRoles);
+
+            removeButtons()[1].click();
+            fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)?.accept();
+            httpMock.expectOne({ method: 'DELETE' }).flush(null);
+            fixture.detectChanges();
+            httpMock.expectOne({ method: 'GET', url: courseRolesUrl }).flush([courseRoles[0], courseRoles[2], courseRoles[3]]);
+            await fixture.whenStable();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            // The entries are listed Instructors, then Students (Algorithms, Compilers): the removed Students entry was the second button.
+            expect(document.activeElement).toBe(removeButtons()[1]);
+            element().remove();
+        });
+
+        it('looks at the server again and reports a change when adding failed', async () => {
+            await respondWith([]);
+
+            fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-role-add').componentInstance.failed.emit();
+            fixture.detectChanges();
+            httpMock.expectOne({ method: 'GET', url: courseRolesUrl }).flush(courseRoles);
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(courseRolesChanged).toBe(1);
+        });
+
+        it('keeps the add form and offers a retry when loading the roles fails', async () => {
+            fixture.detectChanges();
+            httpMock.expectOne(courseRolesUrl).flush('error', { status: 500, statusText: 'Server Error' });
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(element().querySelector('[data-testid="user-course-roles-retry"]')).not.toBeNull();
+            expect(element().querySelector('[data-testid="user-course-role-add"]')).not.toBeNull();
+        });
+
+        it('cannot retry a failed load while a role is being added, because the reload would destroy the form that reports the end of the request', async () => {
+            fixture.detectChanges();
+            httpMock.expectOne(courseRolesUrl).flush('error', { status: 500, statusText: 'Server Error' });
+            await fixture.whenStable();
+            fixture.detectChanges();
+            const retry = () => element().querySelector('[data-testid="user-course-roles-retry"] button') as HTMLButtonElement;
+            expect(retry().disabled).toBe(false);
+
+            const addForm = fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-role-add').componentInstance;
+            addForm.changing.emit(true);
+            fixture.detectChanges();
+
+            expect(retry().disabled).toBe(true);
+            retry().click();
+            httpMock.expectNone({ method: 'GET', url: courseRolesUrl });
+            expect(element().querySelector('[data-testid="user-course-role-add"]')).not.toBeNull();
+
+            addForm.changing.emit(false);
+            fixture.detectChanges();
+
+            expect(retry().disabled).toBe(false);
+            expect(inProgress).toEqual([true, false]);
+        });
+
+        it('does not emit after it was destroyed', async () => {
+            await respondWith(courseRoles);
+            removeButtons()[0].click();
+            fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)?.accept();
+            const request = httpMock.expectOne({ method: 'DELETE' });
+
+            fixture.destroy();
+            request.flush(null);
+
+            expect(courseRolesChanged).toBe(0);
+            expect(inProgress).toEqual([true]);
+        });
+
+        it('reloads the roles and reports the change when a role was added', async () => {
+            await respondWith([]);
+
+            fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-role-add').componentInstance.added.emit();
+            fixture.detectChanges();
+            httpMock.expectOne({ method: 'GET', url: courseRolesUrl }).flush(courseRoles);
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(courseRolesChanged).toBe(1);
+            expect(element().querySelectorAll('[data-testid="user-course-roles-course"]')).toHaveLength(4);
+        });
+
+        it('blocks every other change while a role is being removed', async () => {
+            await respondWith(courseRoles);
+
+            removeButtons()[0].click();
+            const confirmation = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+            confirmation.request(undefined)?.accept();
+            confirmation.close(undefined);
+            fixture.detectChanges();
+
+            expect(removeButtons().every((button) => button.hasAttribute('disabled'))).toBe(true);
+            expect(fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-role-add').componentInstance.disabled()).toBe(true);
+            removeButtons()[1].click();
+            expect(fixture.debugElement.injector.get(TumAetUiConfirmationService).request(undefined)).toBeUndefined();
+            httpMock.expectOne({ method: 'DELETE' }).flush(null);
+            fixture.detectChanges();
+            httpMock.expectOne({ method: 'GET', url: courseRolesUrl }).flush(courseRoles.slice(1));
+        });
+
+        it('blocks removing a role while a role is being added', async () => {
+            await respondWith(courseRoles);
+
+            fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-role-add').componentInstance.changing.emit(true);
+            fixture.detectChanges();
+
+            expect(removeButtons().every((button) => button.hasAttribute('disabled'))).toBe(true);
+        });
+
+        it('blocks every change while the host disables the component', async () => {
+            fixture.componentRef.setInput('disabled', true);
+            await respondWith(courseRoles);
+
+            expect(removeButtons().every((button) => button.hasAttribute('disabled'))).toBe(true);
+            expect(fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-role-add').componentInstance.disabled()).toBe(true);
+        });
+
+        it('forwards the progress of adding a role', async () => {
+            await respondWith([]);
+
+            fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-role-add').componentInstance.changing.emit(true);
+
+            expect(inProgress).toEqual([true]);
+        });
     });
 });
