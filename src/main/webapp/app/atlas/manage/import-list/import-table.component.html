@@ -22,21 +22,29 @@
     <table class="table align-middle table-striped">
         <thead>
             <tr>
-                <th class="col-1 clickable">
-                    <div class="d-flex align-items-center" (click)="setSortedColumn('ID')">
+                <th scope="col" class="col-1 clickable">
+                    <button
+                        type="button"
+                        (click)="setSortedColumn('ID')"
+                        class="flex w-full items-center border-0 bg-transparent p-0 text-start text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
+                    >
                         <span>#</span>
                         <ng-container *ngTemplateOutlet="sortIcon; context: { sortedColumn: 'ID', currentSortedColumn: sortedColumn(), sortingOrder: sortingOrder() }" />
-                    </div>
+                    </button>
                 </th>
                 @for (column of columns(); track column) {
-                    <th class="col-4 clickable" (click)="setSortedColumn(column.name)">
-                        <div class="d-flex align-items-center">
+                    <th scope="col" class="col-4">
+                        <button
+                            type="button"
+                            (click)="setSortedColumn(column.name)"
+                            class="flex w-full items-center border-0 bg-transparent p-0 text-start text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
+                        >
                             <span [jhiTranslate]="columnBaseTranslationKey() + '.table.columns.' + column.name"></span>
                             <ng-container *ngTemplateOutlet="sortIcon; context: { sortedColumn: column.name, currentSortedColumn: sortedColumn(), sortingOrder: sortingOrder() }" />
-                        </div>
+                        </button>
                     </th>
                 }
-                <th></th>
+                <th scope="col"><span class="visually-hidden" jhiTranslate="entity.actions"></span></th>
             </tr>
         </thead>
         <tbody>
@@ -51,7 +59,7 @@
                         </td>
                     }
                     <td class="col-1">
-                        <button class="btn btn-sm btn-outline-secondary" (click)="selectRow(entity)">Select</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="selectRow(entity)">Select</button>
                     </td>
                 </tr>
             } @empty {

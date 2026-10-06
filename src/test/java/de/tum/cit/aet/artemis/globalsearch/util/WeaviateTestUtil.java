@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateUuidUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -56,6 +57,30 @@ public final class WeaviateTestUtil {
     }
 
     /**
+     * Directly inserts (or replaces) a row in the {@code SearchableEntities} collection, bypassing the outbox and its
+     * dispatch-time re-derivation. Use this to set up Weaviate rows for tests of the bulk-delete filters, which operate
+     * purely on Weaviate state and must not depend on a backing database entity existing for a synthetic id.
+     *
+     * @param weaviateService the Weaviate service
+     * @param type            the {@code SearchableEntitySchema.TypeValues} discriminator
+     * @param entityId        the entity id (used to derive the deterministic object UUID)
+     * @param properties      the property map to store
+     */
+    public static void seedRow(WeaviateService weaviateService, String type, long entityId, Map<String, Object> properties) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        String uuid = WeaviateUuidUtil.deterministicUuid(type, entityId);
+        if (collection.data.exists(uuid)) {
+            collection.data.replace(uuid, r -> r.properties(properties));
+        }
+        else {
+            collection.data.insert(properties, obj -> obj.uuid(uuid));
+        }
+    }
+
+    /**
      * Queries Weaviate for the exercise with the given ID and returns its properties,
      * or {@code null} if no exercise was found.
      * Returns {@code null} without querying if Docker is not available.
@@ -77,6 +102,26 @@ public final class WeaviateTestUtil {
             return null;
         }
         return response.objects().getFirst().properties();
+    }
+
+    /**
+     * Waits until the exercise is present in Weaviate, without asserting on any of its properties.
+     * <p>
+     * Indexing runs asynchronously, so a test that indexes an exercise and then deletes its course needs this barrier:
+     * without it the upsert can land after the deletion has already swept the collection, leaving behind a row that
+     * the deletion can no longer remove and that the test then reports as a cleanup failure.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param exerciseId      the ID of the exercise that should be indexed
+     */
+    public static void awaitExerciseInWeaviate(WeaviateService weaviateService, long exerciseId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryExerciseProperties(weaviateService, exerciseId);
+            assertThat(properties).as("Exercise %d should be indexed in Weaviate before its course is deleted", exerciseId).isNotNull();
+        });
     }
 
     /**
@@ -262,6 +307,7 @@ public final class WeaviateTestUtil {
         var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
         var response = collection.query
                 .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.LECTURE),
+                        Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.LECTURE_UNIT).not(),
                         Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(lectureId))).limit(1));
         if (response.objects().isEmpty()) {
             return null;
@@ -635,8 +681,12 @@ public final class WeaviateTestUtil {
             return null;
         }
         var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        // `type` uses Weaviate's default WORD tokenization, so "answer_post" carries the token "post" and a bare
+        // type == "post" filter also matches answer posts. Without the NotEqual guard this helper reports an unrelated
+        // answer post that happens to share the numeric id, which is a false failure that depends on id allocation.
         var response = collection.query
                 .fetchObjects(query -> query.filters(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
+                        Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST).not(),
                         Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(postId))).limit(1));
         if (response.objects().isEmpty()) {
             return null;

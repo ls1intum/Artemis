@@ -1,11 +1,46 @@
-<jhi-title-channel-name
-    [title]="lecture().title"
-    (titleChange)="onTitleChange($event)"
-    [channelName]="lecture().channelName"
-    (channelNameChange)="onChannelNameChange($event)"
-    channelNamePrefix="lecture-"
-    [hideTitleLabel]="false"
-    [emphasizeLabels]="false"
-    [hideChannelName]="hideChannelNameInput()"
-    [initChannelName]="lecture().id === undefined"
-/>
+<div [class]="hideChannelNameInput() ? 'grid gap-6' : 'grid gap-6 lg:grid-cols-2'">
+    <tumaet-ui-form-field
+        controlId="field_title"
+        [label]="'artemisApp.lecture.title' | artemisTranslate"
+        required
+        [invalid]="titleTouched() && !isTitleValid()"
+        [error]="'entity.validation.required' | artemisTranslate"
+    >
+        <input
+            tumAetUiInput
+            id="field_title"
+            [attr.aria-label]="'artemisApp.lecture.title' | artemisTranslate"
+            name="title"
+            type="text"
+            required
+            [value]="title() ?? ''"
+            (input)="onTitleInput(titleField.value)"
+            (blur)="titleTouched.set(true)"
+            #titleField
+        />
+    </tumaet-ui-form-field>
+    @if (!hideChannelNameInput()) {
+        <tumaet-ui-form-field
+            controlId="field_channel_name"
+            [label]="'artemisApp.lecture.channelName' | artemisTranslate"
+            required
+            [hint]="'artemisApp.lecture.channelNameHint' | artemisTranslate"
+            [invalid]="channelNameTouched() && !isChannelNameValid()"
+            [error]="'entity.validation.required' | artemisTranslate"
+        >
+            <input
+                tumAetUiInput
+                id="field_channel_name"
+                [attr.aria-label]="'artemisApp.lecture.channelName' | artemisTranslate"
+                name="channelName"
+                type="text"
+                required
+                [maxLength]="channelNameMaxLength"
+                [value]="channelName() ?? ''"
+                (input)="onChannelNameInput(channelNameField)"
+                (blur)="channelNameTouched.set(true)"
+                #channelNameField
+            />
+        </tumaet-ui-form-field>
+    }
+</div>

@@ -11,6 +11,8 @@ import { onError } from 'app/foundation/util/global.utils';
 import { Subscription } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { TumAetUiListComponent, TumAetUiListItemDirective, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export const GLOBAL_NOTIFICATION_TYPES = {
     NEW_LOGIN: 'NEW_LOGIN',
@@ -33,11 +35,15 @@ interface NotificationTypeLink {
 
 @Component({
     selector: 'jhi-email-notifications-settings',
-    imports: [TranslateDirective, FaIconComponent, FormsModule, RouterLink],
+    imports: [TranslateDirective, FaIconComponent, FormsModule, RouterLink, TumAetUiListComponent, TumAetUiListItemDirective, TumAetUiToggleSwitchComponent, ArtemisTranslatePipe],
     templateUrl: './global-notifications-settings.component.html',
     styleUrls: ['../user-settings.scss'],
 })
 export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
+    private globalNotificationSettingsService = inject(GlobalNotificationSettingsService);
+    private profileService = inject(ProfileService);
+    private alertService = inject(AlertService);
+
     protected readonly faSpinner = faSpinner;
     protected readonly notificationTypes = Object.values(GLOBAL_NOTIFICATION_TYPES);
     protected readonly filteredNotificationTypes = signal<GlobalNotificationType[]>([]);
@@ -61,10 +67,6 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
         },
     ];
     readonly notificationSettings = signal<{ [key: string]: boolean } | undefined>(undefined);
-
-    private globalNotificationSettingsService = inject(GlobalNotificationSettingsService);
-    private profileService = inject(ProfileService);
-    private alertService = inject(AlertService);
 
     private getAllSub?: Subscription;
     private updateSub?: Subscription;

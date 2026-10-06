@@ -1,6 +1,8 @@
 <input
+    [attr.aria-label]="'artemisApp.team.selectOwnerForTeam' | artemisTranslate"
     #instance="ngbTypeahead"
-    id="owner-search-input"
+    id="teamOwnerInput"
+    data-testid="owner-search-input"
     name="search-filter"
     type="text"
     class="form-control"

@@ -16,12 +16,15 @@ import de.tum.cit.aet.artemis.admin.dto.PrivacyStatementDTO;
 import de.tum.cit.aet.artemis.admin.service.LegalDocumentService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for retrieving the Privacy Statement.
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage(UserFeature.LEGAL_PAGES)
 @RestController
 @RequestMapping("api/core/public/")
 public class PublicPrivacyStatementResource {

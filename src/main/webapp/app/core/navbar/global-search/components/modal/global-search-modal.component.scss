@@ -36,6 +36,9 @@
 
 .keyboard-hints {
     font-size: 0.75rem;
+
+    // Medium grey (PrimeNG's muted washed out); matches the key glyphs below.
+    color: color-mix(in srgb, var(--p-text-color) 60%, transparent);
 }
 
 .key-hint-small {
@@ -44,4 +47,7 @@
     border: 1px solid var(--global-search-kbd-border);
     border-radius: 0.25rem;
     font-size: 0.75rem;
+
+    // Key glyphs (arrows / ESC / Enter) at a medium grey: clear but not vibrant, identical across footer + nav hints.
+    color: color-mix(in srgb, var(--p-text-color) 60%, transparent);
 }

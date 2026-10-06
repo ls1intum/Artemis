@@ -19,10 +19,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
     template: '',
 })
 class StubModelingEditorComponent {
+    tile = input(false);
     umlModel = input<UMLModel>();
     diagramType = input<UMLDiagramType>();
+    problemStatement = input<string>();
     readOnly = input(false);
     withExplanation = input(false);
+    savedStatus = input<{ isChanged?: boolean; isSaving?: boolean }>();
     explanation = model<string>('');
 
     getCurrentModel(): UMLModel {
@@ -160,11 +163,12 @@ describe('ModelingExamSubmissionComponent', () => {
             expect(modelingEditor).not.toBeNull();
             const umlModel = modelingEditor.componentInstance.umlModel();
             expect(umlModel).toBeDefined();
-            expect(umlModel.version).toBe('4.0.0');
+            expect(umlModel.version).toMatch(/^4\.\d+\.\d+$/);
             expect(umlModel.type).toBe('ClassDiagram');
             expect(modelingEditor.componentInstance.withExplanation()).toBe(true);
             expect(modelingEditor.componentInstance.explanation()).toEqual(mockSubmission.explanationText);
             expect(modelingEditor.componentInstance.diagramType()).toEqual(UMLDiagramType.ClassDiagram);
+            expect(modelingEditor.componentInstance.problemStatement()).toBe(mockExercise.problemStatement);
         });
 
         it('should show problem statement if there is any', () => {
@@ -249,7 +253,7 @@ describe('ModelingExamSubmissionComponent', () => {
         });
     });
 
-    it('should update the model on submission version change', async () => {
+    it('should update the model synchronously on submission version change', () => {
         vi.spyOn(comp, 'modelingEditor').mockReturnValue({
             apollonEditor: { nextRender: Promise.resolve(), model: {} } as unknown as ApollonEditor,
         } as unknown as ModelingEditorComponent);
@@ -257,11 +261,11 @@ describe('ModelingExamSubmissionComponent', () => {
             content:
                 'Model: {"version":"3.0.0","type":"ClassDiagram","size":{"width":220,"height":420},"interactive":{"elements":{},"relationships":{}},"elements":{},"relationships":{},"assessments":{}}; Explanation: explanation',
         } as unknown as SubmissionVersion;
-        await comp.setSubmissionVersion(submissionVersion);
+        expect(comp.setSubmissionVersion(submissionVersion)).toBeUndefined();
 
         expect(comp.submissionVersion).toEqual(submissionVersion);
         expect(comp.umlModel()).toBeDefined();
-        expect(comp.umlModel()!.version).toBe('4.0.0');
+        expect(comp.umlModel()!.version).toMatch(/^4\.\d+\.\d+$/);
         expect(comp.umlModel()!.type).toBe('ClassDiagram');
         expect(comp.explanationText()).toBe('explanation');
     });

@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -21,9 +22,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
@@ -69,7 +70,7 @@ public class MavenCentralRateLimitNotificationService {
     /** Hosts used by Maven Central. Requiring one avoids misclassifying rate limits from private Maven-compatible registries. */
     private static final List<String> MAVEN_CENTRAL_HOSTS = List.of("repo.maven.apache.org", "repo1.maven.org");
 
-    static final String DOCUMENTATION_URL = "https://docs.artemis.tum.de/instructor/exercises/programming-exercise#prevent-maven-central-rate-limits-java-and-kotlin";
+    static final String DOCUMENTATION_URL = "https://docs.artemis.tum.de/instructor/exercises/programming-exercise/write-code-and-tests#prevent-maven-central-rate-limits-java-and-kotlin";
 
     private static final String NOTIFICATION_SENT_MAP = "maven-central-rate-limit-notification-sent";
 
@@ -86,7 +87,7 @@ public class MavenCentralRateLimitNotificationService {
     private final MailSendingService mailSendingService;
 
     /** Lazily resolved cluster-shared map with the last notification timestamp (epoch millis) per exercise id; {@code null} until first use. */
-    private volatile DistributedMap<Long, Long> distributedSentMap;
+    private final AtomicReference<DistributedMap<Long, Long>> distributedSentMap = new AtomicReference<>();
 
     /** Node-local fallback for deployments without a {@link DistributedDataProvider}. */
     private final ConcurrentHashMap<Long, Long> localSentMap = new ConcurrentHashMap<>();
@@ -185,22 +186,12 @@ public class MavenCentralRateLimitNotificationService {
     }
 
     private DistributedMap<Long, Long> distributedSentMap() {
-        DistributedMap<Long, Long> resolved = distributedSentMap;
-        if (resolved == null) {
-            synchronized (this) {
-                resolved = distributedSentMap;
-                if (resolved == null) {
-                    resolved = distributedDataProvider.orElseThrow().getMap(NOTIFICATION_SENT_MAP);
-                    distributedSentMap = resolved;
-                }
-            }
-        }
-        return resolved;
+        return distributedSentMap.updateAndGet(current -> current != null ? current : distributedDataProvider.orElseThrow().getMap(NOTIFICATION_SENT_MAP));
     }
 
     private void notifyInstructors(long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findWithEagerCourseAndExamById(exerciseId).orElseThrow();
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         Set<User> instructors = userRepository.getInstructors(course);
         log.info("Notifying {} instructors of course {} about Maven Central rate limiting in programming exercise {}", instructors.size(), course.getId(), exercise.getId());
         Set<Long> instructorIds = instructors.stream().map(User::getId).collect(Collectors.toSet());

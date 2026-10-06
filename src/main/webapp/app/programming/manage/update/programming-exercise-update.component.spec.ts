@@ -28,6 +28,7 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';
+import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 import {
     APP_NAME_PATTERN_FOR_SWIFT,
     MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH,
@@ -800,20 +801,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 expect(comp.programmingExercise).toBe(programmingExercise);
                 expect(courseService.find).toHaveBeenCalledWith(courseId);
 
-                // Only available for Maven
-                if (projectType === ProjectType.PLAIN_MAVEN) {
-                    // Needed to trigger setting of update template since we can't use UI components.
-                    comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
-                    comp.onStaticCodeAnalysisChanged();
-                    fixture.changeDetectorRef.detectChanges();
-
-                    expect(comp.importOptions.updateTemplate).toBe(true);
-
-                    comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
-                    comp.onStaticCodeAnalysisChanged();
-                    fixture.changeDetectorRef.detectChanges();
-                }
-
                 comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
                 comp.onStaticCodeAnalysisChanged();
                 fixture.changeDetectorRef.detectChanges();
@@ -822,14 +809,13 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     comp.programmingExercise.maxStaticCodeAnalysisPenalty = newMaxPenalty;
                 }
 
-                // Recreate build plan and template update should be automatically selected
+                // Recreating the build plans should be automatically selected
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(!scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(scaActivatedOriginal ? undefined : newMaxPenalty);
                 expect(comp.importOptions.recreateBuildPlans).toBe(true);
-                expect(comp.importOptions.updateTemplate).toBe(true);
 
                 comp.importOptions.recreateBuildPlans = !comp.importOptions.recreateBuildPlans;
-                comp.onRecreateBuildPlanOrUpdateTemplateChange();
+                comp.onRecreateBuildPlanChange();
 
                 // SCA should revert to the state of the original exercise, maxPenalty will revert to undefined
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(comp.originalStaticCodeAnalysisEnabled);
@@ -1216,12 +1202,70 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
         });
 
+        it('enables saving in the form footer when there are no invalid reasons', () => {
+            const footer = TestBed.createComponent(FormFooterComponent);
+            footer.componentRef.setInput('isCreation', true);
+            footer.componentRef.setInput('invalidReasons', []);
+            footer.detectChanges();
+
+            const saveButton = footer.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
+            expect(saveButton.getAttribute('aria-disabled')).toBe('false');
+            expect(saveButton.getAttribute('aria-describedby')).toBeNull();
+        });
+
         it('validateExercisePoints', () => {
             comp.programmingExercise.maxPoints = 10_000;
             expect(comp.getInvalidReasons()).toContainEqual({
                 translateKey: 'artemisApp.exercise.form.points.customMax',
                 translateValues: {},
             });
+        });
+
+        const gradingReason = { translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason', translateValues: {} };
+        const withInvalidGradingForm = (isTimelineValid = true) => {
+            internals(comp).exerciseGradingComponent = signal({
+                formValid: false,
+                // The grading component carries the timeline's status itself now, rather than a child lifecycle component.
+                timelineStatus: signal({ valid: isTimelineValid, empty: false, invalidItems: [] }),
+            } as unknown as ProgrammingExerciseGradingComponent).asReadonly();
+        };
+
+        // The timeline lives in the grading form and has no validator of its own, so the generic message
+        // is the only thing that can report it.
+        it('should report the generic grading reason when no grading field explains it', () => {
+            withInvalidGradingForm();
+            comp.programmingExercise.maxPoints = 100;
+            comp.programmingExercise.bonusPoints = 0;
+
+            expect(comp.getInvalidReasons()).toContainEqual(gradingReason);
+        });
+
+        it('should not add the generic grading reason on top of a grading field reason', () => {
+            withInvalidGradingForm();
+            comp.programmingExercise.maxPoints = undefined;
+            comp.programmingExercise.bonusPoints = 0;
+
+            const reasons = comp.getInvalidReasons();
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+            expect(reasons).not.toContainEqual(gradingReason);
+        });
+
+        // An invalid timeline is a separate cause that only the generic message names, so deduplicating it against
+        // a field error would hide it until that field is fixed.
+        it('should keep the generic grading reason alongside a field reason when the timeline is also invalid', () => {
+            withInvalidGradingForm(false);
+            comp.programmingExercise.maxPoints = undefined;
+            comp.programmingExercise.bonusPoints = 0;
+
+            const reasons = comp.getInvalidReasons();
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual(gradingReason);
         });
 
         it('should not require points when exercise is not included in the course score', () => {
@@ -1790,8 +1834,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(comp.programmingExercise.allowOnlineEditor).toBe(true);
         expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.JAVA);
         expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
-        // allow manual feedback requests and complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
-        expect(comp.programmingExercise.allowFeedbackRequests).toBe(false);
+        // complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
         expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBe(false);
         // name and short name should also be imported
         expect(comp.programmingExercise.title).toEqual(importedProgrammingExercise.title);
@@ -1815,7 +1858,6 @@ const getProgrammingExerciseForImport = () => {
     programmingExercise.allowOfflineIde = true;
     programmingExercise.allowOnlineEditor = true;
     programmingExercise.allowComplaintsForAutomaticAssessments = true;
-    programmingExercise.allowFeedbackRequests = true;
 
     history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');
 

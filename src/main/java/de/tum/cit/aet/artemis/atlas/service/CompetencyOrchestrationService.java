@@ -16,14 +16,16 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.metadata.EmptyUsage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -31,36 +33,40 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
+import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
+import de.tum.cit.aet.artemis.atlas.service.OrchestratorToolContextKeys.AppliedActionsBuffer;
 import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLShortlistService;
 import de.tum.cit.aet.artemis.atlas.service.util.AtlasPromptSanitizer;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
 
 /**
  * Entry point for autonomous competency management runs.
  * <p>
- * {@link #run(long)} drives a tool-calling LLM loop: the model is given the exercise as anchor
- * text and can call {@link OrchestratorToolsService}'s read tools to inspect course state and
- * the five write tools ({@code createCompetency}, {@code editCompetency},
- * {@code assignExerciseToCompetency}, {@code unassignExerciseFromCompetency},
- * {@code deleteCompetency}) to mutate it. Every successful mutation is appended to a
- * per-run applied-actions list held in the Spring AI {@code ToolContext}.
+ * {@link #run(long)} drives a tool-calling LLM loop through the shared {@link AtlasAgentDelegationService}
+ * harness: the model is given the exercise as anchor text and can call the orchestrator read/planning
+ * tools ({@link OrchestratorReadToolsService}, {@link OrchestratorPlanningToolsService}) to inspect
+ * course state and the five write tools ({@code createCompetency}, {@code editCompetency},
+ * {@code assignExerciseToCompetency}, {@code unassignExerciseFromCompetency}, {@code deleteCompetency},
+ * split across {@link CreatorToolsService} / {@link EditorToolsService} / {@link AssignerToolsService})
+ * to mutate it. Every successful mutation is appended to a per-run applied-actions list held in the
+ * Spring AI {@code ToolContext}.
  * <p>
- * Course context is injected via {@code ToolContext} (see {@link OrchestratorToolsService}) so
- * the LLM cannot forge the course id through tool arguments.
+ * Course context is injected via {@code ToolContext} (see {@link OrchestratorToolContextKeys}) so the
+ * LLM cannot forge the course id through tool arguments.
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 @Lazy
 @Service
 public class CompetencyOrchestrationService {
@@ -92,15 +98,23 @@ public class CompetencyOrchestrationService {
 
     private final ContentExtractionService contentExtractionService;
 
-    private final OrchestratorToolsService orchestratorToolsService;
+    private final OrchestratorPlanningToolsService orchestratorPlanningToolsService;
 
     private final AtlasPromptTemplateService templateService;
 
-    @Nullable
-    private final ChatClient chatClient;
+    private final AtlasAgentDelegationService delegationService;
 
-    @Nullable
-    private final ToolCallbackProvider orchestratorToolCallbackProvider;
+    private final ToolCallbackProvider terminalToolCallbackProvider;
+
+    private final ToolCallbackProvider orchestratorReadToolCallbackProvider;
+
+    private final ToolCallbackProvider orchestratorPlanningToolCallbackProvider;
+
+    private final ToolCallbackProvider creatorToolCallbackProvider;
+
+    private final ToolCallbackProvider editorToolCallbackProvider;
+
+    private final ToolCallbackProvider assignerToolCallbackProvider;
 
     private final String deploymentName;
 
@@ -118,19 +132,29 @@ public class CompetencyOrchestrationService {
 
     private final AtlasMLShortlistService shortlistService;
 
-    private volatile DistributedMap<Long, RunInfo> runMap;
+    private final AtomicReference<DistributedMap<Long, RunInfo>> runMap = new AtomicReference<>();
 
     public CompetencyOrchestrationService(ExerciseRepository exerciseRepository, ContentExtractionService contentExtractionService,
-            OrchestratorToolsService orchestratorToolsService, AtlasPromptTemplateService templateService, @Nullable ChatClient chatClient,
-            AtlasAgentToolCallbackService toolCallbackFactory, Optional<DistributedDataProvider> distributedDataProvider, AtlasOrchestratorProperties properties,
-            ContentChangeAccumulatorService contentChangeAccumulatorService, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository,
-            AtlasMLShortlistService shortlistService) {
+            OrchestratorPlanningToolsService orchestratorPlanningToolsService, AtlasPromptTemplateService templateService, AtlasAgentDelegationService delegationService,
+            @Qualifier("orchestratorTerminalToolCallbackProvider") AtlasToolSurface terminalTools,
+            @Qualifier("orchestratorReadToolCallbackProvider") AtlasToolSurface orchestratorReadToolCallbackProvider,
+            @Qualifier("orchestratorPlanningToolCallbackProvider") AtlasToolSurface orchestratorPlanningToolCallbackProvider,
+            @Qualifier("creatorToolCallbackProvider") AtlasToolSurface creatorToolCallbackProvider,
+            @Qualifier("editorToolCallbackProvider") AtlasToolSurface editorToolCallbackProvider,
+            @Qualifier("assignerToolCallbackProvider") AtlasToolSurface assignerToolCallbackProvider, Optional<DistributedDataProvider> distributedDataProvider,
+            AtlasOrchestratorProperties properties, ContentChangeAccumulatorService contentChangeAccumulatorService, LLMTokenUsageService llmTokenUsageService,
+            UserRepository userRepository, AtlasMLShortlistService shortlistService) {
         this.exerciseRepository = exerciseRepository;
         this.contentExtractionService = contentExtractionService;
-        this.orchestratorToolsService = orchestratorToolsService;
+        this.orchestratorPlanningToolsService = orchestratorPlanningToolsService;
         this.templateService = templateService;
-        this.chatClient = chatClient;
-        this.orchestratorToolCallbackProvider = toolCallbackFactory.createOrchestratorProvider();
+        this.delegationService = delegationService;
+        this.terminalToolCallbackProvider = terminalTools.provider();
+        this.orchestratorReadToolCallbackProvider = orchestratorReadToolCallbackProvider.provider();
+        this.orchestratorPlanningToolCallbackProvider = orchestratorPlanningToolCallbackProvider.provider();
+        this.creatorToolCallbackProvider = creatorToolCallbackProvider.provider();
+        this.editorToolCallbackProvider = editorToolCallbackProvider.provider();
+        this.assignerToolCallbackProvider = assignerToolCallbackProvider.provider();
         this.deploymentName = properties.model();
         this.temperature = properties.temperature();
         this.reasoningEffort = properties.reasoningEffort();
@@ -143,13 +167,13 @@ public class CompetencyOrchestrationService {
 
     /** Per-course IN_PROGRESS guard map, resolved lazily (see {@link #resolveRunMap}). */
     private DistributedMap<Long, RunInfo> runMap() {
-        DistributedMap<Long, RunInfo> resolved = runMap;
+        DistributedMap<Long, RunInfo> resolved = runMap.get();
         if (resolved == null) {
             synchronized (this) {
-                resolved = runMap;
+                resolved = runMap.get();
                 if (resolved == null) {
                     resolved = resolveRunMap();
-                    runMap = resolved;
+                    runMap.set(resolved);
                 }
             }
         }
@@ -271,7 +295,7 @@ public class CompetencyOrchestrationService {
      *         another run holds the course lock
      */
     public CompetencyOrchestrationResultDTO runBatch(long courseId, Set<Long> exerciseIds) {
-        if (chatClient == null) {
+        if (!delegationService.isOrchestratorAvailable()) {
             return CompetencyOrchestrationResultDTO.failed("Atlas chat model is not configured.", CompetencyOrchestrationResultDTO.FailureReason.NO_CHAT_CLIENT);
         }
         List<Exercise> exercises = resolveBatchExercises(courseId, exerciseIds);
@@ -332,8 +356,10 @@ public class CompetencyOrchestrationService {
                 return CompetencyOrchestrationResultDTO.noOp("No applicable exercises in batch.");
             }
             CompetencyOrchestrationResultDTO result = orchestrateBatch(exercises, courseId);
-            // claimBatchNow drained the bucket; on FAILED (nothing committed) requeue so the drained ids aren't lost.
-            if (result.status() == CompetencyOrchestrationResultDTO.Status.FAILED) {
+            // Preserve drained ids after retryable failures; budget and completion failures must not be replayed automatically.
+            if (result.status() == CompetencyOrchestrationResultDTO.Status.FAILED
+                    && result.failureReason() != CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED
+                    && result.failureReason() != CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION) {
                 contentChangeAccumulatorService.requeueAfterFailedRun(courseId, mergedExerciseIds);
             }
             return result;
@@ -387,7 +413,7 @@ public class CompetencyOrchestrationService {
             return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator only operates on course exercises.",
                     CompetencyOrchestrationResultDTO.FailureReason.UNSUPPORTED_EXERCISE);
         }
-        if (chatClient == null) {
+        if (!delegationService.isOrchestratorAvailable()) {
             log.info("Atlas orchestrator requested for exercise {} but no ChatClient is available", exercise.getId());
             return CompetencyOrchestrationResultDTO.failed("Atlas chat model is not configured.", CompetencyOrchestrationResultDTO.FailureReason.NO_CHAT_CLIENT);
         }
@@ -404,7 +430,7 @@ public class CompetencyOrchestrationService {
         try {
             ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
             List<ExerciseChange> changes = List.of(new ExerciseChange(exerciseId, extracted.title(), extracted.extractedLearningText()));
-            CompetencyIndexResponseDTO competencyIndex = orchestratorToolsService.listCompetencyIndex(courseId);
+            CompetencyIndexResponseDTO competencyIndex = orchestratorPlanningToolsService.listCompetencyIndex(courseId);
             String renderedIndex = renderCompetencyIndex(competencyIndex);
             String renderedChanges = renderExerciseChangeBatch(changes);
             String renderedShortlist = renderAtlasMLShortlist(courseId, changes);
@@ -419,11 +445,20 @@ public class CompetencyOrchestrationService {
             return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.INTERNAL_ERROR);
         }
         // Synchronized list: Spring AI's roadmap supports parallel tool calls; the orchestrator's
-        // write tools all go through OrchestratorToolsService.appendAction which only adds.
+        // write tools all go through OrchestratorToolHelpers.appendAction which only adds.
         List<AppliedActionDTO> appliedActions = Collections.synchronizedList(new ArrayList<>());
         String content;
         try {
             content = callChatClient(systemPrompt, courseId, exerciseId, appliedActions);
+        }
+        catch (AtlasToolCallBudget.LimitReachedException ex) {
+            log.warn("Atlas orchestration tool budget exhausted for exercise {}", exerciseId);
+            return toolLimitResult(appliedActions, ex.summary());
+        }
+        catch (IncompleteOrchestrationException ex) {
+            return appliedActions.isEmpty() ? CompetencyOrchestrationResultDTO.failed(ex.getMessage(), CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION)
+                    : CompetencyOrchestrationResultDTO.partial(ex.getMessage(), List.copyOf(appliedActions),
+                            CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION);
         }
         catch (Exception ex) {
             log.warn("Atlas orchestrator LLM call failed for exercise {} after applying {} action(s): {}", exerciseId, appliedActions.size(), ex.getMessage(), ex);
@@ -467,7 +502,7 @@ public class CompetencyOrchestrationService {
                 log.warn("Atlas orchestrator (batch) has no extractable exercises for course {}", courseId);
                 return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.INTERNAL_ERROR);
             }
-            CompetencyIndexResponseDTO competencyIndex = orchestratorToolsService.listCompetencyIndex(courseId);
+            CompetencyIndexResponseDTO competencyIndex = orchestratorPlanningToolsService.listCompetencyIndex(courseId);
             String renderedIndex = renderCompetencyIndex(competencyIndex);
             String renderedChanges = renderExerciseChangeBatch(changes);
             String renderedShortlist = renderAtlasMLShortlist(courseId, changes);
@@ -483,6 +518,17 @@ public class CompetencyOrchestrationService {
         try {
             // Batch cost is attributed to the course; the first exercise stands in for the per-exercise field.
             content = callChatClient(systemPrompt, courseId, exercises.getFirst().getId(), appliedActions);
+        }
+        catch (AtlasToolCallBudget.LimitReachedException ex) {
+            log.warn("Atlas orchestration tool budget exhausted for course {}", courseId);
+            requeueSkippedExercises(courseId, skipped);
+            return toolLimitResult(appliedActions, ex.summary());
+        }
+        catch (IncompleteOrchestrationException ex) {
+            requeueSkippedExercises(courseId, skipped);
+            return appliedActions.isEmpty() ? CompetencyOrchestrationResultDTO.failed(ex.getMessage(), CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION)
+                    : CompetencyOrchestrationResultDTO.partial(ex.getMessage(), List.copyOf(appliedActions),
+                            CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION);
         }
         catch (Exception ex) {
             log.warn("Atlas orchestrator (batch) LLM call failed for course {} after applying {} action(s): {}", courseId, appliedActions.size(), ex.getMessage(), ex);
@@ -505,10 +551,11 @@ public class CompetencyOrchestrationService {
 
     /**
      * Requeue exercise ids that were dropped mid-batch because their content extraction threw. Only
-     * called on the SUCCESS / PARTIAL paths, where the caller keeps the drained accumulator bucket;
-     * on FAILED the caller requeues the whole batch instead. The reservation is kept (a run did
-     * happen), so the per-course daily cap still bounds retries. Safe on PARTIAL: skipped ids never
-     * reached the prompt, so no mutation was committed for them.
+     * called on paths where the caller keeps the drained accumulator bucket, including terminal
+     * tool-budget and incomplete-orchestration failures; on other FAILED paths the caller requeues
+     * the whole batch instead. The reservation is kept (a run did happen), so the per-course daily
+     * cap still bounds retries. Safe after committed work: skipped ids never reached the prompt, so
+     * no mutation was committed for them.
      * <p>
      * The requeue is best-effort and must never throw: by the time it runs the LLM has already
      * committed its competency tool mutations. If a requeue failure escaped {@code runBatch},
@@ -533,32 +580,73 @@ public class CompetencyOrchestrationService {
     }
 
     /**
-     * Drive the Spring AI tool-calling loop. {@link #run(long)} guarantees {@link #chatClient} is
-     * non-null before we get here, so no null check is needed and no null is returned. Returns the
-     * (possibly empty) final assistant message; the orchestrator's mutations have already been
-     * appended to {@code appliedActions} via the typed buffer in the tool context.
+     * Drive the Spring AI tool-calling loop through the shared {@link AtlasAgentDelegationService}
+     * harness. {@link #run(long)} / {@link #runBatch(long, Set)} check the selected transport
+     * before dispatch. Returns the (possibly
+     * empty) final assistant message; the orchestrator's mutations have already been appended to
+     * {@code appliedActions} via the typed {@link AppliedActionsBuffer} in the tool context (passed by
+     * reference into the harness).
      * <p>
-     * The {@link ChatResponse} (rather than just its content) is captured so the round's token usage
+     * The orchestrator owns its model config: the orchestrator deployment / temperature / reasoning
+     * effort from {@link AtlasOrchestratorProperties} are applied via {@link #buildChatOptions()} and
+     * handed to the harness, which performs the call with chat memory OFF (each run is a fresh call).
+     * The {@link ChatResponse} (rather than just its content) is returned so the round's token usage
      * is persisted via {@link LLMTokenUsageService}, feeding the existing per-course LLM cost views.
-     * Tracking is best-effort: it never throws, and {@code userId} resolves to {@code null} when
-     * there is no {@code SecurityContext} (e.g. a scheduler-driven run).
+     * Tracking is best-effort: it never throws, and {@code userId} resolves to {@code null} when there
+     * is no {@code SecurityContext} (e.g. a scheduler-driven run).
      */
     private String callChatClient(String systemPrompt, long courseId, long exerciseId, List<AppliedActionDTO> appliedActions) {
         OpenAiChatOptions.Builder options = buildChatOptions();
         Map<String, Object> toolContext = new HashMap<>();
-        toolContext.put(OrchestratorToolsService.COURSE_ID_KEY, courseId);
-        toolContext.put(OrchestratorToolsService.APPLIED_ACTIONS_KEY, new OrchestratorToolsService.AppliedActionsBuffer(appliedActions));
-        var promptSpec = chatClient.prompt().system(systemPrompt).user("Plan and execute the competency-management actions required by the listed exercise change.")
-                .options(options).toolContext(toolContext);
-        if (orchestratorToolCallbackProvider != null) {
-            promptSpec = promptSpec.toolCallbacks(orchestratorToolCallbackProvider);
+        toolContext.put(OrchestratorToolContextKeys.COURSE_ID_KEY, courseId);
+        toolContext.put(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY, new AppliedActionsBuffer(appliedActions));
+        AtlasToolCallBudget budget = AtlasToolCallBudget.budgetForContext(toolContext);
+        ChatResponse chatResponse;
+        try {
+            chatResponse = delegationService.delegateOrchestratorRound(systemPrompt, "Plan and execute the competency-management actions required by the listed exercise change.",
+                    options, toolContext, orchestratorReadToolCallbackProvider, orchestratorPlanningToolCallbackProvider, creatorToolCallbackProvider, editorToolCallbackProvider,
+                    assignerToolCallbackProvider, terminalToolCallbackProvider);
         }
-        ChatResponse chatResponse = promptSpec.call().chatResponse();
+        catch (RuntimeException ex) {
+            if (budget.completion() != null) {
+                throw new IncompleteOrchestrationException("Atlas attempted further work after completion. " + budget.completion().message());
+            }
+            throw ex;
+        }
         Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
-        llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.ATLAS, ORCHESTRATION_PIPELINE_ID,
-                builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
-        String content = LLMTokenUsageService.extractResponseText(chatResponse);
-        return Objects.requireNonNullElse(content, "");
+        if (chatResponse != null) {
+            llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.ATLAS, ORCHESTRATION_PIPELINE_ID,
+                    builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
+            if (Boolean.FALSE.equals(chatResponse.getMetadata().get(AtlasResponsesChatModel.USAGE_COMPLETE_METADATA_KEY))) {
+                if (chatResponse.getMetadata().getUsage() instanceof EmptyUsage) {
+                    log.warn("Atlas orchestration usage is unavailable for course {}; no zero-cost record is stored", courseId);
+                }
+                else {
+                    log.warn("Atlas orchestration usage is incomplete for course {}; storing the reported partial usage", courseId);
+                }
+            }
+        }
+        else {
+            log.warn("Atlas orchestration usage is unavailable for course {}; no zero-cost record is stored", courseId);
+        }
+        AtlasToolCallBudget.checkResponse(chatResponse, toolContext);
+        if (chatResponse != null && chatResponse.getResult() != null) {
+            String finish = chatResponse.getResult().getMetadata().getFinishReason();
+            if (java.util.Set.of("failed", "incomplete", "cancelled", "queued", "in_progress", "missing_status").contains(finish == null ? "" : finish)) {
+                throw new IllegalStateException("Atlas Responses request did not complete: " + finish);
+            }
+        }
+        if (budget.completion() == null) {
+            throw new IncompleteOrchestrationException("Atlas returned without calling completeOrchestration; completion could not be verified.");
+        }
+        var completion = budget.completion();
+        if (!completion.verified()) {
+            if (budget.calls() >= AtlasToolCallBudget.WRAP_UP_AT) {
+                throw new AtlasToolCallBudget.LimitReachedException(completion.message());
+            }
+            throw new IncompleteOrchestrationException(completion.message());
+        }
+        return completion.message();
     }
 
     /** GPT-5 reasoning models reject explicit temperature alongside reasoningEffort, so we omit one when the other is set. */
@@ -571,6 +659,19 @@ public class CompetencyOrchestrationService {
             builder.temperature(temperature);
         }
         return builder;
+    }
+
+    private static final class IncompleteOrchestrationException extends RuntimeException {
+
+        private IncompleteOrchestrationException(String message) {
+            super(message);
+        }
+    }
+
+    /** Keeps committed actions and identifies budget exhaustion as a terminal failure. */
+    private static CompetencyOrchestrationResultDTO toolLimitResult(List<AppliedActionDTO> actions, String message) {
+        return actions.isEmpty() ? CompetencyOrchestrationResultDTO.failed(message, CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED)
+                : CompetencyOrchestrationResultDTO.partial(message, List.copyOf(actions), CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED);
     }
 
     private static String renderExerciseChangeBatch(List<ExerciseChange> changes) {

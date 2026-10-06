@@ -1,6 +1,11 @@
 @if (eventCount()) {
-    <button class="btn btn-md btn-info" (click)="openDialog($event)">
+    <button type="button" tumAetUiButton severity="info" (click)="openDialog($event)">
         <fa-icon [icon]="faBullhorn" />
         <span>({{ eventCount() }})</span>
     </button>
 }
+<tumaet-ui-dialog [(visible)]="dialogVisible" [header]="'artemisApp.exam.events.title' | artemisTranslate" size="medium">
+    @if (dialogVisible()) {
+        <jhi-exam-live-events-overlay [examStartDate]="examStartDate()" (closed)="dialogVisible.set(false)" />
+    }
+</tumaet-ui-dialog>

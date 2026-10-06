@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.dto.UserCourseRoleDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 @Profile(PROFILE_CORE)
@@ -45,13 +47,30 @@ public interface UserCourseRoleRepository extends ArtemisJpaRepository<UserCours
     @Query("SELECT DISTINCT ucr.user FROM UserCourseRole ucr WHERE ucr.course.id = :courseId AND ucr.role IN :roles AND ucr.user.deleted = FALSE")
     Set<User> findUsersByCourse_IdAndRoleIn(@Param("courseId") Long courseId, @Param("roles") Collection<CourseRole> roles);
 
+    /**
+     * Returns every course role of the given user together with the minimal course information needed to display it, in a
+     * single query and without hydrating {@link UserCourseRole} or course entities. A user holding several roles in one
+     * course yields one row per role.
+     *
+     * @param userId the id of the user
+     * @return the course roles of the user, ordered by course id; the client sorts them for display
+     *         order)
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.UserCourseRoleDTO(c.id, c.title, c.shortName, c.semester, ucr.role)
+            FROM UserCourseRole ucr
+                JOIN ucr.course c
+            WHERE ucr.user.id = :userId
+            ORDER BY c.id ASC
+            """)
+    List<UserCourseRoleDTO> findCourseRoleDTOsByUser_Id(@Param("userId") Long userId);
+
     @Query("SELECT EXISTS (FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role = :role)")
     boolean existsByUser_IdAndCourse_IdAndRole(@Param("userId") Long userId, @Param("courseId") Long courseId, @Param("role") CourseRole role);
 
     /**
      * Batch variant of {@link #existsByUser_IdAndCourse_IdAndRole}: returns which of the given users already hold the
-     * role in the course in a single query, so bulk enrollment can skip the already-enrolled subset without one
-     * existence check per user.
+     * role in the course in a single query, without one existence check per user.
      *
      * @param courseId the id of the course
      * @param role     the role to check for

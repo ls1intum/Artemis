@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.iris.service;
 
+import static de.tum.cit.aet.artemis.iris.web.IrisWebsocketTopics.COMPETENCY_GENERATION;
+
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
@@ -8,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
@@ -35,6 +39,8 @@ public class IrisCompetencyGenerationService {
 
     private final PyrisPipelineService pyrisPipelineService;
 
+    private final UserAiPreferenceService userAiPreferenceService;
+
     private final LLMTokenUsageService llmTokenUsageService;
 
     private final CourseRepository courseRepository;
@@ -48,8 +54,10 @@ public class IrisCompetencyGenerationService {
     private final IrisSettingsService irisSettingsService;
 
     public IrisCompetencyGenerationService(PyrisPipelineService pyrisPipelineService, LLMTokenUsageService llmTokenUsageService, CourseRepository courseRepository,
-            IrisWebsocketService websocketService, PyrisJobService pyrisJobService, UserRepository userRepository, IrisSettingsService irisSettingsService) {
+            IrisWebsocketService websocketService, PyrisJobService pyrisJobService, UserRepository userRepository, IrisSettingsService irisSettingsService,
+            UserAiPreferenceService userAiPreferenceService) {
         this.pyrisPipelineService = pyrisPipelineService;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.courseRepository = courseRepository;
         this.websocketService = websocketService;
@@ -66,7 +74,7 @@ public class IrisCompetencyGenerationService {
      * @param courseDescription   the description of the course
      * @param currentCompetencies the current competencies of the course (to avoid re-extraction)
      */
-    public void executeCompetencyExtractionPipeline(User user, Course course, String courseDescription, PyrisCompetencyRecommendationDTO[] currentCompetencies) {
+    public void executeCompetencyExtractionPipeline(User user, Course course, String courseDescription, List<PyrisCompetencyRecommendationDTO> currentCompetencies) {
         var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled()) {
             throw new ConflictException("Competency extraction is disabled for this course", "Iris", "irisDisabled");
@@ -75,13 +83,13 @@ public class IrisCompetencyGenerationService {
         // @formatter:off
         pyrisPipelineService.executePipeline(
                 "competency-extraction",
-                user.getSelectedLLMUsage(),
+                userAiPreferenceService.findDecision(user.getId()),
                 settings.variant().jsonValue(),
                 settings.supportLevel().jsonValue(),
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user.getId())),
-                executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, currentCompetencies, CompetencyTaxonomy.values(), 5),
-                (runId, runState, error) -> websocketService.send(user.getLogin(), websocketTopic(course.getId()),
+                executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, currentCompetencies, List.of(CompetencyTaxonomy.values()), 5),
+                (runId, runState, error) -> websocketService.send(user.getLogin(), COMPETENCY_GENERATION.at(course.getId()),
                         new IrisCompetencyGenerationStatusDTO(runState, error, null))
         );
         // @formatter:on
@@ -101,13 +109,9 @@ public class IrisCompetencyGenerationService {
         }
 
         var user = userRepository.findById(job.userId()).orElseThrow();
-        websocketService.send(user.getLogin(), websocketTopic(job.courseId()), IrisCompetencyGenerationStatusDTO.of(statusUpdate));
+        websocketService.send(user.getLogin(), COMPETENCY_GENERATION.at(job.courseId()), IrisCompetencyGenerationStatusDTO.of(statusUpdate));
 
         return job;
-    }
-
-    private static String websocketTopic(long courseId) {
-        return "competencies/" + courseId;
     }
 
 }

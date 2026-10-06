@@ -23,7 +23,7 @@ class ResizeObserverMock {
 
 @Component({
     template: `
-        <jhi-resizable-panels [useViewportWidthForCollapse]="useViewportWidthForCollapse" [storageKey]="storageKey">
+        <jhi-resizable-panels [useViewportWidthForCollapse]="useViewportWidthForCollapse" [storageKey]="storageKey" [flushLeftPanel]="flushLeftPanel">
             <ng-template jhiPanel [label]="'left'" [icon]="faAlignLeft"><div id="left-marker">Left Content</div></ng-template>
             <ng-template jhiPanel [label]="'right'">Right Content</ng-template>
             <ng-template jhiPanel [label]="'iris'" [icon]="faComment" [startsCollapsed]="irisStartsCollapsed">Iris Content</ng-template>
@@ -36,6 +36,7 @@ class ResizablePanelsTestComponent {
     protected readonly faComment = faComment;
     irisStartsCollapsed = false;
     useViewportWidthForCollapse = false;
+    flushLeftPanel = false;
     storageKey: string | undefined = undefined;
 }
 
@@ -101,6 +102,16 @@ describe('ResizablePanelsComponent', () => {
         expect(component.isNarrow()).toBe(false);
         expect(component.isRightPanelCollapsed()).toBe(false);
         expect(fixture.nativeElement.querySelector('p-splitter')).not.toBeNull();
+    });
+
+    it('should remove only the primary panel gutter in full-bleed mode', () => {
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.flushLeftPanel = true;
+        fixture.detectChanges();
+
+        const panelBodies = fixture.nativeElement.querySelectorAll('.p-splitterpanel .overflow-y-auto');
+        expect(panelBodies[0].classList.contains('p-2')).toBe(false);
+        expect(panelBodies[1].classList.contains('p-2')).toBe(true);
     });
 
     it('should keep the splitter mounted but show the icon rail when the right panel is collapsed', () => {

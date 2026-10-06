@@ -14,9 +14,11 @@ import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.factories.CourseFactory;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.course.service.CourseValidator;
 
 /**
  * API for course functionality that other modules need to access.
@@ -62,26 +64,46 @@ public class CourseApi extends AbstractCourseApi {
         ZonedDateTime now = ZonedDateTime.now();
         Course course = CourseFactory.generateCourse(DEMO_COURSE_TITLE, DEMO_COURSE_SHORT_NAME, now.minusMonths(1), now.plusMonths(11), new HashSet<>(), 3, 3, 7, 2000, 2000, true,
                 true, 7);
+        course.setSemester(semesterOf(course.getStartDate()));
         course.setDescription("Demo course seeded on startup by the 'demo' profile. Feel free to modify it, it is only recreated once it no longer exists.");
 
-        // Mirrors CourseCreateDTO.toCourse(): the retention configuration is attached on creation and defaults to grade-relevant.
+        // Mirrors CourseCreateDTO.toCourse(): Athena starts disabled, and the retention configuration is attached on creation and defaults to grade-relevant.
+        course.setAthenaConfig(new CourseAthenaConfig());
         CourseConfiguration configuration = new CourseConfiguration();
         configuration.setGradeRelevant(true);
         configuration.setCourse(course);
         course.setCourseConfiguration(configuration);
 
-        course.validateShortName();
-        course.validateEnrollmentConfirmationMessage();
-        course.validateComplaintsAndRequestMoreFeedbackConfig();
-        course.validateOnlineCourseAndEnrollmentEnabled();
-        course.validateAccuracyOfScores();
-        course.validatePointBounds();
-        course.validateStartAndEndDate();
+        // Mirrors AdminCourseResource#createCourse.
+        CourseValidator.validateShortName(course);
+        CourseValidator.validateEnrollmentConfirmationMessage(course);
+        CourseValidator.validateComplaintsAndRequestMoreFeedbackConfig(course);
+        CourseValidator.validateOnlineCourseAndEnrollmentEnabled(course);
+        CourseValidator.validateAccuracyOfScores(course);
+        CourseValidator.validatePointBounds(course);
+        CourseValidator.validateStartAndEndDate(course);
+        CourseValidator.validateSemester(course);
+        CourseValidator.validateTimeZone(course.getTimeZone());
 
         Course createdCourse = courseRepository.save(course);
         channelService.createDefaultChannels(createdCourse);
 
         log.info("Created demo course '{}' with id {}", DEMO_COURSE_SHORT_NAME, createdCourse.getId());
         return createdCourse;
+    }
+
+    /**
+     * Formats the semester the given date falls into the way the client expects it: summer semesters (April to September) as {@code SS26}, winter semesters as {@code WS26/27}.
+     *
+     * @param date the date to derive the semester from.
+     * @return the semester of the date.
+     */
+    private static String semesterOf(ZonedDateTime date) {
+        int month = date.getMonthValue();
+        if (month >= 4 && month <= 9) {
+            return "SS%02d".formatted(date.getYear() % 100);
+        }
+        int winterStartYear = month <= 3 ? date.getYear() - 1 : date.getYear();
+        return "WS%02d/%02d".formatted(winterStartYear % 100, (winterStartYear + 1) % 100);
     }
 }

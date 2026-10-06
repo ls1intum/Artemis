@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 
@@ -35,4 +36,21 @@ public interface CourseConfigurationRepository extends ArtemisJpaRepository<Cour
             WHERE configuration.course.id = :courseId
             """)
     Optional<CourseConfiguration> findByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Lightweight projection of a course's auto-orchestration configuration (kill switch plus the nullable debounce /
+     * daily-cap overrides), read on the Atlas accumulator hot path without loading the full entity. Returns empty when the
+     * course has no configuration row, in which case callers fall back to the global defaults and treat the pipeline as
+     * disabled.
+     *
+     * @param courseId the course to resolve the configuration for
+     * @return the projected configuration, or empty when the course has no configuration row
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO(
+                configuration.autoOrchestratorEnabled, configuration.debounceWindowSecondsOverride, configuration.maxDailyOrchestrationOverride)
+            FROM CourseConfiguration configuration
+            WHERE configuration.course.id = :courseId
+            """)
+    Optional<CourseAutoOrchestrationConfigDTO> findAutoOrchestrationConfigByCourseId(@Param("courseId") long courseId);
 }

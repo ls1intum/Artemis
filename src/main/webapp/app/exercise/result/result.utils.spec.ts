@@ -8,7 +8,10 @@ import {
     getResultIconClass,
     getTextColorClass,
     getUnreferencedFeedback,
+    isBuildFailedAndResultIsAutomatic,
     isOnlyCompilationTested,
+    isStudentParticipation,
+    resultIsPreliminary,
 } from 'app/exercise/result/result.utils';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
@@ -363,6 +366,67 @@ describe('ResultUtils', () => {
             },
         ])('should correctly determine result icon', ({ result, participation, templateStatus, expected }) => {
             expect(getResultIconClass(result, participation, templateStatus!)).toBe(expected);
+        });
+    });
+
+    describe('styling for participations that carry no exercise', () => {
+        // The team-assignment websocket payload sends participations without their exercise, so the badge helpers must
+        // use the exercise the caller passes in (regression guard).
+        const participationWithoutExercise = { id: 42, type: ParticipationType.PROGRAMMING } as Participation;
+        const automaticResult = { id: 7, score: 50, assessmentType: AssessmentType.AUTOMATIC, completionDate: dayjs().subtract(1, 'minute') } as Result;
+        const manuallyAssessedExercise = { id: 3, type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.SEMI_AUTOMATIC } as Exercise;
+
+        it('resultIsPreliminary uses the explicit exercise', () => {
+            expect(resultIsPreliminary(automaticResult, participationWithoutExercise)).toBe(false);
+            expect(resultIsPreliminary(automaticResult, participationWithoutExercise, manuallyAssessedExercise)).toBe(true);
+        });
+
+        it('getResultIconClass marks a preliminary result with the explicit exercise', () => {
+            expect(getResultIconClass(automaticResult, participationWithoutExercise, ResultTemplateStatus.HAS_RESULT, manuallyAssessedExercise)).toBe(faQuestionCircle);
+        });
+
+        it('isOnlyCompilationTested uses the explicit exercise', () => {
+            expect(isOnlyCompilationTested(automaticResult, participationWithoutExercise, ResultTemplateStatus.HAS_RESULT)).toBe(false);
+            expect(isOnlyCompilationTested(automaticResult, participationWithoutExercise, ResultTemplateStatus.HAS_RESULT, manuallyAssessedExercise)).toBe(true);
+        });
+    });
+
+    describe('results without a participation', () => {
+        const automaticResult = { id: 1, score: 80, assessmentType: AssessmentType.AUTOMATIC } as Result;
+
+        it('isBuildFailedAndResultIsAutomatic does not throw and reports no build failure', () => {
+            expect(isBuildFailedAndResultIsAutomatic(automaticResult, undefined)).toBe(false);
+            expect(isBuildFailedAndResultIsAutomatic(undefined, undefined)).toBe(false);
+        });
+
+        it('isBuildFailedAndResultIsAutomatic still uses the result’s own submission when there is no participation', () => {
+            const failedBuild = {
+                assessmentType: AssessmentType.AUTOMATIC,
+                submission: { submissionExerciseType: SubmissionExerciseType.PROGRAMMING, buildFailed: true },
+            } as Result;
+            expect(isBuildFailedAndResultIsAutomatic(failedBuild, undefined)).toBe(true);
+        });
+
+        it('isStudentParticipation reports false for an absent participation', () => {
+            expect(isStudentParticipation(undefined)).toBe(false);
+        });
+
+        it('isOnlyCompilationTested reports false for an absent participation', () => {
+            expect(isOnlyCompilationTested(automaticResult, undefined, ResultTemplateStatus.HAS_RESULT)).toBe(false);
+        });
+
+        it('resultIsPreliminary reports false for an absent participation', () => {
+            expect(resultIsPreliminary(automaticResult, undefined)).toBe(false);
+        });
+
+        it('getTextColorClass grades the result without a participation', () => {
+            expect(getTextColorClass(automaticResult, undefined, ResultTemplateStatus.HAS_RESULT)).toBe('text-state-success');
+            expect(getTextColorClass(undefined, undefined, ResultTemplateStatus.HAS_RESULT)).toBe('text-muted-color');
+        });
+
+        it('getResultIconClass grades the result without a participation', () => {
+            expect(getResultIconClass(automaticResult, undefined, ResultTemplateStatus.HAS_RESULT)).toBe(faCheckCircle);
+            expect(getResultIconClass(undefined, undefined, ResultTemplateStatus.HAS_RESULT)).toBe(faQuestionCircle);
         });
     });
 

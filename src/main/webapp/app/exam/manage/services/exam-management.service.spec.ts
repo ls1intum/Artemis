@@ -14,6 +14,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
 import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -122,7 +123,9 @@ describe('Exam Management Service Tests', () => {
     it('should import an exercise group', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockExerciseGroup = [{ id: 2 } as ExerciseGroup];
+        const mockExerciseGroup = [
+            { id: 2, title: 'Group', isMandatory: false, exercises: [{ id: 3, type: ExerciseType.TEXT, title: 'Text', maxPoints: 5, bonusPoints: 1 }] } as ExerciseGroup,
+        ];
         const importId = 'import-2';
 
         // WHEN: the response carries the full ExerciseGroupImportResultDTO
@@ -132,7 +135,10 @@ describe('Exam Management Service Tests', () => {
         const req = httpMock.expectOne(
             (request) => request.method === 'POST' && request.url === `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/import-exercise-group`,
         );
-        expect(req.request.body).toEqual(mockExerciseGroup);
+        // The body is the slim import DTO shape (source id + type + overrides), not the loaded exercise group
+        expect(req.request.body).toEqual([
+            { title: 'Group', isMandatory: false, exercises: [{ id: 3, exerciseType: ExerciseType.TEXT, title: 'Text', maxPoints: 5, bonusPoints: 1 }] },
+        ]);
         expect(req.request.params.get('importId')).toBe(importId);
 
         // CLEANUP

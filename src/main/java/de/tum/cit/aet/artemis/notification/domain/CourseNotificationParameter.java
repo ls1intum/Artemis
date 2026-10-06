@@ -14,6 +14,8 @@ import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.Parent;
+
 /**
  * Entity class for Course Notification Parameters.
  */
@@ -26,6 +28,7 @@ public class CourseNotificationParameter implements Serializable {
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_notification_id", nullable = false)
+    @Parent
     private CourseNotification courseNotification;
 
     @Id

@@ -32,7 +32,7 @@ describe('Component Tests', () => {
                     FormBuilder,
                     {
                         provide: ActivatedRoute,
-                        useValue: new MockActivatedRoute({ key: 'XYZPDQ' }),
+                        useValue: new MockActivatedRoute({ keyId: 'XYZPDQ', keySecret: 'XYZSecret' }),
                     },
                     LocalStorageService,
                     SessionStorageService,
@@ -99,7 +99,8 @@ describe('Component Tests', () => {
 
         it('should define its initial state', () => {
             expect(comp.initialized()).toBe(true);
-            expect(comp.resetKey()).toBe('XYZPDQ');
+            expect(comp.resetKeyId()).toBe('XYZPDQ');
+            expect(comp.resetKeySecret()).toBe('XYZSecret');
         });
 
         it('sets focus after the view has been initialized', () => {
@@ -134,7 +135,11 @@ describe('Component Tests', () => {
 
             await comp.finishReset();
 
-            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'password', { passkeys: true, sshKeys: true, vcsAccessTokens: true });
+            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'XYZSecret', 'password', {
+                passkeys: true,
+                sshKeys: true,
+                vcsAccessTokens: true,
+            });
             expect(comp.success()).toBe(true);
         });
 
@@ -156,11 +161,38 @@ describe('Component Tests', () => {
 
             await comp.finishReset();
 
-            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'password', {
+            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'XYZSecret', 'password', {
                 passkeys: true,
                 sshKeys: false,
                 vcsAccessTokens: false,
             });
+            expect(comp.success()).toBe(true);
+        });
+
+        it.each(['ä'.repeat(37), '€'.repeat(25), '😀'.repeat(19), 'ä'.repeat(36) + 'a'])(
+            'should reject a password exceeding 72 UTF-8 bytes without submitting it: %s',
+            async (password) => {
+                const finishSpy = vi.spyOn(passwordResetFinishService, 'completePasswordReset').mockReturnValue(of({}));
+                const confirmSpy = vi.spyOn(TestBed.inject(CredentialRevocationConfirmationService), 'confirm');
+                comp.passwordForm.setValue({ newPassword: password, confirmPassword: password });
+
+                expect(comp.passwordForm.invalid).toBe(true);
+                expect(comp.passwordForm.controls.newPassword.hasError('maxbytes')).toBe(true);
+                await comp.finishReset();
+
+                expect(confirmSpy).not.toHaveBeenCalled();
+                expect(finishSpy).not.toHaveBeenCalled();
+                expect(comp.error()).toBe(false);
+            },
+        );
+
+        it.each(['ä'.repeat(36), '€'.repeat(24), '😀'.repeat(18), 'a'.repeat(50)])('should accept a password within the byte limit: %s', async (password) => {
+            vi.spyOn(passwordResetFinishService, 'completePasswordReset').mockReturnValue(of({}));
+            comp.passwordForm.setValue({ newPassword: password, confirmPassword: password });
+
+            expect(comp.passwordForm.valid).toBe(true);
+            await comp.finishReset();
+
             expect(comp.success()).toBe(true);
         });
 
@@ -173,7 +205,11 @@ describe('Component Tests', () => {
 
             await comp.finishReset();
 
-            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'password', { passkeys: true, sshKeys: true, vcsAccessTokens: true });
+            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'XYZSecret', 'password', {
+                passkeys: true,
+                sshKeys: true,
+                vcsAccessTokens: true,
+            });
             expect(comp.success()).toBe(false);
             expect(comp.error()).toBe(true);
         });

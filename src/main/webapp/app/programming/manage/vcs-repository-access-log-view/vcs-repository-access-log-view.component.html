@@ -21,7 +21,9 @@
                     <tr class="w-25">
                         <td class="p-2">{{ i }}</td>
                         <td class="p-2">{{ entry.userId }}</td>
-                        <td class="p-2">{{ entry.name + ', ' + entry.email }}</td>
+                        <!-- A build agent access has no person behind it and therefore no email, so the name stands alone rather than being
+                             concatenated with an undefined -->
+                        <td class="p-2">{{ entry.email ? entry.name + ', ' + entry.email : entry.name }}</td>
                         <td class="p-2">{{ entry.repositoryActionType }}</td>
                         <td class="p-2">{{ entry.authenticationMechanism }}</td>
                         <td class="p-2">{{ entry.commitHash }}</td>

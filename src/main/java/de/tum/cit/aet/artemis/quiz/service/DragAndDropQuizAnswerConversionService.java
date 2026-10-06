@@ -11,7 +11,6 @@ import java.awt.Shape;
 import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -28,8 +27,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropSubmittedAnswer;
@@ -57,8 +55,10 @@ public class DragAndDropQuizAnswerConversionService {
     public void convertDragAndDropQuizAnswerAndStoreAsPdf(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Path outputDir, boolean showResult) throws IOException {
         DragAndDropQuestion question = (DragAndDropQuestion) dragAndDropSubmittedAnswer.getQuizQuestion();
         String backgroundFilePath = question.getBackgroundFilePath();
-        BufferedImage backgroundImage = ImageIO
-                .read(FilePathConverter.fileSystemPathForExternalUri(URI.create(backgroundFilePath), FilePathType.DRAG_AND_DROP_BACKGROUND).toFile());
+        if (backgroundFilePath == null) {
+            throw new IOException("The drag and drop question " + question.getId() + " has no background image");
+        }
+        BufferedImage backgroundImage = ImageIO.read(new FileSystemLocation.DragAndDropBackground(backgroundFilePath).path().toFile());
 
         generateDragAndDropSubmittedAnswerImage(backgroundImage, dragAndDropSubmittedAnswer, showResult);
         Path dndSubmissionPathPdf = outputDir.resolve(
@@ -67,18 +67,23 @@ public class DragAndDropQuizAnswerConversionService {
     }
 
     private void storeSubmissionAsPdf(BufferedImage backgroundImage, Path dndSubmissionPathPdf) throws IOException {
-        PDDocument doc = new PDDocument();
-        // creates a page in landscape mode, makes the image fit better
-        PDPage page = new PDPage(new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth()));
-        doc.addPage(page);
-        PDPageContentStream contentStream = new PDPageContentStream(doc, page, PDPageContentStream.AppendMode.OVERWRITE, false);
-        Dimension scaledDim = getScaledDimension(new Dimension(backgroundImage.getWidth(), backgroundImage.getHeight()),
-                new Dimension((int) page.getMediaBox().getWidth(), (int) page.getMediaBox().getHeight()));
-        PDImageXObject imageForPdf = LosslessFactory.createFromImage(doc, backgroundImage);
-        contentStream.drawImage(imageForPdf, PDRectangle.A4.getLowerLeftX(), PDRectangle.A4.getLowerLeftY(), scaledDim.width, scaledDim.height);
-        contentStream.close();
-        doc.save(dndSubmissionPathPdf.toFile());
-        doc.close();
+        // Both resources were previously closed only on the happy path, so a failure in createFromImage, drawImage or
+        // save leaked them. A PDDocument holds the whole rendered page in memory, and this runs once per drag and drop
+        // submission when a course is exported.
+        try (PDDocument doc = new PDDocument()) {
+            // creates a page in landscape mode, makes the image fit better
+            PDPage page = new PDPage(new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth()));
+            doc.addPage(page);
+            // The content stream is closed before the document is saved, because PDFBox only writes the page content
+            // when the stream is closed.
+            try (PDPageContentStream contentStream = new PDPageContentStream(doc, page, PDPageContentStream.AppendMode.OVERWRITE, false)) {
+                Dimension scaledDim = getScaledDimension(new Dimension(backgroundImage.getWidth(), backgroundImage.getHeight()),
+                        new Dimension((int) page.getMediaBox().getWidth(), (int) page.getMediaBox().getHeight()));
+                PDImageXObject imageForPdf = LosslessFactory.createFromImage(doc, backgroundImage);
+                contentStream.drawImage(imageForPdf, PDRectangle.A4.getLowerLeftX(), PDRectangle.A4.getLowerLeftY(), scaledDim.width, scaledDim.height);
+            }
+            doc.save(dndSubmissionPathPdf.toFile());
+        }
     }
 
     private void generateDragAndDropSubmittedAnswerImage(BufferedImage backgroundImage, DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, boolean showResult)
@@ -113,11 +118,12 @@ public class DragAndDropQuizAnswerConversionService {
         Set<DragAndDropMapping> mappings = dragAndDropSubmittedAnswer.getMappings();
         for (var mapping : mappings) {
             if (dropLocation.equals(mapping.getDropLocation())) {
-                if (mapping.getDragItem().getPictureFilePath() == null) {
+                String pictureFilePath = mapping.getDragItem().getPictureFilePath();
+                if (pictureFilePath == null) {
                     drawTextDragItem(graphics, dropLocationCoordinates, dropLocationMidY, mapping);
                 }
                 else {
-                    drawPictureDragItem(graphics, dropLocationCoordinates, mapping);
+                    drawPictureDragItem(graphics, dropLocationCoordinates, pictureFilePath);
                 }
                 // if the drop location is invalid, we already marked the spot as invalid, no need to mark it twice
                 if (mapping.getDragItem().isInvalid() && !mapping.getDropLocation().isInvalid()) {
@@ -132,9 +138,8 @@ public class DragAndDropQuizAnswerConversionService {
         graphics.drawString(mapping.getDragItem().getText(), dropLocationCoordinates.x + 5, dropLocationMidY);
     }
 
-    private void drawPictureDragItem(Graphics2D graphics, DropLocationCoordinates dropLocationCoordinates, DragAndDropMapping mapping) throws IOException {
-        BufferedImage dragItem = ImageIO
-                .read(FilePathConverter.fileSystemPathForExternalUri(URI.create(mapping.getDragItem().getPictureFilePath()), FilePathType.DRAG_ITEM).toFile());
+    private void drawPictureDragItem(Graphics2D graphics, DropLocationCoordinates dropLocationCoordinates, String pictureFilePath) throws IOException {
+        BufferedImage dragItem = ImageIO.read(new FileSystemLocation.DragItem(pictureFilePath).path().toFile());
         Dimension scaledDimForDragItem = getScaledDimension(new Dimension(dragItem.getWidth(), dragItem.getHeight()),
                 new Dimension(dropLocationCoordinates.width, dropLocationCoordinates.height));
         graphics.drawImage(dragItem, dropLocationCoordinates.x, dropLocationCoordinates.y, (int) scaledDimForDragItem.getWidth(), (int) scaledDimForDragItem.getHeight(), null);
@@ -193,10 +198,10 @@ public class DragAndDropQuizAnswerConversionService {
     private void markItemAsInvalid(Graphics2D graphics, DropLocationCoordinates dropLocationCoordinates) {
         graphics.setColor(Color.DARK_GRAY);
         // create a cross to signal that the drop location is invalid
-        Shape diagonalFromBottomToTop = new Line2D.Float(dropLocationCoordinates.x, dropLocationCoordinates.y + dropLocationCoordinates.height,
-                dropLocationCoordinates.x + dropLocationCoordinates.width, dropLocationCoordinates.y);
-        Shape diagonalFromTopToBottom = new Line2D.Float(dropLocationCoordinates.x, dropLocationCoordinates.y, dropLocationCoordinates.x + dropLocationCoordinates.width,
-                dropLocationCoordinates.y + dropLocationCoordinates.height);
+        Shape diagonalFromBottomToTop = new Line2D.Float(dropLocationCoordinates.x, (float) dropLocationCoordinates.y + dropLocationCoordinates.height,
+                (float) dropLocationCoordinates.x + dropLocationCoordinates.width, dropLocationCoordinates.y);
+        Shape diagonalFromTopToBottom = new Line2D.Float(dropLocationCoordinates.x, dropLocationCoordinates.y, (float) dropLocationCoordinates.x + dropLocationCoordinates.width,
+                (float) dropLocationCoordinates.y + dropLocationCoordinates.height);
         graphics.draw(diagonalFromBottomToTop);
         graphics.draw(diagonalFromTopToBottom);
     }

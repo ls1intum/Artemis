@@ -6,7 +6,6 @@ import static org.mockito.Mockito.verify;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +17,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
+import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayloadDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.cit.aet.artemis.notification.service.notifications.push_notifications.FirebasePushNotificationService;
 
@@ -62,7 +62,8 @@ class CourseNotificationPushServiceTest {
     }
 
     private CourseNotificationDTO createTestNotification() {
-        return new CourseNotificationDTO("testNotification", 1L, 1L, ZonedDateTime.parse("2023-01-01T12:00:00Z"), CourseNotificationCategory.COMMUNICATION, Map.of(), "/");
+        return new CourseNotificationDTO("testNotification", 1L, 1L, ZonedDateTime.parse("2023-01-01T12:00:00Z"), CourseNotificationCategory.COMMUNICATION, "Test Course", null,
+                new ExerciseOpenForPracticePayloadDTO(1L, "Test Exercise"), "/");
     }
 
     private List<CourseNotificationRecipientDTO> createTestRecipients() {

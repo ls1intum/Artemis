@@ -163,9 +163,7 @@ export class CodeButtonComponent implements OnInit {
 
         return this.participationService.getSpecificStudentParticipation(participations, this.isPractice()) ?? participations[0];
     });
-    selectedAuthenticationMechanism = signal<RepositoryAuthenticationMethod>(
-        this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state') ?? this.authenticationMechanisms()[0],
-    );
+    selectedAuthenticationMechanism = signal<RepositoryAuthenticationMethod>(RepositoryAuthenticationMethod.Token);
     useToken = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token);
     useSsh = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH);
     usePassword = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password);
@@ -218,7 +216,11 @@ export class CodeButtonComponent implements OnInit {
         });
     }
 
-    async ngOnInit() {
+    ngOnInit() {
+        void this.initializeCodeButtonComponent();
+    }
+
+    private async initializeCodeButtonComponent(): Promise<void> {
         // Populate the tooltip strings first. They only depend on window.location.origin and the loaded
         // translations, not on the awaits below. The clone popover renders (and can be opened by the user)
         // before ngOnInit's async work finishes; if the SSH-key-missing alert appears while these strings
@@ -297,7 +299,10 @@ export class CodeButtonComponent implements OnInit {
     }
 
     onClick() {
-        const storedState = this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state');
+        let storedState = this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state');
+        if (storedState === RepositoryAuthenticationMethod.Password) {
+            storedState = RepositoryAuthenticationMethod.Token;
+        }
         const selectedMechanism = storedState && this.authenticationMechanisms().includes(storedState) ? storedState : this.authenticationMechanisms()[0];
         this.selectedAuthenticationMechanism.set(selectedMechanism);
 

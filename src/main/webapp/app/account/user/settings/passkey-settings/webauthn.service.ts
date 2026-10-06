@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { captureException } from '@sentry/angular';
 import { WebauthnApiService } from 'app/account/user/settings/passkey-settings/webauthn-api.service';
 import { decodeBase64url } from 'app/foundation/util/base64.util';
@@ -19,12 +19,12 @@ import { PasskeyAbortError } from 'app/account/user/settings/passkey-settings/en
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
- * Should be aligned and a bit lower than HazelcastPublicKeyCredentialRequestOptionsRepository#AUTH_OPTIONS_TIME_TO_LIVE_SECONDS
+ * Should be aligned and a bit lower than DistributedPublicKeyCredentialRequestOptionsRepository#AUTH_OPTIONS_TIME_TO_LIVE_SECONDS
  * As the interval is 5 minutes there currently, until the challenge expires we refresh the challenge every 4m45s.
  */
 const CONDITIONAL_MEDIATION_REFRESH_INTERVAL_MS = 4 * 60 * 1000 + 45 * 1000;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class WebauthnService {
     private readonly alertService = inject(AlertService);
     private readonly accountService = inject(AccountService);

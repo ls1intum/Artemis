@@ -22,7 +22,11 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
 
     private componentRef: ComponentRef<unknown> | undefined;
 
-    async ngOnInit() {
+    ngOnInit() {
+        void this.initializeExerciseDetailDirective();
+    }
+
+    private async initializeExerciseDetailDirective(): Promise<void> {
         const shownDetail = this.detail();
         if (!this.isShownDetail(shownDetail)) {
             return;

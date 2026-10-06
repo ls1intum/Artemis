@@ -10,7 +10,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { BehaviorSubject, EMPTY, Subject } from 'rxjs';
@@ -18,13 +18,13 @@ import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/co
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/detail/exam-detail.component';
-import { MetisService } from 'app/communication/service/metis.service';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import {
@@ -44,7 +44,7 @@ examples.forEach((activeConversation) => {
     describe('ConversationHeaderComponent with' + +(activeConversation instanceof ChannelDTO ? activeConversation.subType + ' ' : '') + activeConversation.type, () => {
         let component: ConversationHeaderComponent;
         let fixture: ComponentFixture<ConversationHeaderComponent>;
-        let metisConversationService: MetisConversationService;
+        let courseConversationsService: CourseConversationsService;
         let location: Location;
         const course = { id: 1 } as any;
         const canAddUsers = vi.fn();
@@ -61,9 +61,9 @@ examples.forEach((activeConversation) => {
                     ]),
                     MockProvider(DialogService),
                     MockProvider(ConversationService),
-                    { provide: MetisService, useClass: MockMetisService },
+                    { provide: CommunicationService, useClass: MockCommunicationService },
                     { provide: TranslateService, useClass: MockTranslateService },
-                    { provide: MetisConversationService, useClass: MockMetisConversationService },
+                    { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                     LocalStorageService,
                 ],
             });
@@ -71,10 +71,10 @@ examples.forEach((activeConversation) => {
 
         beforeEach(() => {
             canAddUsers.mockReturnValue(true);
-            metisConversationService = TestBed.inject(MetisConversationService);
-            Object.defineProperty(metisConversationService, 'course', { get: () => course });
-            Object.defineProperty(metisConversationService, 'activeConversation$', { get: () => new BehaviorSubject(activeConversation).asObservable() });
-            Object.defineProperty(metisConversationService, 'forceRefresh', { value: () => EMPTY });
+            courseConversationsService = TestBed.inject(CourseConversationsService);
+            Object.defineProperty(courseConversationsService, 'course', { get: () => course });
+            Object.defineProperty(courseConversationsService, 'activeConversation$', { get: () => new BehaviorSubject(activeConversation).asObservable() });
+            Object.defineProperty(courseConversationsService, 'forceRefresh', { value: () => EMPTY });
 
             location = TestBed.inject(Location);
 

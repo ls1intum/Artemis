@@ -1,5 +1,5 @@
 import { UMLModel, importDiagram } from '@tumaet/apollon';
-import { ChangeDetectionStrategy, Component, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -20,7 +20,6 @@ import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
@@ -34,7 +33,6 @@ import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.c
         IncludedInScoreBadgeComponent,
         ExerciseSaveButtonComponent,
         ResizeableContainerComponent,
-        FullscreenComponent,
         ModelingEditorComponent,
         FaIconComponent,
         ExamExerciseUpdateHighlighterComponent,
@@ -42,10 +40,10 @@ import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.c
     ],
 })
 export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
-    exerciseType = ExerciseType.MODELING;
-
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private examParticipationService = inject(ExamParticipationService);
+
+    exerciseType = ExerciseType.MODELING;
 
     modelingEditor = viewChild.required(ModelingEditorComponent);
 
@@ -64,6 +62,10 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     readonly explanationText = signal<string>(undefined!); // current explanation text
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    protected readonly savedStatus = computed(() => ({
+        isChanged: !this.studentSubmission().isSynced,
+        isSaving: this.examParticipationService.isSubmissionSaving(this.studentSubmission()),
+    }));
 
     // Icons
     protected readonly faListAlt = faListAlt;
@@ -152,21 +154,20 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         this.explanationText.set(explanation);
     }
 
-    async setSubmissionVersion(submission: SubmissionVersion): Promise<void> {
+    setSubmissionVersion(submission: SubmissionVersion): void {
         this.submissionVersion = submission;
-        await this.updateViewFromSubmissionVersion();
+        this.updateViewFromSubmissionVersion();
     }
 
     /**
      * Updates the model and explanation text with the latest submission version.
      * It extracts the model and explanation text from the submission version and updates the view.
      */
-    private async updateViewFromSubmissionVersion() {
+    private updateViewFromSubmissionVersion(): void {
         if (this.submissionVersion?.content) {
             // we need these string operations because we store the string in the database as concatenation of Model: <model>; Explanation: <explanation>
             // and need to remove the content that was added before the string is saved to the db to get valid JSON
             let model = this.submissionVersion.content.substring(0, this.submissionVersion.content.indexOf('; Explanation:'));
-            // if we do not wait here for apollon, the redux store might be undefined
             model = model.replace('Model: ', '');
             // updates the Apollon editor model state (view) with the latest modeling submission
             this.umlModel.set(importDiagram(parseJson(model)));

@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
@@ -43,16 +45,18 @@ import de.tum.cit.aet.artemis.assessment.repository.AssessmentNoteRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.GradingInstructionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.NameSimilarity;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
@@ -61,6 +65,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -78,6 +83,7 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -102,6 +108,8 @@ public class ResultService {
 
     private final FeedbackRepository feedbackRepository;
 
+    private final GradingInstructionRepository gradingInstructionRepository;
+
     private final ComplaintRepository complaintRepository;
 
     private final ParticipantScoreRepository participantScoreRepository;
@@ -113,6 +121,12 @@ public class ResultService {
     private final Optional<StudentExamApi> studentExamApi;
 
     private final LongFeedbackTextRepository longFeedbackTextRepository;
+
+    private final TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    private final ScaFeedbackRepository scaFeedbackRepository;
+
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
     private final BuildJobRepository buildJobRepository;
 
@@ -139,7 +153,9 @@ public class ResultService {
             Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService,
             StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService,
-            Optional<ParticipantScoreScheduleService> participantScoreScheduleService) {
+            Optional<ParticipantScoreScheduleService> participantScoreScheduleService, TestCaseFeedbackRepository testCaseFeedbackRepository,
+            ScaFeedbackRepository scaFeedbackRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService,
+            GradingInstructionRepository gradingInstructionRepository) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.assessmentNoteRepository = assessmentNoteRepository;
@@ -148,6 +164,7 @@ public class ResultService {
         this.complaintResponseRepository = complaintResponseRepository;
         this.ratingRepository = ratingRepository;
         this.feedbackRepository = feedbackRepository;
+        this.gradingInstructionRepository = gradingInstructionRepository;
         this.longFeedbackTextRepository = longFeedbackTextRepository;
         this.complaintRepository = complaintRepository;
         this.participantScoreRepository = participantScoreRepository;
@@ -161,6 +178,9 @@ public class ResultService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionFilterService = submissionFilterService;
         this.participantScoreScheduleService = participantScoreScheduleService;
+        this.testCaseFeedbackRepository = testCaseFeedbackRepository;
+        this.scaFeedbackRepository = scaFeedbackRepository;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -171,6 +191,7 @@ public class ResultService {
      * @return updated result with eagerly loaded Submission and Feedback items.
      */
     public Result createNewManualResult(Result result, boolean ratedResult) {
+        validateGradingInstructions(result.getFeedbacks(), result.getExerciseId());
         User user = userRepository.getUserWithAuthorities();
 
         result.setAssessmentType(AssessmentType.MANUAL);
@@ -201,6 +222,21 @@ public class ResultService {
 
     public void createNewRatedManualResult(Result result) {
         createNewManualResult(result, true);
+    }
+
+    /**
+     * Rejects feedback referencing missing instructions or instructions from another exercise. Ownership is checked
+     * against the database, not against instruction data supplied by the caller. Call before any assessment writes.
+     *
+     * @param feedbacks  the new feedback
+     * @param exerciseId the trusted id of the exercise being assessed
+     */
+    public void validateGradingInstructions(Collection<Feedback> feedbacks, long exerciseId) {
+        Set<Long> instructionIds = feedbacks.stream().map(Feedback::getGradingInstruction).filter(Objects::nonNull).map(GradingInstruction::getId).collect(Collectors.toSet());
+        if (!instructionIds.isEmpty()
+                && (instructionIds.contains(null) || gradingInstructionRepository.countByIdInAndGradingCriterionExerciseId(instructionIds, exerciseId) != instructionIds.size())) {
+            throw new BadRequestAlertException("Every grading instruction must belong to the assessed exercise.", "feedback", "invalidGradingInstruction");
+        }
     }
 
     /**
@@ -256,6 +292,8 @@ public class ResultService {
             // delete the result itself via JPQL, completely bypassing Hibernate's cascade logic.
             longFeedbackTextRepository.deleteByFeedbackResultId(resultId);
             feedbackRepository.deleteByResult_Id(resultId);
+            testCaseFeedbackRepository.deleteByResultId(resultId);
+            scaFeedbackRepository.deleteByResultId(resultId);
             // Since JPQL bypasses @PreRemove in ResultListener, we must explicitly schedule
             // participant score recalculation here for single-result deletions. For bulk deletions
             // (shouldClearParticipantScore=false), the caller handles scores separately.
@@ -313,6 +351,8 @@ public class ResultService {
         // Order matters: long_feedback_text has a FK to feedback, so delete it first.
         longFeedbackTextRepository.deleteByFeedbackResultId(resultId);
         feedbackRepository.deleteByResult_Id(resultId);
+        testCaseFeedbackRepository.deleteByResultId(resultId);
+        scaFeedbackRepository.deleteByResultId(resultId);
     }
 
     /**
@@ -348,7 +388,7 @@ public class ResultService {
      * @return the updated (and potentially saved) result
      */
     @NonNull
-    public Result addFeedbackToResult(@NonNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
+    public Result addFeedbackToResult(@NonNull Result result, @NonNull List<Feedback> feedbackList, boolean shouldSave) {
         List<Feedback> savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
         result.addFeedbacks(savedFeedbacks);
         return shouldSaveResult(result, shouldSave);
@@ -391,6 +431,19 @@ public class ResultService {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user.orElse(null))) {
             filterInformation(participation, results);
         }
+    }
+
+    /**
+     * Attaches the synthesized views of the automatic feedback of programming results and then removes what the owner of the participation must not see. Read paths that
+     * serialize stored results need both steps in this order: the filters — and the test case counts they refresh — operate on the attached views, so filtering first would
+     * report a result without any automatic feedback.
+     *
+     * @param participation the results belong to
+     * @param results       the results to complete and filter, in place
+     */
+    public void attachAutomaticFeedbackAndFilterSensitiveInformation(final Participation participation, final Collection<Result> results) {
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(results);
+        filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
     }
 
     private void filterInformation(Participation participation, Collection<Result> results) {
@@ -436,15 +489,7 @@ public class ResultService {
     }
 
     private void filterSensitiveFeedbacksInExamExercise(Participation participation, Collection<Result> results, Exercise exercise) {
-        StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
-        Exam exam = exercise.getExerciseGroup().getExam();
-        boolean shouldResultsBePublished = exam.resultsPublished();
-        if (!shouldResultsBePublished && exam.isTestExam() && participation instanceof StudentParticipation) {
-            var studentExamOptional = api.findByExamIdAndParticipationId(exam.getId(), participation.getId());
-            if (studentExamOptional.isPresent()) {
-                shouldResultsBePublished = studentExamOptional.get().areResultsPublishedYet();
-            }
-        }
+        boolean shouldResultsBePublished = areExamResultsPublished(participation, exercise);
         for (Result result : results) {
             if (Hibernate.isInitialized(result.getFeedbacks())) {
                 result.filterSensitiveFeedbacks(!shouldResultsBePublished);
@@ -452,8 +497,41 @@ public class ResultService {
         }
     }
 
+    private boolean areExamResultsPublished(Participation participation, Exercise exercise) {
+        StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
+        Exam exam = exercise.getExerciseGroup().getExam();
+        if (exam.resultsPublished()) {
+            return true;
+        }
+        if (exam.isTestExam() && participation instanceof StudentParticipation) {
+            return api.findByExamIdAndParticipationId(exam.getId(), participation.getId()).map(StudentExam::areResultsPublishedYet).orElse(false);
+        }
+        return false;
+    }
+
+    /**
+     * Decides whether feedback marked {@code AFTER_DUE_DATE} still has to be hidden from the owner of the given participation. This is the same predicate the
+     * serialization filters apply ({@link #filterInformation}) — callers that serve a single feedback item outside those filters (see {@code LongFeedbackTextResource}) must
+     * use it so that an enumerable feedback id cannot expose what a full result would still hide.
+     *
+     * @param participation  the participation the feedback belongs to; its exercise decides between the exam and the course rules
+     * @param assessmentType the assessment type of the result the feedback belongs to
+     * @return true if 'after due date' feedback has to be withheld
+     */
+    public boolean shouldHideAfterDueDateFeedback(Participation participation, AssessmentType assessmentType) {
+        Exercise exercise = participation.getExercise();
+        if (exercise.isExamExercise()) {
+            return !areExamResultsPublished(participation, exercise);
+        }
+        // course exercises: hidden until this participation's own due date has passed, and for automatic results until the last student's individual due date has passed, so
+        // that no one gains an unfair advantage
+        return exerciseDateService.isBeforeDueDate(participation) || (AssessmentType.AUTOMATIC.equals(assessmentType) && exerciseDateService.isBeforeLatestDueDate(exercise));
+    }
+
     /**
      * Get the successful results for an exercise, ordered ascending by build completion date.
+     * <p>
+     * The returned results carry their feedback, including the synthesized views of the automatic feedback of programming results.
      *
      * @param participations  the participations with references to the exercises for which the results should be returned
      * @param withSubmissions true, if each result should also contain the submissions.
@@ -483,7 +561,7 @@ public class ResultService {
         // spring.jpa.open-in-view is disabled, so the entities returned here are detached. The assessor is included for the same reason - it is lazy but gets serialized.
         final Set<Long> relevantResultIds = relevantSubmissions.stream().map(submission -> submission.getLatestResult().getId()).collect(Collectors.toSet());
         final Map<Long, Result> resultsWithFeedbacks = relevantResultIds.isEmpty() ? Map.of()
-                : resultRepository.findResultsWithFeedbacksTestCaseAndAssessorByIdIn(relevantResultIds).stream().collect(Collectors.toMap(Result::getId, Function.identity()));
+                : resultRepository.findResultsWithFeedbacksAndAssessorByIdIn(relevantResultIds).stream().collect(Collectors.toMap(Result::getId, Function.identity()));
 
         final List<Result> results = new ArrayList<>();
         for (Submission submission : relevantSubmissions) {
@@ -503,27 +581,11 @@ public class ResultService {
             results.removeIf(result -> result.getSubmission() == null || !result.getSubmission().isSubmitted());
         }
 
-        return results;
-    }
+        // The automatic feedback of programming results lives in the compact typed tables, so it is not part of the feedbacks loaded above. Attach it as legacy views: the
+        // callers sum up the feedbacks of every returned result, which would otherwise report the manual points only.
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(results);
 
-    /**
-     * Returns the result for the given id with authorization checks.
-     *
-     * @param participationId the id of the participation
-     * @param resultId        the id of the result
-     * @param role            the minimum role required to access the result
-     * @return the result
-     */
-    public Result getResultForParticipationAndCheckAccess(Long participationId, Long resultId, Role role) {
-        Result result = resultRepository.findByIdElseThrow(resultId);
-        Participation participation = result.getSubmission().getParticipation();
-        if (!participation.getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + "!",
-                    "Participation", "400");
-        }
-        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
-        return result;
+        return results;
     }
 
     /**
@@ -552,7 +614,8 @@ public class ResultService {
     }
 
     @NonNull
-    private List<Feedback> saveFeedbackWithHibernateWorkaround(@NonNull Result result, List<Feedback> feedbackList) {
+    private List<Feedback> saveFeedbackWithHibernateWorkaround(@NonNull Result result, @NonNull List<Feedback> feedbackList) {
+        validateGradingInstructions(feedbackList, result.getExerciseId());
         List<Feedback> savedFeedbacks = new ArrayList<>();
 
         // Fetch long feedback texts associated with the provided feedback list
@@ -569,8 +632,10 @@ public class ResultService {
     }
 
     private void handleFeedbackPersistence(Feedback feedback, Result result, Map<Long, LongFeedbackText> longFeedbackTextMap) {
-        // Temporarily detach feedback from the parent result to avoid Hibernate issues
-        feedback.setResult(null);
+        // The feedback owns the foreign key to its result, so it is saved together with it. This used to detach the
+        // feedback first, which was needed while a result held its feedback in an ordered list and which wrote a row
+        // without a parent for as long as the surrounding save took.
+        feedback.setResult(result);
 
         // Connect old long feedback text to the feedback before saving, otherwise it would be deleted
         if (feedback.getId() != null && feedback.getHasLongFeedbackText()) {
@@ -583,15 +648,17 @@ public class ResultService {
             }
             else {
                 LongFeedbackText longFeedback = longFeedbackTextMap.get(feedback.getId());
-                feedback.setLongFeedbackText(Set.of(longFeedback));
+                if (longFeedback != null) {
+                    feedback.setLongFeedbackText(Set.of(longFeedback));
+                }
+                else {
+                    // the flag is stale: no long feedback text exists behind it
+                    feedback.setHasLongFeedbackText(false);
+                }
             }
         }
 
-        // Persist the feedback entity without the parent association
-        feedback = feedbackRepository.saveAndFlush(feedback);
-
-        // Restore associations to the result
-        feedback.setResult(result);
+        feedbackRepository.saveAndFlush(feedback);
     }
 
     @NonNull
@@ -680,7 +747,7 @@ public class ResultService {
 
         // 9. Query the database based on groupFeedback attribute to retrieve paginated and filtered feedback
         final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
-                StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeNotAssignedToTask, minOccurrence,
+                StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(Locale.ROOT), data.getFilterTestCases(), includeNotAssignedToTask, minOccurrence,
                 maxOccurrence, filterErrorCategories, pageable);
 
         List<FeedbackDetailDTO> processedDetails;
@@ -812,7 +879,18 @@ public class ResultService {
      * @return A {@link List} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
      */
     public List<FeedbackAffectedStudentDTO> getAffectedStudentsWithFeedbackIds(long exerciseId, List<Long> feedbackIds) {
-        return studentParticipationRepository.findAffectedStudentsByFeedbackIds(exerciseId, feedbackIds);
+        // The ids of automatic test-case feedback are synthetic (negative) and address the typed row, so the result - which is what identifies the affected student - has to be
+        // looked up. The feedback analysis groups test-case feedback only, so SCA ids are not expected here and are ignored.
+        List<Long> rowIds = feedbackIds.stream().filter(Objects::nonNull).filter(ProgrammingFeedbackSynthesizerService::isSyntheticId)
+                .filter(id -> !ProgrammingFeedbackSynthesizerService.isSyntheticScaId(id)).map(ProgrammingFeedbackSynthesizerService::rowIdFromSyntheticId).distinct().toList();
+        if (rowIds.isEmpty()) {
+            return List.of();
+        }
+        List<Long> resultIds = testCaseFeedbackRepository.findResultIdsByIds(rowIds);
+        if (resultIds.isEmpty()) {
+            return List.of();
+        }
+        return studentParticipationRepository.findAffectedStudentsByResultIds(exerciseId, resultIds);
     }
 
     /**
@@ -890,7 +968,7 @@ public class ResultService {
             entry.setValue(rounded);
         });
 
-        return new ResultWithPointsPerGradingCriterionDTO(result, totalPoints, pointsPerCriterion);
+        return new ResultWithPointsPerGradingCriterionDTO(ResultWithPointsPerGradingCriterionDTO.ResultForExportDTO.of(result), totalPoints, pointsPerCriterion);
     }
 
 }

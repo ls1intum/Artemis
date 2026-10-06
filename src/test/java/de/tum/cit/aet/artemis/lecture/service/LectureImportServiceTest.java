@@ -13,7 +13,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -46,11 +45,10 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentBatch
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, true, 0);
         Course course1 = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         long lecture1Id = course1.getLectures().stream().findFirst().orElseThrow().getId();
-        lecture1 = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompletionsElseThrow(lecture1Id);
+        lecture1 = lectureRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(lecture1Id);
         course2 = courseUtilService.createCourse();
 
         assertThat(lecture1.getLectureUnits()).isNotEmpty();
-        assertThat(lecture1.getAttachments()).isNotEmpty();
     }
 
     @AfterEach
@@ -72,7 +70,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentBatch
 
         // Find the imported lecture and fetch it with lecture units
         Long lecture2Id = this.course2.getLectures().stream().skip(lectureCount).findFirst().orElseThrow().getId();
-        Lecture lecture2 = this.lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompletionsElseThrow(lecture2Id);
+        Lecture lecture2 = this.lectureRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(lecture2Id);
 
         assertThat(lecture2.getTitle()).isEqualTo(this.lecture1.getTitle());
         assertThat(lecture2.getDescription()).isNotNull().isEqualTo(this.lecture1.getDescription());
@@ -82,9 +80,6 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentBatch
         // Assert that all lecture units (except exercise units) were copied
         assertThat(lecture2.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(
                 this.lecture1.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(LectureUnit::getName).toList());
-
-        assertThat(lecture2.getAttachments().stream().map(Attachment::getName).toList())
-                .containsExactlyElementsOf(this.lecture1.getAttachments().stream().map(Attachment::getName).toList());
 
         lectureRepository.delete(lecture2);
     }

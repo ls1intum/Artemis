@@ -1,23 +1,32 @@
-$textareaHeight: 200px;
-
 :host {
-    margin-top: 15px;
+    box-sizing: border-box;
+    display: block;
+    width: var(--modeling-editor-explanation-panel-width, min(44rem, 100%));
+    min-width: 0;
+    max-width: 100%;
+    flex: 0 0 auto;
 }
 
 .text-editor-textarea {
+    box-sizing: border-box;
+    display: block;
     width: 100%;
-    height: $textareaHeight;
-    padding: 10px 12px;
-    border: 1px solid var(--text-editor-border-color);
-    border-radius: 2px;
-    background-color: var(--text-editor-background);
-    color: var(--text-editor-color);
+    min-width: 0;
+    max-width: 100%;
+    min-height: calc(1.4em + 0.7rem);
+    max-height: 100%;
+    flex: 1;
+    padding: 0.45rem 0.55rem 0.3rem;
+    border: 0;
+    border-radius: var(--apollon-radius-sm);
+    background: color-mix(in srgb, var(--apollon-background) 82%, transparent);
+    color: var(--apollon-foreground);
+    font: inherit;
+    line-height: 1.4;
+    overflow-y: auto;
     resize: none;
 
     &:focus {
         outline: none;
-        border: 1px solid var(--artemis-dark);
-        background-color: var(--text-editor-focus-background);
-        box-shadow: 0 0 20px rgba(0, 0, 200, 0.04);
     }
 }

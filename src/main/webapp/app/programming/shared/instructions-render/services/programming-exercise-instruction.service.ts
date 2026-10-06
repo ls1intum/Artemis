@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 
@@ -24,7 +24,7 @@ export type TaskResult = {
 const testIdRegex = /<testid>(\d+)<\/testid>/;
 const testSplitRegex = /,(?![^(]*?\))/;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExerciseInstructionService {
     /**
      * @function testStatusForTask

@@ -21,8 +21,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/foundation/service/file-uploader.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect-to-iris-button/redirect-to-iris-button.component';
@@ -45,8 +45,8 @@ describe('MarkdownEditorMonacoComponent', () => {
             providers: [
                 MockProvider(FileUploaderService),
                 MockProvider(AlertService),
-                MockProvider(MetisConversationService),
-                MockProvider(MetisService),
+                MockProvider(CourseConversationsService),
+                MockProvider(CommunicationService),
                 MockProvider(ProfileService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -102,6 +102,17 @@ describe('MarkdownEditorMonacoComponent', () => {
         fixture.detectChanges();
         comp.onTabChange(TAB_PREVIEW);
         expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should preview the live Monaco value before the debounced text change emits', () => {
+        fixture.detectChanges();
+        vi.spyOn(comp.monacoEditor()!, 'getText').mockReturnValue('**Fresh preview**');
+
+        comp.onTabChange(TAB_PREVIEW);
+
+        expect(comp.currentMarkdown()).toBe('**Fresh preview**');
+        const html = comp.defaultPreviewHtml() as { changingThisBreaksApplicationSecurity: string };
+        expect(html.changingThisBreaksApplicationSecurity).toContain('<strong>Fresh preview</strong>');
     });
 
     it('should layout and focus the editor when the edit tab is shown', () => {
@@ -354,7 +365,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         fixture.componentRef.setInput('colorAction', new ColorAction());
         fixture.detectChanges();
         const executeInCurrentEditorStub = vi.spyOn(comp.colorAction()!, 'executeInCurrentEditor').mockImplementation(() => {});
-        const markdownColors = comp.colorSignal();
+        const markdownColors = comp.colors;
         for (let i = 0; i < markdownColors.length; i++) {
             const color = markdownColors[i];
             comp.onSelectColor(color);

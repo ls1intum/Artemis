@@ -7,6 +7,7 @@ import { instructor, studentOne } from '../../support/users';
 import { SEED_COURSES } from '../../support/seedData';
 import { Commands } from '../../support/commands';
 import { IrisChat } from '../../support/pageobjects/iris/IrisChat';
+import { enableIrisForCourse } from '../../support/irisSetup';
 
 // Course 9022 (lectureManagement); studentOne (artemis_test_user_1) is enrolled.
 //
@@ -32,7 +33,7 @@ const course = { id: SEED_COURSES.lectureManagement.id, title: SEED_COURSES.lect
  * These tests require Iris to be enabled on the server (the panel is gated behind
  * `profileService.isModuleFeatureActive('iris')` AND the course Iris settings being
  * enabled). Run them with:
- *     RUN_IRIS=true ./run-e2e-tests-local-fast.sh --skip-db --filter "Iris"
+ *     RUN_IRIS=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --skip-db --filter "Iris"
  *
  * When Iris is NOT enabled (the default), the suite skips itself rather than failing, so
  * it is a no-op in normal CI runs.
@@ -67,7 +68,7 @@ test.describe('Iris lecture chat (real Pyris)', { tag: '@slow' }, () => {
         // Defensively ensure the course-level Iris settings are enabled (they default to
         // enabled when no override row exists, but this is idempotent and robust to a
         // future default flip). Instructors may toggle `enabled`.
-        await page.request.put(`api/iris/courses/${course.id}/iris-settings`, { data: { enabled: true, variant: 'default' } });
+        await enableIrisForCourse(page.request, course.id!);
         lecture = await courseManagementAPIRequests.createLecture(course);
         expect(lecture.id, 'lecture should be created with an id').toBeDefined();
     });

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.notification.service.notifications;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -92,7 +91,7 @@ public class SingleUserNotificationService {
      * @param recipient who should be notified
      */
     public void notifyUserAboutAssessedExerciseSubmission(Exercise exercise, User recipient) {
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
 
         var studentParticipation = exercise.getStudentParticipations().stream().filter(participation -> participation.getStudent().orElseThrow().equals(recipient)).findFirst();
 
@@ -100,7 +99,7 @@ public class SingleUserNotificationService {
             return;
         }
 
-        Double score = Objects.requireNonNull(studentParticipation.get().findLatestResult()).getScore();
+        Double score = studentParticipation.get().findLatestResult().getScore();
 
         Long examId = exercise.isExamExercise() ? exercise.getExerciseGroup().getExam().getId() : null;
         var exerciseAssessedNotification = new ExerciseAssessedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
@@ -148,9 +147,9 @@ public class SingleUserNotificationService {
      */
     public void notifyUserAboutNewPlagiarismCase(PlagiarismCase plagiarismCase, User student) {
         var plagiarismCaseExercise = plagiarismCase.getExercise();
-        var course = plagiarismCaseExercise.getCourseViaExerciseGroupOrCourseMember();
+        var course = plagiarismCaseExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
 
-        Long examId = plagiarismCaseExercise.isExamExercise() ? plagiarismCaseExercise.getExerciseGroup().getExam().getId() : null;
+        Long examId = plagiarismCaseExercise.isExamExercise() ? plagiarismCaseExercise.getExamElseThrow().getId() : null;
         var newPlagiarismCaseNotification = new NewPlagiarismCaseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), plagiarismCaseExercise.getId(),
                 plagiarismCaseExercise.getExerciseNotificationTitle(), plagiarismCaseExercise.getType(), plagiarismCase.getPost().getContent(), examId);
 
@@ -166,9 +165,9 @@ public class SingleUserNotificationService {
      */
     public void notifyUserAboutNewContinuousPlagiarismControlPlagiarismCase(PlagiarismCase plagiarismCase, User student) {
         var plagiarismCaseExercise = plagiarismCase.getExercise();
-        var course = plagiarismCaseExercise.getCourseViaExerciseGroupOrCourseMember();
+        var course = plagiarismCaseExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
 
-        Long examId = plagiarismCaseExercise.isExamExercise() ? plagiarismCaseExercise.getExerciseGroup().getExam().getId() : null;
+        Long examId = plagiarismCaseExercise.isExamExercise() ? plagiarismCaseExercise.getExamElseThrow().getId() : null;
         var newCpcPlagiarismCaseNotification = new NewCpcPlagiarismCaseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), plagiarismCaseExercise.getId(),
                 plagiarismCaseExercise.getExerciseNotificationTitle(), plagiarismCaseExercise.getType(), plagiarismCase.getPost().getContent(), examId);
 
@@ -183,9 +182,9 @@ public class SingleUserNotificationService {
      */
     public void notifyUserAboutPlagiarismCaseVerdict(PlagiarismCase plagiarismCase, User student) {
         var plagiarismCaseExercise = plagiarismCase.getExercise();
-        var course = plagiarismCaseExercise.getCourseViaExerciseGroupOrCourseMember();
+        var course = plagiarismCaseExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
 
-        Long examId = plagiarismCaseExercise.isExamExercise() ? plagiarismCaseExercise.getExerciseGroup().getExam().getId() : null;
+        Long examId = plagiarismCaseExercise.isExamExercise() ? plagiarismCaseExercise.getExamElseThrow().getId() : null;
         var plagiarismCaseVerdictNotification = new PlagiarismCaseVerdictNotification(course.getId(), course.getTitle(), course.getCourseIcon(), plagiarismCaseExercise.getId(),
                 plagiarismCaseExercise.getExerciseNotificationTitle(), plagiarismCaseExercise.getType(), plagiarismCase.getVerdict().toString(), examId);
 

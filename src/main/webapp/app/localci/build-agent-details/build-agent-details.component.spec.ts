@@ -40,6 +40,7 @@ describe('BuildAgentDetailsComponent', () => {
         pauseBuildAgent: vi.fn().mockReturnValue(of({})),
         resumeBuildAgent: vi.fn().mockReturnValue(of({})),
         getFinishedBuildJobs: vi.fn().mockReturnValue(of({})),
+        getBuildAgentAddresses: vi.fn().mockReturnValue(of([])),
     };
 
     const repositoryInfo: RepositoryInfo = {
@@ -356,6 +357,43 @@ describe('BuildAgentDetailsComponent', () => {
             type: AlertType.DANGER,
             message: 'artemisApp.buildAgents.alerts.buildAgentResumeFailed',
         });
+    });
+
+    it('should show the addresses this agent is registered to connect from', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        mockBuildAgentsService.getBuildAgentAddresses.mockReturnValue(
+            of([
+                { agentName: 'other-agent', addresses: ['10.0.0.9'], withinAllowlist: true },
+                { agentName: mockBuildAgent.buildAgent!.name, addresses: ['10.0.0.5'], withinAllowlist: true },
+            ]),
+        );
+
+        component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(component.registeredAddressInfo()?.addresses).toEqual(['10.0.0.5']);
+    });
+
+    it('should not show addresses of a different agent', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        mockBuildAgentsService.getBuildAgentAddresses.mockReturnValue(of([{ agentName: 'other-agent', addresses: ['10.0.0.9'], withinAllowlist: true }]));
+
+        component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(component.registeredAddressInfo()).toBeUndefined();
+    });
+
+    // The addresses are supplementary, so a failure to load them must leave the rest of the page working
+    it('should tolerate a failure to load the registered addresses', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        mockBuildAgentsService.getBuildAgentAddresses.mockReturnValue(throwError(() => new Error('unavailable')));
+
+        component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(component.registeredAddressInfo()).toBeUndefined();
+        expect(component.buildAgent()).toBeDefined();
     });
 
     it('should trigger refresh on search term change', async () => {

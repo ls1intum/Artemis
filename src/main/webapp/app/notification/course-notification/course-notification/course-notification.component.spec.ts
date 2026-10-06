@@ -22,7 +22,12 @@ describe('CourseNotificationComponent', () => {
     let courseNotificationService: CourseNotificationService;
     let componentAsAny: any;
 
-    const createMockNotification = (id: number, courseId: number, notificationType: string = 'newPostNotification', parameters: any = {}): CourseNotification => {
+    const createMockNotification = (
+        id: number,
+        courseId: number,
+        notificationType: string = 'newPostNotification',
+        parameters: Record<string, unknown> = {},
+    ): CourseNotification => {
         return new CourseNotification(
             id,
             courseId,
@@ -30,11 +35,9 @@ describe('CourseNotificationComponent', () => {
             CourseNotificationCategory.COMMUNICATION,
             CourseNotificationViewingStatus.UNSEEN,
             dayjs(),
-            {
-                courseTitle: 'Test Course',
-                courseIconUrl: 'test-icon-url',
-                ...parameters,
-            },
+            'Test Course',
+            'test-icon-url',
+            { ...parameters },
             '/',
         );
     };
@@ -79,9 +82,9 @@ describe('CourseNotificationComponent', () => {
     });
 
     it('should set notification parameters correctly', () => {
+        // The course is offered to the translation by name, and the payload contributes the values of its own type.
+        // The icon is not a translation value, so it is not among them.
         expect(componentAsAny.notificationParameters()).toEqual({
-            courseTitle: 'Test Course',
-            courseIconUrl: 'test-icon-url',
             courseName: 'Test Course',
             courseId: 101,
         });

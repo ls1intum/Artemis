@@ -1,6 +1,9 @@
 .programming-exercise-detail-wrapper-class {
     .button-header {
-        button {
+        // Only the legacy bottom row relies on this margin. The top action row is a flex row that spaces
+        // itself with `gap`, and its items stretch to the row height — a <button> there would end up 10px
+        // shorter than its <a class="btn"> siblings, which carry no such margin.
+        > div:not(.d-flex) button {
             margin-bottom: 10px;
         }
     }

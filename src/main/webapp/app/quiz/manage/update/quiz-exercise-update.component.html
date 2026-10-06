@@ -12,7 +12,7 @@
                         }
                     </div>
                     <div class="d-flex gap-2 mt-3">
-                        <button class="btn btn-secondary" (click)="navigateBack()">
+                        <button type="button" class="btn btn-secondary" (click)="navigateBack()">
                             <fa-icon [icon]="faArrowLeft" class="me-1" />
                             <span jhiTranslate="entity.action.back"></span>
                         </button>
@@ -72,7 +72,6 @@
                                     [categories]="exerciseCategories()"
                                     [existingCategories]="existingCategories()"
                                     (selectedCategories)="updateCategories($event)"
-                                    (ngModelChange)="cacheValidation()"
                                 />
                             </div>
                         }
@@ -348,21 +347,6 @@
                             @if (isSaving()) {
                                 <span class="save-status save-status--pending" jhiTranslate="artemisApp.quizExercise.edit.saving"></span>
                             }
-                            <ng-template #tooltipTranslate>
-                                @for (reason of invalidReasons(); track reason) {
-                                    <div>
-                                        @if ((reason.translateValues | json) !== '{}') {
-                                            <p
-                                                jhiTranslate="{{ reason.translateKey }}"
-                                                [translateValues]="{ index: reason.translateValues.index, threshold: reason.translateValues.threshold }"
-                                            ></p>
-                                        }
-                                        @if ((reason.translateValues | json) === '{}') {
-                                            <p jhiTranslate="{{ reason.translateKey }}"></p>
-                                        }
-                                    </div>
-                                }
-                            </ng-template>
                             <ng-template #warningTranslate>
                                 @for (warning of invalidWarnings(); track warning) {
                                     <div>
@@ -375,13 +359,6 @@
                                     </div>
                                 }
                             </ng-template>
-                            @if (!quizIsValid()) {
-                                <span class="save-status save-status--invalid" [ngbTooltip]="tooltipTranslate" placement="top auto">
-                                    <fa-icon [icon]="faExclamationCircle" class="me-1" />
-                                    <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
-                                    <span>({{ invalidReasons().length }})</span>
-                                </span>
-                            }
                             @if (warningQuizCache()) {
                                 <span class="save-status save-status--warning" [ngbTooltip]="warningTranslate" placement="top auto">
                                     <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
@@ -392,6 +369,7 @@
                         <div class="quiz-save-actions">
                             @if (!isExamMode() && quizExercise().id) {
                                 <input
+                                    [attr.aria-label]="'artemisApp.exercise.notificationText' | artemisTranslate"
                                     minlength="3"
                                     type="text"
                                     placeholder="{{ 'artemisApp.exercise.notificationText' | artemisTranslate }}"
@@ -404,6 +382,7 @@
                             }
                             @if (quizExercise().course || quizExercise().exerciseGroup) {
                                 <button
+                                    type="button"
                                     id="quiz-cancel-back-button"
                                     class="section-header-action"
                                     [class.danger]="pendingChangesCache()"
@@ -412,19 +391,32 @@
                                 ></button>
                             }
                             @if (!quizExercise().isEditable && quizExercise().quizEnded && quizExercise().isAtLeastInstructor) {
-                                <button class="section-header-action" [routerLink]="reEvaluateUrl">
+                                <button type="button" class="section-header-action" [routerLink]="reEvaluateUrl">
                                     <fa-icon [icon]="faWrench" class="me-1" />
                                     <span jhiTranslate="entity.action.re-evaluate"></span>
                                 </button>
                             }
+                            <!-- The tooltip would only describe its host while open, so it leaves aria-describedby to this permanent list. -->
+                            @if (!isSaveTooltipDisabled()) {
+                                <div [id]="saveReasonsId" class="sr-only">
+                                    <ul>
+                                        @for (reason of saveBlockedReasons(); track $index) {
+                                            <li>{{ reason }}</li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                            <!-- aria-disabled rather than disabled, so the button stays focusable and can explain itself. Pointer
+                                 events stay on for the same reason: a blocked button still has to be able to show its tooltip. -->
                             <button
-                                id="quiz-save"
-                                class="footer-save-btn"
-                                (click)="validateItemLimit()"
-                                [disabled]="isSaveDisabled()"
-                                [ngbTooltip]="!quizExercise().isEditable ? saveButtonTooltip : !quizIsValid() ? tooltipTranslate : ''"
-                                tooltip-placement="top-right auto"
-                                tooltip-class="invalid-reasons-tooltip"
+                                data-testid="quiz-save"
+                                type="button"
+                                class="footer-save-btn aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
+                                (click)="onSaveClick()"
+                                [tumAetUiTooltip]="saveBlockedReasons()"
+                                [tumAetUiTooltipDescribesHost]="false"
+                                [attr.aria-disabled]="isSaveDisabled()"
+                                [attr.aria-describedby]="isSaveTooltipDisabled() ? null : saveReasonsId"
                             >
                                 <fa-icon [icon]="faFloppyDisk" class="me-1" />
                                 <span jhiTranslate="entity.action.save"></span>
@@ -458,12 +450,13 @@
                             <fa-icon [icon]="faXmark" />
                         </button>
                         <textarea
+                            [attr.aria-label]="'artemisApp.quizExercise.aiGeneration.refinement.globalPlaceholder' | artemisTranslate"
                             pTextarea
                             class="global-refinement-fab-textarea"
                             [placeholder]="'artemisApp.quizExercise.aiGeneration.refinement.globalPlaceholder' | artemisTranslate"
                             maxlength="2000"
                             [ngModel]="globalRefinementPrompt()"
-                            (ngModelChange)="globalRefinementPrompt.set($any($event))"
+                            (ngModelChange)="globalRefinementPrompt.set($event)"
                             [disabled]="isGlobalRefining()"
                             (keydown.enter)="onGlobalRefinementEnterKey($event)"
                         ></textarea>

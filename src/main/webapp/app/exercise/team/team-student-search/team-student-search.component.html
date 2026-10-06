@@ -1,6 +1,8 @@
 <input
+    [attr.aria-label]="'artemisApp.team.addStudentToTeam' | artemisTranslate"
     #ngbTypeahead
-    id="student-search-input"
+    id="teamStudentsInput"
+    data-testid="student-search-input"
     name="search-filter"
     type="text"
     class="form-control"

@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Subscription, filter, skip } from 'rxjs';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenSquare } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -19,7 +18,6 @@ import { UserService } from 'app/account/user/shared/user.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
@@ -44,7 +42,7 @@ function isPendingAthenaFeedbackResult(result: Result | undefined): boolean {
 
 @Component({
     selector: 'jhi-request-feedback-button',
-    imports: [NgbTooltipModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
+    imports: [FontAwesomeModule, TranslateDirective],
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
@@ -116,7 +114,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (this.isExamExercise() || !this.exercise().id) {
             return;
         }
-        this.requestFeedbackEnabled.set(this.exercise().allowFeedbackRequests ?? false);
+        this.requestFeedbackEnabled.set(this.exercise().course?.athenaFormativeFeedbackEnabled ?? false);
         this.updateParticipation();
         this.setUserAcceptedLLMUsage();
     }
@@ -272,13 +270,11 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     private processFeedbackRequest(participation = this.participation) {
         this.courseExerciseService.requestFeedback(this.exercise().id!, participation!.id!).subscribe({
-            next: (updatedParticipation: StudentParticipation) => {
-                if (updatedParticipation) {
-                    if (this.participationId() === undefined || this.participationId() === participation?.id) {
-                        this.isFeedbackRequestPending.set(true);
-                    }
-                    this.alertService.success('artemisApp.exercise.feedbackRequestSent');
+            next: () => {
+                if (this.participationId() === undefined || this.participationId() === participation?.id) {
+                    this.isFeedbackRequestPending.set(true);
                 }
+                this.alertService.success('artemisApp.exercise.feedbackRequestSent');
             },
             error: (error: HttpErrorResponse) => {
                 this.alertService.error(`artemisApp.exercise.${error.error.errorKey}`);
@@ -297,7 +293,11 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (!participation?.id) {
             return false;
         }
-        return this.exercise().type === ExerciseType.PROGRAMMING || this.assureTextModelingConditions();
+        if (this.exercise().type === ExerciseType.PROGRAMMING) {
+            // Athena feedback requests for programming exercises require manual assessment to be enabled
+            return this.exercise().assessmentType === AssessmentType.SEMI_AUTOMATIC;
+        }
+        return this.assureTextModelingConditions();
     }
 
     /**

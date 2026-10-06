@@ -17,6 +17,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 
@@ -45,6 +46,7 @@ public abstract class ExamLiveEvent extends DomainObject {
     private Instant createdDate = Instant.now();
 
     @Column(name = "exam_id", nullable = false, updatable = false)
+    @Parent
     private Long examId;
 
     @Column(name = "student_exam_id", updatable = false)

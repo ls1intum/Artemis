@@ -11,9 +11,29 @@
                 <jhi-landing-social-proof />
             }
         </div>
+        <div #pillarsTrigger class="landing-defer-placeholder">
+            @defer (on viewport(pillarsTrigger); prefetch on idle) {
+                <jhi-landing-pillars />
+            }
+        </div>
         <div #featuresTrigger class="landing-defer-placeholder">
             @defer (on viewport(featuresTrigger); prefetch on idle) {
                 <jhi-landing-features />
+            }
+        </div>
+        <div #trustTrigger class="landing-defer-placeholder">
+            @defer (on viewport(trustTrigger); prefetch on idle) {
+                <jhi-landing-trust />
+            }
+        </div>
+        <div #researchTrigger class="landing-defer-placeholder">
+            @defer (on viewport(researchTrigger); prefetch on idle) {
+                <jhi-landing-research />
+            }
+        </div>
+        <div #communityTrigger class="landing-defer-placeholder">
+            @defer (on viewport(communityTrigger); prefetch on idle) {
+                <jhi-landing-community />
             }
         </div>
         <div #faqTrigger class="landing-defer-placeholder">

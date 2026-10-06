@@ -26,6 +26,8 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
@@ -51,6 +53,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage(UserFeature.QUIZ_LIFECYCLE)
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizExerciseResource {
@@ -134,7 +137,7 @@ public class QuizExerciseResource {
     @EnforceAtLeastEditorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizExerciseDatesDTO> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable QuizAction action) {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
-        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExerciseId);
         var user = userRepository.getUserWithAuthorities();
 
         if (quizExercise.isExamExercise()) {
@@ -180,7 +183,7 @@ public class QuizExerciseResource {
                 var previousReleaseDate = quizExercise.getReleaseDate();
                 var releaseDateNeedsClamping = previousReleaseDate != null && previousReleaseDate.isAfter(now);
                 var newReleaseDate = releaseDateNeedsClamping ? now : previousReleaseDate;
-                var newDueDate = now.plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
+                var newDueDate = now.plusSeconds((long) quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
 
                 // getOrCreateSynchronizedQuizBatch may return a transient (id == null) batch for quizzes that never
                 // started before. save() persists it; for already-existing batches it issues a plain UPDATE. Either
@@ -214,7 +217,7 @@ public class QuizExerciseResource {
                 // endQuiz mutates the in-memory entity only (its contract, relied on by several re-evaluation tests).
                 // Persist the scalar changes via targeted UPDATEs so the full-graph cascade is avoided.
                 quizExerciseService.endQuiz(quizExercise);
-                var lastStart = quizExercise.getDueDate().minusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
+                var lastStart = quizExercise.getDueDate().minusSeconds((long) quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
                 quizExerciseRepository.updateDueDate(quizExerciseId, quizExercise.getDueDate());
                 quizBatchRepository.clampBatchStartTimesForEndNow(quizExerciseId, lastStart);
             }
@@ -239,7 +242,7 @@ public class QuizExerciseResource {
         // Reload to refresh proxy state before building the response DTO and broadcasting. Cheap (one SELECT with
         // the existing entity graph) and — critically — no write path was invoked above that could cascade into the
         // question graph, so child primary keys are guaranteed stable at this point.
-        quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExercise.getId());
 
         if (action == QuizAction.START_NOW) {
             // notify the instance message send service to send the quiz exercise start schedule (if necessary

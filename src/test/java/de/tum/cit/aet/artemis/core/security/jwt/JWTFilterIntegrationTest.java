@@ -53,7 +53,7 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Value("${jhipster.security.authentication.jwt.token-validity-in-seconds}") // 86400 when tests where written
     private long TOKEN_VALIDITY_IN_SECONDS;
 
-    @Value("${jhipster.security.authentication.jwt.token-validity-in-seconds-for-remember-me}") // 2592000 when tests where written
+    @Value("${jhipster.security.authentication.jwt.token-validity-in-seconds-for-remember-me}") // read from the config so it follows the shipped value
     private long TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS;
 
     @Value("${artemis.user-management.passkey.token-validity-in-seconds-for-passkey}") // 1555200 when tests where written
@@ -143,18 +143,24 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
                 Authentication authentication = AuthenticationFactory.createWebAuthnAuthentication(USER_NAME);
 
                 long nowInMilliseconds = System.currentTimeMillis();
-                Date issuedAt = new Date(nowInMilliseconds - (long) (TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 0.9 * 1000));
-                Date expiration = new Date(nowInMilliseconds + (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.4 * 1000));
+                // Far enough into the passkey lifetime that the window left is shorter than one whole remember-me validity.
+                // That is what the test is about: the rotation has to clip to the passkey ceiling instead of handing out a
+                // full window. The fraction is derived from the two configured lifetimes rather than fixed, so shortening
+                // the remember-me validity cannot quietly turn this into a test of nothing.
+                Date issuedAt = new Date(nowInMilliseconds - (long) (TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 0.99 * 1000));
 
                 long tokenLifetimeAlreadyUsedUpInMilliseconds = nowInMilliseconds - issuedAt.getTime();
                 long expectedRemainingLifetimeInMilliseconds = TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000 - tokenLifetimeAlreadyUsedUpInMilliseconds;
-                // if this is not the case, the test does not make sense - might happen if TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY or TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS is
-                // adjusted
-                // -> adjust issuedAt and expiration accordingly in that case (no full-time for TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS left, last rotated token before passkey token
-                // lifetime
-                // is reached)
+
+                // Expires inside that remaining window, and soon enough for a rotation to be due.
+                Date expiration = new Date(nowInMilliseconds + (long) (expectedRemainingLifetimeInMilliseconds * 0.9));
+
+                // The premises the assertions below rest on. If one of these fails the lifetimes were reconfigured and the
+                // fractions above need revisiting, rather than the production behaviour having changed.
                 assertThat(expectedRemainingLifetimeInMilliseconds).isLessThan(TOKEN_VALIDITY_IN_SECONDS_FOR_PASSKEY * 1000);
-                assertThat(expectedRemainingLifetimeInMilliseconds).isLessThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
+                assertThat(expectedRemainingLifetimeInMilliseconds).as("the window left has to be shorter than a whole remember-me validity")
+                        .isLessThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
+                assertThat(expiration.getTime() - nowInMilliseconds).as("a rotation has to be due").isLessThan(TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000 / 2);
 
                 String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
                 assertThat(tokenProvider.getAuthenticationMethod(jwt)).isEqualTo(AuthenticationMethod.PASSKEY);

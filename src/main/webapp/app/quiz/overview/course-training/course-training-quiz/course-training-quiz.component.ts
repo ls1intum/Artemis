@@ -31,18 +31,18 @@ import { ButtonModule } from 'primeng/button';
     templateUrl: './course-training-quiz.component.html',
 })
 export class CourseTrainingQuizComponent {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private quizService = inject(CourseTrainingQuizService);
+    private alertService = inject(AlertService);
+    private courseService = inject(CourseManagementService);
+
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
-    private route = inject(ActivatedRoute);
-    private router = inject(Router);
-    private quizService = inject(CourseTrainingQuizService);
-
     currentIndex = signal(0);
-    private alertService = inject(AlertService);
-    private courseService = inject(CourseManagementService);
 
     // Pagination options
     page = signal(0);

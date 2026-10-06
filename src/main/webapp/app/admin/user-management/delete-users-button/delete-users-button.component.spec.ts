@@ -1,7 +1,3 @@
-/**
- * Vitest tests for DeleteUsersButtonComponent.
- * Tests the component that handles bulk deletion of non-enrolled users.
- */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
@@ -11,28 +7,23 @@ import { TranslateService } from '@ngx-translate/core';
 
 import { DeleteUsersButtonComponent } from 'app/admin/user-management/delete-users-button/delete-users-button.component';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
-import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import * as globalUtils from 'app/foundation/util/global.utils';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockProvider } from 'ng-mocks';
 
 describe('DeleteUsersButtonComponent', () => {
     let component: DeleteUsersButtonComponent;
     let fixture: ComponentFixture<DeleteUsersButtonComponent>;
     let adminUserService: AdminUserService;
     let alertService: AlertService;
-    let deleteDialogService: DeleteDialogService;
 
-    /** Sample user logins to be deleted */
-    const testUserLogins: string[] = ['student42', 'tutor73'];
-    /** Sample error for testing error handling */
-    const testError: Error = new Error('Some server side error ...');
+    const testUserLogins = ['student42', 'tutor73'];
+    const testError = new Error('Some server side error ...');
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [DeleteUsersButtonComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(DeleteDialogService), provideHttpClient(), provideHttpClientTesting()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
         })
             .overrideTemplate(DeleteUsersButtonComponent, '')
             .compileComponents();
@@ -41,123 +32,65 @@ describe('DeleteUsersButtonComponent', () => {
         component = fixture.componentInstance;
         adminUserService = TestBed.inject(AdminUserService);
         alertService = TestBed.inject(AlertService);
-        deleteDialogService = TestBed.inject(DeleteDialogService);
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
     });
 
-    describe('rendering', () => {
-        it('should render a delete button that triggers loadUserList on click', async () => {
-            TestBed.resetTestingModule();
-            await TestBed.configureTestingModule({
-                imports: [DeleteUsersButtonComponent],
-                providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(DeleteDialogService), provideHttpClient(), provideHttpClientTesting()],
-            }).compileComponents();
+    it('should render a button that loads deletion candidates', async () => {
+        TestBed.resetTestingModule();
+        await TestBed.configureTestingModule({
+            imports: [DeleteUsersButtonComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
+        }).compileComponents();
 
-            const renderFixture = TestBed.createComponent(DeleteUsersButtonComponent);
-            const renderComponent = renderFixture.componentInstance;
-            const loadUserListSpy = vi.spyOn(renderComponent, 'loadUserList').mockImplementation(() => {});
-            renderFixture.detectChanges();
+        const renderFixture = TestBed.createComponent(DeleteUsersButtonComponent);
+        const loadUserListSpy = vi.spyOn(renderFixture.componentInstance, 'loadUserList').mockImplementation(() => {});
+        renderFixture.detectChanges();
 
-            const button = renderFixture.nativeElement.querySelector('[data-testid="delete-users-button"]');
-            expect(button).toBeTruthy();
-
-            const nativeButton: HTMLButtonElement = button.querySelector('button') ?? button;
-            nativeButton.click();
-            expect(loadUserListSpy).toHaveBeenCalledOnce();
-        });
+        const button = renderFixture.nativeElement.querySelector('[data-testid="delete-users-button"]');
+        expect(button).toBeTruthy();
+        (button.querySelector('button') ?? button).click();
+        expect(loadUserListSpy).toHaveBeenCalledOnce();
     });
 
-    describe('loadUserList', () => {
-        it('should load users and open delete dialog when users exist', () => {
-            vi.spyOn(component, 'openDeleteDialog').mockImplementation(() => {});
-            vi.spyOn(adminUserService, 'queryNotEnrolledUsers').mockReturnValue(
-                of(
-                    new HttpResponse({
-                        body: testUserLogins,
-                    }),
-                ),
-            );
+    it('should load candidates and delegate deletion to the parent impact dialog', () => {
+        vi.spyOn(adminUserService, 'queryNotEnrolledUsers').mockReturnValue(of(new HttpResponse({ body: testUserLogins })));
+        vi.spyOn(component.deletionRequested, 'emit');
 
-            component.loadUserList();
+        component.loadUserList();
 
-            expect(adminUserService.queryNotEnrolledUsers).toHaveBeenCalledOnce();
-            expect(component.openDeleteDialog).toHaveBeenCalledOnce();
-            expect(component.users()).toEqual(testUserLogins);
-        });
-
-        it('should show info message when no users found to delete', () => {
-            vi.spyOn(adminUserService, 'queryNotEnrolledUsers').mockReturnValue(
-                of(
-                    new HttpResponse({
-                        body: [],
-                    }),
-                ),
-            );
-            vi.spyOn(alertService, 'info');
-
-            component.loadUserList();
-
-            expect(adminUserService.queryNotEnrolledUsers).toHaveBeenCalledOnce();
-            expect(component.users()).toHaveLength(0);
-            expect(alertService.info).toHaveBeenCalledWith('artemisApp.userManagement.notEnrolled.delete.cancel');
-        });
-
-        it('should handle error response and call onError', () => {
-            vi.spyOn(adminUserService, 'queryNotEnrolledUsers').mockReturnValue(throwError(() => testError));
-            vi.spyOn(globalUtils, 'onError');
-
-            component.loadUserList();
-
-            expect(adminUserService.queryNotEnrolledUsers).toHaveBeenCalledOnce();
-            expect(component.users()).toBeUndefined();
-            expect(globalUtils.onError).toHaveBeenCalledWith(alertService, testError);
-        });
+        expect(component.users()).toEqual(testUserLogins);
+        expect(component.deletionRequested.emit).toHaveBeenCalledWith(testUserLogins);
     });
 
-    describe('openDeleteDialog', () => {
-        it('should call delete dialog service', () => {
-            vi.spyOn(deleteDialogService, 'openDeleteDialog').mockImplementation(() => {});
+    it('should show an information message when there are no candidates', () => {
+        vi.spyOn(adminUserService, 'queryNotEnrolledUsers').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(alertService, 'info');
+        vi.spyOn(component.deletionRequested, 'emit');
 
-            component.openDeleteDialog();
+        component.loadUserList();
 
-            expect(deleteDialogService.openDeleteDialog).toHaveBeenCalledOnce();
-        });
+        expect(alertService.info).toHaveBeenCalledWith('artemisApp.userManagement.notEnrolled.delete.cancel');
+        expect(component.deletionRequested.emit).not.toHaveBeenCalled();
     });
 
-    describe('onConfirm', () => {
-        it('should delete users and emit completion event on success', () => {
-            vi.spyOn(adminUserService, 'deleteUsers').mockReturnValue(of(new HttpResponse<void>()));
-            vi.spyOn(component.deletionCompleted, 'emit');
-            component.users.set(testUserLogins);
+    it('should forward loading errors to the alert utility', () => {
+        vi.spyOn(adminUserService, 'queryNotEnrolledUsers').mockReturnValue(throwError(() => testError));
+        vi.spyOn(globalUtils, 'onError');
 
-            component.onConfirm();
+        component.loadUserList();
 
-            expect(adminUserService.deleteUsers).toHaveBeenCalledWith(testUserLogins);
-            expect(component.deletionCompleted.emit).toHaveBeenCalledOnce();
-        });
+        expect(globalUtils.onError).toHaveBeenCalledWith(alertService, testError);
+    });
 
-        it('should not emit completion event when deletion fails', () => {
-            vi.spyOn(adminUserService, 'deleteUsers').mockReturnValue(throwError(() => testError));
-            vi.spyOn(component.deletionCompleted, 'emit');
-            component.users.set(testUserLogins);
+    it('should emit the currently loaded candidates', () => {
+        vi.spyOn(component.deletionRequested, 'emit');
+        component.users.set(testUserLogins);
 
-            component.onConfirm();
+        component.openDeleteDialog();
 
-            expect(adminUserService.deleteUsers).toHaveBeenCalledWith(testUserLogins);
-            expect(component.deletionCompleted.emit).not.toHaveBeenCalled();
-        });
-
-        it('should not call delete service when users list is empty', () => {
-            vi.spyOn(adminUserService, 'deleteUsers').mockImplementation(() => of(new HttpResponse<void>()));
-            vi.spyOn(component.deletionCompleted, 'emit');
-
-            component.onConfirm();
-
-            expect(adminUserService.deleteUsers).not.toHaveBeenCalled();
-            expect(component.deletionCompleted.emit).not.toHaveBeenCalled();
-        });
+        expect(component.deletionRequested.emit).toHaveBeenCalledWith(testUserLogins);
     });
 });

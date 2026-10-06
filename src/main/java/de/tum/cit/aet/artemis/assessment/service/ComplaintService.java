@@ -78,14 +78,13 @@ public class ComplaintService {
 
     /**
      * Create a new complaint by checking if the user is still allowed to submit complaints and in the case of normal course exercises
-     * whether the user still enough complaints left.
+     * whether the user still enough complaints left. For exam exercises, the review period is checked on the exam of the exercise the result belongs to.
      *
      * @param complaintRequest the complaint to create
      * @param principal        the current Principal
-     * @param examId           the optional examId. This is only set if the exercise is an exam exercise
      * @return the saved complaint
      */
-    public Complaint createComplaint(ComplaintRequestDTO complaintRequest, Optional<Long> examId, Principal principal) {
+    public Complaint createComplaint(ComplaintRequestDTO complaintRequest, Principal principal) {
         Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaintRequest.resultId())
                 .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
 
@@ -93,7 +92,7 @@ public class ComplaintService {
         Participant participant = studentParticipation.getParticipant(); // Team or Student
 
         // Retrieve course to get Max Complaints, Max Team Complaints and Max Complaint Time
-        final Course course = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        final Course course = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
 
         Long courseId = course.getId();
 
@@ -104,10 +103,15 @@ public class ComplaintService {
                     "exceededComplaintTextLimit");
         }
 
+        if (originalResult.isAthenaBased()) {
+            throw new BadRequestAlertException(
+                    "Cannot submit " + (complaintRequest.complaintType() == ComplaintType.COMPLAINT ? "a complaint" : "a more feedback request") + " for preliminary AI feedback.",
+                    ENTITY_NAME, "complaintOrRequestMoreFeedbackAthena");
+        }
+
         // checking if it is allowed to create a complaint
-        if (examId.isPresent()) {
-            ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
-            final Exam exam = api.findByIdElseThrow(examId.get());
+        if (studentParticipation.getExercise().isExamExercise()) {
+            final Exam exam = studentParticipation.getExercise().getExam();
             final Set<User> instructors = userRepository.getInstructors(exam.getCourse());
             boolean examTestRun = instructors.stream().anyMatch(instructor -> instructor.getLogin().equals(principal.getName()));
             if (!examTestRun && !isTimeOfComplaintValid(exam)) {
@@ -161,7 +165,7 @@ public class ComplaintService {
     /**
      * Count the number of unaccepted complaints of a student or team in a given course. Unaccepted means that they are either open/unhandled or rejected. We use this to limit the
      * number of complaints for a student or team in a course. Requests for more feedback are not counted here.
-     * Uses optimized query that leverages the denormalized result.exerciseId.
+     * Uses optimized query that leverages the denormalized complaint.exerciseId.
      *
      * @param participant the participant (student or team)
      * @param courseId    the id of the course
@@ -288,7 +292,7 @@ public class ComplaintService {
 
     /**
      * Get all complaints for a course.
-     * Uses optimized query that leverages the denormalized result.exerciseId instead of joining through submission -> participation -> exercise.
+     * Uses optimized query that leverages the denormalized complaint.exerciseId instead of joining through submission -> participation -> exercise.
      *
      * @param courseId the id of the course
      * @return list of complaints for the course
@@ -298,12 +302,12 @@ public class ComplaintService {
         if (exerciseIds.isEmpty()) {
             return List.of();
         }
-        return complaintRepository.findAllByResult_ExerciseIdIn(exerciseIds);
+        return complaintRepository.findAllByExerciseIdIn(exerciseIds);
     }
 
     /**
      * Get all complaints for an exam.
-     * Uses optimized query that leverages the denormalized result.exerciseId instead of joining through submission -> participation -> exercise -> exerciseGroup -> exam.
+     * Uses optimized query that leverages the denormalized complaint.exerciseId instead of joining through submission -> participation -> exercise -> exerciseGroup -> exam.
      *
      * @param examId the id of the exam
      * @return list of complaints for the exam
@@ -314,12 +318,12 @@ public class ComplaintService {
         if (exerciseIds.isEmpty()) {
             return List.of();
         }
-        return complaintRepository.findAllByResult_ExerciseIdIn(exerciseIds);
+        return complaintRepository.findAllByExerciseIdIn(exerciseIds);
     }
 
     /**
      * Get all complaints for a course made by a specific tutor (assessor).
-     * Uses optimized query that leverages the denormalized result.exerciseId.
+     * Uses optimized query that leverages the denormalized complaint.exerciseId.
      *
      * @param courseId the id of the course
      * @param tutorId  the id of the tutor
@@ -330,18 +334,18 @@ public class ComplaintService {
         if (exerciseIds.isEmpty()) {
             return List.of();
         }
-        return complaintRepository.findAllByResult_Assessor_IdAndResult_ExerciseIdIn(tutorId, exerciseIds);
+        return complaintRepository.findAllByResult_Assessor_IdAndExerciseIdIn(tutorId, exerciseIds);
     }
 
     /**
      * Get all complaints for an exercise.
-     * Uses optimized query that leverages the denormalized result.exerciseId.
+     * Uses optimized query that leverages the denormalized complaint.exerciseId.
      *
      * @param exerciseId the id of the exercise
      * @return list of complaints for the exercise
      */
     public List<Complaint> getAllComplaintsByExerciseId(Long exerciseId) {
-        return complaintRepository.findAllByResult_ExerciseIdIn(Set.of(exerciseId));
+        return complaintRepository.findAllByExerciseIdIn(Set.of(exerciseId));
     }
 
     /**
@@ -357,14 +361,14 @@ public class ComplaintService {
 
     /**
      * Get all complaints for an exercise made by a specific tutor (assessor).
-     * Uses optimized query that leverages the denormalized result.exerciseId.
+     * Uses optimized query that leverages the denormalized complaint.exerciseId.
      *
      * @param exerciseId the id of the exercise
      * @param tutorId    the id of the tutor
      * @return list of complaints for the exercise and tutor
      */
     public List<Complaint> getAllComplaintsByExerciseIdAndTutorId(Long exerciseId, Long tutorId) {
-        return complaintRepository.findAllByResult_Assessor_IdAndResult_ExerciseId(tutorId, exerciseId);
+        return complaintRepository.findAllByResult_Assessor_IdAndExerciseId(tutorId, exerciseId);
     }
 
     /**

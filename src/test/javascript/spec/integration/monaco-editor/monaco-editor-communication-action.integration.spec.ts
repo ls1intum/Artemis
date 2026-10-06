@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { HttpResponse } from '@angular/common/http';
 import { firstValueFrom, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
@@ -14,7 +14,14 @@ import { ChannelReferenceAction } from 'app/editor/monaco-editor/model/actions/c
 import { UserMentionAction } from 'app/editor/monaco-editor/model/actions/communication/user-mention.action';
 import { ExerciseReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/exercise-reference.action';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, metisTutor, metisUser1, metisUser2 } from 'test/helpers/sample/metis-sample-data';
+import {
+    communicationExamChannelDTO,
+    communicationExerciseChannelDTO,
+    communicationGeneralChannelDTO,
+    communicationTutor,
+    communicationUser1,
+    communicationUser2,
+} from 'test/helpers/sample/communication-sample-data';
 import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import * as monaco from 'monaco-editor';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
@@ -23,9 +30,8 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureAttachmentReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { ReferenceType } from 'app/communication/metis.util';
+import { ReferenceType } from 'app/communication/communication.util';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
-import dayjs from 'dayjs/esm';
 import { FaqReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/faq-reference.action';
 import { Faq } from 'app/communication/shared/entities/faq.model';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
@@ -36,7 +42,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 describe('MonacoEditorCommunicationActionIntegration', () => {
     let comp: MonacoEditorComponent;
     let fixture: ComponentFixture<MonacoEditorComponent>;
-    let metisService: MetisService;
+    let communicationService: CommunicationService;
     let fileService: FileService;
     let courseManagementService: CourseManagementService;
     let channelService: ChannelService;
@@ -54,7 +60,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         await TestBed.configureTestingModule({
             imports: [MonacoEditorComponent],
             providers: [
-                { provide: MetisService, useClass: MockMetisService },
+                { provide: CommunicationService, useClass: MockCommunicationService },
                 { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(LectureService),
@@ -67,20 +73,20 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
         fixture = TestBed.createComponent(MonacoEditorComponent);
         comp = fixture.componentInstance;
-        metisService = TestBed.inject(MetisService);
+        communicationService = TestBed.inject(CommunicationService);
         fileService = TestBed.inject(FileService);
         courseManagementService = TestBed.inject(CourseManagementService);
         lectureService = TestBed.inject(LectureService);
         channelService = TestBed.inject(ChannelService);
-        channelReferenceAction = new ChannelReferenceAction(metisService, channelService);
-        userMentionAction = new UserMentionAction(courseManagementService, metisService);
+        channelReferenceAction = new ChannelReferenceAction(communicationService, channelService);
+        userMentionAction = new UserMentionAction(courseManagementService, communicationService);
         exerciseService = TestBed.inject(ExerciseService);
         // The action asks for the exercise titles instead of reading them off the course, which no longer carries them
         vi.spyOn(exerciseService, 'getTitlesForCourse').mockReturnValue(
-            of((metisService.getCourse().exercises ?? []).map((exercise) => ({ id: exercise.id!, title: exercise.title, type: exercise.type }))),
+            of((communicationService.getCourse().exercises ?? []).map((exercise) => ({ id: exercise.id!, title: exercise.title, type: exercise.type }))),
         );
-        exerciseReferenceAction = new ExerciseReferenceAction(metisService, exerciseService);
-        faqReferenceAction = new FaqReferenceAction(metisService);
+        exerciseReferenceAction = new ExerciseReferenceAction(communicationService, exerciseService);
+        faqReferenceAction = new FaqReferenceAction(communicationService);
     });
 
     afterEach(() => {
@@ -114,12 +120,12 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         beforeEach(async () => {
             fixture.detectChanges();
             comp.changeModel('initial', '');
-            channels = [metisGeneralChannelDTO, metisExamChannelDTO, metisExerciseChannelDTO];
+            channels = [communicationGeneralChannelDTO, communicationExamChannelDTO, communicationExerciseChannelDTO];
             channelReferenceAction.cachedChannels = channels;
-            users = [metisUser1, metisUser2, metisTutor];
+            users = [communicationUser1, communicationUser2, communicationTutor];
             vi.spyOn(courseManagementService, 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: users, status: 200 })));
-            exercises = metisService.getCourse().exercises!;
-            faqs = await firstValueFrom(metisService.getFaqs());
+            exercises = communicationService.getCourse().exercises!;
+            faqs = await firstValueFrom(communicationService.getFaqs());
 
             switch (actionId) {
                 case ChannelReferenceAction.ID:
@@ -184,7 +190,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             suggestions.forEach((suggestion, index) => {
                 expect(suggestion.label).toBe(`/exercise ${exercises[index].title}`);
                 expect(suggestion.insertText).toBe(
-                    `[${exercises[index].type}]${exercises[index].title}(${metisService.getLinkForExercise(exercises[index].id!.toString())})[/${exercises[index].type}]`,
+                    `[${exercises[index].type}]${exercises[index].title}(${communicationService.getLinkForExercise(exercises[index].id!.toString())})[/${exercises[index].type}]`,
                 );
                 expect(suggestion.detail).toBe(exercises[index].type);
             });
@@ -194,7 +200,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             expect(suggestions).toHaveLength(faqs.length);
             suggestions.forEach((suggestion, index) => {
                 expect(suggestion.label).toBe(`/faq ${faqs[index].questionTitle}`);
-                expect(suggestion.insertText).toBe(`[faq]${faqs[index].questionTitle}(${metisService.getLinkForFaq()}?faqId=${faqs[index].id})[/faq]`);
+                expect(suggestion.insertText).toBe(`[faq]${faqs[index].questionTitle}(${communicationService.getLinkForFaq()}?faqId=${faqs[index].id})[/faq]`);
                 expect(suggestion.detail).toBe('faq');
             });
         };
@@ -227,7 +233,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
 
     describe('ChannelReferenceAction', () => {
         it('should use cached channels if available', async () => {
-            const channels: ChannelIdAndNameDTO[] = [metisGeneralChannelDTO, metisExamChannelDTO, metisExerciseChannelDTO];
+            const channels: ChannelIdAndNameDTO[] = [communicationGeneralChannelDTO, communicationExamChannelDTO, communicationExerciseChannelDTO];
             channelReferenceAction.cachedChannels = channels;
             const getChannelsSpy = vi.spyOn(channelService, 'getPublicChannelsOfCourse');
             fixture.detectChanges();
@@ -237,12 +243,12 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         });
 
         it('should load and cache channels if none are cached', async () => {
-            const channels: ChannelIdAndNameDTO[] = [metisGeneralChannelDTO, metisExamChannelDTO, metisExerciseChannelDTO];
+            const channels: ChannelIdAndNameDTO[] = [communicationGeneralChannelDTO, communicationExamChannelDTO, communicationExerciseChannelDTO];
             const getChannelsStub = vi.spyOn(channelService, 'getPublicChannelsOfCourse').mockReturnValue(of(new HttpResponse({ body: channels, status: 200 })));
             fixture.detectChanges();
             comp.registerAction(channelReferenceAction);
             expect(await channelReferenceAction.fetchChannels()).toBe(channels);
-            expect(getChannelsStub).toHaveBeenCalledExactlyOnceWith(metisService.getCourse().id!);
+            expect(getChannelsStub).toHaveBeenCalledExactlyOnceWith(communicationService.getCourse().id!);
             expect(channelReferenceAction.cachedChannels).toBe(channels);
         });
 
@@ -257,7 +263,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
     describe('ExerciseReferenceAction (edge cases)', () => {
         it('should initialize with empty values if no exercise titles are available', async () => {
             vi.spyOn(exerciseService, 'getTitlesForCourse').mockReturnValue(of([]));
-            const actionWithoutExercises = new ExerciseReferenceAction(metisService, exerciseService);
+            const actionWithoutExercises = new ExerciseReferenceAction(communicationService, exerciseService);
             await firstValueFrom(exerciseService.getTitlesForCourse(1));
             fixture.detectChanges();
             comp.registerAction(actionWithoutExercises);
@@ -274,7 +280,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
 
     describe('FaqReferenceAction', () => {
         it('should initialize with empty values if faqs are not available', () => {
-            vi.spyOn(metisService, 'getFaqs').mockReturnValue(of([]));
+            vi.spyOn(communicationService, 'getFaqs').mockReturnValue(of([]));
 
             fixture.detectChanges();
             comp.registerAction(faqReferenceAction);
@@ -287,7 +293,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
 
             const faq: Faq = { id: 99, questionTitle: 'Loaded FAQ', questionAnswer: 'Answer' };
             // Simulate REST-loaded FAQs arriving via the observable
-            metisService.setFaqs([faq]);
+            communicationService.setFaqs([faq]);
 
             expect(faqReferenceAction.getValues()).toEqual([{ id: faq.id!.toString(), value: faq.questionTitle!, type: 'faq' }]);
         });
@@ -298,9 +304,9 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         let lectureAttachmentReferenceAction: LectureAttachmentReferenceAction;
 
         beforeEach(() => {
-            lectures = metisService.getCourse().lectures!;
+            lectures = communicationService.getCourse().lectures!;
             vi.spyOn(lectureService, 'findAllByCourseIdWithSlides').mockReturnValue(of(new HttpResponse({ body: lectures, status: 200 })));
-            lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(metisService, lectureService, fileService);
+            lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(communicationService, lectureService, fileService);
         });
 
         afterEach(() => {
@@ -315,14 +321,6 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 id: lecture.id!,
                 title: lecture.title!,
                 attachmentVideoUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO),
-                attachments: lecture.attachments?.map((attachment) => ({
-                    ...attachment,
-                    link: attachment.link && attachment.name ? fileService.createAttachmentFileUrl(attachment.link, attachment.name, false, attachment.version) : attachment.link,
-                    linkUrl:
-                        attachment.link && attachment.name
-                            ? 'api/core/files/' + fileService.createAttachmentFileUrl(attachment.link, attachment.name, false, attachment.version)
-                            : attachment.link,
-                })),
             }));
 
             expect(lectureAttachmentReferenceAction.lecturesWithDetails).toEqual(lecturesWithDetails);
@@ -341,29 +339,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             comp.registerAction(lectureAttachmentReferenceAction);
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];
             lectureAttachmentReferenceAction.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture });
-            expect(comp.getText()).toBe(`[lecture]${lecture.title}(${metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
-        });
-
-        it('should reference an attachment without brackets', () => {
-            fixture.detectChanges();
-
-            const attachmentNameWithBrackets = 'Test (File) With [Brackets] And (More) [Bracket(s)]';
-            const attachmentNameWithoutBrackets = 'Test File With Brackets And More Brackets';
-
-            const newAttachment = {
-                id: 53,
-                name: attachmentNameWithBrackets,
-                link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
-                version: 1,
-                uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
-                attachmentType: 'FILE',
-            } as Attachment;
-
-            comp.registerAction(lectureAttachmentReferenceAction);
-            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];
-            const shortLink = newAttachment.link?.split('attachments/')[1];
-            lectureAttachmentReferenceAction.executeInCurrentEditor({ reference: ReferenceType.ATTACHMENT, lecture: lecture, attachment: newAttachment });
-            expect(comp.getText()).toBe(`[attachment]${attachmentNameWithoutBrackets}(${shortLink})[/attachment]`);
+            expect(comp.getText()).toBe(`[lecture]${lecture.title}(${communicationService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
         });
 
         it('should reference a lecture without brackets', () => {
@@ -378,7 +354,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             lecture.title = lectureNameWithBrackets;
             lectureAttachmentReferenceAction.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture });
             lecture.title = previousTitle;
-            expect(comp.getText()).toBe(`[lecture]${lectureNameWithoutBrackets}(${metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
+            expect(comp.getText()).toBe(`[lecture]${lectureNameWithoutBrackets}(${communicationService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
         });
 
         it('should reference an attachment video unit without brackets', () => {
@@ -392,15 +368,15 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const attachmentVideoUnit = lecture.attachmentVideoUnits![0];
 
             attachmentVideoUnit.attachment = {
-                link: '/api/files/attachments/lecture/1/Metis-Attachment.pdf',
-                studentVersion: 'attachments/lecture/1/Metis-Attachment.pdf',
-                name: 'Metis-Attachment.pdf',
+                link: 'attachments/lectures/1/Communication-Attachment.pdf',
+                studentVersion: 'attachments/attachment-video-units/1/student/Communication-Attachment.pdf',
+                name: 'Communication-Attachment.pdf',
             } as Attachment;
 
             const previousName = attachmentVideoUnit.name;
             attachmentVideoUnit.name = attachmentVideoUnitNameWithBrackets;
 
-            const attachmentVideoUnitFileName = 'lecture/1/Metis-Attachment.pdf';
+            const attachmentVideoUnitFileName = 'attachment-video-units/1/student/Communication-Attachment.pdf';
 
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.ATTACHMENT_UNITS,
@@ -412,33 +388,6 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             expect(comp.getText()).toBe(`[lecture-unit]${attachmentVideoUnitNameWithoutBrackets}(${attachmentVideoUnitFileName})[/lecture-unit]`);
         });
 
-        it('should reference an attachment', () => {
-            fixture.detectChanges();
-            comp.registerAction(lectureAttachmentReferenceAction);
-            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];
-            const attachment = lecture.attachments![0];
-            const attachmentFileName = 'Metis-Attachment.pdf';
-            lectureAttachmentReferenceAction.executeInCurrentEditor({
-                reference: ReferenceType.ATTACHMENT,
-                lecture,
-                attachment,
-            });
-            expect(comp.getText()).toBe(`[attachment]${attachment.name}(${attachmentFileName})[/attachment]`);
-        });
-
-        it('should error when trying to reference a nonexistent attachment', () => {
-            fixture.detectChanges();
-            comp.registerAction(lectureAttachmentReferenceAction);
-            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];
-            const executeAction = () =>
-                lectureAttachmentReferenceAction.executeInCurrentEditor({
-                    reference: ReferenceType.ATTACHMENT,
-                    lecture,
-                    attachment: undefined,
-                });
-            expect(executeAction).toThrow(Error);
-        });
-
         it('should reference an attachment video unit', () => {
             fixture.detectChanges();
             comp.registerAction(lectureAttachmentReferenceAction);
@@ -446,13 +395,13 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const attachmentVideoUnit = lecture.attachmentVideoUnits![0];
 
             attachmentVideoUnit.attachment = {
-                link: '/api/files/attachments/Metis-Attachment.pdf',
-                studentVersion: 'attachments/Metis-Attachment.pdf',
-                name: 'Metis-Attachment.pdf',
+                link: '/api/files/attachments/Communication-Attachment.pdf',
+                studentVersion: 'attachments/Communication-Attachment.pdf',
+                name: 'Communication-Attachment.pdf',
                 version: 2,
             } as Attachment;
 
-            const attachmentVideoUnitFileName = 'Metis-Attachment.pdf?version=2';
+            const attachmentVideoUnitFileName = 'Communication-Attachment.pdf?version=2';
 
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.ATTACHMENT_UNITS,
@@ -469,11 +418,11 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const attachmentVideoUnit = lecture.attachmentVideoUnits![0];
 
             attachmentVideoUnit.attachment = {
-                link: 'attachments/attachment-unit/123/Metis-Attachment.pdf',
-                name: 'Metis-Attachment.pdf',
+                link: 'attachments/attachment-video-units/123/Communication-Attachment.pdf',
+                name: 'Communication-Attachment.pdf',
                 version: 3,
             } as Attachment;
-            vi.spyOn(fileService, 'createStudentLink').mockReturnValue('attachments/attachment-unit/123/student/Metis-Attachment.pdf');
+            vi.spyOn(fileService, 'createStudentLink').mockReturnValue('attachments/attachment-video-units/123/student/Communication-Attachment.pdf');
 
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.ATTACHMENT_UNITS,
@@ -481,7 +430,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 attachmentVideoUnit,
             });
 
-            expect(comp.getText()).toBe(`[lecture-unit]${attachmentVideoUnit.name}(attachment-unit/123/student/Metis-Attachment.pdf?version=3)[/lecture-unit]`);
+            expect(comp.getText()).toBe(`[lecture-unit]${attachmentVideoUnit.name}(attachment-video-units/123/student/Communication-Attachment.pdf?version=3)[/lecture-unit]`);
         });
 
         it('should error when trying to reference a nonexistent attachment video unit', () => {
@@ -505,7 +454,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const slide = attachmentVideoUnit.slides![0];
 
             // Ensure slide has a valid slideImagePath
-            slide.slideImagePath = 'attachments/attachment-unit/123/slide/slide1.png';
+            slide.slideImagePath = 'slide1.png';
 
             const slideIndex = 1;
             const slideId = 1;

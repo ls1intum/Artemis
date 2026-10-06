@@ -20,6 +20,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -29,6 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -90,9 +92,13 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService.Repo
 @Lazy(false)
 @Service
 @Profile(PROFILE_BUILDAGENT)
+@ConditionalOnProperty(prefix = "artemis.continuous-integration", name = "build-runner", havingValue = "docker", matchIfMissing = true)
 public class BuildJobContainerService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobContainerService.class);
+
+    /** The characters a path inside a build container may consist of. */
+    private static final Pattern SAFE_CONTAINER_PATH = Pattern.compile("[a-zA-Z0-9_*./-]+");
 
     /**
      * Timeout in minutes for Docker exec setup commands (mkdir, chmod, cp, etc.).
@@ -409,6 +415,9 @@ public class BuildJobContainerService {
      * Adding a file "stop_container.txt" like in {@link #stopContainer(String)} might not work for unresponsive containers, thus we use
      * {@link DockerClient#stopContainerCmd(String)}, {@link DockerClient#killContainerCmd(String)} and {@link DockerClient#removeContainerCmd(String)} to stop, kill or remove the
      * container.
+     * <p>
+     * Runs to the end even when the calling thread has been interrupted, because it is reached during cancellation and
+     * stopping the container is exactly the work that still has to happen.
      *
      * @param containerId The ID of the container to stop or kill.
      */
@@ -432,6 +441,12 @@ public class BuildJobContainerService {
                 future.get(20, TimeUnit.SECONDS);  // Wait for the stop command to complete with a timeout
             }
             catch (Exception e) {
+                // The interrupt status is deliberately left cleared here, which is what java:S2142 would ask to
+                // restore. This method is reached during cancellation from callers that have already restored the flag
+                // themselves - BuildJobManagementService.awaitTermination and the pause grace period in
+                // SharedQueueProcessingService both do - and every Docker call below waits on a Future, which fails
+                // immediately while the flag is set. Restoring it would abandon a running container per cancelled job
+                // and leave the students' build scripts burning CPU until the hourly container cleanup reaps them.
                 Throwable cause = e.getCause();
                 // e will be ExecutionException if thrown in executor service by submitted task
                 // We are interested in the underlying cause in this case
@@ -485,6 +500,10 @@ public class BuildJobContainerService {
             killFuture.get(10, TimeUnit.SECONDS);  // Wait for the kill command to complete with a timeout
         }
         catch (Exception e) {
+            // Not restoring the interrupt status is deliberate; see stopUnresponsiveContainer. Restoring it here would
+            // additionally make the enclosing try-with-resources close the executor with shutdownNow() instead of
+            // shutdown(), which drains the work queue and so drops a kill or remove task still queued behind a
+            // wedged stop.
             log.error("Failed to kill container with id {}.", containerId, e);
         }
     }
@@ -505,6 +524,7 @@ public class BuildJobContainerService {
             removeFuture.get(10, TimeUnit.SECONDS); // Wait for the remove command to complete with a timeout
         }
         catch (Exception e) {
+            // Not restoring the interrupt status is deliberate; see killContainer.
             log.error("Failed to remove container with id {}", containerId, e);
         }
     }
@@ -984,7 +1004,7 @@ public class BuildJobContainerService {
      * @throws LocalCIException if the path is invalid or potentially malicious
      */
     private void checkPath(String path) {
-        if (path == null || path.contains("..") || !path.matches("[a-zA-Z0-9_*./-]+")) {
+        if (path == null || path.contains("..") || !SAFE_CONTAINER_PATH.matcher(path).matches()) {
             throw new LocalCIException("Invalid path: " + path);
         }
     }

@@ -45,6 +45,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -54,6 +56,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
  */
 @Conditional(AtlasEnabled.class)
 @Lazy
+@FeatureUsage(UserFeature.COMPETENCY_MANAGEMENT)
 @RestController
 @RequestMapping("api/atlas/")
 public class PrerequisiteResource {
@@ -97,6 +100,7 @@ public class PrerequisiteResource {
      * @param courseId the id of the course for which the prerequisites should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the found prerequisites
      */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
     @GetMapping("courses/{courseId}/prerequisites")
     @EnforceAtLeastStudent
     public ResponseEntity<List<CourseCompetencyResponseDTO>> getPrerequisitesWithProgress(@PathVariable long courseId) {
@@ -114,6 +118,7 @@ public class PrerequisiteResource {
      * @param courseId       the id of the course to which the prerequisite belongs
      * @return the ResponseEntity with status 200 (OK) and with body the prerequisite, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
     @GetMapping("courses/{courseId}/prerequisites/{prerequisiteId}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<CourseCompetencyResponseDTO> getPrerequisite(@PathVariable long prerequisiteId, @PathVariable long courseId) {
@@ -288,6 +293,7 @@ public class PrerequisiteResource {
      * @return the ResponseEntity with status 201 (Created) and with body containing the imported prerequisites
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
+    @FeatureUsage(UserFeature.STANDARDIZED_COMPETENCIES)
     @PostMapping("courses/{courseId}/prerequisites/import-standardized")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<CompetencyImportResponseDTO>> importStandardizedPrerequisites(@PathVariable long courseId, @RequestBody List<Long> prerequisiteIdsToImport)

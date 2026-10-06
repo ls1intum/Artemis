@@ -1,7 +1,8 @@
 package de.tum.cit.aet.artemis.core.util;
 
-import java.util.Objects;
+import java.util.regex.Pattern;
 
+import org.jspecify.annotations.NonNull;
 import org.semver4j.Semver;
 import org.semver4j.SemverException;
 
@@ -17,6 +18,12 @@ import org.semver4j.SemverException;
  * original version string through to anything user-visible or persisted.
  */
 public final class ArtemisVersionUtil {
+
+    /** Two numeric dot-separated components, for example {@code 9.2}. */
+    private static final Pattern TWO_COMPONENT_VERSION = Pattern.compile("\\d+\\.\\d+");
+
+    /** Three numeric dot-separated components, for example {@code 10.4.1}. */
+    private static final Pattern THREE_COMPONENT_VERSION = Pattern.compile("\\d+\\.\\d+\\.\\d+");
 
     private ArtemisVersionUtil() {
     }
@@ -35,14 +42,14 @@ public final class ArtemisVersionUtil {
      * @throws NullPointerException if {@code version} is null
      * @throws SemverException      if {@code version} is not exactly two or three numeric components
      */
-    public static Semver parseForComparison(String version) {
-        String trimmed = Objects.requireNonNull(version, "version must not be null").trim();
-        if (trimmed.matches("\\d+\\.\\d+")) {
+    public static Semver parseForComparison(@NonNull String version) {
+        String trimmed = version.trim();
+        if (TWO_COMPONENT_VERSION.matcher(trimmed).matches()) {
             return new Semver(trimmed + ".0");
         }
         // Reject anything that is not exactly three dotted numeric components before delegating, so inputs
         // like "9.2.3.4" are treated as invalid regardless of the underlying parser's leniency.
-        if (!trimmed.matches("\\d+\\.\\d+\\.\\d+")) {
+        if (!THREE_COMPONENT_VERSION.matcher(trimmed).matches()) {
             throw new SemverException("Invalid Artemis version: " + version);
         }
         return new Semver(trimmed);

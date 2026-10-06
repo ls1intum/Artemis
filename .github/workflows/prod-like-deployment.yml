@@ -57,7 +57,7 @@ jobs:
       # Check out only the resolver action, from the workflow's own ref (Helios dispatches this
       # workflow from the branch being deployed). Run-resolution is a build-correctness helper.
       - name: Check out resolver action
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           sparse-checkout: .github/actions/resolve-artifact-run
           sparse-checkout-cone-mode: false
@@ -102,37 +102,39 @@ jobs:
           chmod 700 ~/.ssh
 
           # Write private key
-          echo "$DEPLOYMENT_SSH_KEY" | sed 's/\\n/\n/g' > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "$DEPLOYMENT_SSH_KEY" | sed 's/\\n/\n/g' > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
 
           # Write known hosts
           echo "$DEPLOYMENT_HOST_PUBLIC_KEYS" > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
       - name: Checkout Artemis-Ansible repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           repository: 'ls1intum/artemis-ansible'
 
+      - name: Check out Python dependency lock
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          path: artemis-dependency-lock
+          sparse-checkout: .github/python-dependencies
+          sparse-checkout-cone-mode: false
+
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: '3.14'
 
       - name: Install Artemis-Ansible dependencies
         run: |
-          pip3 install -r requirements.txt
+          python3 -m pip install --require-hashes -r artemis-dependency-lock/.github/python-dependencies/requirements.txt
           ansible-galaxy collection install -r requirements.yml --force
           ansible-galaxy install -r requirements.yml --force
           ansible-galaxy install -r ~/.ansible/collections/ansible_collections/ls1intum/artemis/requirements.yml
 
-      - name: Set Vault token
-        run: |
-          echo "${{ secrets.VAULT_TOKEN }}" > ~/.vault-token
-          export VAULT_TOKEN=$(cat ~/.vault-token)
-
       - name: Download artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: Artemis.war
           path: /tmp/artifact
@@ -178,7 +180,5 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          rm -f ~/.ssh/id_rsa
-          rm -f ~/.vault-token
-          unset VAULT_TOKEN
+          rm -f ~/.ssh/id_ed25519
           rm -rf /tmp/artifact/*

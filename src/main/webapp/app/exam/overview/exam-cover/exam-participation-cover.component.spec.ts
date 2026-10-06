@@ -119,6 +119,25 @@ describe('ExamParticipationCoverComponent', () => {
         expect(component.endEnabled()).toBe(false);
     });
 
+    it('should enable the end of the exam as soon as the confirmation checkbox is ticked', async () => {
+        flushInputs();
+        const checkbox = fixture.nativeElement.querySelector('#confirmBox') as HTMLInputElement;
+        expect(checkbox).toBeTruthy();
+        expect(component.endEnabled()).toBe(false);
+
+        checkbox.click();
+        await fixture.whenStable();
+
+        expect(component.confirmed).toBe(true);
+        expect(component.endEnabled()).toBe(true);
+
+        checkbox.click();
+        await fixture.whenStable();
+
+        expect(component.confirmed).toBe(false);
+        expect(component.endEnabled()).toBe(false);
+    });
+
     it('should not reset the confirmation on a live schedule update while waiting for the exam start (issue #13071)', () => {
         flushInputs();
 

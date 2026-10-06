@@ -10,15 +10,17 @@
             }
             mavenCentral()
         }
+        // The org.openapi.generator plugin comes from the plugins block of the root build.gradle. Do not add it here as
+        // well: the Jackson pin in the root buildscript block does not reach this classpath, so a second copy would put
+        // its older jackson-databind into the GitHub dependency graph.
         dependencies {
             classpath "org.yaml:snakeyaml:${rootProject.property('snakeyaml_version')}"
-            classpath "org.openapitools:openapi-generator-gradle-plugin:7.14.0"
         }
     }
 
     openApi {
         apiDocsUrl.set("http://localhost:8080/api-docs.yaml")
-        outputDir.set(file("$rootDir/openapi"))
+        outputDir.set(file("$rootDir/config/openapi"))
         outputFileName.set("openapi.yaml")
         // This is the time we wait for the Artemis server to start. The default is 30s, which might not suffice on less powerful machines.
         def waitTimeSeconds = 180;
@@ -29,7 +31,7 @@
             jvmArgs = [
                 "-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,theia,dev,localci,localvc",
                 "-Dartemis.lti.enabled=true",
-                "-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web.training",
+                "-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web.openapi",
                 "-Dartemis.hyperion.enabled=true",
                 "-Dartemis.weaviate.enabled=true",
                 "-Dartemis.openapi-docs-generation=true",
@@ -76,7 +78,7 @@
     // committed, so CI never runs openApiGenerate.
     openApiGenerate {
         generatorName = "angular22"
-        inputSpec.set(file("${rootDir}/openapi/openapi.yaml").toURI().toString())
+        inputSpec.set(file("${rootDir}/config/openapi/openapi.yaml").toURI().toString())
         outputDir = "${rootDir}/src/main/webapp/app/openapi"
         apiPackage = "api"
         modelPackage = "model"
@@ -102,8 +104,8 @@
 
         doLast {
             def projectRoot = project.rootDir
-            def inputFile = file("${projectRoot}/openapi/openapi.yaml")
-            def outputFile = file("${projectRoot}/openapi/openapi.yaml")
+            def inputFile = file("${projectRoot}/config/openapi/openapi.yaml")
+            def outputFile = file("${projectRoot}/config/openapi/openapi.yaml")
             def yamlParser = new Yaml()
 
             Map<String, Object> specificationMap =
