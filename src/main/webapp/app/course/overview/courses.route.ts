@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import { CanMatchFn, Route, Routes, UrlSegment } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_STUDENT } from 'app/foundation/constants/authority.constants';
@@ -45,6 +45,12 @@ export const COURSE_OVERVIEW_GUARDED_ROUTE_PATHS: ReadonlySet<string> = new Set(
     CourseOverviewRoutePath.TRAINING,
     CourseOverviewRoutePath.TRAINING_QUIZ,
 ]);
+
+/**
+ * Matches the URLs of the text unit full screen page, `lectures/:lectureId/text-units/:unitId`. It receives all
+ * segments from the `lectures` one on, so these are exactly four.
+ */
+export const isTextUnitFullscreenUrl: CanMatchFn = (_route: Route, segments: UrlSegment[]) => segments.length === 4 && segments[2].path === 'text-units';
 
 export const courseRoutes: Routes = [
     {
@@ -207,6 +213,36 @@ export const courseRoutes: Routes = [
                 loadChildren: () => import('app/programming/overview/programming-repository.route').then((m) => m.programmingRepositoryRoutes),
             },
 
+            {
+                // A text unit shown on its own page. It shares the `lectures` path, and therefore its guards, but not
+                // the lecture list around the regular lecture routes. `isolatedView` makes the course shell drop its
+                // sidebar and title bar.
+                //
+                // `canMatch` is what keeps every other lecture URL on the route below: a route without a component
+                // whose children do not match is still taken when no URL segments are left over, which is the case
+                // for the bare `lectures` URL that the sidebar links to.
+                path: CourseOverviewRoutePath.LECTURES,
+                canMatch: [isTextUnitFullscreenUrl],
+                data: {
+                    authorities: IS_AT_LEAST_STUDENT,
+                    pageTitle: 'overview.lectures',
+                    isolatedView: true,
+                },
+                canActivate: [UserRouteAccessService, CourseOverviewGuard, LectureGuard],
+                children: [
+                    {
+                        path: ':lectureId/text-units/:unitId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.lectures',
+                            isolatedView: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () =>
+                            import('app/lecture/overview/course-lectures/text-unit-fullscreen/text-unit-fullscreen.component').then((m) => m.TextUnitFullscreenComponent),
+                    },
+                ],
+            },
             {
                 path: CourseOverviewRoutePath.LECTURES,
                 loadComponent: () => import('app/lecture/shared/course-lectures/course-lectures.component').then((m) => m.CourseLecturesComponent),
