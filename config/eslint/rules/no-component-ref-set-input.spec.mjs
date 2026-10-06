@@ -17,7 +17,7 @@ describe('no-component-ref-set-input', () => {
                 // A plain function that is not a method call.
                 { code: `setInput('a', 1);`, filename: 'src/main/webapp/app/some.service.ts' },
                 // Another computed member.
-                { code: `this.ref['setInputs']('a', 1); this.ref[name]('a', 1);`, filename: 'src/main/webapp/app/some.service.ts' },
+                { code: `this.ref['setInputs']('a', 1); this.ref[name]('a', 1); ref.setInput[method](ref, 'a', 1);`, filename: 'src/main/webapp/app/some.service.ts' },
                 // Test code sets inputs on fixtures.
                 { code: `fixture.componentRef.setInput('exercise', exercise);`, filename: 'src/main/webapp/app/exercise/foo.component.spec.ts' },
             ],
@@ -45,6 +45,12 @@ describe('no-component-ref-set-input', () => {
                 // call, apply and bind call it as well.
                 {
                     code: `ref.setInput.call(ref, 'a', 1); ref.setInput.apply(ref, ['a', 1]); const set = ref.setInput.bind(ref);`,
+                    filename: 'src/main/webapp/app/some.service.ts',
+                    errors: [error, error, error],
+                },
+                // The call, apply and bind members can be spelled with brackets as well.
+                {
+                    code: "ref.setInput['call'](ref, 'a', 1); ref['setInput']['apply'](ref, ['a', 1]); const set = ref.setInput[`bind`](ref);",
                     filename: 'src/main/webapp/app/some.service.ts',
                     errors: [error, error, error],
                 },

@@ -14,6 +14,13 @@ type IsInput<Member> = Member extends InputSignalWithTransform<infer _Read, infe
 type InputName<T> = Extract<{ [K in keyof T]-?: IsInput<T[K]> extends true ? K : never }[keyof T], keyof T>;
 
 /**
+ * What each key of the passed object may hold: the write type of the input of that name, and nothing for any other key.
+ * Checking every key of the argument, not only the ones the helper knows, also rejects an object that is stored in a
+ * variable and carries an extra property; TypeScript only reports excess properties of an object literal.
+ */
+type AllowedValues<T, V> = { [K in keyof V]: K extends InputName<T> ? InputWriteType<T[K]> : never };
+
+/**
  * Sets inputs on a component that was created in code (`ViewContainerRef.createComponent`, `createComponent`, a portal).
  *
  * `ComponentRef.setInput` takes the input name as a plain string, so a misspelled or removed input is only logged as NG0303
@@ -29,10 +36,10 @@ type InputName<T> = Extract<{ [K in keyof T]-?: IsInput<T[K]> extends true ? K :
  * @param ref The reference of the created component
  * @param values The inputs to set, by class member; omitted inputs keep their current value
  */
-export function setInputs<T, Name extends InputName<T>>(ref: ComponentRef<T>, values: { [K in Name]: InputWriteType<T[K]> }): void {
+export function setInputs<T, V extends object>(ref: ComponentRef<T>, values: V & AllowedValues<T, V>): void {
     // `setInput` looks an input up by its public (template) name, which differs from the class member for an aliased input.
     const declaredInputs = reflectComponentType(ref.componentType)?.inputs ?? [];
-    for (const [name, value] of Object.entries<unknown>(values)) {
+    for (const [name, value] of Object.entries(values)) {
         const publicName = declaredInputs.find((input) => input.propName === name)?.templateName ?? name;
         // This is one of the two places that may call `setInput` (the UI kit has its own copy); every caller is type checked.
         // eslint-disable-next-line localRules/no-component-ref-set-input -- the typed wrapper around the string based API

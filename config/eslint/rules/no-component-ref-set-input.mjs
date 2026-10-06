@@ -41,32 +41,38 @@ export default createRule({
             return {};
         }
 
-        // `x.setInput`, `x?.setInput` and the spellings that reach the same member: `x['setInput']` and x[`setInput`].
-        const isSetInputMember = (node) => {
+        // The name a member access spells out: `x.name`, `x?.name`, `x['name']` and x[`name`]. Undefined for a dynamic key.
+        const staticMemberName = (node) => {
             if (node.type !== 'MemberExpression') {
-                return false;
+                return undefined;
             }
             const property = node.property;
             if (!node.computed) {
-                return property.type === 'Identifier' && property.name === 'setInput';
+                return property.type === 'Identifier' ? property.name : undefined;
             }
-            return (
-                (property.type === 'Literal' && property.value === 'setInput') ||
-                (property.type === 'TemplateLiteral' && property.expressions.length === 0 && property.quasis[0].value.cooked === 'setInput')
-            );
+            if (property.type === 'Literal' && typeof property.value === 'string') {
+                return property.value;
+            }
+            if (property.type === 'TemplateLiteral' && property.expressions.length === 0) {
+                return property.quasis[0].value.cooked;
+            }
+            return undefined;
         };
+        const isSetInputMember = (node) => staticMemberName(node) === 'setInput';
+        // The member to report: for `x.setInput` the name of `setInput` itself.
+        const reportTarget = (member) => member.property;
 
         return {
             CallExpression(node) {
                 const callee = node.callee;
                 // `ref.setInput(...)`, `this.ref.setInput(...)`, `this.ref?.setInput(...)` and `ref['setInput'](...)`.
                 if (isSetInputMember(callee)) {
-                    context.report({ node: callee.property, messageId: 'noSetInput' });
+                    context.report({ node: reportTarget(callee), messageId: 'noSetInput' });
                     return;
                 }
-                // `ref.setInput.call(...)`, `.apply(...)` and `.bind(...)` call it as well.
-                if (callee.type === 'MemberExpression' && !callee.computed && ['call', 'apply', 'bind'].includes(callee.property.name) && isSetInputMember(callee.object)) {
-                    context.report({ node: callee.object.property, messageId: 'noSetInput' });
+                // `ref.setInput.call(...)`, `.apply(...)` and `.bind(...)` call it as well, also spelled `ref.setInput['call'](...)`.
+                if (['call', 'apply', 'bind'].includes(staticMemberName(callee)) && isSetInputMember(callee.object)) {
+                    context.report({ node: reportTarget(callee.object), messageId: 'noSetInput' });
                 }
             },
         };

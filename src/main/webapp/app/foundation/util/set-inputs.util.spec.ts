@@ -63,6 +63,16 @@ describe('setInputs', () => {
         expect(fixture.componentInstance.label()).toBeUndefined();
     });
 
+    it('should accept an object that is kept in a variable when all of its keys are inputs', () => {
+        const fixture = create();
+        const stored = { label: 'stored', count: 4 };
+
+        setInputs(fixture.componentRef, stored);
+
+        expect(fixture.componentInstance.label()).toBe('stored');
+        expect(fixture.componentInstance.count()).toBe(4);
+    });
+
     it('should reject at compile time what the string based API cannot', () => {
         const fixture = create();
         // Angular only logs an unknown input at runtime; the point here is that the calls below do not compile.
@@ -78,6 +88,10 @@ describe('setInputs', () => {
         setInputs(fixture.componentRef, { count: undefined });
         // @ts-expect-error a value that may be undefined for a required input of type number
         setInputs(fixture.componentRef, { count: Math.random() > 2 ? 1 : undefined });
+        // Excess properties are only reported for an object literal, so a stored object needs its own check.
+        const storedWithExtraKey = { count: 1, label: 'x', notAnInput: 'extra' };
+        // @ts-expect-error an object in a variable that has all inputs and one more property
+        setInputs(fixture.componentRef, storedWithExtraKey);
 
         consoleError.mockRestore();
     });
