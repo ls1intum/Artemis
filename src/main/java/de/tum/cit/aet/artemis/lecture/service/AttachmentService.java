@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
@@ -38,6 +40,12 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 public class AttachmentService {
 
     private static final Logger log = LoggerFactory.getLogger(AttachmentService.class);
+
+    /**
+     * Only the extension of this name ends up in a student version filename; the rest is a timestamp and a random part. No part of a name an instructor chose reaches the
+     * file system.
+     */
+    private static final String STUDENT_VERSION_FILENAME_TEMPLATE = "student_version.pdf";
 
     private final AttachmentRepository attachmentRepository;
 
@@ -161,7 +169,14 @@ public class AttachmentService {
      */
     private void deleteStudentVersionFile(long attachmentVideoUnitId, String studentVersionFilename) {
         try {
-            Path oldStudentVersionPath = new FileSystemLocation.StudentVersionSlides(attachmentVideoUnitId, studentVersionFilename).path();
+            Path studentVersionDirectory = studentVersionDirectory(attachmentVideoUnitId).toAbsolutePath().normalize();
+            Path oldStudentVersionPath = new FileSystemLocation.StudentVersionSlides(attachmentVideoUnitId, studentVersionFilename).path().toAbsolutePath().normalize();
+            // A stored value must never make this delete anything outside the student version directory of its unit.
+            if (!oldStudentVersionPath.startsWith(studentVersionDirectory) || oldStudentVersionPath.equals(studentVersionDirectory)) {
+                log.warn("Not deleting student version {} of attachment video unit {}: it is not inside the student version directory", studentVersionFilename,
+                        attachmentVideoUnitId);
+                return;
+            }
             fileService.schedulePathForDeletion(oldStudentVersionPath, 0);
             fileService.evictCacheForPath(oldStudentVersionPath);
         }
@@ -198,9 +213,7 @@ public class AttachmentService {
      * @throws IOException If there's an error handling the file
      */
     private void replaceStudentVersionFile(byte[] pdfData, Attachment attachment, long attachmentVideoUnitId) throws IOException {
-        String sanitizedName = FileUtil.checkAndSanitizeFilename(attachment.getName());
-        String filename = FileUtil.generateFilename(FileUtil.generateTargetFilenameBase(FilePathType.STUDENT_VERSION_SLIDES), sanitizedName + ".pdf", false);
-        persistStudentVersionFile(pdfData, attachment, attachmentVideoUnitId, filename);
+        persistStudentVersionFile(pdfData, attachment, attachmentVideoUnitId, newStudentVersionFilename());
     }
 
     /**
@@ -228,10 +241,12 @@ public class AttachmentService {
      * @throws IOException if the file cannot be written
      */
     public String stageUploadedStudentVersionFile(byte[] pdfData, long attachmentVideoUnitId, String originalFilename) throws IOException {
-        String sanitizedFilename = FileUtil.checkAndSanitizeFilename(originalFilename);
-        FileUtil.validateExtension(sanitizedFilename, false);
-        // Always use a unique target, so the previously referenced file is never overwritten in place.
-        String filename = FileUtil.generateFilename(FileUtil.generateTargetFilenameBase(FilePathType.STUDENT_VERSION_SLIDES), sanitizedFilename, false);
+        // The uploaded name is only checked, never used: a student version is always a PDF stored under a new, unique name, so the previously referenced file is never
+        // overwritten in place.
+        if (!"pdf".equalsIgnoreCase(FilenameUtils.getExtension(FileUtil.checkAndSanitizeFilename(originalFilename)))) {
+            throw new BadRequestAlertException("The student version must be a PDF file", "attachment", "studentVersionNotPdf");
+        }
+        String filename = newStudentVersionFilename();
         writeStudentVersionFile(pdfData, attachmentVideoUnitId, filename);
         return filename;
     }
@@ -254,8 +269,16 @@ public class AttachmentService {
         publishStudentVersionFile(attachment, attachmentVideoUnitId, filename);
     }
 
+    private static String newStudentVersionFilename() {
+        return FileUtil.generateFilename(FileUtil.generateTargetFilenameBase(FilePathType.STUDENT_VERSION_SLIDES), STUDENT_VERSION_FILENAME_TEMPLATE, false);
+    }
+
+    private static Path studentVersionDirectory(long attachmentVideoUnitId) {
+        return FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(String.valueOf(attachmentVideoUnitId)).resolve("student");
+    }
+
     private void writeStudentVersionFile(byte[] pdfData, long attachmentVideoUnitId, String filename) throws IOException {
-        Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(String.valueOf(attachmentVideoUnitId)).resolve("student");
+        Path basePath = studentVersionDirectory(attachmentVideoUnitId);
         Files.createDirectories(basePath);
         tempFileUtilService.replaceFileAtomically(FilePathConverter.getAttachmentVideoUnitFileSystemPath(), basePath.resolve(filename), pdfData);
     }

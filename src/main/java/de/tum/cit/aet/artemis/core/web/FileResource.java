@@ -15,7 +15,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FilenameUtils;
@@ -553,22 +552,15 @@ public class FileResource {
                 unit -> authorizationCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
                 .toList();
 
-        Set<Long> attachmentVideoUnitIds = lectureAttachments.stream().map(AttachmentVideoUnit::getId).collect(Collectors.toSet());
-        Set<Long> unitIdsWithHiddenSlides = attachmentApi.findAttachmentVideoUnitIdsWithHiddenSlides(attachmentVideoUnitIds);
-        lectureAttachments.stream().filter(unit -> unit.getAttachment().getStudentVersion() == null && unitIdsWithHiddenSlides.contains(unit.getId())).findFirst()
-                .ifPresent(unit -> {
-                    throw new EntityNotFoundException("Student version", unit.getId());
-                });
-
+        attachmentApi.ensureStudentVersionsAvailable(lectureAttachments);
         unitApi.setCompletedForAllLectureUnits(lectureAttachments, user, true);
 
         // Modified to use studentVersion if available
         List<Path> attachmentLinks = lectureAttachments.stream().flatMap(unit -> {
             Attachment attachment = unit.getAttachment();
             // The attachment says where its own file is: a unit created for an attachment that used to hang off a lecture still has it under that lecture's directory.
-            String studentVersion = attachment.getStudentVersion();
-            if (studentVersion != null) {
-                return Stream.of(new FileSystemLocation.StudentVersionSlides(unit.getId(), studentVersion).path());
+            if (attachment.getStudentVersion() != null) {
+                return Stream.of(new FileSystemLocation.StudentVersionSlides(unit.getId(), attachment.getStudentVersion()).path());
             }
             // An attachment linking to a document hosted elsewhere contributes nothing: there is no file of ours to merge, and the `.pdf` its URL ends in is enough to pass the
             // extension filter above. Dropping it merges the lecture's own PDFs rather than failing the whole download over one external link.
@@ -721,9 +713,7 @@ public class FileResource {
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
         if (studentVersion == null) {
-            if (api.hasHiddenSlides(attachmentVideoUnitId)) {
-                throw new EntityNotFoundException("Student version", attachmentVideoUnitId);
-            }
+            api.ensureStudentVersionAvailable(attachmentVideoUnitId);
             return buildAttachmentFileResponse(storedFileLocationElseThrow(attachment), downloadFilename, AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
         }
 

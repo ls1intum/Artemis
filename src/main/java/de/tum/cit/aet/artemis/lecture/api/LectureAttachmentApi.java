@@ -1,13 +1,16 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
@@ -54,25 +57,33 @@ public class LectureAttachmentApi extends AbstractLectureApi {
     }
 
     /**
-     * Checks whether the current slide deck of an attachment video unit hides any slide.
+     * Fails closed for an attachment video unit without a student version: if its current deck hides any slide, the full file must not be served to students. This is the
+     * case while a student version is being regenerated or after its regeneration failed.
      *
-     * @param attachmentVideoUnitId the id of the attachment video unit
-     * @return whether at least one current slide is hidden
+     * @param attachmentVideoUnitId the id of the attachment video unit whose attachment has no student version
+     * @throws EntityNotFoundException if the current deck of the unit hides at least one slide
      */
-    public boolean hasHiddenSlides(long attachmentVideoUnitId) {
-        return slideRepository.existsByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(attachmentVideoUnitId);
+    public void ensureStudentVersionAvailable(long attachmentVideoUnitId) {
+        if (slideRepository.existsByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(attachmentVideoUnitId)) {
+            throw new EntityNotFoundException("Student version", attachmentVideoUnitId);
+        }
     }
 
     /**
-     * Finds which of the given attachment video units hide at least one slide of their current deck.
+     * Fails closed for a set of attachment video units: if any of them has no student version but hides slides of its current deck, none of their files may be merged for
+     * students. See {@link #ensureStudentVersionAvailable(long)}.
      *
-     * @param attachmentVideoUnitIds the ids of the attachment video units to check
-     * @return the ids of the units with at least one current hidden slide
+     * @param attachmentVideoUnits the attachment video units whose files are about to be served
+     * @throws EntityNotFoundException if a unit without student version hides at least one slide of its current deck
      */
-    public Set<Long> findAttachmentVideoUnitIdsWithHiddenSlides(Set<Long> attachmentVideoUnitIds) {
-        if (attachmentVideoUnitIds.isEmpty()) {
-            return Set.of();
+    public void ensureStudentVersionsAvailable(Collection<AttachmentVideoUnit> attachmentVideoUnits) {
+        Set<Long> unitIdsWithoutStudentVersion = attachmentVideoUnits.stream().filter(unit -> unit.getAttachment() != null && unit.getAttachment().getStudentVersion() == null)
+                .map(AttachmentVideoUnit::getId).collect(Collectors.toSet());
+        if (unitIdsWithoutStudentVersion.isEmpty()) {
+            return;
         }
-        return slideRepository.findAttachmentVideoUnitIdsWithHiddenSlides(attachmentVideoUnitIds);
+        slideRepository.findAttachmentVideoUnitIdsWithHiddenSlides(unitIdsWithoutStudentVersion).stream().findFirst().ifPresent(unitId -> {
+            throw new EntityNotFoundException("Student version", unitId);
+        });
     }
 }

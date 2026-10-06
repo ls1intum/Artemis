@@ -25,6 +25,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -164,6 +165,32 @@ class AttachmentServiceFileReplacementTest {
         assertThat(attachmentService.regenerateStudentVersionOrRemoveOutdated(attachment)).isFalse();
 
         verify(attachmentRepository, never()).clearStudentVersionIfUnchanged(anyLong(), anyString());
+    }
+
+    @Test
+    void uploadedStudentVersionMustBeAPdf() throws IOException {
+        assertThatThrownBy(() -> attachmentService.stageUploadedStudentVersionFile(new byte[] { 1 }, ATTACHMENT_VIDEO_UNIT_ID, "student.exe"))
+                .isInstanceOf(BadRequestAlertException.class);
+
+        verify(tempFileUtilService, never()).replaceFileAtomically(any(Path.class), any(Path.class), any(byte[].class));
+    }
+
+    @Test
+    void uploadedStudentVersionNameDoesNotUseTheUploadedName() throws IOException {
+        String filename = attachmentService.stageUploadedStudentVersionFile(new byte[] { 1 }, ATTACHMENT_VIDEO_UNIT_ID, "lecture notes final.PDF");
+
+        assertThat(filename).startsWith("StudentVersionSlides_").endsWith(".pdf").doesNotContain("lecture");
+    }
+
+    @Test
+    void storedValueOutsideTheStudentVersionDirectoryIsNeverDeleted() {
+        attachment.setStudentVersion("..");
+        when(slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(ATTACHMENT_VIDEO_UNIT_ID)).thenReturn(List.of());
+        when(attachmentRepository.clearStudentVersionIfUnchanged(ATTACHMENT_ID, "..")).thenReturn(1);
+
+        attachmentService.regenerateStudentVersion(attachment);
+
+        verify(fileService, never()).schedulePathForDeletion(any(Path.class), anyLong());
     }
 
     private static Slide hiddenSlide() {
