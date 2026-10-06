@@ -101,7 +101,8 @@ public class FileUploadAssessmentResource extends AssessmentResource {
             @Valid @RequestBody FileUploadAssessmentInputDTO fileUploadAssessment) {
         Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
         // if a result exists, we want to override it, otherwise create a new one
-        var resultId = submission.getLatestResult() != null ? submission.getLatestResult().getId() : null;
+        var latestResult = submission.getLatestResult();
+        var resultId = latestResult != null ? latestResult.getId() : null;
         var response = super.saveAssessment(submission, submit, fileUploadAssessment.feedbackEntities(), resultId, fileUploadAssessment.assessmentNote());
         return toFileUploadResultResponse(response.getStatusCode(), response.getHeaders(), response.getBody());
     }

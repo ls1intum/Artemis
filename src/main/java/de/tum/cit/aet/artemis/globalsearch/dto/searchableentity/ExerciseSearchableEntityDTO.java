@@ -38,7 +38,7 @@ public record ExerciseSearchableEntityDTO(Long exerciseId, Long courseId, String
      * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
      */
     public static ExerciseSearchableEntityDTO fromExercise(Exercise exercise) {
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         Exam exam = exercise.isExamExercise() ? exercise.getExam() : null;
         return buildDto(exercise, course, exam);
     }
@@ -54,7 +54,7 @@ public record ExerciseSearchableEntityDTO(Long exerciseId, Long courseId, String
      * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
      */
     public static ExerciseSearchableEntityDTO fromExerciseWithExam(Exercise exercise, Exam exam) {
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         return buildDto(exercise, course, exam);
     }
 
