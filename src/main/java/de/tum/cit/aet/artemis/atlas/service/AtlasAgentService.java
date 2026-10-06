@@ -721,9 +721,9 @@ public class AtlasAgentService {
      */
     private String getActionInstructionForAgent(ExecutionPlanStateManagerService.NextStepContext nextStep) {
         return switch (nextStep.agentType()) {
-            case COMPETENCY_MAPPER -> "Suggest relation mappings between the competencies from the previous step. "
-                    + "Call getCourseCompetencies first to get the competency IDs, then call suggestRelationMappingsUsingML or "
-                    + "use previewRelationMappings to suggest appropriate relations (ASSUMES, EXTENDS, MATCHES) between them. " + "Set viewOnly=false for the preview.";
+            case COMPETENCY_MAPPER ->
+                "Suggest relation mappings between the competencies from the previous step. " + "Call getCourseCompetencies first to get the competency IDs, then "
+                        + "use previewRelationMappings to suggest appropriate relations (ASSUMES, EXTENDS, MATCHES) between them. " + "Set viewOnly=false for the preview.";
             case EXERCISE_MAPPER -> buildExerciseMapperInstruction(nextStep.exerciseId(), nextStep.exerciseTitle());
             case COMPETENCY_EXPERT -> "Create or update competencies as described in the original user request. " + "Use the context from previous steps if available.";
         };
