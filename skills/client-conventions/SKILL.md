@@ -94,6 +94,24 @@ or already described next to it (`@angular-eslint/template/alt-text`). Keep keyb
 order; do not use a positive `tabindex` to reorder controls
 (`@angular-eslint/template/no-positive-tabindex`). Move markup when the DOM order is wrong.
 
+## Components created in code
+
+Do not call `ComponentRef.setInput` in production code. It takes the input name as a plain string
+and accepts any value, so a misspelled input only logs NG0303 at runtime (no exception) and the
+component silently keeps its default. For a closed set of components, declare them in a template
+with a `@switch`; the template compiler checks the inputs (`SidebarCardComponent`). When a
+component has to be created in code, use `setInputs(ref, { ... })` from
+`app/foundation/util/set-inputs.util`, which checks names and value types at compile time. It
+matches class member names, so aliased inputs are not supported. When the component is chosen
+from data, `switch` on the discriminant and pass component and data to one generic method
+(`ExerciseDetailDirective.render`), because `InputSignal` is invariant and a lookup table cannot
+tie a component to its data. `packages/tum-aet-ui` keeps an internal copy of the helper in
+`packages/tum-aet-ui/src/lib/internal/set-inputs.ts`, because it must not import from the application.
+
+`localRules/no-component-ref-set-input` enforces this at error level in production code of the
+application and the UI kit; specs are exempt. The helpers are the only places that disable it.
+`inputBinding` and `ngComponentOutlet` inputs use string names too and are no substitute.
+
 ## Redirecting from guards and resolvers
 
 A guard returns or emits `router.createUrlTree(...)`, or `new RedirectCommand(urlTree, options)`

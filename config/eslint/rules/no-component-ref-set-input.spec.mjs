@@ -1,0 +1,51 @@
+import { describe, it } from 'vitest';
+import rule from './no-component-ref-set-input.mjs';
+import { createTypeScriptRuleTester } from './rule-tester.mjs';
+
+const ruleTester = createTypeScriptRuleTester();
+
+const error = { messageId: 'noSetInput' };
+
+describe('no-component-ref-set-input', () => {
+    it('accepts code that does not set inputs through the string based API', () => {
+        ruleTester.run('no-component-ref-set-input', rule, {
+            valid: [
+                // The typed wrapper.
+                { code: `setInputs(this.widgetRef, { thread, showLocationWarning });`, filename: 'src/main/webapp/app/exercise/review/manager.ts' },
+                // A method that merely contains the word, or a differently named one.
+                { code: `this.service.setInputs(a, b); this.ref.setInputValue('x', 1);`, filename: 'src/main/webapp/app/some.service.ts' },
+                // A plain function that is not a method call.
+                { code: `setInput('a', 1);`, filename: 'src/main/webapp/app/some.service.ts' },
+                // A computed member access is not the API this rule is about.
+                { code: `this.ref['setInput']('a', 1);`, filename: 'src/main/webapp/app/some.service.ts' },
+                // Test code sets inputs on fixtures.
+                { code: `fixture.componentRef.setInput('exercise', exercise);`, filename: 'src/main/webapp/app/exercise/foo.component.spec.ts' },
+            ],
+            invalid: [],
+        });
+    });
+
+    it('rejects setInput on a component reference in production code', () => {
+        ruleTester.run('no-component-ref-set-input', rule, {
+            valid: [],
+            invalid: [
+                // A local variable.
+                {
+                    code: `const ref = createComponent(Widget, { hostElement }); ref.setInput('exercise', exercise);`,
+                    filename: 'src/main/webapp/app/a/b.component.ts',
+                    errors: [error],
+                },
+                // A member of the class.
+                { code: `class A { run() { this.componentRef.setInput('detail', detail); } }`, filename: 'src/main/webapp/app/a/b.directive.ts', errors: [error] },
+                // Optional chaining on a possibly missing reference.
+                { code: `class A { run() { this.contentRef?.setInput('text', text); } }`, filename: 'packages/tum-aet-ui/src/lib/tooltip/tooltip.directive.ts', errors: [error] },
+                // Every call is reported.
+                {
+                    code: `ref.setInput('a', 1); ref.setInput('b', 2);`,
+                    filename: 'src/main/webapp/app/a/b.component.ts',
+                    errors: [error, error],
+                },
+            ],
+        });
+    });
+});
