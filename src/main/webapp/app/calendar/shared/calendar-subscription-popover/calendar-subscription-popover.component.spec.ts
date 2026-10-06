@@ -57,6 +57,17 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
         expect(parameters.get('language')).toBe('GERMAN');
     });
 
+    it('copies the subscription link and shows the confirmation icon', () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        vi.stubGlobal('navigator', { clipboard: { writeText } });
+
+        component.copySubscriptionUrlToClipboard();
+
+        expect(writeText).toHaveBeenCalledWith(component.subscriptionUrl());
+        expect(component.copiedUrl()).toBe(true);
+        vi.unstubAllGlobals();
+    });
+
     it('marks the last remaining checkbox as disabled', () => {
         component.includeLectureEvents.set(false);
         component.includeTutorialEvents.set(false);

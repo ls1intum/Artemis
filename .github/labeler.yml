@@ -24,7 +24,7 @@ documentation:
 
 docker:
   - changed-files:
-      - any-glob-to-any-file: docker/**/*
+      - any-glob-to-any-file: deployment/**/*
 
 config-change:
   - changed-files:

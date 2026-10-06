@@ -58,7 +58,7 @@ jhi-posting-markdown-editor .suggest-widget {
 .monaco-add-review-comment-button::before {
     cursor: pointer;
     content: '\ea6b'; // codicon-comment-add
-    font-family: codicon;
+    font-family: codicon, monospace;
     font-size: 1.1em;
     background-color: var(--link-color);
     color: var(--white);
