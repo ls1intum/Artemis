@@ -77,6 +77,8 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ImportedExerciseAssertions;
@@ -109,6 +111,12 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "textexerciseintegration";
+
+    @Autowired
+    private TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    @Autowired
+    private PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
@@ -635,6 +643,30 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(reloaded.getPlagiarismDetectionConfig().getMinimumScore()).isEqualTo(4);
         assertThat(reloaded.getPlagiarismDetectionConfig().getMinimumSize()).isEqualTo(9);
         assertThat(reloaded.getPlagiarismDetectionConfig().getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(12);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateTextExercise_missingDefaultSettingsRows_areAddedByTheUpdate() throws Exception {
+        courseUtilService.enableMessagingForCourse(course);
+        textExercise.setId(null);
+        textExercise.setTitle("Text exercise repair");
+        textExercise.setChannelName("test-text-repair");
+        TextExerciseResponseDTO created = request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class,
+                HttpStatus.CREATED);
+
+        // an incomplete creation left the exercise without its settings rows
+        teamAssignmentConfigRepository.deleteById(teamAssignmentConfigRepository.findByExerciseId(created.id()).orElseThrow().getId());
+        plagiarismDetectionConfigRepository.deleteById(plagiarismDetectionConfigRepository.findByExerciseId(created.id()).orElseThrow().getId());
+        assertThat(teamAssignmentConfigRepository.existsByExerciseId(created.id())).isFalse();
+        assertThat(plagiarismDetectionConfigRepository.existsByExerciseId(created.id())).isFalse();
+
+        TextExercise stored = textExerciseRepository.findWithCompetenciesCategoriesAndGradingCriteriaByIdElseThrow(created.id());
+        stored.setTitle("Text exercise repaired");
+        request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(stored), TextExerciseResponseDTO.class, HttpStatus.OK);
+
+        assertThat(teamAssignmentConfigRepository.existsByExerciseId(created.id())).as("team settings row").isTrue();
+        assertThat(plagiarismDetectionConfigRepository.existsByExerciseId(created.id())).as("plagiarism settings row").isTrue();
     }
 
     /** Submitted settings update the permanent default row instead of replacing it. */

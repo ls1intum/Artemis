@@ -405,9 +405,9 @@ public class ProgrammingExerciseCreationUpdateService {
 
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);
-        // Team mode and its configuration are fixed at creation, so an update only reports the stored configuration. The
-        // plagiarism detection configuration is stored when the update carried one and read otherwise.
-        teamAssignmentConfigRepository.attachTo(savedProgrammingExercise);
+        // Team mode and its configuration are fixed at creation, so an update only reports the stored configuration and
+        // adds the default row an incomplete creation left out. The plagiarism detection configuration is stored when the update carried one and read otherwise.
+        teamAssignmentConfigRepository.applyTo(savedProgrammingExercise, null);
         plagiarismDetectionConfigRepository.applyTo(savedProgrammingExercise, updatedProgrammingExercise.getPlagiarismDetectionConfig());
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);

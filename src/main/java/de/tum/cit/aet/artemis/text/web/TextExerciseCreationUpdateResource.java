@@ -284,9 +284,9 @@ public class TextExerciseCreationUpdateResource {
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
         TextExercise persistedExercise = textExerciseRepository.save(updatedExercise);
-        // Team mode and its configuration are fixed at creation, so an update only reports the stored configuration. The
-        // plagiarism detection configuration is stored when the update carried one and read otherwise.
-        teamAssignmentConfigRepository.attachTo(persistedExercise);
+        // Team mode and its configuration are fixed at creation, so an update only reports the stored configuration and
+        // adds the default row an incomplete creation left out. The plagiarism detection configuration is stored when the update carried one and read otherwise.
+        teamAssignmentConfigRepository.applyTo(persistedExercise, null);
         plagiarismDetectionConfigRepository.applyTo(persistedExercise, updatedExercise.getPlagiarismDetectionConfig());
 
         exerciseService.logUpdate(persistedExercise, persistedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -353,7 +353,7 @@ public class TextExerciseCreationUpdateResource {
 
         // Save directly instead of delegating to updateTextExercise() to avoid double side effects.
         TextExercise savedExercise = textExerciseRepository.save(exerciseForReevaluation);
-        teamAssignmentConfigRepository.attachTo(savedExercise);
+        teamAssignmentConfigRepository.applyTo(savedExercise, null);
         plagiarismDetectionConfigRepository.applyTo(savedExercise, exerciseForReevaluation.getPlagiarismDetectionConfig());
 
         // Apply all post-save side effects once with the captured originals.
