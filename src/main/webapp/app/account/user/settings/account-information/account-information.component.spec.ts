@@ -13,7 +13,7 @@ import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
 
 describe('AccountInformationComponent', () => {
@@ -60,6 +60,19 @@ describe('AccountInformationComponent', () => {
         expect(comp.currentUser()).toEqual({ id: 99, internal: true });
     });
 
+    it('should render account properties as valid definition pairs', () => {
+        accountServiceMock.userIdentity.set({ id: 99, name: 'Ada Lovelace', login: 'ada', email: 'ada@tum.de' } as User);
+        fixture.detectChanges();
+
+        const definitions: NodeListOf<HTMLDListElement> = fixture.nativeElement.querySelectorAll('dl');
+        expect(definitions).toHaveLength(3);
+        expect(Array.from(definitions, (definition) => definition.querySelector('dd')?.textContent?.trim())).toEqual(['Ada Lovelace', 'ada', 'ada@tum.de']);
+        for (const definition of definitions) {
+            expect(definition.querySelectorAll(':scope > dt')).toHaveLength(1);
+            expect(definition.querySelectorAll(':scope > dd')).toHaveLength(1);
+        }
+    });
+
     it('should show the image cropper when setting user image', () => {
         const file = new File([''], 'test.jpg', { type: 'image/jpeg' });
         const event = { currentTarget: { files: [file], value: '' } } as unknown as Event;
@@ -72,7 +85,7 @@ describe('AccountInformationComponent', () => {
     it('should configure a small cropper dialog with the profile picture title', () => {
         fixture.detectChanges();
 
-        const dialog = fixture.debugElement.query(By.directive(TumUiDialogComponent)).componentInstance as TumUiDialogComponent;
+        const dialog = fixture.debugElement.query(By.directive(TumAetUiDialogComponent)).componentInstance as TumAetUiDialogComponent;
         expect(dialog.header()).toBe('artemisApp.userSettings.accountInformationPage.profilePicture');
         expect(dialog.size()).toBe('small');
     });

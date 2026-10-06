@@ -126,8 +126,12 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
      * @param onlineCourseConfiguration The online course configuration to be associated.
      */
     public void addOnlineCourseConfigurationToLtiConfigurations(OnlineCourseConfiguration onlineCourseConfiguration) {
-        if (onlineCourseConfiguration.getLtiPlatformConfiguration() != null) {
-            Long platformId = onlineCourseConfiguration.getLtiPlatformConfiguration().getId();
+        LtiPlatformConfiguration linkedPlatform = onlineCourseConfiguration.getLtiPlatformConfiguration();
+        if (linkedPlatform != null) {
+            Long platformId = linkedPlatform.getId();
+            if (platformId == null) {
+                throw new IllegalStateException("The LTI platform configuration linked to the online course configuration has not been persisted");
+            }
             LtiPlatformConfiguration platformConfiguration = ltiPlatformConfigurationRepository.findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(platformId);
 
             var setOfOnlineCourses = platformConfiguration.getOnlineCourseConfigurations();

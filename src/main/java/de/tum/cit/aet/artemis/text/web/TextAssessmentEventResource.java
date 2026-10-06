@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -39,7 +40,7 @@ import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
  */
 @Conditional(TextEnabled.class)
 @Lazy
-@FeatureUsage("assessment/assessment-analytics")
+@FeatureUsage(UserFeature.TUTOR_EFFORT)
 @RestController
 @RequestMapping("api/text/")
 public class TextAssessmentEventResource {

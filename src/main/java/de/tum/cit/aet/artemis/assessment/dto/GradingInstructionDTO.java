@@ -2,11 +2,13 @@ package de.tum.cit.aet.artemis.assessment.dto;
 
 import jakarta.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record GradingInstructionDTO(Long id, double credits, String gradingScale, String instructionDescription, String feedback, int usageCount) {
 
     /**

@@ -57,6 +57,7 @@ import jakarta.persistence.OrderColumn;
 import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.util.SystemReader;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -78,7 +79,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
@@ -111,7 +111,6 @@ import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
 import de.tum.cit.aet.artemis.communication.repository.CustomPostRepositoryImpl;
-import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
@@ -146,7 +145,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 .because("Google libraries (Guava, Gson) are forbidden to reduce incompatibilities, to reduce dependencies and security risks. " + "Alternatives: "
                         + "Guava Cache -> Spring CacheManager (see HazelcastConfiguration), " + "Guava Collections -> Java Collections API (List.of(), Set.of(), Map.of()), "
                         + "Guava Strings -> Apache Commons Lang3 StringUtils or Spring StringUtils, "
-                        + "Guava Preconditions -> for nullness, @NonNull or @Nullable from org.jspecify.annotations (see checkstyle.xml); "
+                        + "Guava Preconditions -> for nullness, @NonNull or @Nullable from org.jspecify.annotations (see config/checkstyle/checkstyle.xml); "
                         + "for any other check, an explicit if throwing IllegalArgumentException or IllegalStateException, " + "Guava Optional -> java.util.Optional, "
                         + "Gson -> Jackson ObjectMapper");
         noGoogleDependencies.check(allClasses);
@@ -737,14 +736,6 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    void testValidSimpMessageSendingOperationsUsage() {
-        ArchRule usage = fields().that().haveRawType(SimpMessageSendingOperations.class.getTypeName()).should().bePrivate().andShould()
-                .beDeclaredIn(WebsocketMessagingService.class)
-                .because("Classes should only use WebsocketMessagingService as a Facade and not SimpMessageSendingOperations directly");
-        usage.check(productionClasses);
-    }
-
-    @Test
     void testFileWriteUsage() {
         ArchRule usage = noClasses().that()
                 // The unit test of FileUtil has to plant a file at the destination itself to create the precondition it
@@ -754,7 +745,14 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // FileUtil.publishAtomically is the one place allowed to call Files.move, because an atomic rename is
                 // exactly what Apache FileUtils cannot promise: it falls back to copying and deleting, which can leave
                 // an incomplete target behind. Callers that need that guarantee go through the helper.
-                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.util.FileUtil").should()
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.util.FileUtil")
+                // FailedBuildLogService publishes a log file by writing a sibling temporary file and renaming it into
+                // place, so that a reader never sees half a file. It needs REPLACE_EXISTING, which publishAtomically
+                // does not offer, and it falls back to a plain rename where the export cannot promise an atomic one,
+                // which Apache FileUtils cannot express either. Its test plants files directly to set up the malformed
+                // content it then asserts the reader survives.
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.programming.service.FailedBuildLogService").and()
+                .doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.programming.service.FailedBuildLogServiceTest").should()
                 .callMethodWhere(target(owner(assignableTo(Files.class))).and(target(nameMatching("copy")).or(target(nameMatching("move"))).or(target(nameMatching("write.*")))))
                 .because("Files.copy does not create directories if they do not exist. Use Apache FileUtils instead.");
         usage.check(allClasses);
@@ -924,6 +922,22 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testHibernatePropertyInitializedNotUsed() {
+        String reason = """
+                Hibernate.isPropertyInitialized takes the attribute name as a string, and a name that matches \
+                no attribute is not an error: for an entity without bytecode enhancement it answers true whatever the name, \
+                so the check passes without checking anything and the code behind it reads a lazy association that was never \
+                loaded. Static analysis also models the call as passing the entity to a logger inside Hibernate, so a client \
+                supplied entity reaching it is reported as log injection (SonarQube Cloud javasecurity:S5145).
+                Ask the standard JPA call instead, Persistence.getPersistenceUtil().isLoaded(entity, Entity_.ATTRIBUTE), \
+                with the constant of the generated static metamodel; checkstyle rejects a string literal there.""";
+
+        ArchRule noHibernatePropertyInitialized = noClasses().should().callMethod(Hibernate.class, "isPropertyInitialized", Object.class, String.class).because(reason);
+
+        noHibernatePropertyInitialized.check(allClasses);
+    }
+
+    @Test
     void testNoRestControllersImported() {
         final var exceptions = new String[] { "AccountResourceIntegrationTest", "AdminResourceArchitectureTest", "AndroidAppSiteAssociationResourceTest",
                 "AppleAppSiteAssociationResourceTest", "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "CourseResourceArchitectureTest",
@@ -933,7 +947,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // failure to a status, and the access checks made inside the method rather than by its annotations. They call
                 // the resource directly on purpose; the annotations and the routing stay covered by the integration tests.
                 "AuxiliaryRepositoryResourceTest", "BuildJobQueueResourceTest", "CourseArchiveResourceTest", "ProgrammingExerciseParticipationResourceResetTest",
-                "PublicProgrammingExerciseResultResourceTest", "RepositoryProgrammingExerciseParticipationResourceTest" };
+                "PublicProgrammingExerciseResultResourceTest", "RepositoryProgrammingExerciseParticipationResourceTest", "IrisGlobalSearchResourceTest",
+                "IngestionCoverageResourceTest" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }

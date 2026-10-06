@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -46,34 +47,37 @@ class ExerciseVersionSnapshotCompatibilityTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void readsASnapshotThatStillCarriesFieldsTheRecordNoLongerDeclares() {
+    void keepsVersioningAnExerciseWhoseNewestSnapshotIsOfAnOlderShape() {
         ExerciseVersion version = exerciseVersionTestRepository.findTopByExerciseIdOrderByCreatedDateDesc(textExercise.getId()).orElseThrow();
         storeLegacySnapshot(version.getId());
 
-        // The read that writes the next version: it reads the newest one first, so an unreadable snapshot stops an
-        // exercise from ever being versioned again.
-        ExerciseSnapshotDTO snapshot = exerciseVersionTestRepository.findTopByExerciseIdOrderByCreatedDateDesc(textExercise.getId()).orElseThrow().getExerciseSnapshot();
+        // Writing a version reads the newest one first, so an unreadable snapshot stops the exercise from ever being
+        // versioned again. The failure is swallowed on an async executor, which is why this asserts on the rows.
+        exerciseVersionService.createExerciseVersion(textExercise);
 
-        assertThat(snapshot.title()).isEqualTo("Legacy title");
-        assertThat(snapshot.teamAssignmentConfig().maxTeamSize()).isEqualTo(3);
+        assertThat(exerciseVersionTestRepository.findAllByExerciseId(textExercise.getId())).hasSize(2);
+        ExerciseSnapshotDTO stored = exerciseVersionTestRepository.findByIdElseThrow(version.getId()).getExerciseSnapshot();
+        assertThat(stored.title()).isEqualTo("Legacy title");
+        assertThat(stored.teamAssignmentConfig().maxTeamSize()).isEqualTo(3);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void readsALegacySnapshotByIdForTheVersionHistory() {
+    void answersTheVersionHistoryForASnapshotOfAnOlderShape() throws Exception {
         ExerciseVersion version = exerciseVersionTestRepository.findTopByExerciseIdOrderByCreatedDateDesc(textExercise.getId()).orElseThrow();
         storeLegacySnapshot(version.getId());
 
-        // The read behind the version history, which answered a request with 500 while the snapshot could not be read.
-        ExerciseSnapshotDTO snapshot = exerciseVersionTestRepository.findByIdElseThrow(version.getId()).getExerciseSnapshot();
+        // The request that answered with 500 while the snapshot could not be read.
+        ExerciseSnapshotDTO snapshot = request.get("/api/exercise/exercises/" + textExercise.getId() + "/versions/" + version.getId(), HttpStatus.OK, ExerciseSnapshotDTO.class);
 
         assertThat(snapshot.title()).isEqualTo("Legacy title");
     }
 
     /**
-     * Writes a snapshot of an older shape, carrying one field that used to sit on the exercise itself
-     * ({@code allowFeedbackRequests}, moved to the course) and one on a nested record ({@code formationBy}). The record
-     * writes only what it declares today, so such a snapshot can only be put into the column as raw json.
+     * Writes a snapshot of an older shape. It carries {@code allowFeedbackRequests}, which really did sit on the
+     * exercise until Athena's feedback configuration moved to the course, and an unknown key on a nested record, which
+     * stands for the next such removal at depth. The record writes only what it declares today, so a snapshot of an
+     * older shape can only be put into the column as raw json.
      *
      * @param exerciseVersionId the version whose snapshot is replaced
      */
@@ -83,7 +87,7 @@ class ExerciseVersionSnapshotCompatibilityTest extends AbstractSpringIntegration
                   "id": %d,
                   "title": "Legacy title",
                   "allowFeedbackRequests": true,
-                  "teamAssignmentConfig": {"id": 1, "minTeamSize": 2, "maxTeamSize": 3, "formationBy": "RANDOM"}
+                  "teamAssignmentConfig": {"id": 1, "minTeamSize": 2, "maxTeamSize": 3, "assignmentStrategy": "RANDOM"}
                 }
                 """.formatted(textExercise.getId()));
     }

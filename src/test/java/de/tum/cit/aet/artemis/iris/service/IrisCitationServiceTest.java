@@ -9,7 +9,10 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +29,7 @@ import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
 
 @ExtendWith(MockitoExtension.class)
 class IrisCitationServiceTest {
@@ -46,11 +50,14 @@ class IrisCitationServiceTest {
     @Mock
     private IrisSessionRepository irisSessionRepository;
 
+    @Mock
+    private IrisLectureMaterialVersionService materialVersionService;
+
     private IrisCitationService citationService;
 
     @BeforeEach
     void setUp() {
-        citationService = new IrisCitationService(Optional.of(lectureUnitRepositoryApi), irisSessionRepository);
+        citationService = new IrisCitationService(Optional.of(lectureUnitRepositoryApi), irisSessionRepository, materialVersionService);
     }
 
     @Test
@@ -137,9 +144,166 @@ class IrisCitationServiceTest {
 
     @Test
     void resolveCitationInfo_returnsEmptyWhenRepositoryUnavailable() {
-        var serviceWithoutRepository = new IrisCitationService(Optional.empty(), irisSessionRepository);
+        var serviceWithoutRepository = new IrisCitationService(Optional.empty(), irisSessionRepository, materialVersionService);
 
         assertThat(serviceWithoutRepository.resolveCitationInfo("[cite:L:1:::::]")).isEmpty();
+    }
+
+    @Test
+    void stampCitationVersions_pinsAttachmentVersionForSlideCitation() {
+        when(materialVersionService.getSnapshot("job")).thenReturn(snapshot(ingested(LECTURE_UNIT_ID, 3, null)));
+
+        var stamped = citationService.stampCitationVersions("See [cite:L:42:7:::Deadlocks:A summary.] for details.", "job");
+
+        assertThat(stamped).isEqualTo("See [cite:L:42:7:::Deadlocks:A summary.:va3] for details.");
+    }
+
+    @Test
+    void stampCitationVersions_pinsTranscriptionVersionForVideoCitation() {
+        when(materialVersionService.getSnapshot("job")).thenReturn(snapshot(ingested(LECTURE_UNIT_ID, 3, 2)));
+
+        var stamped = citationService.stampCitationVersions("[cite:L:42:7:120:180:Deadlocks:A summary.]", "job");
+
+        // A transcript segment carries a companion page number, but only the video revision is pinned: the timestamp is what the citation points at.
+        assertThat(stamped).isEqualTo("[cite:L:42:7:120:180:Deadlocks:A summary.:vt2]");
+    }
+
+    @Test
+    void stampCitationVersions_marksVideoUnverifiedWhenTheTranscriptionHasNoVersionYet() {
+        when(materialVersionService.getSnapshot("job")).thenReturn(snapshot(ingested(LECTURE_UNIT_ID, 3, null)));
+
+        var text = "[cite:L:42:7:120:180:Deadlocks:A summary.]";
+
+        // The slides do have a version, but a video citation must not be pinned to it
+        assertThat(citationService.stampCitationVersions(text, "job")).isEqualTo(text.replace("]", text.contains(":120:") ? ":vt0]" : ":va0]"));
+    }
+
+    @Test
+    void stampCitationVersions_marksUnknownLectureUnitUnverified() {
+        when(materialVersionService.getSnapshot("job")).thenReturn(snapshot(ingested(SECOND_LECTURE_UNIT_ID, 3, null)));
+
+        var text = "[cite:L:42:7:::Deadlocks:A summary.]";
+
+        assertThat(citationService.stampCitationVersions(text, "job")).isEqualTo(text.replace("]", text.contains(":120:") ? ":vt0]" : ":va0]"));
+    }
+
+    @Test
+    void stampCitationVersions_marksACopiedVersionUnverified() {
+        when(materialVersionService.getSnapshot("job")).thenReturn(snapshot(ingested(LECTURE_UNIT_ID, 3, null)));
+
+        var alreadyStamped = "[cite:L:42:7:::Deadlocks:A summary.:va3]";
+
+        assertThat(citationService.stampCitationVersions(alreadyStamped, "job")).isEqualTo(alreadyStamped.replace(":va3]", ":va0]"));
+    }
+
+    @Test
+    void stampCitationVersions_preservesKeywordsAndSummariesWithSpecialCharacters() {
+        when(materialVersionService.getSnapshot("job")).thenReturn(snapshot(ingested(LECTURE_UNIT_ID, 3, null)));
+
+        var stamped = citationService.stampCitationVersions("[cite:L:42:7:::Costs:A price of $5 and a backslash \\ stay intact.]", "job");
+
+        assertThat(stamped).isEqualTo("[cite:L:42:7:::Costs:A price of $5 and a backslash \\ stay intact.:va3]");
+    }
+
+    /**
+     * The version fields are read from the right, so an ordinary summary containing a colon still has to be stamped correctly.
+     */
+    @Test
+    void stampCitationVersions_stampsSummaryContainingColons() {
+        when(materialVersionService.getSnapshot("job")).thenReturn(snapshot(ingested(LECTURE_UNIT_ID, 3, null)));
+
+        var stamped = citationService.stampCitationVersions("[cite:L:42:7:::Ratio:The split is 3:1]", "job");
+
+        assertThat(stamped).isEqualTo("[cite:L:42:7:::Ratio:The split is 3:1:va3]");
+    }
+
+    /**
+     * The tag is what keeps a summary from being mistaken for a version. Without it, a summary ending in colon-separated numbers read as an already stamped citation: it
+     * was left unpinned here, while the client read those very numbers as the pinned versions and would have called the citation current whenever they happened to match
+     * the ones the unit currently has.
+     */
+    @Test
+    void stampCitationVersions_stampsSummaryThatEndsInColonSeparatedNumbers() {
+        when(materialVersionService.getSnapshot("job")).thenReturn(snapshot(ingested(LECTURE_UNIT_ID, 3, null)));
+
+        var stamped = citationService.stampCitationVersions("[cite:L:42:7:::Key:Ratios:3:1]", "job");
+
+        assertThat(stamped).isEqualTo("[cite:L:42:7:::Key:Ratios:3:1:va3]");
+    }
+
+    /**
+     * A copied suffix must not be trusted, even when the summary itself ends in numbers.
+     */
+    @Test
+    void stampCitationVersions_preservesSummaryAndRejectsACopiedVersion() {
+        when(materialVersionService.getSnapshot("job")).thenReturn(snapshot(ingested(LECTURE_UNIT_ID, 3, null)));
+
+        var alreadyStamped = "[cite:L:42:7:::Key:Ratios:3:1:va3]";
+
+        assertThat(citationService.stampCitationVersions(alreadyStamped, "job")).isEqualTo(alreadyStamped.replace(":va3]", ":va0]"));
+    }
+
+    /**
+     * A citation carrying only an end time is rendered as a slide citation by the client, because it builds the link from the start time. Pinning has to follow that same
+     * choice, otherwise the pinned version describes material the click never navigates to.
+     */
+    @Test
+    void stampCitationVersions_pinsAttachmentVersionWhenOnlyAnEndTimeIsPresent() {
+        when(materialVersionService.getSnapshot("job")).thenReturn(snapshot(ingested(LECTURE_UNIT_ID, 3, 2)));
+
+        var stamped = citationService.stampCitationVersions("[cite:L:42:7::180:Deadlocks:A summary.]", "job");
+
+        assertThat(stamped).isEqualTo("[cite:L:42:7::180:Deadlocks:A summary.:va3]");
+    }
+
+    @Test
+    void stampCitationVersions_stampsEveryCitationInTheText() {
+        when(materialVersionService.getSnapshot("job")).thenReturn(snapshot(ingested(LECTURE_UNIT_ID, 3, 2), ingested(SECOND_LECTURE_UNIT_ID, 8, null)));
+
+        var stamped = citationService.stampCitationVersions("A [cite:L:42::30:60:Locks:First.] and B [cite:L:7:2:::Threads:Second.]", "job");
+
+        assertThat(stamped).isEqualTo("A [cite:L:42::30:60:Locks:First.:vt2] and B [cite:L:7:2:::Threads:Second.:va8]");
+        verify(materialVersionService).getSnapshot("job");
+    }
+
+    /**
+     * The citation pattern accepts any run of digits, so a model inventing an ID beyond {@code long} produces a well-formed citation that cannot name a lecture unit. It
+     * has to be skipped rather than throw: the lookup already ignores it, and a valid citation next to it is enough to reach the stamping loop, where an escaping
+     * {@link NumberFormatException} would abort stamping for the whole answer — and with it the persistence of the assistant message.
+     */
+    @Test
+    void stampCitationVersions_skipsAnOversizedEntityIdAndStampsTheValidCitationBesideIt() {
+        when(materialVersionService.getSnapshot("job")).thenReturn(snapshot(ingested(LECTURE_UNIT_ID, 3, null)));
+
+        var stamped = citationService.stampCitationVersions("Bad [cite:L:99999999999999999999:1:::Key:Summary.] and good [cite:L:42:7:::Deadlocks:A summary.]", "job");
+
+        assertThat(stamped).isEqualTo("Bad [cite:L:99999999999999999999:1:::Key:Summary.:va0] and good [cite:L:42:7:::Deadlocks:A summary.:va3]");
+    }
+
+    @Test
+    void stampCitationVersions_returnsTextUnchangedWhenNothingToStamp() {
+        assertThat(citationService.stampCitationVersions("No citations here.", "job")).isEqualTo("No citations here.");
+        assertThat(citationService.stampCitationVersions(null, "job")).isNull();
+        assertThat(citationService.stampCitationVersions("   ", "job")).isEqualTo("   ");
+        assertThat(citationService.stampCitationVersions("Invalid [cite:L:abc] reference.", "job")).isEqualTo("Invalid [cite:L:abc] reference.");
+        verifyNoInteractions(materialVersionService);
+        verifyNoInteractions(lectureUnitRepositoryApi);
+    }
+
+    @Test
+    void stampCitationVersions_marksNewCitationUnverifiedWithoutSnapshot() {
+        var serviceWithoutRepository = new IrisCitationService(Optional.empty(), irisSessionRepository, materialVersionService);
+        var text = "[cite:L:42:7:::Deadlocks:A summary.]";
+
+        assertThat(serviceWithoutRepository.stampCitationVersions(text, "job")).isEqualTo(text.replace("]", ":va0]"));
+    }
+
+    @Test
+    void stampCitationVersions_marksNewCitationUnverifiedWhenSnapshotIsMissing() {
+        when(materialVersionService.getSnapshot("job")).thenReturn(Map.of());
+        var text = "[cite:L:42:7:::Deadlocks:A summary.]";
+
+        assertThat(citationService.stampCitationVersions(text, "job")).isEqualTo(text.replace("]", text.contains(":120:") ? ":vt0]" : ":va0]"));
     }
 
     private static LectureUnit lectureUnit(long id, long lectureId, long courseId, String lectureTitle, String unitTitle) {
@@ -156,5 +320,13 @@ class IrisCitationServiceTest {
         unit.setLecture(lecture);
         unit.setName(unitTitle);
         return unit;
+    }
+
+    private static Map<Long, LectureUnitIngestedVersionsDTO> snapshot(LectureUnitIngestedVersionsDTO... versions) {
+        return Arrays.stream(versions).collect(Collectors.toMap(LectureUnitIngestedVersionsDTO::lectureUnitId, Function.identity()));
+    }
+
+    private static LectureUnitIngestedVersionsDTO ingested(long lectureUnitId, Integer attachmentVersion, Integer videoVersion) {
+        return new LectureUnitIngestedVersionsDTO(lectureUnitId, attachmentVersion, videoVersion);
     }
 }

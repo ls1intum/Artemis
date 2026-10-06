@@ -19,10 +19,12 @@ name: Sonar
 # Two entry points on purpose:
 #   workflow_call     — from ci.yml on develop pushes, after a green `test`, importing its coverage.
 #   workflow_dispatch — standalone, to get a grade on demand without waiting out a full CI run
-#                       (~2 h with the e2e tail). Analyses the ref it is dispatched on, without
-#                       coverage: a manual run has no `test` job to take artifacts from. The ratings
-#                       and issue counts, which are what the Codacy comparison turns on, do not
-#                       depend on coverage.
+#                       (~2 h with the e2e tail). Analyses the ref it is dispatched on. A manual run
+#                       has no `test` job of its own, so it imports the coverage of the latest
+#                       SUCCESSFUL `ci.yml` run for exactly the commit it analyses (a pull request
+#                       build counts) and falls back to no coverage when there is none. Without this
+#                       the quality gate reads 0.0% coverage on new code for a dispatched run, which
+#                       is a measurement artifact and not a property of the code.
 on:
   workflow_call:
     inputs:
@@ -66,8 +68,9 @@ jobs:
     continue-on-error: true
     permissions:
       contents: read
+      actions: read  # lists the CI runs of the commit and downloads their coverage artifacts
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           # Undefined on a dispatched run, which declares no inputs; the dispatched ref is what we want.
           ref: ${{ inputs.commit_sha || github.sha }}
@@ -76,7 +79,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: 'temurin'
           java-version: '${{ env.java }}'
@@ -94,7 +97,7 @@ jobs:
       # pinning it here keeps the analysis reproducible when that image changes, matching how every
       # other job in this repo pins Node rather than inheriting it.
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: '${{ env.node }}'
           cache: 'pnpm'
@@ -107,14 +110,48 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # And this is required for the same reason again. `tsconfig.json` maps `@tumaet/ui-angular` to
-      # `packages/tum-ui/dist`, which is a build output: it is not tracked and `pnpm install` does not
+      # `packages/tum-aet-ui/dist`, which is a build output: it is not tracked and `pnpm install` does not
       # create it. Without it every one of the ~240 application imports of the alias is unresolved,
       # which is the same silent degradation as the missing `node_modules`. Only the library build is
       # run, not the full `prebuild`: the rest of that script writes an angular.json file replacement
       # no source imports and runs a vite version check that would fail this job for a reason
       # unrelated to the scan.
-      - name: Build the TUM UI package the client imports
-        run: pnpm run tum-ui:build
+      - name: Build the TUM AET UI package the client imports
+        run: pnpm run tum-aet-ui:build
+
+      # Which run holds the coverage. A call from ci.yml imports the artifacts of its own run. A dispatched
+      # run has none, so it looks for the newest `ci.yml` run of the analysed commit that SUCCEEDED, for the
+      # same reason ci.yml gates the call on a green `test`: a partially failed run reports artificially low
+      # coverage, and an analysis is stored as history. The head SHA must match exactly, because JaCoCo and
+      # LCOV report line numbers, which only mean something against the commit that produced them. No such
+      # run is not an error: the analysis then runs without coverage, exactly as before.
+      - name: Find the CI run that produced coverage for this commit
+        id: coverage-run
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -Eeuo pipefail
+          run_id=""
+          while read -r id; do
+            [ -n "${id}" ] || continue
+            found=$(gh api -X GET "repos/${REPO}/actions/runs/${id}/artifacts" -f "name=Server JaCoCo XML" \
+              --jq '[.artifacts[] | select(.expired == false)] | length')
+            if [ "${found:-0}" -gt 0 ]; then
+              run_id="${id}"
+              break
+            fi
+          done < <(gh api -X GET "repos/${REPO}/actions/workflows/ci.yml/runs" -f "head_sha=${SHA}" -f "status=success" -f "per_page=100" \
+            --jq '.workflow_runs[].id')
+          if [ -z "${run_id}" ]; then
+            echo "::notice::No successful CI run with coverage artifacts exists for ${SHA}; analyzing without coverage."
+            exit 0
+          fi
+          echo "Importing the coverage of CI run ${run_id} for ${SHA}"
+          echo "run_id=${run_id}" >> "${GITHUB_OUTPUT}"
 
       # Coverage is imported from the reports the `test` job already uploaded, so no suite is re-run
       # here. Both downloads are `continue-on-error`: a missing report costs the coverage metric and
@@ -124,27 +161,31 @@ jobs:
       # `sonar.coverage.jacoco.xmlReportPaths` / `sonar.javascript.lcov.reportPaths`. The artifact
       # unpacks to `aggregated/jacocoTestReport.xml`, hence the `build/reports/jacoco` target.
       - name: Download the server JaCoCo report
-        if: ${{ inputs.with_coverage }}
+        if: ${{ inputs.with_coverage || steps.coverage-run.outputs.run_id != '' }}
         continue-on-error: true
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: Server JaCoCo XML
           path: build/reports/jacoco
+          run-id: ${{ steps.coverage-run.outputs.run_id || github.run_id }}
+          github-token: ${{ github.token }}
 
       - name: Download the client coverage report
-        if: ${{ inputs.with_coverage }}
+        if: ${{ inputs.with_coverage || steps.coverage-run.outputs.run_id != '' }}
         continue-on-error: true
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: Vitest Coverage Report
           path: build/test-results/vitest/coverage
+          run-id: ${{ steps.coverage-run.outputs.run_id || github.run_id }}
+          github-token: ${{ github.token }}
 
-      # Gated on `with_coverage` so a dispatched run — which is expected to have no reports — does
-      # not emit two warnings that mean nothing. When coverage WAS requested, a missing report is
-      # worth a warning: it means an artifact name drifted, which would otherwise show up only as a
+      # Gated on coverage having been requested, so a dispatched run for a commit with no successful CI
+      # run does not emit two warnings that mean nothing. When coverage WAS requested, a missing report
+      # is worth a warning: it means an artifact name drifted, which would otherwise show up only as a
       # silent coverage drop in Sonar.
       - name: Report which coverage inputs were found
-        if: ${{ inputs.with_coverage }}
+        if: ${{ inputs.with_coverage || steps.coverage-run.outputs.run_id != '' }}
         run: |
           set -Eeuo pipefail
           jacoco=build/reports/jacoco/aggregated/jacocoTestReport.xml
@@ -169,4 +210,6 @@ jobs:
       - name: Build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew compileJava sonar -x webapp
+          # Manual dispatches must not publish a feature branch as the main branch.
+          SONAR_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+        run: ./gradlew compileJava sonar -x webapp "-Dsonar.branch.name=${SONAR_BRANCH_NAME}"

@@ -75,6 +75,29 @@ describe('KnowledgeAreaTreeComponent', () => {
         expect(knowledgeAreaNodes).toHaveLength(1);
     });
 
+    it('should expose expansion on the focusable title for keyboard and programmatic changes', () => {
+        host.dataSource = { data: [ka({ id: 1 })] };
+        hostFixture.detectChanges();
+        const title = () => hostFixture.nativeElement.querySelector('[data-testid="knowledge-area-node"] h5') as HTMLElement;
+        expect(title().getAttribute('aria-expanded')).toBe('false');
+
+        title().dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        hostFixture.detectChanges();
+        expect(title().getAttribute('aria-expanded')).toBe('true');
+
+        title().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        hostFixture.detectChanges();
+        expect(title().getAttribute('aria-expanded')).toBe('false');
+
+        host.tree().expandAll();
+        hostFixture.detectChanges();
+        expect(title().getAttribute('aria-expanded')).toBe('true');
+
+        host.tree().collapseAll();
+        hostFixture.detectChanges();
+        expect(title().getAttribute('aria-expanded')).toBe('false');
+    });
+
     it('should render an empty-state node for a knowledge area without children or competencies', () => {
         host.dataSource = { data: [ka({ id: 1 })] };
         hostFixture.detectChanges();

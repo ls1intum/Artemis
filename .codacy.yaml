@@ -50,7 +50,7 @@ exclude_paths:
   - "src/main/resources/templates/**/*"
   # Test code and test resources: hardcoded test credentials, non-literal fs/regexp in helpers and
   # sample payloads are intentional fixtures, not defects. Both spec extensions are named: the ESLint
-  # rule tests in rules/ are .spec.mjs and sit outside every directory excluded here, so without the
+  # rule tests in config/eslint/rules/ are .spec.mjs and sit outside every directory excluded here, so without the
   # second pattern their regex-heavy fixtures are still graded as application code.
   - "src/test/**"
   - "src/test/**/*"
@@ -59,15 +59,19 @@ exclude_paths:
   # Storybook stories and the Angular wrapper decorators: static examples that trip the
   # html-in-template-string rule through Storybook's rendering API.
   - "**/*.stories.ts"
-  - "packages/tum-ui/.storybook/story-decorators.ts"
+  - "packages/tum-aet-ui/.storybook/story-decorators.ts"
   # Internal developer/CI tooling (coverage reporting, course setup, transcription, benchmarks).
   # Not part of the deployed application and not exposed to untrusted end-user input.
   - "supporting_scripts/**"
   - "supporting_scripts/**/*"
   # Throwaway OIDC test identity provider used only by the local E2E stack.
-  - "docker/oidc-test/**"
-  - "docker/oidc-test/**/*"
+  - "deployment/docker/oidc-test/**"
+  - "deployment/docker/oidc-test/**/*"
 
+# Checkstyle and PMD keep their discoverable filenames under config/. Stylelint uses
+# config/stylelint/stylelint.config.js as a discovery wrapper; local commands discover
+# the same rules through package.json. See the supported filenames and nested discovery:
+# https://docs.codacy.com/repositories-configure/configuring-code-patterns/
 engines:
   opengrep: # Semgrep — SAST security scanning
     exclude_paths:
@@ -76,13 +80,13 @@ engines:
       - "**/*.spec.ts"
       - "**/*.spec.mjs"
       - "**/*.stories.ts"
-      - "packages/tum-ui/.storybook/story-decorators.ts"
+      - "packages/tum-aet-ui/.storybook/story-decorators.ts"
       - "src/main/resources/templates/**"
       - "src/main/resources/templates/**/*"
       - "supporting_scripts/**"
       - "supporting_scripts/**/*"
-      - "docker/oidc-test/**"
-      - "docker/oidc-test/**/*"
+      - "deployment/docker/oidc-test/**"
+      - "deployment/docker/oidc-test/**/*"
   bandit: # Python security scanning
     exclude_paths:
       - "src/test/**"
@@ -102,8 +106,8 @@ engines:
       - "src/main/resources/templates/**/*"
       - "supporting_scripts/**"
       - "supporting_scripts/**/*"
-      - "docker/oidc-test/**"
-      - "docker/oidc-test/**/*"
+      - "deployment/docker/oidc-test/**"
+      - "deployment/docker/oidc-test/**/*"
   trivy: # dependency-vulnerability / secret scanning
     exclude_paths:
       - "src/test/**"
@@ -112,16 +116,16 @@ engines:
       - "src/main/resources/templates/**/*"
       - "supporting_scripts/**"
       - "supporting_scripts/**/*"
-      - "docker/oidc-test/**"
-      - "docker/oidc-test/**/*"
+      - "deployment/docker/oidc-test/**"
+      - "deployment/docker/oidc-test/**/*"
   codenarc: # Groovy linting — exercise-template Jenkins pipelines + docker Jenkins init scripts are scaffolding/infra, not app code
     exclude_paths:
       - "src/main/resources/templates/**"
       - "src/main/resources/templates/**/*"
       # Jenkins init.groovy.d scripts (e.g. disabling the CSRF crumb issuer) are dynamic-Groovy by
       # design; @CompileStatic / explicit-type rules are inappropriate for them.
-      - "docker/jenkins/**"
-      - "docker/jenkins/**/*"
+      - "deployment/docker/jenkins/**"
+      - "deployment/docker/jenkins/**/*"
   shellcheck: # shell linting — exercise-template build scripts are scaffolding, not app code
     exclude_paths:
       - "src/main/resources/templates/**"

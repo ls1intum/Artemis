@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lti.web;
 
 import java.text.ParseException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -61,7 +63,7 @@ import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
  */
 @Conditional(LtiEnabled.class)
 @Lazy
-@FeatureUsage("lti/launch")
+@FeatureUsage(UserFeature.LTI)
 @RestController
 @RequestMapping("api/lti/")
 public class LtiResource {
@@ -134,7 +136,8 @@ public class LtiResource {
             throw new BadRequestAlertException("Course must be online course", Course.ENTITY_NAME, "courseMustBeOnline");
         }
 
-        if (!course.getOnlineCourseConfiguration().getId().equals(onlineCourseConfiguration.getId())) {
+        OnlineCourseConfiguration existingConfiguration = course.getOnlineCourseConfiguration();
+        if (existingConfiguration == null || !Objects.equals(existingConfiguration.getId(), onlineCourseConfiguration.getId())) {
             throw new BadRequestAlertException("The onlineCourseConfigurationId does not match the id of the course's onlineCourseConfiguration",
                     OnlineCourseConfiguration.ENTITY_NAME, "idMismatch");
         }
@@ -178,8 +181,7 @@ public class LtiResource {
             @RequestParam(name = "contentIds", required = false) Set<Long> contentIds, @RequestParam(name = "ltiIdToken") String ltiIdToken,
             @RequestParam(name = "clientRegistrationId") String clientRegistrationId) throws ParseException {
 
-        log.info("LTI 1.3 Deep Linking request received for course {} with resourceType: {}, contentIds: {}, registrationId: {}", courseId, resourceType, contentIds,
-                clientRegistrationId);
+        log.info("LTI 1.3 Deep Linking request received for course {} with resourceType: {}, contentIds: {}", courseId, resourceType, contentIds);
 
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
 

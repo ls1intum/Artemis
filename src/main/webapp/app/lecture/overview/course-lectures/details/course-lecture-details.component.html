@@ -59,6 +59,7 @@
                         </div>
                         @if (hasPdfLectureUnit()) {
                             <button
+                                type="button"
                                 id="downloadButton"
                                 class="col-auto btn btn-primary btn-sm rounded-pill"
                                 (click)="downloadMergedFiles()"
@@ -78,31 +79,19 @@
                                     <jhi-attachment-video-unit
                                         [courseId]="courseId()!"
                                         [lectureUnit]="lectureUnit"
-                                        [initiallyExpanded]="lectureUnit.id === targetUnitId()"
-                                        [targetTimestamp]="lectureUnit.id === targetUnitId() ? targetVideoTimestamp() : undefined"
-                                        [targetPdfPage]="lectureUnit.id === targetUnitId() ? targetPdfPage() : undefined"
-                                        [targetCombinedView]="lectureUnit.id === targetUnitId() && targetCombinedView()"
+                                        [deepLink]="deepLink()"
                                         [irisSettings]="irisSettings()"
                                         [contextsProvider]="contextsProvider"
                                         (onCompletion)="completeLectureUnit($event)"
                                     />
                                 }
                                 @case (LectureUnitType.TEXT) {
-                                    <jhi-text-unit
-                                        [courseId]="courseId()!"
-                                        [lectureUnit]="lectureUnit"
-                                        [initiallyExpanded]="lectureUnit.id === targetUnitId()"
-                                        (onCompletion)="completeLectureUnit($event)"
-                                    />
+                                    <jhi-text-unit [courseId]="courseId()!" [lectureUnit]="lectureUnit" [deepLink]="deepLink()" (onCompletion)="completeLectureUnit($event)" />
                                 }
                                 @case (LectureUnitType.ONLINE) {
-                                    <jhi-online-unit
-                                        [courseId]="courseId()!"
-                                        [lectureUnit]="lectureUnit"
-                                        [initiallyExpanded]="lectureUnit.id === targetUnitId()"
-                                        (onCompletion)="completeLectureUnit($event)"
-                                    />
+                                    <jhi-online-unit [courseId]="courseId()!" [lectureUnit]="lectureUnit" [deepLink]="deepLink()" (onCompletion)="completeLectureUnit($event)" />
                                 }
+                                @default {}
                             }
                         </div>
                     </div>
@@ -120,7 +109,7 @@
             }
 
             @if (showDiscussion()) {
-                <ng-template jhiPanel [label]="'artemisApp.metis.communication.label'" [icon]="faComment">
+                <ng-template jhiPanel [label]="'artemisApp.communication.label'" [icon]="faComment">
                     <jhi-discussion-section [lecture]="lecture" [embedded]="true" />
                 </ng-template>
             }

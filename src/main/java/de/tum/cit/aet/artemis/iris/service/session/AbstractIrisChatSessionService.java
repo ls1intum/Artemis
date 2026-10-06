@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -19,6 +20,7 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -32,6 +34,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCompactionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -171,8 +174,9 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      *
      * @param job          The job that was executed
      * @param statusUpdate The status update of the job
-     * @return the same job record or a new job record with the same job id if changes were made
+     * @return the same job record or a new job record with the same job id if changes were made, or {@code null} if the session no longer exists
      */
+    @Nullable
     public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         long handlingStart = System.nanoTime();
         // Only the result branch (saving the assistant message) needs the messages and contents;
@@ -180,7 +184,12 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         // its pipeline thread on each callback, so this reload is on the chat latency critical path.
         // noinspection unchecked
         var session = statusUpdate.result() != null ? (S) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId())
-                : (S) irisSessionRepository.findByIdElseThrow(job.sessionId());
+                : (S) irisSessionRepository.findById(job.sessionId()).orElse(null);
+        if (session == null) {
+            // The session was deleted while its job was still running, so there is nothing left to update.
+            log.info("Dropping status update for Iris job {} because its session {} no longer exists", job.jobId(), job.sessionId());
+            return null;
+        }
 
         String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
         TrackedSessionBasedPyrisJob updatedJob;
@@ -192,6 +201,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             applyNonResultSideEffects(session, job, statusUpdate, sessionTitle, false);
             updatedJob = recordTokenUsage(session, job, statusUpdate, null);
         }
+        saveCompaction(session, statusUpdate.compaction());
 
         updateLatestSuggestions(session, statusUpdate.suggestions());
 
@@ -202,8 +212,13 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
 
     private TrackedSessionBasedPyrisJob handleIntermediateResultStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, S session,
             String sessionTitle) {
+        // Intermediate messages are persisted and, once the session is reloaded, get their citation metadata resolved just like final ones - so their citations become
+        // clickable and have to be pinned too. The run snapshot pins citations before they are persisted; stampCitationVersions returns
+        // immediately otherwise, which keeps the frequent citation-free intermediate updates off the database.
+        var result = irisCitationService.map(service -> service.stampCitationVersions(statusUpdate.result(), job.jobId())).orElse(statusUpdate.result());
+
         var message = new IrisMessage();
-        for (var content : parseResultContents(statusUpdate.result())) {
+        for (var content : parseResultContents(result)) {
             message.addContent(content);
         }
         message.setIntermediate(true);
@@ -225,11 +240,15 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
                 return trackedJob;
             }
 
+            // Pin every citation to the version of the material it was generated from, before the text is persisted. Once stored, the marker keeps that version forever,
+            // so a later re-upload of the PDF or a re-transcribed video can be detected when the citation is clicked.
+            var result = irisCitationService.map(service -> service.stampCitationVersions(statusUpdate.result(), job.jobId())).orElse(statusUpdate.result());
+
             var message = new IrisMessage();
-            for (var content : parseResultContents(statusUpdate.result())) {
+            for (var content : parseResultContents(result)) {
                 message.addContent(content);
             }
-            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(statusUpdate.result())).orElse(List.of());
+            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(result)).orElse(List.of());
             message.setAccessedMemories(statusUpdate.accessedMemories());
             message.setCreatedMemories(statusUpdate.createdMemories());
             message.setToolActivity(statusUpdate.activities());
@@ -268,6 +287,19 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
                 statusUpdate.tokens(), statusUpdate.activities(), statusUpdate.activitySeq());
     }
 
+    /**
+     * Stores a summary Iris wrote of the earlier conversation. Iris sends it in place of the messages it covers on later turns.
+     * The client hides it, so it is not pushed over the websocket.
+     */
+    private void saveCompaction(S session, @Nullable PyrisCompactionDTO compaction) {
+        if (compaction == null || compaction.summary() == null || compaction.summary().isBlank()) {
+            return;
+        }
+        var message = new IrisMessage();
+        message.addContent(new IrisJsonMessageContent(JsonObjectMapper.get().valueToTree(compaction)));
+        irisMessageService.saveMessage(message, session, IrisMessageSender.SUMMARY);
+    }
+
     private TrackedSessionBasedPyrisJob recordTokenUsage(S session, TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, IrisMessage savedMessage) {
         if (statusUpdate.tokens() == null || statusUpdate.tokens().isEmpty()) {
             return job;
@@ -303,11 +335,18 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      *
      * @param job          The job that is currently executed
      * @param statusUpdate The partial status update of the job
+     * @return {@code false} if the session no longer exists and the update was dropped, {@code true} otherwise
      */
-    public void handlePartialStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+    public boolean handlePartialStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         // noinspection unchecked
-        var session = (S) irisSessionRepository.findByIdElseThrow(job.sessionId());
+        var session = (S) irisSessionRepository.findById(job.sessionId()).orElse(null);
+        if (session == null) {
+            // The session was deleted while its job was still running, so there is nothing left to update.
+            log.info("Dropping partial status update for Iris job {} because its session {} no longer exists", job.jobId(), job.sessionId());
+            return false;
+        }
         irisChatWebsocketService.sendPartialUpdate(session, statusUpdate.partialResult(), statusUpdate.partialSeq(), job.jobId());
+        return true;
     }
 
     private static final String MALFORMED_MCQ_ERROR_MESSAGE = "Sorry, I tried to generate a quiz question but the response was malformed. Please try again.";

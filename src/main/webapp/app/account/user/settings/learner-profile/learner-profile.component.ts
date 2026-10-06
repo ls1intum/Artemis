@@ -33,7 +33,11 @@ export class LearnerProfileComponent implements OnInit {
     // Gate rendering of course learner profiles until the base learner profile request has completed
     public readonly coursePanelEnabled = signal(false);
 
-    async ngOnInit(): Promise<void> {
+    ngOnInit(): void {
+        void this.initializeLearnerProfileComponent();
+    }
+
+    private async initializeLearnerProfileComponent(): Promise<void> {
         this.atlasEnabled.set(isAtlasModuleActive(this.profileService));
         this.irisEnabled.set(isIrisModuleActive(this.profileService));
         if (!this.atlasEnabled()) {

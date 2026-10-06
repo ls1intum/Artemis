@@ -748,4 +748,41 @@ class AtlasMLServiceTest {
         assertThat(result).isTrue();
         verify(atlasmlRestTemplate, org.mockito.Mockito.never()).exchange(any(String.class), any(HttpMethod.class), any(HttpEntity.class), eq(String.class));
     }
+
+    @Test
+    void testSaveCompetenciesWithDomainObjects_WhenServiceThrowsException_ReturnsFalse() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
+        Competency competency = new Competency();
+        competency.setId(1L);
+        competency.setTitle("Test Competency");
+        competency.setDescription("Test Description");
+        competency.setTaxonomy(CompetencyTaxonomy.APPLY);
+        Course course = new Course();
+        course.setId(1L);
+        competency.setCourse(course);
+
+        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
+                .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        boolean result = atlasMLService.saveCompetencies(List.of(competency), OperationTypeDTO.DELETE);
+
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void testSaveCompetenciesWithDomainObjects_WhenRequestFails_ReturnsFalse() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
+        Course course = new Course();
+        course.setId(7L);
+        Competency competency = new Competency();
+        competency.setId(1L);
+        competency.setTitle("Title");
+        competency.setCourse(course);
+        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
+                .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        boolean result = atlasMLService.saveCompetencies(List.of(competency), OperationTypeDTO.DELETE);
+
+        assertThat(result).isFalse();
+    }
 }

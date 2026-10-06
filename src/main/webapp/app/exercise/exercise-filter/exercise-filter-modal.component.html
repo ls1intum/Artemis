@@ -18,6 +18,7 @@
                 <label for="exercise-categories-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.categories"></label>
 
                 <input
+                    #categoryInput
                     id="exercise-categories-filter-selection"
                     type="text"
                     class="form-control mb-2"
@@ -27,8 +28,8 @@
                     [placeholder]="
                         (!selectableCategoryOptions().length ? 'artemisApp.courseOverview.exerciseFilter.noMoreOptions' : 'artemisApp.exercise.selectCategories') | artemisTranslate
                     "
-                    (focus)="focus$.next($any($event).target.value)"
-                    (click)="click$.next($any($event).target.value)"
+                    (focus)="focus$.next(categoryInput.value)"
+                    (click)="click$.next(categoryInput.value)"
                     #categoriesFilterSelection="ngbTypeahead"
                     (selectItem)="onSelectItem($event)"
                     [resultFormatter]="resultFormatter"

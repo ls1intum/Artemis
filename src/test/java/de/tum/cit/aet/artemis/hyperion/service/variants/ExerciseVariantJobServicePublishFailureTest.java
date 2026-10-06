@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -39,9 +40,10 @@ class ExerciseVariantJobServicePublishFailureTest {
     @BeforeEach
     void setUp() {
         HyperionWebsocketService websocketService = mock(HyperionWebsocketService.class);
-        // The broker is unavailable / the payload cannot be converted — an unchecked throw that
-        // HyperionWebsocketService does not catch itself (it only handles Interrupted/ExecutionException).
-        doThrow(new IllegalStateException("broker unavailable")).when(websocketService).send(anyString(), anyString(), any());
+        // Simulates an unchecked throw out of send() itself. Nothing in the current implementation is expected to throw
+        // that way (WebsocketMessagingService turns every send failure into a failed future, which HyperionWebsocketService
+        // only logs), so this guards publish()'s catch against a future implementation that does.
+        doThrow(new IllegalStateException("broker unavailable")).when(websocketService).send(anyString(), any(WebsocketUserDestination.class), any());
 
         jobService = new ExerciseVariantJobService(new LocalDataProviderService(), websocketService);
         jobService.init();

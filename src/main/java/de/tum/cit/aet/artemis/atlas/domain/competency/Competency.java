@@ -19,6 +19,7 @@ public class Competency extends CourseCompetency {
     public Competency(CourseCompetency courseCompetency) {
         super(courseCompetency.getTitle(), courseCompetency.getDescription(), courseCompetency.getSoftDueDate(), courseCompetency.getMasteryThreshold(),
                 courseCompetency.getTaxonomy(), courseCompetency.isOptional());
+        setGeneratedByAi(courseCompetency.isGeneratedByAi());
     }
 
     public Competency() {

@@ -40,10 +40,10 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     ],
 })
 export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
-    exerciseType = ExerciseType.MODELING;
-
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private examParticipationService = inject(ExamParticipationService);
+
+    exerciseType = ExerciseType.MODELING;
 
     modelingEditor = viewChild.required(ModelingEditorComponent);
 
@@ -154,21 +154,20 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         this.explanationText.set(explanation);
     }
 
-    async setSubmissionVersion(submission: SubmissionVersion): Promise<void> {
+    setSubmissionVersion(submission: SubmissionVersion): void {
         this.submissionVersion = submission;
-        await this.updateViewFromSubmissionVersion();
+        this.updateViewFromSubmissionVersion();
     }
 
     /**
      * Updates the model and explanation text with the latest submission version.
      * It extracts the model and explanation text from the submission version and updates the view.
      */
-    private async updateViewFromSubmissionVersion() {
+    private updateViewFromSubmissionVersion(): void {
         if (this.submissionVersion?.content) {
             // we need these string operations because we store the string in the database as concatenation of Model: <model>; Explanation: <explanation>
             // and need to remove the content that was added before the string is saved to the db to get valid JSON
             let model = this.submissionVersion.content.substring(0, this.submissionVersion.content.indexOf('; Explanation:'));
-            // if we do not wait here for apollon, the redux store might be undefined
             model = model.replace('Model: ', '');
             // updates the Apollon editor model state (view) with the latest modeling submission
             this.umlModel.set(importDiagram(parseJson(model)));

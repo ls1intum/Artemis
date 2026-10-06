@@ -10,13 +10,13 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { CourseExerciseDueDateDTO, exerciseFromCourseExerciseDueDateDTO } from 'app/course/shared/entities/course-content-response.dto';
 import { StudentParticipationDTO, fromStudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseExerciseService {
     private http = inject(HttpClient);
     private participationWebsocketService = inject(ParticipationWebsocketService);

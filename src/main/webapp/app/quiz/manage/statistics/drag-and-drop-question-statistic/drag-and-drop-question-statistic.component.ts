@@ -12,11 +12,10 @@ import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-sv
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
-import { NgStyle } from '@angular/common';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiBarChartComponent } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
@@ -24,7 +23,7 @@ import { TumUiBarChartComponent } from '@tumaet/ui-angular';
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil],
     styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', './drag-and-drop-question-statistic.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, TumUiBarChartComponent, FaIconComponent, ImageComponent, NgStyle, DragItemComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, TumAetUiBarChartComponent, FaIconComponent, ImageComponent, DragItemComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
 export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent {
     private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);

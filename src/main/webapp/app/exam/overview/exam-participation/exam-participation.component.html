@@ -9,16 +9,15 @@
                 <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
             </div>
         }
-        <p-message id="summaryLoadFailedMessage" severity="error" [pt]="{ content: { class: 'w-full' }, text: { class: 'w-full' } }">
+        <tumaet-ui-message id="summaryLoadFailedMessage" severity="error" class="w-full">
             <div class="flex flex-col items-start gap-2">
-                <!-- <strong> rather than a heading + Tailwind weight utility: PrimeNG injects its component CSS unlayered, so it wins over Tailwind's @layer utilities -->
                 <strong jhiTranslate="artemisApp.examParticipation.summaryLoadFailed.title"></strong>
                 <span jhiTranslate="artemisApp.examParticipation.summaryLoadFailed.explanation"></span>
-                <button pButton type="button" id="retryLoadSummaryButton" size="small" [disabled]="loadingExam()" (click)="retryLoadSummary()">
+                <button tumAetUiButton type="button" id="retryLoadSummaryButton" size="small" [disabled]="loadingExam()" (click)="retryLoadSummary()">
                     {{ 'artemisApp.examParticipation.summaryLoadFailed.retry' | artemisTranslate }}
                 </button>
             </div>
-        </p-message>
+        </tumaet-ui-message>
     </div>
 }
 @if (exam()) {
@@ -36,7 +35,7 @@
     @if (studentExam()) {
         <!-- exam() participation -->
         @if (isVisible() && isActive() && !isOver() && examStartConfirmed()) {
-            <div class="exam-background-wrapper hide-scrollbar-unless-scrolling">
+            <div class="exam-background-wrapper body-bg hide-scrollbar-unless-scrolling">
                 <jhi-exam-bar
                     [exam]="exam()"
                     [studentExam]="studentExam()"
@@ -49,8 +48,8 @@
                     (heightChange)="updateHeight($event)"
                 />
 
-                <div class="d-flex justify-content-between gap-3">
-                    <div class="bg-body" [class.ms-3]="!testRunId()">
+                <div class="flex justify-between gap-4">
+                    <div class="body-bg" [class.ml-4]="!testRunId()">
                         <jhi-exam-navigation-sidebar
                             [sidebarData]="sidebarData()"
                             [exercises]="studentExam().exercises!"
@@ -63,8 +62,9 @@
                     <!-- exercises -->
                     <!-- cdkScrollable registers the container with the CDK ScrollDispatcher so drag-and-drop auto-scrolls it (#13187) -->
                     <div
-                        class="vw-100 module-bg rounded-3 px-3 pt-3 content-exam-height"
-                        [ngClass]="{ 'content-exam-height-testRun': testRunId(), 'me-3': !testRunId() }"
+                        class="module-bg content-exam-height w-screen rounded-lg px-4 pt-4"
+                        [class.content-exam-height-testRun]="testRunId()"
+                        [class.mr-4]="!testRunId()"
                         cdkScrollable
                     >
                         <!--
@@ -75,7 +75,7 @@
                             other's cause — stretched, the column fit, so the classes came back, so it stretched again —
                             and the scrollbar flickered in and out on every change-detection pass (#13916).
                         -->
-                        <div class="d-flex flex-column justify-content-between min-h-100">
+                        <div class="min-h-100 flex flex-col justify-between">
                             <div [hidden]="activePageIndex !== -1">
                                 <jhi-exam-exercise-overview-page [studentExam]="studentExam()" (onPageChanged)="onPageChange($event)" />
                             </div>
@@ -127,24 +127,26 @@
                                                         [courseId]="courseId()"
                                                     />
                                                 }
+                                                @default {}
                                             }
                                         </div>
                                     }
                                 }
                             }
                             @if ((generateParticipationStatus | async) === 'generating') {
-                                <div class="d-flex justify-content-center align-items-center">
-                                    <p class="mb-0" jhiTranslate="artemisApp.examParticipation.preparingParticipation"></p>
-                                    <div class="spinner-border ms-2" role="status">
-                                        <span class="visually-hidden" jhiTranslate="loading"></span>
-                                    </div>
+                                <div class="flex items-center justify-center">
+                                    <p class="mb-0!" jhiTranslate="artemisApp.examParticipation.preparingParticipation"></p>
+                                    <tumaet-ui-progress-spinner class="ml-2" [ariaLabel]="'loading' | artemisTranslate" />
                                 </div>
                             }
                             @if ((generateParticipationStatus | async) === 'failed') {
-                                <div class="d-flex justify-content-center align-items-center">
-                                    <p class="mb-0" jhiTranslate="artemisApp.examParticipation.generateParticipationFailed"></p>
+                                <div class="flex items-center justify-center">
+                                    <p class="mb-0!" jhiTranslate="artemisApp.examParticipation.generateParticipationFailed"></p>
                                     <button
-                                        class="btn btn-sm btn-primary px-3 ms-2"
+                                        type="button"
+                                        tumAetUiButton
+                                        size="small"
+                                        class="ml-2!"
                                         (click)="createParticipationForExercise(this.activeExamPage().exercise!).subscribe()"
                                         jhiTranslate="artemisApp.examParticipation.generateParticipationRetry"
                                     ></button>
@@ -157,19 +159,19 @@
                                     <div class="exam-footer-content">
                                         <!-- Note by SK: this case shows an empty <p> on purpose -->
                                         @if (isProgrammingExercise()) {
-                                            <p jhiTranslate="artemisApp.examParticipation.ideConnected" class="mb-0"></p>
+                                            <p jhiTranslate="artemisApp.examParticipation.ideConnected" class="mb-0!"></p>
                                         } @else {
-                                            <p jhiTranslate="artemisApp.examParticipation.connected" class="mb-0"></p>
+                                            <p jhiTranslate="artemisApp.examParticipation.connected" class="mb-0!"></p>
                                         }
-                                        <jhi-connection-status [isExamMode]="true" class="mx-3 connection-status-exam-participation" />
+                                        <jhi-connection-status [isExamMode]="true" class="connection-status-exam-participation mx-4" />
                                     </div>
                                 </div>
                             }
                             @if (!connected()) {
                                 <div class="update-footer gap-4 disconnected">
                                     <div class="exam-footer-content">
-                                        <p jhiTranslate="artemisApp.examParticipation.disconnected" class="mb-0"></p>
-                                        <jhi-connection-status [isExamMode]="true" class="mx-3 connection-status-exam-participation" />
+                                        <p jhiTranslate="artemisApp.examParticipation.disconnected" class="mb-0!"></p>
+                                        <jhi-connection-status [isExamMode]="true" class="connection-status-exam-participation mx-4" />
                                     </div>
                                 </div>
                             }
@@ -194,7 +196,7 @@
                         (heightChange)="updateHeight($event)"
                     />
 
-                    <div class="module-bg rounded-3 px-3 pt-3 end-view content-exam-height" [ngClass]="{ 'content-exam-height-testRun': testRunId() }">
+                    <div class="module-bg end-view content-exam-height rounded-lg px-4 pt-4" [class.content-exam-height-testRun]="testRunId()">
                         <jhi-exam-participation-cover
                             [startView]="false"
                             [exam]="exam()"
@@ -210,15 +212,15 @@
                 </div>
             } @else {
                 <!-- Display submission not in time view -->
-                <div class="d-flex flex-column p-3">
+                <div class="flex flex-col p-4">
                     @if (isSidebarCollapsed()) {
                         <div>
                             <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
                         </div>
                     }
-                    <div class="col-12 text-center my-auto">
-                        <h3 class="mt-2">{{ exam().title }}</h3>
-                        <div class="mb-2 font-weight-bold text-danger">
+                    <div class="my-auto w-full text-center">
+                        <h3 class="mt-2!">{{ exam().title }}</h3>
+                        <div class="mb-2 font-bold text-state-danger">
                             <span jhiTranslate="artemisApp.studentExam.submissionNotInTime"></span>
                         </div>
                     </div>
@@ -226,7 +228,7 @@
             }
         }
         @if (this.studentExam()?.submitted && !showExamSummary() && !loadingExam() && !summaryLoadFailed()) {
-            <div class="submissionSuccessfulHint pb-3">
+            <div class="submissionSuccessfulHint pb-4">
                 <fa-icon [icon]="faCheckCircle" class="check" />
                 <h2 jhiTranslate="artemisApp.examParticipation.submissionSuccessful.title"></h2>
                 <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.noActionRequired"></p>
@@ -234,8 +236,8 @@
                 @if (isExamSummaryVisible()) {
                     <button
                         type="button"
+                        tumAetUiButton
                         id="showExamSummaryButton"
-                        class="btn btn-primary"
                         [disabled]="examSummaryButtonSecondsLeft()"
                         (click)="loadAndDisplaySummary()"
                         jhiTranslate="artemisApp.examParticipation.submissionSuccessful.button"
@@ -244,7 +246,7 @@
                 } @else {
                     <p
                         data-testid="examSummaryUnavailableHint"
-                        class="mb-0"
+                        class="mb-0!"
                         jhiTranslate="artemisApp.examParticipation.submissionSuccessful.summaryAvailableFrom"
                         [translateValues]="{ date: exam().examSummaryPublicationDate | artemisDate }"
                     ></p>
@@ -252,36 +254,38 @@
             </div>
         }
         @if (showExamSummary()) {
-            <div [ngClass]="{ 'p-3 scrollable-content': !testRunId() }">
+            <div [class]="!testRunId() ? 'scrollable-content p-4' : ''">
                 <jhi-exam-participation-summary [studentExam]="studentExam()" [isSidebarCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
             </div>
         }
     }
 }
 @if (!loadingExam() && !exam() && !summaryLoadFailed()) {
-    <div class="d-flex flex-column gap-2 p-3">
+    <div class="flex flex-col gap-2 p-4">
         @if (isSidebarCollapsed()) {
             <div>
                 <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
             </div>
         }
         @if (isAtLeastTutor() && !testRunId()) {
-            <div class="alert alert-warning mb-0">
-                <h6 jhiTranslate="artemisApp.examParticipation.atLeastTutorStudentExam"></h6>
-                @if (isAtLeastInstructor()) {
-                    <a [routerLink]="['/course-management', courseId(), 'exams', examId()]" class="btn btn-primary">
-                        <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
-                    </a>
-                } @else {
-                    <a [routerLink]="['/course-management', courseId(), 'exams']" class="btn btn-primary">
-                        <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
-                    </a>
-                }
-            </div>
+            <tumaet-ui-message severity="warn" class="w-full">
+                <div class="flex flex-col items-start gap-2">
+                    <h6 class="mb-0!" jhiTranslate="artemisApp.examParticipation.atLeastTutorStudentExam"></h6>
+                    @if (isAtLeastInstructor()) {
+                        <a tumAetUiButton [routerLink]="['/course-management', courseId(), 'exams', examId()]">
+                            <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
+                        </a>
+                    } @else {
+                        <a tumAetUiButton [routerLink]="['/course-management', courseId(), 'exams']">
+                            <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
+                        </a>
+                    }
+                </div>
+            </tumaet-ui-message>
         } @else {
-            <div class="alert alert-danger mb-0">
-                <h6 [jhiTranslate]="'artemisApp.examParticipation.' + (testExam() ? 'noFurtherAttempts' : 'noStudentExam')"></h6>
-            </div>
+            <tumaet-ui-message severity="error" class="w-full">
+                <h6 class="mb-0!" [jhiTranslate]="'artemisApp.examParticipation.' + (testExam() ? 'noFurtherAttempts' : 'noStudentExam')"></h6>
+            </tumaet-ui-message>
         }
     </div>
 }

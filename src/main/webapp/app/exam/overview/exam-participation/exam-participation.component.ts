@@ -23,7 +23,7 @@ import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundat
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
 import { TestRunRibbonComponent } from '../../manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationCoverComponent } from '../exam-cover/exam-participation-cover.component';
-import { AsyncPipe, NgClass } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { ExamBarComponent } from '../exam-bar/exam-bar.component';
 import { ExamNavigationSidebarComponent } from '../exam-navigation-sidebar/exam-navigation-sidebar.component';
 import { QuizExamSubmissionComponent } from '../exercises/quiz/quiz-exam-submission.component';
@@ -60,8 +60,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
-import { Message } from 'primeng/message';
-import { ButtonDirective } from 'primeng/button';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
@@ -74,7 +73,6 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         CdkScrollable,
         TestRunRibbonComponent,
         ExamParticipationCoverComponent,
-        NgClass,
         ExamBarComponent,
         ExamNavigationSidebarComponent,
         QuizExamSubmissionComponent,
@@ -92,8 +90,9 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         ArtemisDatePipe,
         ExamExerciseOverviewPageComponent,
         CourseSidebarToggleButtonComponent,
-        Message,
-        ButtonDirective,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiProgressSpinnerComponent,
     ],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -113,6 +112,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private courseStorageService = inject(CourseStorageService);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
     private examManagementService = inject(ExamManagementService);
+
+    /** Set once the component is destroyed, so that a late response does not restart work for the exam that was left. */
+    private isDestroyed = false;
 
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faGraduationCap = faGraduationCap;
@@ -352,6 +354,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private resetForNewRoute(): void {
         this.resetForNewLoad();
         this.stopConductionOfPreviousExam();
+        // Right away rather than when the next exam is loaded: if that load stalls or fails, the live events of the previous exam would keep being fetched
+        this.liveEventsService.reset();
         this.exam.set(undefined!);
         this.studentExam.set(undefined!);
         this.examStartConfirmed.set(false);
@@ -606,6 +610,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                     // Publish it so other components are aware of the change
                     this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
+                    if (this.isDestroyed) {
+                        // The student left before the response arrived: the publication above made the live events service handle this exam again
+                        this.liveEventsService.reset();
+                    }
 
                     // Leave the hand-in-early cover: the exam is submitted, so its Finish button is disabled from here on and the
                     // student has to reach the submission confirmation instead. Without this they stay on the confirmation screen
@@ -815,6 +823,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.problemStatementUpdateEventsSubscription?.unsubscribe();
         this.examLoadSubscription?.unsubscribe();
         this.examParticipationService.resetExamLayout();
+        this.isDestroyed = true;
+        this.liveEventsService.reset();
         this.stopAutoSaveTimer();
     }
 

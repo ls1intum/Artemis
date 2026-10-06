@@ -132,7 +132,7 @@ public class SubmissionService {
     public void checkSubmissionAllowanceElseThrow(Exercise exercise, Submission submission, User currentUser) {
         // The exercise was loaded from the database by the caller, so its course is a persisted entity and not something
         // the client could have tampered with. Re-reading it by id would only repeat a row we are already holding.
-        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        final var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         if (!authCheckService.isAtLeastStudentInCourse(course, currentUser)) {
             throw new AccessForbiddenException();
         }
@@ -628,8 +628,9 @@ public class SubmissionService {
      */
     public Result prepareTestRunSubmissionForAssessment(Submission submission) {
         Optional<Result> existingAutomaticResult = Optional.empty();
-        if (submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {
-            existingAutomaticResult = resultRepository.findByIdWithEagerFeedbacks(submission.getLatestResult().getId());
+        Result latestResult = submission.getLatestResult();
+        if (latestResult != null && AssessmentType.AUTOMATIC == latestResult.getAssessmentType()) {
+            existingAutomaticResult = resultRepository.findByIdWithEagerFeedbacks(latestResult.getId());
         }
 
         // we only support one correction round for test runs
@@ -792,6 +793,25 @@ public class SubmissionService {
             throw new BadRequestAlertException("The correction round " + correctionRound + " does not exist for exercise " + exercise.getId(), ENTITY_NAME,
                     "invalidCorrectionRound");
         }
+    }
+
+    /**
+     * Like {@link #checkCorrectionRoundIsValidElseThrow(Exercise, int)}, but for an endpoint that opens one specific submission. Such a
+     * submission may already hold a result for a round beyond the exercise's number of correction rounds: the response to a complaint
+     * is stored as an additional manual result with the next round. Opening that existing result is valid and creates nothing.
+     *
+     * @param exercise        the exercise the submission belongs to
+     * @param submissionId    the id of the submission that is opened
+     * @param correctionRound the requested correction round
+     * @throws BadRequestAlertException if the round is negative, or neither below the exercise's number of correction rounds nor the round of an
+     *                                      existing result of the submission
+     */
+    public void checkCorrectionRoundIsValidElseThrow(Exercise exercise, long submissionId, int correctionRound) {
+        boolean isRoundOfTheExercise = correctionRound >= 0 && correctionRound < exercise.getNumberOfCorrectionRounds();
+        if (isRoundOfTheExercise || (correctionRound >= 0 && resultRepository.existsManualResultBySubmissionIdAndCorrectionRound(submissionId, correctionRound))) {
+            return;
+        }
+        checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
     }
 
     /**

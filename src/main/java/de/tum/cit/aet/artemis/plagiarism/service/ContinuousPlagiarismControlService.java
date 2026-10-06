@@ -24,9 +24,11 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -107,7 +109,7 @@ public class ContinuousPlagiarismControlService {
             // is not worth running, so a course without an instructor is skipped before the expensive part starts.
             var author = findPostAuthor(exercise);
             if (author.isEmpty()) {
-                log.warn("Skipping continuous plagiarism control, the course has no instructor to act on the findings: exerciseId={}, type={}.", exercise.getId(),
+                log.warn("Skipping continuous plagiarism control, no course instructor could be resolved to act on the findings: exerciseId={}, type={}.", exercise.getId(),
                         exercise.getExerciseType());
                 return;
             }
@@ -135,7 +137,8 @@ public class ContinuousPlagiarismControlService {
 
     private void recordUsage(Exercise exercise, long durationMs, boolean failed) {
         featureUsageCollector.ifPresent(collector -> collector.recordUsage(FeatureKind.BACKGROUND, PLAGIARISM_MODULE,
-                "continuous-plagiarism-control/" + exercise.getExerciseType().name().toLowerCase(Locale.ROOT), Role.ANONYMOUS, failed, durationMs));
+                "continuous-plagiarism-control/" + exercise.getExerciseType().name().toLowerCase(Locale.ROOT), UserFeature.CONTINUOUS_PLAGIARISM_CONTROL, FeatureInteraction.ACTION,
+                Role.ANONYMOUS, failed, durationMs));
     }
 
     /**
@@ -201,8 +204,8 @@ public class ContinuousPlagiarismControlService {
     }
 
     private void createOrUpdatePlagiarismCases(PlagiarismComparison comparison, User author) {
-        var plagiarismCases = Set.of(plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionA(), true),
-                plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionB(), true));
+        var plagiarismCases = Set.of(plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionAElseThrow(), true),
+                plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionBElseThrow(), true));
 
         plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getPost() == null && plagiarismCase.getStudent() != null)
                 .map(plagiarismCase -> buildCpcPost(plagiarismCase, author)).forEach(post -> {
@@ -225,10 +228,11 @@ public class ContinuousPlagiarismControlService {
      * instructor with the lowest id is taken so that repeated runs keep attributing the posts the same way.
      *
      * @param exercise the exercise the plagiarism check is about to run on
-     * @return the instructor to write the post in the name of, empty if the course has none and the check is skipped
+     * @return the instructor to write the post in the name of, empty if no course instructor can be resolved and the check is skipped
      */
     private Optional<User> findPostAuthor(Exercise exercise) {
-        return userRepository.getInstructors(exercise.getCourseViaExerciseGroupOrCourseMember()).stream().min(Comparator.comparing(User::getId));
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        return course == null ? Optional.empty() : userRepository.getInstructors(course).stream().min(Comparator.comparing(User::getId));
     }
 
     private static Post buildCpcPost(PlagiarismCase plagiarismCase, User author) {

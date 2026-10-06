@@ -40,7 +40,7 @@ End-to-end tests test entire workflows; therefore, they require the whole Artemi
 Playwright tests rely on the Playwright Node.js library, browser binaries, and some helper packages.
 
 **The recommended way to run E2E tests locally is the [fast local runner](#fast-local-runner-recommended-for-development)** — a single script
-(`./run-e2e-tests-local-fast.sh`) that handles database, server, client, and Playwright setup automatically.
+(`./supporting_scripts/e2e/run-e2e-tests-local-fast.sh`) that handles database, server, client, and Playwright setup automatically.
 It auto-kills conflicting processes on ports 8080/9000, keeps services running between re-runs, and supports filtering individual tests.
 
 Alternatively, you can use the Docker-based scripts in `supporting_scripts/playwright` (see the README there),
@@ -66,7 +66,7 @@ The three steps for setting up Playwright with these supporting scripts are:
 
 ### Fast local runner (recommended for development)
 
-For the fastest local development experience, use the `run-e2e-tests-local-fast.sh` script in the repository root.
+For the fastest local development experience, use the `supporting_scripts/e2e/run-e2e-tests-local-fast.sh` script in the repository root.
 This is the **recommended way to run E2E tests locally** for both developers and AI agents.
 Unlike the Docker-based approach above, this script runs only PostgreSQL in Docker while running the server and client directly on the host.
 Services stay running between test runs, so re-runs only take seconds.
@@ -86,7 +86,7 @@ so you don't need to manually stop conflicting processes before running it.
 **First run (starts everything):**
 
 ```bash
-./run-e2e-tests-local-fast.sh
+./supporting_scripts/e2e/run-e2e-tests-local-fast.sh
 ```
 
 This starts PostgreSQL, boots the server (~30-90s), starts the client (~10-20s), then runs all Playwright tests.
@@ -97,10 +97,10 @@ Use `--filter` with a pattern (supports regex) to run only matching tests:
 
 ```bash
 # Run tests with "Quiz" in the name
-./run-e2e-tests-local-fast.sh --filter "Quiz"
+./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --filter "Quiz"
 
 # Run tests matching multiple patterns
-./run-e2e-tests-local-fast.sh --filter "ExamAssessment|SystemHealth"
+./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --filter "ExamAssessment|SystemHealth"
 ```
 
 **Re-run tests (services already running):**
@@ -109,19 +109,19 @@ After the first run, services stay running. Skip startup for faster re-runs:
 
 ```bash
 # Run all tests (skips starting services that are already running)
-./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db
+./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db
 
 # Run only specific tests
-./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --filter "Quiz"
+./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --filter "Quiz"
 
 # Open Playwright UI for debugging
-./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --ui
+./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --ui
 ```
 
 **Stop everything:**
 
 ```bash
-./run-e2e-tests-local-fast.sh --stop
+./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --stop
 ```
 
 **Available options:**
@@ -411,7 +411,7 @@ unrelated to any regression. A `data-testid` attribute survives UI refactors as 
     points at the tests.
 
     Both archive tests used to find the download button as `button.btn-primary[data-mode="Course"]`. When that button
-    became a TUM UI button, the class disappeared and both tests waited about eleven minutes each for an element that
+    became a TUM AET UI button, the class disappeared and both tests waited about eleven minutes each for an element that
     could no longer exist.
 
 </Callout>
@@ -561,7 +561,7 @@ does not consume compute resources.
 
 ### Selective test execution and `e2e-test-mapping.json`
 
-The `determine-tests` CI job reads `.ci/E2E-tests/e2e-test-mapping.json` to decide which tests to include in Phase 1.
+The `determine-tests` CI job reads `supporting_scripts/ci/E2E-tests/e2e-test-mapping.json` to decide which tests to include in Phase 1.
 The mapping file lists, for each Artemis module, the source paths that belong to it and the test paths that cover it.
 All `testPaths` and `allTestPaths` entries are resolved relative to `src/test/playwright/` (the Playwright test root).
 
@@ -601,7 +601,7 @@ All `testPaths` and `allTestPaths` entries are resolved relative to `src/test/pl
         }
     },
     "alwaysRunTests": ["e2e/Login.spec.ts", "e2e/Logout.spec.ts", "e2e/SystemHealth.spec.ts"],
-    "runAllTestsPatterns": ["src/main/resources/config/", "docker/", "build.gradle", "angular.json"]
+    "runAllTestsPatterns": ["src/main/resources/config/", "deployment/docker/", "build.gradle", "angular.json"]
 }
 ```
 
@@ -674,13 +674,13 @@ with the recommended settings for Artemis.
 ### Artemis Application
 
 The Docker image for the Artemis container is created from the already existing
-[Dockerfile](https://github.com/ls1intum/Artemis/blob/develop/docker/artemis/Dockerfile).
+[Dockerfile](https://github.com/ls1intum/Artemis/blob/develop/deployment/docker/artemis/Dockerfile).
 When the build of the Playwright test suite starts, it retrieves the Artemis executable (.war file).
 Upon creation of the Artemis Docker image the executable is copied into the image together with configuration files
 for the Artemis server.
 
 The main configuration of the Artemis server is contained in the
-[Playwright environment configuration files](https://github.com/ls1intum/Artemis/tree/develop/docker/artemis/config).
+[Playwright environment configuration files](https://github.com/ls1intum/Artemis/tree/develop/deployment/docker/artemis/config).
 Security-relevant settings are passed to the Docker container via environment variables and GitHub secrets.
 
 The Artemis container is configured to
@@ -704,14 +704,14 @@ other Artemis Docker setups.
 Therefore, only Playwright and the Playwright Docker image require active maintenance.
 Since the Playwright test suite simulates a real user, it makes sense to execute the test suite with
 the latest browser versions.
-If you run Playwright inside Docker locally (using `docker/playwright.yml`), the Playwright Docker image
+If you run Playwright inside Docker locally (using `deployment/docker/playwright.yml`), the Playwright Docker image
 has browsers at specific pinned versions. The
-[docker-compose file](https://github.com/ls1intum/Artemis/blob/develop/docker/playwright.yml)
+[docker-compose file](https://github.com/ls1intum/Artemis/blob/develop/deployment/docker/playwright.yml)
 should be updated monthly to pull the latest Playwright image with up-to-date browsers.
 This step does not apply to CI, where Playwright runs directly on the host (not in a container).
 
 When a new Artemis module is created or an existing module is significantly reorganized, update
-`.ci/E2E-tests/e2e-test-mapping.json`:
+`supporting_scripts/ci/E2E-tests/e2e-test-mapping.json`:
 
 1. Add a new entry to `mappings` with the module's `sourcePaths` and `testPaths`.
 2. Add all new test paths to `allTestPaths` so Phase 2 covers them on unrelated PRs.

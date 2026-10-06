@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { HttpClient } from '@angular/common/http';
 
@@ -14,7 +14,7 @@ export interface ServerDateService {
     now: () => dayjs.Dayjs;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ArtemisServerDateService implements ServerDateService {
     resourceUrl: string;
     recentOffsets: number[];
@@ -95,7 +95,7 @@ export class ArtemisServerDateService implements ServerDateService {
             // remove highest
             offsetsSorted.pop();
             // calculate avg
-            offset = offsetsSorted.reduce((a, b) => a + b) / offsetsSorted.length;
+            offset = offsetsSorted.reduce((a, b) => a + b, 0) / offsetsSorted.length;
         }
         // adjust with previously calculated offset
         return clientDate.add(offset, 'ms');
