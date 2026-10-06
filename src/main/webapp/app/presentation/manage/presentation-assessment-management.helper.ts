@@ -61,8 +61,7 @@ export function filterStudentRowsBySearch(rows: PresentationStudentRow[], search
 
 export function createPresentationSidebarData(
     presentationAssessments: PresentationAssessment[],
-    viewMode: PresentationViewMode,
-    selectedPresentationId: number | undefined,
+    courseId: number,
     translate: (key: string) => string,
     overviewIcon: IconDefinition,
     linkIcon: IconDefinition,
@@ -72,8 +71,7 @@ export function createPresentationSidebarData(
         title: translate('artemisApp.presentationAssessment.overallOverview'),
         icon: overviewIcon,
         size: 'M',
-        active: viewMode === 'students',
-        disableNavigation: true,
+        routerLink: `/course-management/${courseId}/presentations`,
     };
     const standalonePresentations = presentationAssessments
         .filter((assessment) => !assessment.exerciseId)
@@ -88,12 +86,12 @@ export function createPresentationSidebarData(
         pinnedData: [overview],
         groupedData: {
             standalone: {
-                entityData: standalonePresentations.map((assessment) => toSidebarItem(assessment, viewMode, selectedPresentationId)),
+                entityData: standalonePresentations.map((assessment) => toSidebarItem(assessment, courseId)),
                 isHideCount: true,
                 translationKey: 'artemisApp.presentationAssessment.standalone',
             },
             linkedToExercise: {
-                entityData: linkedPresentations.map((assessment) => toSidebarItem(assessment, viewMode, selectedPresentationId, linkIcon)),
+                entityData: linkedPresentations.map((assessment) => toSidebarItem(assessment, courseId, linkIcon)),
                 isHideCount: true,
                 translationKey: 'artemisApp.presentationAssessment.linkedToExercise',
             },
@@ -152,19 +150,13 @@ function studentSortValue(row: PresentationStudentRow, field: string): string | 
     return values[field];
 }
 
-function toSidebarItem(
-    assessment: PresentationAssessment,
-    viewMode: PresentationViewMode,
-    selectedPresentationId: number | undefined,
-    linkIcon?: IconDefinition,
-): SidebarCardElement {
+function toSidebarItem(assessment: PresentationAssessment, courseId: number, linkIcon?: IconDefinition): SidebarCardElement {
     return {
         id: assessment.id!,
         title: assessment.title ?? '',
         subtitleLeft: linkIcon ? assessment.exerciseTitle : undefined,
         subtitleLeftIcon: linkIcon,
         size: 'M',
-        active: viewMode === 'presentations' && selectedPresentationId === assessment.id,
-        disableNavigation: true,
+        routerLink: `/course-management/${courseId}/presentations/${assessment.id}${assessment.exerciseId ? `/exercises/${assessment.exerciseId}` : ''}`,
     };
 }

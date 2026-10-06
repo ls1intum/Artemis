@@ -29,6 +29,7 @@
                 'bg-group-selected': containsActiveVariant(),
             }"
             [routerLinkActive]="'bg-selected border-selected'"
+            [routerLinkActiveOptions]="{ exact: !!sidebarItem().routerLink }"
             [attr.role]="sidebarItem().disableNavigation ? 'button' : null"
             [attr.tabindex]="sidebarItem().disableNavigation ? 0 : null"
             (keydown.enter)="onSelectionCardKeydown($event)"
@@ -39,9 +40,11 @@
                 [routerLink]="
                     sidebarItem().disableNavigation
                         ? null
-                        : sidebarItem()?.targetComponentSubRoute
-                          ? ['./', sidebarItem().targetComponentSubRoute, sidebarItem().id]
-                          : ['./', sidebarItem().id]
+                        : sidebarItem().routerLink
+                          ? sidebarItem().routerLink
+                          : sidebarItem()?.targetComponentSubRoute
+                            ? ['./', sidebarItem().targetComponentSubRoute, sidebarItem().id]
+                            : ['./', sidebarItem().id]
                 "
                 (click)="onNonExamCardClicked($event)"
             >

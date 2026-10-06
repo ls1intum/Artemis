@@ -11,6 +11,8 @@ import { PresentationAssessmentManagementComponent } from 'app/presentation/mana
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
+import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
 
 function presentationRoutes(routes: Routes): Routes {
     return routes.flatMap((route) => (route.path?.startsWith('presentations') ? [route] : presentationRoutes(route.children ?? [])));
@@ -18,7 +20,9 @@ function presentationRoutes(routes: Routes): Routes {
 
 describe('presentation course navigation', () => {
     it.each(['presentations', 'presentations/42', 'presentations/42/exercises/7'])('reloads the course and targets subsequent writes correctly for %s', async (path) => {
-        const findAllByCourseId = vi.fn((courseId: number) => of(new HttpResponse({ body: [{ id: 42, title: `Course ${courseId}`, courseId, exerciseId: 7, instances: [] }] })));
+        const findAllByCourseId = vi.fn((courseId: number) =>
+            of(new HttpResponse({ body: [42, 43].map((id) => ({ id, title: `Course ${courseId}`, courseId, exerciseId: 7, instances: [] })) })),
+        );
         const create = vi.fn().mockReturnValue(of(new HttpResponse({ body: { id: 43 } })));
         const findWithExercises = vi.fn((id: number) => of(new HttpResponse({ body: { id, exercises: [] } })));
         const routes = presentationRoutes(courseManagementRoutes);
@@ -34,17 +38,46 @@ describe('presentation course navigation', () => {
                 { provide: TranslateService, useValue: { instant: (key: string) => key, onLangChange: new Subject(), onTranslationChange: new Subject() } },
             ],
         })
-            .overrideComponent(PresentationAssessmentManagementComponent, { set: { template: '' } })
+            .overrideComponent(PresentationAssessmentManagementComponent, {
+                set: {
+                    imports: [SidebarCardMediumComponent],
+                    template: `
+                        @for (item of sidebarData().pinnedData; track item.id) {
+                            <jhi-medium-sidebar-card [sidebarItem]="item" />
+                        }
+                        @for (item of sidebarData().groupedData?.['linkedToExercise']?.entityData; track item.id) {
+                            <jhi-medium-sidebar-card [sidebarItem]="item" [itemSelected]="true" />
+                        }
+                    `,
+                },
+            })
+            .overrideComponent(SidebarCardItemComponent, { set: { template: '' } })
             .compileComponents();
         const harness = await RouterTestingHarness.create();
         const first = await harness.navigateByUrl(`/course-management/1/${path}`, PresentationAssessmentManagementComponent);
         const second = await harness.navigateByUrl(`/course-management/2/${path}`, PresentationAssessmentManagementComponent);
-        expect(second).not.toBe(first);
+        expect(second).toBe(first);
         expect(second.courseId()).toBe(2);
         expect(second.presentationAssessments()[0].courseId).toBe(2);
         expect(findAllByCourseId).toHaveBeenCalledWith(1);
         expect(findAllByCourseId).toHaveBeenCalledWith(2);
         expect(findWithExercises).toHaveBeenCalledWith(2);
+        const detail = await harness.navigateByUrl('/course-management/2/presentations/42/exercises/7', PresentationAssessmentManagementComponent);
+        const loadCount = findAllByCourseId.mock.calls.length;
+        const exerciseLoadCount = findWithExercises.mock.calls.length;
+        const selected = await harness.navigateByUrl('/course-management/2/presentations/43/exercises/7', PresentationAssessmentManagementComponent);
+        expect(selected).toBe(detail);
+        expect(selected.selectedPresentationId()).toBe(43);
+        expect(selected.contentReady()).toBe(true);
+        const selectedLink = harness.routeNativeElement?.querySelector('a[href="/course-management/2/presentations/43/exercises/7"]');
+        expect(selectedLink?.parentElement?.classList.contains('bg-selected')).toBe(true);
+        const overviewLink = harness.routeNativeElement?.querySelector('a[href="/course-management/2/presentations"]');
+        expect(overviewLink?.parentElement?.classList.contains('bg-selected')).toBe(false);
+        expect(selected.sidebarData().groupedData?.['linkedToExercise'].entityData.find((item) => item.id === 43)?.routerLink).toBe(
+            '/course-management/2/presentations/43/exercises/7',
+        );
+        expect(findAllByCourseId).toHaveBeenCalledTimes(loadCount);
+        expect(findWithExercises).toHaveBeenCalledTimes(exerciseLoadCount);
         second.handlePresentationDialogSave({ presentationAssessment: { title: 'New presentation', maxPoints: 10 } });
         expect(create).toHaveBeenCalledWith(2, expect.objectContaining({ title: 'New presentation' }));
     });

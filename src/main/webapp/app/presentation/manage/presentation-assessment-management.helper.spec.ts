@@ -68,12 +68,17 @@ describe('Presentation assessment management helpers', () => {
     });
 
     it('should build grouped sidebar data and resolve assigned students', () => {
-        const sidebar = createPresentationSidebarData([standalone, linked], 'presentations', linked.id, (key) => key, faUsers, faLink);
+        const sidebar = createPresentationSidebarData([standalone, linked], 1, (key) => key, faUsers, faLink);
 
-        expect(sidebar.pinnedData?.[0].active).toBe(false);
+        expect(sidebar.pinnedData?.[0].routerLink).toBe('/course-management/1/presentations');
         expect(sidebar.groupedData?.standalone.entityData[0].subtitleLeft).toBeUndefined();
         expect(sidebar.groupedData?.linkedToExercise.entityData[0]).toEqual(
-            expect.objectContaining({ id: linked.id, active: true, subtitleLeft: 'Exercise', subtitleLeftIcon: faLink }),
+            expect.objectContaining({
+                id: linked.id,
+                routerLink: `/course-management/1/presentations/${linked.id}/exercises/${linked.exerciseId}`,
+                subtitleLeft: 'Exercise',
+                subtitleLeftIcon: faLink,
+            }),
         );
         expect(resolveStudentsByLogin(students, ['anna', 'unknown']).map((student) => student.login)).toEqual(['anna', 'unknown']);
         expect(hasResultPoints(0)).toBe(true);

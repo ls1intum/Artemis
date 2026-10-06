@@ -231,13 +231,54 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(sidebarData.groupedData?.standalone.entityData[0].icon).toBeUndefined();
     });
 
-    it('should use the sidebar to switch between the overall overview and a presentation', () => {
-        component.onSidebarItemSelected('overview');
-        expect(component.viewMode()).toBe('students');
+    it('should keep content hidden until the new course and route selection are loaded', () => {
+        const response = new Subject<HttpResponse<PresentationAssessment[]>>();
+        presentationAssessmentService.findAllByCourseId.mockReturnValue(response);
+        routeParamMap.next(convertToParamMap({ courseId: 2, presentationId: 99 }));
+        fixture.detectChanges();
+        expect(component.contentReady()).toBe(false);
+        expect(component.presentationAssessments()).toEqual([]);
+        response.next(new HttpResponse({ body: [{ id: 99, courseId: 2, title: 'Next course' }] }));
+        fixture.detectChanges();
+        expect(component.contentReady()).toBe(true);
+        expect(component.selectedPresentationId()).toBe(99);
+    });
 
-        component.onSidebarItemSelected(42);
-        expect(component.viewMode()).toBe('presentations');
-        expect(component.selectedPresentationId()).toBe(42);
+    it('should provide real sidebar links for the overview and presentation', () => {
+        expect(component.sidebarData().pinnedData?.[0].routerLink).toBe(`/course-management/${courseId}/presentations`);
+        expect(component.sidebarData().groupedData?.standalone.entityData[0].routerLink).toBe(`/course-management/${courseId}/presentations/42`);
+    });
+
+    it('should discard open dialog data when switching courses', () => {
+        component.presentationDialogVisible.set(true);
+        component.instanceDialogVisible.set(true);
+        component.dialogPresentationAssessment.set(presentationAssessment);
+        component.dialogInstancePresentationAssessment.set(presentationAssessment);
+        component.dialogInstance.set({ id: 11 });
+        component.dialogInstanceStudentLogin.set('student1');
+        component.dialogAssignedStudents.set([{ login: 'student1', internal: true }]);
+        routeParamMap.next(convertToParamMap({ courseId: 2 }));
+        fixture.detectChanges();
+        expect(component.presentationDialogVisible()).toBe(false);
+        expect(component.instanceDialogVisible()).toBe(false);
+        expect(component.dialogPresentationAssessment()).toBeUndefined();
+        expect(component.dialogInstancePresentationAssessment()).toBeUndefined();
+        expect(component.dialogInstance()).toBeUndefined();
+        expect(component.dialogInstanceStudentLogin()).toBeUndefined();
+        expect(component.dialogAssignedStudents()).toEqual([]);
+    });
+
+    it('should finish the failed load state and allow retrying', () => {
+        presentationAssessmentService.findAllByCourseId.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        routeParamMap.next(convertToParamMap({ courseId: 2 }));
+        fixture.detectChanges();
+        expect(component.presentationLoadFailed()).toBe(true);
+        expect(component.contentReady()).toBe(false);
+        presentationAssessmentService.findAllByCourseId.mockReturnValue(of(new HttpResponse({ body: [{ id: 99, courseId: 2 }] })));
+        component.loadAll();
+        fixture.detectChanges();
+        expect(component.presentationLoadFailed()).toBe(false);
+        expect(component.contentReady()).toBe(true);
     });
 
     it('should create the course management route for the linked exercise', () => {

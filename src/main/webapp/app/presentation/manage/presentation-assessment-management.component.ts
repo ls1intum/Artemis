@@ -128,11 +128,12 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     private readonly routeSelection = toSignal(
         this.route.paramMap.pipe(
             map((params) => ({
+                courseId: Number(params.get('courseId') ?? this.route.parent?.snapshot.paramMap.get('courseId')),
                 presentationId: positiveRouteId(params.get('presentationId')),
                 exerciseId: positiveRouteId(params.get('exerciseId')),
             })),
         ),
-        { initialValue: { presentationId: undefined, exerciseId: undefined } },
+        { initialValue: { courseId: 0, presentationId: undefined, exerciseId: undefined } },
     );
 
     protected readonly faPencilAlt = faPencilAlt;
@@ -149,6 +150,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     readonly course = signal<Course | undefined>(undefined);
     readonly presentationAssessments = signal<PresentationAssessment[]>([]);
     private readonly presentationAssessmentsLoaded = signal(false);
+    readonly presentationLoadFailed = signal(false);
     readonly isSaving = signal(false);
     readonly isLoadingAssignedStudents = signal(false);
     readonly exercises = signal<Exercise[]>([]);
@@ -159,6 +161,16 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     );
     readonly viewMode = signal<PresentationViewMode>('students');
     readonly selectedPresentationId = signal<number | undefined>(undefined);
+    readonly contentReady = computed(() => {
+        const selection = this.routeSelection();
+        return (
+            this.presentationAssessmentsLoaded() &&
+            selection.courseId === this.courseId() &&
+            (selection.presentationId === undefined
+                ? this.viewMode() === 'students'
+                : this.viewMode() === 'presentations' && this.selectedPresentationId() === selection.presentationId)
+        );
+    });
     readonly studentSearchTerm = signal('');
     readonly assessmentStatusFilter = signal<AssessmentStatusFilter>('all');
     readonly presentationFilter = signal<number | 'all'>('all');
@@ -235,24 +247,46 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     });
     readonly sidebarData = computed(() => {
         this.translationChanges();
-        return createPresentationSidebarData(
-            this.presentationAssessments(),
-            this.viewMode(),
-            this.selectedPresentationId(),
-            (key) => this.translateService.instant(key),
-            this.faUsers,
-            this.faLink,
-        );
+        return createPresentationSidebarData(this.presentationAssessments(), this.courseId(), (key) => this.translateService.instant(key), this.faUsers, this.faLink);
     });
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor() {
         effect(() => {
-            const { presentationId, exerciseId } = this.routeSelection();
+            const { courseId, presentationId, exerciseId } = this.routeSelection();
             const assessments = this.presentationAssessments();
             const assessmentsLoaded = this.presentationAssessmentsLoaded();
             untracked(() => {
+                if (courseId && courseId !== this.courseId()) {
+                    this.courseId.set(courseId);
+                    this.presentationAssessmentsLoaded.set(false);
+                    this.presentationLoadFailed.set(false);
+                    this.presentationDialogVisible.set(false);
+                    this.instanceDialogVisible.set(false);
+                    this.dialogPresentationAssessment.set(undefined);
+                    this.dialogInstancePresentationAssessment.set(undefined);
+                    this.dialogInstance.set(undefined);
+                    this.dialogInstanceStudentLogin.set(undefined);
+                    this.dialogAssignedStudents.set([]);
+                    this.dialogErrorSource.next('');
+                    this.presentationAssessments.set([]);
+                    this.selectedPresentationId.set(undefined);
+                    this.exercises.set([]);
+                    this.expandedStudentRows.set([]);
+                    this.overviewPage.set(0);
+                    this.presentationFilter.set('all');
+                    this.loadAll();
+                    this.courseManagementService.findWithExercises(courseId).subscribe({
+                        next: (res: HttpResponse<Course>) => {
+                            if (this.courseId() === courseId) {
+                                this.exercises.set(res.body?.exercises ?? []);
+                            }
+                        },
+                        error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                    });
+                    return;
+                }
                 if (presentationId === undefined) {
                     this.viewMode.set('students');
                     return;
@@ -277,18 +311,17 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId') ?? this.route.parent?.snapshot.paramMap.get('courseId')));
         this.route.parent?.data.subscribe(({ course }) => this.course.set(course));
-        this.loadAll();
-        this.courseManagementService.findWithExercises(this.courseId()).subscribe({
-            next: (res: HttpResponse<Course>) => this.exercises.set(res.body?.exercises ?? []),
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
-        });
     }
 
     loadAll(): void {
-        this.presentationAssessmentService.findAllByCourseId(this.courseId()).subscribe({
+        const courseId = this.courseId();
+        this.presentationLoadFailed.set(false);
+        this.presentationAssessmentService.findAllByCourseId(courseId).subscribe({
             next: (res: HttpResponse<PresentationAssessment[]>) => {
+                if (this.courseId() !== courseId) {
+                    return;
+                }
                 const assessments = res.body ?? [];
                 this.presentationAssessments.set(assessments);
                 this.presentationAssessmentsLoaded.set(true);
@@ -296,7 +329,13 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                     this.selectedPresentationId.set(assessments[0]?.id);
                 }
             },
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            error: (res: HttpErrorResponse) => {
+                if (this.courseId() !== courseId) {
+                    return;
+                }
+                this.presentationLoadFailed.set(true);
+                onError(this.alertService, res);
+            },
         });
     }
 
@@ -308,17 +347,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.selectedPresentationId.set(presentationAssessment.id);
         this.viewMode.set('presentations');
         this.navigateToPresentation(presentationAssessment);
-    }
-
-    onSidebarItemSelected(itemId: string | number): void {
-        if (itemId === 'overview') {
-            this.setViewMode('students');
-            return;
-        }
-        const presentationAssessment = this.presentationAssessments().find((assessment) => assessment.id === Number(itemId));
-        if (presentationAssessment) {
-            this.selectPresentation(presentationAssessment);
-        }
     }
 
     setViewMode(viewMode: PresentationViewMode): void {
