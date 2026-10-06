@@ -368,27 +368,7 @@ class LectureContentProcessingSchedulerTest {
         }
 
         @Test
-        void shouldRequeueStuckIngestionWithoutFailureWhenReconcileResolvesIt() {
-            // Given: A stuck INGESTING state that the census evidence resolves as a lost callback
-            testState.setPhase(ProcessingPhase.INGESTING);
-            testState.setStartedAt(ZonedDateTime.now().minusMinutes(130));
-            testState.setRetryEligibleAt(null);
-
-            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of());
-            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class), any(ZonedDateTime.class)))
-                    .thenReturn(List.of(testState));
-            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
-            when(reconcileService.resolveStuckIngestionWithoutRetryPenalty(eq(testState), any(), any())).thenReturn(true);
-
-            // When
-            scheduler.processScheduledRetries();
-
-            // Then: The failure path (which burns a retry) must not run
-            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
-        }
-
-        @Test
-        void shouldFallBackToFailureWhenReconcileCannotResolveStuckIngestion() {
+        void shouldFailStuckIngestionThroughTheChargedPath() {
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(130));
             testState.setLastUpdated(ZonedDateTime.now().minusMinutes(30)); // silent past the no-callback cutoff, as findStuckStates requires
@@ -399,7 +379,6 @@ class LectureContentProcessingSchedulerTest {
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class), any(ZonedDateTime.class)))
                     .thenReturn(List.of(testState));
             when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
-            when(reconcileService.resolveStuckIngestionWithoutRetryPenalty(eq(testState), any(), any())).thenReturn(false);
 
             scheduler.processScheduledRetries();
 
@@ -407,8 +386,7 @@ class LectureContentProcessingSchedulerTest {
         }
 
         @Test
-        void shouldNotConsultReconcileForStuckTranscription() {
-            // A TRANSCRIBING run cannot be complete on the Iris side, so the heal path must not apply
+        void shouldFailStuckTranscriptionThroughTheChargedPath() {
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(130));
             testState.setLastUpdated(ZonedDateTime.now().minusMinutes(30)); // silent past the no-callback cutoff, as findStuckStates requires
@@ -422,7 +400,6 @@ class LectureContentProcessingSchedulerTest {
 
             scheduler.processScheduledRetries();
 
-            verify(reconcileService, never()).resolveStuckIngestionWithoutRetryPenalty(any(), any(), any());
             verify(callbackService).handleProcessingFailureIfStillLive(testState, null, null, testState.getLastUpdated());
         }
 
@@ -691,7 +668,7 @@ class LectureContentProcessingSchedulerTest {
             ProcessingStateCallbackService realCallbackService = new ProcessingStateCallbackService(raceRepository, transcriptionRepository, mock(AttachmentRepository.class),
                     Optional.empty(), new ProcessingStateNotificationService(mock(WebsocketMessagingService.class), transcriptionRepository),
                     mock(LectureUnitContentFingerprintService.class), mock(DistributedDataProvider.class), mock(FeatureToggleService.class), MAX_CONCURRENT_JOBS, 20,
-                    Duration.ofSeconds(90), 8, mock(IrisLectureUnitSyncStateRepository.class));
+                    Duration.ofSeconds(90), 8, 3, mock(IrisLectureUnitSyncStateRepository.class));
 
             FeatureToggleService raceFeatureToggleService = mock(FeatureToggleService.class);
             when(raceFeatureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);

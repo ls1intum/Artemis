@@ -15,7 +15,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param currentPipelineVersion the ingestion pipeline version the reporting Iris currently runs;
  *                                   drives the once-per-version quality re-ingestion rule
  * @param units                  one entry per lecture unit any collection still knows about
+ * @param truncated              whether the course-wide unit-row scan hit its cap, so units may be missing or incomplete
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IngestionCensusDTO(long courseId, @Nullable Integer currentPipelineVersion, List<IngestionCensusUnitDTO> units) {
+public record IngestionCensusDTO(long courseId, @Nullable Integer currentPipelineVersion, List<IngestionCensusUnitDTO> units, boolean truncated) {
 }

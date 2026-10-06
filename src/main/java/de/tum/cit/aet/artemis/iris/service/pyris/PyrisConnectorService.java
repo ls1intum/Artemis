@@ -81,6 +81,8 @@ public class PyrisConnectorService {
 
     private final RestTemplate restTemplate;
 
+    private final RestTemplate censusRestTemplate;
+
     private final JsonMapper objectMapper;
 
     @Value("${server.url}")
@@ -89,8 +91,10 @@ public class PyrisConnectorService {
     @Value("${artemis.iris.url}")
     private String pyrisUrl;
 
-    public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, JsonMapper objectMapper) {
+    public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, @Qualifier("censusPyrisRestTemplate") RestTemplate censusRestTemplate,
+            JsonMapper objectMapper) {
         this.restTemplate = restTemplate;
+        this.censusRestTemplate = censusRestTemplate;
         this.objectMapper = objectMapper;
     }
 
@@ -109,7 +113,7 @@ public class PyrisConnectorService {
     public IngestionCensusDTO getIngestionCensus(long courseId) {
         String url = pyrisUrl + "/api/v1/courses/" + courseId + "/ingestion-census?base_url=" + URLEncoder.encode(artemisBaseUrl, StandardCharsets.UTF_8);
         try {
-            var response = restTemplate.getForEntity(url, IngestionCensusDTO.class);
+            var response = censusRestTemplate.getForEntity(url, IngestionCensusDTO.class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
                 log.warn("Ingestion census for course {} returned status {} without a usable body", courseId, response.getStatusCode());
                 return null;

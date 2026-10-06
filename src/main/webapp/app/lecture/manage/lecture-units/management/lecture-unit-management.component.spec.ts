@@ -438,7 +438,6 @@ describe('LectureUnitManagementComponent', () => {
                 },
             });
             expect(lectureUnitManagementComponent.isProcessingTranscribing(attachmentVideoUnit)).toBe(false);
-            expect(lectureUnitManagementComponent.isProcessingDone(attachmentVideoUnit)).toBe(false);
 
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: {
@@ -456,7 +455,7 @@ describe('LectureUnitManagementComponent', () => {
                     retryCount: 0,
                 },
             });
-            expect(lectureUnitManagementComponent.isProcessingIngesting(attachmentVideoUnit)).toBe(true);
+            expect(lectureUnitManagementComponent.isProcessingTranscribing(attachmentVideoUnit)).toBe(false);
 
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: {
@@ -465,7 +464,7 @@ describe('LectureUnitManagementComponent', () => {
                     retryCount: 0,
                 },
             });
-            expect(lectureUnitManagementComponent.isProcessingDone(attachmentVideoUnit)).toBe(true);
+            expect(lectureUnitManagementComponent.isProcessingFailed(attachmentVideoUnit)).toBe(false);
 
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: {
@@ -483,53 +482,7 @@ describe('LectureUnitManagementComponent', () => {
                     retryCount: 0,
                 },
             });
-            expect(lectureUnitManagementComponent.isProcessingSkipped(attachmentVideoUnit)).toBe(true);
-            expect(lectureUnitManagementComponent.isProcessingInProgress(attachmentVideoUnit)).toBe(false);
             expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBe(false);
-        });
-
-        it('should return true for hasProcessingBadge when processing was skipped', () => {
-            lectureUnitManagementComponent.processingStatus.set({
-                [attachmentVideoUnit.id!]: {
-                    lectureUnitId: attachmentVideoUnit.id!,
-                    phase: ProcessingPhase.SKIPPED,
-                    retryCount: 0,
-                },
-            });
-            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBe(true);
-        });
-
-        it('should return true for hasProcessingBadge when processing is in progress', () => {
-            lectureUnitManagementComponent.processingStatus.set({
-                [attachmentVideoUnit.id!]: {
-                    lectureUnitId: attachmentVideoUnit.id!,
-                    phase: ProcessingPhase.TRANSCRIBING,
-                    retryCount: 0,
-                },
-            });
-            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBe(true);
-        });
-
-        it('should return true for hasProcessingBadge when processing is done', () => {
-            lectureUnitManagementComponent.processingStatus.set({
-                [attachmentVideoUnit.id!]: {
-                    lectureUnitId: attachmentVideoUnit.id!,
-                    phase: ProcessingPhase.DONE,
-                    retryCount: 0,
-                },
-            });
-            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBe(true);
-        });
-
-        it('should return true for hasProcessingBadge when processing failed', () => {
-            lectureUnitManagementComponent.processingStatus.set({
-                [attachmentVideoUnit.id!]: {
-                    lectureUnitId: attachmentVideoUnit.id!,
-                    phase: ProcessingPhase.FAILED,
-                    retryCount: 0,
-                },
-            });
-            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBe(true);
         });
 
         it('should handle error when bulk status endpoint fails', () => {

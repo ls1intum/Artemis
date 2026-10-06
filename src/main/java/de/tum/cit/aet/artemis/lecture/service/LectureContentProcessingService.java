@@ -3,10 +3,12 @@ package de.tum.cit.aet.artemis.lecture.service;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -61,6 +63,12 @@ public class LectureContentProcessingService {
      * Dispatch priority of backfill and reconcile work: only dispatched when no fresh work waits.
      */
     static final int BACKLOG_DISPATCH_PRIORITY = 2;
+
+    /**
+     * Age after which the claim of a removed-content cleanup that failed or died is taken over by the next attempt; matches the
+     * default no-callback timeout the stranded-run sweep uses for the same purpose.
+     */
+    static final Duration CLEANUP_CLAIM_STALE_AFTER = Duration.ofMinutes(20);
 
     private final LectureUnitProcessingStateRepository processingStateRepository;
 
@@ -153,7 +161,7 @@ public class LectureContentProcessingService {
         }
 
         boolean hasVideo = unit.getVideoSource() != null && !unit.getVideoSource().isBlank();
-        boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().getLink() != null && unit.getAttachment().getLink().endsWith(".pdf");
+        boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().isStoredPdf();
         Optional<LectureUnitProcessingState> existingState = stateToDelete.isPresent() ? Optional.empty() : processingStateRepository.findByLectureUnit_Id(unit.getId());
 
         if (!hasVideo && !hasPdf) {
@@ -417,25 +425,34 @@ public class LectureContentProcessingService {
 
         log.info("Processable content removed for unit {}, cleaning up existing Pyris content and processing state", unit.getId());
         // As in handleContentChanges: invalidate an in-flight run before deleting what it is producing, so it cannot write its
-        // transcript back or finish as DONE for removed content. If the cleanup then fails, the row is stranded in flight, which
-        // the scheduler's recovery sweep settles once the Iris cleanup succeeds.
+        // transcript back or finish as DONE for removed content.
         String staleToken = state.getIngestionJobToken();
         if (staleToken != null) {
             processingStateRepository.invalidateTokenIfMatches(state.getId(), staleToken, ZonedDateTime.now());
         }
-        if (previousVideoKnown) {
-            processingStateCallbackService.deleteTranscriptionForUnit(unit.getId());
-        }
-        boolean cleanupSucceeded = cleanupForReprocessing(unit);
-        if (!cleanupSucceeded) {
-            log.warn("Cleanup delete failed for unit {}, preserving stored content markers for a future retry", unit.getId());
-            return;
-        }
+        retryRemovedContentCleanup(unit, state.getId());
+    }
 
-        // DONE here means "nothing indexed"; a confirmed fingerprint from the previous content would falsely claim
-        // the index still holds verified data for this unit, so it is dropped with the rest. Committed as a targeted
-        // update rather than a whole-entity save, which would revert a run activated while the cleanup above ran.
-        processingStateRepository.settleAsNothingIndexed(state.getId(), ZonedDateTime.now());
+    /**
+     * Clean up the Iris content and recorded markers of a unit whose processable content was removed, through the claim-pinned
+     * recovery path: the transcript and markers are only cleared, and the row only settled, while this cleanup's claim holds, and a
+     * newer run that took the unit over meanwhile is requeued afterwards. A cleanup whose Iris delete fails keeps its claim, which
+     * the next attempt (the reconcile walk, or the stranded-run sweep for a row still in flight) takes over once it is older than
+     * {@link #CLEANUP_CLAIM_STALE_AFTER}.
+     *
+     * @param unit    the unit as it currently is, without processable content
+     * @param stateId its processing state
+     * @return true if this call claimed the cleanup, false if the row is not eligible or another cleanup holds a recent claim
+     */
+    public boolean retryRemovedContentCleanup(AttachmentVideoUnit unit, long stateId) {
+        String claimToken = UUID.randomUUID().toString();
+        ZonedDateTime now = ZonedDateTime.now();
+        if (recoveryRepository.claimForContentRemoval(stateId, claimToken, now.minus(CLEANUP_CLAIM_STALE_AFTER), now) == 0) {
+            log.debug("Not cleaning up removed content of unit {}: not eligible, or another cleanup holds the claim", unit.getId());
+            return false;
+        }
+        recoverInterruptedContentChange(unit, claimToken);
+        return true;
     }
 
     /**
@@ -460,7 +477,7 @@ public class LectureContentProcessingService {
             return; // Requeued by an edit since the claim; the guards below would match nothing anyway
         }
         boolean hasVideo = unit.getVideoSource() != null && !unit.getVideoSource().isBlank();
-        boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().getLink() != null && unit.getAttachment().getLink().endsWith(".pdf");
+        boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().isStoredPdf();
         if (hasVideoSourceChanged(unit, state)) {
             // The stored transcript belongs to a video the unit no longer has
             transcriptionRepository.deleteIfRecoveryClaimHolds(unit.getId(), claimToken);

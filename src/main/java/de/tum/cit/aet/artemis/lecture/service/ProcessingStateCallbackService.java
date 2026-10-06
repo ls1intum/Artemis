@@ -39,7 +39,6 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
-import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegmentConverter;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
@@ -123,6 +122,16 @@ public class ProcessingStateCallbackService {
     /** Upper bound on jobs handed out per single worker claim call, purely as a sanity clamp. */
     private final int maxJobsPerClaim;
 
+    /**
+     * How many dispatch claims a unit may take without reaching an outcome before the next one is replaced by a charged failure. Runs lost to a
+     * restart, a lapsed lease, or an abandoned claim are recovered without charging the retry budget; this limit is what keeps a unit that
+     * keeps losing its runs from being re-dispatched forever.
+     */
+    private final int maxUnsettledAttempts;
+
+    /** Error code for a unit whose claims reached {@link #maxUnsettledAttempts} without an outcome. */
+    static final String RECOVERY_LIMIT_REACHED = "RECOVERY_LIMIT_REACHED";
+
     private final IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository;
 
     private static final String WORKER_MAP_NAME = "pyris-ingestion-worker";
@@ -138,7 +147,7 @@ public class ProcessingStateCallbackService {
             @Value("${artemis.iris.ingestion.max-concurrent-jobs:2}") int maxConcurrentJobs,
             @Value("${artemis.iris.ingestion.retry-claim-lease-minutes:20}") int retryClaimLeaseMinutes,
             @Value("${artemis.iris.ingestion.worker-mode-grace:PT90S}") Duration workerModeGrace, @Value("${artemis.iris.ingestion.max-jobs-per-claim:8}") int maxJobsPerClaim,
-            IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository) {
+            @Value("${artemis.iris.ingestion.max-unsettled-attempts:3}") int maxUnsettledAttempts, IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.attachmentRepository = attachmentRepository;
@@ -151,6 +160,7 @@ public class ProcessingStateCallbackService {
         this.retryClaimLeaseMinutes = retryClaimLeaseMinutes;
         this.workerModeGrace = workerModeGrace;
         this.maxJobsPerClaim = maxJobsPerClaim;
+        this.maxUnsettledAttempts = maxUnsettledAttempts;
         this.irisLectureUnitSyncStateRepository = irisLectureUnitSyncStateRepository;
     }
 
@@ -237,9 +247,12 @@ public class ProcessingStateCallbackService {
                 if (availableSlots <= 0) {
                     break;
                 }
+                if (failIfAttemptsExhausted(state, true)) {
+                    continue;
+                }
                 ZonedDateTime leaseExpiry = now.plusMinutes(retryClaimLeaseMinutes);
                 String claimToken = newClaimToken();
-                if (processingStateRepository.claimRetryEligible(state.getId(), claimToken, now, leaseExpiry) == 0) {
+                if (processingStateRepository.claimRetryEligible(state.getId(), claimToken, now, leaseExpiry, maxUnsettledAttempts) == 0) {
                     log.debug("Another node claimed the retry of unit {}", state.getLectureUnit().getId());
                     continue;
                 }
@@ -270,8 +283,11 @@ public class ProcessingStateCallbackService {
             }
 
             for (LectureUnitProcessingState state : idleJobs) {
+                if (failIfAttemptsExhausted(state, false)) {
+                    continue;
+                }
                 String claimToken = newClaimToken();
-                if (processingStateRepository.claimIdleForDispatch(state.getId(), claimToken, now) == 0) {
+                if (processingStateRepository.claimIdleForDispatch(state.getId(), claimToken, now, maxUnsettledAttempts) == 0) {
                     log.debug("Another node claimed the dispatch of unit {}", state.getLectureUnit().getId());
                     continue;
                 }
@@ -365,6 +381,32 @@ public class ProcessingStateCallbackService {
      */
     private static String newClaimToken() {
         return UUID.randomUUID().toString();
+    }
+
+    /**
+     * Replace the claim of a unit that reached {@link #maxUnsettledAttempts} with a charged failure. The write repeats the claim's own eligibility
+     * and pins the retry count read here, so it applies at most once and never to a row that moved on.
+     *
+     * @param state     the candidate from the dispatch batch read
+     * @param retryPath whether the candidate came from the retry queue rather than the IDLE queue
+     * @return true when the unit is at the limit, so the caller must not claim it
+     */
+    private boolean failIfAttemptsExhausted(LectureUnitProcessingState state, boolean retryPath) {
+        if (state.getUnsettledAttempts() < maxUnsettledAttempts) {
+            return false;
+        }
+        int expectedRetryCount = state.getRetryCount();
+        LectureIngestionFailureClassifier.FailureComputation computation = LectureIngestionFailureClassifier.computeFailure(state, RECOVERY_LIMIT_REACHED);
+        int updated = retryPath
+                ? processingStateRepository.failExhaustedRetryAttempts(state.getId(), expectedRetryCount, computation.retryCount(), computation.errorKey(),
+                        computation.retryEligibleAt(), maxUnsettledAttempts, computation.now())
+                : processingStateRepository.failExhaustedIdleAttempts(state.getId(), expectedRetryCount, computation.retryCount(), computation.errorKey(),
+                        computation.retryEligibleAt(), maxUnsettledAttempts, computation.now());
+        if (updated == 1) {
+            log.warn("Unit {} lost {} runs in a row without an outcome; charging a failure instead of dispatching it again", state.getLectureUnit().getId(), maxUnsettledAttempts);
+            notificationService.notifyWithTranscriptionStatus(state);
+        }
+        return true;
     }
 
     // Fail a dispatch that never reached Pyris, bound to the claim that produced it: the caller holds the
@@ -479,9 +521,12 @@ public class ProcessingStateCallbackService {
         List<LectureUnitProcessingState> claimed = new ArrayList<>();
 
         for (LectureUnitProcessingState state : processingStateRepository.findStatesReadyForRetry(ProcessingPhase.FAILED.name(), now, jobs)) {
+            if (failIfAttemptsExhausted(state, true)) {
+                continue;
+            }
             ZonedDateTime leaseExpiry = now.plusMinutes(retryClaimLeaseMinutes);
             String claimToken = newClaimToken();
-            if (processingStateRepository.claimRetryEligible(state.getId(), claimToken, now, leaseExpiry) == 0) {
+            if (processingStateRepository.claimRetryEligible(state.getId(), claimToken, now, leaseExpiry, maxUnsettledAttempts) == 0) {
                 continue;
             }
             // Mirror the claim onto the loaded entity so a later save cannot write back the stale value.
@@ -494,8 +539,11 @@ public class ProcessingStateCallbackService {
         int remaining = jobs - claimed.size();
         if (remaining > 0) {
             for (LectureUnitProcessingState state : processingStateRepository.findIdleForDispatch(now, remaining)) {
+                if (failIfAttemptsExhausted(state, false)) {
+                    continue;
+                }
                 String claimToken = newClaimToken();
-                if (processingStateRepository.claimIdleForDispatch(state.getId(), claimToken, now) == 0) {
+                if (processingStateRepository.claimIdleForDispatch(state.getId(), claimToken, now, maxUnsettledAttempts) == 0) {
                     continue;
                 }
                 state.setStartedAt(now);
@@ -570,6 +618,18 @@ public class ProcessingStateCallbackService {
         }
         log.info("Processing not applicable for claimed unit {} (course settings or content type), marking as SKIPPED", lectureUnitId);
         return true;
+    }
+
+    /**
+     * Charge a failure to a claimed unit whose preparation for the worker failed unexpectedly, bound to that claim exactly like a failed
+     * push dispatch: the retry budget bounds a preparation error that repeats, instead of the claim being released and re-claimed for
+     * free.
+     *
+     * @param lectureUnitId the claimed unit
+     * @param claimToken    identity of the claim, from {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO#claimToken()}
+     */
+    public void failClaimedUnitPreparation(long lectureUnitId, String claimToken) {
+        processingStateRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(state -> failDispatchIfStillClaimed(state, claimToken));
     }
 
     /**
@@ -800,17 +860,6 @@ public class ProcessingStateCallbackService {
     private void saveTranscription(long lectureUnitId, LectureUnitProcessingState state, TranscriptionCheckpoint checkpoint) {
         LectureUnit unit = state.getLectureUnit();
 
-        // An existing row is updated conditionally on its own id below, not saved blindly.
-        Optional<LectureTranscription> existing = transcriptionRepository.findByLectureUnit_Id(lectureUnitId);
-        LectureTranscription transcription = existing.orElseGet(() -> {
-            var newTranscription = new LectureTranscription(checkpoint.language(), checkpoint.segments(), unit);
-            newTranscription.setTranscriptionStatus(TranscriptionStatus.PENDING);
-            return newTranscription;
-        });
-
-        transcription.setLanguage(checkpoint.language());
-        transcription.setSegments(checkpoint.segments());
-
         if (checkpoint.isEnriched()) {
             // Version, then transcript, then TRANSCRIBING → INGESTING, each guarded on its own: if any step fails, the row is
             // still TRANSCRIBING and Iris's redelivery replays the rest, the hash keeping the version from moving twice. The
@@ -822,8 +871,7 @@ public class ProcessingStateCallbackService {
                 log.debug("Ignoring enriched checkpoint for unit {}: the run is no longer TRANSCRIBING under this token", lectureUnitId);
                 return;
             }
-            transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
-            if (!persistTranscription(lectureUnitId, jobToken, existing, transcription)) {
+            if (!persistTranscription(unit, jobToken, checkpoint, TranscriptionStatus.COMPLETED)) {
                 return;
             }
             if (processingStateRepository.transitionToIngestingIfTranscribing(state.getId(), jobToken, ZonedDateTime.now(), state.getTranscriptionVersion(),
@@ -846,27 +894,21 @@ public class ProcessingStateCallbackService {
                 return;
             }
 
-            transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
             log.info("Raw transcription checkpoint saved for unit {}, staying in TRANSCRIBING", lectureUnitId);
-            persistTranscription(lectureUnitId, jobToken, existing, transcription);
+            persistTranscription(unit, jobToken, checkpoint, TranscriptionStatus.PENDING);
         }
     }
 
     /**
-     * Write the checkpoint's transcription only while its run still owns the unit: both the insert of a first row and the
-     * update of an existing one fold the token check into the write itself (see
-     * {@link LectureTranscriptionRepository#insertIfTokenMatches}), so a superseded run can neither recreate a deleted row
-     * nor overwrite the transcript of the newer run that kept it.
+     * Write the checkpoint's transcription only while its run still owns the unit; see
+     * {@link LectureTranscriptionRepository#saveCheckpointIfTokenMatches} for how the ownership check and the write commit together, so a
+     * superseded run can neither recreate a deleted transcript nor overwrite the transcript of the newer run that kept it.
      *
-     * @return whether the transcription was written; false when ownership or the stored row was gone
+     * @return whether the transcription was written; false when the run no longer owns the unit or a completed transcript is kept
      */
-    private boolean persistTranscription(long lectureUnitId, String expectedToken, Optional<LectureTranscription> existing, LectureTranscription transcription) {
-        String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(transcription.getSegments());
-        String status = transcription.getTranscriptionStatus().name();
-        int written = existing.isEmpty() ? transcriptionRepository.insertIfTokenMatches(lectureUnitId, transcription.getLanguage(), segmentsJson, status, expectedToken)
-                : transcriptionRepository.updateContentIfTokenMatches(transcription.getId(), lectureUnitId, transcription.getLanguage(), segmentsJson, status, expectedToken);
-        if (written == 0) {
-            log.debug("Skipping transcription write for unit {}: the run no longer owns the unit or the stored row was deleted", lectureUnitId);
+    private boolean persistTranscription(LectureUnit unit, String expectedToken, TranscriptionCheckpoint checkpoint, TranscriptionStatus status) {
+        if (!transcriptionRepository.saveCheckpointIfTokenMatches(unit, expectedToken, checkpoint.language(), checkpoint.segments(), status)) {
+            log.debug("Skipping transcription write for unit {}: the run no longer owns the unit or a completed transcript is kept", unit.getId());
             return false;
         }
         return true;

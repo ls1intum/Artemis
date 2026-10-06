@@ -30,11 +30,15 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.IngestionCensusDTO;
 import de.tum.cit.aet.artemis.lecture.dto.IngestionCensusUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
+import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateReconcileRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
@@ -49,15 +53,13 @@ class LectureIngestionReconcileServiceTest {
 
     private static final String FINGERPRINT = "v1:current-fingerprint";
 
-    private static final ZonedDateTime CUTOFF = ZonedDateTime.now().minusMinutes(10);
-
-    private static final ZonedDateTime ABSOLUTE_CUTOFF = ZonedDateTime.now().minusHours(1);
-
     private LectureIngestionReconcileService reconcileService;
 
     private LectureUnitProcessingStateRepository processingStateRepository;
 
     private LectureUnitProcessingStateReconcileRepository reconcileStateRepository;
+
+    private LectureTranscriptionRepository transcriptionRepository;
 
     private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
@@ -79,13 +81,14 @@ class LectureIngestionReconcileServiceTest {
     void setUp() {
         processingStateRepository = mock(LectureUnitProcessingStateRepository.class);
         reconcileStateRepository = mock(LectureUnitProcessingStateReconcileRepository.class);
+        transcriptionRepository = mock(LectureTranscriptionRepository.class);
         attachmentVideoUnitRepository = mock(AttachmentVideoUnitTestRepository.class);
         irisLectureApi = mock(IrisLectureApi.class);
         contentFingerprintService = mock(LectureUnitContentFingerprintService.class);
         processingService = mock(LectureContentProcessingService.class);
 
         reconcileService = new LectureIngestionReconcileService(processingStateRepository, reconcileStateRepository, attachmentVideoUnitRepository, Optional.of(irisLectureApi),
-                contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10);
+                contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10, transcriptionRepository);
 
         course = new Course();
         course.setId(COURSE_ID);
@@ -135,7 +138,7 @@ class LectureIngestionReconcileServiceTest {
         // A structurally complete unit by default: contiguous page coverage (no missing pages), segments
         // present, no null display numbers. Divergence tests override one field to exercise a signal.
         return new IngestionCensusUnitDTO(lecture.getId(), unitId, fingerprint, unitRowCount, expectedChunkCount, pipelineVersion, qualityScore, chunkCount, generationCount, 1, 5,
-                3, 3, 0, 5, 1, 5, 0, 0, "en");
+                3, 3, 0, 5, 1, 5, 0, 0, "en", false);
     }
 
     /**
@@ -144,7 +147,7 @@ class LectureIngestionReconcileServiceTest {
      */
     private IngestionCensusUnitDTO structuralEntry(int unitRowCount, int chunkCount, int segmentCount, int missingPageCount, int nullDisplayCount) {
         return new IngestionCensusUnitDTO(lecture.getId(), unit.getId(), FINGERPRINT, unitRowCount, null, CURRENT_PIPELINE_VERSION, null, chunkCount, 1, 1, 5, 3, 3, 0,
-                segmentCount, 1, 5, missingPageCount, nullDisplayCount, "en");
+                segmentCount, 1, 5, missingPageCount, nullDisplayCount, "en", false);
     }
 
     /** Make the unit an attachment (PDF) unit, so page chunks and slide segments are expected. */
@@ -158,7 +161,7 @@ class LectureIngestionReconcileServiceTest {
     }
 
     private void givenCensus(IngestionCensusUnitDTO... entries) {
-        when(irisLectureApi.getIngestionCensus(COURSE_ID)).thenReturn(new IngestionCensusDTO(COURSE_ID, CURRENT_PIPELINE_VERSION, List.of(entries)));
+        when(irisLectureApi.getIngestionCensus(COURSE_ID)).thenReturn(new IngestionCensusDTO(COURSE_ID, CURRENT_PIPELINE_VERSION, List.of(entries), false));
     }
 
     @Nested
@@ -733,7 +736,7 @@ class LectureIngestionReconcileServiceTest {
             when(attachmentVideoUnitRepository.findTutorialLectureUnitIdentities(any()))
                     .thenReturn(List.of(new IngestionJobIdentityDTO(COURSE_ID, tutorialLectureId, tutorialUnitId)));
             // Only chunks of the tutorial unit are indexed, so the census does not know its lecture.
-            IngestionCensusUnitDTO chunksOnly = new IngestionCensusUnitDTO(null, tutorialUnitId, null, 0, null, null, null, 10, 1, 1, 5, 3, 3, 0, 5, 1, 5, 0, 0, "en");
+            IngestionCensusUnitDTO chunksOnly = new IngestionCensusUnitDTO(null, tutorialUnitId, null, 0, null, null, null, 10, 1, 1, 5, 3, 3, 0, 5, 1, 5, 0, 0, "en", false);
             givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1), chunksOnly, censusEntry(orphanUnitId, "v1:whatever", 1));
 
             reconcileService.reconcileCourse(COURSE_ID, 10);
@@ -788,7 +791,8 @@ class LectureIngestionReconcileServiceTest {
         @Test
         void shouldResumeAPausedCourseAfterItsLastVisitedUnitInsteadOfSkippingOrRestartingIt() {
             LectureIngestionReconcileService oneRequeuePerPass = new LectureIngestionReconcileService(processingStateRepository, reconcileStateRepository,
-                    attachmentVideoUnitRepository, Optional.of(irisLectureApi), contentFingerprintService, processingService, 5, 1, 0.8, Duration.ofHours(1), 10);
+                    attachmentVideoUnitRepository, Optional.of(irisLectureApi), contentFingerprintService, processingService, 5, 1, 0.8, Duration.ofHours(1), 10,
+                    transcriptionRepository);
             AttachmentVideoUnit secondUnit = new AttachmentVideoUnit();
             secondUnit.setId(101L);
             secondUnit.setLecture(lecture);
@@ -841,137 +845,12 @@ class LectureIngestionReconcileServiceTest {
         }
     }
 
-    @Nested
-    class LostCallbackResolution {
-
-        @BeforeEach
-        void stuckState() {
-            state.setPhase(ProcessingPhase.INGESTING);
-            state.setContentFingerprint(FINGERPRINT);
-            state.setRetryCount(2);
-            state.setIngestionJobToken("token-123");
-        }
-
-        @Test
-        void shouldRequeueWithoutRetryPenaltyWhenStampMatches() {
-            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
-            when(processingStateRepository.requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), eq(CUTOFF), eq(ABSOLUTE_CUTOFF), any())).thenReturn(1);
-
-            boolean resolved = reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF);
-
-            assertThat(resolved).isTrue();
-            verify(processingStateRepository).requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), eq(CUTOFF), eq(ABSOLUTE_CUTOFF), any());
-            verify(processingStateRepository, never()).save(state);
-        }
-
-        @Test
-        void shouldNotRequeueWhenAHeartbeatLandsDuringTheCensusCall() {
-            // The census lookup is a slow external round-trip; a heartbeat can land while it is in
-            // flight and prove the run was never actually stuck. The atomic requeue re-checks the same
-            // stuck predicate findStuckStates used to find this candidate, so it must not fire here --
-            // simulated directly on the mocked repository, since the real predicate lives in the query.
-            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
-            when(processingStateRepository.requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), eq(CUTOFF), eq(ABSOLUTE_CUTOFF), any())).thenReturn(0);
-            LectureUnitProcessingState reloaded = new LectureUnitProcessingState(unit);
-            reloaded.setId(state.getId());
-            reloaded.setPhase(ProcessingPhase.INGESTING);
-            reloaded.setIngestionJobToken("token-123");
-            when(processingStateRepository.findById(state.getId())).thenReturn(Optional.of(reloaded));
-
-            boolean resolved = reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF);
-
-            // 0 rows with the token still intact means the run proved liveness, not that it moved on
-            // to a terminal state elsewhere; nothing here should be treated as a fallback failure.
-            assertThat(resolved).isTrue();
-            verify(processingStateRepository, never()).save(any());
-        }
-
-        @Test
-        void shouldStillReportResolvedWhenATerminalCallbackWonTheRace() {
-            // The census lookup matched (evidence the run completed), but the atomic requeue affected 0
-            // rows -- a terminal callback finished (or otherwise changed) this run in the window opened by
-            // that lookup. This is finding 4: the caller must not fall back to the normal failure path with
-            // this now-stale snapshot either, since whatever happened to the run is already correctly
-            // reflected in the database.
-            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
-            when(processingStateRepository.requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), eq(CUTOFF), eq(ABSOLUTE_CUTOFF), any())).thenReturn(0);
-
-            boolean resolved = reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF);
-
-            assertThat(resolved).isTrue();
-            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
-            verify(processingStateRepository, never()).save(state);
-        }
-
-        @Test
-        void shouldFallBackToNormalFailureHandlingWhenATerminalCallbackCrashedMidWrite() {
-            // handleIngestionComplete clears the ingestion job token and saves the terminal state as two
-            // separate writes. A crash between them leaves the row stuck INGESTING with a null token --
-            // a shape the atomic requeue's "ingestionJobToken = :token" guard can never match (SQL
-            // equality against NULL is never true), so it reports 0 rows just like a clean hand-off would.
-            // Unlike that clean hand-off, this row is not "already correctly reflected in the database":
-            // nothing else is coming for it, so it must fall through to normal failure handling instead
-            // of being reported resolved and abandoned.
-            LectureUnitProcessingState reloaded = new LectureUnitProcessingState(unit);
-            reloaded.setId(state.getId());
-            reloaded.setPhase(ProcessingPhase.INGESTING);
-            reloaded.setIngestionJobToken(null);
-            when(processingStateRepository.findById(state.getId())).thenReturn(Optional.of(reloaded));
-            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
-            when(processingStateRepository.requeueStuckIngestionWithoutPenalty(eq(state.getId()), eq("token-123"), eq(CUTOFF), eq(ABSOLUTE_CUTOFF), any())).thenReturn(0);
-
-            boolean resolved = reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF);
-
-            assertThat(resolved).isFalse();
-            verify(processingStateRepository, never()).save(any());
-        }
-
-        @Test
-        void shouldNotResolveWhenStampDiffers() {
-            givenCensus(censusEntry(unit.getId(), "v1:previous-run", 1));
-
-            assertThat(reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF)).isFalse();
-            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
-        }
-
-        @Test
-        void shouldNotResolveWhenUnitAbsentFromCensus() {
-            givenCensus();
-
-            assertThat(reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF)).isFalse();
-        }
-
-        @Test
-        void shouldNotResolveWithoutCensus() {
-            when(irisLectureApi.getIngestionCensus(COURSE_ID)).thenReturn(null);
-
-            assertThat(reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF)).isFalse();
-        }
-
-        @Test
-        void shouldNotResolveWithoutDispatchedFingerprint() {
-            state.setContentFingerprint(null);
-
-            assertThat(reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF)).isFalse();
-            verify(irisLectureApi, never()).getIngestionCensus(anyLong());
-        }
-
-        @Test
-        void shouldNotResolveTranscribingStates() {
-            state.setPhase(ProcessingPhase.TRANSCRIBING);
-
-            assertThat(reconcileService.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF)).isFalse();
-            verify(irisLectureApi, never()).getIngestionCensus(anyLong());
-        }
-    }
-
     @Test
     void shouldSpendNothingWithoutIrisApi() {
         LectureIngestionReconcileService withoutIris = new LectureIngestionReconcileService(processingStateRepository, reconcileStateRepository, attachmentVideoUnitRepository,
-                Optional.empty(), contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10);
+                Optional.empty(), contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10, transcriptionRepository);
 
         assertThat(withoutIris.walkNextCourses()).isZero();
-        assertThat(withoutIris.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF)).isFalse();
     }
 
     /**
@@ -988,5 +867,127 @@ class LectureIngestionReconcileServiceTest {
 
         assertThat(spent).isEqualTo(1);
         assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+    }
+
+    @Nested
+    class ReviewFixes {
+
+        @Test
+        void shouldForceARebuildWhenTheContentChangedSinceItsConfirmation() {
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint("v1:previous-content");
+            givenCensus(censusEntry(unit.getId(), "v1:previous-content", 1));
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
+
+            // The skip-check compares versions, not content, so only a forced rebuild replaces what the index holds
+            verify(reconcileStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.DONE), eq("v1:previous-content"), isNull(), eq(Boolean.TRUE),
+                    any(), anyInt(), any());
+        }
+
+        @Test
+        void shouldRequeueALegacyRowWithoutForcing() {
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(null);
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
+
+            verify(reconcileStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.DONE), isNull(), isNull(), isNull(), any(), anyInt(), any());
+        }
+
+        @Test
+        void shouldRebuildWhenACompletedTranscriptIsNotIndexed() {
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
+            LectureTranscription transcription = new LectureTranscription("en", List.of(new LectureTranscriptionSegment(0.0, 5.0, "Hello", 1)), unit);
+            transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+            when(transcriptionRepository.findAllByLectureUnit_IdInAndTranscriptionStatus(any(), eq(TranscriptionStatus.COMPLETED))).thenReturn(List.of(transcription));
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
+
+            verify(reconcileStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.DONE), eq(FINGERPRINT), isNull(), eq(Boolean.TRUE), any(),
+                    anyInt(), any());
+        }
+
+        @Test
+        void shouldNotRequeueForATranscriptWithoutSegments() {
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
+            LectureTranscription silent = new LectureTranscription("en", List.of(), unit);
+            silent.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+            when(transcriptionRepository.findAllByLectureUnit_IdInAndTranscriptionStatus(any(), eq(TranscriptionStatus.COMPLETED))).thenReturn(List.of(silent));
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).as("an empty transcript indexes no rows, so it must not loop").isZero();
+        }
+
+        @Test
+        void shouldSkipEveryCensusDecisionWhenTheCourseCensusIsTruncated() {
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            long orphanUnitId = 999L;
+            // The unit appears only through its chunks: zero unit rows and no stamp, which would otherwise force a rebuild
+            IngestionCensusUnitDTO chunksOnly = new IngestionCensusUnitDTO(lecture.getId(), unit.getId(), null, 0, null, null, null, 10, 1, 1, 5, 3, 3, 0, 5, 1, 5, 0, 0, "en",
+                    false);
+            when(irisLectureApi.getIngestionCensus(COURSE_ID))
+                    .thenReturn(new IngestionCensusDTO(COURSE_ID, CURRENT_PIPELINE_VERSION, List.of(chunksOnly, censusEntry(orphanUnitId, "v1:whatever", 1)), true));
+            when(attachmentVideoUnitRepository.findExistingIds(any())).thenReturn(Set.of(unit.getId()));
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isZero();
+
+            verify(reconcileStateRepository, never()).requeueForReconcileIfUnchanged(anyLong(), any(), any(), any(), any(), any(), anyInt(), any());
+            verify(irisLectureApi, never()).deleteLectureUnitsByIdentity(any());
+        }
+
+        @Test
+        void shouldSkipTheCensusChecksOfATruncatedUnit() {
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            IngestionCensusUnitDTO truncated = new IngestionCensusUnitDTO(lecture.getId(), unit.getId(), FINGERPRINT, 1, 500, CURRENT_PIPELINE_VERSION, null, 10, 3, 1, 5, 3, 3, 0,
+                    5, 1, 5, 4, 0, "en", true);
+            givenCensus(truncated);
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).as("undercounted rows of a truncated unit are no evidence of divergence").isZero();
+        }
+
+        @Test
+        void shouldNotDeleteAnOrphanWithoutALectureId() {
+            long orphanUnitId = 998L;
+            IngestionCensusUnitDTO orphan = new IngestionCensusUnitDTO(null, orphanUnitId, null, 0, null, null, null, 10, 1, 1, 5, 3, 3, 0, 5, 1, 5, 0, 0, "en", false);
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1), orphan);
+            when(attachmentVideoUnitRepository.findExistingIds(any())).thenReturn(Set.of(unit.getId()));
+
+            reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            verify(irisLectureApi, never()).deleteLectureUnitsByIdentity(any());
+        }
+
+        @Test
+        void shouldRetryTheCleanupOfRemovedContent() {
+            unit.setVideoSource(null);
+            unit.setAttachment(null);
+            state.setPhase(ProcessingPhase.DONE);
+            state.setVideoSourceHash("old-video-hash");
+            givenCensus();
+            when(processingService.retryRemovedContentCleanup(unit, state.getId())).thenReturn(true);
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
+
+            verify(processingService).retryRemovedContentCleanup(unit, state.getId());
+        }
+
+        @Test
+        void shouldLeaveAContentlessUnitWithoutMarkersAlone() {
+            unit.setVideoSource(null);
+            unit.setAttachment(null);
+            state.setPhase(ProcessingPhase.DONE);
+            givenCensus();
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isZero();
+
+            verify(processingService, never()).retryRemovedContentCleanup(any(), anyLong());
+        }
     }
 }

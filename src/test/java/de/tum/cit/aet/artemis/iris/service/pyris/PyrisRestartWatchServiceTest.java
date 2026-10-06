@@ -82,7 +82,7 @@ class PyrisRestartWatchServiceTest {
         service.observeBootId("boot-2");
 
         verify(bootIdMap).put(BOOT_ID_KEY, "boot-2");
-        verify(recoveryApi).handleIrisReset();
+        verify(recoveryApi).handleIrisReset("boot-1");
     }
 
     @Test
@@ -95,7 +95,7 @@ class PyrisRestartWatchServiceTest {
         // becomes visible: a node that dies mid-reset leaves the old id for the next observer to retry.
         var order = inOrder(bootIdMap, recoveryApi);
         order.verify(bootIdMap).lock(BOOT_ID_KEY);
-        order.verify(recoveryApi).handleIrisReset();
+        order.verify(recoveryApi).handleIrisReset("boot-1");
         order.verify(bootIdMap).put(BOOT_ID_KEY, "boot-2");
         order.verify(bootIdMap).unlock(BOOT_ID_KEY);
     }
@@ -103,7 +103,7 @@ class PyrisRestartWatchServiceTest {
     @Test
     void shouldKeepThePreviousBootIdWhenTheResetFails() {
         when(bootIdMap.get(BOOT_ID_KEY)).thenReturn("boot-1");
-        when(recoveryApi.handleIrisReset()).thenThrow(new RuntimeException("database unavailable"));
+        when(recoveryApi.handleIrisReset("boot-1")).thenThrow(new RuntimeException("database unavailable"));
 
         service.observeBootId("boot-2");
 

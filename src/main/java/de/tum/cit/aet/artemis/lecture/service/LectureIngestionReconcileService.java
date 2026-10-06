@@ -26,11 +26,12 @@ import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
-import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.IngestionCensusDTO;
 import de.tum.cit.aet.artemis.lecture.dto.IngestionCensusUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateReconcileRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
@@ -79,6 +80,8 @@ public class LectureIngestionReconcileService {
     private final LectureUnitContentFingerprintService contentFingerprintService;
 
     private final LectureContentProcessingService processingService;
+
+    private final LectureTranscriptionRepository transcriptionRepository;
 
     /**
      * Dispatch priority of reconcile requeues: behind fresh work (0) and behind nothing else,
@@ -150,7 +153,7 @@ public class LectureIngestionReconcileService {
             @Value("${artemis.iris.ingestion.reconcile.requeue-limit-per-run:3}") int requeueLimitPerRun,
             @Value("${artemis.iris.ingestion.reconcile.quality-threshold:0.8}") double qualityThreshold,
             @Value("${artemis.iris.ingestion.reconcile.failed-revival-cooldown:PT1H}") Duration failedRevivalCooldown,
-            @Value("${artemis.iris.ingestion.reconcile.max-revivals:10}") int maxRevivals) {
+            @Value("${artemis.iris.ingestion.reconcile.max-revivals:10}") int maxRevivals, LectureTranscriptionRepository transcriptionRepository) {
         this.processingStateRepository = processingStateRepository;
         this.reconcileStateRepository = reconcileStateRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
@@ -162,6 +165,7 @@ public class LectureIngestionReconcileService {
         this.qualityThreshold = qualityThreshold;
         this.failedRevivalCooldown = failedRevivalCooldown;
         this.maxRevivals = maxRevivals;
+        this.transcriptionRepository = transcriptionRepository;
     }
 
     /**
@@ -243,11 +247,18 @@ public class LectureIngestionReconcileService {
      * @return what the visit spent, and where it paused if the budget ran out with units still ahead
      */
     CourseVisit reconcileCourse(long courseId, int requeueBudget, long afterUnitId) {
-        IngestionCensusDTO census = irisLectureApi.get().getIngestionCensus(courseId);
+        IngestionCensusDTO fetchedCensus = irisLectureApi.get().getIngestionCensus(courseId);
+        if (fetchedCensus != null && fetchedCensus.truncated()) {
+            // The unit-row scan hit its cap, so any unit-row-derived fact (row counts, stamps, lecture ids) may be missing for
+            // any unit: no census-based decision is safe for this course.
+            log.warn("Reconcile: the census of course {} is truncated; skipping every census-based decision for it this pass", courseId);
+        }
+        IngestionCensusDTO census = fetchedCensus != null && !fetchedCensus.truncated() ? fetchedCensus : null;
         boolean censusAvailable = census != null;
         Map<Long, IngestionCensusUnitDTO> censusByUnitId = censusAvailable
                 ? census.units().stream().collect(Collectors.toMap(IngestionCensusUnitDTO::lectureUnitId, Function.identity(), (first, second) -> first))
                 : Map.of();
+        Set<Long> unitsWithUnindexedTranscript = findUnitsWithUnindexedTranscript(censusByUnitId);
 
         List<AttachmentVideoUnit> units = attachmentVideoUnitRepository.findAllWithAttachmentByCourseId(courseId);
         Map<Long, LectureUnitProcessingState> stateByUnitId = processingStateRepository.findWithLectureUnitByCourseId(courseId).stream()
@@ -272,11 +283,16 @@ public class LectureIngestionReconcileService {
             try {
                 boolean hasVideo = unit.getVideoSource() != null && !unit.getVideoSource().isBlank();
                 boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().isStoredPdf();
+                LectureUnitProcessingState state = stateByUnitId.get(unit.getId());
                 if (!hasVideo && !hasPdf) {
+                    // An earlier removed-content cleanup whose Iris delete failed leaves its markers behind; retry it here.
+                    if (state != null && hasRetryableContentCleanup(state) && processingService.retryRemovedContentCleanup(unit, state.getId())) {
+                        log.info("Reconcile: retried the cleanup of removed content for unit {} of course {}", unit.getId(), courseId);
+                        spent++;
+                    }
                     continue;
                 }
 
-                LectureUnitProcessingState state = stateByUnitId.get(unit.getId());
                 if (state == null) {
                     // Never entered the pipeline: typically a pre-pipeline unit in an inactive or archived
                     // course, which the active-course backfill deliberately does not reach.
@@ -286,7 +302,7 @@ public class LectureIngestionReconcileService {
                     continue;
                 }
                 spent += switch (state.getPhase()) {
-                    case DONE -> reconcileDoneUnit(unit, state, census, censusByUnitId.get(unit.getId()));
+                    case DONE -> reconcileDoneUnit(unit, state, census, censusByUnitId.get(unit.getId()), unitsWithUnindexedTranscript.contains(unit.getId()));
                     case SKIPPED -> reconcileSkippedUnit(unit, state);
                     // A FAILED unit is revived once its transient cause has had time to clear (see
                     // reconcileFailedUnit); only permanent content failures stay terminal for the manual button.
@@ -309,7 +325,8 @@ public class LectureIngestionReconcileService {
     /**
      * Reconcile a DONE unit against its current content and the index reality.
      */
-    private int reconcileDoneUnit(AttachmentVideoUnit unit, LectureUnitProcessingState state, @Nullable IngestionCensusDTO census, @Nullable IngestionCensusUnitDTO censusEntry) {
+    private int reconcileDoneUnit(AttachmentVideoUnit unit, LectureUnitProcessingState state, @Nullable IngestionCensusDTO census, @Nullable IngestionCensusUnitDTO censusEntry,
+            boolean transcriptUnindexed) {
         String currentFingerprint;
         try {
             currentFingerprint = contentFingerprintService.computeFingerprint(unit);
@@ -334,10 +351,16 @@ public class LectureIngestionReconcileService {
                 processingService.triggerProcessingAsBacklog(unit);
                 return 1;
             }
-            // Legacy row that predates verification, or the content changed without the update path firing.
-            return requeueForReconcile(state, observedFingerprint, "no confirmed fingerprint for the current content", ReconcileIntent.plain()) ? 1 : 0;
+            if (observedFingerprint == null) {
+                // Legacy row that predates verification: the pipeline's skip-check decides whether a re-run has anything to do.
+                return requeueForReconcile(state, null, "no confirmed fingerprint for the current content", ReconcileIntent.plain()) ? 1 : 0;
+            }
+            // The content changed without the update path firing. The skip-check compares versions, not content, so only a
+            // forced rebuild is certain to replace what the index holds.
+            return requeueForReconcile(state, observedFingerprint, "the content changed since its fingerprint was confirmed", ReconcileIntent.forcingRebuild()) ? 1 : 0;
         }
-        if (census != null) {
+        // A truncated entry undercounts this unit's rows, so none of the census checks below can be trusted for it.
+        if (census != null && (censusEntry == null || !censusEntry.truncated())) {
             if (censusEntry == null || censusEntry.unitRowCount() == 0 || !currentFingerprint.equals(censusEntry.contentFingerprint())) {
                 // The run was confirmed, but the index no longer holds a matching stamp: the data was lost
                 // or replaced after the fact (backup restore, collection recreate, raced delete). Force a
@@ -353,7 +376,7 @@ public class LectureIngestionReconcileService {
             // count difference is deliberately not a signal, so a stale expectation alone does not cause churn.
             // The same stored-PDF rule the payload uses: an external .pdf link is ingested as video-only and must not be expected to have page chunks.
             boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().isStoredPdf();
-            String divergence = divergenceReason(censusEntry, hasPdf);
+            String divergence = divergenceReason(censusEntry, hasPdf, transcriptUnindexed);
             if (divergence != null) {
                 return requeueForReconcile(state, observedFingerprint, divergence, ReconcileIntent.forcingRebuild()) ? 1 : 0;
             }
@@ -381,7 +404,7 @@ public class LectureIngestionReconcileService {
      * @return a human-readable reason, or {@code null} when nothing diverges
      */
     @Nullable
-    private static String divergenceReason(IngestionCensusUnitDTO censusEntry, boolean hasPdf) {
+    private static String divergenceReason(IngestionCensusUnitDTO censusEntry, boolean hasPdf, boolean transcriptUnindexed) {
         // Stale generations coexist. Counted after excluding object-store ghosts, so a healed unit with inert
         // ghost rows reports 1 and is left alone; a genuine second real generation is rewritten to one.
         if (censusEntry.generationCount() > 1) {
@@ -408,6 +431,10 @@ public class LectureIngestionReconcileService {
         // Slides present but their per-slide segment summaries are missing.
         if (hasPdf && censusEntry.chunkCount() > 0 && censusEntry.segmentCount() == 0) {
             return "slide segments are missing for a unit with page chunks";
+        }
+        // A completed, non-empty transcript is stored in Artemis but the index holds none of its rows.
+        if (transcriptUnindexed) {
+            return "a completed transcript is not indexed";
         }
         // Legacy chunks whose display page number was never resolved; a re-ingest repopulates real numbers.
         if (censusEntry.nullDisplayCount() > 0) {
@@ -591,6 +618,35 @@ public class LectureIngestionReconcileService {
     }
 
     /**
+     * Units whose census entry reports no transcript rows although Artemis stores a completed, non-empty transcript for them. Only the
+     * units the census reports without transcript rows are loaded, so a healthy course costs one empty lookup at most.
+     */
+    private Set<Long> findUnitsWithUnindexedTranscript(Map<Long, IngestionCensusUnitDTO> censusByUnitId) {
+        List<Long> candidates = censusByUnitId.values().stream().filter(entry -> entry.unitRowCount() > 0 && entry.transcriptionCount() == 0 && !entry.truncated())
+                .map(IngestionCensusUnitDTO::lectureUnitId).toList();
+        if (candidates.isEmpty()) {
+            return Set.of();
+        }
+        return transcriptionRepository.findAllByLectureUnit_IdInAndTranscriptionStatus(candidates, TranscriptionStatus.COMPLETED).stream()
+                .filter(transcription -> transcription.getSegments() != null && !transcription.getSegments().isEmpty()).map(transcription -> transcription.getLectureUnit().getId())
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Whether a unit without processable content still records content markers from a removed-content cleanup that did not finish,
+     * in a phase the cleanup claim accepts: at rest, and not waiting for a retry.
+     */
+    private static boolean hasRetryableContentCleanup(LectureUnitProcessingState state) {
+        boolean hasMarkers = (state.getVideoSourceHash() != null && !state.getVideoSourceHash().isBlank()) || state.getAttachmentVersion() != null;
+        boolean atRest = switch (state.getPhase()) {
+            case DONE, SKIPPED -> true;
+            case FAILED -> state.getRetryEligibleAt() == null;
+            default -> false;
+        };
+        return hasMarkers && atRest && state.getIngestionJobToken() == null;
+    }
+
+    /**
      * Delete index rows whose lecture unit no longer exists in the database, or whose lecture is a tutorial lecture.
      * The census reports a unit as long as ANY collection still holds rows for it, so this is what
      * garbage-collects leftovers from failed deletions and superseded runs, and the rows of units whose
@@ -605,8 +661,12 @@ public class LectureIngestionReconcileService {
             return;
         }
         Set<Long> existingUnitIds = attachmentVideoUnitRepository.findExistingIds(censusUnitIds);
-        List<IngestionJobIdentityDTO> orphans = census.units().stream().filter(entry -> !existingUnitIds.contains(entry.lectureUnitId()))
-                .map(entry -> new IngestionJobIdentityDTO(census.courseId(), entry.lectureId() != null ? entry.lectureId() : 0, entry.lectureUnitId())).toList();
+        List<IngestionCensusUnitDTO> orphanEntries = census.units().stream().filter(entry -> !existingUnitIds.contains(entry.lectureUnitId()) && !entry.truncated()).toList();
+        // The Iris deletion matches on the lecture id; without one it would delete nothing while reporting success.
+        orphanEntries.stream().filter(entry -> entry.lectureId() == null).forEach(
+                entry -> log.warn("Reconcile: orphaned unit {} of course {} reports no lecture id, cannot delete its index rows", entry.lectureUnitId(), census.courseId()));
+        List<IngestionJobIdentityDTO> orphans = orphanEntries.stream().filter(entry -> entry.lectureId() != null)
+                .map(entry -> new IngestionJobIdentityDTO(census.courseId(), entry.lectureId(), entry.lectureUnitId())).toList();
         // A tutorial lecture unit still exists, so it is never an orphan, and the per-unit loop excludes it.
         List<IngestionJobIdentityDTO> tutorialUnits = attachmentVideoUnitRepository.findTutorialLectureUnitIdentities(censusUnitIds);
         if (orphans.isEmpty() && tutorialUnits.isEmpty()) {
@@ -616,68 +676,5 @@ public class LectureIngestionReconcileService {
                 orphans.stream().map(IngestionJobIdentityDTO::lectureUnitId).toList(), tutorialUnits.size(),
                 tutorialUnits.stream().map(IngestionJobIdentityDTO::lectureUnitId).toList());
         irisLectureApi.get().deleteLectureUnitsByIdentity(Stream.concat(orphans.stream(), tutorialUnits.stream()).toList());
-    }
-
-    /**
-     * Resolve a stuck INGESTING run that very likely completed on the Iris side with only its terminal
-     * callback lost, without charging the retry budget.
-     * <p>
-     * Evidence: the census stamp of the unit equals the fingerprint this run dispatched with. The stamp
-     * is written by the run's final vector store write, so its presence means the pipeline reached its
-     * last stage. The state is requeued rather than marked DONE, because only a terminal success callback
-     * (behind the Iris end-of-run audit) may confirm a fingerprint; the re-run is cheap for content that
-     * is already current and complete. What this avoids is the failure path: without it, a lost success
-     * callback costs a retry, and enough lost callbacks in a row mark a perfectly ingested unit as
-     * permanently FAILED.
-     *
-     * @param state              the stuck processing state, in phase INGESTING
-     * @param cutoffTime         the no-callback cutoff the caller's stuck-state batch read used
-     * @param absoluteCutoffTime the absolute-timeout cutoff the caller's stuck-state batch read used
-     * @return true if the state was requeued without retry penalty; false if the normal failure handling should proceed
-     */
-    public boolean resolveStuckIngestionWithoutRetryPenalty(LectureUnitProcessingState state, ZonedDateTime cutoffTime, ZonedDateTime absoluteCutoffTime) {
-        if (irisLectureApi.isEmpty() || state.getPhase() != ProcessingPhase.INGESTING || state.getContentFingerprint() == null) {
-            return false;
-        }
-        long unitId = state.getLectureUnit().getId();
-        long courseId = state.getLectureUnit().getLecture().getCourse().getId();
-        IngestionCensusDTO census = irisLectureApi.get().getIngestionCensus(courseId);
-        if (census == null) {
-            return false;
-        }
-        IngestionCensusUnitDTO entry = census.units().stream().filter(unit -> unit.lectureUnitId() == unitId).findFirst().orElse(null);
-        if (entry == null || entry.unitRowCount() == 0 || !state.getContentFingerprint().equals(entry.contentFingerprint())) {
-            return false;
-        }
-        // The census lookup above is a slow external round-trip; a terminal callback can finish this run
-        // (or it can otherwise move on) while it is in flight. Requeue atomically, guarded on the same
-        // token this decision was made against and on still matching the same stuck predicate that found
-        // this candidate: 0 rows affected means either the run already moved on in that window, or a
-        // heartbeat/callback proved it was never actually stuck to begin with. What "moved on" means still
-        // needs one more check below -- it is usually a completed callback (already correctly reflected in
-        // the database, nothing to do), but it can also be a callback that only half-finished, which this
-        // guard's null-bound "= :token" can never match.
-        int updated = processingStateRepository.requeueStuckIngestionWithoutPenalty(state.getId(), state.getIngestionJobToken(), cutoffTime, absoluteCutoffTime,
-                ZonedDateTime.now());
-        if (updated == 0) {
-            // 0 rows can mean the run already moved on to a state written elsewhere (nothing more to
-            // do here) -- but it can also mean handleIngestionComplete's own token-clear-then-save
-            // crashed in between, leaving the row stuck INGESTING with a null token that this guard's
-            // "= :token" can never match (SQL equality against NULL is never true, even when the
-            // column itself is NULL). Re-check for that specific broken shape before treating this as
-            // resolved: if it's still there, fall through to normal failure handling instead of
-            // abandoning it.
-            LectureUnitProcessingState reloaded = processingStateRepository.findById(state.getId()).orElse(null);
-            if (reloaded != null && reloaded.getPhase() == ProcessingPhase.INGESTING && reloaded.getIngestionJobToken() == null) {
-                log.warn("Reconcile: unit {} is stuck INGESTING with an already-cleared token (an interrupted completion callback); falling through to normal failure handling",
-                        unitId);
-                return false;
-            }
-            log.debug("Reconcile: unit {} moved on before the stuck-recovery requeue could apply; leaving it as-is", unitId);
-        }
-        else {
-            log.warn("Reconcile: unit {} looks fully ingested but its terminal callback never arrived; requeueing without retry penalty", unitId);
-        }
-        return true;
     }
 }

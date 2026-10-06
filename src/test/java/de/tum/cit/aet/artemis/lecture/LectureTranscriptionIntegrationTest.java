@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
-import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegmentConverter;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
@@ -84,7 +83,7 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
         userUtilService.createAndSaveUser(TEST_PREFIX + "outsider");
     }
 
-    // insertIfTokenMatches's FOR UPDATE blocks on this. H2 gives up after one second by default, so raise its
+    // saveCheckpointIfTokenMatches's row lock blocks on this. H2 gives up after one second by default, so raise its
     // limit rather than loosen the assertion; a no-op on the other engines.
     private void raiseLockTimeoutOnH2() throws SQLException {
         try (var connection = dataSource.getConnection()) {
@@ -141,12 +140,9 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
         request.get("/api/lecture/lecture-units/" + lectureUnit.getId() + "/transcript", HttpStatus.FORBIDDEN, LectureTranscriptionDTO.class);
     }
 
-    /**
-     * Verifies updateContentIfTokenMatches against a real database: like the insert, it binds the {@code json}-typed
-     * {@code segments} column through an explicit {@code CAST(... AS json)}, and applies when the run still owns the unit.
-     */
+    /** A checkpoint of the run that owns the unit updates the stored transcript. */
     @Test
-    void testUpdateContentIfTokenMatches_appliesWhenTokenMatches() {
+    void testSaveCheckpointIfTokenMatches_updatesWhenTokenMatches() {
         LectureUnitProcessingState state = new LectureUnitProcessingState(lectureUnit);
         state.setIngestionJobToken("valid-token");
         processingStateRepository.save(state);
@@ -154,11 +150,9 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
                 .save(new LectureTranscription("en", List.of(new LectureTranscriptionSegment(0.0, 10.0, "Original text", 1)), lectureUnit));
 
         var updatedSegments = List.of(new LectureTranscriptionSegment(0.0, 5.0, "Updated text", 1), new LectureTranscriptionSegment(5.0, 10.0, "More updated text", 2));
-        String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(updatedSegments);
-        int updated = lectureTranscriptionRepository.updateContentIfTokenMatches(saved.getId(), lectureUnit.getId(), "de", segmentsJson, TranscriptionStatus.COMPLETED.name(),
-                "valid-token");
+        boolean written = lectureTranscriptionRepository.saveCheckpointIfTokenMatches(lectureUnit, "valid-token", "de", updatedSegments, TranscriptionStatus.COMPLETED);
 
-        assertThat(updated).isEqualTo(1);
+        assertThat(written).as("the owning run's checkpoint is written").isTrue();
         LectureTranscription reloaded = lectureTranscriptionRepository.findById(saved.getId()).orElseThrow();
         assertThat(reloaded.getLanguage()).isEqualTo("de");
         assertThat(reloaded.getTranscriptionStatus()).isEqualTo(TranscriptionStatus.COMPLETED);
@@ -168,47 +162,43 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     /**
-     * The case an id-only guard misses: a lease reclaim or retry keeps the transcription row and starts a newer run on it,
-     * so the row still exists when a delayed checkpoint of the superseded run arrives. Its stale token must leave the
-     * newer run's transcript untouched.
+     * A lease reclaim or retry keeps the transcription row and starts a newer run on it, so the row still exists when a delayed
+     * checkpoint of the superseded run arrives. Its stale token must leave the newer run's transcript untouched.
      */
     @Test
-    void testUpdateContentIfTokenMatches_noOpsForAStaleRunWhileTheRowIsKept() {
+    void testSaveCheckpointIfTokenMatches_leavesTheNewerRunsTranscriptAlone() {
         LectureUnitProcessingState state = new LectureUnitProcessingState(lectureUnit);
         state.setIngestionJobToken("newer-run-token");
         processingStateRepository.save(state);
         LectureTranscription kept = lectureTranscriptionRepository
                 .save(new LectureTranscription("en", List.of(new LectureTranscriptionSegment(0.0, 10.0, "Newer run text", 1)), lectureUnit));
 
-        String staleJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(List.of(new LectureTranscriptionSegment(0.0, 10.0, "Stale run text", 1)));
-        int updated = lectureTranscriptionRepository.updateContentIfTokenMatches(kept.getId(), lectureUnit.getId(), "de", staleJson, TranscriptionStatus.COMPLETED.name(),
-                "superseded-run-token");
+        boolean written = lectureTranscriptionRepository.saveCheckpointIfTokenMatches(lectureUnit, "superseded-run-token", "de",
+                List.of(new LectureTranscriptionSegment(0.0, 10.0, "Stale run text", 1)), TranscriptionStatus.COMPLETED);
 
-        assertThat(updated).isZero();
+        assertThat(written).as("a superseded run's checkpoint is refused").isFalse();
         LectureTranscription reloaded = lectureTranscriptionRepository.findById(kept.getId()).orElseThrow();
         assertThat(reloaded.getLanguage()).isEqualTo("en");
         assertThat(reloaded.getSegments().getFirst().text()).isEqualTo("Newer run text");
     }
 
     /**
-     * Within one run the token cannot tell a raw checkpoint from the enriched one. A raw (PENDING) write delayed past the
-     * enriched write must not replace the completed transcript, while an enriched write over a raw transcript still applies.
+     * Within one run the token cannot tell a raw checkpoint from the enriched one. A raw (PENDING) write delayed past the enriched write
+     * must not replace the completed transcript, while an enriched write over a raw transcript still applies.
      */
     @Test
-    void testUpdateContentIfTokenMatches_neverReplacesACompletedTranscriptWithAPendingOne() {
+    void testSaveCheckpointIfTokenMatches_neverReplacesACompletedTranscriptWithAPendingOne() {
         LectureUnitProcessingState state = new LectureUnitProcessingState(lectureUnit);
         state.setIngestionJobToken("run-token");
         processingStateRepository.save(state);
         LectureTranscription stored = lectureTranscriptionRepository
                 .save(new LectureTranscription("en", List.of(new LectureTranscriptionSegment(0.0, 10.0, "Raw text", 0)), lectureUnit));
-        var converter = new LectureTranscriptionSegmentConverter();
-        String enrichedJson = converter.convertToDatabaseColumn(List.of(new LectureTranscriptionSegment(0.0, 10.0, "Enriched text", 1)));
-        String rawJson = converter.convertToDatabaseColumn(List.of(new LectureTranscriptionSegment(0.0, 10.0, "Late raw text", 0)));
 
-        assertThat(lectureTranscriptionRepository.updateContentIfTokenMatches(stored.getId(), lectureUnit.getId(), "en", enrichedJson, TranscriptionStatus.COMPLETED.name(),
-                "run-token")).as("enriched over raw applies").isEqualTo(1);
-        assertThat(lectureTranscriptionRepository.updateContentIfTokenMatches(stored.getId(), lectureUnit.getId(), "en", rawJson, TranscriptionStatus.PENDING.name(), "run-token"))
-                .as("a late raw write over the completed transcript is refused").isZero();
+        assertThat(lectureTranscriptionRepository.saveCheckpointIfTokenMatches(lectureUnit, "run-token", "en",
+                List.of(new LectureTranscriptionSegment(0.0, 10.0, "Enriched text", 1)), TranscriptionStatus.COMPLETED)).as("enriched over raw applies").isTrue();
+        assertThat(lectureTranscriptionRepository.saveCheckpointIfTokenMatches(lectureUnit, "run-token", "en",
+                List.of(new LectureTranscriptionSegment(0.0, 10.0, "Late raw text", 0)), TranscriptionStatus.PENDING))
+                .as("a late raw write over the completed transcript is refused").isFalse();
 
         LectureTranscription reloaded = lectureTranscriptionRepository.findById(stored.getId()).orElseThrow();
         assertThat(reloaded.getTranscriptionStatus()).isEqualTo(TranscriptionStatus.COMPLETED);
@@ -216,47 +206,17 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(processingStateRepository.findById(state.getId())).as("the guarded writes leave the processing state untouched").isPresent();
     }
 
-    /**
-     * A content-triggered requeue deletes the row between a checkpoint's read and its write. The update must no-op, not
-     * resurrect it, even under the token that still matches.
-     */
+    /** The first checkpoint of the owning run creates the transcript, with its segments round-tripping through the JSON column. */
     @Test
-    void testUpdateContentIfTokenMatches_noOpsWhenRowWasDeleted() {
-        LectureUnitProcessingState state = new LectureUnitProcessingState(lectureUnit);
-        state.setIngestionJobToken("valid-token");
-        processingStateRepository.save(state);
-        var segments = List.of(new LectureTranscriptionSegment(0.0, 10.0, "Original text", 1));
-        LectureTranscription saved = lectureTranscriptionRepository.save(new LectureTranscription("en", segments, lectureUnit));
-        Long deletedId = saved.getId();
-        lectureTranscriptionRepository.delete(saved);
-
-        String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(segments);
-        int updated = lectureTranscriptionRepository.updateContentIfTokenMatches(deletedId, lectureUnit.getId(), "de", segmentsJson, TranscriptionStatus.COMPLETED.name(),
-                "valid-token");
-
-        assertThat(updated).isZero();
-        assertThat(lectureTranscriptionRepository.findById(deletedId)).isEmpty();
-    }
-
-    /**
-     * Verifies insertIfTokenMatches against a real database: the first native INSERT in this
-     * codebase, and the only place a bulk write binds a value into the {@code json}-typed
-     * {@code segments} column via an explicit {@code CAST(... AS json)} rather than through
-     * Hibernate's own converter/type layer. Confirms the cast round-trips content correctly and
-     * that the EXISTS-gated insert actually applies when the token matches.
-     */
-    @Test
-    void testInsertIfTokenMatches_insertsWhenTokenMatches() {
+    void testSaveCheckpointIfTokenMatches_insertsTheFirstTranscriptWhenTokenMatches() {
         LectureUnitProcessingState state = new LectureUnitProcessingState(lectureUnit);
         state.setIngestionJobToken("valid-token");
         processingStateRepository.save(state);
 
         var segments = List.of(new LectureTranscriptionSegment(0.0, 10.0, "Inserted text", 1), new LectureTranscriptionSegment(10.0, 20.0, "More text", 2));
-        String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(segments);
+        boolean written = lectureTranscriptionRepository.saveCheckpointIfTokenMatches(lectureUnit, "valid-token", "en", segments, TranscriptionStatus.COMPLETED);
 
-        int inserted = lectureTranscriptionRepository.insertIfTokenMatches(lectureUnit.getId(), "en", segmentsJson, TranscriptionStatus.COMPLETED.name(), "valid-token");
-
-        assertThat(inserted).isEqualTo(1);
+        assertThat(written).isTrue();
         LectureTranscription created = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId()).orElseThrow();
         assertThat(created.getLanguage()).isEqualTo("en");
         assertThat(created.getTranscriptionStatus()).isEqualTo(TranscriptionStatus.COMPLETED);
@@ -265,61 +225,45 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(created.getSegments().get(1).text()).isEqualTo("More text");
     }
 
-    /**
-     * The exact interleaving this atomic insert exists to close: ownership was proven at some
-     * earlier instant, but the token has since changed (a content-triggered requeue invalidated it)
-     * by the time this statement actually executes. Folding the check into the insert itself --
-     * rather than a separate read before it -- means there is no gap left for that change to land in.
-     */
+    /** A content-triggered requeue invalidated the token before the first checkpoint arrived: nothing may be created for the old run. */
     @Test
-    void testInsertIfTokenMatches_noOpsWhenTokenDoesNotMatch() {
+    void testSaveCheckpointIfTokenMatches_createsNothingWhenTokenDoesNotMatch() {
         LectureUnitProcessingState state = new LectureUnitProcessingState(lectureUnit);
         state.setIngestionJobToken("current-token");
         processingStateRepository.save(state);
 
-        var segments = List.of(new LectureTranscriptionSegment(0.0, 10.0, "Stale text", 1));
-        String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(segments);
+        boolean written = lectureTranscriptionRepository.saveCheckpointIfTokenMatches(lectureUnit, "stale-token", "en",
+                List.of(new LectureTranscriptionSegment(0.0, 10.0, "Stale text", 1)), TranscriptionStatus.COMPLETED);
 
-        int inserted = lectureTranscriptionRepository.insertIfTokenMatches(lectureUnit.getId(), "en", segmentsJson, TranscriptionStatus.COMPLETED.name(), "stale-token");
-
-        assertThat(inserted).isZero();
+        assertThat(written).isFalse();
         assertThat(lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId())).isEmpty();
     }
 
     @Test
-    void testInsertIfTokenMatches_noOpsWhenNoProcessingStateExists() {
-        var segments = List.of(new LectureTranscriptionSegment(0.0, 10.0, "Stale text", 1));
-        String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(segments);
+    void testSaveCheckpointIfTokenMatches_createsNothingWithoutAProcessingState() {
+        boolean written = lectureTranscriptionRepository.saveCheckpointIfTokenMatches(lectureUnit, "any-token", "en",
+                List.of(new LectureTranscriptionSegment(0.0, 10.0, "Stale text", 1)), TranscriptionStatus.COMPLETED);
 
-        int inserted = lectureTranscriptionRepository.insertIfTokenMatches(lectureUnit.getId(), "en", segmentsJson, TranscriptionStatus.COMPLETED.name(), "any-token");
-
-        assertThat(inserted).isZero();
+        assertThat(written).isFalse();
         assertThat(lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId())).isEmpty();
     }
 
     /**
-     * The window a plain {@code EXISTS} subquery cannot cover: a concurrent invalidation that commits
-     * strictly between this statement's snapshot and its own commit, rather than before it starts. The
-     * mismatch tests above change the token before {@code insertIfTokenMatches} runs at all, so they
-     * cannot exercise this. Here, a transaction that has already taken {@code invalidateTokenIfMatches}'s
-     * row lock -- but not yet committed it -- must make a concurrent {@code insertIfTokenMatches} block,
-     * not race past it on a stale snapshot; and once that lock is released, the insert must observe the
-     * now-invalidated token and skip, not resurrect a row the invalidation was about to orphan.
+     * The window a check before the write cannot cover: an invalidation that holds the processing-state row lock, not yet committed,
+     * when the checkpoint arrives. The checkpoint must block on that lock rather than race past it, and once the invalidation commits it
+     * must see the new token and write nothing.
      */
     @Test
-    void testInsertIfTokenMatches_blocksOnAndThenObservesAConcurrentInvalidation() throws Exception {
+    void testSaveCheckpointIfTokenMatches_blocksOnAndThenObservesAConcurrentInvalidation() throws Exception {
         LectureUnitProcessingState state = new LectureUnitProcessingState(lectureUnit);
         state.setIngestionJobToken("in-flight-token");
         processingStateRepository.save(state);
         long stateId = state.getId();
 
-        var segments = List.of(new LectureTranscriptionSegment(0.0, 10.0, "Should not persist", 1));
-        String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(segments);
-
         var holderHasLock = new CountDownLatch(1);
         var releaseHolder = new CountDownLatch(1);
         var holder = Executors.newSingleThreadExecutor();
-        var inserter = Executors.newSingleThreadExecutor();
+        var writer = Executors.newSingleThreadExecutor();
         try {
             // One transaction invalidates the token and holds the processing-state row's lock open until released.
             var holding = holder.submit(() -> new TransactionTemplate(transactionManager).execute(status -> {
@@ -335,25 +279,53 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
             }));
             assertThat(holderHasLock.await(10, TimeUnit.SECONDS)).isTrue();
 
-            var insertResult = inserter.submit(
-                    () -> lectureTranscriptionRepository.insertIfTokenMatches(lectureUnit.getId(), "en", segmentsJson, TranscriptionStatus.COMPLETED.name(), "in-flight-token"));
+            var writeResult = writer.submit(() -> lectureTranscriptionRepository.saveCheckpointIfTokenMatches(lectureUnit, "in-flight-token", "en",
+                    List.of(new LectureTranscriptionSegment(0.0, 10.0, "Should not persist", 1)), TranscriptionStatus.COMPLETED));
 
-            // The assertion that makes this a test about the lock: without FOR UPDATE, the insert completes here,
-            // on a snapshot taken before the invalidation committed.
-            assertThatThrownBy(() -> insertResult.get(2, TimeUnit.SECONDS)).as("the insert must block while the processing-state row is locked by the invalidation")
+            assertThatThrownBy(() -> writeResult.get(2, TimeUnit.SECONDS)).as("the checkpoint must block while the processing-state row is locked by the invalidation")
                     .isInstanceOf(TimeoutException.class);
 
             releaseHolder.countDown();
             assertThat(holding.get(30, TimeUnit.SECONDS)).isEqualTo(1);
-            // Once unblocked, the insert re-checks the row's now-current (invalidated) token and must skip.
-            assertThat(insertResult.get(30, TimeUnit.SECONDS)).isZero();
+            assertThat(writeResult.get(30, TimeUnit.SECONDS)).as("once unblocked, the checkpoint sees the invalidated token").isFalse();
         }
         finally {
             releaseHolder.countDown();
             holder.shutdownNow();
-            inserter.shutdownNow();
+            writer.shutdownNow();
         }
 
         assertThat(lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId())).isEmpty();
+    }
+
+    /** Two first checkpoints of the same run arriving together are serialized by the lock instead of colliding on the unique unit column. */
+    @Test
+    void testSaveCheckpointIfTokenMatches_serializesConcurrentFirstCheckpoints() throws Exception {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(lectureUnit);
+        state.setIngestionJobToken("run-token");
+        processingStateRepository.save(state);
+
+        var start = new CountDownLatch(1);
+        var pool = Executors.newFixedThreadPool(2);
+        try {
+            var first = pool.submit(() -> {
+                start.await(10, TimeUnit.SECONDS);
+                return lectureTranscriptionRepository.saveCheckpointIfTokenMatches(lectureUnit, "run-token", "en", List.of(new LectureTranscriptionSegment(0.0, 10.0, "First", 0)),
+                        TranscriptionStatus.PENDING);
+            });
+            var second = pool.submit(() -> {
+                start.await(10, TimeUnit.SECONDS);
+                return lectureTranscriptionRepository.saveCheckpointIfTokenMatches(lectureUnit, "run-token", "en", List.of(new LectureTranscriptionSegment(0.0, 10.0, "Second", 0)),
+                        TranscriptionStatus.PENDING);
+            });
+            start.countDown();
+            assertThat(first.get(30, TimeUnit.SECONDS)).as("the first checkpoint is written").isTrue();
+            assertThat(second.get(30, TimeUnit.SECONDS)).as("the second checkpoint is written over it, not rejected by a constraint").isTrue();
+        }
+        finally {
+            pool.shutdownNow();
+        }
+
+        assertThat(lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId())).as("one transcript exists for the unit").isPresent();
     }
 }

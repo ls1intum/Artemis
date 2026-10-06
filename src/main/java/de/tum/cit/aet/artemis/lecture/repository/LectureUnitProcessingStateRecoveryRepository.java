@@ -71,6 +71,34 @@ public interface LectureUnitProcessingStateRecoveryRepository extends ArtemisJpa
     int claimStrandedRun(@Param("id") long id, @Param("claimToken") String claimToken, @Param("cutoff") ZonedDateTime cutoff, @Param("now") ZonedDateTime now);
 
     /**
+     * Claim a unit whose processable content was removed, so its Iris content and recorded markers can be cleaned up through the same
+     * claim-pinned writes as a stranded run. Covers a row in flight whose token the removal just invalidated, and a row at rest (DONE,
+     * SKIPPED, or FAILED without a scheduled retry) that still records content markers because an earlier cleanup failed. A claim left
+     * by a cleanup that failed or died is taken over once it is older than the cutoff; on these rows no other writer sets a claim,
+     * because dispatch claims need IDLE and retry claims need a scheduled retry.
+     *
+     * @param id         the processing state to claim
+     * @param claimToken a fresh identity for this cleanup
+     * @param cutoff     a claim older than this is considered abandoned
+     * @param now        recorded as the new {@code lastUpdated}
+     * @return 1 when claimed, 0 when the row is not eligible or another cleanup holds a recent claim
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.claimToken = :claimToken, ps.lastUpdated = :now
+            WHERE ps.id = :id
+            AND ps.ingestionJobToken IS NULL
+            AND (ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING,
+                    de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.DONE, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.SKIPPED)
+                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt IS NULL))
+            AND ((ps.videoSourceHash IS NOT NULL AND ps.videoSourceHash <> '') OR ps.attachmentVersion IS NOT NULL)
+            AND (ps.claimToken IS NULL OR ps.lastUpdated < :cutoff)
+            """)
+    int claimForContentRemoval(@Param("id") long id, @Param("claimToken") String claimToken, @Param("cutoff") ZonedDateTime cutoff, @Param("now") ZonedDateTime now);
+
+    /**
      * Requeue a claimed stranded run for its current content: the field set of
      * {@link LectureUnitProcessingStateRepository#requeueForContentChange}, but only while the recovery's claim still holds.
      *
@@ -91,19 +119,21 @@ public interface LectureUnitProcessingStateRecoveryRepository extends ArtemisJpa
                 ps.contentFingerprint = NULL, ps.confirmedFingerprint = NULL,
                 ps.videoSourceHash = :videoSourceHash, ps.attachmentVersion = :attachmentVersion, ps.dispatchPriority = :dispatchPriority,
                 ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL, ps.currentStage = NULL, ps.stageStartedAt = NULL,
-                ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL, ps.lastUpdated = :now
+                ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL, ps.lastUpdated = :now, ps.unsettledAttempts = 0
             WHERE ps.id = :id
             AND ps.claimToken = :claimToken
             AND ps.ingestionJobToken IS NULL
-            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING)
+            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING,
+                de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.DONE, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED,
+                de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.SKIPPED)
             """)
     int requeueStrandedRunIfClaimed(@Param("id") long id, @Param("claimToken") String claimToken, @Param("videoSourceHash") String videoSourceHash,
             @Param("attachmentVersion") Integer attachmentVersion, @Param("dispatchPriority") Integer dispatchPriority, @Param("now") ZonedDateTime now);
 
     /**
-     * Settle a claimed stranded run whose unit no longer has processable content as DONE with nothing indexed: the field
-     * set of {@link LectureUnitProcessingStateRepository#settleAsNothingIndexed}, plus the run-scoped ledger an in-flight
-     * row still carries, but only while the recovery's claim still holds.
+     * Settle a claimed row whose unit no longer has processable content as DONE with nothing indexed: the content markers
+     * and fingerprints go, together with the run-scoped fields an in-flight row still carries, but only while the claim taken
+     * by {@link #claimStrandedRun} or {@link #claimForContentRemoval} still holds.
      *
      * @param id         the processing state to settle
      * @param claimToken the recovery's claim
@@ -118,11 +148,13 @@ public interface LectureUnitProcessingStateRecoveryRepository extends ArtemisJpa
                 ps.ingestionJobToken = NULL, ps.retryEligibleAt = NULL, ps.errorKey = NULL, ps.retryCount = 0,
                 ps.videoSourceHash = NULL, ps.attachmentVersion = NULL, ps.contentFingerprint = NULL, ps.confirmedFingerprint = NULL,
                 ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL, ps.currentStage = NULL, ps.stageStartedAt = NULL,
-                ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL, ps.lastUpdated = :now
+                ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL, ps.lastUpdated = :now, ps.unsettledAttempts = 0
             WHERE ps.id = :id
             AND ps.claimToken = :claimToken
             AND ps.ingestionJobToken IS NULL
-            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING)
+            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING,
+                de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.DONE, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED,
+                de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.SKIPPED)
             """)
     int settleStrandedRunIfClaimed(@Param("id") long id, @Param("claimToken") String claimToken, @Param("now") ZonedDateTime now);
 

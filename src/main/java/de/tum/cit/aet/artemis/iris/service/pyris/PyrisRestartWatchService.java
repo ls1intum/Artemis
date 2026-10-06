@@ -87,7 +87,7 @@ public class PyrisRestartWatchService {
 
             log.warn("Pyris boot id changed — the process restarted, resetting in-flight ingestion jobs");
             try {
-                processingStateRecoveryApi.ifPresent(api -> api.handleIrisReset());
+                processingStateRecoveryApi.ifPresent(api -> api.handleIrisReset(previousBootId));
             }
             catch (Exception e) {
                 log.error("Failed to reset in-flight jobs after a Pyris boot id change; keeping the previous boot id so the next observation retries", e);

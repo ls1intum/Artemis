@@ -173,7 +173,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
             log.info("Iris restarted (DOWN → UP) — resetting in-flight ingestion jobs");
             processingStateRecoveryApi.ifPresent(api -> {
                 try {
-                    api.handleIrisReset();
+                    api.handleIrisReset(null);
                 }
                 catch (Exception e) {
                     previouslyUp.set(false);

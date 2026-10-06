@@ -31,10 +31,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param missingPageCount   interior page-coverage holes: pages in 1..max with no real chunk; 0 for contiguous coverage
  * @param nullDisplayCount   real page chunks whose display page number was never resolved (legacy null)
  * @param courseLanguage     resolved language the unit was ingested under, from the unit row; {@code null} for pre-ledger rows
+ * @param truncated          whether one of this unit's own scans hit the row cap, which makes its counts and ranges unreliable
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IngestionCensusUnitDTO(@Nullable Long lectureId, long lectureUnitId, @Nullable String contentFingerprint, int unitRowCount, @Nullable Integer expectedChunkCount,
         @Nullable Integer pipelineVersion, @Nullable Double qualityScore, int chunkCount, int generationCount, @Nullable Integer chunkPageMin, @Nullable Integer chunkPageMax,
         @Nullable Integer chunkVersionMin, @Nullable Integer chunkVersionMax, int transcriptionCount, int segmentCount, @Nullable Integer segmentPageMin,
-        @Nullable Integer segmentPageMax, int missingPageCount, int nullDisplayCount, @Nullable String courseLanguage) {
+        @Nullable Integer segmentPageMax, int missingPageCount, int nullDisplayCount, @Nullable String courseLanguage, boolean truncated) {
 }

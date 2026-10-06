@@ -33,7 +33,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
-import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -57,8 +56,6 @@ public class PyrisWebhookService {
 
     private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
-    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
-
     private final Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi;
 
     private final VideoSourceResolverService videoSourceResolver;
@@ -67,13 +64,12 @@ public class PyrisWebhookService {
     private String artemisBaseUrl;
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
-            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
-            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, VideoSourceResolverService videoSourceResolver) {
+            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi,
+            VideoSourceResolverService videoSourceResolver) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
         this.lectureRepositoryApi = lectureRepositoryApi;
-        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
         this.videoSourceResolver = videoSourceResolver;
     }
@@ -123,9 +119,6 @@ public class PyrisWebhookService {
         LectureTranscriptionsRepositoryApi transcriptionsRepositoryApi = lectureTranscriptionsRepositoryApi
                 .orElseThrow(() -> new LectureApiNotPresentException(LectureTranscriptionsRepositoryApi.class));
         Optional<LectureTranscription> lectureTranscription = transcriptionsRepositoryApi.findByLectureUnit_Id(attachmentVideoUnit.getId());
-
-        LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
-        attachmentVideoUnit = (AttachmentVideoUnit) api.save(attachmentVideoUnit);
 
         // Resolve TUM Live watch page URLs to HLS playlist URLs for Iris/FFmpeg, and tag video source type.
         // If the type is null (unsupported source), pass null URL so Pyris doesn't try to process it.

@@ -534,35 +534,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.TRANSCRIBING;
     }
 
-    isProcessingIngesting(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.INGESTING;
-    }
-
-    isProcessingDone(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.DONE;
-    }
-
     isProcessingFailed(lectureUnit: AttachmentVideoUnit): boolean {
         return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.FAILED;
-    }
-
-    isProcessingSkipped(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.SKIPPED;
-    }
-
-    isProcessingInProgress(lectureUnit: AttachmentVideoUnit): boolean {
-        const phase = this.processingStatus()[lectureUnit.id!]?.phase;
-        return phase === ProcessingPhase.TRANSCRIBING || phase === ProcessingPhase.INGESTING;
-    }
-
-    hasProcessingBadge(lectureUnit: AttachmentVideoUnit): boolean {
-        return (
-            this.isProcessingInProgress(lectureUnit) ||
-            this.isProcessingFailed(lectureUnit) ||
-            this.isProcessingDone(lectureUnit) ||
-            this.isProcessingSkipped(lectureUnit) ||
-            this.isAwaitingProcessing(lectureUnit)
-        );
     }
 
     /**

@@ -98,5 +98,8 @@ class PyrisInternalIngestionWorkerResourceTest {
         // Preparation throws before prepareLectureAdditionJob registers a token, so there is nothing
         // to revoke for the failing item.
         verify(pyrisWebhookService, never()).revokePreparedIngestionJob(any());
+        // The failure is charged to the failing item's claim, so an error that repeats runs out of retries instead of looping for free.
+        verify(processingStateCallbackApi).failClaimedUnitPreparation(1L, claimedAtFailing);
+        verify(processingStateCallbackApi, never()).failClaimedUnitPreparation(eq(2L), any());
     }
 }

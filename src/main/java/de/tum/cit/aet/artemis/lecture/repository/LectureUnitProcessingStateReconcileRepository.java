@@ -62,7 +62,7 @@ public interface LectureUnitProcessingStateReconcileRepository extends ArtemisJp
                 ps.lastQualityPipelineVersion = COALESCE(:qualityPipelineVersion, ps.lastQualityPipelineVersion),
                 ps.dispatchPriority = :dispatchPriority, ps.lastUpdated = :now,
                 ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL, ps.currentStage = NULL, ps.stageStartedAt = NULL,
-                ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL
+                ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL, ps.unsettledAttempts = 0
             WHERE ps.id = :id AND ps.phase = :expectedPhase AND ps.claimToken IS NULL
             AND COALESCE(ps.confirmedFingerprint, '') = COALESCE(:observedFingerprint, '')
             """)

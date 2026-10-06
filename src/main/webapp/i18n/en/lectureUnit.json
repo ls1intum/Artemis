@@ -162,7 +162,8 @@
                     "youtubeTooLong": "The video exceeds the maximum duration and cannot be transcribed.",
                     "youtubeUnavailable": "The video is unavailable (removed, region-blocked, or age-restricted).",
                     "youtubeDownloadFailed": "The video could not be downloaded for transcription.",
-                    "noIngestibleContent": "No content could be indexed: the PDF has no readable pages and no transcript could be produced from the video. Check the file and the video source, then retry."
+                    "noIngestibleContent": "No content could be indexed: the PDF has no readable pages and no transcript could be produced from the video. Check the file and the video source, then retry.",
+                    "recoveryLimitReached": "Processing was interrupted several times in a row without finishing (for example by service restarts). It will be retried automatically."
                 }
             },
             "createAttachmentVideoUnits": {

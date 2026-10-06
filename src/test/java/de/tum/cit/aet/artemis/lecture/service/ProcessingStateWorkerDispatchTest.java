@@ -92,7 +92,7 @@ class ProcessingStateWorkerDispatchTest {
 
         callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, irisLectureApi,
                 new ProcessingStateNotificationService(websocketMessagingService, transcriptionRepository), contentFingerprintService, distributedDataProvider,
-                featureToggleService, 2, 20, Duration.ofSeconds(90), 8, mock(IrisLectureUnitSyncStateRepository.class));
+                featureToggleService, 2, 20, Duration.ofSeconds(90), 8, 3, mock(IrisLectureUnitSyncStateRepository.class));
 
         Lecture lecture = new Lecture();
         lecture.setId(1L);
@@ -108,7 +108,7 @@ class ProcessingStateWorkerDispatchTest {
     @Test
     void claimReturnsPreparedScalarsAndMarksWorkerSeen() {
         when(processingStateRepository.findIdleForDispatch(any(), eq(2))).thenReturn(List.of(testState));
-        when(processingStateRepository.claimIdleForDispatch(eq(500L), anyString(), any())).thenReturn(1);
+        when(processingStateRepository.claimIdleForDispatch(eq(500L), anyString(), any(), anyInt())).thenReturn(1);
 
         List<ClaimedIngestionUnitDTO> claims = callbackService.claimUnitsForWorker(WORKER_BOOT_ID, 2);
 

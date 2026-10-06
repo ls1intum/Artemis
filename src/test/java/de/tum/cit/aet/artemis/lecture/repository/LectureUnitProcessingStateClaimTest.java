@@ -45,6 +45,8 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
 
     private static final String TEST_PREFIX = "lectureunitprocessingclaim";
 
+    private static final int MAX_ATTEMPTS = 3;
+
     @Autowired
     private LectureUnitProcessingStateRepository processingStateRepository;
 
@@ -132,8 +134,8 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         assertThat(retryCandidateIds(now)).as("a retry whose backoff has passed must be a candidate").contains(retryable.getId());
 
         ZonedDateTime leaseExpiry = now.plusMinutes(20);
-        assertThat(processingStateRepository.claimRetryEligible(retryable.getId(), "claim-1", now, leaseExpiry)).as("the first caller claims the retry").isEqualTo(1);
-        assertThat(processingStateRepository.claimRetryEligible(retryable.getId(), "claim-2", now, leaseExpiry)).as("a second caller must lose the race").isZero();
+        assertThat(processingStateRepository.claimRetryEligible(retryable.getId(), "claim-1", now, leaseExpiry, MAX_ATTEMPTS)).as("the first caller claims the retry").isEqualTo(1);
+        assertThat(processingStateRepository.claimRetryEligible(retryable.getId(), "claim-2", now, leaseExpiry, MAX_ATTEMPTS)).as("a second caller must lose the race").isZero();
 
         assertThat(retryCandidateIds(now)).as("the claim must hide the row for the length of the lease").doesNotContain(retryable.getId());
         assertThat(retryCandidateIds(leaseExpiry.plusSeconds(1))).as("an abandoned claim recovers itself once the lease lapses").contains(retryable.getId());
@@ -146,8 +148,8 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         idle.setPhase(ProcessingPhase.IDLE);
         processingStateRepository.save(idle);
 
-        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-1", now)).as("the first caller claims the dispatch").isEqualTo(1);
-        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-2", now)).as("a second caller must lose the race").isZero();
+        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-1", now, MAX_ATTEMPTS)).as("the first caller claims the dispatch").isEqualTo(1);
+        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-2", now, MAX_ATTEMPTS)).as("a second caller must lose the race").isZero();
         assertThat(idleCandidateIds(now)).as("a claimed row must leave the queue").doesNotContain(idle.getId());
 
         // Asserted on the row rather than on the return value: the sweep is table-wide, so its count depends on
@@ -174,12 +176,13 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         idle.setPhase(ProcessingPhase.IDLE);
         processingStateRepository.save(idle);
 
-        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-A", now)).as("worker A claims the unit").isEqualTo(1);
+        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-A", now, MAX_ATTEMPTS)).as("worker A claims the unit").isEqualTo(1);
 
         // A content update requeues the unit while A is still preparing, and a concurrent pull claim takes it again.
         // Same wall-clock second, so the timestamps of both claims are identical: only the identity tells them apart.
         assertThat(processingStateRepository.requeueIfStillClaimed(idle.getId(), "claim-A", now)).as("the content update releases A's claim").isEqualTo(1);
-        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-B", now)).as("worker B claims the requeued unit in the same second").isEqualTo(1);
+        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-B", now, MAX_ATTEMPTS)).as("worker B claims the requeued unit in the same second")
+                .isEqualTo(1);
 
         assertThat(processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.INGESTING, "stale-token", "stale-fingerprint", "claim-A", ZonedDateTime.now()))
                 .as("A's activation must not take over B's claim").isZero();
@@ -205,7 +208,7 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         idle.setPhase(ProcessingPhase.IDLE);
         processingStateRepository.save(idle);
 
-        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-A", now)).isEqualTo(1);
+        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-A", now, MAX_ATTEMPTS)).isEqualTo(1);
         processingStateRepository.releaseAbandonedIdleClaims(now.plusMinutes(20), now);
 
         assertThat(processingStateRepository.findById(idle.getId()).orElseThrow().getClaimToken()).as("the abandoned-claim sweep must drop the identity").isNull();
@@ -226,7 +229,7 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         processingStateRepository.save(idle);
 
         // A dispatch claims and activates the unit while the content check is still running.
-        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-A", now)).isEqualTo(1);
+        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-A", now, MAX_ATTEMPTS)).isEqualTo(1);
         assertThat(processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.INGESTING, "live-token", "fp", "claim-A", now)).isEqualTo(1);
 
         processingStateRepository.updateContentMarkers(idle.getId(), "video-hash", 7, 0, ZonedDateTime.now());
@@ -245,7 +248,7 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         LectureUnitProcessingState state = new LectureUnitProcessingState(unit);
         state.setPhase(ProcessingPhase.IDLE);
         processingStateRepository.save(state);
-        assertThat(processingStateRepository.claimIdleForDispatch(state.getId(), "claim-A", now)).isEqualTo(1);
+        assertThat(processingStateRepository.claimIdleForDispatch(state.getId(), "claim-A", now, MAX_ATTEMPTS)).isEqualTo(1);
         assertThat(processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.INGESTING, "old-token", "old-fp", "claim-A", now)).isEqualTo(1);
 
         processingStateRepository.requeueForContentChange(state.getId(), "new-video-hash", 9, 0, ZonedDateTime.now());
@@ -259,18 +262,29 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         assertThat(after.getVideoSourceHash()).isEqualTo("new-video-hash");
     }
 
-    /** Settling a unit with no processable content leaves nothing behind that claims the index still holds its data. */
+    /**
+     * Settling a unit with no processable content, through the claim of a removed-content cleanup, leaves nothing behind that claims
+     * the index still holds its data; a stale cleanup claim is taken over, a recent one is not.
+     */
     @Test
-    void testSettlingAsNothingIndexedDropsEveryContentMarker() {
+    void testRemovedContentCleanupClaimsAtRestRowsAndSettlesThemAsNothingIndexed() {
         LectureUnitProcessingState state = new LectureUnitProcessingState(unit);
-        state.setPhase(ProcessingPhase.IDLE);
+        state.setPhase(ProcessingPhase.DONE);
         state.setVideoSourceHash("hash");
         state.setAttachmentVersion(3);
         state.setContentFingerprint("fp");
         state.setConfirmedFingerprint("fp");
+        state.setUnsettledAttempts(2);
         processingStateRepository.save(state);
+        ZonedDateTime now = ZonedDateTime.now();
 
-        assertThat(processingStateRepository.settleAsNothingIndexed(state.getId(), ZonedDateTime.now())).isEqualTo(1);
+        assertThat(recoveryRepository.claimForContentRemoval(state.getId(), "cleanup-1", now.minusMinutes(20), now)).as("a DONE row with content markers is claimable")
+                .isEqualTo(1);
+        assertThat(recoveryRepository.claimForContentRemoval(state.getId(), "cleanup-2", now.minusMinutes(20), now)).as("a recent cleanup claim is not taken over").isZero();
+        assertThat(recoveryRepository.claimForContentRemoval(state.getId(), "cleanup-3", now.plusSeconds(1), now.plusSeconds(1)))
+                .as("a cleanup claim older than the cutoff is taken over").isEqualTo(1);
+        assertThat(recoveryRepository.settleStrandedRunIfClaimed(state.getId(), "cleanup-1", now)).as("the superseded claim settles nothing").isZero();
+        assertThat(recoveryRepository.settleStrandedRunIfClaimed(state.getId(), "cleanup-3", now)).as("the current claim settles the row").isEqualTo(1);
 
         LectureUnitProcessingState after = processingStateRepository.findById(state.getId()).orElseThrow();
         assertThat(after.getPhase()).isEqualTo(ProcessingPhase.DONE);
@@ -278,6 +292,22 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         assertThat(after.getContentFingerprint()).isNull();
         assertThat(after.getVideoSourceHash()).isNull();
         assertThat(after.getAttachmentVersion()).isNull();
+        assertThat(after.getClaimToken()).isNull();
+        assertThat(after.getUnsettledAttempts()).as("settling is an outcome").isZero();
+        assertThat(recoveryRepository.claimForContentRemoval(state.getId(), "cleanup-4", now.plusMinutes(1), now.plusMinutes(1)))
+                .as("nothing left to clean up once the markers are gone").isZero();
+    }
+
+    /** A FAILED row waiting for its retry belongs to the retry path, not to a removed-content cleanup. */
+    @Test
+    void testRemovedContentCleanupLeavesRowsWithAScheduledRetryAlone() {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(unit);
+        state.setPhase(ProcessingPhase.FAILED);
+        state.setAttachmentVersion(2);
+        state.setRetryEligibleAt(ZonedDateTime.now().plusMinutes(5));
+        processingStateRepository.save(state);
+
+        assertThat(recoveryRepository.claimForContentRemoval(state.getId(), "cleanup", ZonedDateTime.now(), ZonedDateTime.now())).isZero();
     }
 
     /**
@@ -295,7 +325,7 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         // The run completes between the batch read (which saw INGESTING/run-token) and the recovery write.
         assertThat(processingStateRepository.completeIngestionIfLive(running.getId(), "run-token", ZonedDateTime.now())).isEqualTo(1);
 
-        assertThat(processingStateRepository.resetToIdleIfStillLive(running.getId(), ProcessingPhase.INGESTING, "run-token", ZonedDateTime.now()))
+        assertThat(processingStateRepository.resetToIdleIfStillLiveAndOwnedBy(running.getId(), ProcessingPhase.INGESTING, "run-token", "departed-boot", ZonedDateTime.now()))
                 .as("recovery must not revert a run that finished since the read").isZero();
         assertThat(processingStateRepository.findById(running.getId()).orElseThrow().getPhase()).isEqualTo(ProcessingPhase.DONE);
     }
@@ -308,12 +338,48 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         running.setIngestionJobToken("run-token");
         processingStateRepository.save(running);
 
-        assertThat(processingStateRepository.resetToIdleIfStillLive(running.getId(), ProcessingPhase.INGESTING, "run-token", ZonedDateTime.now())).isEqualTo(1);
+        assertThat(processingStateRepository.resetToIdleIfStillLiveAndOwnedBy(running.getId(), ProcessingPhase.INGESTING, "run-token", "departed-boot", ZonedDateTime.now()))
+                .isEqualTo(1);
 
         LectureUnitProcessingState after = processingStateRepository.findById(running.getId()).orElseThrow();
         assertThat(after.getPhase()).isEqualTo(ProcessingPhase.IDLE);
         assertThat(after.getIngestionJobToken()).isNull();
         assertThat(after.getStartedAt()).isNull();
+    }
+
+    /**
+     * After a restart only the departed process's runs are reset: a push run (no owner) and a pull run leased by the departed boot, but
+     * not a run a worker of the new process already claimed. Without a boot id, only the push run is reset.
+     */
+    @Test
+    void testRestartResetOnlyTouchesRunsOfTheDepartedProcess() {
+        Lecture lecture = unit.getLecture();
+        LectureUnitProcessingState push = inFlightRun(unit, "push-token", null);
+        LectureUnitProcessingState departed = inFlightRun(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), "departed-token", "boot-A");
+        LectureUnitProcessingState current = inFlightRun(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), "current-token", "boot-B");
+
+        assertThat(processingStateRepository.resetToIdleIfStillLiveAndOwnedBy(current.getId(), ProcessingPhase.INGESTING, "current-token", "boot-A", ZonedDateTime.now()))
+                .as("a run the new process's worker claimed survives the restart").isZero();
+        assertThat(processingStateRepository.resetToIdleIfStillLiveAndUnowned(departed.getId(), ProcessingPhase.INGESTING, "departed-token", ZonedDateTime.now()))
+                .as("without a boot id a leased run is left to lease expiry").isZero();
+        assertThat(processingStateRepository.resetToIdleIfStillLiveAndOwnedBy(departed.getId(), ProcessingPhase.INGESTING, "departed-token", "boot-A", ZonedDateTime.now()))
+                .as("a run leased by the departed boot is reset").isEqualTo(1);
+        assertThat(processingStateRepository.resetToIdleIfStillLiveAndUnowned(push.getId(), ProcessingPhase.INGESTING, "push-token", ZonedDateTime.now()))
+                .as("a push run is reset even without a boot id").isEqualTo(1);
+        assertThat(processingStateRepository.findById(current.getId()).orElseThrow().getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+    }
+
+    /** An in-flight run started the way production starts one: pushed (no owner), or claimed by the worker of the given boot. */
+    private LectureUnitProcessingState inFlightRun(AttachmentVideoUnit runUnit, String token, String workerBootId) {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(runUnit);
+        state.setPhase(ProcessingPhase.IDLE);
+        processingStateRepository.save(state);
+        ZonedDateTime now = ZonedDateTime.now();
+        assertThat(processingStateRepository.claimIdleForDispatch(state.getId(), "claim-" + token, now, MAX_ATTEMPTS)).isEqualTo(1);
+        int activated = workerBootId == null ? processingStateRepository.activatePushDispatch(runUnit.getId(), ProcessingPhase.INGESTING, token, "fp", "claim-" + token, now)
+                : processingStateRepository.activateClaimedJob(runUnit.getId(), ProcessingPhase.INGESTING, token, "fp", workerBootId, "claim-" + token, now);
+        assertThat(activated).isEqualTo(1);
+        return processingStateRepository.findById(state.getId()).orElseThrow();
     }
 
     /**
@@ -378,7 +444,7 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         failed.setRetryEligibleAt(now.minusMinutes(5));
         processingStateRepository.save(failed);
 
-        assertThat(processingStateRepository.claimRetryEligible(failed.getId(), "claim-R", now, now.plusMinutes(20))).isEqualTo(1);
+        assertThat(processingStateRepository.claimRetryEligible(failed.getId(), "claim-R", now, now.plusMinutes(20), MAX_ATTEMPTS)).isEqualTo(1);
         LectureUnitProcessingState claimed = processingStateRepository.findById(failed.getId()).orElseThrow();
 
         assertThat(reconcileStateRepository.reviveFailedIfUnchanged(claimed.getId(), claimed.getErrorKey(), claimed.getLastUpdated(), claimed.getRevivalCount(), 2,
@@ -552,7 +618,7 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
 
         // The edit's own requeue, then a newer run activated by a fresh claim, with its transcript stored
         processingStateRepository.requeueForContentChange(stranded.getId(), "new-video-hash", null, 0, ZonedDateTime.now());
-        assertThat(processingStateRepository.claimIdleForDispatch(stranded.getId(), "dispatch-claim", ZonedDateTime.now())).isEqualTo(1);
+        assertThat(processingStateRepository.claimIdleForDispatch(stranded.getId(), "dispatch-claim", ZonedDateTime.now(), MAX_ATTEMPTS)).isEqualTo(1);
         assertThat(processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.TRANSCRIBING, "newer-run-token", "v1:new", "dispatch-claim", ZonedDateTime.now()))
                 .isEqualTo(1);
         lectureTranscriptionRepository.save(new LectureTranscription("en", List.of(new LectureTranscriptionSegment(0.0, 1.0, "Newer run", 0)), unit));
@@ -708,7 +774,7 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
     void testRepairRequeueRestartsARunThatTookTheUnitOverDuringTheRecovery() {
         LectureUnitProcessingState stranded = claimedStrandedRun(unit, "recovery");
         processingStateRepository.requeueForContentChange(stranded.getId(), "new-hash", 2, 0, ZonedDateTime.now());
-        assertThat(processingStateRepository.claimIdleForDispatch(stranded.getId(), "dispatch-claim", ZonedDateTime.now())).isEqualTo(1);
+        assertThat(processingStateRepository.claimIdleForDispatch(stranded.getId(), "dispatch-claim", ZonedDateTime.now(), MAX_ATTEMPTS)).isEqualTo(1);
         assertThat(processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.INGESTING, "newer-run-token", "v1:new", "dispatch-claim", ZonedDateTime.now()))
                 .isEqualTo(1);
 
@@ -723,7 +789,7 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         assertThat(processingStateRepository.completeIngestionIfLive(stranded.getId(), "newer-run-token", ZonedDateTime.now())).isZero();
 
         // DONE: a run that completed before the deletion landed is requeued as well
-        assertThat(processingStateRepository.claimIdleForDispatch(stranded.getId(), "dispatch-claim-2", ZonedDateTime.now())).isEqualTo(1);
+        assertThat(processingStateRepository.claimIdleForDispatch(stranded.getId(), "dispatch-claim-2", ZonedDateTime.now(), MAX_ATTEMPTS)).isEqualTo(1);
         processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.INGESTING, "third-run-token", "v1:new", "dispatch-claim-2", ZonedDateTime.now());
         assertThat(processingStateRepository.completeIngestionIfLive(stranded.getId(), "third-run-token", ZonedDateTime.now())).isEqualTo(1);
         assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(unit.getId(), "recovery", 0, ZonedDateTime.now())).isEqualTo(1);
@@ -766,7 +832,13 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         processingStateRepository.requeueForContentChange(stranded.getId(), "new-hash", null, 0, ZonedDateTime.now());
         assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(unit.getId(), "recovery", 0, ZonedDateTime.now())).as("unclaimed IDLE").isZero();
 
-        processingStateRepository.settleAsNothingIndexed(stranded.getId(), ZonedDateTime.now());
+        // Settled by a removed-content cleanup: nothing indexed, no markers, no claim
+        LectureUnitProcessingState settled = processingStateRepository.findById(stranded.getId()).orElseThrow();
+        settled.setPhase(ProcessingPhase.DONE);
+        settled.setVideoSourceHash(null);
+        settled.setAttachmentVersion(null);
+        settled.setClaimToken(null);
+        processingStateRepository.save(settled);
         assertThat(recoveryRepository.requeueRunExposedToRecoveryCleanup(unit.getId(), "recovery", 0, ZonedDateTime.now())).as("settled, no content left").isZero();
         assertThat(processingStateRepository.findById(stranded.getId()).orElseThrow().getPhase()).isEqualTo(ProcessingPhase.DONE);
     }
@@ -789,5 +861,133 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         processingStateRepository.requeueForContentChange(stranded.getId(), "new-hash", 2, 0, ZonedDateTime.now());
         assertThat(attachmentRepository.clearDisplayPageNumbersIfRecoveryClaimHolds(attachmentId, withAttachment.getId(), "recovery")).isZero();
         assertThat(attachmentRepository.findById(attachmentId).orElseThrow().getDisplayPageNumbers()).containsExactly(4, 5);
+    }
+
+    /**
+     * Every dispatch claim counts toward the unsettled-attempt limit, abandoned ones included: a claim released by the abandoned-claim sweep
+     * is claimed again and counts again, until the limit refuses the next claim and the unit takes a charged failure instead. A result resets
+     * the count, so a fresh retry gets its attempts back.
+     */
+    @Test
+    void testAbandonedClaimsReachTheAttemptLimitAndEndInAChargedFailure() {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(unit);
+        state.setPhase(ProcessingPhase.IDLE);
+        processingStateRepository.save(state);
+
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+            ZonedDateTime claimedAt = ZonedDateTime.now().minusMinutes(30);
+            assertThat(processingStateRepository.claimIdleForDispatch(state.getId(), "claim-" + attempt, claimedAt, MAX_ATTEMPTS)).as("claim %d is allowed", attempt).isEqualTo(1);
+            // The node dies before activating; the sweep releases the claim for anyone to take again
+            assertThat(processingStateRepository.releaseAbandonedIdleClaims(ZonedDateTime.now().minusMinutes(20), ZonedDateTime.now())).isGreaterThanOrEqualTo(1);
+        }
+        LectureUnitProcessingState atLimit = processingStateRepository.findById(state.getId()).orElseThrow();
+        assertThat(atLimit.getUnsettledAttempts()).as("every abandoned claim counted").isEqualTo(MAX_ATTEMPTS);
+        assertThat(processingStateRepository.claimIdleForDispatch(state.getId(), "claim-over-limit", ZonedDateTime.now(), MAX_ATTEMPTS)).as("the claim over the limit is refused")
+                .isZero();
+
+        ZonedDateTime retryAt = ZonedDateTime.now().plusMinutes(2);
+        assertThat(processingStateRepository.failExhaustedIdleAttempts(state.getId(), 1, 1, "error-key", retryAt, MAX_ATTEMPTS, ZonedDateTime.now()))
+                .as("a stale retry count does not match").isZero();
+        assertThat(processingStateRepository.failExhaustedIdleAttempts(state.getId(), 0, 1, "error-key", retryAt, MAX_ATTEMPTS, ZonedDateTime.now()))
+                .as("the charged failure applies").isEqualTo(1);
+        assertThat(processingStateRepository.failExhaustedIdleAttempts(state.getId(), 0, 1, "error-key", retryAt, MAX_ATTEMPTS, ZonedDateTime.now())).as("and applies only once")
+                .isZero();
+
+        LectureUnitProcessingState failed = processingStateRepository.findById(state.getId()).orElseThrow();
+        assertThat(failed.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+        assertThat(failed.getRetryCount()).isEqualTo(1);
+        assertThat(failed.getUnsettledAttempts()).as("the charged failure is an outcome").isZero();
+        assertThat(processingStateRepository.claimRetryEligible(state.getId(), "retry-claim", retryAt.plusSeconds(1), retryAt.plusMinutes(20), MAX_ATTEMPTS))
+                .as("the retry claims again with fresh attempts").isEqualTo(1);
+    }
+
+    /** Expired retry claims count the same way, and at the limit the retry path takes the charged failure. */
+    @Test
+    void testExpiredRetryClaimsReachTheAttemptLimit() {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(unit);
+        state.setPhase(ProcessingPhase.FAILED);
+        state.setRetryCount(1);
+        state.setRetryEligibleAt(ZonedDateTime.now().minusMinutes(1));
+        processingStateRepository.save(state);
+
+        ZonedDateTime now = ZonedDateTime.now();
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+            // Each claim leases the retry for one second; the node dies and the lease lapses
+            ZonedDateTime claimTime = now.plusSeconds(2L * attempt);
+            assertThat(processingStateRepository.claimRetryEligible(state.getId(), "retry-" + attempt, claimTime, claimTime.plusSeconds(1), MAX_ATTEMPTS)).isEqualTo(1);
+        }
+        ZonedDateTime later = now.plusMinutes(1);
+        assertThat(processingStateRepository.claimRetryEligible(state.getId(), "retry-over-limit", later, later.plusMinutes(20), MAX_ATTEMPTS)).isZero();
+        assertThat(processingStateRepository.failExhaustedRetryAttempts(state.getId(), 1, 2, "error-key", later.plusMinutes(4), MAX_ATTEMPTS, later)).isEqualTo(1);
+
+        LectureUnitProcessingState failed = processingStateRepository.findById(state.getId()).orElseThrow();
+        assertThat(failed.getRetryCount()).isEqualTo(2);
+        assertThat(failed.getUnsettledAttempts()).isZero();
+        assertThat(failed.getClaimToken()).isNull();
+    }
+
+    /** Completing a run is an outcome and resets the count. */
+    @Test
+    void testCompletionResetsTheUnsettledAttempts() {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(unit);
+        state.setPhase(ProcessingPhase.IDLE);
+        processingStateRepository.save(state);
+        ZonedDateTime now = ZonedDateTime.now();
+        assertThat(processingStateRepository.claimIdleForDispatch(state.getId(), "claim", now, MAX_ATTEMPTS)).isEqualTo(1);
+        assertThat(processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.INGESTING, "token", "fp", "claim", now)).isEqualTo(1);
+        assertThat(processingStateRepository.findById(state.getId()).orElseThrow().getUnsettledAttempts()).isEqualTo(1);
+
+        assertThat(processingStateRepository.completeIngestionIfLive(state.getId(), "token", ZonedDateTime.now())).isEqualTo(1);
+        assertThat(processingStateRepository.findById(state.getId()).orElseThrow().getUnsettledAttempts()).isZero();
+    }
+
+    /**
+     * A run a worker once leased fails and is retried through push while no worker is around. The push run must not carry the old lease,
+     * or the lease reaper reclaims the fresh run as lapsed within one scan.
+     */
+    @Test
+    void testPushRetryOfAFormerlyLeasedRunIsNotReclaimedAsALapsedLease() {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(unit);
+        state.setPhase(ProcessingPhase.IDLE);
+        processingStateRepository.save(state);
+        List<ProcessingPhase> inFlight = List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING);
+
+        ZonedDateTime pulledAt = ZonedDateTime.now().minusMinutes(10);
+        assertThat(processingStateRepository.claimIdleForDispatch(state.getId(), "claim-pull", pulledAt, MAX_ATTEMPTS)).isEqualTo(1);
+        assertThat(processingStateRepository.activateClaimedJob(unit.getId(), ProcessingPhase.INGESTING, "token-pull", "fp", "boot-A", "claim-pull", pulledAt)).isEqualTo(1);
+        ZonedDateTime failedAt = pulledAt.plusMinutes(1);
+        assertThat(processingStateRepository.failIfStillLive(state.getId(), ProcessingPhase.INGESTING, "token-pull", 1, "error-key", failedAt.plusMinutes(1), failedAt))
+                .isEqualTo(1);
+        LectureUnitProcessingState afterFailure = processingStateRepository.findById(state.getId()).orElseThrow();
+        assertThat(afterFailure.getLastHeartbeatAt()).as("a failure ends the lease").isNull();
+        assertThat(afterFailure.getLockedBy()).isNull();
+
+        ZonedDateTime now = ZonedDateTime.now();
+        assertThat(processingStateRepository.claimRetryEligible(state.getId(), "claim-push", now, now.plusMinutes(20), MAX_ATTEMPTS)).isEqualTo(1);
+        assertThat(processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.INGESTING, "token-push", "fp", "claim-push", now)).isEqualTo(1);
+
+        ZonedDateTime cutoff = now.minusSeconds(60);
+        assertThat(processingStateRepository.findRunsWithLapsedLease(inFlight, cutoff)).extracting(LectureUnitProcessingState::getId).as("a push run has no lease to lapse")
+                .doesNotContain(state.getId());
+        assertThat(processingStateRepository.reclaimLapsedLease(state.getId(), "token-push", inFlight, cutoff, now)).isZero();
+    }
+
+    /** A dispatch failure is charged only to the claim that produced it. */
+    @Test
+    void testDispatchFailureIsChargedOnlyUnderItsOwnClaim() {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(unit);
+        state.setPhase(ProcessingPhase.IDLE);
+        processingStateRepository.save(state);
+        ZonedDateTime now = ZonedDateTime.now();
+        assertThat(processingStateRepository.claimIdleForDispatch(state.getId(), "current-claim", now, MAX_ATTEMPTS)).isEqualTo(1);
+
+        assertThat(processingStateRepository.failDispatchIfStillClaimed(state.getId(), "stale-claim", 1, "error-key", now.plusMinutes(2), now)).as("a stale claim fails nothing")
+                .isZero();
+        assertThat(processingStateRepository.failDispatchIfStillClaimed(state.getId(), "current-claim", 1, "error-key", now.plusMinutes(2), now)).isEqualTo(1);
+
+        LectureUnitProcessingState failed = processingStateRepository.findById(state.getId()).orElseThrow();
+        assertThat(failed.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+        assertThat(failed.getRetryCount()).isEqualTo(1);
+        assertThat(failed.getUnsettledAttempts()).isZero();
     }
 }

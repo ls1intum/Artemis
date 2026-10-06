@@ -98,6 +98,16 @@ public class ProcessingStateCallbackApi extends AbstractLectureApi {
     }
 
     /**
+     * Charge a failure to a claimed unit whose preparation for the worker failed, but only while it still holds this claim.
+     *
+     * @param lectureUnitId the claimed unit
+     * @param claimToken    identity of the claim, from {@link ClaimedIngestionUnitDTO#claimToken()}
+     */
+    public void failClaimedUnitPreparation(long lectureUnitId, String claimToken) {
+        processingStateCallbackService.failClaimedUnitPreparation(lectureUnitId, claimToken);
+    }
+
+    /**
      * Renew the worker lease of every listed run.
      *
      * @param workerBootId    boot id of the heartbeating worker process

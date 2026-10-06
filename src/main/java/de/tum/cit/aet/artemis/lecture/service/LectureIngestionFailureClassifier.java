@@ -85,6 +85,9 @@ final class LectureIngestionFailureClassifier {
             case "TRANSCRIPTION_FAILED" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.transcriptionFailed", true);
             // Neither readable PDF pages nor a transcript: re-running the same content yields the same empty result
             case "NO_INGESTIBLE_CONTENT" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.noIngestibleContent", false);
+            // Artemis-side: the unit lost its runs repeatedly without any outcome (restarts, lapsed leases, abandoned claims); retried with backoff like any failure
+            case ProcessingStateCallbackService.RECOVERY_LIMIT_REACHED ->
+                new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.recoveryLimitReached", true);
             default -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.processingFailed", true);
         };
     }

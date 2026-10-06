@@ -162,7 +162,8 @@
                     "youtubeTooLong": "Das Video überschreitet die maximale Länge und kann nicht transkribiert werden.",
                     "youtubeUnavailable": "Das Video ist nicht verfügbar (entfernt, regional gesperrt oder altersbeschränkt).",
                     "youtubeDownloadFailed": "Das Video konnte nicht für die Transkription heruntergeladen werden.",
-                    "noIngestibleContent": "Es konnten keine Inhalte indexiert werden: Das PDF enthält keine lesbaren Seiten und aus dem Video konnte kein Transkript erstellt werden. Prüfe die Datei und die Videoquelle und starte die Verarbeitung dann erneut."
+                    "noIngestibleContent": "Es konnten keine Inhalte indexiert werden: Das PDF enthält keine lesbaren Seiten und aus dem Video konnte kein Transkript erstellt werden. Prüfe die Datei und die Videoquelle und starte die Verarbeitung dann erneut.",
+                    "recoveryLimitReached": "Die Verarbeitung wurde mehrmals hintereinander unterbrochen, ohne abzuschließen (zum Beispiel durch Neustarts des Dienstes). Sie wird automatisch erneut versucht."
                 }
             },
             "createAttachmentVideoUnits": {

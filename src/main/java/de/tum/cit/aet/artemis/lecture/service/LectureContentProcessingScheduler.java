@@ -460,13 +460,6 @@ public class LectureContentProcessingScheduler {
 
         log.info("Recovering stuck processing state for unit {}, phase: {}", freshState.getLectureUnit().getId(), phase);
 
-        // A stuck INGESTING run may have completed with only its terminal callback lost. In that case
-        // the census evidence lets us requeue without charging the retry budget, so a series of lost
-        // callbacks can never mark a fully ingested unit as permanently failed.
-        if (phase == ProcessingPhase.INGESTING && reconcileService.resolveStuckIngestionWithoutRetryPenalty(freshState, cutoff, absoluteCutoff)) {
-            return;
-        }
-
         // Treat stuck jobs as failures: the content itself may cause Iris to hang or crash
         // silently (e.g. malformed PDF, OOM during transcription). Incrementing retryCount
         // ensures poison-pill jobs eventually fail permanently instead of looping forever.
@@ -536,9 +529,10 @@ public class LectureContentProcessingScheduler {
      * Periodically reconcile the vector index against the database: requeue units whose confirmed state,
      * current content, and index stamp diverge, trigger units that never entered the pipeline, and delete
      * orphaned index rows. Walks a budgeted slice of courses per run, so a full pass over all courses
-     * takes several runs and never floods the queue; see {@link LectureIngestionReconcileService}.
+     * takes several runs and never floods the queue; see {@link LectureIngestionReconcileService}. Like every scheduled job, it is
+     * disabled by setting its schedule property to {@code -}.
      */
-    @Scheduled(initialDelayString = "${artemis.iris.ingestion.reconcile.initial-delay:PT15M}", fixedDelayString = "${artemis.iris.ingestion.reconcile.interval:PT15M}")
+    @Scheduled(cron = "${artemis.scheduling.lecture-ingestion-reconcile-time:0 */15 * * * *}")
     public void reconcileIngestionState() {
         if (!featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)) {
             log.debug("LectureContentProcessing feature is disabled, skipping ingestion reconcile");

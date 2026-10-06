@@ -98,6 +98,8 @@ public class PyrisInternalIngestionWorkerResource {
             AttachmentVideoUnit unit;
             try {
                 if (!(lectureUnitRepositoryApi.get().findByIdElseThrow(claim.lectureUnitId()) instanceof AttachmentVideoUnit attachmentVideoUnit)) {
+                    // Not expected, since preparing the claim already fails other unit types; never leave the claim behind
+                    processingStateCallbackApi.get().failClaimedUnitPreparation(claim.lectureUnitId(), claim.claimToken());
                     continue;
                 }
                 unit = attachmentVideoUnit;
@@ -117,10 +119,10 @@ public class PyrisInternalIngestionWorkerResource {
                 // claim and preparation) must not abort jobs already activated earlier in this loop.
                 // prepareLectureUnitIngestion registers its job token only after this step succeeds
                 // (see PyrisWebhookService#prepareLectureAdditionJob), so a failure here never leaks
-                // one. The claim itself is left untouched and self-heals the same way an abandoned
-                // claim always does: an IDLE claim is released by releaseAbandonedIdleClaims, and a
-                // retry claim's lease lapses on its own.
+                // one. The failure is charged to the claim like a failed push dispatch, so an error that
+                // repeats runs out of retries instead of being released and re-claimed for free.
                 log.error("Failed to prepare claimed unit {} for the worker: {}", claim.lectureUnitId(), e.getMessage());
+                processingStateCallbackApi.get().failClaimedUnitPreparation(claim.lectureUnitId(), claim.claimToken());
                 continue;
             }
             if (prepared == null) {

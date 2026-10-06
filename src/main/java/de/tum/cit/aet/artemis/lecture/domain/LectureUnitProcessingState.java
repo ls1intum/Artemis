@@ -66,6 +66,15 @@ public class LectureUnitProcessingState extends DomainObject {
     private int revivalCount = 0;
 
     /**
+     * Number of dispatch claims since the last outcome (completion, failure, skip, or a fresh requeue for changed content). Every
+     * claim counts, including one whose run was later lost to a restart, a lapsed lease, or a node dying mid-dispatch, none of which
+     * charge {@link #retryCount}. Once it reaches the configured limit the next claim is refused and the unit takes a charged failure
+     * instead, so a unit that keeps losing its runs cannot be re-dispatched without bound.
+     */
+    @Column(name = "unsettled_attempts")
+    private int unsettledAttempts = 0;
+
+    /**
      * Hash of the video source URL to detect changes.
      * When the video URL changes, processing should restart from the beginning.
      */
@@ -522,6 +531,14 @@ public class LectureUnitProcessingState extends DomainObject {
 
     public void setRevivalCount(int revivalCount) {
         this.revivalCount = revivalCount;
+    }
+
+    public int getUnsettledAttempts() {
+        return unsettledAttempts;
+    }
+
+    public void setUnsettledAttempts(int unsettledAttempts) {
+        this.unsettledAttempts = unsettledAttempts;
     }
 
     /**
