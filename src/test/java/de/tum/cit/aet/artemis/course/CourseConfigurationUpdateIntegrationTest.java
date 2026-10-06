@@ -4,8 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.sql.SQLException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+
+import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,6 +47,9 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     private CourseConfigurationRepository courseConfigurationRepository;
+
+    @Autowired
+    private DataSource dataSource;
 
     private Course course;
 
@@ -115,6 +121,38 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
         assertThat(persisted.getResetWarningSentDate()).isNotNull();
         // Compared with a tolerance because the database rounds to millisecond precision.
         assertThat(persisted.getResetWarningSentDate().toInstant()).isCloseTo(warningSentDate.toInstant(), within(1, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateCourse_missingConfigurationRow_shouldRepairItInsteadOfFailing() throws Exception {
+        // The form is opened while the course is complete, then the row goes missing like after a creation that failed half-way.
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        assertThat(loaded.courseConfiguration()).isNotNull();
+        ObjectNode update = request.getObjectMapper().valueToTree(loaded);
+        update.put("description", "Edited after the repair");
+        copyConfigurationToUpdateRequest(update, loaded.courseConfiguration());
+        deleteConfigurationRow(course.getId());
+        assertThat(courseConfigurationRepository.findByCourseId(course.getId())).isEmpty();
+
+        CourseManagementDTO updated = updateCourse(course.getId(), update);
+
+        assertThat(updated.description()).isEqualTo("Edited after the repair");
+        CourseConfiguration persisted = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
+        assertThat(persisted.isGradeRelevant()).as("the submitted settings are stored on the repaired row").isFalse();
+        assertThat(persisted.isDataRetentionHold()).isTrue();
+    }
+
+    private void deleteConfigurationRow(long courseId) {
+        // The test pool disables auto-commit, so the delete is committed on a connection of its own.
+        try (var connection = dataSource.getConnection(); var statement = connection.prepareStatement("DELETE FROM course_configuration WHERE course_id = ?")) {
+            connection.setAutoCommit(true);
+            statement.setLong(1, courseId);
+            statement.executeUpdate();
+        }
+        catch (SQLException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private static void copyConfigurationToUpdateRequest(ObjectNode update, CourseConfigurationResponseDTO configuration) {

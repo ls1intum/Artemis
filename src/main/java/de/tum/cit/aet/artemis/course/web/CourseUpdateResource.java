@@ -144,6 +144,13 @@ public class CourseUpdateResource {
         // this is important, otherwise someone could put themselves into the instructor group of the updated course
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
+        // A creation that failed half-way left the course without some settings rows; every later save adds the missing ones. This
+        // runs right after the authorization and before the mandatory configuration lookup below, so such a course stays editable.
+        int repairedSettings = courseRepository.ensureDefaultConfigurations(courseId);
+        if (repairedSettings > 0) {
+            log.warn("Course {} was missing {} default settings row(s) from an incomplete creation; added them", courseId, repairedSettings);
+        }
+
         // Attach the (lazily-stored) course configuration so applyTo can update its permanent row,
         // and so the admin-only auto-orchestration change detection below compares against the persisted values. Fetched
         // via its own repository to keep the course update entity graph small.
@@ -220,11 +227,6 @@ public class CourseUpdateResource {
 
         // Configurations live for the lifetime of the course. Toggling online mode only changes the course flag.
         Course result = courseRepository.save(existingCourse);
-        // A creation that failed half-way left the course without some settings rows; every later save adds the missing ones.
-        int repairedSettings = courseRepository.ensureDefaultConfigurations(courseId);
-        if (repairedSettings > 0) {
-            log.warn("Course {} was missing {} default settings row(s) from an incomplete creation; added them", courseId, repairedSettings);
-        }
 
         // The course configuration holds the key to its course, so saving the course does not cascade to it. Only the settings of
         // this form are written, in place, so the retention bookkeeping a cleanup run wrote meanwhile is not overwritten with the
