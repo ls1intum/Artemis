@@ -609,12 +609,7 @@
                                     [tumAetUiTooltip]="'artemisApp.course.courseCommunicationSetting.messagingEnabled.tooltip' | artemisTranslate"
                                 />
                             </div>
-                            <div
-                                class="flex flex-col gap-1.5"
-                                id="field_codeOfConduct"
-                                tabindex="-1"
-                                [attr.aria-describedby]="showError('courseInformationSharingMessagingCodeOfConduct') ? 'field_codeOfConduct_error' : null"
-                            >
+                            <div class="flex flex-col gap-1.5" id="field_codeOfConduct" tabindex="-1">
                                 <span class="course-form-label flex items-center gap-1">
                                     <span jhiTranslate="artemisApp.codeOfConduct.title"></span>
                                     <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.codeOfConduct.tooltip' | artemisTranslate" />
@@ -623,6 +618,8 @@
                                     class="markdown-editor"
                                     [(markdown)]="course.courseInformationSharingMessagingCodeOfConduct"
                                     (markdownChange)="updateCourseInformationSharingMessagingCodeOfConduct($event)"
+                                    [ariaDescribedBy]="showError('courseInformationSharingMessagingCodeOfConduct') ? 'field_codeOfConduct_error' : undefined"
+                                    [ariaInvalid]="showError('courseInformationSharingMessagingCodeOfConduct')"
                                 />
                                 <div
                                     class="text-sm mt-1"

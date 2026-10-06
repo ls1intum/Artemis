@@ -620,4 +620,28 @@ describe('MarkdownEditorMonacoComponent', () => {
 
         expect(result).toBeUndefined();
     });
+
+    describe('applyAriaAttributesToTextarea', () => {
+        it('sets aria-describedby and aria-invalid when given', () => {
+            fixture.detectChanges();
+            const textarea = document.createElement('textarea');
+
+            comp.applyAriaAttributesToTextarea(textarea, 'field_error_id', true);
+
+            expect(textarea.getAttribute('aria-describedby')).toBe('field_error_id');
+            expect(textarea.getAttribute('aria-invalid')).toBe('true');
+        });
+
+        it('removes aria-describedby and clears aria-invalid when the describedBy id is undefined', () => {
+            fixture.detectChanges();
+            const textarea = document.createElement('textarea');
+            textarea.setAttribute('aria-describedby', 'leftover');
+            textarea.setAttribute('aria-invalid', 'true');
+
+            comp.applyAriaAttributesToTextarea(textarea, undefined, false);
+
+            expect(textarea.hasAttribute('aria-describedby')).toBe(false);
+            expect(textarea.getAttribute('aria-invalid')).toBe('false');
+        });
+    });
 });

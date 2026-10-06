@@ -245,6 +245,17 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly enableExerciseReviewComments = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
 
+    /**
+     * The id of an element that describes the editor's content (for example a form validation error),
+     * forwarded to the inner Monaco textarea as `aria-describedby`. Only the textarea is a tab stop
+     * and screen readers announce `aria-describedby` from the focused control, so setting the attribute
+     * on the host wrapper would not reach the editing control.
+     */
+    readonly ariaDescribedBy = input<string | undefined>(undefined);
+
+    /** Forwards `aria-invalid` to the inner Monaco textarea. */
+    readonly ariaInvalid = input<boolean>(false);
+
     readonly isButtonLoading = input<boolean>(false);
     readonly isAiLoading = input<boolean>(false);
     readonly isFormGroupValid = input<boolean>(false);
@@ -404,6 +415,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             const threads = this.exerciseReviewCommentService.threads();
             this.reviewCommentManager?.updateDraftInputs();
             this.reviewCommentManager?.tryUpdateThreadInputs(threads);
+        });
+
+        // Forward `aria-describedby` / `aria-invalid` to the inner Monaco textarea once it exists so screen readers
+        // announce the described content (such as a form validation error) when focus lands on the editing control.
+        effect(() => {
+            const describedBy = this.ariaDescribedBy();
+            const invalid = this.ariaInvalid();
+            const activeEditor = this.monacoEditor()?.getActiveEditor();
+            const textarea = activeEditor?.getDomNode()?.querySelector<HTMLTextAreaElement>('textarea');
+            if (textarea) {
+                this.applyAriaAttributesToTextarea(textarea, describedBy, invalid);
+            }
         });
 
         // Adjust editor dimensions when mode changes (e.g. entering/leaving diff mode).
@@ -755,6 +778,20 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     private applyMarkdownToEditor(value: string | undefined): void {
         this.monacoEditor()?.setText(value ?? '');
+    }
+
+    /**
+     * Applies the given accessibility attributes to Monaco's inner input textarea so screen readers
+     * reach them when focus is on the editing control (the host wrapper would be ignored). Exposed
+     * for direct unit testing because the hosting effect depends on Monaco having been initialized.
+     */
+    applyAriaAttributesToTextarea(textarea: HTMLTextAreaElement, describedBy: string | undefined, invalid: boolean): void {
+        if (describedBy) {
+            textarea.setAttribute('aria-describedby', describedBy);
+        } else {
+            textarea.removeAttribute('aria-describedby');
+        }
+        textarea.setAttribute('aria-invalid', invalid ? 'true' : 'false');
     }
 
     readonly showTextStyleActions = signal<boolean>(true);
