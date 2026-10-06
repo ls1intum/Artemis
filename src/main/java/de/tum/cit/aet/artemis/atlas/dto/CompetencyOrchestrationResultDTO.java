@@ -84,6 +84,11 @@ public record CompetencyOrchestrationResultDTO(@NonNull Status status, @NonNull 
         UNSUPPORTED_LEARNING_OBJECT
     }
 
+    /**
+     * The run completed and the orchestrator verified its terminal outcome. An empty
+     * {@code appliedActions} list means the run inspected the changed content and found nothing to
+     * change; unlike {@link #noOp(String)}, the claimed exercises were processed.
+     */
     public static CompetencyOrchestrationResultDTO success(String summary, List<AppliedActionDTO> appliedActions) {
         return new CompetencyOrchestrationResultDTO(Status.SUCCESS, summary, appliedActions, null);
     }

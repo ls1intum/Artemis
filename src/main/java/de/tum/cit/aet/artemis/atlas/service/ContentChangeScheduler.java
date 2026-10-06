@@ -188,7 +188,8 @@ public class ContentChangeScheduler {
                 accumulator.requeueAfterFailedRun(courseId, exerciseIds, lectureUnitIds);
                 broadcastSummary(courseId, runId, changeCount, Outcome.FAILED);
             }
-            case SUCCESS -> broadcastSummary(courseId, runId, changeCount, Outcome.SUCCESS);
+            // A verified run that applied nothing still processed the batch: report it as completed without changes.
+            case SUCCESS -> broadcastSummary(courseId, runId, changeCount, result.appliedActions().isEmpty() ? Outcome.NO_CHANGES : Outcome.SUCCESS);
             // PARTIAL: some mutations were already committed — must NOT requeue (would re-apply), and the
             // toast must not claim that the whole batch failed.
             case PARTIAL -> broadcastSummary(courseId, runId, changeCount, Outcome.PARTIAL);
@@ -198,7 +199,7 @@ public class ContentChangeScheduler {
     }
 
     private void broadcastSummary(long courseId, String runId, int changeCount, Outcome outcome) {
-        boolean success = outcome == Outcome.SUCCESS;
+        boolean success = outcome == Outcome.SUCCESS || outcome == Outcome.NO_CHANGES;
         AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, changeCount, success ? changeCount : 0, success ? 0 : changeCount, outcome,
                 Instant.now(clock));
         websocketMessagingService.sendMessage(ORCHESTRATION_SUMMARY.at(courseId), summary);
