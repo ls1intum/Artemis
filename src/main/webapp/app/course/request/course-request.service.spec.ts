@@ -138,6 +138,10 @@ describe('CourseRequestService', () => {
                         createdDate: '2025-01-10T08:00:00Z',
                         requester: { id: 1, login: 'user1' },
                         instructorCourseCount: 2,
+                        instructorCourses: [
+                            { id: 11, title: 'Intro', shortName: 'INTRO', semester: 'WS24/25' },
+                            { id: 12, title: 'Advanced', shortName: 'ADV', semester: 'SS25' },
+                        ],
                     },
                 ],
                 decidedRequests: [
@@ -163,6 +167,7 @@ describe('CourseRequestService', () => {
                 expect(result.pendingRequests[0].id).toBe(1);
                 expect(result.pendingRequests[0].status).toBe(CourseRequestStatus.PENDING);
                 expect(result.pendingRequests[0].instructorCourseCount).toBe(2);
+                expect(result.pendingRequests[0].instructorCourses?.map((course) => course.id)).toEqual([11, 12]);
                 expect(result.decidedRequests).toHaveLength(1);
                 expect(result.decidedRequests[0].id).toBe(2);
                 expect(result.decidedRequests[0].status).toBe(CourseRequestStatus.ACCEPTED);
@@ -234,6 +239,38 @@ describe('CourseRequestService', () => {
             const req = httpMock.expectOne({ method: 'POST', url: `${adminResourceUrl}/${courseRequestId}/accept` });
             expect(req.request.body).toEqual({});
             req.flush(mockResponse);
+        });
+    });
+
+    describe('updateRequest', () => {
+        it('should keep the instructor courses the server returns for the edited request', () => {
+            const payload: BaseCourseRequest = {
+                title: 'Edited Course',
+                shortName: 'EC001',
+                semester: 'WS2025',
+                startDate: dayjs('2025-01-01'),
+                endDate: dayjs('2025-06-30'),
+                testCourse: false,
+                reason: 'Edited reason',
+            };
+            const mockResponse = {
+                id: 3,
+                title: 'Edited Course',
+                shortName: 'EC001',
+                testCourse: false,
+                reason: 'Edited reason',
+                status: CourseRequestStatus.PENDING,
+                requester: { id: 1, login: 'instructor1' },
+                instructorCourseCount: 1,
+                instructorCourses: [{ id: 7, title: 'Intro', shortName: 'INTRO', semester: 'WS24/25' }],
+            };
+
+            service.updateRequest(3, payload).subscribe((result) => {
+                expect(result.instructorCourseCount).toBe(1);
+                expect(result.instructorCourses).toEqual([{ id: 7, title: 'Intro', shortName: 'INTRO', semester: 'WS24/25' }]);
+            });
+
+            httpMock.expectOne({ method: 'PUT', url: `${adminResourceUrl}/3` }).flush(mockResponse);
         });
     });
 

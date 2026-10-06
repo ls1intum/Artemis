@@ -17,6 +17,16 @@ export interface CourseRequestRequester {
 }
 
 /**
+ * A course in which the requester of a course request is an instructor.
+ */
+export interface CourseRequestInstructorCourse {
+    id: number;
+    title?: string;
+    shortName?: string;
+    semester?: string;
+}
+
+/**
  * Fields shared between the outgoing create/update payload and the incoming server representation. Kept apart
  * from the two so each can give startDate, endDate and semester their own optionality.
  */
@@ -55,6 +65,8 @@ export interface CourseRequest extends CourseRequestCommon {
     requester?: CourseRequestRequester;
     createdCourseId?: number;
     instructorCourseCount?: number;
+    /** The courses behind {@link instructorCourseCount}; absent when the requester instructs none. */
+    instructorCourses?: CourseRequestInstructorCourse[];
 }
 
 export interface CourseRequestsAdminOverview {

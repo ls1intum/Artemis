@@ -1,7 +1,7 @@
 <div class="modal-body">
     <div class="form-group form-inline">
         <span jhiTranslate="artemisApp.exercise.import.search"></span>:
-        <input class="form-control mx-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
+        <input [attr.aria-label]="'artemisApp.exercise.import.search' | artemisTranslate" class="form-control mx-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
         <div class="form-check form-check-inline">
             <input class="form-check-input" type="checkbox" id="courseFilter" [checked]="isCourseFilter()" [disabled]="!isExamFilter()" (change)="onCourseFilterChange()" />
             <label class="form-check-label" for="courseFilter" jhiTranslate="artemisApp.exercise.import.searchInCourses"></label>

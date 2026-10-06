@@ -14,6 +14,7 @@
                     <strong [jhiTranslate]="'artemisApp.courseNotification.channel.' + option.toLowerCase()"></strong>
                 </div>
                 <input
+                    [attr.aria-label]="'artemisApp.courseNotification.channel.' + option.toLowerCase() | artemisTranslate"
                     [disabled]="isDisabled(option, mockNotification().notificationType!)"
                     class="form-check-input m-0"
                     type="checkbox"

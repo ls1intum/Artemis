@@ -8,8 +8,9 @@
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
             <div>
                 <tumaet-ui-form-field class="mb-3" controlId="login" required [invalid]="editForm.get('login')!.dirty && editForm.get('login')!.invalid">
-                    <span tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.login"></span>
+                    <span id="login-label" tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.login"></span>
                     <input
+                        aria-labelledby="login-label"
                         id="login"
                         type="text"
                         tumAetUiInput
@@ -36,8 +37,18 @@
                     </ng-container>
                 </tumaet-ui-form-field>
                 <tumaet-ui-form-field class="mb-3" controlId="firstName" required [invalid]="editForm.get('firstName')!.dirty && editForm.get('firstName')!.invalid">
-                    <span tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.firstName"></span>
-                    <input id="firstName" type="text" tumAetUiInput class="w-full" name="firstName" formControlName="firstName" [maxlength]="USERNAME_MAX_LENGTH" required />
+                    <span id="firstName-label" tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.firstName"></span>
+                    <input
+                        aria-labelledby="firstName-label"
+                        id="firstName"
+                        type="text"
+                        tumAetUiInput
+                        class="w-full"
+                        name="firstName"
+                        formControlName="firstName"
+                        [maxlength]="USERNAME_MAX_LENGTH"
+                        required
+                    />
                     <ng-container tumAetUiFormFieldError>
                         @if (editForm.get('firstName')!.errors?.required) {
                             <small jhiTranslate="entity.validation.required"></small>
@@ -48,8 +59,18 @@
                     </ng-container>
                 </tumaet-ui-form-field>
                 <tumaet-ui-form-field class="mb-3" controlId="lastName" required [invalid]="editForm.get('lastName')!.dirty && editForm.get('lastName')!.invalid">
-                    <span tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.lastName"></span>
-                    <input id="lastName" type="text" tumAetUiInput class="w-full" name="lastName" formControlName="lastName" [maxlength]="USERNAME_MAX_LENGTH" required />
+                    <span id="lastName-label" tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.lastName"></span>
+                    <input
+                        aria-labelledby="lastName-label"
+                        id="lastName"
+                        type="text"
+                        tumAetUiInput
+                        class="w-full"
+                        name="lastName"
+                        formControlName="lastName"
+                        [maxlength]="USERNAME_MAX_LENGTH"
+                        required
+                    />
                     <ng-container tumAetUiFormFieldError>
                         @if (editForm.get('lastName')!.errors?.required) {
                             <small jhiTranslate="entity.validation.required"></small>
@@ -87,8 +108,9 @@
                             controlId="password"
                             [invalid]="(editForm.get('password')!.dirty || editForm.get('password')!.touched) && editForm.get('password')!.invalid"
                         >
-                            <span tumAetUiFormFieldLabel jhiTranslate="global.menu.account.password"></span>
+                            <span id="password-label" tumAetUiFormFieldLabel jhiTranslate="global.menu.account.password"></span>
                             <input
+                                aria-labelledby="password-label"
                                 type="password"
                                 tumAetUiInput
                                 class="w-full"
@@ -145,8 +167,9 @@
                     </div>
                 </div>
                 <tumaet-ui-form-field class="mb-3" controlId="email" required [invalid]="editForm.get('email')!.dirty && editForm.get('email')!.invalid">
-                    <span tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.email"></span>
+                    <span id="email-label" tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.email"></span>
                     <input
+                        aria-labelledby="email-label"
                         id="email"
                         type="email"
                         tumAetUiInput
@@ -173,8 +196,9 @@
                     </ng-container>
                 </tumaet-ui-form-field>
                 <tumaet-ui-form-field class="mb-3" controlId="visibleRegistrationNumber" [invalid]="editForm.get('visibleRegistrationNumber')!.invalid">
-                    <span tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.registrationNumber"></span>
+                    <span id="visibleRegistrationNumber-label" tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.registrationNumber"></span>
                     <input
+                        aria-labelledby="visibleRegistrationNumber-label"
                         id="visibleRegistrationNumber"
                         type="text"
                         tumAetUiInput
