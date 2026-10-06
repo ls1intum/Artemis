@@ -18,11 +18,9 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphEdgeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
@@ -30,8 +28,6 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.BatchRelationPreviewResponseD
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyRelationPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.RelationGraphPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.SingleRelationPreviewResponseDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyRelationDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyRelationService;
@@ -67,8 +63,6 @@ public class CompetencyMappingToolsService {
 
     private final AtlasAgentSessionCacheService sessionCacheService;
 
-    private final Optional<AtlasMLApi> atlasMLApi;
-
     private final AuthorizationCheckService authorizationCheckService;
 
     private final UserRepository userRepository;
@@ -87,14 +81,13 @@ public class CompetencyMappingToolsService {
 
     public CompetencyMappingToolsService(JsonMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, CompetencyRelationRepository competencyRelationRepository,
             CompetencyRelationService competencyRelationService, CourseRepository courseRepository, AtlasAgentSessionCacheService atlasAgentSessionCacheService,
-            Optional<AtlasMLApi> atlasMLApi, AuthorizationCheckService authorizationCheckService, UserRepository userRepository) {
+            AuthorizationCheckService authorizationCheckService, UserRepository userRepository) {
         this.objectMapper = objectMapper;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.competencyRelationService = competencyRelationService;
         this.courseRepository = courseRepository;
         this.sessionCacheService = atlasAgentSessionCacheService;
-        this.atlasMLApi = atlasMLApi;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
     }
@@ -226,52 +219,6 @@ public class CompetencyMappingToolsService {
     }
 
     /**
-     * Suggests competency relation mappings using ML clustering from AtlasML.
-     * The LLM can call this tool to get ML-based suggestions for relations between competencies.
-     *
-     * @param courseId the ID of the course
-     * @return JSON response with suggested relation mappings
-     */
-    @Tool(description = "Get ML-based suggested competency relation mappings for a course using clustering analysis. Returns suggested relations with relation types.")
-    public String suggestRelationMappingsUsingML(@ToolParam(description = "the Course ID from the CONTEXT section") Long courseId) {
-        if (atlasMLApi.isEmpty()) {
-            return errorResponse("AtlasML is not available");
-        }
-        try {
-            SuggestCompetencyRelationsResponseDTO suggestionsResponse = atlasMLApi.get().suggestCompetencyRelations(courseId);
-
-            if (suggestionsResponse == null || suggestionsResponse.relations() == null || suggestionsResponse.relations().isEmpty()) {
-                return errorResponse("No relation suggestions available from ML clustering");
-            }
-
-            List<CompetencyRelationDTO> suggestedRelations = new ArrayList<>();
-            for (AtlasMLCompetencyRelationDTO atlasMLRelation : suggestionsResponse.relations()) {
-                RelationType relationType;
-                try {
-                    relationType = RelationType.valueOf(atlasMLRelation.relationType());
-                }
-                catch (IllegalArgumentException e) {
-                    continue;
-                }
-
-                suggestedRelations.add(new CompetencyRelationDTO(null, atlasMLRelation.headId(), atlasMLRelation.tailId(), relationType));
-            }
-
-            if (suggestedRelations.isEmpty()) {
-                return errorResponse("No valid relation suggestions found");
-            }
-
-            record SuggestResponse(int count, List<CompetencyRelationDTO> suggestions) {
-            }
-            return toJson(new SuggestResponse(suggestedRelations.size(), suggestedRelations));
-        }
-        catch (Exception e) {
-            log.error("Failed to get ML-based relation suggestions", e);
-            return errorResponse("Failed to get ML-based relation suggestions");
-        }
-    }
-
-    /**
      * Unified tool for creating/updating one or multiple competency relation mappings.
      * Supports both single and batch operations. Continues on partial failures.
      *
@@ -316,9 +263,6 @@ public class CompetencyMappingToolsService {
                 if (rel.id() == null || rel.id() == 0L) {
                     competencyRelationService.createCompetencyRelation(competencies.get().tail(), competencies.get().head(), rel.relationType(), course);
                     createCount++;
-
-                    // Sync with AtlasML - map competency to competency for ML clustering
-                    syncRelationToAtlasML(rel.headCompetencyId(), rel.tailCompetencyId(), "relation");
                 }
                 else {
                     Optional<CompetencyRelation> existing = competencyRelationRepository.findById(rel.id());
@@ -333,9 +277,6 @@ public class CompetencyMappingToolsService {
                         competencyRelationRepository.delete(existingRelation);
                         competencyRelationService.createCompetencyRelation(competencies.get().tail(), competencies.get().head(), rel.relationType(), course);
                         updateCount++;
-
-                        // Sync with AtlasML for updated relation
-                        syncRelationToAtlasML(rel.headCompetencyId(), rel.tailCompetencyId(), "updated relation");
                     }
                     catch (Exception updateException) {
                         log.error("Failed to update relation", updateException);
@@ -529,18 +470,6 @@ public class CompetencyMappingToolsService {
         record ErrorResponse(String error) {
         }
         return toJson(new ErrorResponse(message));
-    }
-
-    private void syncRelationToAtlasML(long headCompetencyId, long tailCompetencyId, String relationContext) {
-        if (atlasMLApi.isEmpty()) {
-            return;
-        }
-        try {
-            atlasMLApi.get().mapCompetencyToCompetency(headCompetencyId, tailCompetencyId);
-        }
-        catch (Exception e) {
-            log.warn("Failed to sync {} to AtlasML: {}", relationContext, e.getMessage());
-        }
     }
 
     /**

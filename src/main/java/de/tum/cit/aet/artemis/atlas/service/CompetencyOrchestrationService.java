@@ -43,7 +43,6 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
 import de.tum.cit.aet.artemis.atlas.service.OrchestratorToolContextKeys.AppliedActionsBuffer;
-import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLShortlistService;
 import de.tum.cit.aet.artemis.atlas.service.util.AtlasPromptSanitizer;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
@@ -130,8 +129,6 @@ public class CompetencyOrchestrationService {
 
     private final UserRepository userRepository;
 
-    private final AtlasMLShortlistService shortlistService;
-
     private final AtomicReference<DistributedMap<Long, RunInfo>> runMap = new AtomicReference<>();
 
     public CompetencyOrchestrationService(ExerciseRepository exerciseRepository, ContentExtractionService contentExtractionService,
@@ -143,7 +140,7 @@ public class CompetencyOrchestrationService {
             @Qualifier("editorToolCallbackProvider") AtlasToolSurface editorToolCallbackProvider,
             @Qualifier("assignerToolCallbackProvider") AtlasToolSurface assignerToolCallbackProvider, Optional<DistributedDataProvider> distributedDataProvider,
             AtlasOrchestratorProperties properties, ContentChangeAccumulatorService contentChangeAccumulatorService, LLMTokenUsageService llmTokenUsageService,
-            UserRepository userRepository, AtlasMLShortlistService shortlistService) {
+            UserRepository userRepository) {
         this.exerciseRepository = exerciseRepository;
         this.contentExtractionService = contentExtractionService;
         this.orchestratorPlanningToolsService = orchestratorPlanningToolsService;
@@ -162,7 +159,6 @@ public class CompetencyOrchestrationService {
         this.contentChangeAccumulatorService = contentChangeAccumulatorService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
-        this.shortlistService = shortlistService;
     }
 
     /** Per-course IN_PROGRESS guard map, resolved lazily (see {@link #resolveRunMap}). */
@@ -433,12 +429,10 @@ public class CompetencyOrchestrationService {
             CompetencyIndexResponseDTO competencyIndex = orchestratorPlanningToolsService.listCompetencyIndex(courseId);
             String renderedIndex = renderCompetencyIndex(competencyIndex);
             String renderedChanges = renderExerciseChangeBatch(changes);
-            String renderedShortlist = renderAtlasMLShortlist(courseId, changes);
             // Map.of key order is irrelevant: the prompt template references the placeholders by
-            // name, and the fence sanitization in renderExerciseChangeBatch / renderCompetencyIndex /
-            // the shortlist service guarantees no user-supplied string can break out and reposition another.
-            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH,
-                    Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex, "atlasMLShortlist", renderedShortlist));
+            // name, and the fence sanitization in renderExerciseChangeBatch / renderCompetencyIndex
+            // guarantees no user-supplied string can break out and reposition another.
+            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH, Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
         }
         catch (Exception ex) {
             log.warn("Atlas orchestrator preparation failed for exercise {}: {}", exerciseId, ex.getMessage(), ex);
@@ -505,9 +499,7 @@ public class CompetencyOrchestrationService {
             CompetencyIndexResponseDTO competencyIndex = orchestratorPlanningToolsService.listCompetencyIndex(courseId);
             String renderedIndex = renderCompetencyIndex(competencyIndex);
             String renderedChanges = renderExerciseChangeBatch(changes);
-            String renderedShortlist = renderAtlasMLShortlist(courseId, changes);
-            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH,
-                    Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex, "atlasMLShortlist", renderedShortlist));
+            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH, Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
         }
         catch (Exception ex) {
             log.warn("Atlas orchestrator (batch) preparation failed for course {}: {}", courseId, ex.getMessage(), ex);
@@ -695,31 +687,12 @@ public class CompetencyOrchestrationService {
     }
 
     /**
-     * Fetches and renders the per-exercise AtlasML similarity shortlist for the batch. The cleaned learning
-     * text of each change is the AtlasML query; the result is the injection-safe block interpolated into the
-     * execute prompt. Best-effort: an unavailable or failing AtlasML yields an omitted block (see {@link AtlasMLShortlistService}).
-     * The whole path is guarded here so an unexpected shortlist failure can never abort the surrounding
-     * orchestration-preparation try with an INTERNAL_ERROR — the section is simply dropped.
-     */
-    private String renderAtlasMLShortlist(long courseId, List<ExerciseChange> changes) {
-        try {
-            List<AtlasMLShortlistService.ExerciseExtract> extracts = changes.stream()
-                    .map(change -> new AtlasMLShortlistService.ExerciseExtract(change.exerciseId(), change.problemStatement())).toList();
-            return shortlistService.renderShortlist(shortlistService.fetchShortlists(courseId, extracts));
-        }
-        catch (Exception ex) {
-            log.debug("AtlasML shortlist generation failed for course {}; continuing without shortlist: {}", courseId, ex.getMessage(), ex);
-            return "";
-        }
-    }
-
-    /**
      * Neutralizes instructor text before prompt interpolation: strips control / zero-width
      * characters, neutralizes the user-data fence delimiters, and hard-truncates at {@code maxChars}
      * (never mid surrogate pair). Preserves {@code \n}/{@code \t} for the multi-line execute-prompt body.
      */
     static String sanitizeForPrompt(@Nullable String raw, int maxChars) {
-        return AtlasPromptSanitizer.sanitizeForPrompt(raw, maxChars, false, "(empty)");
+        return AtlasPromptSanitizer.sanitizeForPrompt(raw, maxChars, "(empty)");
     }
 
     private static String renderCompetencyIndex(CompetencyIndexResponseDTO index) {

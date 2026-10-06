@@ -23,14 +23,10 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.ExerciseCompetencyMappingDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -47,7 +43,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  * by large language models during conversations.
  *
  * Main Responsibilities:
- * - Preview exercise-to-competency mappings before creation (with server-side AtlasML suggestions)
+ * - Preview exercise-to-competency mappings before creation
  * - Create/update/delete exercise-competency links
  */
 @Lazy
@@ -165,26 +161,20 @@ public class ExerciseMappingToolsService {
 
     private final UserRepository userRepository;
 
-    private final Optional<AtlasMLApi> atlasMLApi;
-
     private final AtlasAgentSessionCacheService sessionCacheService;
-
-    private final ContentExtractionService contentExtractionService;
 
     private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     public ExerciseMappingToolsService(ExerciseRepository exerciseRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository, Optional<AtlasMLApi> atlasMLApi, AtlasAgentSessionCacheService sessionCacheService, ContentExtractionService contentExtractionService) {
+            UserRepository userRepository, AtlasAgentSessionCacheService sessionCacheService) {
         this.exerciseRepository = exerciseRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
-        this.atlasMLApi = atlasMLApi;
         this.sessionCacheService = sessionCacheService;
-        this.contentExtractionService = contentExtractionService;
     }
 
     /**
@@ -230,11 +220,11 @@ public class ExerciseMappingToolsService {
             Shows which competencies will be linked to the exercise with their weights (LOW=0.25, MEDIUM=0.5, HIGH=1.0).
             Existing mappings are automatically marked as 'alreadyMapped'.
             The preview is displayed to the user for confirmation before applying changes.
-            Do NOT set suggested — the server determines AI suggestions automatically via AtlasML.
+            Set suggested=true only for the 1-3 competencies that best match the exercise.
             """)
     public String previewExerciseCompetencyMapping(@ToolParam(description = "The ID of the course") Long courseId,
             @ToolParam(description = "The ID of the exercise to map") Long exerciseId,
-            @ToolParam(description = "List of competency mappings with competencyId and weight (0.25/0.5/1.0). Do NOT set suggested — the server determines this automatically via AtlasML.") List<ExerciseCompetencyMappingOperation> mappings,
+            @ToolParam(description = "List of competency mappings with competencyId, weight (0.25/0.5/1.0) and suggested.") List<ExerciseCompetencyMappingOperation> mappings,
             @ToolParam(description = "If true, display only (no action buttons)") Boolean viewOnly) {
 
         try {
@@ -250,32 +240,14 @@ public class ExerciseMappingToolsService {
             List<CompetencyExerciseLink> existingLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
             Set<Long> existingCompetencyIds = existingLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
 
-            // Extract learning-relevant content with flavor text stripping so the suggestion query matches
-            // the cleaned text the orchestrator reasons over. Falls back to the raw problem statement for
-            // unsupported exercise types.
-            String description;
-            try {
-                ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise, true);
-                description = extracted.extractedLearningText().isBlank() ? exercise.getTitle() : extracted.extractedLearningText();
-            }
-            catch (IllegalArgumentException e) {
-                description = exercise.getProblemStatement() != null && !exercise.getProblemStatement().isBlank() ? exercise.getProblemStatement() : exercise.getTitle();
-            }
-
-            // Fetch AtlasML suggestions using the (cleaned) exercise description.
-            // Returns null when AtlasML is unavailable — in that case fall back to the LLM's own suggested flags.
-            Set<Long> suggestedIds = fetchSuggestedCompetencyIds(courseId, description);
-            boolean useAtlasML = suggestedIds != null;
-
             // Bulk-load titles to avoid N+1 queries
             List<Long> allCompetencyIds = mappings.stream().map(ExerciseCompetencyMappingOperation::getCompetencyId).toList();
             Map<Long, String> titleById = courseCompetencyRepository.findAllById(allCompetencyIds).stream()
                     .collect(Collectors.toMap(CourseCompetency::getId, CourseCompetency::getTitle));
 
             ExerciseCompetencyMappingDTO preview = new ExerciseCompetencyMappingDTO(exercise.getId(), exercise.getTitle(), mappings.stream().map(op -> {
-                boolean suggested = useAtlasML ? suggestedIds.contains(op.getCompetencyId()) : Boolean.TRUE.equals(op.getSuggested());
                 return new ExerciseCompetencyMappingDTO.CompetencyMappingOptionDTO(op.getCompetencyId(), titleById.getOrDefault(op.getCompetencyId(), "Unknown Competency"),
-                        op.getWeight(), existingCompetencyIds.contains(op.getCompetencyId()), suggested);
+                        op.getWeight(), existingCompetencyIds.contains(op.getCompetencyId()), Boolean.TRUE.equals(op.getSuggested()));
             }).toList(), viewOnly != null && viewOnly);
 
             exerciseMappingPreview.set(preview);
@@ -384,10 +356,6 @@ public class ExerciseMappingToolsService {
             if (!linksToCreate.isEmpty()) {
                 competencyExerciseLinkRepository.saveAll(linksToCreate);
                 log.info("Created {} new competency links for exercise {}", linksToCreate.size(), exerciseId);
-                // Notify AtlasML so the exercise's vector embedding reflects the new competency links
-                for (CompetencyExerciseLink link : linksToCreate) {
-                    atlasMLApi.ifPresent(api -> api.mapCompetencyToExercise(exerciseId, link.getCompetency().getId()));
-                }
             }
 
             if (!linksToUpdate.isEmpty()) {
@@ -443,32 +411,6 @@ public class ExerciseMappingToolsService {
         }
 
         return exercise;
-    }
-
-    /**
-     * Calls AtlasML to get competency IDs semantically relevant to the given exercise description.
-     * Uses the same logic as the exercise edit page lightbulb button.
-     *
-     * @param courseId    the course ID
-     * @param description the exercise problem statement (or title as fallback)
-     * @return set of suggested competency IDs, or {@code null} if AtlasML is unavailable (callers should fall back to LLM judgment)
-     */
-    private Set<Long> fetchSuggestedCompetencyIds(Long courseId, String description) {
-        if (atlasMLApi.isEmpty()) {
-            return null;
-        }
-
-        try {
-            SuggestCompetencyResponseDTO response = atlasMLApi.get().suggestCompetencies(new SuggestCompetencyRequestDTO(description, courseId));
-            if (response == null || response.competencies() == null) {
-                return Set.of();
-            }
-            return response.competencies().stream().map(c -> c.id()).collect(Collectors.toSet());
-        }
-        catch (Exception e) {
-            log.warn("AtlasML suggestion unavailable for exercise in course {}: {}", courseId, e.getMessage());
-            return null;
-        }
     }
 
     /**

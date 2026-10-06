@@ -32,9 +32,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.service.OrchestratorToolContextKeys.AppliedActionsBuffer;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyAtlasMLNotificationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidationService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -54,9 +52,6 @@ class CreatorToolsServiceTest {
     @Mock
     private CompetencyService competencyService;
 
-    @Mock
-    private CompetencyAtlasMLNotificationService atlasMLNotificationService;
-
     private final CompetencyValidationService competencyValidator = new CompetencyValidationService();
 
     private CreatorToolsService service;
@@ -69,7 +64,7 @@ class CreatorToolsServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new CreatorToolsService(new JsonMapper(), courseRepository, competencyService, competencyValidator, atlasMLNotificationService);
+        service = new CreatorToolsService(new JsonMapper(), courseRepository, competencyService, competencyValidator);
         appliedActions = Collections.synchronizedList(new ArrayList<>());
         appliedActionsBuffer = new AppliedActionsBuffer(appliedActions);
         Map<String, Object> ctx = new HashMap<>();
@@ -97,8 +92,6 @@ class CreatorToolsServiceTest {
             assertThat(action.competencyTitle()).isEqualTo("Sorting Algorithms");
             assertThat(action.justification()).isEqualTo(JUSTIFICATION);
         });
-        // The successful create must mirror the new competency to AtlasML (production sends UPDATE for creation).
-        verify(atlasMLNotificationService).notifyAtlasML(List.of(persisted), OperationTypeDTO.UPDATE, "orchestrator competency creation");
     }
 
     @Test

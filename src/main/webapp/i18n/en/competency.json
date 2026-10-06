@@ -4,12 +4,6 @@
             "created": "Competency created",
             "deleted": "Competency deleted",
             "updated": "Competency updated",
-            "suggested": "AI Suggested",
-            "acceptSuggestion": "Accept this competency suggestion",
-            "dismissSuggestion": "Dismiss this competency suggestion",
-            "suggestions": {
-                "loadError": "Could not load competency suggestions. Please try again later."
-            },
             "competencyButton": "Competencies",
             "title": "Title",
             "description": "Description",
@@ -136,9 +130,6 @@
                     "medium": "Medium",
                     "high": "High"
                 }
-            },
-            "suggestion": {
-                "tooltip": "This competency is suggested by AI based on the exercise description"
             },
             "competencyCard": {
                 "connectedLectureUnits": "Linked Lecture Content",
@@ -299,18 +290,6 @@
                         "competency": "This node represents a Competency",
                         "prerequisite": "This node represents a Prerequisite"
                     }
-                },
-                "suggestions": {
-                    "fetch": "AI suggestions",
-                    "title": "Suggestions",
-                    "empty": "No suggestions",
-                    "aiBadge": "AI",
-                    "aiTooltip": "Suggested by AI",
-                    "aiSuggestionsTitle": "AI Suggestions",
-                    "addSuggestions": "Add Suggestions ({{count}})",
-                    "addSelectedSuggestions": "Add Selected Suggestions",
-                    "alreadyExists": "(already exists)",
-                    "getAiSuggestionsTooltip": "Get AI Suggestions"
                 }
             },
             "featureExplanation": {

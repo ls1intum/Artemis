@@ -34,8 +34,6 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyAtlasMLNotificationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidationService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -66,24 +64,19 @@ public class CreatorToolsService {
 
     private final CompetencyValidationService competencyValidator;
 
-    private final CompetencyAtlasMLNotificationService atlasMLNotificationService;
-
     /**
      * Creates the creator tools service.
      *
-     * @param objectMapper               JSON serialiser for tool responses
-     * @param courseRepository           repository for course lookups
-     * @param competencyService          service persisting new competencies
-     * @param competencyValidator        validator enforcing competency creation invariants
-     * @param atlasMLNotificationService notifies the AtlasML service of competency changes
+     * @param objectMapper        JSON serialiser for tool responses
+     * @param courseRepository    repository for course lookups
+     * @param competencyService   service persisting new competencies
+     * @param competencyValidator validator enforcing competency creation invariants
      */
-    public CreatorToolsService(JsonMapper objectMapper, CourseRepository courseRepository, CompetencyService competencyService, CompetencyValidationService competencyValidator,
-            CompetencyAtlasMLNotificationService atlasMLNotificationService) {
+    public CreatorToolsService(JsonMapper objectMapper, CourseRepository courseRepository, CompetencyService competencyService, CompetencyValidationService competencyValidator) {
         this.objectMapper = objectMapper;
         this.courseRepository = courseRepository;
         this.competencyService = competencyService;
         this.competencyValidator = competencyValidator;
-        this.atlasMLNotificationService = atlasMLNotificationService;
     }
 
     /**
@@ -155,7 +148,6 @@ public class CreatorToolsService {
         Competency persisted = created.get(0);
         String detail = "Created competency " + persisted.getTitle() + " (" + parsedTaxonomy.name() + ").";
         appendAction(toolContext, AppliedActionDTO.create(persisted.getId(), persisted.getTitle(), detail, justification.trim()));
-        atlasMLNotificationService.notifyAtlasML(List.of(persisted), OperationTypeDTO.UPDATE, "orchestrator competency creation");
         return toJson(objectMapper, Map.of("id", persisted.getId(), "title", persisted.getTitle(), "taxonomy", parsedTaxonomy.name()));
     }
 }

@@ -1,6 +1,5 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { CourseCompetencyRelationFormComponent, UnionFind } from 'app/atlas/manage/course-competency-relation-form/course-competency-relation-form.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
@@ -8,8 +7,6 @@ import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-com
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, UpdateCourseCompetencyRelationDTO } from 'app/atlas/shared/entities/competency.model';
-import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { of } from 'rxjs';
 
 describe('CourseCompetencyRelationFormComponent', () => {
     let component: CourseCompetencyRelationFormComponent;
@@ -20,7 +17,6 @@ describe('CourseCompetencyRelationFormComponent', () => {
     let createCourseCompetencyRelationSpy: ReturnType<typeof vi.spyOn>;
     let updateCourseCompetencyRelationSpy: ReturnType<typeof vi.spyOn>;
     let deleteCourseCompetencyRelationSpy: ReturnType<typeof vi.spyOn>;
-    let getSuggestedCompetencyRelationsSpy: ReturnType<typeof vi.spyOn>;
 
     const courseId = 1;
     const courseCompetencies: CourseCompetency[] = [
@@ -63,13 +59,6 @@ describe('CourseCompetencyRelationFormComponent', () => {
                         createCourseCompetencyRelation: vi.fn(),
                         updateCourseCompetencyRelation: vi.fn(),
                         deleteCourseCompetencyRelation: vi.fn(),
-                        getSuggestedCompetencyRelations: vi.fn(),
-                    },
-                },
-                {
-                    provide: FeatureToggleService,
-                    useValue: {
-                        getFeatureToggleActive: vi.fn().mockReturnValue(of(true)),
                     },
                 },
             ],
@@ -81,7 +70,6 @@ describe('CourseCompetencyRelationFormComponent', () => {
         createCourseCompetencyRelationSpy = vi.spyOn(courseCompetencyApiService, 'createCourseCompetencyRelation').mockResolvedValue(newRelation);
         updateCourseCompetencyRelationSpy = vi.spyOn(courseCompetencyApiService, 'updateCourseCompetencyRelation').mockResolvedValue();
         deleteCourseCompetencyRelationSpy = vi.spyOn(courseCompetencyApiService, 'deleteCourseCompetencyRelation').mockResolvedValue();
-        getSuggestedCompetencyRelationsSpy = vi.spyOn(courseCompetencyApiService, 'getSuggestedCompetencyRelations');
 
         fixture = TestBed.createComponent(CourseCompetencyRelationFormComponent);
         component = fixture.componentInstance;
@@ -328,251 +316,6 @@ describe('CourseCompetencyRelationFormComponent', () => {
         await component['deleteRelation']();
 
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
-    });
-
-    describe('AtlasML Relation Suggestions', () => {
-        const mockSuggestionResponse = {
-            relations: [
-                { tail_id: '1', head_id: '2', relation_type: 'EXTENDS' },
-                { tail_id: '2', head_id: '3', relation_type: 'REQUIRES' },
-                { tail_id: '1', head_id: '3', relation_type: 'MATCHES' },
-            ],
-        };
-
-        beforeEach(() => {
-            fixture.detectChanges();
-        });
-
-        it('should show lightbulb button for relation suggestions', () => {
-            // First check if any jhi-button elements exist at all
-            const allButtons = fixture.debugElement.queryAll(By.css('jhi-button'));
-            expect(allButtons.length).toBeGreaterThan(0);
-
-            // Find the button with the correct tooltip
-            const btn = allButtons.find((de) => de.componentInstance?.tooltip() === 'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
-            expect(btn).toBeTruthy();
-            expect(btn?.componentInstance?.disabled()).toBeFalsy();
-        });
-
-        it('should disable lightbulb button when loading suggestions', async () => {
-            getSuggestedCompetencyRelationsSpy.mockImplementation(() => new Promise(() => {})); // Never resolves
-
-            component.fetchSuggestions();
-            fixture.detectChanges();
-
-            const btn = fixture.debugElement
-                .queryAll(By.css('jhi-button'))
-                .find((de) => de.componentInstance?.tooltip() === 'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
-            expect(btn?.componentInstance?.disabled()).toBeTruthy();
-            expect(component.isLoadingSuggestions()).toBeTruthy();
-        });
-
-        it('should call API and load suggestions when lightbulb button is clicked', async () => {
-            getSuggestedCompetencyRelationsSpy.mockResolvedValue(mockSuggestionResponse);
-
-            await component.fetchSuggestions();
-
-            expect(getSuggestedCompetencyRelationsSpy).toHaveBeenCalledWith(courseId);
-            expect(component.suggestedRelations()).toEqual(mockSuggestionResponse.relations);
-            expect(component.isLoadingSuggestions()).toBeFalsy();
-        });
-
-        it('should auto-select only non-existing suggestions when fetched', async () => {
-            getSuggestedCompetencyRelationsSpy.mockResolvedValue(mockSuggestionResponse);
-
-            await component.fetchSuggestions();
-
-            // Existing relations (1->2 EXTENDS) should NOT be auto-selected
-            expect(component['doesSuggestionAlreadyExist'](mockSuggestionResponse.relations[0])).toBeTruthy();
-            expect(component.selectedSuggestions().has(0)).toBeFalsy();
-
-            // Non-existing suggestions should be selected
-            expect(component.selectedSuggestions().has(1)).toBeTruthy();
-            expect(component.selectedSuggestions().has(2)).toBeTruthy();
-            expect(component.selectedSuggestions().size).toBe(2);
-            expect(component.selectedSuggestionsCount()).toBe(2);
-        });
-
-        it('should display suggested relations with correct information', async () => {
-            getSuggestedCompetencyRelationsSpy.mockResolvedValue(mockSuggestionResponse);
-
-            await component.fetchSuggestions();
-            fixture.detectChanges();
-
-            const suggestionElements = fixture.debugElement.nativeElement.querySelectorAll('.list-group-item');
-            expect(suggestionElements).toHaveLength(3);
-
-            // Check first suggestion
-            const firstSuggestion = suggestionElements[0];
-            expect(firstSuggestion.textContent).toContain('Competency 1');
-            expect(firstSuggestion.textContent).toContain('Competency 2');
-            expect(firstSuggestion.textContent).toContain('→');
-        });
-
-        it('should toggle suggestion selection correctly', async () => {
-            getSuggestedCompetencyRelationsSpy.mockResolvedValue(mockSuggestionResponse);
-
-            await component.fetchSuggestions();
-
-            // Initially: index 1 and 2 are selected (non-existing); index 0 is not (existing)
-            expect(component['isSuggestionSelected'](1)).toBeTruthy();
-            expect(component.selectedSuggestionsCount()).toBe(2);
-
-            // Toggle index 1 OFF
-            component['toggleSuggestionSelection'](1);
-            expect(component['isSuggestionSelected'](1)).toBeFalsy();
-            expect(component.selectedSuggestionsCount()).toBe(1);
-
-            // Toggle index 1 back ON
-            component['toggleSuggestionSelection'](1);
-            expect(component['isSuggestionSelected'](1)).toBeTruthy();
-            expect(component.selectedSuggestionsCount()).toBe(2);
-        });
-
-        it('should prevent selection of existing relations', async () => {
-            // Mock response includes a relation that already exists (1->2 EXTENDS)
-            const responseWithExisting = {
-                relations: [
-                    { tail_id: '1', head_id: '2', relation_type: 'EXTENDS' }, // This already exists
-                    { tail_id: '2', head_id: '3', relation_type: 'REQUIRES' },
-                ],
-            };
-            getSuggestedCompetencyRelationsSpy.mockResolvedValue(responseWithExisting);
-
-            await component.fetchSuggestions();
-
-            expect(component['doesSuggestionAlreadyExist'](responseWithExisting.relations[0])).toBeTruthy();
-            expect(component['doesSuggestionAlreadyExist'](responseWithExisting.relations[1])).toBeFalsy();
-
-            // Should only auto-select non-existing relations
-            expect(component.selectedSuggestions().has(0)).toBeFalsy();
-            expect(component.selectedSuggestions().has(1)).toBeTruthy();
-        });
-
-        it('should apply suggestion to form when clicked', async () => {
-            getSuggestedCompetencyRelationsSpy.mockResolvedValue(mockSuggestionResponse);
-
-            await component.fetchSuggestions();
-
-            const suggestion = mockSuggestionResponse.relations[0];
-            component['applySuggestion'](suggestion);
-
-            expect(component.headCompetencyId()).toBe(2);
-            expect(component.tailCompetencyId()).toBe(1);
-            expect(component.relationType()).toBe(CompetencyRelationType.EXTENDS);
-        });
-
-        it('should map REQUIRES relation type to ASSUMES', async () => {
-            getSuggestedCompetencyRelationsSpy.mockResolvedValue(mockSuggestionResponse);
-
-            await component.fetchSuggestions();
-
-            const requiresSuggestion = mockSuggestionResponse.relations[1]; // REQUIRES relation
-            const uiKey = component['getUiRelationTypeKey'](requiresSuggestion);
-
-            expect(uiKey).toBe('ASSUMES');
-        });
-
-        it('should show import suggestions button when suggestions are loaded', async () => {
-            getSuggestedCompetencyRelationsSpy.mockResolvedValue(mockSuggestionResponse);
-
-            await component.fetchSuggestions();
-            fixture.detectChanges();
-
-            const importButton = fixture.debugElement.query(By.css('[data-testid="add-suggestions-button"]'));
-            expect(importButton).toBeTruthy();
-        });
-
-        it('should create selected suggestions when import button is clicked', async () => {
-            getSuggestedCompetencyRelationsSpy.mockResolvedValue(mockSuggestionResponse);
-
-            await component.fetchSuggestions();
-
-            // Select only a non-existing suggestion (index 2)
-            component.selectedSuggestions.set(new Set([2]));
-
-            const mockCreatedRelation = {
-                id: 10,
-                headCompetencyId: 3,
-                tailCompetencyId: 1,
-                relationType: CompetencyRelationType.MATCHES,
-            };
-            createCourseCompetencyRelationSpy.mockResolvedValue(mockCreatedRelation);
-
-            await component['addSelectedSuggestions']();
-
-            expect(createCourseCompetencyRelationSpy).toHaveBeenCalledWith(courseId, {
-                headCompetencyId: 3,
-                tailCompetencyId: 1,
-                relationType: CompetencyRelationType.MATCHES,
-            });
-        });
-
-        it('should clear suggestions after successful import', async () => {
-            getSuggestedCompetencyRelationsSpy.mockResolvedValue(mockSuggestionResponse);
-
-            await component.fetchSuggestions();
-
-            const mockCreatedRelation = {
-                id: 10,
-                headCompetencyId: 2,
-                tailCompetencyId: 1,
-                relationType: CompetencyRelationType.EXTENDS,
-            };
-            createCourseCompetencyRelationSpy.mockResolvedValue(mockCreatedRelation);
-
-            await component['addSelectedSuggestions']();
-
-            expect(component.suggestedRelations()).toEqual([]);
-            expect(component.selectedSuggestions().size).toBe(0);
-        });
-
-        it('should handle API error gracefully when fetching suggestions', async () => {
-            const alertServiceWarningSpy = vi.spyOn(alertService, 'warning');
-            getSuggestedCompetencyRelationsSpy.mockRejectedValue(new Error('API Error'));
-
-            await component.fetchSuggestions();
-
-            expect(component.isLoadingSuggestions()).toBeFalsy();
-            expect(component.suggestedRelations()).toEqual([]);
-            expect(alertServiceWarningSpy).toHaveBeenCalledWith('Failed to load suggested relations');
-        });
-
-        it('should handle partial failures when importing suggestions', async () => {
-            getSuggestedCompetencyRelationsSpy.mockResolvedValue(mockSuggestionResponse);
-
-            await component.fetchSuggestions();
-
-            // Mock first relation creation to succeed, second to fail
-            createCourseCompetencyRelationSpy.mockResolvedValueOnce({
-                id: 10,
-                headCompetencyId: 2,
-                tailCompetencyId: 1,
-                relationType: CompetencyRelationType.EXTENDS,
-            });
-            createCourseCompetencyRelationSpy.mockRejectedValueOnce(new Error('Creation failed'));
-
-            const alertServiceErrorSpy = vi.spyOn(alertService, 'error');
-            const alertServiceSuccessSpy = vi.spyOn(alertService, 'success');
-
-            await component['addSelectedSuggestions']();
-
-            expect(alertServiceErrorSpy).toHaveBeenCalled();
-            expect(alertServiceSuccessSpy).toHaveBeenCalledWith('Successfully added 1 relation(s)');
-        });
-
-        it('should not import suggestions if none are selected', async () => {
-            getSuggestedCompetencyRelationsSpy.mockResolvedValue(mockSuggestionResponse);
-
-            await component.fetchSuggestions();
-
-            // Deselect all suggestions
-            component.selectedSuggestions.set(new Set());
-
-            await component['addSelectedSuggestions']();
-
-            expect(createCourseCompetencyRelationSpy).not.toHaveBeenCalled();
-        });
     });
 });
 

@@ -11,19 +11,6 @@
                     <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
                 </fa-stack>
             }
-            @if (competencyLinks() && competencyLinks()!.length > 0) {
-                <jhi-button
-                    [btnType]="ButtonType.WARNING"
-                    [disabled]="isSuggesting() || disabled() || !exerciseDescription()?.trim()"
-                    (onClick)="suggestCompetencies()"
-                    [tooltip]="'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip'"
-                    [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
-                    [btnSize]="ButtonSize.SMALL"
-                    [icon]="faLightbulb"
-                    [isLoading]="isSuggesting()"
-                    class="ms-2"
-                />
-            }
         </div>
         @if (isLoading()) {
             <div>
@@ -49,9 +36,6 @@
                                     <fa-icon [icon]="getIcon(competencyLink.competency.taxonomy)" [fixedWidth]="true" />
                                     <span class="ms-1">{{ competencyLink.competency.title }}</span>
                                 </label>
-                                @if (isSuggested(competencyLink.competency.id)) {
-                                    <fa-icon [icon]="faLightbulb" class="text-warning ms-2" [ngbTooltip]="'artemisApp.competency.suggestion.tooltip' | artemisTranslate" />
-                                }
                             </div>
                             @if (checkboxStates()[competencyLink.competency.id]) {
                                 <select

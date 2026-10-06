@@ -1415,32 +1415,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizExercise().releaseDate).toEqual(dayjs(now));
             });
 
-            it('getEnhancedDescriptionForSuggestions should combine title and question texts, with fallback', () => {
-                // title only
-                comp.quizExercise().title = 'Quiz Title';
-                comp.quizExercise().quizQuestions = [];
-                expect(comp.getEnhancedDescriptionForSuggestions()).toBe('Quiz Title');
-
-                // title + questions
-                const q1 = new MultipleChoiceQuestion();
-                q1.title = 'Q1';
-                q1.text = 'First question';
-                const q2 = new MultipleChoiceQuestion();
-                q2.title = 'Q2';
-                q2.text = 'Second question';
-                comp.quizExercise().quizQuestions = [q1, q2];
-                const combined = comp.getEnhancedDescriptionForSuggestions();
-                expect(combined).toContain('Quiz Title');
-                expect(combined).toContain('Q1 First question');
-                expect(combined).toContain('Q2 Second question');
-
-                // fallback to problemStatement
-                comp.quizExercise().title = '';
-                comp.quizExercise().quizQuestions = [];
-                comp.quizExercise().problemStatement = 'Problem statement fallback';
-                expect(comp.getEnhancedDescriptionForSuggestions()).toBe('Problem statement fallback');
-            });
-
             it('should handle undefined quizQuestions gracefully (cover ?? [])', () => {
                 comp.quizExercise().quizQuestions = undefined;
 
@@ -1752,35 +1726,6 @@ describe('QuizExerciseUpdateComponent', () => {
                     comp.init();
                     expect(dndQuestion.dragItems[0].id).toBeUndefined();
                 });
-            });
-
-            it('should return empty string if quizExercise is not set', () => {
-                comp.quizExercise.set(undefined as any);
-
-                const result = comp.getEnhancedDescriptionForSuggestions();
-
-                expect(result).toBe('');
-            });
-
-            it('should handle undefined title or text in questions gracefully (cover || "")', () => {
-                comp.quizExercise().title = 'Main Title';
-
-                const q1 = new MultipleChoiceQuestion();
-                q1.title = undefined;
-                q1.text = undefined;
-
-                const q2 = new MultipleChoiceQuestion();
-                q2.title = undefined;
-                q2.text = 'Only Text';
-
-                const q3 = new MultipleChoiceQuestion();
-                q3.title = 'Only Title';
-                q3.text = null as any;
-
-                comp.quizExercise().quizQuestions = [q1, q2, q3];
-
-                const result = comp.getEnhancedDescriptionForSuggestions();
-                expect(result).toBe('Main Title Only Text Only Title');
             });
         });
 

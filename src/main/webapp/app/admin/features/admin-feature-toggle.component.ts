@@ -150,7 +150,6 @@ export class AdminFeatureToggleComponent implements OnInit {
         [FeatureToggle.LearningPaths]: 'https://docs.artemis.tum.de/instructor/analytics/adaptive-learning',
         [FeatureToggle.StandardizedCompetencies]: 'https://docs.artemis.tum.de/admin/adaptive-learning',
         [FeatureToggle.TutorSuggestions]: 'https://docs.artemis.tum.de/instructor/communication-support/communication#tutor-suggestions',
-        [FeatureToggle.AtlasML]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [FeatureToggle.AtlasAgent]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [FeatureToggle.Memiris]: 'https://docs.artemis.tum.de/admin/extensions-setup#edutelligence--iris',
         [FeatureToggle.RateLimit]: 'https://docs.artemis.tum.de/admin/production-setup/security/#rate-limiting',

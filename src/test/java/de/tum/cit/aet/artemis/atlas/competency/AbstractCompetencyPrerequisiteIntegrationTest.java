@@ -74,11 +74,6 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         testPrefix = TEST_PREFIX;
         otherPrefix = OTHER_PREFIX;
 
-        // Mock AtlasML saves to avoid external calls in tests that create/import competencies
-        atlasMLRequestMockProvider.ifPresent(provider -> {
-            provider.enableMockingOfRequests();
-            provider.mockSaveCompetenciesAny();
-        });
         ZonedDateTime releaseDate = ZonedDateTime.now().minusDays(5);
         ZonedDateTime dueDate = releaseDate.plusHours(1);
         ZonedDateTime assessmentDueDate = dueDate.plusHours(1);

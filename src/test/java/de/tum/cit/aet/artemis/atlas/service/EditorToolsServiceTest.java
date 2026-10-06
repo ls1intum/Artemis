@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,10 +26,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.OrchestratorToolContextKeys.AppliedActionsBuffer;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyAtlasMLNotificationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -52,9 +48,6 @@ class EditorToolsServiceTest {
     @Mock
     private CourseCompetencyService courseCompetencyService;
 
-    @Mock
-    private CompetencyAtlasMLNotificationService atlasMLNotificationService;
-
     private final CompetencyValidationService competencyValidator = new CompetencyValidationService();
 
     private EditorToolsService service;
@@ -67,7 +60,7 @@ class EditorToolsServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new EditorToolsService(new JsonMapper(), courseCompetencyRepository, courseCompetencyService, competencyValidator, atlasMLNotificationService);
+        service = new EditorToolsService(new JsonMapper(), courseCompetencyRepository, courseCompetencyService, competencyValidator);
         appliedActions = Collections.synchronizedList(new ArrayList<>());
         appliedActionsBuffer = new AppliedActionsBuffer(appliedActions);
         Map<String, Object> ctx = new HashMap<>();
@@ -90,8 +83,6 @@ class EditorToolsServiceTest {
             assertThat(a.type()).isEqualTo(AppliedActionDTO.ActionType.EDIT);
             assertThat(a.justification()).isEqualTo(JUSTIFICATION);
         });
-        // The successful edit must mirror the updated competency to AtlasML as an UPDATE.
-        verify(atlasMLNotificationService).notifyAtlasML(List.of((Competency) existing), OperationTypeDTO.UPDATE, "orchestrator competency update");
     }
 
     @Test
@@ -175,9 +166,6 @@ class EditorToolsServiceTest {
             assertThat(a.type()).isEqualTo(AppliedActionDTO.ActionType.DELETE);
             assertThat(a.justification()).isEqualTo(JUSTIFICATION);
         });
-        // The successful delete must mirror the removal to AtlasML as a DELETE (production sends a detached
-        // snapshot copy of the competency, so the list contents are matched by type/message, not identity).
-        verify(atlasMLNotificationService).notifyAtlasML(anyList(), eq(OperationTypeDTO.DELETE), eq("orchestrator competency deletion"));
     }
 
     @Test

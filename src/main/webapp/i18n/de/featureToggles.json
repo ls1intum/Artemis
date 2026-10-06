@@ -162,11 +162,6 @@
                     "description": "Nutzt Iris, um Tutor:innen Antwortvorschläge zu machen, wenn sie im Kommunikationsmodul auf Studierendenfragen antworten.",
                     "disableWarning": "Tutor:innen erhalten keine KI-gestützten Antwortvorschläge von Iris im Kommunikationsmodul."
                 },
-                "AtlasML": {
-                    "name": "Atlas Machine Learning",
-                    "description": "Nutzt maschinelles Lernen zur automatischen Generierung von Kompetenzempfehlungen basierend auf Kursinhalten, zur Vorhersage von Studierendenleistungen und für intelligente Vorschläge zur Lernpfad-Optimierung.",
-                    "disableWarning": "Automatische Kompetenzgenerierung, Leistungsvorhersagen und ML-basierte Lernempfehlungen sind nicht verfügbar."
-                },
                 "AtlasAgent": {
                     "name": "Atlas-Agent",
                     "description": "Aktiviert einen KI-Agenten, der Studierenden hilft, Kompetenzen zu verstehen und zu meistern, indem er personalisierte Erklärungen gibt, Fragen zu Lernzielen beantwortet und sie auf ihrem kompetenzbasierten Lernweg begleitet.",
