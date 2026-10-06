@@ -36,6 +36,10 @@
                 <span class="bold-text" th:text="#{email.courseRequest.label.testCourse}">Test course</span>:
                 <span th:text="${courseRequest.testCourse} ? #{email.courseRequest.label.yes} : #{email.courseRequest.label.no}">No</span>
             </li>
+            <li>
+                <span class="bold-text" th:text="#{email.courseRequest.label.gradeRelevant}">Grade relevant</span>:
+                <span th:text="${courseRequest.gradeRelevant} ? #{email.courseRequest.label.yes} : #{email.courseRequest.label.no}">Yes</span>
+            </li>
             <li th:if="${courseRequest.requesterName != null}">
                 <span class="bold-text" th:text="#{email.courseRequest.label.requester}">Requester</span>:
                 <span th:text="${courseRequest.requesterName}">Full Name</span>
