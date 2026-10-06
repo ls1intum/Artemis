@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -47,7 +49,8 @@ import de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEven
  * Behaviour of {@link ContentChangeScheduler} — the per-tick adapter that drives the batched
  * orchestrator from accumulated batches. Verifies the feature-toggle kill switch, the empty-claim
  * skip, the single batched orchestrator invocation, the success/failure summary mapping, the
- * full-batch requeue on a concurrent run, and the WebSocket completion broadcast.
+ * full-batch requeue on a concurrent run, the WebSocket completion broadcast, and the hand-off of every
+ * finished run to the opt-in e-mail report (which itself decides which outcomes are reported).
  */
 @ExtendWith(MockitoExtension.class)
 class ContentChangeSchedulerTest {
@@ -73,12 +76,16 @@ class ContentChangeSchedulerTest {
     @Mock
     private CourseConfigurationRepository courseConfigurationRepository;
 
+    @Mock
+    private AtlasCompetencyUpdateNotificationService competencyUpdateNotificationService;
+
     private ContentChangeScheduler scheduler;
 
     @BeforeEach
     void setUp() {
         Clock fixedClock = Clock.fixed(Instant.parse("2026-04-24T12:00:00Z"), ZoneOffset.UTC);
-        scheduler = new ContentChangeScheduler(accumulator, orchestrationService, websocketMessagingService, featureToggleService, courseConfigurationRepository, fixedClock);
+        scheduler = new ContentChangeScheduler(accumulator, orchestrationService, websocketMessagingService, featureToggleService, courseConfigurationRepository,
+                competencyUpdateNotificationService, fixedClock);
     }
 
     /** Stub the course as auto-orchestration enabled so {@code processCourse} proceeds to claim. */
@@ -102,6 +109,8 @@ class ContentChangeSchedulerTest {
         when(orchestrationService.runBatch(COURSE_ID, exerciseIds, Set.of()))
                 .thenReturn(CompetencyOrchestrationResultDTO.failed("Tool budget exhausted", CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED));
         scheduler.tick();
+        // The early return for terminal failures still hands the result to the e-mail report.
+        verify(competencyUpdateNotificationService).notifyAfterAutomaticRun(eq(COURSE_ID), eq(2), any(CompetencyOrchestrationResultDTO.class));
         verify(accumulator, never()).requeueAfterFailedRun(anyLong(), any(), any());
         verify(accumulator, never()).requeueAfterConcurrentRun(anyLong(), any(), any());
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
@@ -147,12 +156,14 @@ class ContentChangeSchedulerTest {
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
         stubCourseEnabled(true);
         when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds, Set.of())));
-        when(orchestrationService.runBatch(COURSE_ID, exerciseIds, Set.of())).thenReturn(CompetencyOrchestrationResultDTO.success("done", List.of()));
+        CompetencyOrchestrationResultDTO result = CompetencyOrchestrationResultDTO.success("done", List.of());
+        when(orchestrationService.runBatch(COURSE_ID, exerciseIds, Set.of())).thenReturn(result);
 
         scheduler.tick();
 
         // The whole batch goes through a single orchestrator invocation, not one call per exercise.
         verify(orchestrationService).runBatch(COURSE_ID, exerciseIds, Set.of());
+        verify(competencyUpdateNotificationService).notifyAfterAutomaticRun(COURSE_ID, 2, result);
 
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
         verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
@@ -178,6 +189,8 @@ class ContentChangeSchedulerTest {
 
         // Both exercises and lecture units go through a single batched orchestrator invocation.
         verify(orchestrationService).runBatch(COURSE_ID, exerciseIds, lectureUnitIds);
+        // The e-mail report counts the same learning objects as the websocket summary.
+        verify(competencyUpdateNotificationService).notifyAfterAutomaticRun(eq(COURSE_ID), eq(3), any(CompetencyOrchestrationResultDTO.class));
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
         verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
         AutoOrchestrationSummaryDTO summary = payload.getValue();
@@ -199,7 +212,8 @@ class ContentChangeSchedulerTest {
                 courseConfigurationRepository, Optional.of(lectureUnitRepositoryApi));
         AutonomousCompetencyLectureUnitEventListener listener = new AutonomousCompetencyLectureUnitEventListener(realAccumulator, featureToggleService,
                 courseConfigurationRepository, Optional.of(lectureUnitRepositoryApi));
-        scheduler = new ContentChangeScheduler(realAccumulator, orchestrationService, websocketMessagingService, featureToggleService, courseConfigurationRepository, clock);
+        scheduler = new ContentChangeScheduler(realAccumulator, orchestrationService, websocketMessagingService, featureToggleService, courseConfigurationRepository,
+                competencyUpdateNotificationService, clock);
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(COURSE_ID)).thenReturn(Optional.of(new CourseAutoOrchestrationConfigDTO(true, null, null)));
         TextUnit nonblank = courseTextUnit(30L, "Recursion calls itself until a base case is reached.");
@@ -234,7 +248,8 @@ class ContentChangeSchedulerTest {
                 courseConfigurationRepository, Optional.of(lectureUnitRepositoryApi));
         AutonomousCompetencyLectureUnitEventListener listener = new AutonomousCompetencyLectureUnitEventListener(realAccumulator, featureToggleService,
                 courseConfigurationRepository, Optional.of(lectureUnitRepositoryApi));
-        scheduler = new ContentChangeScheduler(realAccumulator, orchestrationService, websocketMessagingService, featureToggleService, courseConfigurationRepository, clock);
+        scheduler = new ContentChangeScheduler(realAccumulator, orchestrationService, websocketMessagingService, featureToggleService, courseConfigurationRepository,
+                competencyUpdateNotificationService, clock);
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(COURSE_ID)).thenReturn(Optional.of(new CourseAutoOrchestrationConfigDTO(true, null, null)));
         TextUnit nonblank = courseTextUnit(30L, "Recursion calls itself until a base case is reached.");
@@ -397,6 +412,7 @@ class ContentChangeSchedulerTest {
         // Another tick (on any node) already drained the batch via the atomic claim — nothing to run.
         verify(orchestrationService, never()).runBatch(anyLong(), any(), any());
         verify(websocketMessagingService, never()).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), any(AutoOrchestrationSummaryDTO.class));
+        verify(competencyUpdateNotificationService, never()).notifyAfterAutomaticRun(anyLong(), anyInt(), any());
     }
 
     @Test
@@ -435,6 +451,8 @@ class ContentChangeSchedulerTest {
         verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
         assertThat(payload.getValue().successCount()).isEqualTo(0);
         assertThat(payload.getValue().failureCount()).isEqualTo(2);
+        // No result exists when the run threw; the report treats that as a failure without changes.
+        verify(competencyUpdateNotificationService).notifyAfterAutomaticRun(eq(COURSE_ID), eq(2), isNull());
     }
 
     @Test
@@ -454,6 +472,7 @@ class ContentChangeSchedulerTest {
         verify(accumulator, never()).claimDueBatch(anyLong(), anyInt(), anyInt());
         verify(orchestrationService, never()).runBatch(anyLong(), any(), any());
         verify(websocketMessagingService, never()).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), any(AutoOrchestrationSummaryDTO.class));
+        verify(competencyUpdateNotificationService, never()).notifyAfterAutomaticRun(anyLong(), anyInt(), any());
     }
 
     private static TextUnit courseTextUnit(long id, String content) {

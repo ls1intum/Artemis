@@ -58,16 +58,19 @@ public class ContentChangeScheduler {
 
     private final CourseConfigurationRepository courseConfigurationRepository;
 
+    private final AtlasCompetencyUpdateNotificationService competencyUpdateNotificationService;
+
     private final Clock clock;
 
     public ContentChangeScheduler(ContentChangeAccumulatorService accumulator, CompetencyOrchestrationService orchestrationService,
             WebsocketMessagingService websocketMessagingService, FeatureToggleService featureToggleService, CourseConfigurationRepository courseConfigurationRepository,
-            Clock clock) {
+            AtlasCompetencyUpdateNotificationService competencyUpdateNotificationService, Clock clock) {
         this.accumulator = accumulator;
         this.orchestrationService = orchestrationService;
         this.websocketMessagingService = websocketMessagingService;
         this.featureToggleService = featureToggleService;
         this.courseConfigurationRepository = courseConfigurationRepository;
+        this.competencyUpdateNotificationService = competencyUpdateNotificationService;
         this.clock = clock;
     }
 
@@ -149,12 +152,14 @@ public class ContentChangeScheduler {
             log.warn("atlas.automatic batch run failed for course {} (run {}): {}", courseId, runId, ex.getMessage(), ex);
             accumulator.requeueAfterFailedRun(courseId, exerciseIds, lectureUnitIds);
             broadcastSummary(courseId, runId, claimedCount, Outcome.FAILED);
+            competencyUpdateNotificationService.notifyAfterAutomaticRun(courseId, claimedCount, null);
             return;
         }
-
         // Once a prompt was built, count only the learning objects that reached it: claimed units dropped before the
         // prompt (deleted, ineligible, blank after extraction, failed extraction) were never processed by this run.
         int changeCount = result != null && result.processedCount() != null ? result.processedCount() : claimedCount;
+        // Opt-in e-mail report next to the websocket summary; the service decides which outcomes are reported.
+        competencyUpdateNotificationService.notifyAfterAutomaticRun(courseId, changeCount, result);
         CompetencyOrchestrationResultDTO.Status status = result == null ? null : result.status();
         if (result != null && (result.failureReason() == CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED
                 || result.failureReason() == CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION)) {
