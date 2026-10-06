@@ -10,6 +10,7 @@ import { CourseNotificationSettingSpecification } from 'app/notification/shared/
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
 import { CourseNotificationViewingStatus } from 'app/notification/shared/entities/course-notification/course-notification-viewing-status';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Component for configuring notification settings for a specific notification type.
@@ -17,7 +18,7 @@ import { CourseNotificationService } from 'app/notification/course-notification/
  */
 @Component({
     selector: 'jhi-course-notification-setting-specification-card',
-    imports: [TranslateDirective, CourseNotificationComponent, FormsModule],
+    imports: [TranslateDirective, CourseNotificationComponent, FormsModule, ArtemisTranslatePipe],
     templateUrl: './course-notification-setting-specification-card.component.html',
     styleUrls: ['./course-notification-setting-specification-card.component.scss'],
 })

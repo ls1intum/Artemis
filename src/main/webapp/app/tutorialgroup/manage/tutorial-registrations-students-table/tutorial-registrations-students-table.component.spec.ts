@@ -42,6 +42,16 @@ describe('TutorialRegistrationsStudentsTable', () => {
         vi.restoreAllMocks();
     });
 
+    it('should associate column headers and data rows in the same table', () => {
+        fixture.componentRef.setInput('students', [firstStudent]);
+        fixture.detectChanges();
+
+        const tables = fixture.nativeElement.querySelectorAll('table');
+        expect(tables).toHaveLength(1);
+        expect(tables[0].querySelectorAll('thead th[scope="col"]')).toHaveLength(4);
+        expect(tables[0].querySelectorAll('tbody tr')).toHaveLength(1);
+    });
+
     it('should render one table row per input student', () => {
         fixture.componentRef.setInput('students', [firstStudent, secondStudent]);
         fixture.detectChanges();
