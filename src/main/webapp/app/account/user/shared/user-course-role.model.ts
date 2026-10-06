@@ -8,5 +8,6 @@ export interface UserCourseRole {
     courseId: number;
     courseTitle?: string;
     courseShortName?: string;
+    courseSemester?: string;
     role: CourseRoleName;
 }

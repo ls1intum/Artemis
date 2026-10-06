@@ -81,17 +81,19 @@
             },
             "courseRoles": {
                 "title": "Kursrollen",
-                "loadError": "Die Kursrollen dieser Person konnten nicht geladen werden.",
+                "loadError": "Die Kursrollen dieser Nutzer:in konnten nicht geladen werden.",
                 "empty": {
                     "title": "Keine Kursrollen",
-                    "description": "Diese Person ist in keinem Kurs eingeschrieben."
+                    "description": "Diese:r Nutzer:in hat in keinem Kurs eine Rolle."
                 },
                 "roles": {
                     "instructor": "Lehrende",
                     "editor": "Editor:innen",
                     "tutor": "Tutor:innen",
                     "student": "Studierende"
-                }
+                },
+                "retry": "Erneut versuchen",
+                "courseCount": "Kurse: {{ count }}"
             },
             "login": "Login",
             "firstName": "Vorname",

@@ -316,7 +316,7 @@ public class AdminUserResource {
     /**
      * GET users/:login/course-roles : get the course roles of the "login" user.
      * <p>
-     * Returns one entry per course and role (a user can hold several roles in one course), ordered by course title.
+     * Returns one entry per course and role (a user can hold several roles in one course), ordered by course id.
      *
      * @param login the login of the user whose course roles should be returned
      * @return the ResponseEntity with status 200 (OK) and the course roles of the user (empty if the user is in no course), or 404 (Not Found) if the user does not exist

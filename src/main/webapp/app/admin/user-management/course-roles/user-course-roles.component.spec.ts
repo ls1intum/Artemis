@@ -37,8 +37,10 @@ describe('UserCourseRolesComponent', () => {
             artemisApp: {
                 userManagement: {
                     courseRoles: {
-                        title: 'Course roles',
+                        title: 'Course Roles',
                         loadError: 'Could not load',
+                        retry: 'Try again',
+                        courseCount: 'Courses: {{ count }}',
                         empty: { title: 'No course roles', description: 'No course.' },
                         roles: { instructor: 'Instructors', editor: 'Editors', tutor: 'Tutors', student: 'Students' },
                     },
@@ -89,17 +91,71 @@ describe('UserCourseRolesComponent', () => {
         expect(groups.map((group) => group.getAttribute('data-testid'))).toEqual(['user-course-roles-group-INSTRUCTOR', 'user-course-roles-group-STUDENT']);
 
         expect(courseTitles(groups[0])).toEqual(['Algorithms']);
-        expect(courseTitles(groups[1])).toEqual(['Databases', 'Algorithms', 'Compilers']);
-        expect(groups[1].querySelector('[data-testid="user-course-roles-course"] span')?.textContent).toBe('DB');
-        expect(groups[1].querySelector('h3')?.textContent).toContain('Students');
-        expect(groups[1].querySelector('h3')?.textContent).toContain('3');
+        expect(courseTitles(groups[1])).toEqual(['Algorithms', 'Compilers', 'Databases']);
+    });
+
+    it('sorts every group by the displayed label according to the language, then by id, whatever order the server sends', async () => {
+        await respondWith([
+            { courseId: 9, courseTitle: 'Zebra', courseShortName: 'ZEB', role: 'STUDENT' },
+            { courseId: 8, courseTitle: 'algorithms', courseShortName: 'ALGO-B', courseSemester: 'SS26', role: 'STUDENT' },
+            { courseId: 7, courseTitle: 'Algorithms', courseShortName: 'ALGO-A', courseSemester: 'WS25', role: 'STUDENT' },
+            { courseId: 6, courseShortName: 'Courses without title sort by short name', role: 'STUDENT' },
+            { courseId: 5, courseTitle: 'Äpfel', courseShortName: 'AEP', role: 'STUDENT' },
+            { courseId: 4, courseTitle: 'Course 10', role: 'STUDENT' },
+            { courseId: 3, courseTitle: 'Course 2', role: 'STUDENT' },
+        ]);
+
+        const group = element().querySelector('[data-testid="user-course-roles-group-STUDENT"]')!;
+        expect(courseTitles(group)).toEqual(['Algorithms', 'algorithms', 'Äpfel', 'Course 2', 'Course 10', 'Courses without title sort by short name', 'Zebra']);
+        // Equal titles keep their id order.
+        const links = Array.from(group.querySelectorAll('[data-testid="user-course-roles-course"] a')).map((link) => link.getAttribute('href'));
+        expect(links.slice(0, 2)).toEqual(['/course-management/7', '/course-management/8']);
+    });
+
+    it('shows short name and semester next to the title, so courses with the same title can be told apart', async () => {
+        await respondWith([
+            { courseId: 1, courseTitle: 'Algorithms', courseShortName: 'ALGO25', courseSemester: 'WS25', role: 'STUDENT' },
+            { courseId: 2, courseTitle: 'Databases', courseShortName: 'DB', role: 'STUDENT' },
+            { courseId: 3, courseTitle: 'Compilers', role: 'STUDENT' },
+        ]);
+
+        const details = Array.from(element().querySelectorAll('[data-testid="user-course-roles-course"]')).map(
+            (course) => course.querySelector('[data-testid="user-course-roles-details"]')?.textContent ?? null,
+        );
+        expect(details).toEqual(['ALGO25 · WS25', null, 'DB']);
+    });
+
+    it('presents a real heading for the card and each role without landmarks, and keeps the list semantics', async () => {
+        await respondWith(courseRoles);
+
+        expect(element().querySelector('h2')?.textContent).toBe('Course Roles');
+        expect(element().querySelector('section')).toBeNull();
+        const group = element().querySelector('[data-testid="user-course-roles-group-STUDENT"]')!;
+        expect(group.getAttribute('role')).toBe('group');
+        const heading = group.querySelector('h3')!;
+        expect(group.getAttribute('aria-labelledby')).toBe(heading.id);
+        expect(heading.textContent).toBe('Students');
+        expect(group.querySelector('ul')?.getAttribute('role')).toBe('list');
+        // The count is spoken as text of its own, outside the heading.
+        expect(group.querySelector('.sr-only')?.textContent).toBe('Courses: 3');
+    });
+
+    it.each([
+        ['INSTRUCTOR', 'Instructors'],
+        ['EDITOR', 'Editors'],
+        ['TEACHING_ASSISTANT', 'Tutors'],
+        ['STUDENT', 'Students'],
+    ] as const)('names the %s group with the translation of %s', async (role, label) => {
+        await respondWith([{ courseId: 1, courseTitle: 'Algorithms', role }]);
+
+        expect(element().querySelector(`[data-testid="user-course-roles-group-${role}"] h3`)?.textContent).toBe(label);
     });
 
     it('links every course to its course management page', async () => {
         await respondWith(courseRoles);
 
         const hrefs = Array.from(element().querySelectorAll('[data-testid="user-course-roles-course"] a')).map((link) => link.getAttribute('href'));
-        expect(hrefs).toEqual(['/course-management/1', '/course-management/2', '/course-management/1', '/course-management/3']);
+        expect(hrefs).toEqual(['/course-management/1', '/course-management/1', '/course-management/3', '/course-management/2']);
     });
 
     it('labels a course without a title by its short name or id, so the link is never empty', async () => {
@@ -109,7 +165,7 @@ describe('UserCourseRolesComponent', () => {
         ]);
 
         const links = Array.from(element().querySelectorAll('[data-testid="user-course-roles-course"] a'));
-        expect(links.map((link) => link.textContent)).toEqual(['NOTITLE', '6']);
+        expect(links.map((link) => link.textContent)).toEqual(['6', 'NOTITLE']);
         expect(element().querySelectorAll('[data-testid="user-course-roles-course"] a + span')).toHaveLength(0);
     });
 
@@ -120,7 +176,7 @@ describe('UserCourseRolesComponent', () => {
         expect(element().querySelector('[data-testid^="user-course-roles-group-"]')).toBeNull();
     });
 
-    it('shows an error message when the course roles cannot be loaded', async () => {
+    it('shows an error message with a retry that loads the course roles again', async () => {
         fixture.detectChanges();
         httpMock.expectOne(courseRolesUrl).flush('error', { status: 500, statusText: 'Server Error' });
         await fixture.whenStable();
@@ -128,6 +184,15 @@ describe('UserCourseRolesComponent', () => {
 
         expect(element().querySelector('[data-testid="user-course-roles-error"]')).not.toBeNull();
         expect(element().querySelector('[data-testid="user-course-roles-empty"]')).toBeNull();
+
+        (element().querySelector('[data-testid="user-course-roles-retry"] button') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        httpMock.expectOne({ method: 'GET', url: courseRolesUrl }).flush(courseRoles);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(element().querySelector('[data-testid="user-course-roles-error"]')).toBeNull();
+        expect(element().querySelectorAll('[data-testid="user-course-roles-course"]')).toHaveLength(4);
     });
 
     it('reloads the course roles when the login changes', async () => {

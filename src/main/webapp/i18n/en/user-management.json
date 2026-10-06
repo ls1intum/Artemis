@@ -80,18 +80,20 @@
                 "title": "User"
             },
             "courseRoles": {
-                "title": "Course roles",
+                "title": "Course Roles",
                 "loadError": "The course roles of this user could not be loaded.",
                 "empty": {
                     "title": "No course roles",
-                    "description": "This user is not a member of any course."
+                    "description": "This user does not have a role in any course."
                 },
                 "roles": {
                     "instructor": "Instructors",
                     "editor": "Editors",
                     "tutor": "Tutors",
                     "student": "Students"
-                }
+                },
+                "retry": "Try again",
+                "courseCount": "Courses: {{ count }}"
             },
             "login": "Login",
             "firstName": "First name",
