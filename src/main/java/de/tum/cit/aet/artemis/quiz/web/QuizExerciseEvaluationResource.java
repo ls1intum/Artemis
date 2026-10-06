@@ -90,7 +90,13 @@ public class QuizExerciseEvaluationResource {
     public ResponseEntity<Void> evaluateQuizExercise(@PathVariable Long quizExerciseId) {
         log.debug("REST request to evaluate quiz exercise {}", quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
-        if (!quizExercise.isQuizEnded()) {
+        if (quizExercise.isTestExamExercise()) {
+            // a test exam has no common end: each attempt is evaluated when it is handed in, so evaluating all of them would also score attempts that are still open or abandoned
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizOfTestExam", "Quizzes of test exams are evaluated when the attempt is handed in."))
+                    .build();
+        }
+        if (!hasQuizEnded(quizExercise)) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotEndedYet", "Quiz hasn't ended yet.")).build();
         }
 
@@ -119,16 +125,11 @@ public class QuizExerciseEvaluationResource {
         log.info("REST request to re-evaluate quiz exercise : {}", quizExerciseId);
         QuizExercise originalQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndBatchesElseThrow(quizExerciseId);
 
-        if (originalQuizExercise.isExamExercise()) {
-            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
-            // Re-evaluation of an exam quiz is only possible if all students finished their exam
-            ZonedDateTime latestIndividualExamEndDate = api.getLatestIndividualExamEndDate(originalQuizExercise.getExerciseGroup().getExam());
-            if (latestIndividualExamEndDate == null || latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
+        if (!hasQuizEnded(originalQuizExercise)) {
+            if (originalQuizExercise.isExamExercise()) {
                 throw new BadRequestAlertException("The exam of the quiz exercise has not ended yet. Re-evaluation is only allowed after an exam has ended.", ENTITY_NAME,
                         "examOfQuizExerciseNotEnded");
             }
-        }
-        else if (!originalQuizExercise.isQuizEnded()) {
             throw new BadRequestAlertException("The quiz exercise has not ended yet. Re-evaluation is only allowed after a quiz has ended.", ENTITY_NAME, "quizExerciseNotEnded");
         }
 
@@ -143,4 +144,19 @@ public class QuizExerciseEvaluationResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Checks whether the quiz is over. An exam quiz never has a due date of its own: it is over once all students of a real exam have finished their exam, including individual
+     * working time extensions.
+     *
+     * @param quizExercise the quiz exercise to check
+     * @return true if the quiz (or, for an exam quiz, the exam of all students) has ended
+     */
+    private boolean hasQuizEnded(QuizExercise quizExercise) {
+        if (!quizExercise.isExamExercise()) {
+            return quizExercise.isQuizEnded();
+        }
+        ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+        ZonedDateTime latestIndividualExamEndDate = api.getLatestIndividualExamEndDate(quizExercise.getExerciseGroup().getExam());
+        return latestIndividualExamEndDate != null && !latestIndividualExamEndDate.isAfter(ZonedDateTime.now());
+    }
 }
