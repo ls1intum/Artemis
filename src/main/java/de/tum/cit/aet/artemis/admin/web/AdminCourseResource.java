@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +20,7 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,6 +28,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,6 +51,7 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseCreateDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForRoleAssignmentDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseOperationProgressDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -66,6 +72,7 @@ import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateServi
  * <li>Deleting courses and all associated data</li>
  * <li>Resetting courses to remove student data while preserving structure</li>
  * <li>Retrieving summaries of what will be affected by delete/reset operations</li>
+ * <li>Searching all courses to choose one in which a course role is assigned to a user</li>
  * </ul>
  * <p>
  * All endpoints in this controller require admin privileges (enforced by {@link EnforceAdmin}).
@@ -86,6 +93,8 @@ public class AdminCourseResource {
     private static final Logger log = LoggerFactory.getLogger(AdminCourseResource.class);
 
     private static final int MAX_TITLE_LENGTH = 255;
+
+    private static final int MAX_SEARCH_TERM_LENGTH = 100;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -192,6 +201,23 @@ public class AdminCourseResource {
         searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(finalCourse)));
 
         return ResponseEntity.created(new URI("/api/admin/courses/" + createdCourse.getId())).body(DomainObjectDTO.of(createdCourse));
+    }
+
+    /**
+     * GET courses/for-role-assignment : search the courses in which an administrator can assign a course role to a user.
+     * Matches the title and the short name of all courses, ignoring case. A blank search term finds nothing.
+     * A course whose short name equals the term comes first, then those whose short name starts with it, then the others, the most recently started first.
+     *
+     * @param searchTerm the text to look for in the title and the short name of the courses, at most 100 characters
+     * @param size       the maximum number of courses to return
+     * @return the ResponseEntity with status 200 (OK) and the matching courses in that order
+     */
+    @FeatureUsage(UserFeature.USER_MANAGEMENT)
+    @GetMapping("courses/for-role-assignment")
+    public ResponseEntity<List<CourseForRoleAssignmentDTO>> getCoursesForRoleAssignment(@RequestParam(defaultValue = "") @Size(max = MAX_SEARCH_TERM_LENGTH) String searchTerm,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size) {
+        log.debug("REST request to search courses for the assignment of a course role: {}", searchTerm);
+        return ResponseEntity.ok(courseRepository.searchForRoleAssignment(searchTerm, PageRequest.of(0, size)));
     }
 
     /**

@@ -835,6 +835,25 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         assertThat(storedLinks).hasSize(1);
         assertThat(storedLinks.getFirst().getCompetency().getId()).isEqualTo(competency.getId());
         assertThat(storedLinks.getFirst().getWeight()).isEqualTo(1);
+        assertThat(storedLinks.getFirst().isGeneratedByAi()).isFalse();
+    }
+
+    /**
+     * The import form shows Hyperion's checklist too, so links it inferred must keep their AI origin when the exercise is
+     * created from a file, just like on setup and update.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_withHyperionCompetencyLink_persistsAiProvenance() throws Exception {
+
+        ImportFileResult importResult = programmingExerciseImportTestService.prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> {
+            exercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, exercise, 1)));
+            exercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
+            return null;
+        }, course, Set.of(competency.getId()));
+
+        List<CompetencyExerciseLink> storedLinks = competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importResult.importedExercise().id());
+        assertThat(storedLinks).singleElement().satisfies(link -> assertThat(link.isGeneratedByAi()).isTrue());
     }
 
     /**
