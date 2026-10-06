@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -131,7 +132,7 @@ public class CompetencyOrchestrationService {
 
     private final AtlasMLShortlistService shortlistService;
 
-    private volatile DistributedMap<Long, RunInfo> runMap;
+    private final AtomicReference<DistributedMap<Long, RunInfo>> runMap = new AtomicReference<>();
 
     public CompetencyOrchestrationService(ExerciseRepository exerciseRepository, ContentExtractionService contentExtractionService,
             OrchestratorPlanningToolsService orchestratorPlanningToolsService, AtlasPromptTemplateService templateService, AtlasAgentDelegationService delegationService,
@@ -166,13 +167,13 @@ public class CompetencyOrchestrationService {
 
     /** Per-course IN_PROGRESS guard map, resolved lazily (see {@link #resolveRunMap}). */
     private DistributedMap<Long, RunInfo> runMap() {
-        DistributedMap<Long, RunInfo> resolved = runMap;
+        DistributedMap<Long, RunInfo> resolved = runMap.get();
         if (resolved == null) {
             synchronized (this) {
-                resolved = runMap;
+                resolved = runMap.get();
                 if (resolved == null) {
                     resolved = resolveRunMap();
-                    runMap = resolved;
+                    runMap.set(resolved);
                 }
             }
         }

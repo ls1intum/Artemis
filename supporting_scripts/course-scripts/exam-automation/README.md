@@ -27,7 +27,7 @@ The runner will ensure a virtual environment exists, install dependencies, and e
 If you prefer to run scripts manually:
 
 1) Prerequisites
-- Python 3.8 or higher
+- Python 3.10 or higher
 - pip
 - Running Artemis instance (local or test server)
 - Admin access to the Artemis instance
@@ -45,7 +45,7 @@ venv\Scripts\activate
 3) Install dependencies
 
 ```shell
-pip install -r requirements.txt
+python -m pip install --require-hashes -r requirements.txt
 ```
 
 4) Configure environment (see Configuration below) and start your Artemis instance

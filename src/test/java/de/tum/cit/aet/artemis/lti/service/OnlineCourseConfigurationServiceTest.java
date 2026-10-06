@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -94,6 +95,17 @@ class OnlineCourseConfigurationServiceTest {
 
         assertThatThrownBy(() -> onlineCourseConfigurationService.addOnlineCourseConfigurationToLtiConfigurations(onlineCourseConfiguration))
                 .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
+    void addOnlineCourseConfigurationToLtiConfigurationsThrowsForUnpersistedPlatform() {
+        LtiPlatformConfiguration ltiPlatformConfiguration = getMockLtiPlatformConfiguration();
+        ltiPlatformConfiguration.setId(null);
+        OnlineCourseConfiguration onlineCourseConfiguration = getMockOnlineCourseConfiguration(ltiPlatformConfiguration);
+
+        assertThatThrownBy(() -> onlineCourseConfigurationService.addOnlineCourseConfigurationToLtiConfigurations(onlineCourseConfiguration))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("not been persisted");
+        verifyNoInteractions(ltiPlatformConfigurationRepository);
     }
 
     @Test

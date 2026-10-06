@@ -136,7 +136,7 @@ jobs:
     with:
       ref: ${{ needs.determine-build-context.outputs.head_sha }}
       image-name: ls1intum/artemis
-      docker-file: ./docker/artemis/Dockerfile
+      docker-file: ./deployment/docker/artemis/Dockerfile
       tags: ${{ needs.determine-build-context.outputs.tag }}
 
   # PR / develop / main: the exact commit's `sha-<commit>` image must already exist in the registry.
@@ -155,7 +155,7 @@ jobs:
       # from the branch being deployed). Keep it out of the root workspace: sparse checkouts mutate
       # the worktree.
       - name: Check out verify action
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           sparse-checkout: .github/actions/verify-image-build
           sparse-checkout-cone-mode: false
@@ -206,9 +206,9 @@ jobs:
       # wget of the script from a mutable URL. Helios dispatches this workflow from the branch being
       # deployed, and test-server deploys are limited to accredited developers.
       - name: Check out deploy CLI
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          sparse-checkout: artemis-server-cli
+          sparse-checkout: deployment/artemis-server-cli
           sparse-checkout-cone-mode: false
           path: ${{ env.WORKFLOW_CHECKOUT_ROOT }}/deploy-cli
 
@@ -236,8 +236,8 @@ jobs:
           DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
         run: |
           set -Eeuo pipefail
-          chmod +x "${WORKFLOW_CHECKOUT_ROOT}/deploy-cli/artemis-server-cli"
-          "${WORKFLOW_CHECKOUT_ROOT}/deploy-cli/artemis-server-cli" docker-deploy "$DEPLOYMENT_USER@$DEPLOYMENT_HOSTS" \
+          chmod +x "${WORKFLOW_CHECKOUT_ROOT}/deploy-cli/deployment/artemis-server-cli"
+          "${WORKFLOW_CHECKOUT_ROOT}/deploy-cli/deployment/artemis-server-cli" docker-deploy "$DEPLOYMENT_USER@$DEPLOYMENT_HOSTS" \
             -g "$GATEWAY_USER@$GATEWAY_HOST" \
             -t "$TAG" -b "$BRANCH_NAME" -d "$DEPLOYMENT_FOLDER" -y
 

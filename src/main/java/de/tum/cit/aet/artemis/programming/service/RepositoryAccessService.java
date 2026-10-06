@@ -50,6 +50,22 @@ public class RepositoryAccessService {
     }
 
     /**
+     * Resolves the course of the exercise. The course cannot be resolved from a masked exam graph, in which case the
+     * access check fails closed instead of dereferencing null.
+     *
+     * @param exercise the exercise whose course is needed
+     * @return the course of the exercise
+     * @throws AccessForbiddenException if the course cannot be resolved
+     */
+    private static Course getCourseOrThrow(ProgrammingExercise exercise) {
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new AccessForbiddenException("The course of this programming exercise could not be resolved.");
+        }
+        return course;
+    }
+
+    /**
      * Checks if the user has access to the repository of the given participation.
      * Throws an {@link AccessForbiddenException} otherwise.
      *
@@ -61,7 +77,7 @@ public class RepositoryAccessService {
      */
     public void checkAccessRepositoryElseThrow(ProgrammingExerciseParticipation programmingParticipation, User user, ProgrammingExercise programmingExercise,
             RepositoryActionType repositoryActionType) throws AccessForbiddenException {
-        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        Course course = getCourseOrThrow(programmingExercise);
         // Each of these resolves in memory when the user was loaded with its course roles, and costs a query otherwise, so
         // none of them is evaluated before its answer is actually needed. A student, the overwhelmingly common caller on
         // this path, reaches only isAtLeastStudentInCourse.
@@ -234,12 +250,12 @@ public class RepositoryAccessService {
      */
     public void checkAccessTestOrAuxRepositoryElseThrow(boolean atLeastEditor, ProgrammingExercise exercise, User user, String repositoryType) {
         if (atLeastEditor) {
-            if (!authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+            if (!authorizationCheckService.isAtLeastEditorInCourse(getCourseOrThrow(exercise), user)) {
                 throw new AccessForbiddenException("You are not allowed to push to the " + repositoryType + " repository of this programming exercise.");
             }
         }
         else {
-            if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+            if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(getCourseOrThrow(exercise), user)) {
                 throw new AccessForbiddenException("You are not allowed to access the " + repositoryType + " repository of this programming exercise.");
             }
         }
@@ -256,8 +272,8 @@ public class RepositoryAccessService {
     public void checkHasAccessToPlagiarismSubmission(ProgrammingExerciseParticipation programmingParticipation, User user, RepositoryActionType repositoryActionType)
             throws AccessForbiddenException {
         if (repositoryActionType == RepositoryActionType.READ) {
-            boolean isAtLeastTeachingAssistant = authorizationCheckService
-                    .isAtLeastTeachingAssistantInCourse(programmingParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember(), user);
+            boolean isAtLeastTeachingAssistant = authorizationCheckService.isAtLeastTeachingAssistantInCourse(getCourseOrThrow(programmingParticipation.getProgrammingExercise()),
+                    user);
             if (isAtLeastTeachingAssistant) {
                 return;
             }
@@ -270,7 +286,7 @@ public class RepositoryAccessService {
     }
 
     public void checkHasAccessToOfflineIDEElseThrow(ProgrammingExercise exercise, User user) throws AccessForbiddenException {
-        if (Boolean.FALSE.equals(exercise.isAllowOfflineIde()) && authorizationCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+        if (Boolean.FALSE.equals(exercise.isAllowOfflineIde()) && authorizationCheckService.isOnlyStudentInCourse(getCourseOrThrow(exercise), user)) {
             throw new AccessForbiddenException();
         }
     }
@@ -279,7 +295,7 @@ public class RepositoryAccessService {
         boolean isAllowedRepository = repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())
                 || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString());
 
-        return isAllowedRepository && authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        return isAllowedRepository && authorizationCheckService.isAtLeastEditorInCourse(getCourseOrThrow(exercise), user);
     }
 
 }

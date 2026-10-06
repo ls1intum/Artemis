@@ -297,7 +297,8 @@ public class ExerciseResource {
         if (exercise.isExamExercise()) {
             // let the client explain why assessment is not possible yet and from when on it is, instead of running into a 403
             ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
-            var examAssessmentDates = ExerciseDateService.computeExamAssessmentDates(exercise, api.getLatestIndividualExamEndDate(exercise.getExam()));
+            var exam = exercise.getExam();
+            var examAssessmentDates = ExerciseDateService.computeExamAssessmentDates(exercise, exam, api.getLatestIndividualExamEndDate(exam));
             if (examAssessmentDates != null) {
                 exercise.setLatestExamEndDate(examAssessmentDates.latestExamEndDate());
                 exercise.setAssessmentPossibleFrom(examAssessmentDates.assessmentPossibleFrom());

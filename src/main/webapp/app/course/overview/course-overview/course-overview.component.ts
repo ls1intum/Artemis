@@ -51,7 +51,15 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      * sidebar header already carries the page identity and the collapse control; a second bar above it would only
      * repeat it. Those pages can still project content, which is what keeps the communication search bar working.
      */
-    protected readonly showCourseTitleBar = computed(() => !this.hasSidebar() || !!(this.courseTitleBarService.actionsTemplate() || this.courseTitleBarService.titleTemplate()));
+    protected readonly showCourseTitleBar = computed(
+        () => !this.isolatedView() && (!this.hasSidebar() || !!(this.courseTitleBarService.actionsTemplate() || this.courseTitleBarService.titleTemplate())),
+    );
+
+    /**
+     * Whether the active page is shown on its own (route data `isolatedView`, e.g. a text unit in full screen). The
+     * course sidebar and the title bar are dropped then, so that only the main navbar and the footer remain around it.
+     */
+    protected readonly isolatedView = signal(false);
 
     private toggleSidebarEventSubscription?: Subscription;
     private examStartedSubscription?: Subscription;
@@ -89,6 +97,10 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     }
 
     private async initializeCourseOverviewComponent(): Promise<void> {
+        // The router outlet only activates once the course is loaded, so a page opened directly (reload, shared link)
+        // would otherwise show the sidebar until then.
+        this.isolatedView.set(!!this.route.snapshot.firstChild?.data?.isolatedView);
+
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
             this.isSidebarCollapsed.update((value) => this.activatedComponentReference()?.isCollapsed() ?? !value);
         });
@@ -283,6 +295,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     }
 
     protected handleComponentActivation(componentRef: unknown): void {
+        this.isolatedView.set(!!this.route.snapshot.firstChild?.data?.isolatedView);
+
         const sidebarView = isSidebarView(componentRef) ? componentRef : undefined;
         if (sidebarView) {
             this.activatedComponentReference.set(sidebarView);
