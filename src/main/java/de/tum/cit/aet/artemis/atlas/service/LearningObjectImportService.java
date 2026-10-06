@@ -179,6 +179,7 @@ public class LearningObjectImportService {
 
                     CourseCompetency importedCompetency = idToImportedCompetency.get(sourceCourseCompetency.getId()).competency();
                     CompetencyExerciseLink link = new CompetencyExerciseLink(importedCompetency, importedExercise, sourceExerciseLink.getWeight());
+                    link.setGeneratedByAi(sourceExerciseLink.isGeneratedByAi());
                     link = competencyExerciseLinkRepository.save(link);
                     importedExercise.getCompetencyLinks().add(link);
                     importedCompetency.getExerciseLinks().add(link);
@@ -371,6 +372,7 @@ public class LearningObjectImportService {
 
         CourseCompetency importedCompetency = idToImportedCompetency.get(sourceCourseCompetency.getId()).competency();
         CompetencyLectureUnitLink link = new CompetencyLectureUnitLink(importedCompetency, importedLectureUnit, sourceLectureUnitLink.getWeight());
+        link.setGeneratedByAi(sourceLectureUnitLink.isGeneratedByAi());
         link = competencyLectureUnitLinkRepository.save(link);
         importedLectureUnit.getCompetencyLinks().add(link);
         importedCompetency.getLectureUnitLinks().add(link);

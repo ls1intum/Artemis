@@ -69,6 +69,8 @@ export class CourseNotificationSettingSpecificationCardComponent {
                         exerciseTitle: 'Modeling 123',
                         unitName: 'Modeling 123',
                         groupTitle: 'Grp 123',
+                        appliedCount: 3,
+                        exerciseCount: 2,
                     },
                     '/',
                 ),
