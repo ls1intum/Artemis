@@ -38,6 +38,9 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     private static final String TEST_PREFIX = "courserequest";
 
+    /** A fixed point in the past, so the start dates of the course fixtures and their ordering are repeatable. */
+    private static final ZonedDateTime FIXED_START = ZonedDateTime.parse("2026-01-01T00:00:00Z");
+
     @Autowired
     private CourseRequestRepository courseRequestRepository;
 
@@ -438,7 +441,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         User firstRequester = userUtilService.createAndSaveUser(TEST_PREFIX + "previousinstructor1");
         User secondRequester = userUtilService.createAndSaveUser(TEST_PREFIX + "previousinstructor2");
         User otherInstructor = userUtilService.createAndSaveUser(TEST_PREFIX + "otherinstructor");
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = FIXED_START;
         Course oldest = createCourseStartingAt("PREVINSA", now.minusYears(2));
         Course newest = createCourseStartingAt("PREVINSB", now.minusMonths(1));
         Course middle = createCourseStartingAt("PREVINSC", now.minusYears(1));
@@ -474,7 +477,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void getAdminOverview_requesterWithoutInstructorCourses_hasZeroCountAndNoCourses() throws Exception {
         User requester = userUtilService.createAndSaveUser(TEST_PREFIX + "noinstructor");
-        Course tutorCourse = createCourseStartingAt("NOINSTTUT", ZonedDateTime.now().minusMonths(1));
+        Course tutorCourse = createCourseStartingAt("NOINSTTUT", FIXED_START.minusMonths(1));
         userUtilService.enrollUserInCourse(requester, tutorCourse, CourseRole.TEACHING_ASSISTANT);
         createTestCourseRequestFor(requester, "No Instructor", "NOINSREQ");
 
@@ -489,11 +492,10 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void updateCourseRequest_keepsTheInstructorCoursesOfTheRequester() throws Exception {
         User requester = userUtilService.createAndSaveUser(TEST_PREFIX + "updateinstructor");
-        Course instructed = createCourseStartingAt("UPDINSA", ZonedDateTime.now().minusMonths(1));
+        Course instructed = createCourseStartingAt("UPDINSA", FIXED_START.minusMonths(1));
         userUtilService.enrollUserInCourse(requester, instructed, CourseRole.INSTRUCTOR);
         CourseRequest pending = createTestCourseRequestFor(requester, "Update Instructor", "UPDINSREQ");
-        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "UPDINSREQ", "SS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
-                "Updated reason.");
+        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "UPDINSREQ", "SS2025", FIXED_START, FIXED_START.plusMonths(3), false, "Updated reason.");
 
         CourseRequestDTO result = request.putWithResponseBody("/api/admin/course-requests/" + pending.getId(), updateDTO, CourseRequestDTO.class, HttpStatus.OK);
 
