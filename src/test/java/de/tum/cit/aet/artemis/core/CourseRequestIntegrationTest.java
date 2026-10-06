@@ -472,6 +472,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(result.shortName()).isEqualTo("UPDTTIT");
         assertThat(result.semester()).isEqualTo("SS2025");
         assertThat(result.testCourse()).isTrue();
+        // the request was a regular, grade-relevant one; marking it as test course without a value makes it not grade relevant
+        assertThat(result.gradeRelevant()).isFalse();
         assertThat(result.reason()).isEqualTo("Updated reason for the course request.");
         assertThat(result.status()).isEqualTo(CourseRequestStatus.PENDING);
     }
@@ -626,21 +628,76 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void acceptCourseRequest_appliesGradeRelevantToCreatedCourse() throws Exception {
+    void acceptCourseRequest_appliesNotGradeRelevantToCreatedRegularCourse() throws Exception {
         CourseRequest notGradeRelevant = createTestCourseRequest("Not Grade Relevant", "GRDNO");
         notGradeRelevant.setGradeRelevant(false);
         courseRequestRepository.save(notGradeRelevant);
+
+        CourseRequestDTO result = request.postWithResponseBody("/api/admin/course-requests/" + notGradeRelevant.getId() + "/accept", null, CourseRequestDTO.class, HttpStatus.OK);
+
+        assertThat(result.gradeRelevant()).isFalse();
+        assertThat(courseConfigurationRepository.findByCourseId(result.createdCourseId()).orElseThrow().isGradeRelevant()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void acceptCourseRequest_appliesGradeRelevantToCreatedRegularCourse() throws Exception {
         CourseRequest gradeRelevant = createTestCourseRequest("Grade Relevant", "GRDYES");
 
-        CourseRequestDTO notGradeRelevantResult = request.postWithResponseBody("/api/admin/course-requests/" + notGradeRelevant.getId() + "/accept", null, CourseRequestDTO.class,
-                HttpStatus.OK);
-        CourseRequestDTO gradeRelevantResult = request.postWithResponseBody("/api/admin/course-requests/" + gradeRelevant.getId() + "/accept", null, CourseRequestDTO.class,
-                HttpStatus.OK);
+        CourseRequestDTO result = request.postWithResponseBody("/api/admin/course-requests/" + gradeRelevant.getId() + "/accept", null, CourseRequestDTO.class, HttpStatus.OK);
 
-        assertThat(notGradeRelevantResult.gradeRelevant()).isFalse();
-        assertThat(courseConfigurationRepository.findByCourseId(notGradeRelevantResult.createdCourseId()).orElseThrow().isGradeRelevant()).isFalse();
-        assertThat(gradeRelevantResult.gradeRelevant()).isTrue();
-        assertThat(courseConfigurationRepository.findByCourseId(gradeRelevantResult.createdCourseId()).orElseThrow().isGradeRelevant()).isTrue();
+        assertThat(result.gradeRelevant()).isTrue();
+        assertThat(courseConfigurationRepository.findByCourseId(result.createdCourseId()).orElseThrow().isGradeRelevant()).isTrue();
+    }
+
+    /**
+     * A test course request is stored as not grade relevant (the form never offers the option for a test course), but the created course keeps the safe default
+     * of the regular course creation. Otherwise the data retention of a test course that is later turned into a regular course would silently drop.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void acceptCourseRequest_keepsSafeGradeRelevantDefaultForCreatedTestCourse() throws Exception {
+        CourseRequest testCourseRequest = createTestCourseRequest("Test Course Request", "GRDTCR");
+        testCourseRequest.setTestCourse(true);
+        testCourseRequest.setGradeRelevant(false);
+        courseRequestRepository.save(testCourseRequest);
+
+        CourseRequestDTO result = request.postWithResponseBody("/api/admin/course-requests/" + testCourseRequest.getId() + "/accept", null, CourseRequestDTO.class, HttpStatus.OK);
+
+        assertThat(result.testCourse()).isTrue();
+        assertThat(result.gradeRelevant()).isFalse();
+        Course createdCourse = courseRepository.findById(result.createdCourseId()).orElseThrow();
+        assertThat(createdCourse.isTestCourse()).isTrue();
+        assertThat(courseConfigurationRepository.findByCourseId(createdCourse.getId()).orElseThrow().isGradeRelevant()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void updateCourseRequest_fromTestCourseToRegularCourse_defaultsToGradeRelevant() throws Exception {
+        CourseRequest testCourseRequest = createTestCourseRequest("Flip To Regular", "GRDFLP");
+        testCourseRequest.setTestCourse(true);
+        testCourseRequest.setGradeRelevant(false);
+        courseRequestRepository.save(testCourseRequest);
+        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Flip To Regular", "GRDFLP", "SS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false, null,
+                "Updated reason.");
+
+        CourseRequestDTO result = request.putWithResponseBody("/api/admin/course-requests/" + testCourseRequest.getId(), updateDTO, CourseRequestDTO.class, HttpStatus.OK);
+
+        assertThat(result.testCourse()).isFalse();
+        assertThat(result.gradeRelevant()).isTrue();
+        assertThat(courseRequestRepository.findById(testCourseRequest.getId()).orElseThrow().isGradeRelevant()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void createCourseRequest_responseSerializesNotGradeRelevant() throws Exception {
+        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("Test Course", "GRDJSN", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false, false,
+                "Reason for request.");
+        MvcResult result = request.performMvcRequest(MockMvcRequestBuilders.post(new URI("/api/course/course-requests")).contentType(MediaType.APPLICATION_JSON)
+                .content(request.getObjectMapper().writeValueAsString(createDTO))).andExpect(status().isCreated()).andReturn();
+
+        // NON_EMPTY must not drop a false value: the client reads a missing gradeRelevant as grade relevant
+        assertThat(result.getResponse().getContentAsString()).contains("\"gradeRelevant\":false");
     }
 
     private CourseRequestDTO postCreateRequest(String shortName, boolean testCourse, Boolean gradeRelevant) throws Exception {

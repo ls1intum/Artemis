@@ -90,16 +90,24 @@
     }
 
     <div class="flex items-center gap-2 mb-3">
-        <p-checkbox [inputId]="idPrefix() + 'testCourse'" [binary]="true" formControlName="testCourse" />
+        <tumaet-ui-checkbox [inputId]="idPrefix() + 'testCourse'" name="testCourse" formControlName="testCourse" />
         <label [for]="idPrefix() + 'testCourse'" jhiTranslate="artemisApp.courseRequest.form.testCourse"></label>
     </div>
 
     <div class="flex flex-col gap-1 mb-3">
         <div class="flex items-center gap-2">
-            <tumaet-ui-checkbox [inputId]="idPrefix() + 'gradeRelevant'" name="gradeRelevant" formControlName="gradeRelevant" />
+            <tumaet-ui-checkbox
+                [inputId]="idPrefix() + 'gradeRelevant'"
+                name="gradeRelevant"
+                [checked]="gradeRelevantChecked()"
+                [disabled]="isTestCourse()"
+                [ariaDescribedBy]="idPrefix() + 'gradeRelevantHint'"
+                (changed)="onGradeRelevantChange($event.checked)"
+            />
             <label [for]="idPrefix() + 'gradeRelevant'" jhiTranslate="artemisApp.courseRequest.form.gradeRelevant"></label>
         </div>
         <small
+            [id]="idPrefix() + 'gradeRelevantHint'"
             class="text-muted-color"
             [jhiTranslate]="isTestCourse() ? 'artemisApp.courseRequest.form.gradeRelevantTestCourseHint' : 'artemisApp.courseRequest.form.gradeRelevantHint'"
         ></small>

@@ -30,15 +30,8 @@
                         <div class="text-muted-color">{{ request.shortName }}</div>
                         @if (request.testCourse) {
                             <tumaet-ui-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
-                        }
-                        @if (!request.testCourse) {
-                            <tumaet-ui-tag
-                                [severity]="request.gradeRelevant ? 'success' : 'secondary'"
-                                [rounded]="true"
-                                [value]="
-                                    (request.gradeRelevant ? 'artemisApp.courseRequest.admin.gradeRelevant' : 'artemisApp.courseRequest.admin.notGradeRelevant') | artemisTranslate
-                                "
-                            />
+                        } @else if (request.gradeRelevant === false) {
+                            <tumaet-ui-tag severity="warn" [rounded]="true" [value]="'artemisApp.courseRequest.admin.notGradeRelevant' | artemisTranslate" />
                         }
                     </td>
                     <td>{{ request.semester }}</td>
@@ -147,15 +140,8 @@
                         <div class="text-muted-color">{{ request.shortName }}</div>
                         @if (request.testCourse) {
                             <tumaet-ui-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
-                        }
-                        @if (!request.testCourse) {
-                            <tumaet-ui-tag
-                                [severity]="request.gradeRelevant ? 'success' : 'secondary'"
-                                [rounded]="true"
-                                [value]="
-                                    (request.gradeRelevant ? 'artemisApp.courseRequest.admin.gradeRelevant' : 'artemisApp.courseRequest.admin.notGradeRelevant') | artemisTranslate
-                                "
-                            />
+                        } @else if (request.gradeRelevant === false) {
+                            <tumaet-ui-tag severity="warn" [rounded]="true" [value]="'artemisApp.courseRequest.admin.notGradeRelevant' | artemisTranslate" />
                         }
                         <div class="mt-1">
                             <tumaet-ui-tag

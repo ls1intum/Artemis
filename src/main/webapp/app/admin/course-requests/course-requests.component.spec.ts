@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
@@ -97,6 +98,7 @@ describe('CourseRequestsComponent', () => {
                 { provide: CourseRequestService, useValue: mockCourseRequestService },
                 { provide: AlertService, useValue: mockAlertService },
                 provideTranslateService(),
+                provideRouter([]),
             ],
         }).compileComponents();
 
@@ -491,46 +493,78 @@ describe('CourseRequestsComponent', () => {
         });
     });
 
-    describe('grade relevant', () => {
-        const renderedTags = (requests: CourseRequest[]): string[] => {
+    describe('grade-relevant', () => {
+        const render = (pending: CourseRequest[], decided: CourseRequest[] = []) => {
             const fixture = TestBed.createComponent(CourseRequestsComponent);
             fixture.detectChanges(); // ngOnInit loads the (mocked) overview
-            fixture.componentInstance.pendingRequests.set(requests);
+            fixture.componentInstance.pendingRequests.set(pending);
+            fixture.componentInstance.decidedRequests.set(decided);
             fixture.detectChanges();
-            return Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('tumaet-ui-tag')).map((tag) => tag.textContent?.trim() ?? '');
+            return fixture;
         };
+        const tagsOfRows = (fixture: ReturnType<typeof render>, tableIndex: number): string[][] =>
+            Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('table')[tableIndex].querySelectorAll('tbody tr')).map((row) =>
+                Array.from<HTMLElement>(row.querySelectorAll('tumaet-ui-tag')).map((tag) => tag.textContent?.trim() ?? ''),
+            );
 
-        it('should show the grade relevance of a regular course and none for a test course', () => {
-            const tags = renderedTags([
+        it('should tag only the exception in the pending table', () => {
+            const fixture = render([
                 { ...mockRequest, id: 1, gradeRelevant: true },
                 { ...mockRequest, id: 2, gradeRelevant: false },
                 { ...mockRequest, id: 3, testCourse: true, gradeRelevant: false },
+                { ...mockRequest, id: 4, gradeRelevant: undefined as unknown as boolean },
             ]);
 
-            expect(tags).toEqual(['artemisApp.courseRequest.admin.gradeRelevant', 'artemisApp.courseRequest.admin.notGradeRelevant', 'artemisApp.courseRequest.admin.testCourse']);
+            expect(tagsOfRows(fixture, 0)).toEqual([[], ['artemisApp.courseRequest.admin.notGradeRelevant'], ['artemisApp.courseRequest.admin.testCourse'], []]);
         });
 
-        beforeEach(() => {
-            component.selectedRequest.set(mockRequest);
-            component.editModalVisible.set(true);
-            mockCourseRequestService.updateRequest.mockReturnValue(of(mockRequest));
-            component.editForm.patchValue({ title: 'Updated Course', shortName: 'UC1', semester: 'WS25/26', reason: 'Updated reason' });
+        it('should tag only the exception in the decided table, next to the status', () => {
+            const fixture = render(
+                [],
+                [
+                    { ...mockAcceptedRequest, id: 1, gradeRelevant: true },
+                    { ...mockAcceptedRequest, id: 2, gradeRelevant: false },
+                    { ...mockRejectedRequest, id: 3, testCourse: true, gradeRelevant: false },
+                ],
+            );
+
+            expect(tagsOfRows(fixture, 1)).toEqual([
+                ['artemisApp.courseRequest.status.ACCEPTED'],
+                ['artemisApp.courseRequest.admin.notGradeRelevant', 'artemisApp.courseRequest.status.ACCEPTED'],
+                ['artemisApp.courseRequest.admin.testCourse', 'artemisApp.courseRequest.status.REJECTED'],
+            ]);
         });
 
-        it('should send a changed grade relevant value when saving an edit', () => {
-            component.editForm.patchValue({ gradeRelevant: false });
+        describe('editing', () => {
+            beforeEach(() => {
+                component.selectedRequest.set(mockRequest);
+                component.editModalVisible.set(true);
+                mockCourseRequestService.updateRequest.mockReturnValue(of(mockRequest));
+                component.editForm.patchValue({ title: 'Updated Course', shortName: 'UC1', semester: 'WS25/26', reason: 'Updated reason' });
+            });
 
-            component.saveEdit();
+            it('should send a changed grade-relevant value when saving an edit', () => {
+                component.editForm.patchValue({ gradeRelevant: false });
 
-            expect(courseRequestService.updateRequest).toHaveBeenCalledWith(1, expect.objectContaining({ testCourse: false, gradeRelevant: false }));
-        });
+                component.saveEdit();
 
-        it('should never send a test course as grade relevant', () => {
-            component.editForm.patchValue({ testCourse: true, gradeRelevant: true });
+                expect(courseRequestService.updateRequest).toHaveBeenCalledWith(1, expect.objectContaining({ testCourse: false, gradeRelevant: false }));
+            });
 
-            component.saveEdit();
+            it('should never send a test course as grade-relevant', () => {
+                component.editForm.patchValue({ testCourse: true, gradeRelevant: true });
 
-            expect(courseRequestService.updateRequest).toHaveBeenCalledWith(1, expect.objectContaining({ testCourse: true, gradeRelevant: false }));
+                component.saveEdit();
+
+                expect(courseRequestService.updateRequest).toHaveBeenCalledWith(1, expect.objectContaining({ testCourse: true, gradeRelevant: false }));
+            });
+
+            it('should offer the default choice when a test course request is opened for editing', () => {
+                component.openEditModal({ ...mockRequest, testCourse: true, gradeRelevant: false });
+
+                expect(component.editForm.get('testCourse')!.value).toBe(true);
+                expect(component.editForm.get('gradeRelevant')!.value).toBe(true);
+            });
         });
     });
 

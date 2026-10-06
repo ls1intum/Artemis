@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { provideTranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
-import { CheckboxModule } from 'primeng/checkbox';
 import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
 
 import { CourseRequestFormComponent } from 'app/course/request/course-request-form.component';
@@ -48,7 +48,6 @@ describe('CourseRequestFormComponent', () => {
                         InputTextModule,
                         TextareaModule,
                         SelectModule,
-                        CheckboxModule,
                         TumAetUiCheckboxComponent,
                         MockComponent(FormDateTimePickerComponent),
                         MockDirective(TranslateDirective),
@@ -199,56 +198,79 @@ describe('CourseRequestFormComponent', () => {
         expect(component.showReasonPlaceholder()).toBe(false);
     });
 
-    describe('grade relevant', () => {
-        const gradeRelevantControl = () => form.get('gradeRelevant')!;
+    describe('grade-relevant', () => {
+        const checkbox = () => fixture.nativeElement.querySelector('input#gradeRelevant') as HTMLInputElement;
+        const hint = () => fixture.nativeElement.querySelector('#gradeRelevantHint') as HTMLElement;
 
-        it('should show an enabled, checked grade relevant control for a regular course', () => {
-            expect(gradeRelevantControl().value).toBe(true);
-            expect(gradeRelevantControl().enabled).toBe(true);
-            expect(fixture.nativeElement.querySelector('#gradeRelevant')).not.toBeNull();
-            expect(fixture.nativeElement.querySelector('#gradeRelevant').disabled).toBe(false);
+        it('should show a checked, enabled checkbox for a regular course', () => {
+            expect(checkbox().checked).toBe(true);
+            expect(checkbox().disabled).toBe(false);
         });
 
-        it('should force the grade relevant control off and disable it when the course becomes a test course', () => {
+        it('should show the checkbox unchecked and disabled for a test course', () => {
             form.get('testCourse')!.setValue(true);
             fixture.detectChanges();
 
-            expect(gradeRelevantControl().value).toBe(false);
-            expect(gradeRelevantControl().disabled).toBe(true);
-            expect(fixture.nativeElement.querySelector('#gradeRelevant').disabled).toBe(true);
+            expect(checkbox().checked).toBe(false);
+            expect(checkbox().disabled).toBe(true);
         });
 
-        it('should track whether the course is a test course for the hint', () => {
-            expect(component['isTestCourse']()).toBe(false);
+        it('should describe the checkbox with the hint, also while it is disabled', () => {
+            expect(checkbox().getAttribute('aria-describedby')).toBe('gradeRelevantHint');
+            expect(hint()).not.toBeNull();
 
             form.get('testCourse')!.setValue(true);
             fixture.detectChanges();
 
-            expect(component['isTestCourse']()).toBe(true);
+            expect(checkbox().getAttribute('aria-describedby')).toBe('gradeRelevantHint');
+            expect(checkbox().disabled).toBe(true);
         });
 
-        it('should enable the grade relevant control again with its default when the test course is unchecked', () => {
+        it('should swap the hint for a test course', () => {
+            const translatedKey = () => fixture.debugElement.query(By.css('#gradeRelevantHint')).injector.get(TranslateDirective).jhiTranslate();
+            expect(translatedKey()).toBe('artemisApp.courseRequest.form.gradeRelevantHint');
+
             form.get('testCourse')!.setValue(true);
-            form.get('testCourse')!.setValue(false);
+            fixture.detectChanges();
 
-            expect(gradeRelevantControl().enabled).toBe(true);
-            expect(gradeRelevantControl().value).toBe(true);
+            expect(translatedKey()).toBe('artemisApp.courseRequest.form.gradeRelevantTestCourseHint');
         });
 
-        it('should keep a deliberately unchecked grade relevant value for a regular course', () => {
-            gradeRelevantControl().setValue(false);
+        it('should store the choice made on the checkbox in the form', () => {
+            checkbox().click();
+            fixture.detectChanges();
 
-            form.get('testCourse')!.setValue(false);
-
-            expect(gradeRelevantControl().enabled).toBe(true);
-            expect(gradeRelevantControl().value).toBe(false);
+            expect(form.get('gradeRelevant')!.value).toBe(false);
+            expect(form.get('gradeRelevant')!.dirty).toBe(true);
+            expect(checkbox().checked).toBe(false);
         });
 
-        it('should disable the control when a form is reset to a test course', () => {
-            form.reset({ semester: 'WS25/26', testCourse: true, gradeRelevant: false });
+        it('should bring the previous choice back when the test course is unchecked', () => {
+            form.get('gradeRelevant')!.setValue(false);
+            form.get('testCourse')!.setValue(true);
+            fixture.detectChanges();
+            expect(checkbox().checked).toBe(false);
 
-            expect(gradeRelevantControl().disabled).toBe(true);
-            expect(gradeRelevantControl().value).toBe(false);
+            form.get('testCourse')!.setValue(false);
+            fixture.detectChanges();
+
+            expect(checkbox().disabled).toBe(false);
+            expect(checkbox().checked).toBe(false);
+            form.get('gradeRelevant')!.setValue(true);
+            fixture.detectChanges();
+            expect(checkbox().checked).toBe(true);
+        });
+
+        it('should follow a form reset regardless of which control is written first', () => {
+            form.reset({ gradeRelevant: true, testCourse: true });
+            fixture.detectChanges();
+            expect(checkbox().checked).toBe(false);
+            expect(checkbox().disabled).toBe(true);
+
+            form.reset({ gradeRelevant: false, testCourse: false });
+            fixture.detectChanges();
+            expect(checkbox().checked).toBe(false);
+            expect(checkbox().disabled).toBe(false);
         });
     });
 });

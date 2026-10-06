@@ -109,7 +109,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(body).contains("INTTEST");
         assertThat(body).contains("WS2025");
         assertThat(body).contains("Need this course for our testing department.");
-        assertThat(body).contains("Grade relevant");
+        assertThat(body).containsPattern("Grade-relevant</span>:\\s*<span[^>]*>Yes</span>");
     }
 
     @Test
@@ -151,6 +151,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         String body = getDeliveredEmailBody();
         assertThat(body).contains("EINFTEST");
         assertThat(body).contains("Kurs wird für die Abteilung benötigt.");
+        assertThat(body).containsPattern("Notenrelevant</span>:\\s*<span[^>]*>Nein</span>");
     }
 
     @Test
@@ -166,7 +167,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(body).contains("NEWCRS");
         assertThat(body).contains("WS2025");
         assertThat(body).contains("We need this course urgently.");
-        assertThat(body).contains("Grade relevant");
+        assertThat(body).containsPattern("Grade-relevant</span>:\\s*<span[^>]*>Yes</span>");
         assertThat(body).contains("Jane Doe");
         assertThat(body).contains("jane@example.com");
     }
@@ -184,6 +185,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(body).contains("NEUKRS");
         assertThat(body).contains("Max Mustermann");
         assertThat(body).contains("Dringend benötigt.");
+        assertThat(body).containsPattern("Notenrelevant</span>:\\s*<span[^>]*>Nein</span>");
     }
 
     @Test

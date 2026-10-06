@@ -327,8 +327,10 @@ public class CourseRequestService {
         course.setStartDate(request.getStartDate());
         course.setEndDate(request.getEndDate());
         course.setTestCourse(request.isTestCourse());
+        // A test course is never asked for its grade relevance, so it keeps the safe default of the regular course creation (grade relevant, the longer
+        // retention period). Persisting the request's "not grade relevant" would shorten the retention if the course is later turned into a regular one.
         CourseConfiguration configuration = new CourseConfiguration();
-        configuration.setGradeRelevant(request.isGradeRelevant());
+        configuration.setGradeRelevant(request.isTestCourse() || request.isGradeRelevant());
         configuration.setCourse(course);
         course.setCourseConfiguration(configuration);
         course.setOnlineCourse(Boolean.FALSE);

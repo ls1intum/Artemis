@@ -15,7 +15,9 @@
         </addColumn>
     </changeSet>
 
-    <!-- A test course can never be grade relevant, so the existing requests for a test course must not claim otherwise. -->
+    <!-- A test course can never be grade relevant, so the existing requests for a test course must not claim otherwise. This only
+         normalises the request: accepting a test course request still creates the course with the safe default (grade relevant),
+         see CourseRequestService. -->
     <changeSet id="20261005210149-02-course-request-test-course-not-grade-relevant" author="krusche">
         <update tableName="course_request">
             <column name="grade_relevant" valueBoolean="false"/>

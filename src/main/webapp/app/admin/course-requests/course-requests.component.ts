@@ -259,7 +259,8 @@ export class CourseRequestsComponent implements OnInit {
             startDate,
             endDate,
             testCourse: request.testCourse ?? false,
-            gradeRelevant: request.gradeRelevant ?? true,
+            // The control holds the choice for a regular course; the form shows a test course as not grade-relevant on its own
+            gradeRelevant: request.testCourse ? true : (request.gradeRelevant ?? true),
             reason: request.reason,
         });
         this.editModalVisible.set(true);

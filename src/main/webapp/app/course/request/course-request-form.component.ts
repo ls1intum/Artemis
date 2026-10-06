@@ -1,12 +1,11 @@
-import { Component, effect, input, output, signal } from '@angular/core';
-import { AbstractControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Component, computed, effect, input, output, signal } from '@angular/core';
+import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { startWith } from 'rxjs';
 import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
-import { CheckboxModule } from 'primeng/checkbox';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -26,7 +25,6 @@ import { generateCourseShortName } from 'app/foundation/util/semester-utils';
         InputTextModule,
         TextareaModule,
         SelectModule,
-        CheckboxModule,
         TumAetUiCheckboxComponent,
     ],
 })
@@ -51,42 +49,39 @@ export class CourseRequestFormComponent {
 
     protected readonly SHORT_NAME_PATTERN = SHORT_NAME_PATTERN;
 
-    /** Whether the course is currently marked as a test course; drives the hint below the grade relevant control. */
+    /** Whether the course is currently marked as a test course; drives the grade-relevant checkbox and its hint. */
     protected readonly isTestCourse = signal(false);
 
+    /** The value the grade-relevant control holds, i.e. the choice for a regular course. It is kept while the course is marked as a test course. */
+    private readonly gradeRelevantChoice = signal(true);
+
+    /**
+     * What the grade-relevant checkbox shows. A test course is never grade-relevant, so it shows unchecked (and disabled). The control itself keeps the choice
+     * for a regular course, so unchecking "test course" brings it back, whatever the order in which a form reset writes the two controls.
+     */
+    protected readonly gradeRelevantChecked = computed(() => !this.isTestCourse() && this.gradeRelevantChoice());
+
     constructor() {
-        // A test course is never grade relevant, so the grade relevant control follows the test course control.
         effect((onCleanup) => {
             const testCourse = this.form().get('testCourse');
             const gradeRelevant = this.form().get('gradeRelevant');
-            if (!testCourse || !gradeRelevant) {
-                return;
-            }
-            const subscription = testCourse.valueChanges.pipe(startWith(testCourse.value)).subscribe((isTestCourse) => {
-                this.isTestCourse.set(!!isTestCourse);
-                this.syncGradeRelevant(gradeRelevant, !!isTestCourse);
-            });
-            onCleanup(() => subscription.unsubscribe());
+            const subscriptions = [
+                testCourse?.valueChanges.pipe(startWith(testCourse.value)).subscribe((value) => this.isTestCourse.set(!!value)),
+                gradeRelevant?.valueChanges.pipe(startWith(gradeRelevant.value)).subscribe((value) => this.gradeRelevantChoice.set(value ?? true)),
+            ];
+            onCleanup(() => subscriptions.forEach((subscription) => subscription?.unsubscribe()));
         });
     }
 
     /**
-     * Forces the grade relevant control off and disables it for a test course. When the course is no longer a test course, the control
-     * is enabled again and returns to its default (grade relevant).
+     * Stores the choice made on the grade-relevant checkbox in the form.
      *
-     * @param gradeRelevant the grade relevant control
-     * @param isTestCourse whether the course is currently marked as a test course
+     * @param checked whether the user checked the box
      */
-    private syncGradeRelevant(gradeRelevant: AbstractControl, isTestCourse: boolean): void {
-        if (isTestCourse) {
-            if (gradeRelevant.enabled || gradeRelevant.value) {
-                gradeRelevant.setValue(false, { emitEvent: false });
-                gradeRelevant.disable({ emitEvent: false });
-            }
-        } else if (gradeRelevant.disabled) {
-            gradeRelevant.enable({ emitEvent: false });
-            gradeRelevant.setValue(true, { emitEvent: false });
-        }
+    protected onGradeRelevantChange(checked: boolean): void {
+        const gradeRelevant = this.form().get('gradeRelevant');
+        gradeRelevant?.setValue(checked);
+        gradeRelevant?.markAsDirty();
     }
 
     generateShortName(): void {
