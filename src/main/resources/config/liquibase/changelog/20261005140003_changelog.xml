@@ -69,14 +69,6 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261005140003-08-give-every-exercise-a-team-assignment-config" author="krusche">
-        <comment>Every exercise owns a permanent row. The earlier backfill gave every existing exercise one, so this only closes the window in which an exercise was created by a server that does not know the new rule; the unique key makes it safe to repeat.</comment>
-        <sql>INSERT INTO team_assignment_config (exercise_id, min_team_size, max_team_size)
-            SELECT exercise.id, 1, 1 FROM exercise
-            WHERE NOT EXISTS (SELECT 1 FROM team_assignment_config existing WHERE existing.exercise_id = exercise.id);</sql>
-        <rollback/>
-    </changeSet>
-
     <changeSet id="20261005140003-09-team-assignment-config-exercise-key-not-null" author="krusche">
         <addNotNullConstraint tableName="team_assignment_config" columnName="exercise_id" columnDataType="BIGINT"/>
         <rollback>

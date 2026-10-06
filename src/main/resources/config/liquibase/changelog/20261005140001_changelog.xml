@@ -69,14 +69,6 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261005140001-08-give-every-course-a-course-athena-config" author="krusche">
-        <comment>Every course owns a permanent row. The earlier backfill gave every existing course one, so this only closes the window in which a course was created by a server that does not know the new rule; the unique key makes it safe to repeat.</comment>
-        <sql>INSERT INTO course_athena_config (course_id, grading_feedback_enabled, formative_feedback_enabled)
-            SELECT course.id, FALSE, FALSE FROM course
-            WHERE NOT EXISTS (SELECT 1 FROM course_athena_config existing WHERE existing.course_id = course.id);</sql>
-        <rollback/>
-    </changeSet>
-
     <changeSet id="20261005140001-09-course-athena-config-course-key-not-null" author="krusche">
         <addNotNullConstraint tableName="course_athena_config" columnName="course_id" columnDataType="BIGINT"/>
         <rollback>

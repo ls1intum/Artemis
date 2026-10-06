@@ -69,14 +69,6 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261005140004-08-give-every-exercise-a-plagiarism-detection-config" author="krusche">
-        <comment>Every exercise owns a permanent row. The earlier backfill gave every existing exercise one, so this only closes the window in which an exercise was created by a server that does not know the new rule; the unique key makes it safe to repeat.</comment>
-        <sql>INSERT INTO plagiarism_detection_config (exercise_id, continuous_plagiarism_control_enabled, continuous_plagiarism_control_post_due_date_checks_enabled, continuous_plagiarism_control_case_student_response_period, similarity_threshold, minimum_score, minimum_size)
-            SELECT exercise.id, FALSE, FALSE, 7, 90, 0, 50 FROM exercise
-            WHERE NOT EXISTS (SELECT 1 FROM plagiarism_detection_config existing WHERE existing.exercise_id = exercise.id);</sql>
-        <rollback/>
-    </changeSet>
-
     <changeSet id="20261005140004-09-plagiarism-detection-config-exercise-key-not-null" author="krusche">
         <addNotNullConstraint tableName="plagiarism_detection_config" columnName="exercise_id" columnDataType="BIGINT"/>
         <rollback>
