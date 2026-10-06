@@ -26,6 +26,9 @@ export class TumAetUiCheckboxComponent implements ControlValueAccessor {
 
     readonly ariaLabel = input<string>();
 
+    /** Id of the element that describes the checkbox, e.g. a hint below it. Read out by screen readers, also while the checkbox is disabled. */
+    readonly ariaDescribedBy = input<string>();
+
     readonly checked = model(false);
 
     /**

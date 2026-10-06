@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CompetencyImportResponseDTO(long id, String title, String description, CompetencyTaxonomy taxonomy, ZonedDateTime softDueDate, Integer masteryThreshold,
-        boolean optional, Long courseId, Long linkedStandardizedCompetencyId) {
+        boolean optional, boolean generatedByAi, Long courseId, Long linkedStandardizedCompetencyId) {
 
     /**
      * Creates a CompetencyImportResponseDTO from the given Competency
@@ -22,6 +22,6 @@ public record CompetencyImportResponseDTO(long id, String title, String descript
         Long linkedStandardizedCompetencyId = competency.getLinkedStandardizedCompetency() == null ? null : competency.getLinkedStandardizedCompetency().getId();
 
         return new CompetencyImportResponseDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), competency.getSoftDueDate(),
-                competency.getMasteryThreshold(), competency.isOptional(), courseId, linkedStandardizedCompetencyId);
+                competency.getMasteryThreshold(), competency.isOptional(), competency.isGeneratedByAi(), courseId, linkedStandardizedCompetencyId);
     }
 }

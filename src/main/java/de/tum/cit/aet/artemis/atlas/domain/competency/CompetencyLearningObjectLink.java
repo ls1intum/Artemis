@@ -7,6 +7,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.MapsId;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @MappedSuperclass
 public abstract class CompetencyLearningObjectLink implements Serializable {
 
@@ -16,6 +18,9 @@ public abstract class CompetencyLearningObjectLink implements Serializable {
 
     @Column(name = "link_weight")
     protected double weight;
+
+    @Column(name = "generated_by_ai", nullable = false)
+    protected boolean generatedByAi;
 
     public CompetencyLearningObjectLink(CourseCompetency competency, double weight) {
         this.competency = competency;
@@ -40,5 +45,14 @@ public abstract class CompetencyLearningObjectLink implements Serializable {
 
     public void setWeight(double weight) {
         this.weight = weight;
+    }
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public boolean isGeneratedByAi() {
+        return generatedByAi;
+    }
+
+    public void setGeneratedByAi(boolean generatedByAi) {
+        this.generatedByAi = generatedByAi;
     }
 }
