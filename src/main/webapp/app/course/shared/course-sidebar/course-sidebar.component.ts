@@ -30,7 +30,7 @@ export interface CourseActionItem {
  *
  * This is a guard rail, not a guarantee: glyph widths differ, so a short label with wide letters can still be wider
  * than a longer one — "Benachrichtigung" (16) needs more room than "LTI Konfiguration" (17). The width therefore
- * carries headroom over the measured minimum, and `rules/sidebar-item-label-length.spec.mjs` keeps every label,
+ * carries headroom over the measured minimum, and `config/eslint/rules/sidebar-item-label-length.spec.mjs` keeps every label,
  * English and German, within this cap. If a new label needs more, widen the sidebar deliberately and raise both.
  */
 export const MAX_SIDEBAR_ITEM_LABEL_LENGTH = 17;

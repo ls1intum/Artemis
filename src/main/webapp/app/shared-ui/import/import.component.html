@@ -8,7 +8,13 @@
     <div class="modal-body">
         <div class="form-group form-inline">
             <span jhiTranslate="{{ 'artemisApp.' + entityName + '.import.search' }}"></span>
-            <input [(ngModel)]="searchTerm" class="form-control ms-2" name="search" type="text" />
+            <input
+                [attr.aria-label]="'artemisApp.' + entityName + '.import.search' | artemisTranslate"
+                [(ngModel)]="searchTerm"
+                class="form-control ms-2"
+                name="search"
+                type="text"
+            />
             @if (loading()) {
                 <span class="ms-3" jhiTranslate="{{ 'artemisApp.' + entityName + '.import.loading' }}"></span>
             }

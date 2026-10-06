@@ -4,6 +4,11 @@
             <span class="mb-1" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorOccurred"></span>
             <div class="table-responsive m-2 p-1">
                 <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col" jhiTranslate="artemisApp.exercise.title"></th>
+                        </tr>
+                    </thead>
                     <tbody>
                         @for (failedExercise of failedExercises(); track failedExercise) {
                             <tr>
@@ -22,6 +27,11 @@
                 <span style="font-weight: bold" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.currentlyEdited"></span>
                 <div class="table-responsive m-2 p-1">
                     <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col" jhiTranslate="artemisApp.exercise.title"></th>
+                            </tr>
+                        </thead>
                         <tbody>
                             @for (programmingExercise of selectedProgrammingExercises(); track programmingExercise) {
                                 <tr>

@@ -12,6 +12,13 @@ runs on event X?" is in exactly one file. Scoped package releases (`@tumaet/*`)
 do not run Artemis builds or Android tests. TUM AET UI uses `release-tum-aet-ui.yml`: a manual run on a
 branch validates; a run on an `@tumaet/ui-angular@<version>` tag validates and stages for npm approval.
 
+The one deliberate exception is `ci-gradle-wrapper.yml`: besides being called by `ci.yml` for
+Gradle-related pull requests, it also runs directly on pushes to `develop`, `main`, and `release/*`.
+OpenSSF Scorecard only treats the committed `gradle-wrapper.jar` as a verified binary when it can
+associate a successful Gradle wrapper validation workflow with the latest commit, which it cannot do
+reliably through a reusable-workflow call alone. The direct push trigger provides that evidence while
+the reusable call keeps wrapper validation inside the existing required PR gate.
+
 ```text
 ci.yml                                                            (single entry workflow)
 ├── detect-changes               (dorny/paths-filter, emits per-area booleans)
@@ -126,21 +133,20 @@ gate closed.
 
 ## Action pinning policy
 
-- **Third-party actions** (anything outside `actions/*`, `github/*`) are pinned to a
+- **All external actions**, including `actions/*` and `github/*`, are pinned to a
   40-character commit SHA with a `# vX.Y.Z` trailing comment. This is the
   [GitHub-recommended supply-chain mitigation](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-third-party-actions)
   and matches the org policy GitHub now supports enforcing.
-- **First-party `actions/*` and `github/*` actions** may use a major-version tag
-  (`@v6`, `@v9`) because they are governed by GitHub's own release process.
-  `actionlint`'s install script is pinned to a release tag because the script itself
-  is the third party, not the binary it downloads.
+- **Local actions and reusable workflows** use relative paths. The `actionlint` install
+  script uses a release tag and a verified SHA-256 checksum before execution.
 - **Don't hand-bump the SHAs.** Renovate (`renovate.json`) reads the `@<sha> # vX.Y.Z`
   format and opens PRs that update both the SHA and the comment together — keep the comment
   in that exact shape so it stays auto-maintained.
+  The `helpers:pinGitHubActionDigests` preset also pins newly added action references.
 
 ## Reusable workflows — `ci-*.yml`
 
-Each `ci-*.yml` file has `on: workflow_call:` and is invoked only by `ci.yml`. Rules:
+Most `ci-*.yml` files have `on: workflow_call:` and are invoked only by `ci.yml`. `ci-gradle-wrapper.yml` also has the direct push trigger documented above. Rules:
 
 1. **No `concurrency:` block inside a reusable.** The parent's group already applies. A
    child-level `concurrency:` block can cancel a queued child while the parent run stays

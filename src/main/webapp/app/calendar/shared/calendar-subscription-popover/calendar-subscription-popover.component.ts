@@ -1,21 +1,28 @@
 import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
-import { NgClass } from '@angular/common';
-import { Popover } from 'primeng/popover';
-import { Checkbox } from 'primeng/checkbox';
-import { SelectButton } from 'primeng/selectbutton';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPopoverComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { TextFieldModule } from '@angular/cdk/text-field';
 import { FormsModule } from '@angular/forms';
 import { faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 
 @Component({
     selector: 'jhi-calendar-subscription-popover',
-    imports: [NgClass, Popover, Checkbox, SelectButton, TextFieldModule, FormsModule, FaIconComponent, TranslateDirective],
+    imports: [
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiSelectButtonComponent,
+        TextFieldModule,
+        FormsModule,
+        FaIconComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
     templateUrl: './calendar-subscription-popover.component.html',
-    styleUrl: './calendar-subscription-popover.component.scss',
 })
 export class CalendarSubscriptionPopoverComponent {
     private translateService = inject(TranslateService);
@@ -25,7 +32,7 @@ export class CalendarSubscriptionPopoverComponent {
     readonly faCopy = faCopy;
     readonly faCheck = faCheck;
 
-    calendarSubscriptionPopover = viewChild<Popover>('calendarSubscriptionPopover');
+    calendarSubscriptionPopover = viewChild<TumAetUiPopoverComponent>('calendarSubscriptionPopover');
     subscriptionToken = input.required<string>();
     courseId = input.required<number>();
     isMobile = input<boolean>(false);
@@ -59,8 +66,12 @@ export class CalendarSubscriptionPopoverComponent {
         }
     }
 
+    /** Opens the popover next to the element that received the click. */
     open(event: Event): void {
-        this.calendarSubscriptionPopover()?.show(event);
+        const origin = event.currentTarget;
+        if (origin instanceof HTMLElement) {
+            this.calendarSubscriptionPopover()?.open(origin);
+        }
     }
 
     private buildCalendarSubscriptionURL(): string {

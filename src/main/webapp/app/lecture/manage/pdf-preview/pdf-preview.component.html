@@ -105,7 +105,14 @@
                     <fa-icon [icon]="faTrash" />
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.removePageButton"></span>
                 </button>
-                <input type="file" #fileInput style="display: none" accept="application/pdf" (change)="mergePDF($event)" />
+                <input
+                    [attr.aria-label]="'accessibility.mergePdf' | artemisTranslate"
+                    type="file"
+                    #fileInput
+                    style="display: none"
+                    accept="application/pdf"
+                    (change)="mergePDF($event)"
+                />
                 <button
                     type="button"
                     (click)="triggerFileInput()"

@@ -363,7 +363,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         componentAsAny.isExpanded.set(true);
         fixture.changeDetectorRef.detectChanges();
         const collapseOverlayClickedSpy = vi.spyOn(component, 'collapseOverlayClicked');
-        const collapseButton = fixture.debugElement.query(By.css('button[pButton]'));
+        const collapseButton = fixture.debugElement.query(By.css('[data-testid="notification-popup-toggle"]'));
 
         collapseButton.nativeElement.click();
 
@@ -430,7 +430,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
         const clearAllNotificationsSpy = vi.spyOn(component, 'clearAllNotifications');
 
-        const clearButton = fixture.debugElement.queryAll(By.css('button[pButton]'))[1];
+        const clearButton = fixture.debugElement.query(By.css('.notification-popup-clear'));
         clearButton.nativeElement.click();
 
         expect(clearAllNotificationsSpy).toHaveBeenCalledOnce();

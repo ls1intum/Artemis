@@ -30,6 +30,7 @@ import { RunningJobsTableComponent } from './tables/running-jobs-table/running-j
 import { QueuedJobsTableComponent } from './tables/queued-jobs-table/queued-jobs-table.component';
 import { FinishedJobsTableComponent } from './tables/finished-jobs-table/finished-jobs-table.component';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Component that provides an overview of the build queue system.
@@ -66,6 +67,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         TumAetUiButtonGroupComponent,
         TumAetUiInputDirective,
         TumAetUiTagComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class BuildOverviewComponent implements OnInit, OnDestroy {

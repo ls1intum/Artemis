@@ -122,10 +122,10 @@ describe('CalendarEventsPerDaySectionComponent', () => {
 
         const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
         const popoverComponent = popoverDebugElement.componentInstance as CalendarEventDetailPopoverComponent;
-        // Mock the PrimeNG popover to avoid animation timing issues in tests
+        // Open without the overlay, so that the test does not depend on animation timing.
         const openSpy = vi.spyOn(popoverComponent, 'open').mockImplementation((mouseEvent, event) => {
             popoverComponent['event'].set(event);
-            popoverComponent.onShow();
+            popoverComponent.onOpenChange(true);
         });
 
         examEventCell.nativeElement.click();
@@ -139,12 +139,12 @@ describe('CalendarEventsPerDaySectionComponent', () => {
         const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
         const popoverComponent = popoverDebugElement.componentInstance as CalendarEventDetailPopoverComponent;
         const closeSpy = vi.spyOn(popoverComponent, 'close').mockImplementation(() => {
-            popoverComponent.onHide();
+            popoverComponent.onOpenChange(false);
         });
-        // Mock the PrimeNG popover to avoid animation timing issues in tests
+        // Open without the overlay, so that the test does not depend on animation timing.
         vi.spyOn(popoverComponent, 'open').mockImplementation((mouseEvent, event) => {
             popoverComponent['event'].set(event);
-            popoverComponent.onShow();
+            popoverComponent.onOpenChange(true);
         });
 
         const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));

@@ -166,6 +166,12 @@
         <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.cloneSourceTree.helpIcon" />
 
         <!-- This hidden iframe is used to avoid "Do you want to leave the site" messages in the exam mode -->
-        <iframe name="hidden-iframe" style="visibility: hidden; position: absolute"></iframe>
+        <iframe
+            name="hidden-iframe"
+            [title]="'accessibility.externalApplicationLauncher' | artemisTranslate"
+            aria-hidden="true"
+            tabindex="-1"
+            style="visibility: hidden; position: absolute"
+        ></iframe>
     </ng-template>
 </ng-container>

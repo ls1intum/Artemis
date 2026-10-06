@@ -13,6 +13,7 @@
                 </div>
                 <div class="task__row__cell task__row__cell--small">
                     <input
+                        [attr.aria-label]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.weight' | artemisTranslate"
                         [disabled]="task().taskName === NOT_ASSIGNED_TO_TASK_NAME"
                         type="number"
                         class="form-control"
@@ -24,6 +25,7 @@
                 </div>
                 <div class="task__row__cell task__row__cell--small">
                     <input
+                        [attr.aria-label]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.bonusMultiplier' | artemisTranslate"
                         [disabled]="task().taskName === NOT_ASSIGNED_TO_TASK_NAME"
                         type="number"
                         class="form-control"
@@ -35,6 +37,7 @@
                 </div>
                 <div class="task__row__cell task__row__cell--small">
                     <input
+                        [attr.aria-label]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.bonusPoints' | artemisTranslate"
                         [disabled]="task().taskName === NOT_ASSIGNED_TO_TASK_NAME"
                         type="number"
                         class="form-control"
@@ -46,6 +49,7 @@
                 </div>
                 <div class="task__row__cell">
                     <select
+                        [attr.aria-label]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.visibility' | artemisTranslate"
                         [disabled]="task().taskName === NOT_ASSIGNED_TO_TASK_NAME"
                         [(ngModel)]="task().visibility"
                         class="form-select"
@@ -94,10 +98,19 @@
                         <span class="task__field" [pTooltip]="test.testName" [showOnEllipsis]="true" tooltipPosition="top" appendTo="body">{{ test.testName }}</span>
                     </div>
                     <div class="task__row__cell task__row__cell--small">
-                        <input type="number" class="form-control" min="0" [(ngModel)]="test.weight" name="{{ test.testName }}-name" (change)="testUpdateHandler(test)" />
+                        <input
+                            [attr.aria-label]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.weight' | artemisTranslate"
+                            type="number"
+                            class="form-control"
+                            min="0"
+                            [(ngModel)]="test.weight"
+                            name="{{ test.testName }}-name"
+                            (change)="testUpdateHandler(test)"
+                        />
                     </div>
                     <div class="task__row__cell task__row__cell--small">
                         <input
+                            [attr.aria-label]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.bonusMultiplier' | artemisTranslate"
                             type="number"
                             class="form-control"
                             min="0"
@@ -108,6 +121,7 @@
                     </div>
                     <div class="task__row__cell task__row__cell--small">
                         <input
+                            [attr.aria-label]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.bonusPoints' | artemisTranslate"
                             type="number"
                             class="form-control"
                             min="0"
@@ -117,7 +131,13 @@
                         />
                     </div>
                     <div class="task__row__cell">
-                        <select [(ngModel)]="test.visibility" class="form-select" name="{{ test.testName }}-visibility" (change)="testUpdateHandler(test)">
+                        <select
+                            [attr.aria-label]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.visibility' | artemisTranslate"
+                            [(ngModel)]="test.visibility"
+                            class="form-select"
+                            name="{{ test.testName }}-visibility"
+                            (change)="testUpdateHandler(test)"
+                        >
                             @for (testCaseVisibility of testCaseVisibilityList(); track testCaseVisibility) {
                                 <option [value]="testCaseVisibility.value">
                                     {{ 'artemisApp.programmingExerciseTestCase.visibility.' + testCaseVisibility.name | artemisTranslate }}

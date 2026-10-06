@@ -95,7 +95,7 @@ export class ArtemisServerDateService implements ServerDateService {
             // remove highest
             offsetsSorted.pop();
             // calculate avg
-            offset = offsetsSorted.reduce((a, b) => a + b) / offsetsSorted.length;
+            offset = offsetsSorted.reduce((a, b) => a + b, 0) / offsetsSorted.length;
         }
         // adjust with previously calculated offset
         return clientDate.add(offset, 'ms');

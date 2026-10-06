@@ -24,16 +24,16 @@
             <table tumAetUiTable striped>
                 <thead>
                     <tr>
-                        <th>
+                        <th scope="col">
                             <span>#</span>
                         </th>
-                        <th>
+                        <th scope="col">
                             <span jhiTranslate="artemisApp.examManagement.checklist.checklistItem"></span>
                         </th>
-                        <th>
+                        <th scope="col">
                             <span jhiTranslate="artemisApp.examManagement.checklist.description"></span>
                         </th>
-                        <th>
+                        <th scope="col">
                             <span jhiTranslate="artemisApp.examManagement.checklist.goTo"></span>
                         </th>
                     </tr>
@@ -288,16 +288,16 @@
             <table tumAetUiTable striped>
                 <thead>
                     <tr>
-                        <th>
+                        <th scope="col">
                             <span>#</span>
                         </th>
-                        <th>
+                        <th scope="col">
                             <span jhiTranslate="artemisApp.examManagement.checklist.checklistItem"></span>
                         </th>
-                        <th>
+                        <th scope="col">
                             <span jhiTranslate="artemisApp.examManagement.checklist.description"></span>
                         </th>
-                        <th>
+                        <th scope="col">
                             <span jhiTranslate="artemisApp.examManagement.checklist.goTo"></span>
                         </th>
                     </tr>
@@ -405,16 +405,16 @@
                 <table tumAetUiTable striped>
                     <thead>
                         <tr>
-                            <th>
+                            <th scope="col">
                                 <span>#</span>
                             </th>
-                            <th>
+                            <th scope="col">
                                 <span jhiTranslate="artemisApp.examManagement.checklist.checklistItem"></span>
                             </th>
-                            <th>
+                            <th scope="col">
                                 <span jhiTranslate="artemisApp.examManagement.checklist.description"></span>
                             </th>
-                            <th>
+                            <th scope="col">
                                 <span jhiTranslate="artemisApp.examManagement.checklist.goTo"></span>
                             </th>
                         </tr>
@@ -504,29 +504,29 @@
                                                     <table tumAetUiTable striped>
                                                         <thead>
                                                             <tr>
-                                                                <th>
+                                                                <th scope="col">
                                                                     <span jhiTranslate="artemisApp.examManagement.checklist.textitems.assessmentCheckType"></span>
                                                                 </th>
-                                                                <th>
+                                                                <th scope="col">
                                                                     <span jhiTranslate="artemisApp.examManagement.checklist.textitems.assessmentStatus"></span>
                                                                 </th>
-                                                                <th>
+                                                                <th scope="col">
                                                                     <span jhiTranslate="artemisApp.examManagement.checklist.textitems.assessmentAction"></span>
                                                                 </th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
                                                             <tr>
-                                                                <th>
+                                                                <th scope="row">
                                                                     <span jhiTranslate="artemisApp.examManagement.checklist.textitems.checkUnfinishedAssessments"></span>
                                                                 </th>
-                                                                <th>
+                                                                <td class="font-bold">
                                                                     <jhi-checklist-check
                                                                         [checkAttribute]="!isExamOver() || (isExamOver() && !existsUnfinishedAssessments())"
                                                                         data-testid="check-unfinished-assessments"
                                                                     />
-                                                                </th>
-                                                                <th>
+                                                                </td>
+                                                                <td class="font-bold">
                                                                     <button
                                                                         tumAetUiButton
                                                                         type="button"
@@ -537,13 +537,13 @@
                                                                         <fa-icon [icon]="faThList" />
                                                                         <span jhiTranslate="artemisApp.examManagement.assessmentDashboard"></span>
                                                                     </button>
-                                                                </th>
+                                                                </td>
                                                             </tr>
                                                             <tr>
-                                                                <th>
+                                                                <th scope="row">
                                                                     <span jhiTranslate="artemisApp.examManagement.checklist.textitems.checkUnassessedQuizzes"></span>
                                                                 </th>
-                                                                <th>
+                                                                <td class="font-bold">
                                                                     @if (isEvaluatingQuizExercises()) {
                                                                         <fa-icon [icon]="faSpinner" animation="spin" role="status" />
                                                                     } @else {
@@ -552,8 +552,8 @@
                                                                             data-testid="check-unassessed-quizzes"
                                                                         />
                                                                     }
-                                                                </th>
-                                                                <th>
+                                                                </td>
+                                                                <td class="font-bold">
                                                                     <button
                                                                         tumAetUiButton
                                                                         type="button"
@@ -571,13 +571,13 @@
                                                                         }
                                                                         <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises"></span>
                                                                     </button>
-                                                                </th>
+                                                                </td>
                                                             </tr>
                                                             <tr>
-                                                                <th>
+                                                                <th scope="row">
                                                                     <span jhiTranslate="artemisApp.examManagement.checklist.textitems.checkUnsubmittedExercises"></span>
                                                                 </th>
-                                                                <th>
+                                                                <td class="font-bold">
                                                                     @if (isAssessingUnsubmittedExams()) {
                                                                         <fa-icon [icon]="faSpinner" animation="spin" role="status" />
                                                                     } @else {
@@ -586,8 +586,8 @@
                                                                             data-testid="check-unsubmitted-exercises"
                                                                         />
                                                                     }
-                                                                </th>
-                                                                <th>
+                                                                </td>
+                                                                <td class="font-bold">
                                                                     <button
                                                                         tumAetUiButton
                                                                         type="button"
@@ -605,7 +605,7 @@
                                                                         }
                                                                         <span jhiTranslate="artemisApp.studentExams.assessUnsubmittedStudentExams"></span>
                                                                     </button>
-                                                                </th>
+                                                                </td>
                                                             </tr>
                                                         </tbody>
                                                     </table>

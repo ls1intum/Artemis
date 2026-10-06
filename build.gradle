@@ -820,15 +820,15 @@ tasks.register("pnpmSetCacheDockerfile", PnpmTask) {
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
     toolVersion = "${checkstyle_version}"
-    configFile = file("checkstyle.xml")
+    configFile = file("config/checkstyle/checkstyle.xml")
     maxErrors = 0
 }
 
-// Test sources get their own configuration rather than checkstyle.xml, which requires Javadoc on public methods and
-// would therefore demand a comment on every test method. checkstyle-test.xml carries only the rules that apply to
+// Test sources get their own configuration rather than config/checkstyle/checkstyle.xml, which requires Javadoc on public methods and
+// would therefore demand a comment on every test method. config/checkstyle/checkstyle-test.xml carries only the rules that apply to
 // test code; see the note at the top of that file.
 checkstyleTest {
-    configFile = file("checkstyle-test.xml")
+    configFile = file("config/checkstyle/checkstyle-test.xml")
 }
 
 gradleLint {

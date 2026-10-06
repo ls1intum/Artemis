@@ -344,7 +344,7 @@ export class TeamService implements ITeamService, OnDestroy {
      */
     private static convertTeamArrayResponseDatesFromServer(res: TeamArrayResponse): TeamArrayResponse {
         if (res.body) {
-            res.body.map((team: Team) => this.convertTeamDatesFromServer(team));
+            res.body.forEach((team: Team) => this.convertTeamDatesFromServer(team));
         }
         return res;
     }

@@ -133,7 +133,7 @@ export default defineConfig({
             },
         },
         // Tests with @kubernetes tag. These need an Artemis installation whose build agents use the
-        // Kubernetes build runner, which only run-localci-kubernetes.sh sets up. No other pipeline
+        // Kubernetes build runner, which only deployment/kubernetes/run-localci-kubernetes.sh sets up. No other pipeline
         // selects this project.
         {
             name: 'kubernetes-tests',

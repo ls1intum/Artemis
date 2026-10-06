@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { User } from 'app/account/user/user.model';
+import { CourseForRoleAssignment, UserCourseRole } from 'app/account/user/shared/user-course-role.model';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -54,6 +56,60 @@ describe('AdminUserService', () => {
                 status: 404,
                 statusText: 'Bad Request',
             });
+        });
+    });
+
+    describe('getCourseRoles', () => {
+        it('should request the course roles of the user and return them', () => {
+            const courseRoles: UserCourseRole[] = [{ courseId: 1, courseTitle: 'Algorithms', courseShortName: 'ALGO', role: 'STUDENT' }];
+            let received: UserCourseRole[] | undefined;
+
+            adminService.getCourseRoles('user').subscribe((roles) => (received = roles));
+
+            const req = httpMock.expectOne({ method: 'GET' });
+            expect(req.request.url).toBe(`${resourceUrl}/user/course-roles`);
+            expect(req.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+            req.flush(courseRoles);
+            expect(received).toEqual(courseRoles);
+        });
+    });
+
+    describe('course role editing', () => {
+        it('should search the courses by the given term and size', () => {
+            let received: CourseForRoleAssignment[] | undefined;
+
+            adminService.searchCoursesForRoleAssignment('algo', 5).subscribe((courses) => (received = courses));
+
+            const req = httpMock.expectOne((request) => request.url === 'api/admin/courses/for-role-assignment');
+            expect(req.request.method).toBe('GET');
+            expect(req.request.params.get('searchTerm')).toBe('algo');
+            expect(req.request.params.get('size')).toBe('5');
+            req.flush([{ id: 1, title: 'Algorithms' }]);
+            expect(received).toEqual([{ id: 1, title: 'Algorithms' }]);
+        });
+
+        it.each([
+            ['INSTRUCTOR', 'instructors'],
+            ['EDITOR', 'editors'],
+            ['TEACHING_ASSISTANT', 'tutors'],
+            ['STUDENT', 'students'],
+        ] as const)('should add the %s role through the %s membership endpoint', (role, slug) => {
+            adminService.addCourseRole('user', 7, role).subscribe();
+
+            const req = httpMock.expectOne({ method: 'POST', url: `api/course/courses/7/${slug}/user` });
+            req.flush(null);
+        });
+
+        it.each([
+            ['INSTRUCTOR', 'instructors'],
+            ['EDITOR', 'editors'],
+            ['TEACHING_ASSISTANT', 'tutors'],
+            ['STUDENT', 'students'],
+        ] as const)('should remove the %s role through the %s membership endpoint', (role, slug) => {
+            adminService.removeCourseRole('user', 7, role).subscribe();
+
+            const req = httpMock.expectOne({ method: 'DELETE', url: `api/course/courses/7/${slug}/user` });
+            req.flush(null);
         });
     });
 

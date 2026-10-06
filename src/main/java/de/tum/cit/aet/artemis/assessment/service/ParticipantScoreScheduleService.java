@@ -21,6 +21,7 @@ import jakarta.annotation.PreDestroy;
 
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -511,8 +512,7 @@ public class ParticipantScoreScheduleService {
         }
         else {
             associatedParticipantScore.setLastScore(newLastResult.getScore());
-            associatedParticipantScore.setLastPoints(RoundingUtil.roundScoreSpecifiedByCourseSettings(newLastResult.getScore() * 0.01 * exercise.getMaxPoints(),
-                    exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow()));
+            associatedParticipantScore.setLastPoints(calculatePoints(newLastResult, exercise));
         }
     }
 
@@ -527,9 +527,18 @@ public class ParticipantScoreScheduleService {
         }
         else {
             associatedParticipantScore.setLastRatedScore(newLastRatedResult.getScore());
-            associatedParticipantScore.setLastRatedPoints(RoundingUtil.roundScoreSpecifiedByCourseSettings(newLastRatedResult.getScore() * 0.01 * exercise.getMaxPoints(),
-                    exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow()));
+            associatedParticipantScore.setLastRatedPoints(calculatePoints(newLastRatedResult, exercise));
         }
+    }
+
+    @Nullable
+    private Double calculatePoints(Result result, Exercise exercise) {
+        Double score = result.getScore();
+        Double maxPoints = exercise.getMaxPoints();
+        if (score == null || maxPoints == null) {
+            return null;
+        }
+        return RoundingUtil.roundScoreSpecifiedByCourseSettings(score * 0.01 * maxPoints, exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow());
     }
 
     /**

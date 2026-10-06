@@ -1,4 +1,4 @@
-<label class="tumaet-ui-form-field-label tumaet:flex tumaet:items-center tumaet:gap-1 tumaet:text-sm tumaet:font-medium tumaet:text-text" [for]="labelTargetId()">
+<label [id]="labelId()" class="tumaet-ui-form-field-label tumaet:flex tumaet:items-center tumaet:gap-1 tumaet:text-sm tumaet:font-medium tumaet:text-text" [for]="labelTargetId()">
     {{ label() }}<ng-content select="[tumAetUiFormFieldLabel]" />
     @if (required()) {
         <span class="tumaet-ui-form-field-required tumaet:text-state-danger" aria-hidden="true">*</span>

@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject_;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
@@ -328,7 +329,7 @@ public class CoverageRecomputeService {
     public Page<IngestionCoverageDTO> computeLiveCoveragePage(String search, Pageable pageable) {
         // Trimmed the same way as readStoredCoverage, so a search with incidental leading/trailing whitespace (e.g.
         // pasted from elsewhere) matches the same courses whichever view is currently active.
-        Pageable stablePageable = withTieBreaker(pageable, "id");
+        Pageable stablePageable = withTieBreaker(pageable, DomainObject_.ID);
         Page<Course> courses = search == null || search.isBlank() ? courseRepository.findAll(stablePageable)
                 : courseRepository.findByTitleIgnoreCaseContaining(search.trim(), stablePageable);
         return new PageImpl<>(computeCoverageLive(courses.getContent()), pageable, courses.getTotalElements());

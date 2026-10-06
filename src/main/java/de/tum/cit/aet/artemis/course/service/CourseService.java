@@ -227,7 +227,7 @@ public class CourseService {
             return exerciseGroup.getExam().getCourse();
         }
         else {
-            Course course = courseRepository.findByIdElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            Course course = courseRepository.findByIdElseThrow(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
             exercise.setCourse(course);
             return course;
         }

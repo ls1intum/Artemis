@@ -26,7 +26,7 @@ describe('CollapsibleCardComponent', () => {
         toggleSpy.mockReset();
 
         fixture.detectChanges();
-        const toggleCollapseHeader = fixture.debugElement.query(By.css('.card-header'));
+        const toggleCollapseHeader = fixture.debugElement.query(By.css('[data-testid="collapsible-card-toggle"]'));
 
         expect(toggleCollapseHeader).not.toBeNull();
 
@@ -38,5 +38,20 @@ describe('CollapsibleCardComponent', () => {
 
         // Reference component to silence unused-variable warnings.
         expect(component).toBeDefined();
+    });
+
+    it('should hide the content while the card is collapsed and keep it in the DOM', () => {
+        fixture.componentRef.setInput('isCardContentCollapsed', true);
+        fixture.detectChanges();
+
+        const content = fixture.debugElement.query(By.css('[data-testid="collapsible-card-content"]'));
+        const toggle = fixture.debugElement.query(By.css('[data-testid="collapsible-card-toggle"]'));
+        expect(content.nativeElement.classList).toContain('hidden');
+        expect(toggle.nativeElement.getAttribute('aria-expanded')).toBe('false');
+
+        fixture.componentRef.setInput('isCardContentCollapsed', false);
+        fixture.detectChanges();
+        expect(content.nativeElement.classList).not.toContain('hidden');
+        expect(toggle.nativeElement.getAttribute('aria-expanded')).toBe('true');
     });
 });

@@ -213,6 +213,17 @@ describe('AssessmentDashboardComponent', () => {
         expect(comp.currentlyShownExercises()).toHaveLength(4);
     });
 
+    it('should filter finished exercises with no correction rounds without throwing', () => {
+        const finishedExercise = { ...fileUploadExercise, numberOfAssessmentsOfCorrectionRounds: [] };
+        const unfinishedExercise = { ...finishedExercise, id: 20, totalNumberOfAssessments: 4 };
+        comp.allExercises.set([finishedExercise, unfinishedExercise]);
+
+        comp.hideFinishedExercises.set(true);
+        comp.updateExercises();
+
+        expect(comp.currentlyShownExercises()).toEqual([unfinishedExercise]);
+    });
+
     it('should update exercises when finished exercises are filtered', () => {
         comp.allExercises.set([programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, textExercise, modelingExercise, fileUploadExercise]);
         comp.currentlyShownExercises.set([programmingExercise, textExercise, modelingExercise]);

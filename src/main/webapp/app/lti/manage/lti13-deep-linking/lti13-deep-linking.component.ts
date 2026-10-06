@@ -21,6 +21,7 @@ import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { DeepLinkingType } from 'app/lti/manage/lti13-deep-linking/lti.constants';
 import { IS_AT_LEAST_INSTRUCTOR } from 'app/foundation/constants/authority.constants';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-deep-linking',
@@ -34,6 +35,7 @@ import { IS_AT_LEAST_INSTRUCTOR } from 'app/foundation/constants/authority.const
         SortDirective,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
+        ArtemisTranslatePipe,
     ],
 })
 export class Lti13DeepLinkingComponent implements OnInit {

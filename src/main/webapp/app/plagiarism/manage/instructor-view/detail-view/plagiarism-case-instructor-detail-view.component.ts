@@ -45,6 +45,7 @@ import { PlagiarismPostService } from 'app/plagiarism/shared/services/plagiarism
 import { PlagiarismPostCreationDtoModel } from 'app/plagiarism/shared/entities/plagiarism-post-creation-dto.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -72,6 +73,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         FormsModule,
         NgbNavOutlet,
         PlagiarismCaseReviewComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDestroy {

@@ -86,7 +86,7 @@
 
 
 # Other
-/docker     @ls1intum/operations-maintainers
+/deployment/docker    @ls1intum/operations-maintainers
 /.github    @ls1intum/operations-maintainers
-/.ci        @ls1intum/operations-maintainers
+/supporting_scripts/ci    @ls1intum/operations-maintainers
 

@@ -86,4 +86,33 @@ class ParticipantScoreScheduleServiceCourseGuardTest {
         assertThat(score.getLastRatedScore()).isEqualTo(50.0);
         assertThat(score.getLastRatedPoints()).isEqualTo(5.0);
     }
+
+    @Test
+    void missingMaximumPoints_keepsScoresWithoutInventingPoints() {
+        exercise.setMaxPoints(null);
+        var score = new StudentScore();
+        score.setLastPoints(7.0);
+        score.setLastRatedPoints(7.0);
+
+        ReflectionTestUtils.invokeMethod(service, "setLastAttributes", score, result, exercise);
+        ReflectionTestUtils.invokeMethod(service, "setLastRatedAttributes", score, result, exercise);
+
+        assertThat(score.getLastScore()).isEqualTo(50.0);
+        assertThat(score.getLastRatedScore()).isEqualTo(50.0);
+        assertThat(score.getLastPoints()).isNull();
+        assertThat(score.getLastRatedPoints()).isNull();
+    }
+
+    @Test
+    void missingScore_keepsPointsUnavailable() {
+        result.score(null);
+        var score = new StudentScore();
+
+        ReflectionTestUtils.invokeMethod(service, "setLastAttributes", score, result, exercise);
+        ReflectionTestUtils.invokeMethod(service, "setLastRatedAttributes", score, result, exercise);
+
+        assertThat(score.getLastPoints()).isNull();
+        assertThat(score.getLastRatedPoints()).isNull();
+    }
+
 }

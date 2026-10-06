@@ -56,6 +56,7 @@
                                     [ngbTooltip]="classifyInputField(element) === 'invalid' ? ('artemisApp.shortAnswerSpot.invalidSpot' | artemisTranslate) : undefined"
                                 >
                                     <input
+                                        [attr.aria-label]="'accessibility.shortAnswer' | artemisTranslate: { number: shortAnswerQuestionUtil.getSpotNr(element) }"
                                         class="short-answer-question-container__input {{ classifyInputField(element) }}"
                                         type="text"
                                         disabled

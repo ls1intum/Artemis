@@ -1,15 +1,17 @@
 @if (copyText().length > 0) {
-    <p-button
+    <button
         id="copyButton"
         type="button"
-        [text]="true"
+        tumAetUiButton
+        variant="text"
         size="small"
         [severity]="wasCopied() ? 'success' : 'secondary'"
-        [styleClass]="'ms-1 ' + class()"
+        [class]="'ms-1! ' + class()"
         [cdkCopyToClipboard]="copyText()"
         (cdkCopyToClipboardCopied)="onCopyFinished()"
-        [pTooltip]="'global.generic.copy' | artemisTranslate"
+        [tumAetUiTooltip]="'global.generic.copy' | artemisTranslate"
+        [attr.aria-label]="'global.generic.copy' | artemisTranslate"
     >
         <fa-icon [icon]="wasCopied() ? faCheck : faCopy" />
-    </p-button>
+    </button>
 }

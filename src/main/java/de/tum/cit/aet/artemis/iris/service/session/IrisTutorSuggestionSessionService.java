@@ -208,6 +208,9 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
     @Override
     public void checkHasAccessTo(User user, IrisTutorSuggestionSession irisSession) {
+        if (user == null) {
+            throw new AccessForbiddenException("Iris Session", irisSession.getId());
+        }
         var post = postRepository.findPostOrMessagePostByIdElseThrow(irisSession.getPostId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseOfPostElseThrow(post, irisSession.getId()), user);
         if (irisSession.getUserId() != user.getId()) {

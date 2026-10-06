@@ -41,7 +41,6 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         CodeEditorRepositoryFileService,
         CodeEditorRepositoryService,
     ],
-    styleUrls: ['./programming-exam-submission.component.scss'],
     imports: [
         TranslateDirective,
         IncludedInScoreBadgeComponent,

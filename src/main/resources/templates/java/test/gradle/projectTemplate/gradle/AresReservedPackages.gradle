@@ -1,0 +1,52 @@
+// Ares reserved-package build boundary, version 2. Applied from build.gradle.
+// Student classes must not live in packages that Ares or the JDK trust by name.
+// Attached to `check` and to every Test task, because `check` depends on `test` and not the other way round.
+import org.gradle.api.tasks.testing.Test
+
+def aresReservedPackageBoundaryVersion = '2'
+def aresReservedPackagePatterns = [
+        // The JDK
+        'java/**', 'javax/**', 'jdk/**', 'sun/**', 'com/sun/**',
+        // Ares and the libraries it brings to the test runtime. Student classes in these packages would shadow the real
+        // ones (e.g. an Assertions class that never fails) and forge the grading.
+        'anonymous/toolclasses/**', 'ch/qos/logback/**', 'com/fasterxml/**', 'com/github/javaparser/**', 'com/google/**',
+        'com/ibm/wala/**', 'com/intellij/**', 'com/opencsv/**', 'com/tngtech/archunit/**', 'de/tum/cit/ase/ares/**',
+        'javassist/**', 'junit/**', 'metatest/**', 'net/bytebuddy/**', 'net/jqwik/**', 'org/apache/**', 'org/apfloat/**',
+        'org/apiguardian/**', 'org/aspectj/**', 'org/assertj/**', 'org/checkerframework/**', 'org/eclipse/**', 'org/gradle/**',
+        'org/hamcrest/**', 'org/jacoco/**', 'org/jgrapht/**', 'org/jheaps/**', 'org/json/**', 'org/jspecify/**', 'org/junit/**',
+        'org/mockito/**', 'org/objenesis/**', 'org/opentest4j/**', 'org/slf4j/**', 'org/yaml/**', 'worker/org/gradle/**'
+]
+
+tasks.register('verifyAresReservedPackagesV2') {
+    dependsOn tasks.named('classes')
+    // Resolved at configuration time and declared as an input to stay configuration-cache compatible.
+    def studentClassesDirs = sourceSets.main.output.classesDirs
+    def reservedPrefixes = aresReservedPackagePatterns.collect { it.substring(0, it.length() - 2) }
+    def boundaryVersion = aresReservedPackageBoundaryVersion
+    inputs.files(studentClassesDirs).withPropertyName('studentClasses')
+    doLast {
+        def forbidden = []
+        studentClassesDirs.files.each { root ->
+            if (!root.isDirectory()) {
+                return
+            }
+            def rootPath = root.toPath()
+            root.eachFileRecurse { candidate ->
+                if (!candidate.isFile()) {
+                    return
+                }
+                def relative = rootPath.relativize(candidate.toPath()).toString().replace(File.separator, '/')
+                if (reservedPrefixes.any { relative.startsWith(it) }) {
+                    forbidden << relative
+                }
+            }
+        }
+        if (!forbidden.isEmpty()) {
+            throw new GradleException("Ares reserved-package validation ${boundaryVersion} " +
+                    "rejected student output: ${forbidden.sort()}. No bypass flag is supported.")
+        }
+    }
+}
+
+tasks.named('check') { dependsOn tasks.named('verifyAresReservedPackagesV2') }
+tasks.withType(Test).configureEach { dependsOn tasks.named('verifyAresReservedPackagesV2') }

@@ -30,7 +30,13 @@
         @if (allowRelationImport) {
             <div class="mb-1 d-flex">
                 <span [jhiTranslate]="'artemisApp.competency.import.importRelations'"></span>
-                <input type="checkbox" class="ms-2" [(ngModel)]="importRelations" name="importRelations" />
+                <input
+                    [attr.aria-label]="'artemisApp.competency.import.importRelations' | artemisTranslate"
+                    type="checkbox"
+                    class="ms-2"
+                    [(ngModel)]="importRelations"
+                    name="importRelations"
+                />
             </div>
         }
         <div>

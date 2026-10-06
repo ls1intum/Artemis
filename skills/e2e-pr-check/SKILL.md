@@ -14,12 +14,12 @@ Use the CI resolver instead of selecting specs by inspection. Its output depends
 revision and committed diff:
 
 ```bash
-./.ci/E2E-tests/determine-relevant-tests.sh origin/develop
+./supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh origin/develop
 ```
 
 It prints five `OUTPUT:` lines. The ones that matter:
 
-- `RUN_ALL_TESTS=true` means the change hit `runAllTestsPatterns` (Spring config, `docker/`,
+- `RUN_ALL_TESTS=true` means the change hit `runAllTestsPatterns` (Spring config, `deployment/docker/`,
   `build.gradle`, `angular.json`) or touched Playwright infrastructure outside `e2e/`. Say so
   explicitly rather than quietly running a subset. Then either run the full suite or agree with the
   user on a narrower scope, but do not present a subset as sufficient coverage.
@@ -42,14 +42,14 @@ Two things about the input:
 Default to the single-node runner. It is faster and it is what most changes need.
 
 ```bash
-./run-e2e-tests-local-fast.sh --specs "<RELEVANT_TESTS from step 1>"
+./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --specs "<RELEVANT_TESTS from step 1>"
 ```
 
 Use the multi-node runner instead when the diff touches cluster-sensitive code, because a single
 node cannot reproduce cross-node failures at all:
 
 ```bash
-./run-e2e-tests-local-multinode-fast.sh --specs "<RELEVANT_TESTS from step 1>"
+./supporting_scripts/e2e/run-e2e-tests-local-multinode-fast.sh --specs "<RELEVANT_TESTS from step 1>"
 ```
 
 Treat a change as cluster-sensitive when it touches any of:
@@ -65,7 +65,7 @@ providers. Redis has to pass the same tests as Hazelcast, and with `--middleware
 instance is created at all, which is what makes it a genuine test of the abstraction:
 
 ```bash
-./run-e2e-tests-local-multinode-fast.sh --middleware redis --specs "<paths>"
+./supporting_scripts/e2e/run-e2e-tests-local-multinode-fast.sh --middleware redis --specs "<paths>"
 ```
 
 ## Step 3: re-runs
@@ -73,7 +73,7 @@ instance is created at all, which is what makes it a genuine test of the abstrac
 The runners keep services alive between runs. After the first run, reuse them:
 
 ```bash
-./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --specs "<paths>"
+./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --specs "<paths>"
 ```
 
 For the multi-node runner the equivalent is `--skip-build --skip-up`.

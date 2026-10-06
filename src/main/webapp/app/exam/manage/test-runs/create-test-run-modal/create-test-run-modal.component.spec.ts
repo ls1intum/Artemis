@@ -119,4 +119,25 @@ describe('Create Test Run Modal Component', () => {
             expect(comp.testRunConfigured()).toBe(true);
         });
     });
+    it('should select exercises through a native button and announce the selected state', async () => {
+        const other = { id: 2, title: 'other', type: ExerciseType.TEXT } as Exercise;
+        const group = { id: 3, exercises: [exercise, other], title: 'two exercises' } as ExerciseGroup;
+        fixture.destroy();
+        exam.exerciseGroups = [group];
+        createComponent();
+        comp.visible.set(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const button = document.querySelector<HTMLButtonElement>('[data-testid="test-run-select-exercise-2"]')!;
+        expect(button.tagName).toBe('BUTTON');
+        expect(button.type).toBe('button');
+        expect(button.getAttribute('aria-pressed')).toBe('false');
+        button.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(comp.isSelected(other, group)).toBe(true);
+        expect(button.getAttribute('aria-pressed')).toBe('true');
+    });
 });

@@ -23,8 +23,10 @@ public record ModelingExerciseDTO(long id, String title, double maxPoints, doubl
      * @return The ModelingExerciseDTO representation of the provided exercise
      */
     public static ModelingExerciseDTO of(@NotNull ModelingExercise exercise) {
+        var gradingCriteria = exercise.getGradingCriteria();
         return new ModelingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getGradingInstructions(),
-                exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).toList(), exercise.getProblemStatement(), exercise.getExampleSolutionModel());
+                gradingCriteria == null ? List.of() : gradingCriteria.stream().map(GradingCriterionDTO::of).toList(), exercise.getProblemStatement(),
+                exercise.getExampleSolutionModel());
     }
 
     /**

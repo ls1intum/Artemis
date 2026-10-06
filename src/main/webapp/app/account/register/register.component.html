@@ -40,8 +40,9 @@
                 @if (!success()) {
                     <form name="form" role="form" (ngSubmit)="register()" [formGroup]="registerForm">
                         <tumaet-ui-form-field class="mb-3" controlId="firstName" required>
-                            <span tumAetUiFormFieldLabel jhiTranslate="global.form.firstname"></span>
+                            <span id="firstName-label" tumAetUiFormFieldLabel jhiTranslate="global.form.firstname"></span>
                             <input
+                                aria-labelledby="firstName-label"
                                 type="text"
                                 tumAetUiInput
                                 class="w-full"
@@ -54,8 +55,9 @@
                             />
                         </tumaet-ui-form-field>
                         <tumaet-ui-form-field class="mb-3" controlId="lastName" required>
-                            <span tumAetUiFormFieldLabel jhiTranslate="global.form.lastname"></span>
+                            <span id="lastName-label" tumAetUiFormFieldLabel jhiTranslate="global.form.lastname"></span>
                             <input
+                                aria-labelledby="lastName-label"
                                 type="text"
                                 tumAetUiInput
                                 class="w-full"
@@ -73,8 +75,9 @@
                             required
                             [invalid]="registerForm.controls.login.invalid && (registerForm.controls.login.dirty || registerForm.controls.login.touched)"
                         >
-                            <span tumAetUiFormFieldLabel jhiTranslate="register.form.login"></span>
+                            <span id="login-label" tumAetUiFormFieldLabel jhiTranslate="register.form.login"></span>
                             <input
+                                aria-labelledby="login-label"
                                 type="text"
                                 tumAetUiInput
                                 class="w-full"
@@ -113,8 +116,9 @@
                             required
                             [invalid]="registerForm.controls.email.invalid && (registerForm.controls.email.dirty || registerForm.controls.email.touched)"
                         >
-                            <span tumAetUiFormFieldLabel jhiTranslate="global.form.email"></span>
+                            <span id="email-label" tumAetUiFormFieldLabel jhiTranslate="global.form.email"></span>
                             <input
+                                aria-labelledby="email-label"
                                 type="email"
                                 tumAetUiInput
                                 class="w-full"
@@ -149,8 +153,9 @@
                             required
                             [invalid]="registerForm.controls.password.invalid && (registerForm.controls.password.dirty || registerForm.controls.password.touched)"
                         >
-                            <span tumAetUiFormFieldLabel jhiTranslate="global.form.newpassword"></span>
+                            <span id="password-label" tumAetUiFormFieldLabel jhiTranslate="global.form.newpassword"></span>
                             <input
+                                aria-labelledby="password-label"
                                 type="password"
                                 tumAetUiInput
                                 class="w-full"
@@ -185,8 +190,9 @@
                                 registerForm.controls.confirmPassword.invalid && (registerForm.controls.confirmPassword.dirty || registerForm.controls.confirmPassword.touched)
                             "
                         >
-                            <span tumAetUiFormFieldLabel jhiTranslate="global.form.confirmpassword"></span>
+                            <span id="confirmPassword-label" tumAetUiFormFieldLabel jhiTranslate="global.form.confirmpassword"></span>
                             <input
+                                aria-labelledby="confirmPassword-label"
                                 type="password"
                                 tumAetUiInput
                                 class="w-full"

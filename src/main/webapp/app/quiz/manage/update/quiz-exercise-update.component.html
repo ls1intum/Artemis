@@ -369,6 +369,7 @@
                         <div class="quiz-save-actions">
                             @if (!isExamMode() && quizExercise().id) {
                                 <input
+                                    [attr.aria-label]="'artemisApp.exercise.notificationText' | artemisTranslate"
                                     minlength="3"
                                     type="text"
                                     placeholder="{{ 'artemisApp.exercise.notificationText' | artemisTranslate }}"
@@ -449,6 +450,7 @@
                             <fa-icon [icon]="faXmark" />
                         </button>
                         <textarea
+                            [attr.aria-label]="'artemisApp.quizExercise.aiGeneration.refinement.globalPlaceholder' | artemisTranslate"
                             pTextarea
                             class="global-refinement-fab-textarea"
                             [placeholder]="'artemisApp.quizExercise.aiGeneration.refinement.globalPlaceholder' | artemisTranslate"

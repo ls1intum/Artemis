@@ -194,25 +194,8 @@ describe('YouTubePlayerComponent', () => {
         expect(updateSpy).toHaveBeenCalledWith(25);
     });
 
-    it('seeks when initialTimestamp arrives after the player component exists', async () => {
+    it('queues the latest timestamp while the player has not reported ready', async () => {
         const seekSpy = vi.fn();
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        (component as any).playerComponent = () => ({ seekTo: seekSpy }) as any;
-
-        fixture.componentRef.setInput('initialTimestamp', 60);
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        expect(seekSpy).toHaveBeenCalledWith(60, true);
-    });
-
-    it('seeks again when the deeplink timestamp changes', async () => {
-        const seekSpy = vi.fn();
-        fixture.detectChanges();
-        await fixture.whenStable();
-
         (component as any).playerComponent = () => ({ seekTo: seekSpy }) as any;
 
         fixture.componentRef.setInput('initialTimestamp', 30);
@@ -222,8 +205,23 @@ describe('YouTubePlayerComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
+        // The wrapper only queues a seek made before ready and keeps the last one, so the newest request must be it.
         expect(seekSpy).toHaveBeenNthCalledWith(1, 30, true);
-        expect(seekSpy).toHaveBeenNthCalledWith(2, 60, true);
+        expect(seekSpy).toHaveBeenLastCalledWith(60, true);
+    });
+
+    it('leaves later timestamps to the wrapper and the lecture unit once the player is ready, so a new timestamp does not autoplay', async () => {
+        const seekSpy = vi.fn();
+        (component as any).playerComponent = () => ({ ...fakePlayer(0, 600, seekSpy) }) as any;
+        fixture.detectChanges();
+        component.onPlayerReady({} as any);
+
+        fixture.componentRef.setInput('initialTimestamp', 60);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        // Seeking a cued video starts it. The wrapper cues again on its own and the unit seeks and pauses.
+        expect(seekSpy).not.toHaveBeenCalled();
     });
 
     it('resyncs segment index when transcriptSegments arrives after player is ready', async () => {

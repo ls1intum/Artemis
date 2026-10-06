@@ -16,6 +16,8 @@ import { isInsideProtectedSegment, parseCitationNumbers, renderCitationMarkers }
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { SEARCH_DEBOUNCE_MS, SHORT_QUERY_MAX_LENGTH } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { catchError, of, switchMap, timer } from 'rxjs';
+import { normalizeLectureSearchResultQueryParams } from 'app/core/navbar/global-search/services/lecture-search-result-normalization.util';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 /** Number of lines shown before the answer is clamped. Must match the CSS `max-height` on `.iris-answer-text.is-clamped`. */
 const CLAMP_LINE_COUNT = 4;
@@ -113,7 +115,7 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly isExpanded = signal(false);
     protected readonly isOverflowing = signal(false);
     protected readonly moreOpen = signal(false);
-    protected readonly sources = computed(() => this.irisResult()?.sources ?? []);
+    protected readonly sources = computed(() => (this.irisResult()?.sources ?? []).map(normalizeLectureSearchResultQueryParams));
     /** Entity sources (course information); their citation numbers may interleave with the lecture sources'. */
     protected readonly entitySources = computed(() => this.irisResult()?.entitySources ?? []);
     /** Marker number (matching the answer's `[n]` citation numbers) for each entry of `sources()`, by index. */
@@ -180,6 +182,7 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly faChevronUp = faChevronUp;
     protected readonly faCircleInfo = faCircleInfo;
     protected readonly faFile = faFile;
+    protected readonly lectureDeepLinkNavigationState = LECTURE_DEEP_LINK_NAVIGATION_STATE;
 
     protected readonly SOURCE_ICONS: Partial<Record<string, IconDefinition>> = {
         lecture_unit_slide: faFilePdf,
@@ -664,7 +667,10 @@ export class GlobalSearchIrisAnswerComponent {
         const sourceNumber = parseCitationNumbers(chip.dataset.n)[0] ?? 0;
         const lectureSource = this.citedLectureSource(sourceNumber);
         if (lectureSource) {
-            void this.router.navigate([lectureSource.lectureUnit.link], { queryParams: lectureSource.lectureUnit.queryParams });
+            void this.router.navigate([lectureSource.lectureUnit.link], {
+                queryParams: lectureSource.lectureUnit.queryParams,
+                state: LECTURE_DEEP_LINK_NAVIGATION_STATE,
+            });
             return;
         }
         const entitySource = sourceNumber > 0 ? this.citedEntitySource(sourceNumber) : undefined;

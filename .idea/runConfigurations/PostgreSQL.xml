@@ -3,7 +3,7 @@
     <deployment type="docker-compose.yml">
       <settings>
         <option name="envFilePath" value="$PROJECT_DIR$/.env" />
-        <option name="sourceFilePath" value="docker/postgres.yml" />
+        <option name="sourceFilePath" value="deployment/docker/postgres.yml" />
       </settings>
     </deployment>
     <method v="2" />

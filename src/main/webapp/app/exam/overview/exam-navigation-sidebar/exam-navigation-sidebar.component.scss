@@ -58,31 +58,15 @@ $exam-sidebar-margin: 62px;
 }
 
 .notSynced {
-    --fa-secondary-color: var(--bs-body-color);
+    --fa-secondary-color: var(--tumaet-ui-text-color);
     --fa-secondary-opacity: 1; // necessary to set the opacity to 1, because it's 0.4 per default
     --fa-primary-color: var(--warning);
 }
 
 .saved {
-    --fa-secondary-color: var(--bs-body-color);
+    --fa-secondary-color: var(--tumaet-ui-text-color);
     --fa-secondary-opacity: 1;
     --fa-primary-color: var(--success);
-}
-
-.bg-module {
-    background-color: var(--module-bg);
-}
-
-.border-module {
-    border-color: var(--module-bg) !important;
-}
-
-.bg-selected {
-    background-color: var(--sidebar-card-selected-bg);
-
-    &.border-module {
-        border-color: var(--sidebar-card-selected-bg) !important;
-    }
 }
 
 .double-arrow.menu-collapsed {
@@ -106,12 +90,4 @@ $exam-sidebar-margin: 62px;
 .double-arrow-icon {
     transform: rotate(180deg);
     transition: transform ease 0.3s 0.3s;
-}
-
-.me-negative {
-    margin-right: -5px;
-}
-
-.highlight-card:hover {
-    background-color: var(--sidebar-card-selected-bg);
 }

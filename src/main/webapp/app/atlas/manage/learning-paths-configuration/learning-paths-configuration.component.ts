@@ -9,11 +9,12 @@ import { onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-learning-paths-configuration',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FontAwesomeModule, TranslateDirective, HelpIconComponent],
+    imports: [FontAwesomeModule, TranslateDirective, HelpIconComponent, ArtemisTranslatePipe],
     templateUrl: './learning-paths-configuration.component.html',
     styleUrls: ['../learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })

@@ -13,7 +13,7 @@ import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
 import { UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { faArrowLeft, faCircleExclamation, faDoorClosed, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
-import { NgClass } from '@angular/common';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { ExamLiveEventsButtonComponent } from '../events/button/exam-live-events-button.component';
 import { ExamStartInformationComponent } from '../exam-start-information/exam-start-information.component';
 import { FormsModule } from '@angular/forms';
@@ -28,7 +28,10 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     templateUrl: './exam-participation-cover.component.html',
     styleUrls: ['./exam-participation-cover.scss'],
     imports: [
-        NgClass,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
         ExamLiveEventsButtonComponent,
         ExamStartInformationComponent,
         FormsModule,
@@ -66,7 +69,14 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     course?: Course;
     readonly startEnabled = signal(false);
     readonly endEnabled = signal(false);
-    confirmed = false;
+    private readonly confirmedState = signal(false);
+    /** Whether the student ticked the confirmation checkbox. Backed by a signal, so that changes made outside of a template event reach the view. */
+    get confirmed(): boolean {
+        return this.confirmedState();
+    }
+    set confirmed(value: boolean) {
+        this.confirmedState.set(value);
+    }
     readonly isAttendanceChecked = signal(false);
 
     readonly testRun = computed(() => this.studentExam()?.testRun);

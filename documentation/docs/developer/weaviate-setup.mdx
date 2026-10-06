@@ -38,7 +38,7 @@ If you only need basic Artemis features without AI assistance and without global
 </Callout>
 
   ```bash
-  cd docker
+  cd deployment/docker
   ```
 
 ### Starting Weaviate
@@ -101,12 +101,12 @@ For semantic search using an OpenAI-compatible embedding API such as [Ollama](ht
    docker compose -f weaviate.yml down -v
    ```
 
-   Edit `docker/weaviate.yml` to use `./weaviate/openai.env` instead of `./weaviate/default.env`, then:
+   Edit `deployment/docker/weaviate.yml` to use `./weaviate/openai.env` instead of `./weaviate/default.env`, then:
    ```bash
    docker compose -f weaviate.yml up -d
    ```
 
-   Alternatively, temporarily update `docker/weaviate/default.env`:
+   Alternatively, temporarily update `deployment/docker/weaviate/default.env`:
    ```bash
    DEFAULT_VECTORIZER_MODULE=text2vec-openai
    ENABLE_MODULES=text2vec-openai
@@ -238,7 +238,7 @@ By default, the embedding model runs on CPU. To enable GPU acceleration:
 
 Two environment configurations are available:
 
-#### Basic Configuration (`docker/weaviate/default.env`)
+#### Basic Configuration (`deployment/docker/weaviate/default.env`)
 
 Used by `weaviate.yml` - no automatic embedding generation:
 
@@ -260,7 +260,7 @@ DISK_USE_WARNING_PERCENTAGE=80
 #AUTHORIZATION_ADMINLIST_USERS=admin@example.com
 ```
 
-#### Embeddings Configuration (`docker/weaviate/embeddings.env`)
+#### Embeddings Configuration (`deployment/docker/weaviate/embeddings.env`)
 
 Used by `weaviate-embeddings.yml` - enables text2vec-transformers for automatic embeddings:
 
@@ -283,7 +283,7 @@ DISK_USE_WARNING_PERCENTAGE=80
 #AUTHORIZATION_ADMINLIST_USERS=admin@example.com
 ```
 
-#### OpenAI-Compatible API Configuration (`docker/weaviate/openai.env`)
+#### OpenAI-Compatible API Configuration (`deployment/docker/weaviate/openai.env`)
 
 Used with `weaviate.yml` (swap the env file) - enables text2vec-openai for Ollama or other OpenAI-compatible APIs:
 
@@ -330,7 +330,7 @@ By default, anonymous access is enabled for local development. For shared or pro
 
 #### Enabling API Key Authentication on the Weaviate Server
 
-Edit your Weaviate environment file (e.g. `docker/weaviate/default.env`) and uncomment the authentication lines:
+Edit your Weaviate environment file (e.g. `deployment/docker/weaviate/default.env`) and uncomment the authentication lines:
 
 ```bash
 AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=false
@@ -476,7 +476,7 @@ All date properties in Weaviate are normalized to a consistent ISO 8601 format (
 
 ### Port Conflicts
 
-If port 8001 or 50051 is already in use, create or edit `docker/.env` (which is gitignored) and set custom ports,
+If port 8001 or 50051 is already in use, create or edit `deployment/docker/.env` (which is gitignored) and set custom ports,
 
 You can also define a custom Weaviate version if needed, but make sure to use a compatible version with the embedding model and the [java client used in Artemis](https://docs.weaviate.io/weaviate/release-notes).
 

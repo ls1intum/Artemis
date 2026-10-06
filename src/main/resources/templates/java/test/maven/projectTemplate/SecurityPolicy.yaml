@@ -1,0 +1,25 @@
+# Ares 2 security policy for the tests of this repository, referenced by @Policy in the test classes.
+# Docs: https://ls1intum.github.io/Ares2/instructor/policy-reference
+# Add every new test class below, otherwise Ares treats it like student code and blocks it.
+thisPolicyFileCompliesToThePolicyVersion: 1
+regardingTheSupervisedCode:
+  theFollowingProgrammingLanguageConfigurationIsUsed: JAVA_USING_MAVEN_ARCHUNIT_AND_ASPECTJ
+  theSupervisedCodeUsesTheFollowingPackage: "${packageName}"
+  theMainClassInsideThisPackageIs: "Client"
+  theFollowingClassesAreTestClasses:
+    - "${packageName}.AttributeTest"
+    - "${packageName}.ClassTest"
+    - "${packageName}.ConstructorTest"
+    - "${packageName}.MethodTest"
+    - "${packageName}.SortingExampleBehaviorTest"
+  theFollowingResourceAccessesArePermitted:
+    regardingFileSystemInteractions: [ ]
+    regardingNetworkConnections: [ ]
+    regardingCommandExecutions: [ ]
+    # The sorting exercise uses ThreadLocalRandom to create random dates
+    regardingThreadCreations:
+      - createTheFollowingNumberOfThreads: 1
+        ofThisClass: "java.util.concurrent.ThreadLocalRandom"
+    regardingPackageImports:
+      - importTheFollowingPackage: "org.apache.commons.lang3"
+    regardingTimeouts: [ ]

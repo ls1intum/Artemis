@@ -15,7 +15,7 @@ Use `input()` / `input.required()`, `output()`, `viewChild()` / `viewChild.requi
 
 The legacy decorators `@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, and
 `@ContentChildren` are banned throughout the application, including co-located specs and test
-helpers. `localRules/enforce-signal-apis` (`rules/enforce-signal-apis.mjs`) enforces this under
+helpers. `localRules/enforce-signal-apis` (`config/eslint/rules/enforce-signal-apis.mjs`) enforces this under
 `src/main/webapp/app/` and `src/test/javascript/`. Use signal APIs when changing an existing
 component; there is no unmigrated-module exception.
 
@@ -55,7 +55,7 @@ caller.
 ## `ngOnChanges` is banned
 
 Use `computed()` or `effect()`. Enforced at error level by
-`localRules/prefer-signal-reactivity-over-ngonchanges` (`rules/prefer-signal-reactivity-over-ngonchanges.mjs`)
+`localRules/prefer-signal-reactivity-over-ngonchanges` (`config/eslint/rules/prefer-signal-reactivity-over-ngonchanges.mjs`)
 across `src/main/webapp/app`, `packages/tum-aet-ui/src/lib`, and `src/test/javascript`, including specs
 and undecorated base classes.
 
@@ -116,7 +116,7 @@ navigation on the spot and starts a new one, so the original `replaceUrl` and
 navigation receives `false`, and the navigation still happens when another guard rejects the
 route. A `return false` or `EMPTY` after the call changes nothing.
 
-`localRules/no-navigation-in-guard-or-resolver` (`rules/no-navigation-in-guard-or-resolver.mjs`)
+`localRules/no-navigation-in-guard-or-resolver` (`config/eslint/rules/no-navigation-in-guard-or-resolver.mjs`)
 enforces this at error level under `src/main/webapp`. It follows the guard into nested callbacks,
 into methods of its own class reached through `this`, and into functions of the same file. It is
 file-local and does not resolve types, so it misses navigation in an injected service the guard
@@ -150,7 +150,7 @@ In production `src/main/webapp/app/**/*.ts`, use the wrappers in
 - `cloneWith(x, { a, b })` deep-clones the source and applies overrides by reference.
 - `hydrate(new Course(), dto)` gives a parsed DTO its prototype.
 
-`rules/prefer-deep-clone.mjs` bans object spread, `Object.assign` and `structuredClone` in that
+`config/eslint/rules/prefer-deep-clone.mjs` bans object spread, `Object.assign` and `structuredClone` in that
 scope, even for plain objects; specs are exempt. `eslint.config.mjs` also restricts direct lodash
 cloning imports. Array spread and object rest remain allowed.
 

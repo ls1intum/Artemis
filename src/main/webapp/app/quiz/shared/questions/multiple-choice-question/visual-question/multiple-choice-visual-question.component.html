@@ -1,6 +1,7 @@
 <div class="markdown-preview visual-mode">
     <h4 jhiTranslate="artemisApp.multipleChoiceQuestion.visualEditor.questionTitle"></h4>
     <textarea
+        [attr.aria-label]="'artemisApp.multipleChoiceQuestion.visualEditor.questionTitle' | artemisTranslate"
         id="mc-question"
         class="form-control form-group-narrow"
         [(ngModel)]="question().text"
@@ -11,6 +12,7 @@
     <div class="form-group-narrow visual-question-hint">
         <fa-icon [icon]="faQuestionCircle" class="text-secondary me-1" ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintTooltip' | artemisTranslate }}" />
         <input
+            [attr.aria-label]="'artemisApp.multipleChoiceQuestion.visualEditor.hintPlaceholder' | artemisTranslate"
             class="form-control"
             [(ngModel)]="question().hint"
             (input)="this.questionChanged.emit()"
@@ -24,6 +26,7 @@
             ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.explanationTooltip' | artemisTranslate }}"
         />
         <input
+            [attr.aria-label]="'artemisApp.multipleChoiceQuestion.visualEditor.explanationPlaceholder' | artemisTranslate"
             class="form-control"
             [(ngModel)]="question().explanation"
             (input)="this.questionChanged.emit()"
@@ -86,6 +89,7 @@
             <div class="form-group-narrow visual-question-hint">
                 <fa-icon [icon]="faQuestionCircle" class="text-secondary me-1" ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintTooltip' | artemisTranslate }}" />
                 <input
+                    [attr.aria-label]="'artemisApp.multipleChoiceQuestion.visualEditor.hintPlaceholder' | artemisTranslate"
                     class="form-control"
                     [(ngModel)]="answerOption.hint"
                     (input)="this.questionChanged.emit()"
@@ -99,6 +103,7 @@
                     ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.explanationTooltip' | artemisTranslate }}"
                 />
                 <input
+                    [attr.aria-label]="'artemisApp.multipleChoiceQuestion.visualEditor.explanationPlaceholder' | artemisTranslate"
                     class="form-control"
                     [(ngModel)]="answerOption.explanation"
                     (input)="this.questionChanged.emit()"

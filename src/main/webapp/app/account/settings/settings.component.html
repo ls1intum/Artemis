@@ -30,8 +30,9 @@
                             required
                             [invalid]="settingsForm.controls.firstName.invalid && (settingsForm.controls.firstName.dirty || settingsForm.controls.firstName.touched)"
                         >
-                            <span tumAetUiFormFieldLabel jhiTranslate="settings.form.firstname"></span>
+                            <span id="firstName-label" tumAetUiFormFieldLabel jhiTranslate="settings.form.firstname"></span>
                             <input
+                                aria-labelledby="firstName-label"
                                 type="text"
                                 tumAetUiInput
                                 class="w-full"
@@ -60,8 +61,9 @@
                             required
                             [invalid]="settingsForm.controls.lastName.invalid && (settingsForm.controls.lastName.dirty || settingsForm.controls.lastName.touched)"
                         >
-                            <span tumAetUiFormFieldLabel jhiTranslate="settings.form.lastname"></span>
+                            <span id="lastName-label" tumAetUiFormFieldLabel jhiTranslate="settings.form.lastname"></span>
                             <input
+                                aria-labelledby="lastName-label"
                                 type="text"
                                 tumAetUiInput
                                 class="w-full"
@@ -96,8 +98,9 @@
                             required
                             [invalid]="settingsForm.controls.email.invalid && (settingsForm.controls.email.dirty || settingsForm.controls.email.touched)"
                         >
-                            <span tumAetUiFormFieldLabel jhiTranslate="global.form.email"></span>
+                            <span id="email-label" tumAetUiFormFieldLabel jhiTranslate="global.form.email"></span>
                             <input
+                                aria-labelledby="email-label"
                                 type="email"
                                 tumAetUiInput
                                 class="w-full"

@@ -168,6 +168,7 @@
             @for (path of phase().resultPaths; track $index) {
                 <div class="d-flex align-items-center gap-2">
                     <input
+                        [attr.aria-label]="'artemisApp.programmingExercise.buildPhasesEditor.resultPathPlaceholder' | artemisTranslate"
                         [attr.data-testid]="'result-path-input-' + $index"
                         pInputText
                         pSize="small"

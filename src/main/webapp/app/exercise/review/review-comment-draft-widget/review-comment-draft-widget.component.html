@@ -1,6 +1,11 @@
 <div class="monaco-review-comment-widget">
     <div class="monaco-review-comment-title">{{ 'artemisApp.review.addCommentTitle' | artemisTranslate }}</div>
-    <textarea class="monaco-review-comment-textarea" [placeholder]="'artemisApp.review.addCommentPlaceholder' | artemisTranslate" [(ngModel)]="text"></textarea>
+    <textarea
+        [attr.aria-label]="'artemisApp.review.addCommentPlaceholder' | artemisTranslate"
+        class="monaco-review-comment-textarea"
+        [placeholder]="'artemisApp.review.addCommentPlaceholder' | artemisTranslate"
+        [(ngModel)]="text"
+    ></textarea>
     <div class="monaco-review-comment-actions">
         @if (!canSubmit()) {
             <span class="monaco-review-comment-error">{{ 'artemisApp.review.submitBeforeComment' | artemisTranslate }}</span>

@@ -23,9 +23,9 @@
                 <div class="dropdown" ngbDropdown>
                     <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button" [attr.aria-label]="connectToInstructionAriaLabel()"></button>
                     @if (criteriaList.length === 1) {
-                        <ul ngbDropdownMenu>
+                        <div ngbDropdownMenu>
                             <jhi-textblock-feedback-dropdown [criterion]="criteriaList[0]" [feedback]="feedback()" (didChange)="didChange()" />
-                        </ul>
+                        </div>
                     } @else {
                         <ul class="dropdown-menu" ngbDropdownMenu>
                             @for (criterion of criteriaList; track criterion) {
@@ -37,9 +37,9 @@
                                             <span jhiTranslate="artemisApp.textAssessment.feedbackEditor.noTitle"></span>&nbsp;<fa-icon class="float-end" [icon]="faAngleRight" />
                                         </button>
                                     }
-                                    <ul class="dropdown-menu dropdown-submenu">
+                                    <div class="dropdown-menu dropdown-submenu">
                                         <jhi-textblock-feedback-dropdown [criterion]="criterion" [feedback]="feedback()" (didChange)="didChange()" />
-                                    </ul>
+                                    </div>
                                 </li>
                             }
                         </ul>

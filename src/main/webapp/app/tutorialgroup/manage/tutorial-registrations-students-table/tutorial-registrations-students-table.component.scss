@@ -14,6 +14,13 @@
     .table-header {
         width: 100%;
 
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background-color: var(--tumaet-ui-content-background);
+        }
+
         .header-row {
             display: flex;
             border-bottom: 1px solid var(--border-color);

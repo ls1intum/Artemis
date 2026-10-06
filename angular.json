@@ -178,7 +178,7 @@
                             ]
                         },
                         "tum-aet-ui-source": {
-                            "tsConfig": "tsconfig.serve.json"
+                            "tsConfig": "config/client/tsconfig.serve.json"
                         }
                     },
                     "defaultConfiguration": "production"
@@ -190,7 +190,7 @@
                         "prebundle": {
                             "exclude": ["@tumaet/ui-angular"]
                         },
-                        "proxyConfig": "proxy.conf.mjs",
+                        "proxyConfig": "config/client/proxy.conf.mjs",
                         "port": 9000
                     },
                     "configurations": {

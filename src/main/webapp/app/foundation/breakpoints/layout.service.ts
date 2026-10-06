@@ -18,7 +18,7 @@ export class LayoutService {
     parseBreakpointsResponse(breakpoints: { [key: string]: boolean }): string[] {
         this.activeBreakpoints = [];
 
-        Object.keys(breakpoints).map((key) => {
+        Object.keys(breakpoints).forEach((key) => {
             if (breakpoints[key]) {
                 this.activeBreakpoints.push(this.breakpointService.getBreakpointName(key));
             }

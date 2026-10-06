@@ -1,36 +1,45 @@
-<p-popover #popover (onHide)="onHide()" (onShow)="onShow()">
+<tumaet-ui-popover #popover [ariaLabel]="eventData()?.title ?? ''" placement="bottom" (openChange)="onOpenChange($event)">
     @let event = eventData();
     @if (event) {
-        <div class="frame">
-            <div class="header">
+        <div class="flex min-w-48 flex-col gap-2">
+            <div class="flex items-start justify-between gap-8 text-base font-semibold">
                 <div>{{ event.title }}</div>
-                <button type="button" class="close-button" (click)="close()">
+                <button
+                    type="button"
+                    tumAetUiButton
+                    variant="text"
+                    severity="secondary"
+                    size="small"
+                    data-testid="event-detail-close-button"
+                    [attr.aria-label]="'entity.action.close' | artemisTranslate"
+                    (click)="close()"
+                >
                     <fa-icon [icon]="faXmark" />
                 </button>
             </div>
-            <div class="info-row">
-                <div class="icon-frame">
+            <div class="flex items-center gap-2 text-(--text-body-secondary)">
+                <div class="flex w-4 items-center justify-center">
                     <fa-icon [icon]="event.icon" />
                 </div>
                 <div jhiTranslate="{{ event.eventTypeNameKey }}" data-testid="event-type-name-key"></div>
             </div>
-            <div class="info-row" id="time-row">
-                <div class="icon-frame">
+            <div class="flex items-center gap-2 text-(--text-body-secondary)" id="time-row">
+                <div class="flex w-4 items-center justify-center">
                     <fa-icon [icon]="faClock" />
                 </div>
                 <div>{{ event.time }}</div>
             </div>
             @if (event.location) {
-                <div class="info-row" id="location-row">
-                    <div class="icon-frame">
+                <div class="flex items-center gap-2 text-(--text-body-secondary)" id="location-row">
+                    <div class="flex w-4 items-center justify-center">
                         <fa-icon [icon]="faLocationDot" />
                     </div>
                     <div>{{ event.location }}</div>
                 </div>
             }
             @if (event.facilitator) {
-                <div class="info-row" id="facilitator-row">
-                    <div class="icon-frame">
+                <div class="flex items-center gap-2 text-(--text-body-secondary)" id="facilitator-row">
+                    <div class="flex w-4 items-center justify-center">
                         <fa-icon [icon]="faUser" />
                     </div>
                     <div>{{ event.facilitator }}</div>
@@ -38,4 +47,4 @@
             }
         </div>
     }
-</p-popover>
+</tumaet-ui-popover>

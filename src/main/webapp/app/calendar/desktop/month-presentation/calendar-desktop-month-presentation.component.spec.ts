@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -15,7 +15,7 @@ import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calenda
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PopoverModule } from 'primeng/popover';
+import { TumAetUiButtonDirective, TumAetUiPopoverComponent } from '@tumaet/ui-angular';
 describe('CalendarDesktopMonthPresentationComponent', () => {
     let fixture: ComponentFixture<CalendarDesktopMonthPresentationComponent>;
     let component: CalendarDesktopMonthPresentationComponent;
@@ -77,7 +77,13 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
             })
             .overrideComponent(CalendarEventDetailPopoverComponent, {
                 set: {
-                    imports: [MockModule(PopoverModule), MockDirective(TranslateDirective), MockComponent(FaIconComponent)],
+                    imports: [
+                        MockComponent(TumAetUiPopoverComponent),
+                        MockComponent(TumAetUiButtonDirective),
+                        MockDirective(TranslateDirective),
+                        MockPipe(ArtemisTranslatePipe),
+                        MockComponent(FaIconComponent),
+                    ],
                 },
             })
             .compileComponents();
@@ -126,9 +132,9 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
     it('should open popover', async () => {
         const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
         const popoverComponent = popoverDebugElement.componentInstance as CalendarEventDetailPopoverComponent;
-        // Spy on the component's open method to verify it's called and manually trigger onShow
+        // Spy on the component's open method to verify it's called and manually trigger onOpenChange
         const openSpy = vi.spyOn(popoverComponent, 'open').mockImplementation((mouseEvent, event) => {
-            popoverComponent.onShow();
+            popoverComponent.onOpenChange(true);
         });
 
         const eventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
@@ -144,10 +150,10 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
         const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
         const popoverComponent = popoverDebugElement.componentInstance as CalendarEventDetailPopoverComponent;
         const closeSpy = vi.spyOn(popoverComponent, 'close');
-        // Mock the PrimeNG popover to avoid animation timing issues in tests
+        // Open without the overlay, so that the test does not depend on animation timing.
         vi.spyOn(popoverComponent, 'open').mockImplementation((mouseEvent, event) => {
             popoverComponent['event'].set(event);
-            popoverComponent.onShow();
+            popoverComponent.onOpenChange(true);
         });
 
         const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
@@ -158,8 +164,8 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
         expect(popoverComponent.isOpen()).toBe(true);
 
         // Since popover is mocked, manually call close
-        popoverComponent.onHide();
-        closeSpy.mockImplementation(() => popoverComponent.onHide());
+        popoverComponent.onOpenChange(false);
+        closeSpy.mockImplementation(() => popoverComponent.onOpenChange(false));
         popoverComponent.close();
         fixture.detectChanges();
         await fixture.whenStable();

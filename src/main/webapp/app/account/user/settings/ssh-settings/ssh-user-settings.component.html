@@ -2,10 +2,10 @@
 @if (!isLoading()) {
     <tumaet-ui-list [ariaLabel]="'artemisApp.userSettings.sshSettingsPage.keysTablePageTitle' | artemisTranslate">
         <li tumAetUiListItem>
-            <dt>
+            <p class="mb-0 font-medium">
                 <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.whatToUseSSHForInfo"></span>
                 <jhi-documentation-link [documentationType]="documentationType" [displayString]="'artemisApp.userSettings.sshSettingsPage.learnMore'" />
-            </dt>
+            </p>
         </li>
 
         <li tumAetUiListItem>

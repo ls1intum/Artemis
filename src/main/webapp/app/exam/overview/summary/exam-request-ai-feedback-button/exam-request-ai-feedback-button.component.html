@@ -2,7 +2,9 @@
     <button
         type="button"
         id="requestAIFeedbackButton"
-        class="btn btn-secondary float-end me-2"
+        tumAetUiButton
+        severity="secondary"
+        class="float-right mr-2!"
         (click)="requestAIFeedback()"
         [disabled]="
             isRequestingFeedback() || feedbackRequested() || hasAnyAthenaResultForCurrentAttempt() || (athenaFeedbackLimit() > 0 && athenaFeedbackUsed() >= athenaFeedbackLimit())
@@ -19,7 +21,7 @@
             <span jhiTranslate="artemisApp.exam.examSummary.requestAIFeedback"></span>
         }
         @if (athenaFeedbackLimit() > 0) {
-            <span class="ms-1">({{ athenaFeedbackUsed() }} / {{ athenaFeedbackLimit() }})</span>
+            <span class="ml-1">({{ athenaFeedbackUsed() }} / {{ athenaFeedbackLimit() }})</span>
         }
     </button>
 }

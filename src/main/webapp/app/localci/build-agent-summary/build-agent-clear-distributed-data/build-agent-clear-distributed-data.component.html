@@ -11,7 +11,16 @@
         <div jhiTranslate="artemisApp.buildAgents.clearDistributedData.descriptionSecond"></div>
         <div jhiTranslate="artemisApp.buildAgents.clearDistributedData.descriptionThird"></div>
     </div>
-    <input tumAetUiInput type="text" class="mt-2 w-full" required name="confirm" [(ngModel)]="confirmationText" [pattern]="'CLEAR DATA'" />
+    <input
+        [attr.aria-label]="'accessibility.confirmClearData' | artemisTranslate"
+        tumAetUiInput
+        type="text"
+        class="mt-2 w-full"
+        required
+        name="confirm"
+        [(ngModel)]="confirmationText"
+        [pattern]="'CLEAR DATA'"
+    />
     <ng-template #footer>
         <tumaet-ui-button type="button" severity="secondary" size="small" (clicked)="cancel()">
             <fa-icon [icon]="faTimes" />

@@ -1,5 +1,5 @@
 <!--Folder-->
-<li class="list-group-item list-group-item--folder" id="file-browser-folder">
+<div class="list-group-item list-group-item--folder" id="file-browser-folder">
     <button
         type="button"
         (click)="onCollapseExpand()()"
@@ -24,6 +24,7 @@
         <span class="file-label-group">
             <span class="ms-1 rename-input-wrapper"
                 ><input
+                    [attr.aria-label]="'artemisApp.editor.fileBrowser.renameFolder' | artemisTranslate"
                     #renamingInput
                     value="{{ item().text }}"
                     (keyup.enter)="renameNode($event)"
@@ -56,4 +57,4 @@
             </button>
         </span>
     }
-</li>
+</div>

@@ -13,7 +13,7 @@
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve, relative } from 'node:path';
-import { isBanned, bannedClassesInBindingExpression } from '../../rules/no-bootstrap-classes.mjs';
+import { isBanned, bannedClassesInBindingExpression } from '../../config/eslint/rules/no-bootstrap-classes.mjs';
 
 const APP = resolve(dirname(fileURLToPath(import.meta.url)), '../../src/main/webapp/app');
 

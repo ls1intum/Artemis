@@ -240,7 +240,15 @@ public class Lti13Service {
      * @param participation The exercise participation for which a new result is available
      */
     public void onNewResult(StudentParticipation participation) {
-        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
+        var exercise = participation.getExercise();
+        if (exercise == null) {
+            return;
+        }
+        var participationCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (participationCourse == null) {
+            return;
+        }
+        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(participationCourse.getId());
 
         if (!course.isOnlineCourse()) {
             log.error("Could not transmit score to external LMS for course {}:", course.getTitle());

@@ -456,7 +456,7 @@ describe('AttachmentVideoUnitComponent', () => {
 
     describe('YouTube player branching (server metadata)', () => {
         it('renders YouTube player when DTO declares videoSourceType YOUTUBE and youtubeVideoId is present', () => {
-            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.componentRef.setInput('deepLink', { unitId: 1 });
             fixture.componentRef.setInput('lectureUnit', {
                 id: 1,
                 videoSourceType: 'YOUTUBE',
@@ -468,7 +468,7 @@ describe('AttachmentVideoUnitComponent', () => {
         });
 
         it('falls back to iframe with embed URL when playerFailed fires', () => {
-            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.componentRef.setInput('deepLink', { unitId: 1 });
             fixture.componentRef.setInput('lectureUnit', {
                 id: 1,
                 videoSourceType: 'YOUTUBE',
@@ -503,16 +503,16 @@ describe('AttachmentVideoUnitComponent', () => {
             };
             vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(mockTranscriptDTO));
 
-            // Set lectureUnit first, then expand (initiallyExpanded triggers toggleCollapse)
+            // Set lectureUnit first, then expand through its deep link.
             fixture.componentRef.setInput('lectureUnit', {
                 id: 2,
                 videoSourceType: 'TUM_LIVE',
                 videoSource: src,
             } as any);
-            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.componentRef.setInput('deepLink', { unitId: 2 });
             fixture.detectChanges();
 
-            // Flush the HTTP request triggered by initiallyExpanded → toggleCollapse(false)
+            // Flush the HTTP request triggered by the deep link expanding the unit.
             expectPlaylistRequest(src, playlist);
             await fixture.whenStable();
             fixture.detectChanges();
@@ -525,10 +525,10 @@ describe('AttachmentVideoUnitComponent', () => {
                 id: 3,
                 videoSource: 'https://youtu.be/dQw4w9WgXcQ',
             } as any);
-            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.componentRef.setInput('deepLink', { unitId: 3 });
             fixture.detectChanges();
 
-            // initiallyExpanded triggers toggleCollapse → playlist request
+            // The deep link triggers toggleCollapse → playlist request.
             expectPlaylistRequest('https://youtu.be/dQw4w9WgXcQ', null);
             await fixture.whenStable();
             fixture.detectChanges();
@@ -537,7 +537,7 @@ describe('AttachmentVideoUnitComponent', () => {
         });
 
         it('playerFailed resets when the lecture unit changes', () => {
-            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.componentRef.setInput('deepLink', { unitId: 10 });
             fixture.componentRef.setInput('lectureUnit', {
                 id: 10,
                 videoSourceType: 'YOUTUBE',
@@ -593,6 +593,17 @@ describe('AttachmentVideoUnitComponent', () => {
             fixture.detectChanges();
 
             expect(component.hasPdf()).toBe(false);
+        });
+
+        it('hasPdf: follows the student version over the stored link', () => {
+            // A fresh unit: the shared fixture's attachment is mutated by neighbouring tests and must not keep this version.
+            fixture.componentRef.setInput('lectureUnit', {
+                ...attachmentVideoUnit,
+                attachment: { ...attachmentVideoUnit.attachment, link: '/path/to/file/test.docx', studentVersion: '/path/to/file/student.pdf' },
+            });
+            fixture.detectChanges();
+
+            expect(component.hasPdf()).toBe(true);
         });
 
         it('hasPdf: returns false when attachment is not PDF', () => {
@@ -939,7 +950,7 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component.isFullscreen()).toBe(false);
         });
 
-        it('targetCombinedView: opens the combined view once content is there, and only once', () => {
+        it('opens the combined view once per deep-link request when content becomes available', () => {
             // A point-out marker clicked from elsewhere in the app arrives as a deep link, and has to end up in the
             // same view as clicking it on this page does. The content is still being resolved when the unit is first
             // built, so the opening waits for it — but must not overrule the student closing the view again.
@@ -949,7 +960,7 @@ describe('AttachmentVideoUnitComponent', () => {
             component.lectureUnit().lecture = { id: 1, isTutorialLecture: false } as any;
             component.lectureUnit().videoSource = undefined;
             component.lectureUnit().attachment = undefined;
-            fixture.componentRef.setInput('targetCombinedView', true);
+            fixture.componentRef.setInput('deepLink', { unitId: 1, combined: true });
             fixture.detectChanges();
 
             // Nothing to show yet, so nothing is opened and the request is still outstanding.
@@ -968,10 +979,8 @@ describe('AttachmentVideoUnitComponent', () => {
 
             expect(openFullscreen).toHaveBeenCalledOnce();
 
-            // Once the deep-link request clears, a later request for the same component instance may open it again.
-            fixture.componentRef.setInput('targetCombinedView', false);
-            fixture.detectChanges();
-            fixture.componentRef.setInput('targetCombinedView', true);
+            // A fresh request with the same values must reopen the view without clearing the old target first.
+            fixture.componentRef.setInput('deepLink', { unitId: 1, combined: true });
             fixture.detectChanges();
 
             expect(openFullscreen).toHaveBeenCalledTimes(2);
@@ -1148,6 +1157,123 @@ describe('AttachmentVideoUnitComponent', () => {
             const provider = component.contextProvider();
 
             expect(provider.hasVideoBeenPlayed!()).toBe(false);
+        });
+    });
+
+    describe('combined-view context', () => {
+        const setContext = (page?: number, timestamp?: number, played = false) => {
+            const isCollapsed = signal(false);
+            Object.defineProperty(component, 'lectureUnitCard', {
+                value: () => ({ isCollapsed }),
+                configurable: true,
+            });
+            Object.defineProperty(component, 'contextProvider', {
+                value: () => ({ getCurrentPdfPage: () => page, getCurrentVideoTimestamp: () => timestamp, hasVideoBeenPlayed: () => played }),
+                configurable: true,
+            });
+            return isCollapsed;
+        };
+
+        it('nests the visible slide and played video positions in one combined-view context', () => {
+            setContext(4, 30, true);
+
+            expect(component.ownContextsProvider().getVisibleContexts()).toEqual([
+                { type: 'combinedView', slides: { type: 'slides', lectureUnitId: 1, page: 4 }, video: { type: 'video', lectureUnitId: 1, timestamp: 30 } },
+            ]);
+        });
+
+        it('omits the video context until playback starts', () => {
+            setContext(4, 30);
+
+            expect(component.ownContextsProvider().getVisibleContexts()).toEqual([
+                { type: 'combinedView', slides: { type: 'slides', lectureUnitId: 1, page: 4 }, video: undefined },
+            ]);
+        });
+
+        it('includes a played video at timestamp zero even without slides', () => {
+            setContext(undefined, 0, true);
+
+            expect(component.ownContextsProvider().getVisibleContexts()).toEqual([
+                { type: 'combinedView', slides: undefined, video: { type: 'video', lectureUnitId: 1, timestamp: 0 } },
+            ]);
+        });
+
+        it('omits a context with no media position', () => {
+            setContext();
+
+            expect(component.ownContextsProvider().getVisibleContexts()).toEqual([]);
+        });
+
+        it('omits the context while the unit is collapsed', () => {
+            const isCollapsed = setContext(4, 30, true);
+            isCollapsed.set(true);
+
+            expect(component.ownContextsProvider().getVisibleContexts()).toEqual([]);
+        });
+
+        it('omits the context when the unit has no id', () => {
+            setContext(4, 30, true);
+            fixture.componentRef.setInput('lectureUnit', { ...attachmentVideoUnit, id: undefined });
+
+            expect(component.ownContextsProvider().getVisibleContexts()).toEqual([]);
+        });
+    });
+
+    describe('Deep linking', () => {
+        it.each(['videoPlayer', 'youtubePlayer'] as const)('re-seeks an existing %s for each identical timestamp request without starting playback', (player) => {
+            const seekTo = vi.fn().mockReturnValue(true);
+            Object.defineProperty(component, player, {
+                value: () => ({ seekTo }),
+                writable: true,
+                configurable: true,
+            });
+            if (player === 'youtubePlayer') {
+                component.playlistUrl.set(undefined);
+            } else {
+                component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+                component.transcriptSegments.set([{ startTime: 0, endTime: 60, text: 'Slide', slideNumber: 1 }]);
+            }
+
+            fixture.componentRef.setInput('deepLink', { unitId: 1, timestamp: 30 });
+            fixture.detectChanges();
+            fixture.componentRef.setInput('deepLink', { unitId: 1, timestamp: 30 });
+            fixture.detectChanges();
+
+            expect(seekTo).toHaveBeenCalledTimes(2);
+            expect(seekTo).toHaveBeenNthCalledWith(1, 30, false);
+            expect(seekTo).toHaveBeenNthCalledWith(2, 30, false);
+        });
+
+        it('executes the same jump again, so a repeated citation click is not swallowed', () => {
+            const goToPage = vi.fn().mockReturnValue(true);
+            Object.defineProperty(component, 'pdfViewer', {
+                value: () => ({ getCurrentPage: () => 1, goToPage }),
+                writable: true,
+                configurable: true,
+            });
+
+            fixture.componentRef.setInput('deepLink', { unitId: 1, page: 3 });
+            fixture.detectChanges();
+            fixture.componentRef.setInput('deepLink', { unitId: 1, page: 3 });
+            fixture.detectChanges();
+
+            expect(goToPage).toHaveBeenCalledTimes(2);
+            expect(goToPage).toHaveBeenLastCalledWith(3);
+        });
+
+        it('ignores a jump addressed to another unit', () => {
+            const goToPage = vi.fn();
+            Object.defineProperty(component, 'pdfViewer', {
+                value: () => ({ getCurrentPage: () => 1, goToPage }),
+                writable: true,
+                configurable: true,
+            });
+
+            fixture.componentRef.setInput('deepLink', { unitId: 99, page: 3 });
+            fixture.detectChanges();
+
+            expect(component.matchedDeepLink()).toBeUndefined();
+            expect(goToPage).not.toHaveBeenCalled();
         });
     });
 
@@ -1623,6 +1749,112 @@ describe('AttachmentVideoUnitComponent', () => {
                 expect(seekTo).toHaveBeenCalledWith(10, false);
                 expect(component.synchronizeVideoAndSlides()).toBe(true);
                 expect(component.syncDisabledByPointOut()).toBeUndefined();
+            });
+
+            it('synchronizes the video when a page-only deep link emits a PDF page change', () => {
+                const { goToPage, seekTo } = mockViewers(signal(3));
+                component.lectureUnitCard()!.isCollapsed.set(false);
+
+                fixture.componentRef.setInput('deepLink', { unitId: 1, page: 2 });
+                fixture.detectChanges();
+
+                expect(goToPage).toHaveBeenCalledExactlyOnceWith(2);
+                expect(seekTo).toHaveBeenCalledExactlyOnceWith(10, false);
+                expect(component.synchronizeVideoAndSlides()).toBe(true);
+            });
+
+            it.each([
+                { timestamp: 0, page: 1, startingPage: 2 },
+                { timestamp: 12, page: 2, startingPage: 1 },
+            ])('preserves an explicit deep-link timestamp on its matching slide: %j', ({ timestamp, page, startingPage }) => {
+                const { goToPage, seekTo } = mockViewers(signal(3));
+                component.lectureUnitCard()!.isCollapsed.set(false);
+                goToPage(startingPage);
+                goToPage.mockClear();
+                seekTo.mockClear();
+
+                fixture.componentRef.setInput('deepLink', { unitId: 1, page, timestamp });
+                fixture.detectChanges();
+
+                expect(goToPage).toHaveBeenCalledExactlyOnceWith(page);
+                expect(seekTo).toHaveBeenCalledExactlyOnceWith(timestamp, false);
+                expect(component.synchronizeVideoAndSlides()).toBe(true);
+            });
+
+            it('keeps an explicit timestamp when its requested page emits a conflicting synchronization target', () => {
+                const { goToPage, seekTo } = mockViewers(signal(3));
+                component.lectureUnitCard()!.isCollapsed.set(false);
+
+                fixture.componentRef.setInput('deepLink', { unitId: 1, page: 2, timestamp: 0 });
+                fixture.detectChanges();
+
+                expect(goToPage).toHaveBeenCalledExactlyOnceWith(2);
+                expect(seekTo).toHaveBeenCalledExactlyOnceWith(0, false);
+            });
+
+            describe('a deep link to the page the viewer already shows', () => {
+                // The real viewer reports a page only when it changes, which the shared mock does not copy.
+                const showPage = (shownPage: number) => {
+                    const { seekTo } = mockViewers(signal(3));
+                    const goToPage = vi.fn((page: number) => {
+                        if (page !== shownPage) {
+                            shownPage = page;
+                            component['onPdfCurrentPageChange'](page);
+                        }
+                        return true;
+                    });
+                    Object.defineProperty(component, 'pdfViewer', {
+                        value: () => ({ goToPage, getCurrentPage: () => shownPage }),
+                        writable: true,
+                        configurable: true,
+                    });
+                    component.lectureUnitCard()!.isCollapsed.set(false);
+                    return { goToPage, seekTo };
+                };
+
+                it('returns the video to the start of the slide and the view to the top of the page', () => {
+                    // Page 2 is slide 8, which starts at 10s. The student has played on to 15s and asks for it again.
+                    const { goToPage, seekTo } = showPage(2);
+
+                    fixture.componentRef.setInput('deepLink', { unitId: 1, page: 2 });
+                    fixture.detectChanges();
+
+                    expect(goToPage).toHaveBeenCalledExactlyOnceWith(2);
+                    expect(seekTo).toHaveBeenCalledExactlyOnceWith(10, false);
+                });
+
+                it('keeps an explicit timestamp on that page and leaves no target waiting for a page report that never comes', () => {
+                    const { goToPage, seekTo } = showPage(2);
+
+                    fixture.componentRef.setInput('deepLink', { unitId: 1, page: 2, timestamp: 15 });
+                    fixture.detectChanges();
+
+                    expect(goToPage).toHaveBeenCalledExactlyOnceWith(2);
+                    expect(seekTo).toHaveBeenCalledExactlyOnceWith(15, false);
+                    expect(component['pendingPdfTargetPage']).toBeUndefined();
+                });
+
+                it('does not synchronize when the toggle is off', () => {
+                    const { goToPage, seekTo } = showPage(2);
+                    component.synchronizeVideoAndSlides.set(false);
+
+                    fixture.componentRef.setInput('deepLink', { unitId: 1, page: 2 });
+                    fixture.detectChanges();
+
+                    expect(goToPage).toHaveBeenCalledExactlyOnceWith(2);
+                    expect(seekTo).not.toHaveBeenCalled();
+                });
+            });
+
+            it('leaves no target waiting when the viewer cannot move to the requested page yet', () => {
+                const { goToPage } = mockViewers(signal(3), 300, signal(false));
+                component.lectureUnitCard()!.isCollapsed.set(false);
+
+                fixture.componentRef.setInput('deepLink', { unitId: 1, page: 2, timestamp: 12 });
+                fixture.detectChanges();
+
+                expect(goToPage).toHaveReturnedWith(false);
+                expect(component['pendingPdfTargetPage']).toBeUndefined();
             });
 
             it('drops the explanation once the student decides about the toggle themselves', () => {

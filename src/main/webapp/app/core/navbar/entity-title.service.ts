@@ -51,11 +51,13 @@ export class EntityTitleService implements OnDestroy {
 
     ngOnDestroy(): void {
         this.authenticationStateSubscription?.unsubscribe();
+        // Cancel pending fallback fetches; otherwise they would call HttpClient on a destroyed injector.
+        this.resetState();
     }
 
     /**
      * Clears the cached title subjects and any pending fetch timeouts. Called on logout / user change
-     * so the next user does not see the previous user's entity titles in breadcrumbs.
+     * so the next user does not see the previous user's entity titles in breadcrumbs, and on destroy.
      */
     private resetState(): void {
         this.stateGeneration++;

@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
-import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
@@ -14,7 +14,7 @@ import { captureException } from '@sentry/angular';
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CollapsibleCardComponent } from '../collapsible-card/collapsible-card.component';
-import { NgClass } from '@angular/common';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-component';
 import { GradingKeyTableComponent } from 'app/assessment/manage/grading/grading-key/grading-key-table.component';
@@ -31,9 +31,8 @@ type ResultOverviewSection = 'grading-table' | 'grading-key' | 'bonus-grading-ke
 
 @Component({
     selector: 'jhi-exam-result-overview',
-    styleUrls: ['./exam-result-overview.component.scss'],
     templateUrl: './exam-result-overview.component.html',
-    imports: [TranslateDirective, CollapsibleCardComponent, NgClass, FaIconComponent, NoDataComponent, GradingKeyTableComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, CollapsibleCardComponent, FaIconComponent, NoDataComponent, GradingKeyTableComponent, ArtemisTranslatePipe, TumAetUiTableDirective],
 })
 export class ExamResultOverviewComponent implements OnInit {
     private serverDateService = inject(ArtemisServerDateService);
@@ -208,6 +207,21 @@ export class ExamResultOverviewComponent implements OnInit {
     getMaxNormalAndBonusPointsSum(): number {
         const maxAchievableBonusPoints = this.studentExamWithGrade()?.maxBonusPoints ?? 0;
         return this.maxPoints() + maxAchievableBonusPoints;
+    }
+
+    /**
+     * Styling of an exercise row. Exercises that are not included in the score are dimmed and red, bonus exercises are orange.
+     * The table sets the text color of its cells itself, so the color has to be applied to them as well.
+     */
+    rowClass(exercise: Exercise): string {
+        switch (exercise.includedInOverallScore) {
+            case IncludedInOverallScore.NOT_INCLUDED:
+                return 'font-bold italic opacity-50 [&_td]:text-state-danger! [&_th]:text-state-danger!';
+            case IncludedInOverallScore.INCLUDED_AS_BONUS:
+                return 'font-bold italic [&_td]:text-state-warning! [&_th]:text-state-warning!';
+            default:
+                return '';
+        }
     }
 
     scrollToExercise(exerciseId?: number) {

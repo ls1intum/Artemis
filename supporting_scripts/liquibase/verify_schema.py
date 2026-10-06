@@ -51,7 +51,7 @@ DRIVER_DIR = REPO / "build/liquibase-drivers"
 MASTER = "config/liquibase/master.xml"
 HISTORY_MASTER = "config/liquibase/history/master.xml"
 
-# The contexts an end-to-end stack starts with; see docker/artemis/config/playwright.env.
+# The contexts an end-to-end stack starts with; see deployment/docker/artemis/config/playwright.env.
 SEED_CONTEXTS = "prod,e2e"
 
 # Changesets an upgraded database has recorded that a fresh one never will, because the changelog that
@@ -563,7 +563,7 @@ def check_seed(engine: Engine, liquibase: Liquibase, port: int) -> list[str]:
     the schema in its final shape, so the seed has to match that shape.
     """
     with Database(engine, "seed", port) as database:
-        # The contexts an end-to-end stack runs with (docker/artemis/config/playwright.env).
+        # The contexts an end-to-end stack runs with (deployment/docker/artemis/config/playwright.env).
         liquibase.apply(database, HISTORY_MASTER, command="changelog-sync", contexts=SEED_CONTEXTS)
         liquibase.apply(database, MASTER, contexts=SEED_CONTEXTS)
 

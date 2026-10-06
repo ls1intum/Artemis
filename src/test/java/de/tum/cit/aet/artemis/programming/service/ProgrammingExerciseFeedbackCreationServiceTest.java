@@ -116,6 +116,17 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
     }
 
     @Test
+    void createFeedbackFromTestCaseRemovesExceptionNamesOfAres1AndAres2() {
+        String msgAres = """
+                de.tum.in.test.api.util.UnexpectedExceptionError: Unexpected exception in Ares 1
+                de.tum.cit.ase.ares.api.util.UnexpectedExceptionError: Unexpected exception in Ares 2""";
+        String actualFeedback = createFeedbackFromTestCase("test1", List.of(msgAres), false);
+        assertThat(actualFeedback).isEqualTo("""
+                Unexpected exception in Ares 1
+                Unexpected exception in Ares 2""");
+    }
+
+    @Test
     void createFeedbackFromTestCaseUnchanged() {
         String msgUnchanged = "Should not be changed";
         String actualFeedback = createFeedbackFromTestCase("test3", List.of(msgUnchanged), false);

@@ -17,11 +17,13 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User_;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipantSettingsView;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation_;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
@@ -294,8 +296,8 @@ public class ConversationDTOService {
     @NonNull
     private Set<ConversationParticipant> getConversationParticipants(Conversation conversation) {
         Set<ConversationParticipant> conversationParticipants;
-        var participantsInitialized = Persistence.getPersistenceUtil().isLoaded(conversation, "conversationParticipants") && conversation.getConversationParticipants() != null
-                && !conversation.getConversationParticipants().isEmpty();
+        var participantsInitialized = Persistence.getPersistenceUtil().isLoaded(conversation, Conversation_.CONVERSATION_PARTICIPANTS)
+                && conversation.getConversationParticipants() != null && !conversation.getConversationParticipants().isEmpty();
         if (participantsInitialized) {
             conversationParticipants = conversation.getConversationParticipants();
         }
@@ -312,7 +314,7 @@ public class ConversationDTOService {
             userDTO.setIsRequestingUser(user.getId().equals(requestingUser.getId()));
             userDTO.setIsChannelModerator(null); // not needed for one to one chats
             var userWithGroups = user;
-            var courseRolesInitialized = Persistence.getPersistenceUtil().isLoaded(user, "courseRoles") && user.getCourseRoles() != null;
+            var courseRolesInitialized = Persistence.getPersistenceUtil().isLoaded(user, User_.COURSE_ROLES) && user.getCourseRoles() != null;
             if (!courseRolesInitialized) {
                 userWithGroups = userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(user.getId());
             }

@@ -16,14 +16,14 @@ spotless {
                     "**/build/**",
                     "**/src/main/generated/**",
                     "**/src/main/resources/templates/**",
-                    "/docker/**",
+                    "/deployment/docker/**",
                     "checked-out-repos/**",
                     "supporting_scripts/**"
                 )
             }
         }
-        importOrderFile "artemis-spotless.importorder"
-        eclipse("4.34").configFile "artemis-spotless-style.xml"
+        importOrderFile "config/spotless/artemis-spotless.importorder"
+        eclipse("4.34").configFile "config/spotless/artemis-spotless-style.xml"
 
         removeUnusedImports()
 

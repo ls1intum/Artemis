@@ -9,6 +9,7 @@ import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { IrisCitationParsed, IrisCitationVersion } from './iris-citation-text.model';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE, lectureDeepLinkQueryParams, parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 import { IrisMaterialVersionService } from 'app/iris/overview/services/iris-material-version.service';
 import { escapeHtml, formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
 import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, faFilePdf, faFileVideo } from '@fortawesome/free-solid-svg-icons';
@@ -420,19 +421,21 @@ export class IrisCitationTextComponent {
         includeExactPosition: boolean,
         pinnedKind?: IrisCitationVersion['kind'],
     ): void {
-        const queryParams: Record<string, string> = { unit: unitId };
-        if (includeExactPosition) {
-            const timestamp = element.getAttribute('data-timestamp');
-            const page = element.getAttribute('data-page');
-            if (timestamp && pinnedKind !== 'attachment') {
-                queryParams.timestamp = timestamp;
-            }
-            if (page && pinnedKind !== 'video') {
-                queryParams.page = page;
-            }
+        const deepLink = parseLectureDeepLink({
+            unit: unitId,
+            timestamp: includeExactPosition && pinnedKind !== 'attachment' ? element.getAttribute('data-timestamp') : undefined,
+            page: includeExactPosition && pinnedKind !== 'video' ? element.getAttribute('data-page') : undefined,
+        });
+        const lectureRoute = ['/courses', courseId, 'lectures', lectureId];
+        if (!deepLink) {
+            // A citation whose unit cannot be parsed still names its lecture; open that rather than doing nothing.
+            void this.router.navigate(lectureRoute);
+            return;
         }
-
-        void this.router.navigate(['/courses', courseId, 'lectures', lectureId], { queryParams });
+        void this.router.navigate(lectureRoute, {
+            queryParams: lectureDeepLinkQueryParams(deepLink),
+            state: LECTURE_DEEP_LINK_NAVIGATION_STATE,
+        });
     }
 
     /**

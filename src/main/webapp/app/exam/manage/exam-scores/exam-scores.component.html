@@ -73,30 +73,30 @@
                     @if (hasSecondCorrectionAndStarted()) {
                         <thead>
                             <tr>
-                                <th></th>
+                                <th scope="col"></th>
                                 @if (gradingScaleExists() && !isBonus()) {
-                                    <th colspan="3" jhiTranslate="artemisApp.examScores.secondCorrectionColumn"></th>
+                                    <th scope="colgroup" colspan="3" jhiTranslate="artemisApp.examScores.secondCorrectionColumn"></th>
                                 }
                                 @if (gradingScaleExists() && !isBonus()) {
-                                    <th colspan="3" class="correction-divider" jhiTranslate="artemisApp.examScores.firstCorrectionColumn"></th>
+                                    <th scope="colgroup" colspan="3" class="correction-divider" jhiTranslate="artemisApp.examScores.firstCorrectionColumn"></th>
                                 }
                                 @if (!gradingScaleExists() || isBonus()) {
-                                    <th colspan="2" jhiTranslate="artemisApp.examScores.secondCorrectionColumn"></th>
+                                    <th scope="colgroup" colspan="2" jhiTranslate="artemisApp.examScores.secondCorrectionColumn"></th>
                                 }
                                 @if (!gradingScaleExists() || isBonus()) {
-                                    <th colspan="2" class="correction-divider" jhiTranslate="artemisApp.examScores.firstCorrectionColumn"></th>
+                                    <th scope="colgroup" colspan="2" class="correction-divider" jhiTranslate="artemisApp.examScores.firstCorrectionColumn"></th>
                                 }
                             </tr>
                         </thead>
                     }
                     <thead>
                         <tr>
-                            <th></th>
+                            <th scope="col"></th>
                             @if (gradingScaleExists() && !isBonus()) {
-                                <th jhiTranslate="artemisApp.examScores.passedColumn"></th>
+                                <th scope="col" jhiTranslate="artemisApp.examScores.passedColumn"></th>
                             }
-                            <th jhiTranslate="artemisApp.examScores.submittedColumn"></th>
-                            <th jhiTranslate="artemisApp.examScores.totalColumn"></th>
+                            <th scope="col" jhiTranslate="artemisApp.examScores.submittedColumn"></th>
+                            <th scope="col" jhiTranslate="artemisApp.examScores.totalColumn"></th>
                             @if (hasSecondCorrectionAndStarted() && gradingScaleExists() && !isBonus()) {
                                 <th scope="col" class="correction-divider" jhiTranslate="artemisApp.examScores.passedColumn"></th>
                             }
@@ -426,25 +426,28 @@
                         <table tumAetUiTable class="body-striped">
                             <thead>
                                 <tr>
-                                    <th>#</th>
-                                    <th jhiTranslate="artemisApp.examScores.titleExerciseGroupColumn"></th>
-                                    <th>
+                                    <th scope="col">#</th>
+                                    <th scope="col" jhiTranslate="artemisApp.examScores.titleExerciseGroupColumn"></th>
+                                    <th scope="col">
                                         {{ 'artemisApp.examScores.participantsColumn' | artemisTranslate }}
                                         <jhi-help-icon text="artemisApp.examScores.participantsExerciseGroupTooltip" />
                                     </th>
-                                    <th>
+                                    <th scope="col">
                                         {{ 'artemisApp.examScores.averagePointsColumn' | artemisTranslate }}
                                         <jhi-help-icon text="artemisApp.examScores.averageExerciseGroupTooltip" />
                                     </th>
                                     @if (gradingScaleExists()) {
-                                        <th jhiTranslate="{{ isBonus() ? 'artemisApp.examScores.averageBonusColumn' : 'artemisApp.examScores.averageGradeColumn' }}"></th>
+                                        <th
+                                            scope="col"
+                                            jhiTranslate="{{ isBonus() ? 'artemisApp.examScores.averageBonusColumn' : 'artemisApp.examScores.averageGradeColumn' }}"
+                                        ></th>
                                     }
-                                    <th jhiTranslate="artemisApp.examScores.titleExerciseColumn"></th>
-                                    <th>
+                                    <th scope="col" jhiTranslate="artemisApp.examScores.titleExerciseColumn"></th>
+                                    <th scope="col">
                                         {{ 'artemisApp.examScores.participantsColumn' | artemisTranslate }}
                                         <jhi-help-icon text="artemisApp.examScores.participantsExerciseTooltip" />
                                     </th>
-                                    <th>
+                                    <th scope="col">
                                         {{ 'artemisApp.examScores.averagePointsColumn' | artemisTranslate }}
                                         <jhi-help-icon text="artemisApp.examScores.averageExerciseTooltip" />
                                     </th>
@@ -521,63 +524,63 @@
                 <table tumAetUiTable striped [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th tumAetUiSortableColumn="name">
+                            <th scope="col">#</th>
+                            <th scope="col" tumAetUiSortableColumn="name">
                                 <span jhiTranslate="artemisApp.examScores.nameColumn"></span>
                             </th>
-                            <th tumAetUiSortableColumn="login">
+                            <th scope="col" tumAetUiSortableColumn="login">
                                 <span jhiTranslate="artemisApp.examScores.loginColumn"></span>
                             </th>
-                            <th tumAetUiSortableColumn="email">
+                            <th scope="col" tumAetUiSortableColumn="email">
                                 <span jhiTranslate="artemisApp.examScores.eMailColumn"></span>
                             </th>
-                            <th tumAetUiSortableColumn="registrationNumber">
+                            <th scope="col" tumAetUiSortableColumn="registrationNumber">
                                 <span jhiTranslate="artemisApp.examScores.registrationNumberColumn"></span>
                             </th>
                             @for (exerciseGroup of examScoreDTO().exerciseGroups; track exerciseGroup.id) {
-                                <th [tumAetUiSortableColumn]="'exerciseGroupIdToExerciseResult.' + exerciseGroup.id + '.achievedPoints'">
+                                <th scope="col" [tumAetUiSortableColumn]="'exerciseGroupIdToExerciseResult.' + exerciseGroup.id + '.achievedPoints'">
                                     <span>{{ exerciseGroup.title }}</span>
                                 </th>
                             }
-                            <th tumAetUiSortableColumn="overallPointsAchieved">
+                            <th scope="col" tumAetUiSortableColumn="overallPointsAchieved">
                                 <span jhiTranslate="artemisApp.examScores.overallPointsColumn"></span>
                             </th>
-                            <th tumAetUiSortableColumn="overallScoreAchieved">
+                            <th scope="col" tumAetUiSortableColumn="overallScoreAchieved">
                                 <span jhiTranslate="artemisApp.examScores.overallScoreColumn"></span>
                             </th>
                             @if (gradingScaleExists()) {
-                                <th tumAetUiSortableColumn="overallScoreAchieved">
+                                <th scope="col" tumAetUiSortableColumn="overallScoreAchieved">
                                     <span jhiTranslate="{{ isBonus() ? 'artemisApp.examScores.overallBonusColumn' : 'artemisApp.examScores.overallGradeColumn' }}"></span>
                                 </th>
                             }
                             @if (hasBonus()) {
                                 @if (presentationScoreThreshold() !== undefined) {
-                                    <th tumAetUiSortableColumn="gradeWithBonus.achievedPresentationScore">
+                                    <th scope="col" tumAetUiSortableColumn="gradeWithBonus.achievedPresentationScore">
                                         <span
                                             jhiTranslate="artemisApp.examScores.presentationScoreThresholdColumn"
                                             [translateValues]="{ threshold: presentationScoreThreshold() }"
                                         ></span>
                                     </th>
                                 }
-                                <th tumAetUiSortableColumn="gradeWithBonus.bonusGrade">
+                                <th scope="col" tumAetUiSortableColumn="gradeWithBonus.bonusGrade">
                                     <span
                                         [jhiTranslate]="hasBonus() === BonusStrategy.POINTS ? 'artemisApp.examScores.bonusPointsColumn' : 'artemisApp.examScores.bonusGradeColumn'"
                                     ></span>
                                 </th>
-                                <th tumAetUiSortableColumn="gradeWithBonus.finalGrade">
+                                <th scope="col" tumAetUiSortableColumn="gradeWithBonus.finalGrade">
                                     <span jhiTranslate="artemisApp.examScores.finalGradeColumn"></span>
                                 </th>
                             }
                             @if (gradingScaleExists() && !isBonus()) {
-                                <th jhiTranslate="artemisApp.examScores.passedColumn"></th>
+                                <th scope="col" jhiTranslate="artemisApp.examScores.passedColumn"></th>
                             }
                             @if (hasPlagiarismVerdicts()) {
-                                <th tumAetUiSortableColumn="mostSeverePlagiarismVerdict">
+                                <th scope="col" tumAetUiSortableColumn="mostSeverePlagiarismVerdict">
                                     <span jhiTranslate="artemisApp.examScores.mostSeverePlagiarismVerdictColumn"></span>
                                 </th>
                             }
                             @if (hasPlagiarismVerdictsInBonusSource()) {
-                                <th tumAetUiSortableColumn="gradeWithBonus.mostSeverePlagiarismVerdict">
+                                <th scope="col" tumAetUiSortableColumn="gradeWithBonus.mostSeverePlagiarismVerdict">
                                     <span jhiTranslate="artemisApp.examScores.mostSeverePlagiarismVerdictInBonusColumn"></span>
                                 </th>
                             }

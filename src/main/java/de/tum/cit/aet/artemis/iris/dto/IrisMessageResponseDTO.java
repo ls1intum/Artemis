@@ -38,4 +38,15 @@ public record IrisMessageResponseDTO(@Nullable Long id, @Nullable ZonedDateTime 
                 createdMemories == null || createdMemories.isEmpty() ? null : createdMemories, activities == null || activities.isEmpty() ? null : activities,
                 message.getMessageDifferentiator(), finalResult);
     }
+
+    /**
+     * Creates the response DTOs of a session's message list, leaving out {@link IrisMessageSender#SUMMARY SUMMARY} messages. A summary only replaces older messages in
+     * the history Iris reads; clients show every original message instead, and the iOS and VS Code clients would otherwise render it as an empty assistant message.
+     *
+     * @param messages the session's messages, in display order
+     * @return the response DTOs of the messages a client displays, in the same order
+     */
+    public static List<IrisMessageResponseDTO> ofDisplayed(List<IrisMessage> messages) {
+        return messages.stream().filter(message -> message.getSender() != IrisMessageSender.SUMMARY).map(IrisMessageResponseDTO::of).toList();
+    }
 }

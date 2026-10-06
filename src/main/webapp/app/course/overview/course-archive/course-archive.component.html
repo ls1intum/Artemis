@@ -34,17 +34,18 @@
         @if (archiveGroups().length) {
             <div class="mb-0">
                 @for (semester of archiveGroups(); track semester; let last = $last; let i = $index) {
-                    <div
-                        class="d-flex justify-content-between align-items-center px-3"
+                    <button
+                        type="button"
+                        class="flex w-full items-center justify-between border-0 bg-transparent px-3 text-start text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
                         (click)="isCourseFoundInSemester(semester) && toggleCollapseState(semester)"
-                        tabindex="0"
-                        role="button"
+                        [disabled]="!isCourseFoundInSemester(semester)"
+                        [attr.aria-expanded]="!semesterCollapsed()[semester]"
                         id="semester-group-{{ i }}"
                         [ngClass]="{ 'text-secondary': !(coursesBySemester()[semester] | searchFilter: ['title'] : searchCourseText()).length }"
                     >
                         <span class="fw-bold" jhiTranslate="{{ fullFormOfSemesterStrings()[semester] }}" [translateValues]="{ param: semester.slice(2) }"></span>
                         <fa-icon [icon]="semesterCollapsed()[semester] ? faAngleDown : faAngleUp" />
-                    </div>
+                    </button>
                     @if (!semesterCollapsed()[semester]) {
                         <div class="container-fluid mt-2">
                             <div class="course-grid justify-content-center align-items-center">

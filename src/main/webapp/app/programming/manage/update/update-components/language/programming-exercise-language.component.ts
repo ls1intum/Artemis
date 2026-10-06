@@ -13,12 +13,23 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe } from '@angular/common';
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-language',
     templateUrl: './programming-exercise-language.component.html',
     styleUrls: ['../../../../shared/programming-exercise-form.scss'],
-    imports: [TranslateDirective, FormsModule, ModePickerComponent, HelpIconComponent, FaIconComponent, ProgrammingExerciseTheiaComponent, KeyValuePipe, RemoveKeysPipe],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        ModePickerComponent,
+        HelpIconComponent,
+        FaIconComponent,
+        ProgrammingExerciseTheiaComponent,
+        KeyValuePipe,
+        RemoveKeysPipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, AfterViewInit, OnDestroy {
     readonly ProgrammingLanguage = ProgrammingLanguage;

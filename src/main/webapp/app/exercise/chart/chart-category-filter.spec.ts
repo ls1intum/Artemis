@@ -325,6 +325,17 @@ describe('ChartCategoryFilter', () => {
         categoryFilter.setupCategoryFilter(courseExercises);
     });
 
+    it('should treat empty category arrays as exercises without categories', () => {
+        const uncategorizedExercise = { ...quizExercise, categories: [] };
+        categoryFilter.setupCategoryFilter([uncategorizedExercise]);
+
+        expect(categoryFilter.exercisesWithoutCategoriesPresent).toBe(true);
+        expect(categoryFilter.numberOfActiveFilters).toBe(1);
+        expect(categoryFilter.applyCurrentFilter([uncategorizedExercise])).toEqual([uncategorizedExercise]);
+        expect(categoryFilter.toggleExercisesWithNoCategory([uncategorizedExercise])).toEqual([]);
+        expect(categoryFilter.toggleExercisesWithNoCategory([uncategorizedExercise])).toEqual([uncategorizedExercise]);
+    });
+
     it('should deselect and select all categories', () => {
         // 3 Filters: Exercises with no categories, programming1 and quiz1
         expect(categoryFilter.numberOfActiveFilters).toBe(3);

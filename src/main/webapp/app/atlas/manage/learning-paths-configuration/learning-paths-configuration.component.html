@@ -28,6 +28,7 @@
             </div>
         } @else {
             <input
+                [attr.aria-label]="'artemisApp.learningPathManagement.learningPathsConfiguration.configuration.includeAllGradedExercises' | artemisTranslate"
                 id="include-all-graded-exercises-checkbox"
                 type="checkbox"
                 class="col-md-auto"
@@ -35,7 +36,11 @@
                 [checked]="includeAllGradedExercisesEnabled()"
                 [disabled]="!isEditMode()"
             />
-            <label class="col-md-auto" jhiTranslate="artemisApp.learningPathManagement.learningPathsConfiguration.configuration.includeAllGradedExercises"></label>
+            <label
+                for="include-all-graded-exercises-checkbox"
+                class="col-md-auto"
+                jhiTranslate="artemisApp.learningPathManagement.learningPathsConfiguration.configuration.includeAllGradedExercises"
+            ></label>
             <jhi-help-icon class="col-md-auto p-0" text="artemisApp.learningPathManagement.learningPathsConfiguration.configuration.includeAllGradedExercisesToolTip" />
         }
     </div>

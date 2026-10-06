@@ -1,3 +1,12 @@
-.exercise-table {
-    background-color: var(--exam-exercise-overview-table-background);
+// The status icons are duotone icons: the primary layer carries the sync state, the secondary layer follows the text color.
+.notSynced {
+    --fa-secondary-color: var(--tumaet-ui-text-color);
+    --fa-secondary-opacity: 1; // necessary to set the opacity to 1, because it's 0.4 per default
+    --fa-primary-color: var(--warning);
+}
+
+.saved {
+    --fa-secondary-color: var(--tumaet-ui-text-color);
+    --fa-secondary-opacity: 1;
+    --fa-primary-color: var(--success);
 }

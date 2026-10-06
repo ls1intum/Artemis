@@ -134,7 +134,10 @@ describe('GlobalSearchIrisAnswerComponent markdown sanitization', () => {
             throw new Error('Expected a retained inline citation');
         }
         citation.click();
-        expect(navigate).toHaveBeenCalledWith(['/lectures/2/units/3'], { queryParams: { unit: 3, page: 1 } });
+        expect(navigate).toHaveBeenCalledWith(['/lectures/2/units/3'], {
+            queryParams: { unit: 3, page: 1 },
+            state: { lectureDeepLink: true },
+        });
     });
 
     it('sanitizes a malicious streamed tail before the terminal answer settles', async () => {

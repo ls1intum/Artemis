@@ -5,6 +5,7 @@
             <div class="search-container mb-3">
                 <span class="p-input-icon-left w-100">
                     <input
+                        [attr.aria-label]="'artemisApp.course.import.searchPlaceholder' | artemisTranslate"
                         pInputText
                         type="text"
                         [ngModel]="searchTerm()"
@@ -19,10 +20,10 @@
             <p-table [value]="courses()" [tableStyle]="{ 'min-width': '100%' }" class="p-datatable-sm p-datatable-striped" [loading]="isLoadingCourses()">
                 <ng-template #header>
                     <tr>
-                        <th jhiTranslate="artemisApp.course.title"></th>
-                        <th jhiTranslate="artemisApp.course.shortName"></th>
-                        <th jhiTranslate="artemisApp.course.semester"></th>
-                        <th></th>
+                        <th scope="col" jhiTranslate="artemisApp.course.title"></th>
+                        <th scope="col" jhiTranslate="artemisApp.course.shortName"></th>
+                        <th scope="col" jhiTranslate="artemisApp.course.semester"></th>
+                        <th scope="col"></th>
                     </tr>
                 </ng-template>
                 <ng-template #body let-course>

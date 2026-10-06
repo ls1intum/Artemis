@@ -26,7 +26,7 @@ const course = { id: SEED_COURSES.lectureManagement.id, title: SEED_COURSES.lect
  * fake: LangChain tool hooks -> ActivityTracker -> activity snapshots -> Artemis
  * relay -> websocket -> activity feed component.
  *
- * Run with: RUN_IRIS=true ./run-e2e-tests-local-fast.sh --skip-db --filter "Iris"
+ * Run with: RUN_IRIS=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --skip-db --filter "Iris"
  * Skips itself when the Iris module feature is not active.
  *
  * Tagged `@slow`, not `@fast`: this test waits out a full two-round Pyris agent run (tool call plus

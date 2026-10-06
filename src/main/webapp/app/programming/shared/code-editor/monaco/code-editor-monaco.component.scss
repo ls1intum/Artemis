@@ -20,7 +20,7 @@
 .monaco-add-feedback-button::before {
     cursor: pointer;
     content: '\ea60'; // codicon-plus
-    font-family: codicon;
+    font-family: codicon, monospace;
     font-size: 1.1em;
     background-color: var(--monaco-editor-add-feedback-button-background);
     color: var(--monaco-editor-add-feedback-button-text);

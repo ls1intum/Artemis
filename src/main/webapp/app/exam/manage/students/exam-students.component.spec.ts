@@ -14,8 +14,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
@@ -82,7 +80,6 @@ describe('ExamStudentsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: DeleteDialogService, useClass: MockDialogService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 MockProvider(ExamChecklistService, {
                     getExamStatistics: (_exam: Exam) => of(mockChecklist),

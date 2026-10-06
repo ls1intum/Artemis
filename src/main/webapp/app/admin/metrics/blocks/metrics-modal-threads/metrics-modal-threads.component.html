@@ -19,7 +19,7 @@
         </span>
     </ng-template>
     <div class="mt-2 mb-1 text-muted-color">{{ 'metrics.filter' | artemisTranslate }}: {{ filteredThreads().length }} {{ 'metrics.matches' | artemisTranslate }}</div>
-    <input type="text" [(ngModel)]="threadFilter" tumAetUiInput class="w-full mb-3" />
+    <input [attr.aria-label]="'accessibility.threadFilter' | artemisTranslate" type="text" [(ngModel)]="threadFilter" tumAetUiInput class="w-full mb-3" />
     @for (thread of filteredThreads(); track thread) {
         <div class="py-2 border-b border-surface-200 dark:border-surface-700">
             <h6 class="flex items-center gap-2 flex-wrap">

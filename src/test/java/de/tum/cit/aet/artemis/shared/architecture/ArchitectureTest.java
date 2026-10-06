@@ -57,6 +57,7 @@ import jakarta.persistence.OrderColumn;
 import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.util.SystemReader;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -144,7 +145,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 .because("Google libraries (Guava, Gson) are forbidden to reduce incompatibilities, to reduce dependencies and security risks. " + "Alternatives: "
                         + "Guava Cache -> Spring CacheManager (see HazelcastConfiguration), " + "Guava Collections -> Java Collections API (List.of(), Set.of(), Map.of()), "
                         + "Guava Strings -> Apache Commons Lang3 StringUtils or Spring StringUtils, "
-                        + "Guava Preconditions -> for nullness, @NonNull or @Nullable from org.jspecify.annotations (see checkstyle.xml); "
+                        + "Guava Preconditions -> for nullness, @NonNull or @Nullable from org.jspecify.annotations (see config/checkstyle/checkstyle.xml); "
                         + "for any other check, an explicit if throwing IllegalArgumentException or IllegalStateException, " + "Guava Optional -> java.util.Optional, "
                         + "Gson -> Jackson ObjectMapper");
         noGoogleDependencies.check(allClasses);
@@ -918,6 +919,22 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 }
             }
         };
+    }
+
+    @Test
+    void testHibernatePropertyInitializedNotUsed() {
+        String reason = """
+                Hibernate.isPropertyInitialized takes the attribute name as a string, and a name that matches \
+                no attribute is not an error: for an entity without bytecode enhancement it answers true whatever the name, \
+                so the check passes without checking anything and the code behind it reads a lazy association that was never \
+                loaded. Static analysis also models the call as passing the entity to a logger inside Hibernate, so a client \
+                supplied entity reaching it is reported as log injection (SonarQube Cloud javasecurity:S5145).
+                Ask the standard JPA call instead, Persistence.getPersistenceUtil().isLoaded(entity, Entity_.ATTRIBUTE), \
+                with the constant of the generated static metamodel; checkstyle rejects a string literal there.""";
+
+        ArchRule noHibernatePropertyInitialized = noClasses().should().callMethod(Hibernate.class, "isPropertyInitialized", Object.class, String.class).because(reason);
+
+        noHibernatePropertyInitialized.check(allClasses);
     }
 
     @Test

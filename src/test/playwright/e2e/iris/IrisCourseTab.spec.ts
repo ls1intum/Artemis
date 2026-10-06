@@ -43,7 +43,7 @@ async function openIrisChat(page: Page): Promise<void> {
  * nothing on the Iris tab loads course content, and they must be requested lazily rather than on every page view.
  *
  * Requires Iris to be enabled on the server; the suite skips itself otherwise. Run with:
- *     RUN_IRIS=true ./run-e2e-tests-local-fast.sh --skip-db --filter "Iris"
+ *     RUN_IRIS=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --skip-db --filter "Iris"
  *
  * Tagged `@slow` like the other Iris suites: the tab boots the whole chat stack on a cold route.
  */

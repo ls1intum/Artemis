@@ -49,6 +49,7 @@
             ) {
                 <div class="form-check mt-2">
                     <input
+                        [attr.aria-label]="'artemisApp.programmingExercise.withDependencies' | artemisTranslate"
                         class="form-check-input"
                         type="checkbox"
                         name="withDependencies"
@@ -131,6 +132,7 @@
             <div class="form-group">
                 <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.appName" for="field_packageName"></label>
                 <input
+                    [attr.aria-label]="'artemisApp.programmingExercise.appName' | artemisTranslate"
                     required
                     type="text"
                     [pattern]="APP_NAME_PATTERN_FOR_SWIFT"

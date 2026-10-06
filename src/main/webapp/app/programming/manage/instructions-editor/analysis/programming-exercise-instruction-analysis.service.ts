@@ -90,22 +90,14 @@ export class ProgrammingExerciseInstructionAnalysisService {
      * @param analysis arbitrary number of analysis objects to be merged into one.
      */
     private mergeAnalysis = (...analysis: Array<AnalysisItem[]>): ProblemStatementAnalysis => {
-        const reducer = (acc: ProblemStatementAnalysis, [lineNumber, values, issueType]: AnalysisItem): ProblemStatementAnalysis => {
-            const lineNumberValues = acc.get(lineNumber);
+        const merged: ProblemStatementAnalysis = new Map();
+        for (const [lineNumber, values, issueType] of analysis.flat()) {
+            const translatedValues = values.map((id) => this.translateService.instant(this.getTranslationByIssueType(issueType), { id }));
+            const lineNumberValues = merged.get(lineNumber);
             const issueValues = lineNumberValues?.[issueType] ?? [];
-            // hydrate layers the three sources in the same order the spread did: base, existing values, then this issue type.
-            acc.set(lineNumber, hydrate({ lineNumber }, lineNumberValues ?? {}, { [issueType]: [...issueValues, ...values] }));
-            return acc;
-        };
-
-        return analysis
-            .flat()
-            .map(([lineNumber, values, issueType]: AnalysisItem): AnalysisItem => [
-                lineNumber,
-                values.map((id) => this.translateService.instant(this.getTranslationByIssueType(issueType), { id })),
-                issueType,
-            ])
-            .reduce<ProblemStatementAnalysis>(reducer, new Map());
+            merged.set(lineNumber, hydrate({ lineNumber }, lineNumberValues ?? {}, { [issueType]: [...issueValues, ...translatedValues] }));
+        }
+        return merged;
     };
 
     /**

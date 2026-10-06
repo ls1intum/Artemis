@@ -19,8 +19,8 @@ import { computed } from '@angular/core';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { facSaveSuccess, facSaveWarning } from 'app/foundation/icons/icons';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { MockComponent } from 'ng-mocks';
+import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 
 describe('ExamExerciseOverviewPageComponent', () => {
     let fixture: ComponentFixture<ExamExerciseOverviewPageComponent>;
@@ -35,11 +35,13 @@ describe('ExamExerciseOverviewPageComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
-                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        })
+            // the real result component needs the result dialog infrastructure, which is not part of this page
+            .overrideComponent(ExamExerciseOverviewPageComponent, { remove: { imports: [UpdatingResultComponent] }, add: { imports: [MockComponent(UpdatingResultComponent)] } })
+            .compileComponents();
 
         fixture = TestBed.createComponent(ExamExerciseOverviewPageComponent);
         comp = fixture.componentInstance;
@@ -75,6 +77,16 @@ describe('ExamExerciseOverviewPageComponent', () => {
         comp.openExercise(studentExam.exercises![0]);
 
         expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
+    });
+
+    it('should list every exercise as a row of the exercise table with a link that opens it', () => {
+        vi.spyOn(comp.onPageChanged, 'emit');
+        const rows = fixture.debugElement.queryAll(By.css('[data-testid="exercise-table"] tbody tr'));
+        expect(rows).toHaveLength(studentExam.exercises!.length);
+
+        rows[1].query(By.css('a')).nativeElement.click();
+
+        expect(comp.onPageChanged.emit).toHaveBeenCalledWith({ overViewChange: false, exercise: studentExam.exercises![1], forceSave: false });
     });
 
     it('jhi-updating-result component should be defined', () => {

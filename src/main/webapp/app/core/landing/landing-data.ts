@@ -214,7 +214,7 @@ export const TRUST_LINKS: LinkCard[] = [
     {
         titleKey: 'landing.trust.items.security.title',
         descriptionKey: 'landing.trust.items.security.description',
-        href: 'https://github.com/ls1intum/Artemis/blob/develop/SECURITY.md',
+        href: 'https://github.com/ls1intum/Artemis/blob/develop/.github/SECURITY.md',
     },
     {
         titleKey: 'landing.trust.items.privacy.title',
@@ -277,7 +277,7 @@ export const COMMUNITY_LINKS: LinkCard[] = [
     {
         titleKey: 'landing.community.items.contributing.title',
         descriptionKey: 'landing.community.items.contributing.description',
-        href: 'https://github.com/ls1intum/Artemis/blob/develop/CONTRIBUTING.md',
+        href: 'https://github.com/ls1intum/Artemis/blob/develop/.github/CONTRIBUTING.md',
     },
     {
         titleKey: 'landing.community.items.process.title',
@@ -353,7 +353,7 @@ export const FOOTER_LINK_GROUPS: FooterLinkGroup[] = [
             { labelKey: 'landing.footer.links.resources.documentation', href: 'https://docs.artemis.tum.de' },
             { labelKey: 'landing.footer.links.resources.publication', href: 'https://docs.artemis.tum.de/publications' },
             { labelKey: 'landing.footer.links.resources.github', href: 'https://github.com/ls1intum/Artemis' },
-            { labelKey: 'landing.footer.links.resources.security', href: 'https://github.com/ls1intum/Artemis/blob/develop/SECURITY.md' },
+            { labelKey: 'landing.footer.links.resources.security', href: 'https://github.com/ls1intum/Artemis/blob/develop/.github/SECURITY.md' },
         ],
     },
 ];

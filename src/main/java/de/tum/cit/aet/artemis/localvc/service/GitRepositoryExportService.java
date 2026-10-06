@@ -94,7 +94,7 @@ public class GitRepositoryExportService {
      * @throws IOException if the copying process failed.
      */
     public Path getRepositoryWithParticipation(Repository repo, String repositoryDir, boolean hideStudentName) throws IOException {
-        var exercise = repo.getParticipation().getProgrammingExercise();
+        var exercise = repo.getParticipation().getProgrammingExerciseElseThrow();
         ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
 
         Path targetDir = Path.of(repositoryDir, getStudentRepositoryName(exercise, participation, hideStudentName));

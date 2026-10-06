@@ -20,6 +20,7 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { onTextEditorTab } from 'app/foundation/util/text.utils';
 
 @Component({
@@ -36,6 +37,7 @@ import { onTextEditorTab } from 'app/foundation/util/text.utils';
         FaIconComponent,
         ExamExerciseUpdateHighlighterComponent,
         ArtemisTranslatePipe,
+        TumAetUiTagComponent,
     ],
 })
 export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {

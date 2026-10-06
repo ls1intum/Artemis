@@ -90,6 +90,14 @@ class IrisChatSessionServiceNewResultEventTest {
     }
 
     @Test
+    void shouldIgnoreResultWhenProgrammingExerciseIsMissing() {
+        assertThatCode(() -> irisChatSessionService.handleNewResultEvent(eventFor(null))).doesNotThrowAnyException();
+
+        verify(irisSettingsService, never()).getSettingsForCourse(any(Course.class));
+        verify(submissionRepository, never()).findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(any(Long.class));
+    }
+
+    @Test
     void shouldFailWhenTheCourseOfTheExerciseCannotBeResolved() {
         var exercise = new ProgrammingExercise();
         exercise.setId(11L);

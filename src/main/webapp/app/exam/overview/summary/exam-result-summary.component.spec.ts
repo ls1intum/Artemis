@@ -38,8 +38,7 @@ import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbo
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
-import { NgClass } from '@angular/common';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -208,9 +207,10 @@ function sharedSetup(url: string[]) {
                         FaIconComponent,
                         MockDirective(TranslateDirective),
                         MockPipe(ArtemisTranslatePipe),
-                        NgClass,
                         RouterLink,
-                        NgbTooltip,
+                        TumAetUiButtonDirective,
+                        TumAetUiMessageComponent,
+                        MockDirective(TumAetUiTooltipDirective),
                         MockComponent(ExamGeneralInformationComponent),
                         MockComponent(ExamResultOverviewComponent),
                         MockComponent(CollapsibleCardComponent),

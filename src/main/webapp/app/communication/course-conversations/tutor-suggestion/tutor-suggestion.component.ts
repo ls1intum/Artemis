@@ -288,7 +288,7 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
         // Get latest answer
         const latestAnswer = post.answers.reduce((latest, current) => {
             return dayjs(current.creationDate).isAfter(dayjs(latest.creationDate)) ? current : latest;
-        });
+        }, post.answers[0]);
 
         // Get latest suggestion
         const lastSuggestion = suggestions[suggestions.length - 1];

@@ -46,6 +46,8 @@
                 "previousInstructor": "Previous Instructor",
                 "instructorCourseCountNo": "No",
                 "instructorCourseCountYes": "Yes ({{ count }})",
+                "instructorCoursesTitle": "Courses as instructor",
+                "instructorCoursesShow": "show courses",
                 "accept": "Accept",
                 "reject": "Reject",
                 "rejectReasonLabel": "Rejection reason",

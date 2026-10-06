@@ -8,7 +8,7 @@
 }
 
 tbody td {
-    border-bottom-color: color-mix(in srgb, var(--p-content-border-color) 55%, transparent);
+    border-bottom-color: color-mix(in srgb, var(--border-color) 55%, transparent);
 }
 
 .col-icon {
@@ -54,7 +54,7 @@ td.col-actions {
     padding: 0.4rem 0.75rem;
     background-color: var(--body-bg);
     border: 1px solid var(--border-color);
-    border-radius: var(--p-border-radius);
+    border-radius: var(--tumaet-ui-radius-md);
 
     // Elevation comes from Tailwind's `shadow-lg` in the template: a shadow needs a colour, and there is no semantic
     // shadow token to build one from here.

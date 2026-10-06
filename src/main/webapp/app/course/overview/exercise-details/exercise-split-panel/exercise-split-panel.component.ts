@@ -332,7 +332,8 @@ export class ExerciseSplitPanelComponent {
         }
         const component = outlet.component;
         if (isExerciseSubmission(component)) {
-            component.submitExercise();
+            // The participation component owns saving state and reports submission errors.
+            void component.submitExercise();
         }
     }
 

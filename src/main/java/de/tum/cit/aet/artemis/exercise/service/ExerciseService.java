@@ -255,7 +255,7 @@ public class ExerciseService {
         int numberOfCorrectionRounds = 1;
         if (examMode) {
             // set number of corrections specific to each correction round
-            numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+            numberOfCorrectionRounds = exercise.getExamElseThrow().getNumberOfCorrectionRoundsInExam();
             numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds);
         }
         else {

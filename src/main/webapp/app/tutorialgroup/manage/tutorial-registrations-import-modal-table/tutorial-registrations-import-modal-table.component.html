@@ -1,14 +1,13 @@
 <div class="frame">
-    <table class="import-table">
-        <thead>
-            <tr>
-                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.tableHeader.login"></th>
-                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.tableHeader.registrationNumber"></th>
-            </tr>
-        </thead>
-    </table>
     <div class="scroll-container">
         <table class="import-table">
+            <thead>
+                <tr>
+                    <th scope="col" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.tableHeader.login"></th>
+                    <th scope="col" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.tableHeader.registrationNumber"></th>
+                </tr>
+            </thead>
+
             <tbody>
                 @for (row of rows(); track row.login ?? row.registrationNumber) {
                     <tr>

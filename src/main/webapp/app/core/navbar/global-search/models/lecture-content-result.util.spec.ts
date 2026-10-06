@@ -63,6 +63,26 @@ describe('mapLectureContentResult', () => {
         expect(mapped.metadata?.['displayMeta']).toBe('3:41');
     });
 
+    it('normalizes lecture deep-link query params before mapping', () => {
+        const result: LectureSearchResult = {
+            course: { id: 10, name: 'Course' },
+            lecture: { id: 20, name: 'Lecture' },
+            lectureUnit: {
+                id: 30,
+                name: 'Unit',
+                link: '/courses/10/lectures/20',
+                pageNumber: 4,
+                sourceType: 'lecture_unit_slide',
+                queryParams: { unit: '30', timestamp: '-1', page: '4', unrelated: 'kept' },
+            },
+        };
+
+        const mapped = mapLectureContentResult(result);
+
+        expect(mapped.metadata?.['queryParams']).toEqual({ unrelated: 'kept', unit: 30, page: 4 });
+        expect(mapped.id).toBe('lecture-content-/courses/10/lectures/20?page=4&unit=30&unrelated=kept');
+    });
+
     it('gives two video hits from the same unit distinct ids based on their location query params', () => {
         const base = {
             course: { id: 11, name: 'Databases' },

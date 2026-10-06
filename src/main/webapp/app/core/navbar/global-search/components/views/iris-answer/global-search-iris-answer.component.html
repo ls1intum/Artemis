@@ -101,6 +101,7 @@
                                         (mouseenter)="setChipHighlight(view.markerNumber)"
                                         [routerLink]="view.source.lectureUnit.link"
                                         [queryParams]="view.source.lectureUnit.queryParams"
+                                        [state]="lectureDeepLinkNavigationState"
                                     >
                                         @if (hasCitations()) {
                                             <span class="iris-chip-n flex-shrink-0" data-testid="iris-chip-number">{{ view.markerNumber }}</span>
