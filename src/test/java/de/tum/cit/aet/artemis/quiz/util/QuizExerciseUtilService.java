@@ -286,10 +286,25 @@ public class QuizExerciseUtilService {
      */
     @NonNull
     public QuizExercise createAndSaveEnrolledExamQuiz(String userPrefix, ZonedDateTime startDate, ZonedDateTime endDate) {
+        return createAndSaveEnrolledExamQuiz(userPrefix, startDate, endDate, false);
+    }
+
+    /**
+     * Creates and saves a course and an exam. An exam quiz exercise is created and saved.
+     * Users with the given prefix are enrolled in the course.
+     *
+     * @param userPrefix The prefix of the users to enroll in the course (e.g. "test-prefix-")
+     * @param startDate  The start date of the exam, also used to set the start date of the course the exam is in.
+     * @param endDate    The end date of the exam, also used to set the end date of the course the exam is in.
+     * @param testExam   Whether the exam is a test exam
+     * @return The created exam quiz exercise.
+     */
+    @NonNull
+    public QuizExercise createAndSaveEnrolledExamQuiz(String userPrefix, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam) {
         Course course = createAndSaveCourse(null, startDate.minusDays(1), endDate.plusDays(1), new HashSet<>());
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
 
-        Exam exam = ExamFactory.generateExam(course, startDate.minusMinutes(5), startDate, endDate, false);
+        Exam exam = ExamFactory.generateExam(course, startDate.minusMinutes(5), startDate, endDate, testExam);
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam);
         examTestRepository.save(exam);
 
