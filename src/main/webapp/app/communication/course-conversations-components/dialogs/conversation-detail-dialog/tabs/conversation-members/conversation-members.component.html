@@ -18,6 +18,7 @@
                             <fa-icon [icon]="faMagnifyingGlass" size="xs" />
                         </span>
                         <input
+                            [attr.aria-label]="'artemisApp.dialogs.conversationDetail.memberTab.findMembers' | artemisTranslate"
                             (input)="onSearchQueryInput($event)"
                             [placeholder]="'artemisApp.dialogs.conversationDetail.memberTab.findMembers' | artemisTranslate"
                             class="form-control"

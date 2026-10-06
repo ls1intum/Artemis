@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseContentAvailabilityDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseRequestInstructorCourseRowDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -764,18 +765,23 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     Optional<String> getTimeZoneOfCourseById(@Param("courseId") long courseId);
 
     /**
-     * Counts the number of courses where the user has the instructor role.
+     * Lists the courses where any of the users has the instructor role, newest course first.
+     * <p>
+     * One query for the whole batch instead of one per user. It selects only the scalars the course request overview
+     * shows. The user, course and role form the key of {@code UserCourseRole}, so a course appears at most once per user.
      *
-     * @param userId the id of the user
-     * @return the count of courses where the user is an instructor
+     * @param userIds the ids of the users
+     * @return one row per user and course where the user is an instructor
      */
     @Query("""
-            SELECT COUNT(DISTINCT ucr.course.id)
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseRequestInstructorCourseRowDTO(ucr.user.id, c.id, c.title, c.shortName, c.semester)
             FROM UserCourseRole ucr
-            WHERE ucr.user.id = :userId
-            AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
+                JOIN ucr.course c
+            WHERE ucr.user.id IN :userIds
+                AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
+            ORDER BY c.startDate DESC, c.title ASC, c.id ASC
             """)
-    long countCoursesForInstructor(@Param("userId") Long userId);
+    List<CourseRequestInstructorCourseRowDTO> findInstructorCoursesForUsers(@Param("userIds") Collection<Long> userIds);
 
     /**
      * Projects the fields the course overview container renders.

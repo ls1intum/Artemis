@@ -106,12 +106,12 @@
         <div class="flex">
             <div class="flex-1 rounded-s-sm border border-e-0 border-(--border-color) p-1.5">
                 <textarea
+                    [attr.aria-label]="'accessibility.calendarSubscriptionUrl' | artemisTranslate"
                     class="w-full resize-none overflow-hidden border-0 bg-transparent text-xs leading-4 break-all outline-none focus:ring-0 focus:outline-none"
                     cdkTextareaAutosize
                     cdkAutosizeMinRows="1"
                     cdkAutosizeMaxRows="10"
                     [ngModel]="subscriptionUrl()"
-                    [attr.aria-label]="'artemisApp.calendar.subscriptionPopover.title' | artemisTranslate"
                     readonly
                 ></textarea>
             </div>

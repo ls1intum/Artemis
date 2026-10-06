@@ -88,10 +88,15 @@
 @source './app/lecture/manage/lecture-units';
 @source './app/lecture/manage/pdf-drop-zone';
 @source './app/lecture/manage/pdf-upload-target-dialog';
+
+/* A text unit on its own page. */
+@source './app/lecture/overview/course-lectures/text-unit-fullscreen';
+
 @source './app/core/feature-overview';
 @source './app/core/layouts/footer';
 @source './app/core/navbar/global-search/components/modal/global-search-modal.component.html';
 @source './app/course/overview/setup-passkey-modal';
+@source './app/course/sidebar';
 @source './app/notification';
 @source './app/calendar';
 @source './app/shared-ui/profile-picture';
