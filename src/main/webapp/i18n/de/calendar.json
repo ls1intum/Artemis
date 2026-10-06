@@ -27,6 +27,8 @@
             "filterComponentPlaceholder": "Wähle Event-Typen",
             "subscribeButtonLabel": "Abonnieren",
             "todayButtonLabel": "Heute",
+            "previousButtonLabel": "Zurück",
+            "nextButtonLabel": "Weiter",
             "weekButtonLabel": "Woche",
             "monthButtonLabel": "Monat",
             "eventsLoadingError": "Die Kalenderevents konnten nicht geladen werden. Bitte versuche es erneut indem du die Seite aktualisierst.",
@@ -35,6 +37,7 @@
                 "title": "iCalendar Abonnement",
                 "configurationExplanation": "Um dein Abonnement zu konfigurieren, wähle bitte eine Sprache und entscheide für welche Kursinhalte du Events abonnieren möchtest:",
                 "copyExplanation": "Du kannst den folgenden Link verwenden, um den Artemis Kalender in externen Kalender Anwendungen zu abonnieren.",
+                "copyButtonLabel": "Abonnement-Link kopieren",
                 "languageOption": {
                     "german": "Deutsch",
                     "english": "Englisch"

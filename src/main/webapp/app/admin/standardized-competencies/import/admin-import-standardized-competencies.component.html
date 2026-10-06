@@ -27,7 +27,14 @@
             </div>
         }
     </div>
-    <input class="mt-3" type="file" accept="application/json" (change)="onFileChange($event)" data-testid="file-input" />
+    <input
+        [attr.aria-label]="'artemisApp.standardizedCompetency.manage.import.title' | artemisTranslate"
+        class="mt-3"
+        type="file"
+        accept="application/json"
+        (change)="onFileChange($event)"
+        data-testid="file-input"
+    />
     <h4 class="mt-3" jhiTranslate="artemisApp.standardizedCompetency.manage.import.preview.title"></h4>
     @if (importCount(); as count) {
         @if (count.knowledgeAreas) {
