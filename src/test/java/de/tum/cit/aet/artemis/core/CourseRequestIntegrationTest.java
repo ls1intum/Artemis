@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core;
 
+import static de.tum.cit.aet.artemis.core.util.QueryCountAssert.assertThatDb;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -457,7 +458,10 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         createTestCourseRequestFor(firstRequester, "Previous Instructor One", "PREVREQ1");
         createTestCourseRequestFor(secondRequester, "Previous Instructor Two", "PREVREQ2");
 
-        CourseRequestsAdminOverviewDTO result = request.get("/api/admin/course-requests/overview", HttpStatus.OK, CourseRequestsAdminOverviewDTO.class);
+        // One batch query loads the instructor courses of all requesters: the pending list, that batch, and the decided page with its count make 4 queries however many requests
+        // are pending.
+        CourseRequestsAdminOverviewDTO result = assertThatDb(() -> request.get("/api/admin/course-requests/overview", HttpStatus.OK, CourseRequestsAdminOverviewDTO.class))
+                .hasBeenCalledAtMostTimes(4);
 
         CourseRequestDTO first = findPending(result, "PREVREQ1");
         assertThat(first.instructorCourses()).extracting(CourseRequestInstructorCourseDTO::id).containsExactly(newest.getId(), middle.getId(), oldest.getId());
