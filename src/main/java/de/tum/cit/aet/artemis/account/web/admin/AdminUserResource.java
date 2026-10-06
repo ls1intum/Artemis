@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionPlanServ
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
+import de.tum.cit.aet.artemis.core.dto.UserCourseRoleDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -63,6 +64,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -116,6 +118,8 @@ public class AdminUserResource {
 
     private final AuthorityRepository authorityRepository;
 
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
     private final Optional<LdapUserService> ldapUserService;
 
     private final AuthorizationCheckService authorizationCheckService;
@@ -127,13 +131,14 @@ public class AdminUserResource {
     private final Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi;
 
     public AdminUserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AuthorityRepository authorityRepository,
-            Optional<LdapUserService> ldapUserService, AuthorizationCheckService authorizationCheckService, UserDeletionPlanService userDeletionPlanService,
-            PermanentUserDeletionService permanentUserDeletionService, Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi,
+            UserCourseRoleRepository userCourseRoleRepository, Optional<LdapUserService> ldapUserService, AuthorizationCheckService authorizationCheckService,
+            UserDeletionPlanService userDeletionPlanService, PermanentUserDeletionService permanentUserDeletionService, Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi,
             @Nullable @Value("${artemis.user-management.internal-admin.username:#{null}}") String artemisInternalAdminUsername) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.authorityRepository = authorityRepository;
+        this.userCourseRoleRepository = userCourseRoleRepository;
         this.ldapUserService = ldapUserService;
         this.authorizationCheckService = authorizationCheckService;
         this.userDeletionPlanService = userDeletionPlanService;
@@ -216,7 +221,7 @@ public class AdminUserResource {
             checkSuperAdminAuthorizationToManageAdmin(AuthorizationCheckService.isAdmin(userToBeDeactivated.getAuthorities()));
             List<Long> courseMemoryThreads = invalidateCourseMemoryOf(userToBeDeactivated);
             userCreationService.deactivateUser(userToBeDeactivated);
-            courseMemoryIngestionApi.ifPresent(api -> api.refreshThreadsInBackground(courseMemoryThreads));
+            rebuildCourseMemory(courseMemoryThreads);
             return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deactivated", userToBeDeactivated.getLogin()))
                     .body(new UserDTO(userToBeDeactivated));
         }).orElseThrow(() -> new EntityNotFoundException("User", userId));
@@ -257,7 +262,7 @@ public class AdminUserResource {
         final boolean shouldDeactivateUser = Boolean.TRUE.equals(existingUser.getActivated()) && !managedUserVM.isActivated();
         List<Long> courseMemoryThreads = shouldDeactivateUser ? invalidateCourseMemoryOf(existingUser) : List.of();
         var updatedUser = userCreationService.updateUser(existingUser, managedUserVM);
-        courseMemoryIngestionApi.ifPresent(api -> api.refreshThreadsInBackground(courseMemoryThreads));
+        rebuildCourseMemory(courseMemoryThreads);
 
         if (shouldActivateUser) {
             userService.activateUser(updatedUser);
@@ -276,6 +281,20 @@ public class AdminUserResource {
      */
     private List<Long> invalidateCourseMemoryOf(User user) {
         return courseMemoryIngestionApi.map(api -> api.invalidateThreadsWithContentBy(user.getId())).orElse(List.of());
+    }
+
+    /**
+     * Outdates the threads again once the deactivation is saved, then rebuilds them without the user's messages. The bump
+     * after the save covers a refresh that read the account while it was still active (see
+     * ConversationMessageRepository#bumpCourseMemoryVersionIfTracked).
+     *
+     * @param courseMemoryThreads the threads returned by {@link #invalidateCourseMemoryOf} before the save
+     */
+    private void rebuildCourseMemory(List<Long> courseMemoryThreads) {
+        courseMemoryIngestionApi.ifPresent(api -> {
+            api.outdateThreads(courseMemoryThreads);
+            api.refreshThreadsInBackground(courseMemoryThreads);
+        });
     }
 
     /**
@@ -327,6 +346,21 @@ public class AdminUserResource {
             user.setVisibleRegistrationNumber();
             return new UserDTO(user);
         }));
+    }
+
+    /**
+     * GET users/:login/course-roles : get the course roles of the "login" user.
+     * <p>
+     * Returns one entry per course and role (a user can hold several roles in one course), ordered by course id.
+     *
+     * @param login the login of the user whose course roles should be returned
+     * @return the ResponseEntity with status 200 (OK) and the course roles of the user (empty if the user is in no course), or 404 (Not Found) if the user does not exist
+     */
+    @GetMapping("users/{login:" + Constants.LOGIN_REGEX + "}/course-roles")
+    public ResponseEntity<List<UserCourseRoleDTO>> getCourseRoles(@PathVariable String login) {
+        log.debug("REST request to get the course roles of User : {}", login);
+        Long userId = userRepository.findIdByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
+        return ResponseEntity.ok(userCourseRoleRepository.findCourseRoleDTOsByUser_Id(userId));
     }
 
     /**

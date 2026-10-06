@@ -270,8 +270,8 @@ public class CourseMemoryIngestionService {
     /**
      * Bumps the version of every thread with a Course Memory version that contains content by the given user. Called right
      * before an opt-out from AI, a deactivation or the closing of an account is recorded; pass the result to
-     * {@link #refreshThreadsAsync} once it is. A refresh that never runs leaves the outdated entries for the nightly sync
-     * to retract.
+     * {@link #outdateThreads} and {@link #refreshThreadsAsync} once it is. A refresh that never runs leaves the outdated
+     * entries for the nightly sync to retract.
      *
      * @param userId the user
      * @return the affected threads' root post ids
@@ -282,6 +282,18 @@ public class CourseMemoryIngestionService {
             conversationMessageRepository.bumpCourseMemoryVersionsOfThreadsWithContentBy(userId);
         }
         return postIds;
+    }
+
+    /**
+     * Bumps the given threads' versions again once the account change is saved. See
+     * {@link ConversationMessageRepository#bumpCourseMemoryVersionIfTracked} for why the threads are bumped both before and after.
+     *
+     * @param postIds the threads returned by {@link #invalidateThreadsWithContentBy} before the change
+     */
+    public void outdateThreads(Collection<Long> postIds) {
+        if (!postIds.isEmpty()) {
+            conversationMessageRepository.bumpCourseMemoryVersionsIfTracked(postIds);
+        }
     }
 
     /**

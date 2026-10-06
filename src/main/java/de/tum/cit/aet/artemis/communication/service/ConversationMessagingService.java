@@ -373,10 +373,12 @@ public class ConversationMessagingService extends PostingService {
         existingMessage.setTitle(messagePost.title());
         existingMessage.setUpdatedDate(ZonedDateTime.now());
 
-        // The thread's Course Memory version is bumped first: the stored question is derived from this post, so an entry
-        // built from the old wording is outdated once the edit is saved.
+        // The thread's Course Memory version is bumped before and after the save: the stored question is derived from this
+        // post, so an entry built from the old wording is outdated once the edit is saved. The bump after covers a refresh
+        // that read the old wording in between (see ConversationMessageRepository#bumpCourseMemoryVersionIfTracked).
         conversationMessageRepository.bumpCourseMemoryVersionIfTracked(postId);
         Post updatedPost = conversationMessageRepository.save(existingMessage);
+        conversationMessageRepository.bumpCourseMemoryVersionIfTracked(postId);
         updatedPost.setConversation(conversation);
 
         // Right after the change, before the work below that can fail; only a thread with an entry needs it.

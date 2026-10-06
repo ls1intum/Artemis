@@ -53,6 +53,7 @@
         </div>
         <!-- the native input stays hidden, the buttons below open it -->
         <input
+            [attr.aria-label]="'accessibility.uploadAttachment' | artemisTranslate"
             #fileInput
             id="fileInput"
             data-testid="attachment-file-input"

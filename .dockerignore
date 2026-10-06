@@ -35,10 +35,10 @@ build/*
 /src/main/resources/known_hosts
 
 # holds this Dockerfile, which `docker build -f` reads from the host rather than from the context
-docker/
+deployment/docker/
 
 CITATION.cff
-CODE_OF_CONDUCT.md
+.github/CODE_OF_CONDUCT.md
 LICENSE
 README.md
-SECURITY.md
+.github/SECURITY.md

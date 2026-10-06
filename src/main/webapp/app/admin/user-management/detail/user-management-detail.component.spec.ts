@@ -3,6 +3,7 @@
  * Tests the user detail view that displays user information from the route.
  */
 import { beforeEach, describe, expect, it } from 'vitest';
+import { Component, Directive, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -10,6 +11,30 @@ import { ActivatedRoute } from '@angular/router';
 import { UserManagementDetailComponent } from 'app/admin/user-management/detail/user-management-detail.component';
 import { User } from 'app/account/user/user.model';
 import { Authority } from 'app/foundation/constants/authority.constants';
+import { UserCourseRolesComponent } from 'app/admin/user-management/course-roles/user-course-roles.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
+import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { By } from '@angular/platform-browser';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
+import { provideTranslateService } from '@ngx-translate/core';
+
+/** Stands in for the profile picture, which is not under test and needs services of its own. */
+@Component({ selector: 'jhi-profile-picture', template: '' })
+class StubProfilePictureComponent {
+    readonly imageSizeInRem = input<string>();
+    readonly fontSizeInRem = input<string>();
+    readonly imageId = input<string>();
+    readonly defaultPictureId = input<string>();
+    readonly authorId = input<number>();
+    readonly authorName = input<string>();
+    readonly imageUrl = input<string>();
+}
+
+/** Stands in for the title bar directive, which needs the title bar to be present. */
+@Directive({ selector: '[adminTitleBarTitle]' })
+class StubAdminTitleBarTitleDirective {}
 
 describe('UserManagementDetailComponent', () => {
     let component: UserManagementDetailComponent;
@@ -52,6 +77,31 @@ describe('UserManagementDetailComponent', () => {
                     authorities: [Authority.STUDENT],
                 }),
             );
+        });
+    });
+
+    describe('course roles', () => {
+        it('should embed the course roles of the displayed user with the real template, identified by the login', async () => {
+            TestBed.resetTestingModule();
+            await TestBed.configureTestingModule({
+                imports: [UserManagementDetailComponent],
+                providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), provideTranslateService(), { provide: ActivatedRoute, useValue: mockRoute }],
+            })
+                .overrideComponent(UserManagementDetailComponent, {
+                    remove: { imports: [ProfilePictureComponent, AdminTitleBarTitleDirective] },
+                    add: { imports: [StubProfilePictureComponent, StubAdminTitleBarTitleDirective] },
+                })
+                .compileComponents();
+            const httpMock = TestBed.inject(HttpTestingController);
+            const detail = TestBed.createComponent(UserManagementDetailComponent);
+            detail.componentInstance.ngOnInit();
+            detail.detectChanges();
+
+            const roles = detail.debugElement.query(By.directive(UserCourseRolesComponent));
+            expect(roles).not.toBeNull();
+            expect(roles.componentInstance.login()).toBe('user');
+            httpMock.expectOne({ method: 'GET', url: 'api/account/admin/users/user/course-roles' }).flush([]);
+            httpMock.verify();
         });
     });
 });

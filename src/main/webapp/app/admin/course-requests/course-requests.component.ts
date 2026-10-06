@@ -2,14 +2,17 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
     TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
     TumAetUiDialogComponent,
     TumAetUiInputDirective,
     TumAetUiPaginatorComponent,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
     TumAetUiTableDirective,
     TumAetUiTagComponent,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
-import { faCheck, faExternalLinkAlt, faPencil, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faChevronDown, faExternalLinkAlt, faPencil, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -52,6 +55,9 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
         CourseRequestFormComponent,
         TumAetUiDialogComponent,
         TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
         TumAetUiTableDirective,
         TumAetUiTagComponent,
         TumAetUiInputDirective,
@@ -65,6 +71,7 @@ export class CourseRequestsComponent implements OnInit {
 
     protected readonly CourseRequestStatus = CourseRequestStatus;
     protected readonly faCheck = faCheck;
+    protected readonly faChevronDown = faChevronDown;
     protected readonly faTimes = faTimes;
     protected readonly faExternalLinkAlt = faExternalLinkAlt;
     protected readonly faSync = faSync;

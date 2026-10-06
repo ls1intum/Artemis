@@ -11,7 +11,7 @@ import tempfile
 import unittest
 
 
-INSTALLER = Path(__file__).resolve().parents[1] / "install-localci-kubernetes-ubuntu.sh"
+INSTALLER = Path(__file__).resolve().parents[1] / "deployment/kubernetes/install-localci-kubernetes-ubuntu.sh"
 
 
 class VerifiedInstallerTest(unittest.TestCase):
