@@ -104,8 +104,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     let submissionService: SubmissionService;
 
-    const result1 = { id: 11 } as Result;
-    const result2 = { id: 12 } as Result;
+    // The correction round is stated explicitly rather than implied by the position in the results array.
+    const result1 = { id: 11, correctionRound: 0 } as Result;
+    const result2 = { id: 12, correctionRound: 1 } as Result;
     const exam = { id: 13, numberOfCorrectionRoundsInExam: 2 } as Exam;
     const exerciseGroup = { id: 14, exam } as ExerciseGroup;
 
@@ -324,6 +325,32 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         translateService.use('en'); // Change language.
         expect(setupGraphSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should hide the complaints shortcut when the course has complaints disabled', () => {
+        accountService.userIdentity.set({ id: 10, login: 'tutor1' } as User);
+        exerciseServiceGetStatsForTutorsStub.mockReturnValue(
+            of(new HttpResponse({ body: { ...stats, complaintsEnabled: false } as StatsForDashboard, headers: new HttpHeaders() })),
+        );
+
+        fixture.detectChanges();
+
+        expect(comp.complaintsEnabled()).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-complaints"]')).toBeNull();
+    });
+
+    it('should show the complaints shortcut when the course has complaints enabled', () => {
+        accountService.userIdentity.set({ id: 10, login: 'tutor1' } as User);
+        exerciseServiceGetStatsForTutorsStub.mockReturnValue(
+            of(new HttpResponse({ body: { ...stats, complaintsEnabled: true } as StatsForDashboard, headers: new HttpHeaders() })),
+        );
+
+        fixture.detectChanges();
+
+        expect(comp.complaintsEnabled()).toBe(true);
+        const complaintsLink = fixture.nativeElement.querySelector('[data-testid="exercise-complaints"]') as HTMLAnchorElement;
+        expect(complaintsLink).not.toBeNull();
+        expect(complaintsLink.getAttribute('aria-label')).toBe('artemisApp.exercise.complaints');
     });
 
     it('should initialize with tutor leaderboard entry', () => {
@@ -580,7 +607,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         function initComponent() {
             comp.exercise.set({
-                allowFeedbackRequests: false,
                 type: fakeExerciseType,
                 numberOfAssessmentsOfCorrectionRounds: [],
                 studentAssignedTeamIdComputed: false,
@@ -716,7 +742,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     it('generate exercise detail link', () => {
         comp.exercise.set(modelingExercise);
         comp.courseId.set(4);
-        const exerciseDetailsLink = comp.getExerciseDetailsLink();
+        const exerciseDetailsLink = comp.exerciseDetailsLink();
         expect(exerciseDetailsLink).toEqual(['/course-management', 4, ExerciseType.MODELING + '-exercises', modelingExercise.id]);
     });
 

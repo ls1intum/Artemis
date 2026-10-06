@@ -7,7 +7,7 @@ import angularTemplateParser from '@angular-eslint/template-parser';
 import angular from 'angular-eslint';
 import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
-import localRulesPlugin from './rules/index.mjs';
+import localRulesPlugin from './config/eslint/rules/index.mjs';
 
 // Builds `no-restricted-imports` patterns that block importing a sibling client layer
 // (e.g. `shared-ui` or `editor`) from another layer — covering both the absolute alias path
@@ -39,14 +39,27 @@ const noNgZoneImport = {
         'NgZone is forbidden: the client is zoneless (provideZonelessChangeDetection). Drive change detection with signals (signal/computed/effect), markForCheck, afterNextRender, or output emits — NgZone.run/runOutsideAngular are no-ops under zoneless.',
 };
 
-const tumUiConsumerImportPatterns = [
+// Object copying goes through one choke point: `deepClone` / `cloneWith` / `hydrate` in
+// `app/foundation/util/deep-clone.util`. Importing lodash's `cloneDeep` directly bypasses it, which splits the
+// codebase between two spellings of the same operation and leaves nowhere to change the implementation later.
+// The wrapper itself holds the single sanctioned import (line-level disabled). Like `noNgZoneImport`, this must
+// be repeated in every `no-restricted-imports` block, because the foundation/ and shared-ui/ blocks override the
+// rule rather than extending it. Companion to `localRules/prefer-deep-clone`.
+const noDirectCloneDeepImports = [
     {
-        group: ['@tumaet/ui-angular/**'],
-        message: 'Import TUM UI symbols from the @tumaet/ui-angular public entry point, not a package-internal path.',
+        name: 'lodash-es',
+        importNames: ['cloneDeep', 'cloneDeepWith'],
+        message: "Import deepClone / cloneWith / hydrate from 'app/foundation/util/deep-clone.util' instead of lodash cloneDeep.",
     },
     {
-        group: ['app/shared-ui/tum-ui/**'],
-        message: 'Import TUM UI symbols from the @tumaet/ui-angular public entry point.',
+        name: 'lodash-es/cloneDeep',
+        message: "Import deepClone / cloneWith / hydrate from 'app/foundation/util/deep-clone.util' instead of lodash cloneDeep.",
+    },
+];
+const tumAetUiConsumerImportPatterns = [
+    {
+        group: ['@tumaet/ui-angular/**'],
+        message: 'Import TUM AET UI symbols from the @tumaet/ui-angular public entry point, not a package-internal path.',
     },
 ];
 export default tseslint.config(
@@ -62,16 +75,16 @@ export default tseslint.config(
             '.venv/',
             'build/',
             'coverage/',
-            'docker/',
+            'deployment/docker/',
             'docs/',
             'documentation/',
             'gradle/',
             'local/',
             'node/',
             'node_modules/',
-            'openapi/',
+            'config/openapi/',
             'out/',
-            'patches/',
+            'config/pnpm/patches/',
             'repos/',
             'repos-download/',
             'supporting_scripts/',
@@ -86,9 +99,9 @@ export default tseslint.config(
             'src/test/playwright/',
             'src/test/resources/',
             'src/test/vitest/',
-            'packages/tum-ui/coverage/',
-            'packages/tum-ui/dist/',
-            'packages/tum-ui/dist-pack/',
+            'packages/tum-aet-ui/coverage/',
+            'packages/tum-aet-ui/dist/',
+            'packages/tum-aet-ui/dist-pack/',
             // Specific file exclusions within linted directories
             'src/main/webapp/app/openapi/**',
             'src/test/javascript/spec/stub.js',
@@ -100,7 +113,7 @@ export default tseslint.config(
     eslint.configs.recommended,
     ...storybookPlugin.configs['flat/recommended'],
     {
-        files: ['packages/tum-ui/**/*.mjs'],
+        files: ['packages/tum-aet-ui/**/*.mjs'],
         languageOptions: {
             globals: {
                 clearTimeout: 'readonly',
@@ -111,18 +124,20 @@ export default tseslint.config(
         },
     },
     {
-        files: ['src/main/webapp/**/*.ts', 'packages/tum-ui/**/*.ts'],
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-aet-ui/**/*.ts'],
         languageOptions: {
             parser: typescriptParser,
             parserOptions: {
                 tsconfigRootDir: import.meta.dirname,
                 project: [
                     './tsconfig.json',
-                    './tsconfig.app.json',
-                    './tsconfig.spec.json',
-                    './packages/tum-ui/tsconfig.lib.json',
-                    './packages/tum-ui/tsconfig.spec.json',
-                    './packages/tum-ui/.storybook/tsconfig.json',
+                    './config/client/tsconfig.app.json',
+                    './config/client/tsconfig.spec.json',
+                    './packages/tum-aet-ui/tsconfig.lib.json',
+                    './packages/tum-aet-ui/tsconfig.spec.json',
+                    './packages/tum-aet-ui/.storybook/tsconfig.json',
+                    './packages/tum-aet-ui/consumer/tsconfig.json',
+                    './packages/tum-aet-ui/consumer/app/tsconfig.json',
                 ],
             },
             globals: {
@@ -174,6 +189,31 @@ export default tseslint.config(
             '@typescript-eslint/no-floating-promises': 'off',
             '@typescript-eslint/no-unsafe-assignment': 'off',
             '@angular-eslint/no-output-on-prefix': 'off',
+            // Class fields initialize in declaration order, so a getter or method that reads an injected service from
+            // an earlier field initializer sees `undefined` if the inject() field comes later. TypeScript only catches
+            // the direct reference, not the one behind a getter or method, so keep every inject() field first.
+            '@angular-eslint/inject-at-top': 'error',
+            // Angular 22's @Service() is the shorthand for @Injectable({ providedIn: 'root' }) and what `ng generate
+            // service` emits. It also rejects constructor injection at compile time, which matches prefer-inject.
+            // Services with any other provider metadata keep @Injectable. Autofixable, with one trap: a @Pipe that is
+            // also injected as a service is still reported, but @Service() cannot share a class with another Angular
+            // decorator, so the autofix breaks the build with NG1006. Only the AOT compiler (`ng build`) catches that;
+            // Vitest compiles JIT and tsc ignores decorators. Keep @Injectable there with a line-level disable and do
+            // not run the autofix on it.
+            '@angular-eslint/prefer-service-decorator': 'error',
+            // A computed(), linkedSignal(), effect() or afterRenderEffect() that reads no signal never re-runs: either a
+            // signal read is missing (`count` instead of `count()`), or the value is a constant and should be a field.
+            // Version 22.5.0 crashes ("config.args is not iterable") on a bare call named like an Object.prototype
+            // member, such as a destructured Signal Forms `valueOf`; config/pnpm/patches/@angular-eslint__eslint-plugin@22.5.0.patch
+            // backports the upstream fix until a release contains it.
+            '@angular-eslint/reactive-context-must-read-signal': 'error',
+            // A computed() whose function returns nothing is always undefined.
+            '@angular-eslint/computed-must-return': 'error',
+            // takeUntilDestroyed() without a DestroyRef throws NG0203 outside an injection context (ngOnInit, methods).
+            '@angular-eslint/no-implicit-take-until-destroyed': 'error',
+            '@angular-eslint/no-uncalled-signals': 'error',
+            '@angular-eslint/no-async-lifecycle-method': 'error',
+            '@angular-eslint/no-duplicates-in-metadata-arrays': 'error',
             // Production client code must not silently disable the type checker. `@ts-ignore` is banned outright
             // (convert to `@ts-expect-error` with a description, or fix the underlying type); `@ts-expect-error`
             // is allowed only with a description. Specs relax this to 'off' in the test-file block below.
@@ -192,6 +232,12 @@ export default tseslint.config(
                     caughtErrors: 'none',
                 },
             ],
+            // The core `no-redeclare` rule does not understand TypeScript function overloads and reports every
+            // signature after the first as a redeclaration (e.g. the `hydrate` overloads in deep-clone.util.ts).
+            // Swap in the typescript-eslint extension, which is overload-aware and otherwise equivalent; genuine
+            // redeclarations remain errors, and tsc catches them independently.
+            'no-redeclare': 'off',
+            '@typescript-eslint/no-redeclare': 'error',
             'no-unused-private-class-members': 'error',
             'no-case-declarations': 'off',
             'prefer-const': 'warn',
@@ -217,8 +263,9 @@ export default tseslint.config(
                             message: "Please import from 'lodash-es' instead.",
                         },
                         noNgZoneImport,
+                        ...noDirectCloneDeepImports,
                     ],
-                    patterns: tumUiConsumerImportPatterns,
+                    patterns: tumAetUiConsumerImportPatterns,
                 },
             ],
             'no-restricted-syntax': [
@@ -251,7 +298,7 @@ export default tseslint.config(
     // wrapper itself holds the single sanctioned `JSON.parse` (line-level disabled), and test code may parse
     // fixtures freely (specs excluded below).
     {
-        files: ['src/main/webapp/**/*.ts', 'packages/tum-ui/**/*.ts'],
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-aet-ui/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         rules: {
             'no-restricted-properties': [
@@ -271,7 +318,7 @@ export default tseslint.config(
     // Forbid `any` in all production client code. `any` opts a value out of type checking entirely, so it is
     // banned across `src/main/webapp` (production). Specs may still use `any` for mocks/fixtures (excluded below).
     {
-        files: ['src/main/webapp/**/*.ts', 'packages/tum-ui/**/*.ts'],
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-aet-ui/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         rules: {
             '@typescript-eslint/no-explicit-any': 'error',
@@ -286,7 +333,7 @@ export default tseslint.config(
     //     type) or a type annotation instead. `assertionStyle: 'as'` keeps `as const` and ordinary downcasts legal.
     // The stronger `as any` / `as unknown` bans live in the localRules block above. Specs may cast freely (excluded).
     {
-        files: ['src/main/webapp/**/*.ts', 'packages/tum-ui/**/*.ts'],
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-aet-ui/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         rules: {
             '@typescript-eslint/no-unnecessary-type-assertion': 'error',
@@ -301,7 +348,7 @@ export default tseslint.config(
     //     `no-restricted-syntax` block above, so the two do not clobber each other. Specs use `globalThis` for
     //     mocking (excluded below).
     {
-        files: ['src/main/webapp/**/*.ts', 'packages/tum-ui/**/*.ts'],
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-aet-ui/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         rules: {
             'no-console': 'error',
@@ -320,7 +367,7 @@ export default tseslint.config(
     // with the `void` operator (`ignoreVoid: true`). `ignoreIIFE` allows `(async () => { … })()`. This overrides the
     // `'off'` default above for production code; specs may float promises for brevity (excluded below).
     {
-        files: ['src/main/webapp/**/*.ts', 'packages/tum-ui/**/*.ts'],
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-aet-ui/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         rules: {
             '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: true, ignoreIIFE: true }],
@@ -332,7 +379,7 @@ export default tseslint.config(
     // `toString()` yields `"[object Object]"` (template literals, `String(x)`, concatenation). Both preserve
     // behavior once fixed — they surface where a conversion was accidental. Companion to `restrict-template-expressions`.
     {
-        files: ['src/main/webapp/**/*.ts', 'packages/tum-ui/**/*.ts'],
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-aet-ui/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         rules: {
             '@typescript-eslint/restrict-plus-operands': 'error',
@@ -343,7 +390,7 @@ export default tseslint.config(
     // inputs, so this is a consistency rule. A genuinely unavoidable previous-value or lifecycle-ordering case
     // requires a justified line-level disable; see the client-development guide.
     {
-        files: ['src/main/webapp/app/**/*.ts', 'packages/tum-ui/src/lib/**/*.ts', 'src/test/javascript/**/*.ts'],
+        files: ['src/main/webapp/app/**/*.ts', 'packages/tum-aet-ui/src/lib/**/*.ts', 'src/test/javascript/**/*.ts'],
         rules: {
             'localRules/prefer-signal-reactivity-over-ngonchanges': 'error',
         },
@@ -355,10 +402,43 @@ export default tseslint.config(
     // cannot be signals use a justified line-level disable. Full rationale:
     // documentation/docs/developer/guidelines/client-development.mdx ("Zoneless change detection & signal-based state").
     {
-        files: ['src/main/webapp/app/**/*.ts', 'packages/tum-ui/src/lib/**/*.ts'],
+        files: ['src/main/webapp/app/**/*.ts', 'packages/tum-aet-ui/src/lib/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         rules: {
             'localRules/prefer-signal-template-state': 'error',
+        },
+    },
+    // Copy objects with deepClone, never with object spread, Object.assign or structuredClone. All three
+    // alternatives are wrong in ways the type checker cannot see: structuredClone drops prototypes, so a cloned
+    // dayjs date loses its methods while isDayjs() still returns true (the bug behind PR #11910); spread and
+    // Object.assign copy one level, so nested objects and arrays stay shared and editing the copy edits the
+    // original. Object.assign(target, source) additionally mutates in place, which emits no signal notification
+    // because a signal compares with Object.is. Use deepClone(x), cloneWith(x, { … }) or hydrate(new X(), dto)
+    // from app/foundation/util/deep-clone.util. Array spread, call spread and object rest destructuring are
+    // unaffected; specs may build fixtures freely (excluded below). Companion to the `no-restricted-imports`
+    // entry that keeps lodash cloneDeep behind the same wrapper. Full rationale:
+    // documentation/docs/developer/guidelines/client-development.mdx ("Cloning objects").
+    {
+        files: ['src/main/webapp/app/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'localRules/prefer-deep-clone': 'error',
+        },
+    },
+    // Route guards and resolvers use router-native redirects, never by calling Router.navigate() or
+    // navigateByUrl(). Navigating from inside a guard or resolver cancels the running navigation on the spot and starts
+    // a new one: that loses the original replaceUrl / skipLocationChange (a guarded URL opened directly stays in the
+    // history, so Back redirects forward again), makes a caller awaiting the original navigation receive false, and
+    // still navigates when another guard on the route rejects it. A `return false` or `EMPTY` after the call changes
+    // nothing. A guard returns or emits router.createUrlTree(...) or a RedirectCommand; a resolver may also throw a
+    // RedirectCommand from inside an RxJS operator or a promise callback. Throwing from a guard bypasses guard-result
+    // ordering, so guards must return or emit their redirect. The rule follows a guard
+    // into the helper methods and same-file functions it reaches, but not into injected services. Full rationale:
+    // documentation/docs/developer/guidelines/client-development.mdx ("Redirecting from guards and resolvers").
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        rules: {
+            'localRules/no-navigation-in-guard-or-resolver': 'error',
         },
     },
     // Module-boundary rules: enforce the foundation ← shared-ui ← editor layering.
@@ -378,9 +458,10 @@ export default tseslint.config(
                         { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
                         { name: 'lodash', message: "Please import from 'lodash-es' instead." },
                         noNgZoneImport,
+                        ...noDirectCloneDeepImports,
                     ],
                     patterns: [
-                        ...tumUiConsumerImportPatterns,
+                        ...tumAetUiConsumerImportPatterns,
                         {
                             // Block both absolute (app/shared-ui/**) and relative (../shared-ui, ../../shared-ui, …) imports
                             // so the layer cannot be bypassed with a relative path.
@@ -409,9 +490,10 @@ export default tseslint.config(
                         { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
                         { name: 'lodash', message: "Please import from 'lodash-es' instead." },
                         noNgZoneImport,
+                        ...noDirectCloneDeepImports,
                     ],
                     patterns: [
-                        ...tumUiConsumerImportPatterns,
+                        ...tumAetUiConsumerImportPatterns,
                         {
                             // Block both absolute (app/editor/**) and relative (../editor, ../../editor, …) imports.
                             group: blockLayerImportPatterns('editor'),
@@ -424,7 +506,7 @@ export default tseslint.config(
         },
     },
     {
-        files: ['src/test/javascript/**', 'src/main/webapp/app/**/*.spec.ts', 'packages/tum-ui/src/**/*.spec.ts'],
+        files: ['src/test/javascript/**', 'src/main/webapp/app/**/*.spec.ts', 'packages/tum-aet-ui/src/**/*.spec.ts'],
         plugins: {
             localRules: localRulesPlugin,
         },
@@ -461,7 +543,7 @@ export default tseslint.config(
             parser: typescriptParser,
             parserOptions: {
                 tsconfigRootDir: import.meta.dirname,
-                project: ['./tsconfig.spec.json'],
+                project: ['./config/client/tsconfig.spec.json'],
             },
         },
         plugins: {
@@ -474,7 +556,7 @@ export default tseslint.config(
         },
     },
     {
-        files: ['packages/tum-ui/src/lib/**/*.ts'],
+        files: ['packages/tum-aet-ui/src/lib/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         rules: {
             'no-restricted-imports': [
@@ -494,7 +576,7 @@ export default tseslint.config(
                     patterns: [
                         {
                             group: ['app', 'app/**', 'test', 'test/**', '!storybook/test', 'primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
-                            message: 'TUM UI must not depend on Artemis or its application UI frameworks. Move host-specific code to app/shared-ui/tum-ui-integration.',
+                            message: 'TUM AET UI must not depend on Artemis or its application UI frameworks. Move host-specific code to app/shared-ui/tum-aet-ui-integration.',
                         },
                     ],
                 },
@@ -503,7 +585,7 @@ export default tseslint.config(
                 'error',
                 {
                     type: 'attribute',
-                    prefix: 'tumUi',
+                    prefix: 'tumAetUi',
                     style: 'camelCase',
                 },
             ],
@@ -511,7 +593,7 @@ export default tseslint.config(
                 'error',
                 {
                     type: 'element',
-                    prefix: 'tum-ui',
+                    prefix: 'tumaet-ui',
                     style: 'kebab-case',
                 },
             ],
@@ -520,13 +602,17 @@ export default tseslint.config(
     {
         // Attribute-selector components preserve native element semantics while owning a template
         // or component-scoped styles, so the element-selector convention does not apply.
-        files: ['packages/tum-ui/src/lib/button/tum-ui-button.directive.ts', 'packages/tum-ui/src/lib/table-directive/tum-ui-table-sortable-column.component.ts'],
+        files: [
+            'packages/tum-aet-ui/src/lib/button/tumaet-ui-button.directive.ts',
+            'packages/tum-aet-ui/src/lib/chart/tumaet-ui-chart-axes.component.ts',
+            'packages/tum-aet-ui/src/lib/table-directive/tumaet-ui-table-sortable-column.component.ts',
+        ],
         rules: {
             '@angular-eslint/component-selector': 'off',
         },
     },
     {
-        files: ['src/main/webapp/**/*.html', 'packages/tum-ui/**/*.html'],
+        files: ['src/main/webapp/**/*.html', 'packages/tum-aet-ui/**/*.html'],
         languageOptions: {
             parser: angularTemplateParser,
         },
@@ -537,17 +623,30 @@ export default tseslint.config(
         },
         rules: {
             'prettier/prettier': ['error', { parser: 'angular' }],
-            '@angular-eslint/template/click-events-have-key-events': 'off',
-            '@angular-eslint/template/interactive-supports-focus': 'off',
+            '@angular-eslint/template/click-events-have-key-events': 'error',
+            '@angular-eslint/template/interactive-supports-focus': 'error',
+            '@angular-eslint/template/button-has-type': 'error',
             '@angular-eslint/template/label-has-associated-control': 'off',
-            '@angular-eslint/template/alt-text': 'off',
+            '@angular-eslint/template/alt-text': 'error',
+            '@angular-eslint/template/no-positive-tabindex': 'error',
             '@angular-eslint/template/elements-content': 'off',
             '@angular-eslint/template/prefer-control-flow': 'error',
             '@angular-eslint/template/prefer-self-closing-tags': 'error',
+            // A @switch without @default silently renders nothing for an unmatched value. Write `@default never;`
+            // when the cases cover the whole union or enum (the template type check then fails when a member is
+            // added), otherwise `@default {}` to state that nothing is rendered on purpose.
+            '@angular-eslint/template/require-switch-default': 'error',
+            // Setting outerHTML replaces the node Angular is bound to, so the next update fails. Use [innerHTML].
+            '@angular-eslint/template/no-outerhtml': 'error',
+            // Prefer [style], [style.prop] and [style.prop.unit] bindings (or a static style attribute) over NgStyle,
+            // as the Angular style guide recommends. A bound object is compared by reference, so replace it rather
+            // than mutating it, and write a unit suffix such as `top.px` as its own [style.top.px] binding.
+            '@angular-eslint/template/prefer-style-binding': 'error',
+            '@angular-eslint/template/no-any': 'error',
         },
     },
     {
-        files: ['packages/tum-ui/src/lib/**/*.html'],
+        files: ['packages/tum-aet-ui/src/lib/**/*.html'],
         rules: {
             '@angular-eslint/template/click-events-have-key-events': 'error',
             '@angular-eslint/template/interactive-supports-focus': 'error',
@@ -557,8 +656,14 @@ export default tseslint.config(
         },
     },
     {
+        files: ['src/main/webapp/app/exercise/team/**/*.html'],
+        rules: {
+            '@angular-eslint/template/label-has-associated-control': 'error',
+        },
+    },
+    {
         // These composite widgets manage option focus through aria-activedescendant.
-        files: ['packages/tum-ui/src/lib/autocomplete/tum-ui-autocomplete.component.html', 'packages/tum-ui/src/lib/select/tum-ui-select.component.html'],
+        files: ['packages/tum-aet-ui/src/lib/autocomplete/tumaet-ui-autocomplete.component.html', 'packages/tum-aet-ui/src/lib/select/tumaet-ui-select.component.html'],
         rules: {
             '@angular-eslint/template/click-events-have-key-events': 'off',
             '@angular-eslint/template/interactive-supports-focus': 'off',
@@ -568,8 +673,8 @@ export default tseslint.config(
         // Forbid raw Tailwind color palette classes (e.g. text-green-500) and hand-written PrimeNG component root
         // classes (e.g. class="p-button") in ALL client templates: Tailwind + PrimeNG are loaded app-wide, so both
         // are wrong everywhere — use semantic brand tokens and real PrimeNG components instead. The stylelint
-        // hex/--bs- guard (.stylelintrc.json) is scoped per migrated module. See client-development.mdx (### Styling).
-        files: ['src/main/webapp/app/**/*.html', 'packages/tum-ui/src/lib/**/*.html'],
+        // hex/--bs- guard (config/stylelint/stylelint.config.json) is scoped per migrated module. See client-development.mdx (### Styling).
+        files: ['src/main/webapp/app/**/*.html', 'packages/tum-aet-ui/src/lib/**/*.html'],
         languageOptions: {
             parser: angularTemplateParser,
         },
@@ -580,6 +685,10 @@ export default tseslint.config(
             'localRules/no-raw-tailwind-color-palette': 'error',
             'localRules/no-primeng-component-classes': 'error',
             'localRules/require-chart-accessible-name': 'error',
+            // A property binding is re-evaluated on every change-detection pass, so `.bind()` there hands the
+            // consumer a new function identity every pass. Applies to all templates for the same reason as the two
+            // rules above: change detection works the same way everywhere.
+            'localRules/no-bind-in-template-binding': 'error',
         },
     },
     {
@@ -600,16 +709,36 @@ export default tseslint.config(
             'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.html',
             'src/main/webapp/app/shared-ui/delete-dialog/**/*.html',
             'src/main/webapp/app/core/alert/**/*.html',
+            'src/main/webapp/app/core/about-us/**/*.html',
+            'src/main/webapp/app/core/feature-overview/**/*.html',
             'src/main/webapp/app/core/layouts/footer/**/*.html',
             // Only the modal shell is migrated; its search subcomponents go with the navbar/search follow-up.
             'src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.html',
             'src/main/webapp/app/course/overview/setup-passkey-modal/**/*.html',
-            'src/main/webapp/app/notification/course-notification/course-notification-popup-overlay/**/*.html',
+            'src/main/webapp/app/notification/**/*.html',
+            'src/main/webapp/app/calendar/**/*.html',
+            'src/main/webapp/app/shared-ui/profile-picture/**/*.html',
             'src/main/webapp/app/localci/build-agent-summary/**/*.html',
             'src/main/webapp/app/localci/build-agent-details/**/*.html',
             'src/main/webapp/app/localci/build-job-statistics/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.html',
-            'packages/tum-ui/src/lib/**/*.html',
+            'src/main/webapp/app/quiz/manage/apollon-diagrams/**/*.html',
+            // The whole exam mode: instructor pages, student pages and the pieces they share, and the example solution that only the exam summary shows.
+            'src/main/webapp/app/exam/**/*.html',
+            'src/main/webapp/app/exercise/example-solution/**/*.html',
+            'src/main/webapp/app/exercise/exercise-action-bar/**/*.html',
+            'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.html',
+            'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',
+            'src/main/webapp/app/course/manage/update/**/*.html',
+            'src/main/webapp/app/account/**/*.html',
+            // The lecture editor with its content, the pages that create, edit and split content, and the PDF drop zone and dialog.
+            'src/main/webapp/app/lecture/manage/lecture-update/**/*.html',
+            'src/main/webapp/app/lecture/manage/lecture-period/**/*.html',
+            'src/main/webapp/app/lecture/manage/lecture-title-channel-name/**/*.html',
+            'src/main/webapp/app/lecture/manage/lecture-units/**/*.html',
+            'src/main/webapp/app/lecture/manage/pdf-drop-zone/**/*.html',
+            'src/main/webapp/app/lecture/manage/pdf-upload-target-dialog/**/*.html',
+            'packages/tum-aet-ui/src/lib/**/*.html',
         ],
         languageOptions: {
             parser: angularTemplateParser,
@@ -619,6 +748,32 @@ export default tseslint.config(
         },
         rules: {
             'localRules/no-bootstrap-classes': 'error',
+        },
+    },
+    // The exam mode is migrated to TUM AET UI and Tailwind: neither PrimeNG nor ng-bootstrap may be imported anywhere in it, including specs.
+    // Like the other `no-restricted-imports` blocks, this one overrides the rule, so the shared restrictions are repeated.
+    {
+        files: ['src/main/webapp/app/exam/**/*.ts', 'src/main/webapp/app/notification/**/*.ts', 'src/main/webapp/app/calendar/**/*.ts'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    paths: [
+                        { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
+                        { name: 'lodash', message: "Please import from 'lodash-es' instead." },
+                        noNgZoneImport,
+                        ...noDirectCloneDeepImports,
+                    ],
+                    patterns: [
+                        ...tumAetUiConsumerImportPatterns,
+                        {
+                            group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
+                            message:
+                                'The exam mode, the notifications and the calendar use TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
+                        },
+                    ],
+                },
+            ],
         },
     },
 );

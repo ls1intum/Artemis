@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-competency-search',
@@ -23,7 +24,8 @@ export class CompetencySearchComponent {
     protected readonly faChevronUp = faChevronUp;
 
     protected readonly ButtonType = ButtonType;
-    protected readonly semesters = getSemesters();
+    // an empty entry lets the select clear the semester filter, i.e. search across all semesters
+    protected readonly semesters = [...getSemesters(), ''];
 
     /**
      * Toggles advanced search (expands component to show more search fields)
@@ -48,7 +50,7 @@ export class CompetencySearchComponent {
      * Update a single field on the search model. Used by template event bindings.
      */
     updateSearchField(field: 'title' | 'description' | 'courseTitle' | 'semester', value: string) {
-        this.search.update((s) => ({ ...s, [field]: value }));
+        this.search.update((s) => cloneWith(s, { [field]: value }));
     }
 
     /**
@@ -57,7 +59,7 @@ export class CompetencySearchComponent {
      */
     performSearch() {
         if (this.advancedSearchEnabled()) {
-            this.search.update((s) => ({ ...s }));
+            this.search.update((s) => deepClone(s));
         } else {
             //only search with competency title if advancedSearch is disabled
             this.search.set({

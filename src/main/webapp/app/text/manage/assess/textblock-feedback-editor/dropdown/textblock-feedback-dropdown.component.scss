@@ -2,7 +2,8 @@
     padding: 0;
 }
 
-a:hover {
+/* Opts out of the hover underline from `global.scss`; see the sibling editor stylesheet for why the `:not()` matters. */
+a:not(.btn):hover {
     text-decoration: none !important;
     color: var(--bs-body-color);
 }

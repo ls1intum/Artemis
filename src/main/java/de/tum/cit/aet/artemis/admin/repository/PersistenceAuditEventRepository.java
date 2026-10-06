@@ -7,7 +7,6 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
@@ -34,46 +33,29 @@ public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<Pe
     @EntityGraph(type = LOAD, attributePaths = { "data" })
     List<PersistentAuditEvent> findByPrincipalAndAuditEventDateAfterAndAuditEventType(String principle, Instant after, String type);
 
-    /**
-     * Finds a bounded page of expired ids of the given types, oldest first, so pruning can run in batches.
-     * <p>
-     * Batching matters because the table has never been pruned, so the first runs have to clear a backlog that may span
-     * years; deleting all of it in one transaction would hold locks for a long time and bloat the undo log. Oldest first
-     * so that repeated runs make monotonic progress instead of revisiting the same rows.
-     *
-     * @param before   only events strictly older than this are returned
-     * @param types    the event types to prune
-     * @param pageable bounds the batch size
-     * @return ids of expired events of those types, oldest first
-     */
-    @Query("""
-            SELECT event.id
-            FROM PersistentAuditEvent event
-            WHERE event.auditEventDate < :before
-                AND event.auditEventType IN :types
-            ORDER BY event.auditEventDate ASC
-            """)
-    List<Long> findExpiredIdsOfTypes(@Param("before") Instant before, @Param("types") Set<String> types, Pageable pageable);
+    @EntityGraph(type = LOAD, attributePaths = { "data" })
+    List<PersistentAuditEvent> findByPrincipalAndAuditEventDateAfter(String principal, Instant after);
 
     /**
-     * Finds a bounded page of expired ids that are <em>not</em> of the given types, oldest first.
+     * Finds a bounded page of expired event ids, oldest first, so pruning can run in batches. Batching matters because
+     * the log was never pruned before, so the first run has to clear a backlog that may span years; deleting all of it in
+     * one transaction would hold locks for a long time and bloat the undo log. Oldest first so that repeated runs make
+     * monotonic progress instead of revisiting the same rows.
      * <p>
-     * Rows with no type are included: {@code event_type} is nullable, and a plain {@code NOT IN} would silently skip
-     * those rows forever, because in SQL {@code NULL NOT IN (...)} is unknown rather than true.
+     * No type filter is needed: after the audit log split this table holds only authentication events, all of which share
+     * the general retention period.
      *
      * @param before   only events strictly older than this are returned
-     * @param types    the event types to exclude
      * @param pageable bounds the batch size
-     * @return ids of expired events of any other type, oldest first
+     * @return ids of expired events, oldest first
      */
     @Query("""
             SELECT event.id
             FROM PersistentAuditEvent event
             WHERE event.auditEventDate < :before
-                AND (event.auditEventType IS NULL OR event.auditEventType NOT IN :types)
             ORDER BY event.auditEventDate ASC
             """)
-    List<Long> findExpiredIdsExcludingTypes(@Param("before") Instant before, @Param("types") Set<String> types, Pageable pageable);
+    List<Long> findExpiredIds(@Param("before") Instant before, Pageable pageable);
 
     @Query("""
             SELECT p.id

@@ -19,23 +19,25 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 /**
  * DTO representing a result / assessment of a file upload submission.
  *
- * @param id             the ID of the result
- * @param completionDate the date and time when the assessment was completed
- * @param successful     whether the result is considered successful
- * @param score          the score achieved (in percent or points depending on context)
- * @param rated          whether the result is rated (counts for the final score)
- * @param assessmentType the type of assessment (e.g. MANUAL, AUTOMATIC)
- * @param hasComplaint   whether a complaint has been filed for this result
- * @param exampleResult  whether this result belongs to an example submission
- * @param assessmentNote the assessment note associated with the result
- * @param assessor       the tutor/instructor who assessed the submission
- * @param feedbacks      the feedbacks generated for this result
- * @param submission     the submission context if requested
+ * @param id              the ID of the result
+ * @param completionDate  the date and time when the assessment was completed
+ * @param successful      whether the result is considered successful
+ * @param score           the score achieved (in percent or points depending on context)
+ * @param rated           whether the result is rated (counts for the final score)
+ * @param assessmentType  the type of assessment (e.g. MANUAL, AUTOMATIC)
+ * @param hasComplaint    whether a complaint has been filed for this result
+ * @param exampleResult   whether this result belongs to an example submission
+ * @param correctionRound which correction round the result belongs to
+ * @param assessmentNote  the assessment note associated with the result
+ * @param assessor        the tutor/instructor who assessed the submission
+ * @param feedbacks       the feedbacks generated for this result
+ * @param submission      the submission context if requested
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record FileUploadResultDTO(Long id, @Nullable ZonedDateTime completionDate, @Nullable Boolean successful, @Nullable Double score, boolean rated,
-        @Nullable AssessmentType assessmentType, @Nullable Boolean hasComplaint, @Nullable Boolean exampleResult, @Nullable FileUploadAssessmentNoteDTO assessmentNote,
-        @Nullable FileUploadUserDTO assessor, @Nullable List<FileUploadFeedbackDTO> feedbacks, @Nullable FileUploadSubmissionDTO submission) {
+        @Nullable AssessmentType assessmentType, @Nullable Integer correctionRound, @Nullable Boolean hasComplaint, @Nullable Boolean exampleResult,
+        @Nullable FileUploadAssessmentNoteDTO assessmentNote, @Nullable FileUploadUserDTO assessor, @Nullable List<FileUploadFeedbackDTO> feedbacks,
+        @Nullable FileUploadSubmissionDTO submission) {
 
     /**
      * Factory method to map a {@link Result} entity to a nested {@link FileUploadResultDTO} (without including submission loop).
@@ -86,6 +88,6 @@ public record FileUploadResultDTO(Long id, @Nullable ZonedDateTime completionDat
         }
 
         return new FileUploadResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), result.getAssessmentType(),
-                result.hasComplaint(), result.isExampleResult(), assessmentNoteDTO, assessorDTO, feedbackDTOs, submissionDTO);
+                result.getCorrectionRound(), result.hasComplaint(), result.isExampleResult(), assessmentNoteDTO, assessorDTO, feedbackDTOs, submissionDTO);
     }
 }

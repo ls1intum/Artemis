@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/exam/shared/entities/exam-session.model';
 import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
@@ -14,11 +15,24 @@ import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-beh
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 
 @Component({
     selector: 'jhi-suspicious-behavior',
     templateUrl: './suspicious-behavior.component.html',
-    imports: [FormsModule, TranslateDirective, ArtemisTranslatePipe, PlagiarismCasesOverviewComponent, ButtonComponent, HelpIconComponent, DocumentationButtonComponent],
+    imports: [
+        FormsModule,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        PlagiarismCasesOverviewComponent,
+        ButtonComponent,
+        HelpIconComponent,
+        DocumentationButtonComponent,
+        CourseTitleBarTitleDirective,
+    ],
 })
 export class SuspiciousBehaviorComponent implements OnInit {
     private suspiciousSessionsService = inject(SuspiciousSessionsService);

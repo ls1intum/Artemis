@@ -15,6 +15,7 @@ import { getErrorMessage, onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { ScienceService } from 'app/foundation/science/science.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-learning-path-student-page',
@@ -24,14 +25,14 @@ import { ScienceService } from 'app/foundation/science/science.service';
     imports: [LearningPathNavComponent, LearningPathLectureUnitComponent, LearningPathExerciseComponent, TranslateDirective],
 })
 export class LearningPathStudentPageComponent {
-    protected readonly LearningObjectType = LearningObjectType;
-
     private readonly learningApiService = inject(LearningPathApiService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
     private readonly alertService = inject(AlertService);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly courseTabRefreshService = inject(CourseTabRefreshService);
     private readonly scienceService = inject(ScienceService);
+
+    protected readonly LearningObjectType = LearningObjectType;
 
     readonly isLearningPathLoading = signal(false);
     readonly learningPath = signal<LearningPathDTO | undefined>(undefined);
@@ -77,7 +78,7 @@ export class LearningPathStudentPageComponent {
                 this.learningPath.set(learningPath);
             }
             await this.learningApiService.startLearningPathForCurrentUser(this.learningPath()!.id);
-            this.learningPath.update((learningPath) => ({ ...learningPath!, startedByStudent: true }));
+            this.learningPath.update((learningPath) => cloneWith(learningPath!, { startedByStudent: true }));
         } catch (error) {
             this.alertService.error(getErrorMessage(error));
         } finally {

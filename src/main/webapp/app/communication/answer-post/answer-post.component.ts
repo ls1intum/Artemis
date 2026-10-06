@@ -20,7 +20,7 @@ import { PostingDirective } from 'app/communication/directive/posting.directive'
 import dayjs from 'dayjs/esm';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrash, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
+import { DOCUMENT, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -36,7 +36,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { captureException } from '@sentry/angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
@@ -59,7 +59,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
         PostingContentComponent,
         PostingReactionsBarComponent,
         AnswerPostCreateEditModalComponent,
-        NgStyle,
         CdkOverlayOrigin,
         CdkConnectedOverlay,
         EmojiPickerComponent,
@@ -106,7 +105,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
     constructor() {
         super();
-        this.course.set(this.metisService.getCourse());
+        this.course.set(this.communicationService.getCourse());
         // Normalise the bound posting to an AnswerPost instance whenever it changes.
         //
         // Reviewed for the effect()-debt cleanup (P2.2) and intentionally kept as an effect(): `posting` is a two-way
@@ -120,7 +119,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
                 const posting = this.posting();
                 if (!posting) return;
                 if (!(posting instanceof AnswerPost)) {
-                    this.posting.set(Object.assign(new AnswerPost(), posting));
+                    this.posting.set(hydrate(new AnswerPost(), posting));
                 }
             });
         });
@@ -197,7 +196,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
     /** True for users who are allowed to approve, edit, or reject unverified Iris replies. */
     get mayVerify(): boolean {
-        return this.metisService.metisUserIsAtLeastTutorInCourse();
+        return this.communicationService.currentUserIsAtLeastTutorInCourse();
     }
 
     /**
@@ -210,12 +209,12 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
             return;
         }
         this.isVerifying.set(true);
-        this.metisService.verifyAnswerPost(posting, content?.trim() || undefined).subscribe({
+        this.communicationService.verifyAnswerPost(posting, content?.trim() || undefined).subscribe({
             next: (verified) => {
                 // The verify response's parent carries only its id (AnswerMessageDTO -> ParentPostDTO), so replacing the
                 // posting wholesale would drop post.conversation and make AnswerPostService.getResourceEndpoint route a
                 // later edit/delete to the plagiarism API. Preserve the existing full parent post (incl. conversation).
-                const merged = Object.assign(new AnswerPost(), verified, { post: posting.post });
+                const merged = hydrate(new AnswerPost(), verified, { post: posting.post });
                 this.posting.set(merged);
                 this.isEditingIrisReply.set(false);
                 this.isVerifying.set(false);
@@ -247,7 +246,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
             return;
         }
         this.isVerifying.set(true);
-        this.metisService.deleteAnswerPost(posting).subscribe({
+        this.communicationService.deleteAnswerPost(posting).subscribe({
             next: () => {
                 this.isVerifying.set(false);
             },
@@ -302,7 +301,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         const screenWidth = window.innerWidth;
 
         if (this.dropdownPosition().x + dropdownWidth > screenWidth) {
-            this.dropdownPosition.update((position) => ({ ...position, x: screenWidth - dropdownWidth - 10 }));
+            this.dropdownPosition.update((position) => cloneWith(position, { x: screenWidth - dropdownWidth - 10 }));
         }
     }
 
@@ -329,7 +328,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         // This is needed because otherwise instanceof returns 'object'.
         const posting = this.posting();
         if (posting && !(posting instanceof AnswerPost)) {
-            this.posting.set(Object.assign(new AnswerPost(), posting));
+            this.posting.set(hydrate(new AnswerPost(), posting));
         }
     }
 }

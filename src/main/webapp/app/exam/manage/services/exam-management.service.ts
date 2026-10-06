@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { ExamUserAttendanceCheckDTO } from 'app/exam/shared/entities/exam-users-attendance-check-dto.model';
 import { ExamUsersNotFoundDTO } from 'app/exam/shared/entities/exam-users-not-found-dto.model';
@@ -31,13 +31,14 @@ import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-regist
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamImportResultDTO, ExerciseGroupImportResultDTO } from 'app/exam/shared/entities/exam-import-result.model';
 import { ExamImportProgress } from 'app/exam/shared/entities/exam-import-progress.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
 import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExamManagementService {
     private http = inject(HttpClient);
     private accountService = inject(AccountService);
@@ -129,7 +130,8 @@ export class ExamManagementService {
      * @param importId a client-generated id correlating this import with its websocket progress channel
      */
     importExerciseGroup(courseId: number, examId: number, exerciseGroups: ExerciseGroup[], importId: string): Observable<HttpResponse<ExerciseGroupImportResultDTO>> {
-        return this.http.post<ExerciseGroupImportResultDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/import-exercise-group`, exerciseGroups, {
+        const dtos = ExamManagementService.convertExerciseGroupsToImportDTOs(exerciseGroups);
+        return this.http.post<ExerciseGroupImportResultDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/import-exercise-group`, dtos, {
             params: { importId },
             observe: 'response',
         });
@@ -331,11 +333,9 @@ export class ExamManagementService {
             })
             .pipe(
                 map((res) => ({
-                    content: (res.body ?? []).map((row) => ({
-                        ...row,
-                        startedDate: convertDateFromServer(row.startedDate),
-                        submissionDate: convertDateFromServer(row.submissionDate),
-                    })),
+                    content: (res.body ?? []).map((row) =>
+                        cloneWith(row, { startedDate: convertDateFromServer(row.startedDate), submissionDate: convertDateFromServer(row.submissionDate) }),
+                    ),
                     totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
                 })),
             );
@@ -570,19 +570,28 @@ export class ExamManagementService {
             examSummaryPublicationDate: convertDateFromClient(exam.examSummaryPublicationDate),
             channelName: exam.channelName,
             courseId: courseId,
-            exerciseGroups: exam.exerciseGroups?.map((group) => ({
-                title: group.title,
-                isMandatory: group.isMandatory ?? true,
-                exercises: group.exercises?.map((exercise) => ({
-                    id: exercise.id,
-                    exerciseType: exercise.type,
-                    title: exercise.title,
-                    shortName: exercise.shortName,
-                    maxPoints: exercise.maxPoints,
-                    bonusPoints: exercise.bonusPoints,
-                })),
-            })),
+            exerciseGroups: exam.exerciseGroups && ExamManagementService.convertExerciseGroupsToImportDTOs(exam.exerciseGroups),
         };
+    }
+
+    /**
+     * Converts exercise groups (as loaded for the import dialogs) to the import DTO shape the server expects: the group
+     * title and mandatory flag plus, per exercise, the source exercise id, type and the overrides the dialog can edit.
+     * @param exerciseGroups The exercise groups to convert
+     */
+    public static convertExerciseGroupsToImportDTOs(exerciseGroups: ExerciseGroup[]): ExerciseGroupImportDTO[] {
+        return exerciseGroups.map((group) => ({
+            title: group.title,
+            isMandatory: group.isMandatory ?? true,
+            exercises: group.exercises?.map((exercise) => ({
+                id: exercise.id,
+                exerciseType: exercise.type,
+                title: exercise.title,
+                shortName: exercise.shortName,
+                maxPoints: exercise.maxPoints,
+                bonusPoints: exercise.bonusPoints,
+            })),
+        }));
     }
 
     private processExamResponseFromServer(res: EntityResponseType): EntityResponseType {

@@ -1,0 +1,28 @@
+{
+    "artemisApp": {
+        "deimos": {
+            "button": {
+                "courseTrigger": "Run Malicious Participation Analysis",
+                "exerciseTrigger": "Run Malicious Participation Analysis"
+            },
+            "modal": {
+                "title": {
+                    "course": "Run Malicious Participation Analysis for this Course",
+                    "exercise": "Run Malicious Participation Analysis for this Programming Exercise"
+                },
+                "from": "From",
+                "to": "To",
+                "costWarning": "A longer time window and more participations with activity in that window increase runtime and place a greater strain on model and server resources. The analysis executes in the background and may take a long time. Choose the narrowest range that still fits your review goal. The assessment is LLM-generated and can be wrong — verify important results yourself.",
+                "validation": {
+                    "required": "Please select both start and end date.",
+                    "order": "The start date must be before or equal to the end date.",
+                    "window": "The selected time window exceeds the allowed window of 31 days."
+                }
+            },
+            "trigger": {
+                "success": "You have started Malicious Participation Analysis. You will receive a completion email when this run finishes.",
+                "error": "Could not start Malicious Participation Analysis. Please try again."
+            }
+        }
+    }
+}

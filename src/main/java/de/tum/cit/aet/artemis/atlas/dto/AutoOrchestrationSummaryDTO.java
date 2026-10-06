@@ -1,7 +1,8 @@
 package de.tum.cit.aet.artemis.atlas.dto;
 
 import java.time.Instant;
-import java.util.Objects;
+
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -18,11 +19,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param completedAt   wall-clock time the broadcast was generated
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AutoOrchestrationSummaryDTO(long courseId, String runId, int exerciseCount, int successCount, int failureCount, Instant completedAt) {
+public record AutoOrchestrationSummaryDTO(long courseId, @NonNull String runId, int exerciseCount, int successCount, int failureCount, @NonNull Instant completedAt) {
 
     public AutoOrchestrationSummaryDTO {
-        Objects.requireNonNull(runId, "runId must not be null");
-        Objects.requireNonNull(completedAt, "completedAt must not be null");
         if (exerciseCount < 0 || successCount < 0 || failureCount < 0) {
             throw new IllegalArgumentException("counts must be non-negative");
         }

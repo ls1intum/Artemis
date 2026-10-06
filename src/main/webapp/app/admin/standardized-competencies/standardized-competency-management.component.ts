@@ -14,7 +14,7 @@ import { AdminStandardizedCompetencyService } from 'app/admin/standardized-compe
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject, forkJoin, map } from 'rxjs';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiDialogComponent, TumUiProgressSpinnerComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiProgressSpinnerComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { getIcon } from 'app/atlas/shared/entities/competency.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
@@ -33,6 +33,7 @@ import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-com
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-standardized-competency-management',
@@ -51,16 +52,16 @@ import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive
         FaIconComponent,
         StandardizedCompetencyFilterComponent,
         KnowledgeAreaTreeComponent,
-        TumUiTooltipDirective,
+        TumAetUiTooltipDirective,
         StandardizedCompetencyEditComponent,
         KnowledgeAreaEditComponent,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        TumUiDialogComponent,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiProgressSpinnerComponent,
+        TumAetUiDialogComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiProgressSpinnerComponent,
         ResizableDirective,
     ],
 })
@@ -352,13 +353,12 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             return;
         }
         // set children and competencies to previous values as we do not get all descendants from the server
-        const knowledgeAreaForTree: KnowledgeAreaForTree = {
-            ...knowledgeArea,
+        const knowledgeAreaForTree: KnowledgeAreaForTree = cloneWith(knowledgeArea, {
             level: parent ? parent.level + 1 : 0,
             isVisible: true,
             children: previousKnowledgeArea.children,
             competencies: previousKnowledgeArea.competencies,
-        };
+        });
         // update level of descendants
         this.updateLevelOfSelfAndDescendants(knowledgeAreaForTree, knowledgeAreaForTree.level);
 

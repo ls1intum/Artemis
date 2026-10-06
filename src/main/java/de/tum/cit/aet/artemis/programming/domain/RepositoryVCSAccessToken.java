@@ -5,12 +5,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 
 /**
@@ -29,9 +31,13 @@ public class RepositoryVCSAccessToken extends DomainObject {
 
     // All associations are lazy: the hot authentication path (lookup by user + repository URI on every git operation) only needs the token value, never the related entities.
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(nullable = false)
+    @Parent
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(nullable = false)
+    @Parent
     private ProgrammingExercise exercise;
 
     @Enumerated(EnumType.STRING)

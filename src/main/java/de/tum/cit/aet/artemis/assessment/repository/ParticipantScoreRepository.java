@@ -6,7 +6,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -19,7 +18,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.cit.aet.artemis.admin.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
 import de.tum.cit.aet.artemis.assessment.dto.ExerciseAverageScoreDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ScoreDistributionDTO;
@@ -27,7 +25,6 @@ import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresAggregatedInformation;
-import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -174,25 +171,4 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
     // Do not update last modified date
     void clearLastRatedResultByResultId(@Param("lastResultId") Long lastResultId);
 
-    /**
-     * Sets the average for the given <code>CourseManagementOverviewExerciseStatisticsDTO</code>
-     * using the value provided in averageScoreById
-     * <p>
-     * Quiz Exercises are a special case: They don't have a due date set in the database,
-     * therefore it is hard to tell if they are over, so always calculate a score for them
-     *
-     * @param exerciseStatisticsDTO the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
-     * @param averageScoreById      the average score for each exercise indexed by exerciseId
-     * @param exercise              the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
-     */
-    default void setAverageScoreForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Map<Long, Double> averageScoreById, Exercise exercise) {
-        Double averageScore;
-        if (exercise instanceof QuizExercise) {
-            averageScore = findAverageScoreForExercise(exercise.getId());
-        }
-        else {
-            averageScore = averageScoreById.get(exercise.getId());
-        }
-        exerciseStatisticsDTO.setAverageScoreInPercent(averageScore != null ? averageScore : 0.0);
-    }
 }

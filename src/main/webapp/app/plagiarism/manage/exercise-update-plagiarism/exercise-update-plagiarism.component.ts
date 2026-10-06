@@ -8,6 +8,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-exercise-update-plagiarism',
     templateUrl: './exercise-update-plagiarism.component.html',
@@ -16,8 +17,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
     imports: [ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
 export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
-    readonly exercise = model.required<Exercise>();
     readonly fb = inject(FormBuilder);
+
+    readonly exercise = model.required<Exercise>();
 
     form: FormGroup;
 
@@ -77,7 +79,7 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
             )
             .subscribe(() => {
                 this.exercise.update((exercise) => {
-                    exercise.plagiarismDetectionConfig = { ...this.form.getRawValue() };
+                    exercise.plagiarismDetectionConfig = deepClone(this.form.getRawValue());
                     return exercise;
                 });
             });

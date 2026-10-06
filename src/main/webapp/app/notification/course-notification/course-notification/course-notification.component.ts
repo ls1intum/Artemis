@@ -5,6 +5,7 @@ import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CommonModule } from '@angular/common';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -18,7 +19,7 @@ import { RouterLink } from '@angular/router';
  */
 @Component({
     selector: 'jhi-course-notification',
-    imports: [FaIconComponent, ProfilePictureComponent, TranslateDirective, CommonModule, RouterLink],
+    imports: [FaIconComponent, ProfilePictureComponent, TranslateDirective, ArtemisTranslatePipe, CommonModule, RouterLink],
     templateUrl: './course-notification.component.html',
     styleUrls: ['./course-notification.component.scss'],
     // Mirror the `fluid` input onto the host so the (inline by default) host and its inline-block
@@ -79,10 +80,12 @@ export class CourseNotificationComponent {
         this.faIcon.set(this.courseNotificationService.getIconFromType(notification.notificationType));
         // For translations, we pass all parameters and the course name and id so they can automatically be used.
         const notificationParameters: { [key: string]: unknown } = {
-            courseName: notification.courseName,
+            courseName: notification.courseTitle,
             courseId: notification.courseId,
         };
-        for (const [key, value] of Object.entries(notification.parameters ?? {})) {
+        // Interpolation is by name, so every value of the payload is offered to the translation. The payload is a
+        // record of the notification type, so the names are the ones that type declares rather than whatever a map held.
+        for (const [key, value] of Object.entries(notification.payload ?? {})) {
             if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
                 notificationParameters[key] = value;
             } else {

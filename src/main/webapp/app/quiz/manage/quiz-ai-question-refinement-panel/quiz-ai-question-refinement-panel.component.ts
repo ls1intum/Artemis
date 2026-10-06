@@ -14,7 +14,7 @@ import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizAiGenerationService } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.service';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, finalize } from 'rxjs/operators';
@@ -99,7 +99,7 @@ export class QuizAiQuestionRefinementPanelComponent {
             return;
         }
         const currentQuestion = this.question() as MultipleChoiceQuestion;
-        Object.assign(currentQuestion, deepClone(prev));
+        hydrate(currentQuestion, deepClone(prev));
         this.questionRefined.emit(currentQuestion);
         this.refinementExplanation.set(undefined);
         this.previousQuestion.set(undefined);

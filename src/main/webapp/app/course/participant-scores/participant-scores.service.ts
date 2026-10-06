@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 export class ScoresDTO {
@@ -10,7 +10,7 @@ export class ScoresDTO {
     public regularPointsAchievable?: number;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ParticipantScoresService {
     private http = inject(HttpClient);
 

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.account.util;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -8,7 +7,6 @@ import java.util.Set;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 
 /**
@@ -83,8 +81,8 @@ public class UserFactory {
         user.setActivated(true);
         user.setLangKey("en");
         user.setAuthorities(new HashSet<>());
-        user.setSelectedLLMUsageTimestamp(ZonedDateTime.now());
-        user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+        // The AI decision is a row keyed on the user id, so it cannot be seeded before the user has one. UserUtilService
+        // records the default for generated users once they are saved.
         return user;
     }
 

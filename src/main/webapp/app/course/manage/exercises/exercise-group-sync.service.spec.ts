@@ -122,7 +122,9 @@ describe('ExerciseGroupSyncService', () => {
             const result = service.mergeGroupsIntoExercises([exercise], []);
 
             expect(result.exercises[0].exerciseVariantGroup).toBeUndefined();
-            expect(result.exercises[0].dueDate).toBe(exercise.dueDate);
+            // The copy is deep now, so the date is an equal Dayjs rather than the same instance. toStrictEqual also
+            // asserts the prototype, which is what makes the cloned value still usable as a date.
+            expect(result.exercises[0].dueDate).toStrictEqual(exercise.dueDate);
         });
 
         it('leaves an exercise untouched (same reference) when its group membership is unchanged', () => {

@@ -15,7 +15,6 @@ import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.mode
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { cloneDeep } from 'lodash-es';
 import { Course } from 'app/course/shared/entities/course.model';
 import { captureException } from '@sentry/angular';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -24,7 +23,7 @@ import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundat
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
 import { TestRunRibbonComponent } from '../../manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationCoverComponent } from '../exam-cover/exam-participation-cover.component';
-import { AsyncPipe, NgClass } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { ExamBarComponent } from '../exam-bar/exam-bar.component';
 import { ExamNavigationSidebarComponent } from '../exam-navigation-sidebar/exam-navigation-sidebar.component';
 import { QuizExamSubmissionComponent } from '../exercises/quiz/quiz-exam-submission.component';
@@ -61,8 +60,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
-import { Message } from 'primeng/message';
-import { ButtonDirective } from 'primeng/button';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -74,7 +73,6 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         CdkScrollable,
         TestRunRibbonComponent,
         ExamParticipationCoverComponent,
-        NgClass,
         ExamBarComponent,
         ExamNavigationSidebarComponent,
         QuizExamSubmissionComponent,
@@ -92,8 +90,9 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         ArtemisDatePipe,
         ExamExerciseOverviewPageComponent,
         CourseSidebarToggleButtonComponent,
-        Message,
-        ButtonDirective,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiProgressSpinnerComponent,
     ],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -113,6 +112,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private courseStorageService = inject(CourseStorageService);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
     private examManagementService = inject(ExamManagementService);
+
+    /** Set once the component is destroyed, so that a late response does not restart work for the exam that was left. */
+    private isDestroyed = false;
 
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faGraduationCap = faGraduationCap;
@@ -352,6 +354,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private resetForNewRoute(): void {
         this.resetForNewLoad();
         this.stopConductionOfPreviousExam();
+        // Right away rather than when the next exam is loaded: if that load stalls or fails, the live events of the previous exam would keep being fetched
+        this.liveEventsService.reset();
         this.exam.set(undefined!);
         this.studentExam.set(undefined!);
         this.examStartConfirmed.set(false);
@@ -606,6 +610,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                     // Publish it so other components are aware of the change
                     this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
+                    if (this.isDestroyed) {
+                        // The student left before the response arrived: the publication above made the live events service handle this exam again
+                        this.liveEventsService.reset();
+                    }
 
                     // Leave the hand-in-early cover: the exam is submitted, so its Finish button is disabled from here on and the
                     // student has to reach the submission confirmation instead. Without this they stay on the confirmation screen
@@ -805,15 +813,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return startDate ? startDate.isBefore(this.serverDateService.now()) : false;
     }
 
-    checkVerticalOverflow(): boolean {
-        // Get the sidebar-content element
-        const sidebarContent = document.querySelector('.content-exam-height');
-        if (sidebarContent) {
-            return sidebarContent.scrollHeight > sidebarContent.clientHeight;
-        }
-        return false;
-    }
-
     ngOnDestroy(): void {
         this.programmingSubmissionSubscriptions.forEach((subscription) => {
             subscription.unsubscribe();
@@ -824,6 +823,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.problemStatementUpdateEventsSubscription?.unsubscribe();
         this.examLoadSubscription?.unsubscribe();
         this.examParticipationService.resetExamLayout();
+        this.isDestroyed = true;
+        this.liveEventsService.reset();
         this.stopAutoSaveTimer();
     }
 
@@ -925,15 +926,24 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.workingTimeUpdateEventsSubscription = (
             this.liveEventsService.observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE]) as Observable<WorkingTimeUpdateEvent>
         ).subscribe((event: WorkingTimeUpdateEvent) => {
-            // Create new object to make change detection work, otherwise the date will not update
-            this.studentExam.set({ ...this.studentExam(), workingTime: event.newWorkingTime });
+            // A new top-level reference is required, not a copy: children bind `[studentExam]="studentExam()"`, and
+            // Angular compares a property binding with `Object.is` before it reaches their `input()`, so re-setting the
+            // same reference would leave the cover page showing the old working time. `withSameValues` carries every
+            // nested value over untouched, so the submissions the exercise components are editing stay the same objects.
+            const studentExam = StudentExam.withSameValues(this.studentExam());
+            studentExam.workingTime = event.newWorkingTime;
+            this.studentExam.set(studentExam);
             this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
             // A real-exam event carries the exam's (possibly changed) start/end date; apply it so the pre-start
             // countdown and the start-based content visibility (isActive/isVisible) recompute. A test-exam event omits
             // the schedule (the exam dates are only its availability window, not the student's conduction window), so
             // the exam dates are left untouched and the end date is derived from the student's own start below.
             if (event.newStartDate) {
-                this.exam.set({ ...this.exam(), startDate: event.newStartDate, endDate: event.newEndDate ?? this.exam().endDate });
+                // Same reasoning as above: the cover page's start/end dates are derived in a child effect.
+                const exam = Exam.withSameValues(this.exam());
+                exam.startDate = event.newStartDate;
+                exam.endDate = event.newEndDate ?? exam.endDate;
+                this.exam.set(exam);
             }
             // Derive the end date from the new start when present, otherwise from the start captured when the
             // subscription was created (the exam start for real exams, the student's startedDate for test exams),
@@ -1073,7 +1083,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     createParticipationForExercise(exercise: Exercise): Observable<StudentParticipation | undefined> {
         this.generateParticipationStatus.next('generating');
-        return this.courseExerciseService.startExercise(exercise.id!).pipe(
+        return this.courseExerciseService.startExercise(exercise.id!, exercise).pipe(
             map((createdParticipation: StudentParticipation) => {
                 // note: it is important that we exchange the existing student participation and that we do not push it
                 exercise.studentParticipations = [createdParticipation];
@@ -1149,24 +1159,27 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
+                        this.examParticipationService.setSubmissionSaving(submissionToSync.submission, true);
                         this.textSubmissionService.update(submissionToSync.submission, submissionToSync.exercise.id!).subscribe({
                             next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.submission),
                         });
                         break;
                     case ExerciseType.MODELING:
+                        this.examParticipationService.setSubmissionSaving(submissionToSync.submission, true);
                         this.modelingSubmissionService.update(submissionToSync.submission, submissionToSync.exercise.id!).subscribe({
                             next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.submission),
                         });
                         break;
                     case ExerciseType.PROGRAMMING:
                         // nothing to do here, because programming exercises are submitted differently
                         break;
                     case ExerciseType.QUIZ:
+                        this.examParticipationService.setSubmissionSaving(submissionToSync.submission, true);
                         this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission).subscribe({
                             next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.submission),
                         });
                         break;
                     case ExerciseType.FILE_UPLOAD:
@@ -1184,6 +1197,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private onSaveSubmissionSuccess(submission: Submission) {
+        this.examParticipationService.setSubmissionSaving(submission, false);
         submission.isSynced = true;
         submission.submitted = true;
         // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate.
@@ -1214,7 +1228,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         );
     }
 
-    private onSaveSubmissionError(error: HttpErrorResponse) {
+    private onSaveSubmissionError(error: HttpErrorResponse, submission: Submission) {
+        this.examParticipationService.setSubmissionSaving(submission, false);
         this.examParticipationService.setLastSaveFailed(true, this.courseId(), this.examId());
         // The submission stays isSynced=false after a failed save; notify sync-state-dependent UI to re-evaluate
         // (e.g. keep the save button enabled) since the flag was mutated in place.
@@ -1253,7 +1268,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // TODO: This is a dark hack to just make it work; the client assumes that ProgrammingSubmissionStateObj contains a submission
                         // TODO: but this is not always the case (only on the initial REST fetch call). WS submission updates are stripped down DTOs only.
                         const studentParticipation = exerciseForSubmission.studentParticipations?.[0] || {};
-                        exerciseForSubmission.studentParticipations[0] = { ...studentParticipation, ...submissionStateObj.submission.participation } satisfies StudentParticipation;
+                        // hydrate rather than a copy: the comment above asks to update the ORIGINAL object, and mutating in place keeps
+                        // every nested reference (notably the exercise back-reference) intact while detaching the DTO's own values.
+                        exerciseForSubmission.studentParticipations[0] = hydrate(studentParticipation, submissionStateObj.submission.participation) satisfies StudentParticipation;
                     }
                 }),
             )
@@ -1269,7 +1286,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 ) {
                     if (programmingSubmissionObj.submission) {
                         // delete backwards reference so that it is still serializable
-                        const submissionCopy = cloneDeep(programmingSubmissionObj.submission);
+                        const submissionCopy = deepClone(programmingSubmissionObj.submission);
 
                         /**
                          * Syncs the navigation bar correctly when the student only uses an IDE or the code editor.

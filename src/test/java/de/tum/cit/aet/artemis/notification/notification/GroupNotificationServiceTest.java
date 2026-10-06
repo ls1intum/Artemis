@@ -154,7 +154,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         exerciseRepository.save(updatedExercise);
 
         attachment = new Attachment();
-        attachment.setExercise(exercise);
 
         ExerciseGroup exerciseGroup = new ExerciseGroup();
         exerciseGroup.setExam(exam);
@@ -328,9 +327,8 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         lecture.setCourse(course);
 
         attachment.setReleaseDate(CURRENT_TIME);
-        attachment.setLecture(lecture);
 
-        groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment);
+        groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, lecture);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();
@@ -410,20 +408,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
                     .anyMatch(notification -> notification.getType() == 5);
 
             assertThat(hasExerciseReleasedNotification).isTrue();
-        });
-    }
-
-    @Test
-    void shouldCreateNewFeedbackRequestNotificationWhenCourseSpecificNotificationsEnabled() {
-        groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(exercise);
-
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            List<CourseNotification> notifications = courseNotificationRepository.findAll();
-
-            boolean hasNewFeedbackRequestNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
-                    .anyMatch(notification -> notification.getType() == 11);
-
-            assertThat(hasNewFeedbackRequestNotification).isTrue();
         });
     }
 

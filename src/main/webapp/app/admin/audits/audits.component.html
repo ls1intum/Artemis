@@ -1,5 +1,16 @@
 <div>
     <h5 *adminTitleBarTitle id="audits-page-heading" class="mb-0" jhiTranslate="audits.title"></h5>
+    <!-- One tab per audit log. Each log is a separate table with its own retention period, so switching tabs queries a
+         different, much smaller table instead of filtering one large one. -->
+    <tumaet-ui-tabs class="mb-4" [value]="logType()" (valueChange)="onLogTypeChange($event)" data-testid="audits-log-type-tabs">
+        <tumaet-ui-tab-list>
+            @for (tab of logTypeTabs; track tab.value) {
+                <tumaet-ui-tab [value]="tab.value" [attr.data-testid]="'audits-log-type-tab-' + tab.value">
+                    <span [jhiTranslate]="tab.labelKey"></span>
+                </tumaet-ui-tab>
+            }
+        </tumaet-ui-tab-list>
+    </tumaet-ui-tabs>
     <h4 class="mb-3" jhiTranslate="audits.filter.title"></h4>
     <div class="mb-4 flex flex-wrap items-start gap-4" data-testid="audits-date-filter">
         <div class="flex flex-col gap-2">
@@ -37,7 +48,7 @@
     </div>
     @if (audits().length) {
         <div class="overflow-x-auto" data-testid="audits-table-container">
-            <table tumUiTable size="small" [striped]="true" aria-describedby="audits-page-heading" data-testid="audits-table">
+            <table tumAetUiTable size="small" [striped]="true" aria-describedby="audits-page-heading" data-testid="audits-table">
                 <thead>
                     <!-- Sorting works whether or not a date range is set, so the header is not conditional. -->
                     <tr
@@ -55,20 +66,30 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (audit of audits(); track audit) {
+                    @for (row of auditRows(); track row.audit) {
                         <tr>
-                            <td>{{ audit.timestamp | artemisDate: 'long' : true }}</td>
+                            <td>{{ row.audit.timestamp | artemisDate: 'long' : true }}</td>
                             <td>
-                                <small>{{ audit.principal }}</small>
+                                <small>{{ row.audit.principal }}</small>
                             </td>
-                            <td>{{ audit.type }}</td>
+                            <td>{{ row.audit.type }}</td>
                             <td>
-                                @if (audit.data?.message) {
-                                    <span>{{ audit.data.message }}</span>
-                                }
-                                @if (audit.data?.remoteAddress) {
-                                    <span><span jhiTranslate="audits.table.data.remoteAddress"></span> {{ audit.data.remoteAddress }}</span>
-                                }
+                                <!-- Bounded and clipped to one line per entry: a login records its full user agent, which
+                                     would otherwise wrap over two lines on every row of the highest-volume tab. The whole
+                                     value stays available as the title. -->
+                                <div class="flex max-w-md flex-col">
+                                    @if (row.audit.data?.message) {
+                                        <span class="truncate" [title]="row.audit.data.message">{{ row.audit.data.message }}</span>
+                                    }
+                                    @if (row.audit.data?.remoteAddress) {
+                                        <span><span jhiTranslate="audits.table.data.remoteAddress"></span> {{ row.audit.data.remoteAddress }}</span>
+                                    }
+                                    <!-- Everything the server recorded that has no rendering of its own. Keys are
+                                         event-specific (`course`, `reason`, `revokedPasskeys`, ...), so they are shown verbatim. -->
+                                    @for (entry of row.otherData; track entry.key) {
+                                        <span class="truncate" [title]="entry.key + ': ' + entry.value">{{ entry.key }}: {{ entry.value }}</span>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }
@@ -80,7 +101,7 @@
                 <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
             </div>
             <div class="flex justify-center">
-                <tum-ui-paginator
+                <tumaet-ui-paginator
                     [page]="page() - 1"
                     [pageSize]="itemsPerPage"
                     [totalRecords]="totalItems()"
@@ -91,8 +112,8 @@
             </div>
         </div>
     } @else {
-        <tum-ui-message severity="warn" data-testid="audits-not-found">
+        <tumaet-ui-message severity="warn" data-testid="audits-not-found">
             <span jhiTranslate="audits.notFound"></span>
-        </tum-ui-message>
+        </tumaet-ui-message>
     }
 </div>

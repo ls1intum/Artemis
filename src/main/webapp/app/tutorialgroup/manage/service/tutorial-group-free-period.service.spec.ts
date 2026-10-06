@@ -6,6 +6,7 @@ import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/
 import { generateExampleTutorialGroupFreePeriod } from 'test/helpers/sample/tutorialgroup/tutorialGroupFreePeriodExampleModel';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { provideHttpClient } from '@angular/common/http';
+import dayjs from 'dayjs/esm';
 
 describe('TutorialGroupFreePeriodService', () => {
     let service: TutorialGroupFreePeriodService;
@@ -52,6 +53,23 @@ describe('TutorialGroupFreePeriodService', () => {
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
         expect(result).toMatchObject({ body: expected });
+    });
+
+    it('should send the wall clock of the zone the bounds were chosen in, not of the browser', () => {
+        // The server reads these digits back in the course's zone. Auckland is far from the zone the suite runs in, so
+        // routing the value through an instant would send a different day, and the holiday would cancel the wrong one.
+        const startInAuckland = dayjs.tz('2025-12-17 00:00', 'Pacific/Auckland');
+        const dto = new TutorialGroupFreePeriodDTO();
+        dto.startDate = startInAuckland;
+        dto.endDate = startInAuckland.set('hour', 23).set('minute', 59);
+        dto.reason = 'Christmas holidays';
+
+        service.create(1, 1, dto).pipe(take(1)).subscribe();
+
+        const req = httpMock.expectOne({ method: 'POST' });
+        expect(req.request.body.startDate).toBe('2025-12-17T00:00:00');
+        expect(req.request.body.endDate).toBe('2025-12-17T23:59:00');
+        req.flush({ ...elemDefault });
     });
 
     it('update', () => {

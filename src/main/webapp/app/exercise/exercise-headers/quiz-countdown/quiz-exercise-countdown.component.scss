@@ -1,0 +1,21 @@
+@import 'src/main/webapp/content/scss/artemis-mixins';
+
+/*
+ * A bordered box rather than loose text, so the remaining time reads as its own thing in a bar that is otherwise
+ * a title and buttons, and holds a running quiz's attention. `title-bar-box` is the shared frame — the same one the
+ * status and due date pills use — so the boxes in the bar line up with each other and with the buttons beside them.
+ * The urgency stays on the number, in the red the result percentage uses.
+ */
+.quiz-countdown {
+    @include title-bar-box;
+
+    &__label {
+        color: var(--bs-secondary-color);
+    }
+
+    &__value {
+        /* Tabular figures so the box does not jitter as the digits change. */
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+    }
+}

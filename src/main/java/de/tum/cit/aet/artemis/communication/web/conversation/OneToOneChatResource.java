@@ -29,11 +29,14 @@ import de.tum.cit.aet.artemis.communication.service.conversation.OneToOneChatSer
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.OneToOneChatAuthorizationService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage(UserFeature.DIRECT_MESSAGES)
 @RestController
 @RequestMapping("api/communication/courses/")
 public class OneToOneChatResource extends ConversationManagementResource {

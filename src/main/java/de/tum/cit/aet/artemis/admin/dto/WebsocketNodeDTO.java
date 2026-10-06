@@ -15,5 +15,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param brokerConnected whether this node currently reports the websocket broker as available
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record WebsocketNodeDTO(String memberId, String address, String host, int port, boolean local, boolean liteMember, String instanceId, boolean brokerConnected) {
+public record WebsocketNodeDTO(String memberId, String address, String host, int port, boolean local, String instanceId, boolean brokerConnected) {
 }

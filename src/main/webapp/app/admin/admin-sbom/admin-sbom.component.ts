@@ -26,20 +26,21 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 import {
-    TumUiButtonComponent,
-    TumUiButtonDirective,
-    TumUiButtonGroupComponent,
-    TumUiIconFieldComponent,
-    TumUiInputDirective,
-    TumUiMessageComponent,
-    TumUiTableDirective,
-    TumUiTableSortEvent,
-    TumUiTableSortableColumnComponent,
-    TumUiTagComponent,
-    TumUiTagSeverity,
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiButtonGroupComponent,
+    TumAetUiIconFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTagComponent,
+    TumAetUiTagSeverity,
 } from '@tumaet/ui-angular';
 import { AdminSbomService } from './admin-sbom.service';
 import { ArtemisVersion, CombinedSbom, ComponentVulnerabilities, SbomComponent, Vulnerability } from './admin-sbom.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type SbomSource = 'all' | 'server' | 'client';
 
@@ -59,15 +60,15 @@ type SbomSource = 'all' | 'server' | 'client';
         AdminTitleBarActionsDirective,
         ArtemisTranslatePipe,
         HelpIconComponent,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiButtonGroupComponent,
-        TumUiTableDirective,
-        TumUiTableSortableColumnComponent,
-        TumUiTagComponent,
-        TumUiMessageComponent,
-        TumUiInputDirective,
-        TumUiIconFieldComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiButtonGroupComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
+        TumAetUiInputDirective,
+        TumAetUiIconFieldComponent,
     ],
 })
 export class AdminSbomComponent implements OnInit {
@@ -155,20 +156,12 @@ export class AdminSbomComponent implements OnInit {
         const source = this.selectedSource();
         if ((source === 'all' || source === 'server') && sbom.server?.components) {
             components = components.concat(
-                sbom.server.components.map((c) => ({
-                    ...c,
-                    source: 'server' as const,
-                    componentVulnerabilities: this.getComponentVulnerabilities(c, vulnData),
-                })),
+                sbom.server.components.map((c) => cloneWith(c, { source: 'server' as const, componentVulnerabilities: this.getComponentVulnerabilities(c, vulnData) })),
             );
         }
         if ((source === 'all' || source === 'client') && sbom.client?.components) {
             components = components.concat(
-                sbom.client.components.map((c) => ({
-                    ...c,
-                    source: 'client' as const,
-                    componentVulnerabilities: this.getComponentVulnerabilities(c, vulnData),
-                })),
+                sbom.client.components.map((c) => cloneWith(c, { source: 'client' as const, componentVulnerabilities: this.getComponentVulnerabilities(c, vulnData) })),
             );
         }
 
@@ -384,7 +377,7 @@ export class AdminSbomComponent implements OnInit {
         return 'UNKNOWN';
     }
 
-    getSeverityLevel(severity: string): TumUiTagSeverity {
+    getSeverityLevel(severity: string): TumAetUiTagSeverity {
         switch (severity) {
             case 'CRITICAL':
                 return 'danger';
@@ -418,7 +411,7 @@ export class AdminSbomComponent implements OnInit {
      * toggled field/order, so the handler only mirrors that state onto the `sortField`/`sortAscending`
      * signals that drive the client-side sort in `filteredComponents()`.
      */
-    onTableSort(event: TumUiTableSortEvent): void {
+    onTableSort(event: TumAetUiTableSortEvent): void {
         const field = event.field;
         if (field === 'name' || field === 'group' || field === 'version' || field === 'type') {
             this.sortField.set(field);

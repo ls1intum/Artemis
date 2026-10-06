@@ -1,22 +1,6 @@
 <!-- Iris inline answer card -->
 @if (irisEnabled()) {
-    <jhi-global-search-iris-answer [searchQuery]="searchQuery()" />
-}
-
-<!-- Action button: Search Lecture Content (visible when iris enabled and no filter active) -->
-@if (irisEnabled() && showLectureButton()) {
-    <div #selectableItem>
-        <jhi-global-search-action-item
-            [title]="'global.search.actions.lectureSearchTitle' | artemisTranslate"
-            [description]="'global.search.actions.lectureSearchDescription' | artemisTranslate"
-            [selected]="selectedIndex() === LECTURE_SEARCH_ACTION_INDEX"
-            accentColor="var(--global-search-lecture-accent)"
-            secondaryAccentColor="var(--bs-primary)"
-            (clicked)="viewSelected.emit(SearchView.Lecture)"
-        >
-            <fa-icon slot="icon" [icon]="faFileLines" aria-hidden="true" />
-        </jhi-global-search-action-item>
-    </div>
+    <jhi-global-search-iris-answer [searchQuery]="searchQuery()" [courseIds]="courseIds()" [excludeCourseIds]="excludeCourseIds()" />
 }
 
 <!-- Error state -->
@@ -29,21 +13,23 @@
 <!-- Results list when searching or filter is active -->
 @if (showResults() && !isLoading() && !searchError()) {
     @if (results().length > 0) {
-        <div class="search-results-list" [class.mt-3]="irisEnabled()">
+        <div class="search-results-list" [class.mt-3]="irisOccupiesSpace()">
             @for (result of results(); track result.id; let i = $index) {
                 <div #selectableItem>
                     <jhi-global-search-result-item
                         [result]="result"
-                        [icon]="getIconForType(result.type, result.badge)"
-                        [isSelected]="selectedIndex() === actionButtonCount() + i"
+                        [icon]="getIconForType(result.type, result.badgeKey)"
+                        [isSelected]="selectedIndex() === i"
                         (resultClick)="navigateToResult($event)"
                     />
                 </div>
             }
         </div>
     } @else {
-        <div class="no-results-state p-3 text-center text-secondary" [class.mt-3]="irisEnabled()">
-            @if (isTooShortQuery()) {
+        <div class="no-results-state p-3 text-center text-secondary" [class.mt-3]="irisOccupiesSpace()">
+            @if (isContentSearchPrompt()) {
+                <p>{{ 'global.search.contentSearchPrompt' | artemisTranslate }}</p>
+            } @else if (isTooShortQuery()) {
                 <p>{{ 'global.search.tooShortQueryHint' | artemisTranslate }}</p>
             } @else {
                 <p>{{ 'global.search.noResultsFound' | artemisTranslate }}</p>
@@ -55,7 +41,7 @@
     }
 } @else if (isLoading()) {
     <!-- Skeleton loading placeholders -->
-    <div class="search-results-list" [class.mt-3]="irisEnabled()">
+    <div class="search-results-list" [class.mt-3]="irisOccupiesSpace()">
         @for (_ of skeletonItems; track $index) {
             <div class="skeleton-result-item p-3" aria-hidden="true">
                 <div class="d-flex align-items-start gap-3">
@@ -71,15 +57,6 @@
                         <p-skeleton width="80%" height="0.75rem" borderRadius="0.25rem" />
                     </div>
                 </div>
-            </div>
-        }
-    </div>
-} @else {
-    <!-- Searchable entities list (initial state) -->
-    <div class="entity-list" [class.mt-3]="irisEnabled()">
-        @for (entity of searchableEntities; track entity.id; let i = $index) {
-            <div #selectableItem>
-                <jhi-global-search-entity-item [entity]="entity" [isSelected]="selectedIndex() === actionButtonCount() + i" (entityClick)="onEntityItemClick($event)" />
             </div>
         }
     </div>

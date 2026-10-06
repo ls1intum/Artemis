@@ -11,8 +11,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.localci.service.scaparser.format.sarif.ArtifactLocation;
@@ -60,7 +60,7 @@ public class SarifParser implements ParserStrategy {
     private record FileLocation(String path, int startLine, int endLine, int startColumn, int endColumn) {
     }
 
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     private final StaticCodeAnalysisTool tool;
 
@@ -84,7 +84,7 @@ public class SarifParser implements ParserStrategy {
         try {
             sarifLog = objectMapper.readValue(reportContent, SarifLog.class);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new RuntimeException(e);
         }
 

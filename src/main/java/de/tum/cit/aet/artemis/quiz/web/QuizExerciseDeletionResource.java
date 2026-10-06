@@ -19,6 +19,8 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -31,6 +33,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage(UserFeature.QUIZ_AUTHORING)
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizExerciseDeletionResource {
@@ -82,7 +85,7 @@ public class QuizExerciseDeletionResource {
 
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly and, for quizzes, deletes the drag-and-drop image files
         // (see ExerciseDeletionService#delete) across all deletion entry points.
-        exerciseService.logDeletion(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseService.logDeletion(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
         exerciseDeletionService.delete(quizExerciseId, false);
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
 

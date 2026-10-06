@@ -22,14 +22,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.admin.repository.CustomAuditEventRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -52,6 +57,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
  */
 @Conditional(IrisEnabled.class)
 @Lazy
+@FeatureUsage(UserFeature.IRIS_CHAT)
 @RestController
 @RequestMapping("api/iris/chat/")
 public class IrisChatSessionResource {
@@ -59,6 +65,8 @@ public class IrisChatSessionResource {
     private static final Logger log = LoggerFactory.getLogger(IrisChatSessionResource.class);
 
     private final UserRepository userRepository;
+
+    private final UserAiPreferenceService userAiPreferenceService;
 
     private final IrisSessionService irisSessionService;
 
@@ -78,8 +86,9 @@ public class IrisChatSessionResource {
 
     public IrisChatSessionResource(UserRepository userRepository, CourseRepository courseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
             IrisSessionRepository irisSessionRepository, IrisCitationService irisCitationService, IrisChatSessionRepository irisChatSessionRepository,
-            CustomAuditEventRepository auditEventRepository, IrisChatSessionService irisChatSessionService) {
+            CustomAuditEventRepository auditEventRepository, IrisChatSessionService irisChatSessionService, UserAiPreferenceService userAiPreferenceService) {
         this.userRepository = userRepository;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
         this.courseRepository = courseRepository;
@@ -104,6 +113,7 @@ public class IrisChatSessionResource {
      * @param entityId exerciseId for exercise modes, lectureId for LECTURE_CHAT, courseId for COURSE_CHAT
      * @return the current or newly created session
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @PostMapping("sessions/current")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -138,13 +148,13 @@ public class IrisChatSessionResource {
     // -------------------------------------------------------------------------
 
     /**
-     * GET api/iris/chat/{courseId}/session/{sessionId}: Retrieve an Iris Session by id.
+     * GET api/iris/chat/courses/{courseId}/sessions/{sessionId}: Retrieve an Iris Session by id.
      *
      * @param courseId  of the course
      * @param sessionId of the session
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the iris session
      */
-    @GetMapping({ "courses/{courseId}/sessions/{sessionId}", "{courseId}/session/{sessionId}" })
+    @GetMapping("courses/{courseId}/sessions/{sessionId}")
     @EnforceAtLeastStudentInCourse
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisChatSessionResponseDTO> getSessionById(@PathVariable Long courseId, @PathVariable Long sessionId) {
@@ -177,13 +187,14 @@ public class IrisChatSessionResource {
      * @param courseId of the course
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of session DTOs
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping({ "courses/{courseId}/sessions/overview", "{courseId}/sessions/overview" })
     @EnforceAtLeastStudentInCourse
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<List<IrisChatSessionDTO>> getAllSessionsForCourse(@PathVariable Long courseId) {
         User user = userRepository.getUserWithAuthorities();
         Course course = courseRepository.findById(courseId).orElseThrow();
-        if (user.hasOptedIntoLLMUsage()) {
+        if (userAiPreferenceService.hasOptedIntoLlmUsage(user.getId())) {
             List<IrisChatSessionDTO> irisSessionDTOs = irisSessionService.getIrisSessionsByCourseAndUserId(course, user.getId());
             return ResponseEntity.ok(irisSessionDTOs);
         }

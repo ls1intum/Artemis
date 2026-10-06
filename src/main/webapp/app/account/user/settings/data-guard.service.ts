@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { CanActivate } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS } from 'app/app.constants';
@@ -6,7 +6,7 @@ import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS } f
 /**
  * Guard to check if the route "/user-settings/ai-experience" can be activated.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class DataGuard implements CanActivate {
     private readonly profileService = inject(ProfileService);
 

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
+import java.util.Locale;
+
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -35,7 +37,7 @@ public enum ExerciseType {
      * @return the exercise type as a lower case String without any special characters (e.g. FILE_UPLOAD -> "file upload")
      */
     public String getExerciseTypeAsReadableString() {
-        return this.toString().toLowerCase().replace('_', ' ');
+        return this.toString().toLowerCase(Locale.ROOT).replace('_', ' ');
     }
 
     /**

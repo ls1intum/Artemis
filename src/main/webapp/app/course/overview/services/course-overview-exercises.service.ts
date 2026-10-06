@@ -1,11 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable, OnDestroy, inject, signal } from '@angular/core';
+import { OnDestroy, Service, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { EMPTY, Observable, Subscription, catchError, finalize, of, shareReplay, tap } from 'rxjs';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { currentNavigationId } from 'app/course/overview/services/navigation-scope';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -27,7 +27,7 @@ import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.mo
  * twice costs one request while the next selection — including re-selecting the tab you are on, which is how a student
  * refreshes — always asks the server again.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseOverviewExercisesService implements OnDestroy {
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly courseStorageService = inject(CourseStorageService);
@@ -279,7 +279,7 @@ export class CourseOverviewExercisesService implements OnDestroy {
                     return exercise;
                 }
                 didUpdate = true;
-                return { ...exercise, studentAssignedTeamId: teamAssignment.teamId, studentParticipations: teamAssignment.studentParticipations };
+                return cloneWith(exercise, { studentAssignedTeamId: teamAssignment.teamId, studentParticipations: teamAssignment.studentParticipations });
             });
             return didUpdate ? updated : exercises;
         });
@@ -297,7 +297,7 @@ export class CourseOverviewExercisesService implements OnDestroy {
         if (exercises === source) {
             return;
         }
-        const data = { ...current.data, exercises };
+        const data = cloneWith(current.data, { exercises });
         this.state.set({ courseId, navigationId: currentNavigationId(this.router), data });
         this.publishExercisesToStoredCourse(courseId, data);
     }

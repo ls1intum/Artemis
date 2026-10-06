@@ -1,4 +1,18 @@
 /**
+ * Snaps a measured CSS-pixel length to the device pixel grid.
+ *
+ * These measurements position everything the shells render below the header, and `getBoundingClientRect()` reports
+ * subpixel sizes. A fractional offset puts every hairline below it across two device rows instead of on one.
+ *
+ * Rounds against `devicePixelRatio`, not to whole CSS pixels: on a 2x display a whole CSS pixel is still half a
+ * device pixel.
+ */
+function snapToDevicePixelGrid(cssPixels: number): number {
+    const ratio = window.devicePixelRatio || 1;
+    return Math.round(cssPixels * ratio) / ratio;
+}
+
+/**
  * Update the header height SCSS variable based on the navbar height.
  *
  * The navbar height can change based on the screen size and the content of the navbar
@@ -9,7 +23,7 @@ export function updateHeaderHeight() {
         const navbar = document.querySelector('jhi-navbar');
         if (navbar) {
             // do not use navbar.offsetHeight, this might not be defined in Safari!
-            const headerHeight = navbar.getBoundingClientRect().height;
+            const headerHeight = snapToDevicePixelGrid(navbar.getBoundingClientRect().height);
             document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
         }
     });
@@ -47,9 +61,6 @@ let activeObserver: ResizeObserver | undefined;
  * re-creation during HMR, overlapping test fixtures) cannot silently disable a live observer.
  */
 export function observeShellMetrics(): () => void {
-    // Guard like the other ResizeObserver call sites: this runs during AppComponent init, so throwing here would
-    // take down the whole client on a browser/webview without the API. One measurement still gets the shells
-    // close; they only lose the follow-up updates when the navbar or footer changes height.
     if (typeof ResizeObserver === 'undefined') {
         measureShellMetrics();
         return () => {};
@@ -114,7 +125,7 @@ function measureShellMetrics(): void {
             continue;
         }
         // do not use offsetHeight, this might not be defined in Safari!
-        const next = `${element.getBoundingClientRect().height}px`;
+        const next = `${snapToDevicePixelGrid(element.getBoundingClientRect().height)}px`;
         // Writing an unchanged value would invalidate style for the whole document on every navigation.
         if (root.style.getPropertyValue(cssVariable) !== next) {
             root.style.setProperty(cssVariable, next);

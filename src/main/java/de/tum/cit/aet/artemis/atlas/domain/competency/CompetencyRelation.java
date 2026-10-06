@@ -9,6 +9,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * This class models the relation between two competencies. Imagine a graph: (tail) --- type --> (head)
@@ -20,10 +21,12 @@ public class CompetencyRelation extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "tail_competency_id", nullable = false)
+    @Parent
     private CourseCompetency tailCompetency;
 
     @ManyToOne
     @JoinColumn(name = "head_competency_id", nullable = false)
+    @Parent
     private CourseCompetency headCompetency;
 
     @Column(name = "type", nullable = false)

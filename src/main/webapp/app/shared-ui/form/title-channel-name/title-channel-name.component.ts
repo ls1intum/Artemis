@@ -6,9 +6,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators/custom-not-included-in-validator.directive';
 import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
 
-/**
- * @deprecated Use {@link TitleChannelNamePrimengComponent} instead.
- */
+/** @deprecated */
 @Component({
     selector: 'jhi-title-channel-name',
     templateUrl: './title-channel-name.component.html',
@@ -31,6 +29,8 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     hideChannelName = input<boolean>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     alreadyUsedTitles = input<Set<string>>(new Set());
+    /** Renders a * next to the title and channel-name labels. Opt-in so lectures and exams are unaffected. */
+    showRequiredMarker = input<boolean>(false);
 
     titleOnPageLoad = signal<string | undefined>(undefined);
 

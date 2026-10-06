@@ -2,8 +2,10 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.APOLLON_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATHENA_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.ATLASLLM_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLASML_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.DEIMOS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ENABLED_PROPERTY_NAME;
@@ -70,6 +72,17 @@ public class ArtemisConfigHelper {
     }
 
     /**
+     * Check if the LLM-backed part of Atlas is enabled: the chat agent, the autonomous competency orchestrator, and the
+     * tool surfaces they call. Requires the Atlas module itself, since it operates on competencies.
+     *
+     * @param environment the Spring environment
+     * @return true if the AtlasLLM submodule is enabled, false otherwise
+     */
+    public boolean isAtlasLLMEnabled(Environment environment) {
+        return isAtlasEnabled(environment) && getPropertyOrExitArtemis(ATLASLLM_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
      * Check if the AtlasML submodule is enabled.
      *
      * @param environment the Spring environment
@@ -87,6 +100,16 @@ public class ArtemisConfigHelper {
      */
     public boolean isHyperionEnabled(Environment environment) {
         return getPropertyOrExitArtemis(HYPERION_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Deimos malicious participation analysis module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Deimos module is enabled, false otherwise
+     */
+    public boolean isDeimosEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(DEIMOS_ENABLED_PROPERTY_NAME, environment);
     }
 
     /**
@@ -266,8 +289,14 @@ public class ArtemisConfigHelper {
         if (isAtlasMLEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_ATLASML);
         }
+        if (isAtlasLLMEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_ATLASLLM);
+        }
         if (isHyperionEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION);
+        }
+        if (isDeimosEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_DEIMOS);
         }
         if (isIrisEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_IRIS);
@@ -319,6 +348,9 @@ public class ArtemisConfigHelper {
         }
         if (isTheiaEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_THEIA);
+        }
+        if (isWeaviateEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_GLOBAL_SEARCH);
         }
 
         return enabledFeatures;

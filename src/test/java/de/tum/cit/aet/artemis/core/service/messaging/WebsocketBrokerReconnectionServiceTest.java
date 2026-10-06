@@ -1,9 +1,12 @@
 package de.tum.cit.aet.artemis.core.service.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -12,7 +15,6 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Supplier;
 
@@ -28,10 +30,9 @@ import org.springframework.messaging.simp.stomp.StompBrokerRelayMessageHandler;
 import org.springframework.messaging.tcp.TcpOperations;
 import org.springframework.scheduling.TaskScheduler;
 
-import com.hazelcast.cluster.Cluster;
-import com.hazelcast.cluster.Member;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
+import de.tum.cit.aet.artemis.core.service.distributed.NodeRegistryService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 @ExtendWith(MockitoExtension.class)
 class WebsocketBrokerReconnectionServiceTest {
@@ -52,16 +53,13 @@ class WebsocketBrokerReconnectionServiceTest {
     private ScheduledFuture<?> scheduledFuture;
 
     @Mock
-    private HazelcastInstance hazelcastInstance;
+    private DistributedDataProvider distributedDataProvider;
 
     @Mock
-    private IMap<String, Boolean> brokerStatusMap;
+    private NodeRegistryService nodeRegistryService;
 
     @Mock
-    private Cluster cluster;
-
-    @Mock
-    private Member member;
+    private DistributedMap<String, Boolean> brokerStatusMap;
 
     @Captor
     private ArgumentCaptor<Runnable> runnableCaptor;
@@ -70,13 +68,11 @@ class WebsocketBrokerReconnectionServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(hazelcastInstance.<String, Boolean>getMap(WebsocketBrokerReconnectionService.WEBSOCKET_BROKER_STATUS_MAP)).thenReturn(brokerStatusMap);
-        when(hazelcastInstance.getCluster()).thenReturn(cluster);
-        when(cluster.getLocalMember()).thenReturn(member);
-        when(member.getUuid()).thenReturn(UUID.fromString("01234567-89ab-cdef-0123-456789abcdef"));
+        when(distributedDataProvider.<String, Boolean>getMap(WebsocketBrokerReconnectionService.WEBSOCKET_BROKER_STATUS_MAP)).thenReturn(brokerStatusMap);
+        when(nodeRegistryService.getLocalNodeId()).thenReturn("01234567-89ab-cdef-0123-456789abcdef");
 
         websocketBrokerReconnectionService = new WebsocketBrokerReconnectionService(taskScheduler, Optional.of(stompBrokerRelayMessageHandler), tcpClientSupplier,
-                hazelcastInstance);
+                distributedDataProvider, nodeRegistryService);
         websocketBrokerReconnectionService.initBrokerStatusPublisher();
     }
 
@@ -120,7 +116,7 @@ class WebsocketBrokerReconnectionServiceTest {
 
     @Test
     void manualReconnectSkippedWithoutRelay() {
-        var serviceWithoutRelay = new WebsocketBrokerReconnectionService(taskScheduler, Optional.empty(), tcpClientSupplier, hazelcastInstance);
+        var serviceWithoutRelay = new WebsocketBrokerReconnectionService(taskScheduler, Optional.empty(), tcpClientSupplier, distributedDataProvider, nodeRegistryService);
         serviceWithoutRelay.initBrokerStatusPublisher();
         assertThat(serviceWithoutRelay.triggerManualReconnect()).isFalse();
         verifyNoInteractions(tcpClientSupplier);
@@ -147,5 +143,36 @@ class WebsocketBrokerReconnectionServiceTest {
         websocketBrokerReconnectionService.onApplicationEvent(new BrokerAvailabilityEvent(false, new Object()));
 
         verify(taskScheduler).scheduleWithFixedDelay(any(Runnable.class), any(Instant.class), eq(WebsocketBrokerReconnectionService.RECONNECT_INTERVAL));
+    }
+
+    @Test
+    void shouldIgnoreBrokerLossDuringShutdown() {
+        websocketBrokerReconnectionService.onContextClosed();
+
+        websocketBrokerReconnectionService.onApplicationEvent(new BrokerAvailabilityEvent(false, new Object()));
+
+        // only the initial status is published, and no reconnect is attempted
+        verify(brokerStatusMap, times(1)).put(any(), any());
+        verify(taskScheduler, never()).scheduleWithFixedDelay(any(Runnable.class), any(Instant.class), eq(WebsocketBrokerReconnectionService.RECONNECT_INTERVAL));
+        verifyNoInteractions(tcpClientSupplier);
+    }
+
+    @Test
+    void shouldNotFailOnDestroyWhenTheDistributedDataProviderIsShutDown() {
+        doThrow(new IllegalStateException("the distributed data provider is shut down")).when(brokerStatusMap).remove(any());
+
+        assertThatCode(() -> websocketBrokerReconnectionService.destroy()).doesNotThrowAnyException();
+    }
+
+    @Test
+    void shouldCancelStatusPublisherOnDestroy() {
+        doReturn(scheduledFuture).when(taskScheduler).scheduleWithFixedDelay(any(Runnable.class), any(Instant.class), any(Duration.class));
+        var service = new WebsocketBrokerReconnectionService(taskScheduler, Optional.of(stompBrokerRelayMessageHandler), tcpClientSupplier, distributedDataProvider,
+                nodeRegistryService);
+        service.initBrokerStatusPublisher();
+
+        service.destroy();
+
+        verify(scheduledFuture).cancel(false);
     }
 }

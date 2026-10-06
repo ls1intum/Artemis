@@ -5,7 +5,6 @@ import { lastValueFrom, map } from 'rxjs';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { Course } from 'app/course/shared/entities/course.model';
 import { LearningPathsStateComponent } from 'app/atlas/manage/learning-paths-state/learning-paths-state.component';
 import { LearningPathsTableComponent } from 'app/atlas/manage/learning-paths-table/learning-paths-table.component';
@@ -14,6 +13,7 @@ import { LearningPathsAnalyticsComponent } from 'app/atlas/manage/learning-paths
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FeatureActivationComponent } from 'app/shared-ui/feature-activation/feature-activation.component';
 import { faNetworkWired } from '@fortawesome/free-solid-svg-icons';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-learning-path-instructor-page',
@@ -23,11 +23,12 @@ import { faNetworkWired } from '@fortawesome/free-solid-svg-icons';
     styleUrl: './learning-path-instructor-page.component.scss',
 })
 export class LearningPathInstructorPageComponent {
-    protected readonly faNetworkWired = faNetworkWired;
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
     private readonly courseManagementService = inject(CourseManagementService);
+
+    protected readonly faNetworkWired = faNetworkWired;
 
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly course = signal<Course | undefined>(undefined);
@@ -60,12 +61,7 @@ export class LearningPathInstructorPageComponent {
         try {
             this.isLoading.set(true);
             await this.learningPathApiService.enableLearningPaths(this.courseId());
-            this.course.update((course) => {
-                // A different object has to be returned: a signal only notifies when the reference changes
-                const updatedCourse = deepClone(course!);
-                updatedCourse.learningPathsEnabled = true;
-                return updatedCourse;
-            });
+            this.course.update((course) => cloneWith(course!, { learningPathsEnabled: true }));
         } catch (error) {
             onError(this.alertService, error);
         } finally {

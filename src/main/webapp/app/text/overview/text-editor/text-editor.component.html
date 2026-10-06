@@ -23,7 +23,7 @@
                     <div>
                         <span
                             class="badge bg-primary mb-2"
-                            id="word-count"
+                            data-testid="word-count"
                             [hidden]="submission() && !submission().submitted && isExamSummary()"
                             jhiTranslate="artemisApp.textExercise.wordCount"
                             [translateValues]="{ count: wordCount }"
@@ -31,7 +31,7 @@
                         </span>
                         <span
                             class="badge bg-primary mb-2"
-                            id="character-count"
+                            data-testid="character-count"
                             [hidden]="submission() && !submission().submitted && isExamSummary()"
                             jhiTranslate="artemisApp.textExercise.characterCount"
                             [translateValues]="{ count: characterCount }"
@@ -40,6 +40,7 @@
                     </div>
                     @if (!((result() && (!isAutomaticResult || isExamSummary())) || isReadOnlyWithShowResult())) {
                         <textarea
+                            [attr.aria-label]="'artemisApp.exam.yourSolution' | artemisTranslate"
                             id="text-editor"
                             #textEditor
                             class="text-editor-textarea"

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.lecture.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -18,9 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.client.ExpectedCount;
 
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -93,7 +91,7 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
         attachmentService.regenerateStudentVersion(testAttachmentVideoUnit.getAttachment());
         String originalStudentVersion = attachmentRepository.findById(testAttachmentVideoUnit.getAttachment().getId()).orElseThrow().getStudentVersion();
         assertThat(originalStudentVersion).isNotBlank();
-        Path originalStudentVersionPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(originalStudentVersion), FilePathType.STUDENT_VERSION_SLIDES);
+        Path originalStudentVersionPath = new FileSystemLocation.StudentVersionSlides(testAttachmentVideoUnit.getId(), originalStudentVersion).path();
         assertThat(originalStudentVersionPath).exists();
 
         ZonedDateTime newDueDate = originalDueDate.plusDays(3);
@@ -131,7 +129,7 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
         // Create slides linked to this exercise
         testSlide.setExercise(originalExercise);
         Slide savedSlide = slideRepository.save(testSlide);
-        Path sourcePdfPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(testAttachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
+        Path sourcePdfPath = testAttachmentVideoUnit.getAttachment().fileLocation().orElseThrow().path();
         int sourcePageCount;
         try (var sourceDocument = Loader.loadPDF(sourcePdfPath.toFile())) {
             sourcePageCount = sourceDocument.getNumberOfPages();
@@ -144,7 +142,7 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
         assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(newDueDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
         String studentVersion = attachmentRepository.findById(testAttachmentVideoUnit.getAttachment().getId()).orElseThrow().getStudentVersion();
         assertThat(studentVersion).isNotBlank().contains("/student/");
-        Path studentVersionPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(studentVersion), FilePathType.STUDENT_VERSION_SLIDES);
+        Path studentVersionPath = new FileSystemLocation.StudentVersionSlides(testAttachmentVideoUnit.getId(), studentVersion).path();
         assertThat(studentVersionPath).exists();
         try (var studentDocument = Loader.loadPDF(studentVersionPath.toFile())) {
             assertThat(studentDocument.getNumberOfPages()).isEqualTo(sourcePageCount - 1);
@@ -165,7 +163,7 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
         attachmentService.regenerateStudentVersion(testAttachmentVideoUnit.getAttachment());
         String oldStudentVersion = attachmentRepository.findById(testAttachmentVideoUnit.getAttachment().getId()).orElseThrow().getStudentVersion();
         assertThat(oldStudentVersion).isNotBlank();
-        Path oldStudentVersionPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(oldStudentVersion), FilePathType.STUDENT_VERSION_SLIDES);
+        Path oldStudentVersionPath = new FileSystemLocation.StudentVersionSlides(testAttachmentVideoUnit.getId(), oldStudentVersion).path();
         assertThat(oldStudentVersionPath).exists();
 
         Exercise updatedExercise = TextExerciseFactory.generateTextExercise(originalExercise.getReleaseDate(), null, originalExercise.getAssessmentDueDate(), testCourse);

@@ -26,34 +26,36 @@ public class IrisLectureUnitSyncService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    private final TransactionAfterCommitService transactionAfterCommitService;
-
-    public IrisLectureUnitSyncService(IrisLectureUnitSyncStateRepository repository, ApplicationEventPublisher eventPublisher,
-            TransactionAfterCommitService transactionAfterCommitService) {
+    public IrisLectureUnitSyncService(IrisLectureUnitSyncStateRepository repository, ApplicationEventPublisher eventPublisher) {
         this.repository = repository;
         this.eventPublisher = eventPublisher;
-        this.transactionAfterCommitService = transactionAfterCommitService;
     }
 
     /**
-     * Persists a pending metadata synchronization and dispatches it after the surrounding transaction commits.
+     * Records that the metadata of a lecture unit needs synchronizing, then announces it.
+     * <p>
+     * The event is published straight after the repository call rather than being deferred to a commit callback.
+     * {@code markDirty} declares the only transaction involved, so it has committed by the time it returns: a listener
+     * reacting to the event always sees the persisted row. Deferring instead relied on an ambient transaction that a
+     * service is not allowed to declare, so the callback never fired and the branch that registered it was dead.
      *
      * @param snapshot the current lecture unit snapshot
      */
-    public void markMetadataDirtyAfterCommit(LectureContentUpdateSnapshot snapshot) {
+    public void markMetadataDirty(LectureContentUpdateSnapshot snapshot) {
         repository.markDirty(snapshot.lectureUnitId(), metadataHash(snapshot), null, ZonedDateTime.now());
-        transactionAfterCommitService.execute(() -> eventPublisher.publishEvent(new IrisLectureUnitMetadataDirtyEvent(snapshot.lectureUnitId())));
+        eventPublisher.publishEvent(new IrisLectureUnitMetadataDirtyEvent(snapshot.lectureUnitId()));
     }
 
     /**
-     * Persists a pending visibility synchronization and dispatches it after the surrounding transaction commits.
+     * Records that the slide visibility of a lecture unit needs synchronizing, then announces it.
+     * <p>
+     * Publishes immediately, for the reason given on {@link #markMetadataDirty}.
      *
      * @param snapshot the current lecture unit snapshot
      */
-    public void markVisibilityDirtyAfterCommit(LectureContentUpdateSnapshot snapshot) {
+    public void markVisibilityDirty(LectureContentUpdateSnapshot snapshot) {
         repository.markDirty(snapshot.lectureUnitId(), null, visibilityHash(snapshot), ZonedDateTime.now());
-        transactionAfterCommitService
-                .execute(() -> eventPublisher.publishEvent(new IrisLectureUnitVisibilityDirtyEvent(snapshot.lectureUnitId(), snapshot.slideHiddenUntilBySlideNumber())));
+        eventPublisher.publishEvent(new IrisLectureUnitVisibilityDirtyEvent(snapshot.lectureUnitId(), snapshot.slideHiddenUntilBySlideNumber()));
     }
 
     private static String metadataHash(LectureContentUpdateSnapshot snapshot) {

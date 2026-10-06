@@ -1,13 +1,13 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.inOrder;
+import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,9 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.support.SimpleTransactionStatus;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -32,6 +29,8 @@ class LectureUnitVisibilitySyncServiceTest {
 
     private static final long LECTURE_UNIT_ID = 42L;
 
+    private static final long OTHER_LECTURE_UNIT_ID = 43L;
+
     private static final ZonedDateTime RELEASE_DATE = ZonedDateTime.parse("2026-07-02T12:00:00Z");
 
     private static final ZonedDateTime HIDDEN_UNTIL = ZonedDateTime.parse("2026-07-03T12:00:00Z");
@@ -45,118 +44,68 @@ class LectureUnitVisibilitySyncServiceTest {
     @Mock
     private IrisLectureUnitSyncService irisLectureUnitSyncService;
 
-    @Mock
-    private PlatformTransactionManager transactionManager;
-
     private LectureUnitVisibilitySyncService service;
 
     @BeforeEach
     void setUp() {
-        service = new LectureUnitVisibilitySyncService(slideRepository, attachmentVideoUnitRepository, irisLectureUnitSyncService, transactionManager);
-        org.mockito.Mockito.lenient().when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
+        service = new LectureUnitVisibilitySyncService(slideRepository, attachmentVideoUnitRepository, irisLectureUnitSyncService);
     }
 
     @Test
-    void marksAttachmentVideoUnitDirtyFromCommittedRepositoryState() {
-        var unit = attachmentVideoUnit();
-        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(java.util.Optional.of(unit));
-        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(slide(1, HIDDEN_UNTIL, unit)));
+    void marksVisibilityDirtyFromTheCompleteSavedDeck() {
+        var unit = attachmentVideoUnit(LECTURE_UNIT_ID);
+        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+        // The repository returns the current deck only; slide 1 is hidden for an unrelated reason and must stay in the snapshot.
+        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(slide(2, null), slide(1, HIDDEN_UNTIL)));
 
-        service.markVisibilityDirtyForAttachmentVideoUnit(LECTURE_UNIT_ID);
+        service.markVisibilityDirty(LECTURE_UNIT_ID);
 
-        var transactionDefinitionCaptor = ArgumentCaptor.forClass(TransactionDefinition.class);
-        verify(transactionManager).getTransaction(transactionDefinitionCaptor.capture());
-        assertThat(transactionDefinitionCaptor.getValue().getPropagationBehavior()).isEqualTo(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-        var snapshotCaptor = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
-        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
-        assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber()).containsExactly(java.util.Map.entry(1, HIDDEN_UNTIL));
+        var snapshot = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
+        verify(irisLectureUnitSyncService).markVisibilityDirty(snapshot.capture());
+        assertThat(snapshot.getValue().lectureUnitId()).isEqualTo(LECTURE_UNIT_ID);
+        assertThat(snapshot.getValue().releaseDate()).isEqualTo(RELEASE_DATE);
+        assertThat(snapshot.getValue().slideHiddenUntilBySlideNumber()).containsExactly(entry(1, HIDDEN_UNTIL), entry(2, null));
     }
 
     @Test
-    void marksAffectedUnitDirtyWithDetachedSnapshotContainingMetadataAndFullSortedSlideVisibility() {
-        var unit = attachmentVideoUnit();
-        var relatedSlides = List.of(slide(2, HIDDEN_UNTIL, unit));
-        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID))
-                .thenReturn(List.of(slide(3, null, unit), slide(1, HIDDEN_UNTIL.plusDays(1), unit), slide(2, HIDDEN_UNTIL, unit)));
+    void failureForOneUnitDoesNotStopTheOthers() {
+        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenThrow(new IllegalStateException("database unavailable"));
+        var otherUnit = attachmentVideoUnit(OTHER_LECTURE_UNIT_ID);
+        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(OTHER_LECTURE_UNIT_ID)).thenReturn(Optional.of(otherUnit));
+        when(slideRepository.findAllByAttachmentVideoUnitId(OTHER_LECTURE_UNIT_ID)).thenReturn(List.of(slide(1, HIDDEN_UNTIL)));
 
-        service.markVisibilityDirtyForSlides(relatedSlides);
+        service.markVisibilityDirty(List.of(LECTURE_UNIT_ID, OTHER_LECTURE_UNIT_ID));
 
-        var snapshotCaptor = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
-        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
-        var snapshot = snapshotCaptor.getValue();
-        assertThat(snapshot.lectureUnitId()).isEqualTo(LECTURE_UNIT_ID);
-        assertThat(snapshot.lectureUnitName()).isEqualTo("Exercise slides");
-        assertThat(snapshot.lectureName()).isEqualTo("Lecture 1");
-        assertThat(snapshot.courseName()).isEqualTo("Course");
-        assertThat(snapshot.courseDescription()).isEqualTo("Course description");
-        assertThat(snapshot.attachmentVersion()).isEqualTo(7);
-        assertThat(snapshot.attachmentLink()).isEqualTo("attachments/unit.pdf");
-        assertThat(snapshot.videoSource()).isEqualTo("https://video.example/source");
-        assertThat(snapshot.releaseDate()).isEqualTo(RELEASE_DATE);
-        assertThat(snapshot.slideHiddenUntilBySlideNumber().keySet()).containsExactly(1, 2, 3);
-        assertThat(snapshot.slideHiddenUntilBySlideNumber()).containsEntry(1, HIDDEN_UNTIL.plusDays(1));
-        assertThat(snapshot.slideHiddenUntilBySlideNumber()).containsEntry(2, HIDDEN_UNTIL);
-        assertThat(snapshot.slideHiddenUntilBySlideNumber()).containsEntry(3, null);
+        var snapshot = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
+        verify(irisLectureUnitSyncService).markVisibilityDirty(snapshot.capture());
+        assertThat(snapshot.getValue().lectureUnitId()).isEqualTo(OTHER_LECTURE_UNIT_ID);
     }
 
-    @Test
-    void deduplicatesMultipleLinkedSlidesBelongingToSameUnit() {
-        var firstUnitReference = attachmentVideoUnit();
-        var secondUnitReference = attachmentVideoUnit();
-        var relatedSlides = List.of(slide(1, HIDDEN_UNTIL, firstUnitReference), slide(2, HIDDEN_UNTIL, secondUnitReference));
-        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID))
-                .thenReturn(List.of(slide(1, HIDDEN_UNTIL, firstUnitReference), slide(2, HIDDEN_UNTIL, firstUnitReference)));
-
-        service.markVisibilityDirtyForSlides(relatedSlides);
-
-        verify(slideRepository).findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID);
-        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
-    }
-
-    @Test
-    void locksAffectedUnitsOnceInStableOrder() {
-        var laterUnit = attachmentVideoUnit();
-        laterUnit.setId(43L);
-        var earlierUnit = attachmentVideoUnit();
-        earlierUnit.setId(41L);
-
-        service.lockAffectedAttachmentVideoUnits(List.of(slide(1, HIDDEN_UNTIL, laterUnit), slide(2, HIDDEN_UNTIL, earlierUnit), slide(3, null, laterUnit)));
-
-        var inOrder = inOrder(attachmentVideoUnitRepository);
-        inOrder.verify(attachmentVideoUnitRepository).findByIdForUpdate(41L);
-        inOrder.verify(attachmentVideoUnitRepository).findByIdForUpdate(43L);
-    }
-
-    private static AttachmentVideoUnit attachmentVideoUnit() {
+    private static AttachmentVideoUnit attachmentVideoUnit(long id) {
         var course = new Course();
         course.setTitle("Course");
-        course.setDescription("Course description");
 
         var lecture = new Lecture();
         lecture.setTitle("Lecture 1");
         lecture.setCourse(course);
 
         var unit = new AttachmentVideoUnit();
-        unit.setId(LECTURE_UNIT_ID);
+        unit.setId(id);
         unit.setName("Exercise slides");
         unit.setLecture(lecture);
         unit.setReleaseDate(RELEASE_DATE);
-        unit.setVideoSource("https://video.example/source");
 
         var attachment = new Attachment();
         attachment.setVersion(7);
-        attachment.setLink("attachments/unit.pdf");
         attachment.setAttachmentVideoUnit(unit);
         unit.setAttachment(attachment);
-
         return unit;
     }
 
-    private static Slide slide(int slideNumber, ZonedDateTime hidden, AttachmentVideoUnit unit) {
+    private static Slide slide(int slideNumber, ZonedDateTime hidden) {
         var slide = new Slide();
         slide.setSlideNumber(slideNumber);
         slide.setHidden(hidden);
-        slide.setAttachmentVideoUnit(unit);
         return slide;
     }
 }

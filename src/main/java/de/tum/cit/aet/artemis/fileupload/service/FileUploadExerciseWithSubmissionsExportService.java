@@ -5,15 +5,17 @@ import java.util.List;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 
+import tools.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
-import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadExerciseDTO;
 
 /**
  * Service for exporting File Upload Exercises with the student submissions.
@@ -23,9 +25,8 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 @Service
 public class FileUploadExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 
-    public FileUploadExerciseWithSubmissionsExportService(FileService fileService, FileUploadSubmissionExportService fileUploadSubmissionExportService,
-            MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
-        super(fileService, springMvcJacksonConverter, fileUploadSubmissionExportService);
+    public FileUploadExerciseWithSubmissionsExportService(FileUploadSubmissionExportService fileUploadSubmissionExportService, JsonMapper objectMapper) {
+        super(objectMapper, fileUploadSubmissionExportService);
     }
 
     /**
@@ -41,5 +42,15 @@ public class FileUploadExerciseWithSubmissionsExportService extends ExerciseWith
     public Path exportFileUploadExerciseWithSubmissions(FileUploadExercise exercise, SubmissionExportOptionsDTO optionsDTO, Path exportDir, List<String> exportErrors,
             List<ArchivalReportEntry> reportEntries) {
         return exportExerciseWithSubmissions(exercise, optionsDTO, exportDir, exportErrors, reportEntries);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The cast is safe: this service only exports file upload exercises.
+     */
+    @Override
+    protected Record exerciseDetailsForExport(Exercise exercise) {
+        return FileUploadExerciseDTO.forExport((FileUploadExercise) exercise);
     }
 }

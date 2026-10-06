@@ -46,7 +46,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void initTestCase() throws Exception {
         int numberOfTutors = 2;
         userUtilService.addUsers(TEST_PREFIX, 2, numberOfTutors, 0, 1);
-        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         this.course2 = courses.getLast();
         this.faq = FaqFactory.generateFaq(course1, FaqState.PROPOSED, "answer", "title");

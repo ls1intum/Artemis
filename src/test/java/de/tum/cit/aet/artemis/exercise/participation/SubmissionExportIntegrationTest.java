@@ -14,6 +14,8 @@ import java.util.zip.ZipFile;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -24,6 +26,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
@@ -86,7 +89,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 3, 1, 1, 1);
         course = courseUtilService.addEnrolledCourseWithModelingAndTextAndFileUploadExercise(TEST_PREFIX);
         course.getExercises().forEach(exercise -> {
             participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
@@ -206,6 +209,49 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
         request.post("/api/text/text-exercises/" + textExercise.getId() + "/export-submissions", exportOptions, HttpStatus.FORBIDDEN);
         request.post("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", exportOptions, HttpStatus.FORBIDDEN);
         request.post("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", exportOptions, HttpStatus.FORBIDDEN);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void exportByParticipantIdentifier_asTutor_forbidden(ExerciseType type) throws Exception {
+        var options = new SubmissionExportOptionsDTO(false, false, null, TEST_PREFIX + "student1");
+        request.post(exportUrl(type), options, HttpStatus.FORBIDDEN);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void exportByParticipantIdentifier_asEditor_forbidden(ExerciseType type) throws Exception {
+        var options = new SubmissionExportOptionsDTO(false, false, null, TEST_PREFIX + "student1");
+        request.post(exportUrl(type), options, HttpStatus.FORBIDDEN);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void exportByParticipantIdentifier_asInstructor_keepsNamedSubmission(ExerciseType type) throws Exception {
+        var options = new SubmissionExportOptionsDTO(false, false, null, TEST_PREFIX + "student1");
+        File archive = request.postWithResponseBodyFile(exportUrl(type), options, HttpStatus.OK);
+        Submission submission = switch (type) {
+            case TEXT -> textSubmission1;
+            case MODELING -> modelingSubmission1;
+            case FILE_UPLOAD -> fileUploadSubmission1;
+            default -> throw new IllegalArgumentException("Unsupported submission export type");
+        };
+        assertZipContains(archive, submission);
+        try (ZipFile zip = new ZipFile(archive)) {
+            assertThat(zip.size()).isEqualTo(1);
+        }
+    }
+
+    private String exportUrl(ExerciseType type) {
+        return switch (type) {
+            case TEXT -> "/api/text/text-exercises/" + textExercise.getId() + "/export-submissions";
+            case MODELING -> "/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions";
+            case FILE_UPLOAD -> "/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions";
+            default -> throw new IllegalArgumentException("Unsupported submission export type");
+        };
     }
 
     @Test

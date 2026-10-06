@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
@@ -17,7 +18,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 
 /**
  * State manager for multi-step execution plans in the Atlas Agent system.
@@ -29,7 +30,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
  */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class ExecutionPlanStateManagerService {
 
     private static final Logger log = LoggerFactory.getLogger(ExecutionPlanStateManagerService.class);
@@ -509,7 +510,7 @@ public class ExecutionPlanStateManagerService {
         }
 
         try {
-            return PlanTemplate.valueOf(marker.trim().toUpperCase());
+            return PlanTemplate.valueOf(marker.trim().toUpperCase(Locale.ROOT));
         }
         catch (IllegalArgumentException e) {
             log.warn("Unknown plan template: {}", marker);

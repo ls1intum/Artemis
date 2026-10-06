@@ -7,7 +7,7 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
-import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportErrorExerciseGroupDTO;
 
 /**
  * Exception that will be thrown if the user tries to import an exam that contains programming exercises with an invalid shortName.
@@ -19,13 +19,13 @@ public class ExamConfigurationException extends BadRequestAlertException {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ExamConfigurationException(List<ExerciseGroup> exerciseGroupList, int numberOfInvalidProgrammingExercises, String errorKey) {
+    public ExamConfigurationException(List<ExamImportErrorExerciseGroupDTO> exerciseGroupList, int numberOfInvalidProgrammingExercises, String errorKey) {
         super(ErrorConstants.EXAM_PROGRAMMING_EXERCISE_SHORT_NAME_INVALID, "Exam contains programming exercise(s) with invalid short name.", "ExamResource", errorKey,
                 getParameters(exerciseGroupList, numberOfInvalidProgrammingExercises, errorKey));
     }
 
-    private static Map<String, Object> getParameters(List<ExerciseGroup> exerciseGroupList, int numberOfInvalidProgrammingExercises, String errorKey) {
-        Map<String, List<ExerciseGroup>> params = new HashMap<>();
+    private static Map<String, Object> getParameters(List<ExamImportErrorExerciseGroupDTO> exerciseGroupList, int numberOfInvalidProgrammingExercises, String errorKey) {
+        Map<String, List<ExamImportErrorExerciseGroupDTO>> params = new HashMap<>();
         params.put("exerciseGroups", exerciseGroupList);
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("numberOfInvalidProgrammingExercises", numberOfInvalidProgrammingExercises);

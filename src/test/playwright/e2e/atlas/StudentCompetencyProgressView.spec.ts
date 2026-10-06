@@ -64,10 +64,6 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
 
     test.describe('Progress and Mastery updates after completing a lecture unit', () => {
         test('Student progress increases and mastery is achieved after marking a lecture unit as completed', async ({ page, login, courseManagementAPIRequests }) => {
-            // Persisting and reloading computed competency progress can exceed the default fast-test budget under
-            // parallel multi-node load.
-            test.slow();
-
             // Preconditions: Create competency linked to a single lecture unit
             // Completing this single unit (weight 1) should result in 100% progress (Mastery)
             const competency = await courseManagementAPIRequests.createCompetency(course, 'Lecture ' + uid, 'Competency linked to lecture unit');
@@ -80,29 +76,12 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             // Login as student
             await login(studentOne);
 
-            // The course overview guard can briefly see stale competency counts on another node and redirect to the
-            // exercise overview. Retry the intended detail route with bounded navigation and locator waits, retaining
-            // the final URL in the failure diagnostic.
-            const competencyDetailUrl = `/courses/${course.id}/competencies/${competency.id}`;
-            const textUnitToggle = page.locator('jhi-text-unit #lecture-unit-toggle-button');
-            const openCompetencyDetail = async () => {
-                for (let attempt = 0; attempt < 3; attempt++) {
-                    try {
-                        await page.goto(competencyDetailUrl, { waitUntil: WAIT_STATE, timeout: 15000 });
-                        await textUnitToggle.waitFor({ state: 'visible', timeout: 10000 });
-                        return;
-                    } catch (navigationError) {
-                        if (attempt === 2) {
-                            throw new Error(`Competency detail did not render after 3 navigation attempts (URL: ${page.url()})`, { cause: navigationError });
-                        }
-                    }
-                }
-            };
-
-            await openCompetencyDetail();
+            // Navigate to competency detail view
+            await page.goto(`/courses/${course.id}/competencies/${competency.id}`);
+            await page.waitForLoadState(WAIT_STATE);
 
             // Assert: Initial state - No mastery badge
-            await expect(page.locator('.badge.text-bg-success', { hasText: 'Mastered' })).not.toBeVisible();
+            await expect(page.getByTestId('competency-mastered-badge')).not.toBeVisible();
 
             // Navigate to the lecture unit in the competency detail view and mark it as completed
             const textUnitCard = page.locator('jhi-text-unit');
@@ -112,7 +91,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             await textUnitCard.locator('#lecture-unit-toggle-button').click();
 
             // Click the completion checkbox
-            const completionCheckbox = textUnitCard.locator('#completed-checkbox');
+            const completionCheckbox = textUnitCard.getByTestId('lecture-unit-completion-icon');
             await expect(completionCheckbox).toBeVisible();
             await completionCheckbox.click();
 
@@ -131,28 +110,31 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
                 )
                 .toBeGreaterThan(0);
 
-            // Refresh the detail route after persistence using the same guard-aware navigation.
-            await openCompetencyDetail();
+            // Refresh the page to see updated progress
+            await page.reload();
+            await page.waitForLoadState(WAIT_STATE);
 
-            // After navigation, the text unit is collapsed — expand it before checking the checkbox
-            await textUnitToggle.click();
+            // After reload, the text unit is collapsed — expand it before checking the checkbox
+            const textUnitToggleAfterReload = page.locator('jhi-text-unit #lecture-unit-toggle-button');
+            await expect(textUnitToggleAfterReload).toBeVisible();
+            await textUnitToggleAfterReload.click();
 
             // Assert: The lecture unit should now show as completed (green check icon)
-            const completedIcon = page.locator('jhi-text-unit #completed-checkbox.text-success');
+            const completedIcon = page.locator('jhi-text-unit [data-testid="lecture-unit-completion-icon"][data-completed="true"]');
             await expect(completedIcon).toBeVisible({ timeout: 10000 });
 
             // Assert: Progress ring should be visible
             await expect(page.locator('jhi-competency-rings')).toBeVisible();
 
             // Assert: "Mastered" badge should now be visible (Test 4.4 requirement)
-            await expect(page.locator('.badge.text-bg-success', { hasText: 'Mastered' })).toBeVisible();
+            await expect(page.getByTestId('competency-mastered-badge')).toBeVisible();
 
             // Navigate to competencies overview to verify global state
             await page.goto(`/courses/${course.id}/competencies`);
             await page.waitForLoadState(WAIT_STATE);
 
             // Assert: Check that the mastered count is visible in the overview
-            const masteredCount = page.locator('.badge.bg-dark');
+            const masteredCount = page.getByTestId('competencies-mastered-count');
             await expect(masteredCount).toBeVisible();
         });
     });

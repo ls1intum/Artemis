@@ -6,18 +6,17 @@ import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures
 import { onError } from 'app/foundation/util/global.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class LectureUnitService {
     private httpClient = inject(HttpClient);
     private attachmentService = inject(AttachmentService);
@@ -72,18 +71,9 @@ export class LectureUnitService {
                 return lectureUnit;
             }
         }
-        return Object.assign({}, lectureUnit, {
+        return cloneWith(lectureUnit, {
             releaseDate: convertDateFromClient(lectureUnit.releaseDate),
         });
-    }
-
-    convertLectureUnitArrayDatesFromClient<T extends LectureUnit>(lectureUnits: T[]): T[] {
-        if (lectureUnits?.length) {
-            for (let _i = 0; _i < lectureUnits.length; _i++) {
-                lectureUnits[_i] = this.convertLectureUnitDatesFromClient(lectureUnits[_i]);
-            }
-        }
-        return lectureUnits;
     }
 
     convertLectureUnitResponseDatesFromServer<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {

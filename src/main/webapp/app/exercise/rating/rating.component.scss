@@ -1,3 +1,18 @@
 .non-clickable * {
     cursor: default;
 }
+
+/* One row where there is width for it, stacked where there is not — the stars
+   must never be pushed out of a narrow panel. */
+.rating--inline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.25rem 0.75rem;
+    flex-wrap: wrap;
+
+    .rating__label {
+        font-size: 0.8125rem;
+        font-weight: 600;
+    }
+}

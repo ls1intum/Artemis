@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${isError} ? 'Authentication Failed' : 'Redirecting to VS Code...'">Artemis - VS Code Login</title>
+    <style>
+        :root {
+            --tum-blue: #0065BD;
+            --tum-blue-dark: #005293;
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-main: #212529;
+            --text-muted: #6c757d;
+            --error-red: #d9534f;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .auth-card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            max-width: 460px;
+            width: 100%;
+            padding: 36px 30px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--tum-blue);
+            margin-bottom: 20px;
+            letter-spacing: -0.5px;
+        }
+
+        h1 {
+            font-size: 22px;
+            margin: 0 0 12px;
+            font-weight: 600;
+        }
+
+        p {
+            font-size: 15px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin: 0 0 24px;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--tum-blue);
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 12px 28px;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: background-color 0.15s ease-in-out;
+        }
+
+        .btn:hover {
+            background-color: var(--tum-blue-dark);
+        }
+
+        .error-message {
+            color: var(--error-red);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-card">
+        <div class="logo">Artemis</div>
+
+        <div th:if="${!isError}">
+            <h1>Authentication Successful</h1>
+            <p>Redirecting you back to Visual Studio Code...</p>
+            <p>If your editor does not open automatically, click the button below:</p>
+            <a class="btn" th:href="${deepLink}">Open in VS Code</a>
+            <script th:inline="javascript">
+                /*<![CDATA[*/
+                window.location.href = /*[[${deepLink}]]*/ '';
+                /*]]>*/
+            </script>
+        </div>
+
+        <div th:if="${isError}">
+            <h1 class="error-message">Authentication Failed</h1>
+            <p th:text="${errorMessage}">An error occurred during authentication.</p>
+            <a class="btn" th:href="${deepLink}">Return to VS Code</a>
+            <script th:inline="javascript">
+                /*<![CDATA[*/
+                window.location.href = /*[[${deepLink}]]*/ '';
+                /*]]>*/
+            </script>
+        </div>
+    </div>
+</body>
+</html>

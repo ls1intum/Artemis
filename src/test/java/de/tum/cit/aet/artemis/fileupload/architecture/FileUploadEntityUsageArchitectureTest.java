@@ -15,16 +15,14 @@ class FileUploadEntityUsageArchitectureTest extends AbstractModuleEntityUsageArc
         return ARTEMIS_PACKAGE + ".fileupload";
     }
 
-    // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 7;
+        return 0;
     }
 
-    // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart
     @Override
     protected int getExpectedEntityInputViolations() {
-        return 2;
+        return 0;
     }
 
     @Override

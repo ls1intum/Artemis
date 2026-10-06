@@ -13,6 +13,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 interface ProgrammingAssessmentRepoExportDialogData {
     programmingExercises: ProgrammingExercise[];
@@ -27,7 +28,7 @@ interface ProgrammingAssessmentRepoExportDialogData {
     selector: 'jhi-exercise-scores-repo-export-dialog',
     templateUrl: './programming-assessment-repo-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, FormDateTimePickerComponent, FeatureToggleDirective, FaIconComponent],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, FormDateTimePickerComponent, FeatureToggleDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     private repoExportService = inject(ProgrammingAssessmentRepoExportService);
@@ -44,7 +45,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     participantIdentifierList: string = this.data?.participantIdentifierList ?? ''; // TODO: Should be a list and not a comma separated string.
     singleParticipantMode = this.data?.singleParticipantMode ?? false;
     readonly FeatureToggle = FeatureToggle;
-    exportInProgress = false;
+    readonly exportInProgress = signal(false);
     // Backed by a signal because the template reads it (e.g. [disabled]) while [(ngModel)] mutates its
     // properties in place. The getter/setter facade keeps reads reactive without breaking two-way binding.
     private readonly _repositoryExportOptions = signal<RepositoryExportOptions>(undefined!);
@@ -63,7 +64,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
 
     ngOnInit() {
         this.isLoading.set(true);
-        this.exportInProgress = false;
+        this.exportInProgress.set(false);
         this.isRepoExportForMultipleExercises.set(this.programmingExercises.length > 1);
         this.isAtLeastInstructor.set(this.programmingExercises.every((exercise) => exercise.isAtLeastInstructor));
         this.isLoading.set(false);
@@ -84,11 +85,25 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     }
 
     exportRepos() {
+        // Blank entries would otherwise become empty path segments in the request URL. The dialog can also be opened
+        // with nothing preselected (the exercise scores page does that), and exporting then asked the server for an
+        // empty participant list, which answered 404 instead of telling the user that nothing was selected.
+        const participantIdentifiers = this.repositoryExportOptions.exportAllParticipants
+            ? ['ALL']
+            : this.participantIdentifierList
+                  .split(',')
+                  .map((identifier) => identifier.trim())
+                  .filter((identifier) => identifier.length > 0);
+        if (!this.participationIdList?.length && participantIdentifiers.length === 0) {
+            this.alertService.error('artemisApp.programmingExercise.export.noParticipantsSelected');
+            return;
+        }
+
         this.programmingExercises.forEach((exercise) => {
             if (!exercise.id) {
                 return;
             }
-            this.exportInProgress = true;
+            this.exportInProgress.set(true);
             // The participation ids take priority over the participant identifiers (student login or team names).
             if (this.participationIdList?.length) {
                 this.repoExportService
@@ -100,10 +115,8 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
                     .add(() => this.dialogRef.close(true));
                 return;
             }
-            const participantIdentifierList = this.repositoryExportOptions.exportAllParticipants ? ['ALL'] : this.participantIdentifierList.split(',').map((e) => e.trim());
-
             this.repoExportService
-                .exportReposByParticipantIdentifiers(exercise.id, participantIdentifierList, this.repositoryExportOptions)
+                .exportReposByParticipantIdentifiers(exercise.id, participantIdentifiers, this.repositoryExportOptions)
                 .subscribe({
                     next: this.handleExportRepoResponseSuccess,
                     error: () => this.handleExportRepoResponseError(exercise.id!),
@@ -114,12 +127,12 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
 
     handleExportRepoResponseError = (exerciseId: number) => {
         this.alertService.warning('artemisApp.programmingExercise.export.notFoundMessageRepos', { exerciseId });
-        this.exportInProgress = false;
+        this.exportInProgress.set(false);
     };
 
     handleExportRepoResponseSuccess = (response: HttpResponse<Blob>) => {
         this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
-        this.exportInProgress = false;
+        this.exportInProgress.set(false);
         downloadZipFileFromResponse(response);
     };
 }

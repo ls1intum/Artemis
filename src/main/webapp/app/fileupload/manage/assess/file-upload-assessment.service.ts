@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
@@ -6,6 +6,7 @@ import { Feedback, convertFeedbackFromServer } from 'app/assessment/shared/entit
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { map } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 import {
     FileUploadAssessmentInputDTO,
     FileUploadAssessmentUpdateDTO,
@@ -19,9 +20,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
 export type EntityResponseType = HttpResponse<Result>;
 type FileUploadResultDTOResponseType = HttpResponse<FileUploadResultDTO>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class FileUploadAssessmentService {
     private http = inject(HttpClient);
 
@@ -78,13 +77,13 @@ export class FileUploadAssessmentService {
     }
 
     private convertResultFromServer(dto: FileUploadResultDTO): Result {
-        const result = new Result();
-        Object.assign(result, dto);
+        // Annotated as Result rather than hydrate's Result & FileUploadResultDTO intersection, so the
+        // converted feedbacks below stay assignable to Feedback[] instead of the DTO's stricter shape.
+        const result: Result = hydrate(new Result(), dto);
         result.completionDate = convertDateFromServer(dto.completionDate);
         result.feedbacks = dto.feedbacks?.map(convertFeedbackFromServer);
         if (dto.submission) {
-            const submission = new FileUploadSubmission();
-            Object.assign(submission, dto.submission);
+            const submission = hydrate(new FileUploadSubmission(), dto.submission);
             submission.submissionDate = convertDateFromServer(dto.submission.submissionDate);
             submission.filePathUrl = addPublicFilePrefix(dto.submission.filePath);
             if (submission.participation) {

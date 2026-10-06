@@ -70,4 +70,21 @@ public final class DragAndDropQuestionContent implements QuizQuestionContent {
         }
         return ids;
     }
+
+    /**
+     * Value equality by persisted JSON. See {@link QuizQuestionContent#haveEqualPersistedForm} for why this is needed
+     * and why it is not delegated to the nested components.
+     *
+     * @param other the object to compare with
+     * @return true if both would be persisted as the same JSON
+     */
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof DragAndDropQuestionContent && QuizQuestionContent.haveEqualPersistedForm(this, (DragAndDropQuestionContent) other);
+    }
+
+    @Override
+    public int hashCode() {
+        return QuizQuestionContent.persistedFormHashCode(this);
+    }
 }

@@ -6,10 +6,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
 @Table(name = "migration_changelog")
+@AggregateRoot("Operational log.")
 public class MigrationChangelog extends DomainObject {
     // ID documents the execution order
 

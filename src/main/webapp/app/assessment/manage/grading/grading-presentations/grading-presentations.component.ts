@@ -6,6 +6,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MAX_PRESENTATION_COUNT, MAX_PRESENTATION_SCORE } from 'app/foundation/constants/input.constants';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Enum representing the available presentation types in a course grading system.
@@ -61,6 +62,12 @@ export interface PresentationsConfig {
     imports: [TranslateDirective, FormsModule, ModePickerComponent, HelpIconComponent],
 })
 export class GradingPresentationsComponent {
+    // =========================================================================
+    // Injected Dependencies
+    // =========================================================================
+
+    private readonly destroyRef = inject(DestroyRef);
+
     // =========================================================================
     // Template Constants (exposed for use in template)
     // =========================================================================
@@ -129,7 +136,6 @@ export class GradingPresentationsComponent {
     // Private Properties
     // =========================================================================
 
-    private readonly destroyRef = inject(DestroyRef);
     private pendingEmitTimeout?: ReturnType<typeof setTimeout>;
 
     // =========================================================================
@@ -232,7 +238,7 @@ export class GradingPresentationsComponent {
      * a notification of changes with the updated values.
      */
     private emitConfigChange(): void {
-        const configCopy = Object.assign({}, this.presentationsConfig());
+        const configCopy = deepClone(this.presentationsConfig());
         this.presentationsConfigChange.emit(configCopy);
     }
 

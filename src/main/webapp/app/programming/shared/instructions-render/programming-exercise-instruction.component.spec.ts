@@ -567,7 +567,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
  * Background:
  * In exam mode, multiple ProgrammingExerciseInstructionComponent instances coexist
  * simultaneously in the DOM (hidden via [hidden], NOT destroyed). They all share
- * a single ProgrammingExercisePlantUmlExtensionWrapper singleton (providedIn: 'root').
+ * a single ProgrammingExercisePlantUmlExtensionWrapper singleton (a root @Service()).
  *
  * These tests simulate the exact exam scenario to prevent regressions of the
  * per-exercise PlantUML container ID scoping fix.

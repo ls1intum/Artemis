@@ -8,6 +8,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 
 @Entity
@@ -16,6 +17,7 @@ public class ExerciseVersion extends AbstractAuditingEntity {
 
     // Direct ID access (for saving), not nullable because delete will cascade when an exercise is deleted
     @Column(name = "exercise_id", updatable = false, nullable = false)
+    @Parent
     private Long exerciseId;
 
     // Direct ID access (for saving), not nullable, since users can only be soft deleted

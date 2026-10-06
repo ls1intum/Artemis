@@ -13,6 +13,7 @@ import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { captureException } from '@sentry/angular';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-team-students-online-list',
@@ -69,7 +70,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
                 error: (error: unknown) => captureException(error),
             });
         setTimeout(() => {
-            this.websocketService.send<object>(this.buildWebsocketTopic('/trigger'), {});
+            this.websocketService.send<object>(this.buildSendDestination('/trigger'), {});
         }, 700);
     }
 
@@ -77,7 +78,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         const typing$ = this.typing$();
         if (typing$) {
             this.typingSubscription = typing$.pipe(throttleTime(this.SEND_TYPING_INTERVAL)).subscribe({
-                next: () => this.websocketService.send<object>(this.buildWebsocketTopic('/typing'), {}),
+                next: () => this.websocketService.send<object>(this.buildSendDestination('/typing'), {}),
                 error: (error: unknown) => captureException(error),
             });
         }
@@ -156,17 +157,25 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         // The server may send null dates (never typed/acted); the accessors and templates handle that. The array
         // cast (on the map result, not an object literal — so it satisfies consistent-type-assertions) keeps the
         // stream typed as OnlineTeamStudent[] the way it was before strictFunctionTypes enforced the callback variance.
-        return students.map((student) => ({
-            ...student,
-            lastTypingDate: student.lastTypingDate !== null ? dayjs(student.lastTypingDate) : null,
-            lastActionDate: student.lastActionDate !== null ? dayjs(student.lastActionDate) : null,
-        })) as OnlineTeamStudent[];
+        return students.map((student) =>
+            cloneWith(student, {
+                lastTypingDate: student.lastTypingDate !== null ? dayjs(student.lastTypingDate) : null,
+                lastActionDate: student.lastActionDate !== null ? dayjs(student.lastActionDate) : null,
+            }),
+        ) as OnlineTeamStudent[];
     }
 
     /**
-     * Topic for updates on online status of team members (needs to match route in ParticipationTeamWebsocketService.java)
+     * Topic for updates on online status of team members (needs to match ExerciseWebsocketTopics.TEAM_ONLINE_STUDENTS)
      */
-    private buildWebsocketTopic(path = ''): string {
-        return `/topic/participations/${this.participation().id}/team${path}`;
+    private buildWebsocketTopic(): string {
+        return `/topic/participations/${this.participation().id}/team`;
+    }
+
+    /**
+     * Destination for messages to the server (needs to match the routes in ParticipationTeamWebsocketService.java)
+     */
+    private buildSendDestination(path: string): string {
+        return `/app/participations/${this.participation().id}/team${path}`;
     }
 }

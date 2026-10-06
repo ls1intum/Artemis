@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
-import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
+import de.tum.cit.aet.artemis.assessment.service.AssessmentUpdate;
 
 /**
  * DTO for updating a file upload assessment after an accepted complaint.
@@ -37,7 +37,7 @@ public record FileUploadAssessmentUpdateDTO(@Nullable List<@NotNull @Valid FileU
      *
      * @return the internal assessment update
      */
-    public AssessmentUpdateDTO toAssessmentUpdateDTO() {
-        return new AssessmentUpdateDTO(feedbackEntities(), complaintResponse != null ? complaintResponse.toEntity() : null, assessmentNote);
+    public AssessmentUpdate toAssessmentUpdate() {
+        return new AssessmentUpdate(feedbackEntities(), complaintResponse != null ? complaintResponse.toEntity() : null, assessmentNote);
     }
 }

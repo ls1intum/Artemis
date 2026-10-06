@@ -21,6 +21,8 @@ import de.tum.cit.aet.artemis.assessment.service.TutorEffortService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -31,6 +33,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage(UserFeature.TUTOR_EFFORT)
 @RestController
 @RequestMapping("api/assessment/")
 public class TutorEffortResource {
@@ -71,7 +74,7 @@ public class TutorEffortResource {
         // check courseId and exerciseId exist and are linked to each other
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!course.getId().equals(exercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+        if (!course.getId().equals(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId())) {
             return ResponseEntity.noContent().build();
         }
         User user = userRepository.getUserWithAuthorities();

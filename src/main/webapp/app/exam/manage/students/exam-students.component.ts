@@ -1,37 +1,69 @@
-import { Component, DestroyRef, ElementRef, EventEmitter, OnDestroy, TemplateRef, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { User } from 'app/account/user/user.model';
 import { Observable, Subject, forkJoin, of } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ConfirmDialog } from 'primeng/confirmdialog';
-import { DialogService } from 'primeng/dynamicdialog';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { faChair, faCheck, faTimes, faUserTimes } from '@fortawesome/free-solid-svg-icons';
+import {
+    faChair,
+    faCheck,
+    faCircleInfo,
+    faEye,
+    faFileCirclePlus,
+    faFileExport,
+    faFileImport,
+    faFilePen,
+    faIdCard,
+    faPlay,
+    faThLarge,
+    faTimes,
+    faTriangleExclamation,
+    faUpload,
+    faUser,
+    faUserMinus,
+    faUserPen,
+    faUserPlus,
+    faUserTimes,
+} from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { UsersImportDialogComponent } from 'app/shared-ui/user-import/dialog/users-import-dialog.component';
 import { StudentsUploadImagesDialogComponent } from './upload-images/students-upload-images-dialog.component';
+import {
+    CellTemplateRef,
+    ColumnDef,
+    TumAetUiButtonDirective,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
+    TumAetUiProgressBarComponent,
+    TumAetUiSearchFieldComponent,
+    TumAetUiSelectComponent,
+    TumAetUiTableComponent,
+    TumAetUiTableQueryEvent,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ExamDeleteDialogComponent } from 'app/exam/shared/delete-dialog/exam-delete-dialog.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
 import { StudentsReseatingDialogComponent } from 'app/exam/manage/students/room-distribution/students-reseating-dialog.component';
 import { StudentsExportDialogComponent } from 'app/exam/manage/students/export-users/students-export-dialog.component';
-import { ConfirmationService, MenuItem } from 'primeng/api';
-import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { ExamStudentsMenuButtonComponent } from 'app/exam/manage/students/exam-students-menu-button/exam-students-menu-button.component';
+import { ExamStudentsMenuButtonComponent, ExamStudentsMenuItem } from 'app/exam/manage/students/exam-students-menu-button/exam-students-menu-button.component';
 import { UserRegistrationModalComponent } from 'app/shared-ui/user-registration-modal/user-registration-modal.component';
 import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
-import { ButtonDirective } from 'primeng/button';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -42,21 +74,17 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
 import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
 import { TestExamWorkingTimeComponent } from 'app/exam/overview/test-exam-working-time/test-exam-working-time.component';
-import { Tag } from 'primeng/tag';
-import { Popover } from 'primeng/popover';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
-import { Tooltip } from 'primeng/tooltip';
-import { ProgressBar } from 'primeng/progressbar';
-import { TableLazyLoadEvent } from 'primeng/table';
-import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
-import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
+import { buildDbQueryFromTableEvent } from 'app/shared-ui/tum-aet-ui-integration/tumaet-ui-table-request-builder';
 import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
-import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
-interface MenuCommandEvent {
-    originalEvent?: Event;
-}
+
+const SEARCH_DEBOUNCE_MS = 300;
+
 @Component({
     selector: 'jhi-exam-students',
     templateUrl: './exam-students.component.html',
@@ -64,64 +92,69 @@ interface MenuCommandEvent {
         TranslateDirective,
         UsersImportDialogComponent,
         StudentsExportDialogComponent,
+        StudentsUploadImagesDialogComponent,
         StudentsRoomDistributionDialogComponent,
         FaIconComponent,
-        DeleteButtonDirective,
+        ExamDeleteDialogComponent,
         ArtemisTranslatePipe,
         StudentsReseatingDialogComponent,
         ExamStudentsMenuButtonComponent,
         UserRegistrationModalComponent,
-        ButtonDirective,
+        NgTemplateOutlet,
+        TumAetUiButtonDirective,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiProgressBarComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
         RouterLink,
         ArtemisDatePipe,
         StudentExamStatusComponent,
         StudentExamWorkingTimeComponent,
         TestExamWorkingTimeComponent,
-        Tag,
-        Popover,
-        Tooltip,
-        ProgressBar,
-        TableViewComponent,
-        ConfirmDialog,
-        FilterDropdownComponent,
+        TumAetUiTableComponent,
+        TumAetUiSearchFieldComponent,
+        TumAetUiSelectComponent,
+        FormsModule,
+        CourseTitleBarActionsDirective,
+        CourseTitleBarTitleDirective,
     ],
-    providers: [DialogService, ConfirmationService],
+    providers: [TumAetUiConfirmationService],
 })
 export class ExamStudentsComponent implements OnDestroy {
-    protected readonly ActionType = ActionType;
-    protected readonly missingImage = '/content/images/missing_image.png';
-    protected readonly addPublicFilePrefix = addPublicFilePrefix;
-
     private route = inject(ActivatedRoute);
     private examManagementService = inject(ExamManagementService);
     private accountService = inject(AccountService);
-    private deleteDialogService = inject(DeleteDialogService);
-    private dialogService = inject(DialogService);
-    private confirmationService = inject(ConfirmationService);
+    private confirmationService = inject(TumAetUiConfirmationService);
     private router = inject(Router);
     private alertService = inject(AlertService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private websocketService = inject(WebsocketService);
     private examChecklistService = inject(ExamChecklistService);
 
-    private destroyRef = inject(DestroyRef);
+    protected readonly ActionType = ActionType;
+    protected readonly missingImage = '/content/images/missing_image.png';
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     readonly usersImportDialog = viewChild.required(UsersImportDialogComponent);
     readonly studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
+    readonly studentsUploadImagesDialog = viewChild.required(StudentsUploadImagesDialogComponent);
     readonly studentsRoomDistributionDialog = viewChild.required(StudentsRoomDistributionDialogComponent);
     readonly addStudentsModal = viewChild.required(UserRegistrationModalComponent);
-    readonly individualExamsStatusPopover = viewChild.required<Popover>('individualExamsStatusPopover');
+    readonly individualExamsStatusPopover = viewChild(TumAetUiPopoverComponent);
     readonly individualExamsStatusButton = viewChild<ElementRef<HTMLButtonElement>>('individualExamsStatusButton');
-    readonly tableViewRef = viewChild(TableViewComponent);
+    readonly table = viewChild(TumAetUiTableComponent<ExamStudentDTO>);
 
     // Cell template refs (resolved after view init; used by computed columns signal)
-    readonly imageTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ExamStudentDTO> }>>('imageTemplate');
-    readonly studentDetailsTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ExamStudentDTO> }>>('studentDetailsTemplate');
-    readonly roomTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ExamStudentDTO> }>>('roomTemplate');
-    readonly seatTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ExamStudentDTO> }>>('seatTemplate');
-    readonly attendanceTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ExamStudentDTO> }>>('attendanceTemplate');
-    readonly workingTimeTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ExamStudentDTO> }>>('workingTimeTemplate');
-    readonly progressTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ExamStudentDTO> }>>('progressTemplate');
+    readonly plainTemplate = viewChild<CellTemplateRef<ExamStudentDTO>>('plainTemplate');
+    readonly imageTemplate = viewChild<CellTemplateRef<ExamStudentDTO>>('imageTemplate');
+    readonly studentDetailsTemplate = viewChild<CellTemplateRef<ExamStudentDTO>>('studentDetailsTemplate');
+    readonly roomTemplate = viewChild<CellTemplateRef<ExamStudentDTO>>('roomTemplate');
+    readonly seatTemplate = viewChild<CellTemplateRef<ExamStudentDTO>>('seatTemplate');
+    readonly attendanceTemplate = viewChild<CellTemplateRef<ExamStudentDTO>>('attendanceTemplate');
+    readonly workingTimeTemplate = viewChild<CellTemplateRef<ExamStudentDTO>>('workingTimeTemplate');
+    readonly progressTemplate = viewChild<CellTemplateRef<ExamStudentDTO>>('progressTemplate');
 
     private routeData = toSignal(this.route.data, {
         initialValue: { exam: undefined as Exam | undefined },
@@ -187,28 +220,30 @@ export class ExamStudentsComponent implements OnDestroy {
     };
 
     readonly activeFilter = signal('All');
-    readonly examStudentFilterGroups = computed<FilterGroup[]>(() => {
-        const groups: FilterGroup[] = [
-            {
-                labelKey: 'artemisApp.examManagement.examStudents.filterGroup.progress',
-                items: ['ExamMissing', 'NotStarted', 'Started', 'Submitted'],
-            },
-        ];
+    /** The selected filter, or undefined while all students are shown. */
+    readonly selectedFilter = computed(() => (this.activeFilter() === 'All' ? undefined : this.activeFilter()));
+    readonly examStudentFilterOptions = computed<{ value: string; label: string }[]>(() => {
+        const filters = ['ExamMissing', 'NotStarted', 'Started', 'Submitted'];
         if (this.hasExamEnded()) {
-            groups.push({
-                labelKey: 'artemisApp.examManagement.examStudents.filterGroup.attendance',
-                items: ['DidNotAttend', 'AttendanceNotChecked', 'AttendanceChecked'],
-            });
+            filters.push('DidNotAttend', 'AttendanceNotChecked', 'AttendanceChecked');
         }
-        return groups;
+        return filters.map((value) => ({ value, label: this.artemisTranslatePipe.transform('artemisApp.examManagement.examStudents.filter.' + value) }));
     });
+    private searchTerm = '';
+    private searchTimer?: ReturnType<typeof setTimeout>;
     private requestId = 0;
-    private lastLazyEvent: TableLazyLoadEvent | undefined;
+    private lastLoadEvent: TumAetUiTableQueryEvent | undefined;
     // True while a lazy load was recorded but skipped because the exam id was not yet available. It lets the
     // examData$ tap replay exactly that one skipped load and nothing more (issue #13063).
     private lazyEventPending = false;
 
-    private removeAllStudentsEmitter = new EventEmitter<{ [key: string]: boolean }>();
+    readonly removeStudentDialogVisible = signal(false);
+    readonly removeAllDialogVisible = signal(false);
+    readonly studentToRemove = signal<ExamStudentDTO | undefined>(undefined);
+    /** The extra check of both removal dialogs: whether the participations and submissions of the students are deleted as well. */
+    protected readonly removeStudentChecks = {
+        deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission',
+    };
     private examData$ = new Subject<Exam>();
 
     readonly exercisePreparationStatus = signal<ExamExerciseStartPreparationStatus | undefined>(undefined);
@@ -224,20 +259,28 @@ export class ExamStudentsComponent implements OnDestroy {
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
     protected readonly faChair = faChair;
-
-    readonly tableOptions: TableViewOptions = {
-        scrollable: true,
-        scrollHeight: 'flex',
-        rowActionsFrozen: true,
-        pageSize: 10,
-        searchPlaceholder: 'artemisApp.studentExams.searchForStudents',
-    };
+    protected readonly faCircleInfo = faCircleInfo;
+    protected readonly faEye = faEye;
+    protected readonly faFilePen = faFilePen;
+    protected readonly faIdCard = faIdCard;
+    protected readonly faThLarge = faThLarge;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
+    protected readonly faUser = faUser;
+    protected readonly faUserMinus = faUserMinus;
+    protected readonly faUserPen = faUserPen;
 
     readonly columns = computed<ColumnDef<ExamStudentDTO>[]>(() => {
         const cols: ColumnDef<ExamStudentDTO>[] = [
             { field: 'studentImagePath', width: '3rem', templateRef: this.imageTemplate() },
             { field: 'name', headerKey: 'artemisApp.examManagement.examStudents.table.studentDetails', sort: true, width: '6rem', templateRef: this.studentDetailsTemplate() },
-            { field: 'visibleRegistrationNumber', headerKey: 'artemisApp.examManagement.examStudents.table.matriculationNumber', sort: true, width: '6rem' },
+            {
+                field: 'visibleRegistrationNumber',
+                headerKey: 'artemisApp.examManagement.examStudents.table.matriculationNumber',
+                sort: true,
+                wrapHeader: true,
+                width: '6rem',
+                templateRef: this.plainTemplate(),
+            },
             { field: 'actualRoom', headerKey: 'artemisApp.examManagement.examStudents.table.room', sort: true, width: '2rem', templateRef: this.roomTemplate() },
             { field: 'actualSeat', headerKey: 'artemisApp.examManagement.examStudents.table.seat', sort: true, width: '3rem', templateRef: this.seatTemplate() },
         ];
@@ -257,42 +300,50 @@ export class ExamStudentsComponent implements OnDestroy {
                 field: 'workingTime',
                 headerKey: this.isTestExam() ? 'artemisApp.studentExams.usedWorkingTime' : 'artemisApp.studentExams.workingTime',
                 sort: true,
+                wrapHeader: true,
                 width: '4rem',
                 templateRef: this.workingTimeTemplate(),
             },
-            { field: 'progress', headerKey: 'artemisApp.examManagement.examStudents.table.progress', sort: true, width: '8rem', templateRef: this.progressTemplate() },
-            { field: 'numberOfExamSessions', headerKey: 'artemisApp.examManagement.examStudents.table.sessions', sort: true, width: '4rem' },
+            { field: 'progress', headerKey: 'artemisApp.examManagement.examStudents.table.progress', sort: true, width: '7rem', templateRef: this.progressTemplate() },
+            {
+                field: 'numberOfExamSessions',
+                headerKey: 'artemisApp.examManagement.examStudents.table.sessions',
+                sort: true,
+                width: '4rem',
+                hideBelow: '2xl',
+                templateRef: this.plainTemplate(),
+            },
         );
 
         return cols;
     });
 
-    readonly manageStudentsMenuActions = signal<MenuItem[]>([
-        { label: 'artemisApp.examManagement.examStudents.menu.addStudents', icon: 'pi pi-user-plus', command: () => this.openAddStudentsDialog() },
-        { label: 'artemisApp.examManagement.examStudents.menu.importUsers', icon: 'pi pi-file-import', command: () => this.openImportUsersDialog() },
-        { label: 'artemisApp.examManagement.examStudents.menu.exportUsers', icon: 'pi pi-file-export', command: () => this.openExportUsersDialog() },
-        { label: 'artemisApp.examManagement.examStudents.menu.registerCourseStudents', icon: 'pi pi-user-plus', command: () => this.registerAllStudentsFromCourse() },
+    readonly manageStudentsMenuActions = signal<ExamStudentsMenuItem[]>([
+        { label: 'artemisApp.examManagement.examStudents.menu.addStudents', icon: faUserPlus, command: () => this.openAddStudentsDialog() },
+        { label: 'artemisApp.examManagement.examStudents.menu.importUsers', icon: faFileImport, command: () => this.openImportUsersDialog() },
+        { label: 'artemisApp.examManagement.examStudents.menu.exportUsers', icon: faFileExport, command: () => this.openExportUsersDialog() },
+        { label: 'artemisApp.examManagement.examStudents.menu.registerCourseStudents', icon: faUserPlus, command: () => this.registerAllStudentsFromCourse() },
         {
             label: 'artemisApp.examManagement.examStudents.menu.removeAllStudents',
-            icon: 'pi pi-user-minus',
-            styleClass: 'text-danger',
+            icon: faUserMinus,
+            danger: true,
             command: () => this.openRemoveAllStudentsDialog(),
         },
     ]);
 
-    readonly examLogisticsMenuActions = computed<MenuItem[]>(() => [
-        { label: 'artemisApp.examManagement.examStudents.menu.uploadImages', icon: 'pi pi-upload', command: () => this.openUploadImagesDialog() },
-        { label: 'artemisApp.examManagement.examStudents.menu.distribute', icon: 'pi pi-th-large', command: () => this.studentsRoomDistributionDialog()?.openDialog() },
+    readonly examLogisticsMenuActions = computed<ExamStudentsMenuItem[]>(() => [
+        { label: 'artemisApp.examManagement.examStudents.menu.uploadImages', icon: faUpload, command: () => this.openUploadImagesDialog() },
+        { label: 'artemisApp.examManagement.examStudents.menu.distribute', icon: faThLarge, command: () => this.studentsRoomDistributionDialog()?.openDialog() },
         {
             label: 'artemisApp.examManagement.examStudents.menu.verifyAttendance',
-            icon: 'pi pi-check',
+            icon: faCheck,
             disabled: !this.hasExamStarted(),
             tooltip: 'artemisApp.examManagement.examStudents.verifyAttendanceTooltip',
             command: () => this.openVerifyAttendance(),
         },
     ]);
 
-    readonly studentExamsMenuActions = computed<MenuItem[]>(() => {
+    readonly studentExamsMenuActions = computed<ExamStudentsMenuItem[]>(() => {
         const isExamStarted = this.hasExamStarted();
         const isLoading = this.isLoading();
         const hasStudentsWithoutExam = this.isMissingIndividualExams();
@@ -302,30 +353,28 @@ export class ExamStudentsComponent implements OnDestroy {
             {
                 label: 'artemisApp.studentExams.generateStudentExams',
                 tooltip: 'artemisApp.studentExams.generateStudentExamsTooltip',
-                icon: 'pi pi-file-plus',
+                icon: faFileCirclePlus,
                 disabled: isExamStarted || isLoading,
-                command: (event: MenuCommandEvent) => {
-                    this.handleGenerateStudentExams(event.originalEvent);
-                },
+                command: () => this.handleGenerateStudentExams(),
             },
             {
                 label: 'artemisApp.studentExams.generateMissingStudentExams',
                 tooltip: 'artemisApp.studentExams.generateMissingStudentExamsTooltip',
-                icon: 'pi pi-file-plus',
+                icon: faFileCirclePlus,
                 disabled: isExamStarted || isLoading || !hasStudentsWithoutExam,
-                command: (event: MenuCommandEvent) => {
+                command: () => {
                     this.generateMissingStudentExams();
-                    this.openIndividualExamsStatusPopover(event.originalEvent);
+                    this.openIndividualExamsStatusPopover();
                 },
             },
             {
                 label: 'artemisApp.studentExams.startExercises',
                 tooltip: 'artemisApp.studentExams.startExercisesTooltip',
-                icon: 'pi pi-play',
+                icon: faPlay,
                 disabled: isExamStarted || isLoading || exercisePreparationRunning,
-                command: (event: MenuCommandEvent) => {
+                command: () => {
                     this.startExercises();
-                    this.openIndividualExamsStatusPopover(event.originalEvent);
+                    this.openIndividualExamsStatusPopover();
                 },
             },
         ];
@@ -334,11 +383,6 @@ export class ExamStudentsComponent implements OnDestroy {
     constructor() {
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
         this.isAdmin.set(this.accountService.isAdmin());
-
-        this.removeAllStudentsEmitter.pipe(takeUntilDestroyed()).subscribe({
-            next: (event) => this.removeAllStudents(event),
-            error: (err) => onError(this.alertService, err),
-        });
 
         this.examData$
             .pipe(
@@ -354,8 +398,8 @@ export class ExamStudentsComponent implements OnDestroy {
                     // exam re-emissions (reloadStudentsView / websocket-driven fetchExamData) do not trigger a second,
                     // redundant page load — the table's own reset() already reloads on those paths. This replay is
                     // fire-and-forget and intentionally independent of the switchMap below (which only refreshes stats).
-                    if (this.lastLazyEvent && this.lazyEventPending) {
-                        this.loadExamStudents(this.lastLazyEvent);
+                    if (this.lastLoadEvent && this.lazyEventPending) {
+                        this.loadExamStudents(this.lastLoadEvent);
                     }
                 }),
                 switchMap((exam: Exam) => {
@@ -421,18 +465,40 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     ngOnDestroy() {
+        clearTimeout(this.searchTimer);
         this.dialogErrorSource.unsubscribe();
     }
 
-    onFilterChange(filter: string): void {
-        this.activeFilter.set(filter);
-        if (this.lastLazyEvent) {
-            this.loadExamStudents(this.lastLazyEvent);
+    /** The select reports the chosen value, or undefined once the selection was cleared. */
+    onFilterSelected(value: unknown): void {
+        this.onFilterChange(typeof value === 'string' ? value : undefined);
+    }
+
+    onFilterChange(filter: string | undefined): void {
+        this.activeFilter.set(filter ?? 'All');
+        this.reloadFromFirstPage();
+    }
+
+    /** Applies the search term after the reader stopped typing, so each keystroke does not trigger a request. */
+    onSearchInput(term: string): void {
+        clearTimeout(this.searchTimer);
+        this.searchTimer = setTimeout(() => {
+            this.searchTerm = term.trim();
+            this.reloadFromFirstPage();
+        }, SEARCH_DEBOUNCE_MS);
+    }
+
+    /** The table owns the page state: it re-requests only if it has to leave a later page, otherwise the current request is repeated. */
+    private reloadFromFirstPage(): void {
+        if (this.lastLoadEvent && this.lastLoadEvent.pageIndex !== 0) {
+            this.table()?.resetPage();
+        } else if (this.lastLoadEvent) {
+            this.loadExamStudents(this.lastLoadEvent);
         }
     }
 
-    loadExamStudents(event: TableLazyLoadEvent): void {
-        this.lastLazyEvent = event;
+    loadExamStudents(event: TumAetUiTableQueryEvent): void {
+        this.lastLoadEvent = event;
         const examId = this.exam().id;
         if (!examId) {
             // The table fired its lazy load before the exam id was available; remember that we owe a load so the
@@ -443,11 +509,8 @@ export class ExamStudentsComponent implements OnDestroy {
         this.lazyEventPending = false;
 
         const currentRequestId = ++this.requestId;
-        const query = buildDbQueryFromLazyEvent(event);
-        const search: ExamStudentSearch = {
-            ...query,
-            filterProp: this.activeFilter() !== 'All' ? this.activeFilter() : undefined,
-        };
+        const query = buildDbQueryFromTableEvent(event);
+        const search: ExamStudentSearch = cloneWith(query, { searchTerm: this.searchTerm, filterProp: this.activeFilter() !== 'All' ? this.activeFilter() : undefined });
         this.isLoading.set(true);
         this.examManagementService.findExamStudentsPaged(this.courseId(), examId, search).subscribe({
             next: (result) => {
@@ -484,40 +547,16 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     openRemoveAllStudentsDialog() {
-        this.deleteDialogService.openDeleteDialog({
-            entityTitle: this.exam()?.title || '',
-            deleteQuestion: 'artemisApp.studentExams.removeAllStudents.question',
-            translateValues: {},
-            deleteConfirmationText: 'artemisApp.studentExams.removeAllStudents.confirmationText',
-            additionalChecks: {
-                deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission',
-            },
-            actionType: ActionType.Remove,
-            buttonType: ButtonType.ERROR,
-            delete: this.removeAllStudentsEmitter,
-            dialogError: this.dialogError$,
-            requireConfirmationOnlyForAdditionalChecks: false,
-        });
+        this.removeAllDialogVisible.set(true);
+    }
+
+    openRemoveStudentDialog(examUser: ExamStudentDTO) {
+        this.studentToRemove.set(examUser);
+        this.removeStudentDialogVisible.set(true);
     }
 
     openUploadImagesDialog() {
-        const dialogRef = this.dialogService.open(StudentsUploadImagesDialogComponent, {
-            header: this.artemisTranslatePipe.transform('artemisApp.exam.examUsers.dialogTitle'),
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            width: '50rem',
-            data: {
-                courseId: this.courseId(),
-                exam: this.exam(),
-            },
-        });
-        dialogRef?.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
-            if (result === 'finished') {
-                this.reloadStudentsView();
-            }
-        });
+        this.studentsUploadImagesDialog().open();
     }
 
     openVerifyAttendance() {
@@ -528,37 +567,22 @@ export class ExamStudentsComponent implements OnDestroy {
         void this.router.navigate(['/course-management', this.courseId(), 'exams', exam.id, 'students', 'verify-attendance']);
     }
 
-    private openIndividualExamsStatusPopover(event?: Event, defer = false) {
-        const showPopover = () => {
-            const popover = this.individualExamsStatusPopover();
-            const target = this.individualExamsStatusButton()?.nativeElement;
-            if (!popover || !target || popover.overlayVisible) {
-                return;
-            }
-            popover.show(event ?? new MouseEvent('click'), target);
-        };
-
-        if (defer) {
-            setTimeout(showPopover, 0);
-            return;
-        }
-        showPopover();
-    }
-
     reloadStudentsView() {
         const exam = this.exam();
         if (!exam.id) {
             return;
         }
         this.examData$.next(exam);
-        this.tableViewRef()?.reset();
+        if (this.lastLoadEvent) {
+            this.loadExamStudents(this.lastLoadEvent);
+        }
     }
 
     /**
      * Unregister student from exam
      *
      * @param examUser User that should be removed from the exam
-     * @param event generated by the jhiDeleteButton. Has the property deleteParticipationsAndSubmission, reflecting the checkbox choice of the user
+     * @param event emitted by the removal dialog. Has the property deleteParticipationsAndSubmission, reflecting the checkbox choice of the user
      */
     removeFromExam(examUser: ExamStudentDTO, event: { [key: string]: boolean }) {
         const examId = this.exam().id;
@@ -608,24 +632,42 @@ export class ExamStudentsComponent implements OnDestroy {
         }
     }
 
+    private openIndividualExamsStatusPopover(defer = false) {
+        const showPopover = () => {
+            const popover = this.individualExamsStatusPopover();
+            const target = this.individualExamsStatusButton()?.nativeElement;
+            if (!popover || !target) {
+                return;
+            }
+            popover.open(target);
+        };
+
+        if (defer) {
+            setTimeout(showPopover, 0);
+            return;
+        }
+        showPopover();
+    }
+
     /**
      * Generate all student exams for the exam on the server and handle the result.
      * Asks for confirmation if some exams already exist.
      */
-    handleGenerateStudentExams(event: Event | undefined) {
+    handleGenerateStudentExams() {
         if (this.studentExamCount() > 0) {
             this.confirmationService.confirm({
                 header: this.artemisTranslatePipe.transform('artemisApp.studentExams.generateStudentExams'),
                 message: this.artemisTranslatePipe.transform('artemisApp.studentExams.studentExamGenerationModalText'),
-                rejectButtonProps: { label: this.artemisTranslatePipe.transform('global.form.cancel'), severity: 'secondary' },
-                acceptButtonProps: { label: this.artemisTranslatePipe.transform('global.form.confirm'), severity: 'danger' },
+                rejectLabel: this.artemisTranslatePipe.transform('global.form.cancel'),
+                acceptLabel: this.artemisTranslatePipe.transform('global.form.confirm'),
+                acceptSeverity: 'danger',
                 accept: () => {
-                    this.openIndividualExamsStatusPopover(undefined, true);
+                    this.openIndividualExamsStatusPopover(true);
                     this.generateStudentExams();
                 },
             });
         } else {
-            this.openIndividualExamsStatusPopover(event);
+            this.openIndividualExamsStatusPopover();
             this.generateStudentExams();
         }
     }

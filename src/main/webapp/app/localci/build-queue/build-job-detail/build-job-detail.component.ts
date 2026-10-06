@@ -19,11 +19,12 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 import { downloadFile } from 'app/foundation/util/download.util';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { TumUiButtonComponent, TumUiMessageComponent, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { BuildAgentsService } from 'app/localci/build-agents.service';
 import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { createAddressToAgentInfoMap, getAgentInfoByAddress } from 'app/localci/shared/build-agent-address.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-build-job-detail',
@@ -39,9 +40,9 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
         ResultComponent,
         AdminTitleBarTitleDirective,
         HelpIconComponent,
-        TumUiButtonComponent,
-        TumUiTagComponent,
-        TumUiMessageComponent,
+        TumAetUiButtonComponent,
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
     ],
 })
 export class BuildJobDetailComponent implements OnInit, OnDestroy {
@@ -217,8 +218,8 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
             if (job?.jobTimingInfo?.buildStartDate && !this.isFinished()) {
                 const start = dayjs(job.jobTimingInfo.buildStartDate);
                 const now = dayjs();
-                const updatedTimingInfo = Object.assign({}, job.jobTimingInfo, { buildDuration: now.diff(start, 'seconds') });
-                const updatedJob = Object.assign({}, job, { jobTimingInfo: updatedTimingInfo });
+                const updatedTimingInfo = cloneWith(job.jobTimingInfo, { buildDuration: now.diff(start, 'seconds') });
+                const updatedJob = cloneWith(job, { jobTimingInfo: updatedTimingInfo });
                 this.buildJob.set(updatedJob);
             }
         }, 1000);

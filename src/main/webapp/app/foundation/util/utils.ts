@@ -123,7 +123,7 @@ export const average = (values: Array<number>): number => {
 export const findLatestResult = (results?: (Result | null | undefined)[]): Result | undefined => {
     // discard null / undefined items
     const clean: Result[] = (results ?? []).filter((r): r is Result => r != null);
-    return clean.length ? clean.reduce((a, b) => (a.id! > b.id! ? a : b)) : undefined;
+    return clean.length ? clean.reduce((a, b) => (a.id! > b.id! ? a : b), clean[0]) : undefined;
 };
 
 export const isDate = (input: unknown) => {
@@ -142,10 +142,6 @@ export class Range {
     toString(): string {
         return '[' + this.lowerBound + '%, ' + this.upperBound + '%' + (this.upperBound === 100 ? ']' : ')');
     }
-}
-
-export function getAsMutableObject<T extends object>(object: T): { -readonly [K in keyof T]: T[K] } {
-    return { ...object };
 }
 
 /**

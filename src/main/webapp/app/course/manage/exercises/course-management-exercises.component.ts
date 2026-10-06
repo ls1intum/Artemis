@@ -7,7 +7,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseExportComponent } from 'app/quiz/manage/export/quiz-exercise-export.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { FormsModule } from '@angular/forms';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiMessageComponent, TumUiPanelComponent, TumUiSelectButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiEmptyStateComponent,
+    TumAetUiPanelComponent,
+    TumAetUiSelectButtonComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
@@ -19,6 +26,7 @@ import {
     faFileImport,
     faLayerGroup,
     faList,
+    faMagnifyingGlass,
     faPen,
     faPlus,
     faTrash,
@@ -66,6 +74,7 @@ import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
 
 /** Local-storage key under which the last-selected view is remembered, so closing an exercise editor returns to it. */
 const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
@@ -76,12 +85,12 @@ const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
     styleUrl: './course-management-exercises.component.scss',
     imports: [
         FormsModule,
-        TumUiSelectButtonComponent,
-        TumUiPanelComponent,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiMessageComponent,
-        TumUiTooltipDirective,
+        TumAetUiSelectButtonComponent,
+        TumAetUiPanelComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiEmptyStateComponent,
+        TumAetUiTooltipDirective,
         FaIconComponent,
         ExerciseTableComponent,
         ExerciseAddModalComponent,
@@ -102,10 +111,29 @@ const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
     ],
 })
 export class CourseManagementExercisesComponent implements OnInit {
+    private readonly route = inject(ActivatedRoute);
+    private readonly courseManagementService = inject(CourseManagementService);
+    private readonly quizExerciseService = inject(QuizExerciseService);
+    private readonly programmingExerciseService = inject(ProgrammingExerciseService);
+    private readonly textExerciseService = inject(TextExerciseService);
+    private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
+    private readonly modelingExerciseService = inject(ModelingExerciseService);
+    private readonly translateService = inject(TranslateService);
+    private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
+    private readonly groupSync = inject(ExerciseGroupSyncService);
+    private readonly deleteDialogService = inject(DeleteDialogService);
+    private readonly alertService = inject(AlertService);
+    private readonly localStorageService = inject(LocalStorageService);
+    private readonly profileService = inject(ProfileService);
+    private readonly destroyRef = inject(DestroyRef);
+
     protected readonly faPlus = faPlus;
     protected readonly faFileImport = faFileImport;
     protected readonly faFileExport = faFileExport;
     protected readonly faCircleInfo = faCircleInfo;
+    protected readonly faCode = faCode;
+    protected readonly faList = faList;
+    protected readonly faMagnifyingGlass = faMagnifyingGlass;
     protected readonly faPen = faPen;
     protected readonly faTrash = faTrash;
     protected readonly faWrench = faWrench;
@@ -180,22 +208,6 @@ export class CourseManagementExercisesComponent implements OnInit {
     });
     /** The selected exercises narrowed to programming exercises — the mass actions below only apply to those. */
     readonly selectedProgrammingExercises = computed(() => this.selectedExercises().filter((exercise) => exercise.type === ExerciseType.PROGRAMMING) as ProgrammingExercise[]);
-
-    private readonly route = inject(ActivatedRoute);
-    private readonly courseManagementService = inject(CourseManagementService);
-    private readonly quizExerciseService = inject(QuizExerciseService);
-    private readonly programmingExerciseService = inject(ProgrammingExerciseService);
-    private readonly textExerciseService = inject(TextExerciseService);
-    private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
-    private readonly modelingExerciseService = inject(ModelingExerciseService);
-    private readonly translateService = inject(TranslateService);
-    private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
-    private readonly groupSync = inject(ExerciseGroupSyncService);
-    private readonly deleteDialogService = inject(DeleteDialogService);
-    private readonly alertService = inject(AlertService);
-    private readonly localStorageService = inject(LocalStorageService);
-    private readonly profileService = inject(ProfileService);
-    private readonly destroyRef = inject(DestroyRef);
 
     /** Under LocalCI repositories and build plans live inside Artemis, so the delete dialog offers no external cleanup checks. */
     protected readonly localCIEnabled = signal(true);
@@ -301,7 +313,13 @@ export class CourseManagementExercisesComponent implements OnInit {
         if (courseId !== undefined && exercise.id !== undefined) {
             this.exerciseVariantGroupService.setExerciseVariantGroup(courseId, exercise.id, newGroup?.id).subscribe({
                 next: () => this.loadGroupsFromServer(courseId),
-                error: (errorRes: HttpErrorResponse) => this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params),
+                error: (errorRes: HttpErrorResponse) => {
+                    if (errorRes.error?.errorKey === 'automaticTestRunAfterAssessmentDueDate') {
+                        this.alertService.addErrorAlert('artemisApp.exerciseManagement.error.automaticTestRunAfterAssessmentDueDate');
+                    } else {
+                        this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params);
+                    }
+                },
             });
         }
     }
@@ -340,8 +358,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     private deleteObservableFor(exercise: Exercise, event: { [key: string]: boolean }): Observable<HttpResponse<void>> {
         switch (exercise.type) {
             case ExerciseType.PROGRAMMING:
-                // The cleanup checks are only offered on non-LocalCI setups, so the flags default to false.
-                return this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans ?? false, event.deleteBaseReposBuildPlans ?? false);
+                // Preserve omitted LocalCI cleanup flags so the server applies its repository deletion defaults.
+                return this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans);
             case ExerciseType.QUIZ:
                 return this.quizExerciseService.delete(exercise.id!);
             case ExerciseType.TEXT:
@@ -429,24 +447,14 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     onExerciseUpdated(updated: Exercise): void {
         this.exercises.set(this.exercises().map((e) => (e.id === updated.id ? updated : e)));
-        this.groups.set(
-            this.groups().map((g) => ({
-                ...g,
-                exercises: (g.exercises ?? []).map((e) => (e.id === updated.id ? updated : e)),
-            })),
-        );
+        this.groups.set(this.groups().map((g) => cloneWith(g, { exercises: (g.exercises ?? []).map((e) => (e.id === updated.id ? updated : e)) })));
         this.rebuildCards();
     }
 
     onExerciseDeleted(deleted: Exercise): void {
         // Prune the exercise locally (flat list + its group) so it disappears without a reload.
         this.exercises.set(this.exercises().filter((e) => e.id !== deleted.id));
-        this.groups.set(
-            this.groups().map((g) => ({
-                ...g,
-                exercises: (g.exercises ?? []).filter((e) => e.id !== deleted.id),
-            })),
-        );
+        this.groups.set(this.groups().map((g) => cloneWith(g, { exercises: (g.exercises ?? []).filter((e) => e.id !== deleted.id) })));
         if (deleted.id !== undefined && this.selectedIds().has(deleted.id)) {
             const remaining = new Set(this.selectedIds());
             remaining.delete(deleted.id);
@@ -547,7 +555,7 @@ export class CourseManagementExercisesComponent implements OnInit {
                     const refreshedById = new Map(refreshedExercises.filter((e) => e.id !== undefined).map((e) => [e.id!, e]));
                     const mapped = toCourseExerciseGroup(dto, refreshedById);
                     // Merge rather than replace: the DTO carries no `order`, so mapping alone drops the display order.
-                    this.groups.set(this.groups().map((group) => (group.id === updated.id ? Object.assign(new CourseExerciseGroup(), group, mapped) : group)));
+                    this.groups.set(this.groups().map((group) => (group.id === updated.id ? hydrate(new CourseExerciseGroup(), group, mapped) : group)));
                     this.rebuildCards();
                 },
                 error: (errorRes: HttpErrorResponse) => this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params),

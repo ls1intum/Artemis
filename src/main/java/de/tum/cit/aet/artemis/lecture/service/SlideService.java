@@ -1,16 +1,18 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import java.time.ZonedDateTime;
-import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -30,19 +32,16 @@ public class SlideService {
 
     private final SlideUnhideService slideUnhideService;
 
-    private final LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService;
-
     private final AttachmentService attachmentService;
 
-    private final TransactionAfterCommitService transactionAfterCommitService;
+    private final LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService;
 
-    public SlideService(SlideRepository slideRepository, SlideUnhideService slideUnhideService, LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService,
-            AttachmentService attachmentService, TransactionAfterCommitService transactionAfterCommitService) {
+    public SlideService(SlideRepository slideRepository, SlideUnhideService slideUnhideService, AttachmentService attachmentService,
+            LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService) {
         this.slideRepository = slideRepository;
         this.slideUnhideService = slideUnhideService;
-        this.lectureUnitVisibilitySyncService = lectureUnitVisibilitySyncService;
         this.attachmentService = attachmentService;
-        this.transactionAfterCommitService = transactionAfterCommitService;
+        this.lectureUnitVisibilitySyncService = lectureUnitVisibilitySyncService;
     }
 
     /**
@@ -52,7 +51,6 @@ public class SlideService {
      * @param originalExercise The original exercise before the update
      * @param updatedExercise  The updated exercise after the update
      */
-    @Transactional
     public void handleDueDateChange(Exercise originalExercise, Exercise updatedExercise) {
         handleDueDateChange(originalExercise.getDueDate(), updatedExercise);
     }
@@ -64,26 +62,21 @@ public class SlideService {
      * @param originalDueDate The original due date before the update
      * @param updatedExercise The updated exercise after the update
      */
-    @Transactional
     public void handleDueDateChange(ZonedDateTime originalDueDate, Exercise updatedExercise) {
-        ZonedDateTime updatedDueDate = updatedExercise.getDueDate();
-        boolean hasDueDateChanged = !Objects.equals(originalDueDate, updatedDueDate);
-
-        // Check if the due date has changed
-        if (hasDueDateChanged) {
-
+        if (!Objects.equals(originalDueDate, updatedExercise.getDueDate())) {
             updateSlidesHiddenDate(updatedExercise);
         }
-
     }
 
     /**
      * Updates the hidden date of slides associated with the given exercise to match the exercise's due date.
-     * This method should only be called when an exercise's due date has changed.
+     * A due date in the future hides the slides until then; no due date, or one that has passed, makes them visible.
+     * <p>
+     * Afterwards, Iris is told about the new visibility of every affected unit, and the student version is regenerated for each attachment whose set of visible slides
+     * changed. Both run after the slides are saved and neither can make this method fail, so the exercise update that called it always completes.
      *
      * @param exercise The exercise whose due date has changed
      */
-    @Transactional
     public void updateSlidesHiddenDate(Exercise exercise) {
         List<Slide> relatedSlides = slideRepository.findByExerciseId(exercise.getId());
         if (relatedSlides.isEmpty()) {
@@ -91,21 +84,28 @@ public class SlideService {
         }
 
         log.debug("Updating hidden date for {} slides related to exercise {}", relatedSlides.size(), exercise.getId());
-        lectureUnitVisibilitySyncService.lockAffectedAttachmentVideoUnits(relatedSlides);
 
         ZonedDateTime dueDate = exercise.getDueDate();
         ZonedDateTime newHiddenDate = dueDate != null && dueDate.isAfter(ZonedDateTime.now()) ? dueDate : null;
 
-        var attachmentsWithChangedStudentContent = relatedSlides.stream().filter(slide -> (slide.getHidden() == null) != (newHiddenDate == null)).map(Slide::getAttachmentVideoUnit)
-                .filter(Objects::nonNull).map(AttachmentVideoUnit::getAttachment).filter(Objects::nonNull).distinct()
-                .sorted(Comparator.comparing(Attachment::getId, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
+        // Superseded slides belong to an earlier file of their unit. Their hidden date is updated like before, but they neither affect what students see nor what Iris knows.
+        Set<Long> affectedUnitIds = new LinkedHashSet<>();
+        Map<Long, Attachment> attachmentsWithChangedVisibleSlides = new LinkedHashMap<>();
+        relatedSlides.stream().filter(slide -> !slide.isSuperseded()).forEach(slide -> {
+            AttachmentVideoUnit unit = slide.getAttachmentVideoUnit();
+            affectedUnitIds.add(unit.getId());
+            boolean visibilityChanges = (slide.getHidden() == null) != (newHiddenDate == null);
+            Attachment attachment = unit.getAttachment();
+            if (visibilityChanges && attachment != null) {
+                attachmentsWithChangedVisibleSlides.putIfAbsent(attachment.getId(), attachment);
+            }
+        });
 
         relatedSlides.forEach(slide -> slide.setHidden(newHiddenDate));
         slideRepository.saveAll(relatedSlides);
-        // Keep the lock order consistent with hidden-page edits: slide rows first, then the attachment row.
-        attachmentsWithChangedStudentContent.forEach(attachmentService::markStudentVersionRegenerationPending);
-        transactionAfterCommitService.execute(() -> relatedSlides.forEach(slideUnhideService::handleSlideHiddenUpdate));
-        lectureUnitVisibilitySyncService.markVisibilityDirtyForSlides(relatedSlides);
-        attachmentsWithChangedStudentContent.forEach(attachmentService::regenerateStudentVersionOrLeavePending);
+        relatedSlides.forEach(slideUnhideService::handleSlideHiddenUpdate);
+
+        lectureUnitVisibilitySyncService.markVisibilityDirty(affectedUnitIds);
+        attachmentsWithChangedVisibleSlides.values().forEach(attachmentService::regenerateStudentVersionOrRemoveOutdated);
     }
 }

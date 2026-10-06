@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localci.repository;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Locale;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
@@ -24,7 +25,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
  * <p>
  * These replace a single JPQL query that expressed every optional filter as {@code (:param IS NULL OR column = :param)}. MySQL cannot fold those branches away, so it could not
  * estimate the selectivity of any filter and fell back to satisfying the {@code ORDER BY} by scanning {@code idx_build_job_build_submission_date} in reverse across the whole
- * table — 17 s for a course-scoped query on production. Every method here returns {@code null} when its filter is absent; the caller filters those out before combining, so an
+ * table, even for a course-scoped query. Every method here returns {@code null} when its filter is absent; the caller filters those out before combining, so an
  * unset filter contributes no SQL at all and the optimizer sees only real predicates. Note that {@code Specification.allOf} rejects null elements, so they must not simply be
  * passed through.
  */
@@ -103,11 +104,11 @@ public final class BuildJobSpecs {
      * <p>
      * {@code BuildJob.courseId} is a plain column rather than an association, so the course side is a subquery. It is deliberately <em>uncorrelated</em>: it selects the ids of
      * all courses whose title matches, independently of the current row. MySQL then evaluates it once instead of per {@code build_job} row. A correlated {@code EXISTS} was
-     * measured at ~0.0016 ms per row over 229 439 rows (~380 ms) on production, whereas the uncorrelated form lets the optimizer drop the branch entirely when no course title
-     * matches — the common case when searching by repository name.
+     * evaluated once per {@code build_job} row, whereas the uncorrelated form lets the optimizer drop the branch entirely when no course title matches — the common case
+     * when searching by repository name.
      * <p>
-     * Both sides use a leading wildcard, which no index can serve; making this sargable would need prefix matching or a full-text index and is deliberately out of scope. Case
-     * sensitivity is intentionally left as-is (the database collation decides, as before) so that this stays a pure performance change.
+     * Both sides use a leading wildcard, which no index can serve; making this sargable would need prefix matching or a full-text index and is deliberately out of scope. Both
+     * sides are lower cased, because PostgreSQL compares case sensitively and leaving the question to the collation would make the same search behave differently per database.
      *
      * @param searchTerm the term to search for, or null/blank for no filter
      * @return specification matching the search term, or null
@@ -116,12 +117,12 @@ public final class BuildJobSpecs {
         if (searchTerm == null || searchTerm.isBlank()) {
             return null;
         }
-        final String pattern = "%" + searchTerm + "%";
+        final String pattern = "%" + searchTerm.toLowerCase(Locale.ROOT) + "%";
         return (root, query, cb) -> {
             Subquery<Long> matchingCourseIds = query.subquery(Long.class);
             Root<Course> course = matchingCourseIds.from(Course.class);
-            matchingCourseIds.select(course.get(DomainObject_.ID)).where(cb.like(course.get(Course_.TITLE), pattern));
-            return cb.or(cb.like(root.get(BuildJob_.REPOSITORY_NAME), pattern), root.get(BuildJob_.COURSE_ID).in(matchingCourseIds));
+            matchingCourseIds.select(course.get(DomainObject_.ID)).where(cb.like(cb.lower(course.get(Course_.TITLE)), pattern));
+            return cb.or(cb.like(cb.lower(root.get(BuildJob_.REPOSITORY_NAME)), pattern), root.get(BuildJob_.COURSE_ID).in(matchingCourseIds));
         };
     }
 

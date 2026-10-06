@@ -1,18 +1,16 @@
 package de.tum.cit.aet.artemis.atlas.dto;
 
 import java.util.List;
-import java.util.Objects;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyOrchestrationResultDTO(Status status, String summary, List<AppliedActionDTO> appliedActions, @Nullable FailureReason failureReason) {
+public record CompetencyOrchestrationResultDTO(@NonNull Status status, @NonNull String summary, List<AppliedActionDTO> appliedActions, @Nullable FailureReason failureReason) {
 
     public CompetencyOrchestrationResultDTO {
-        Objects.requireNonNull(status, "status must not be null");
-        Objects.requireNonNull(summary, "summary must not be null");
         appliedActions = appliedActions == null ? List.of() : List.copyOf(appliedActions);
         if (status == Status.SUCCESS && summary.isBlank()) {
             throw new IllegalArgumentException("summary must not be blank when status is SUCCESS");
@@ -38,6 +36,10 @@ public record CompetencyOrchestrationResultDTO(Status status, String summary, Li
         NO_CHAT_CLIENT,
         /** The LLM call itself threw — surfaced as 502. */
         LLM_ERROR,
+        /** The shared tool-call budget was exhausted; terminal, not automatically retried. */
+        TOOL_CALL_LIMIT_EXCEEDED,
+        /** Missing or unverified terminal completion; retained for instructor review without automatic replay. */
+        INCOMPLETE_ORCHESTRATION,
         /**
          * A non-LLM step in the orchestrator failed (content extraction, repository lookup,
          * template rendering, tool-index assembly) — surfaced as 500.

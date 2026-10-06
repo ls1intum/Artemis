@@ -1,16 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { NgStyle } from '@angular/common';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { getElement } from 'test/helpers/utils/general-test.utils';
 import { By } from '@angular/platform-browser';
-import { MetisService } from 'app/communication/service/metis.service';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
-import { metisAnswerPostUser2, metisPostExerciseUser1 } from 'test/helpers/sample/metis-sample-data';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
+import { communicationAnswerPostUser2, communicationPostExerciseUser1 } from 'test/helpers/sample/communication-sample-data';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { Subject, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -53,7 +52,7 @@ describe('PostingsMarkdownEditor', () => {
     let fixture: ComponentFixture<PostingMarkdownEditorComponent>;
     let debugElement: DebugElement;
     let mockMarkdownEditorComponent: MarkdownEditorMonacoComponent;
-    let metisService: MetisService;
+    let communicationService: CommunicationService;
     let fileService: FileService;
     let lectureService: LectureService;
     let findLectureWithDetailsSpy: ReturnType<typeof vi.spyOn>;
@@ -133,9 +132,9 @@ describe('PostingsMarkdownEditor', () => {
         mockOverlayRef.attach.mockReturnValue(mockComponentRef);
 
         TestBed.configureTestingModule({
-            imports: [PostingMarkdownEditorComponent, MockComponent(MarkdownEditorMonacoComponent), NgStyle],
+            imports: [PostingMarkdownEditorComponent, MockComponent(MarkdownEditorMonacoComponent)],
             providers: [
-                { provide: MetisService, useClass: MockMetisService },
+                { provide: CommunicationService, useClass: MockCommunicationService },
                 { provide: FileService, useClass: MockFileService },
                 MockProvider(LectureService),
                 MockProvider(CourseManagementService),
@@ -158,7 +157,7 @@ describe('PostingsMarkdownEditor', () => {
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
         fileService = TestBed.inject(FileService);
-        metisService = TestBed.inject(MetisService);
+        communicationService = TestBed.inject(CommunicationService);
         lectureService = TestBed.inject(LectureService);
 
         findLectureWithDetailsSpy = vi.spyOn(lectureService, 'findAllByCourseIdWithSlides');
@@ -167,7 +166,7 @@ describe('PostingsMarkdownEditor', () => {
         fixture.autoDetectChanges();
         mockMarkdownEditorComponent = fixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
         component.ngOnInit();
-        component.content.set(metisPostExerciseUser1.content);
+        component.content.set(communicationPostExerciseUser1.content);
 
         mockEmojiSelect.next({ emoji: { native: '\u{1F600}' }, event: new PointerEvent('click') });
     });
@@ -176,14 +175,14 @@ describe('PostingsMarkdownEditor', () => {
         component.ngOnInit();
         containDefaultActions(component.defaultActions());
         expect(component.defaultActions()).toEqual(expect.arrayContaining([expect.any(UserMentionAction), expect.any(ChannelReferenceAction)]));
-        expect(component.lectureAttachmentReferenceAction()).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
+        expect(component.lectureAttachmentReferenceAction()).toEqual(new LectureAttachmentReferenceAction(communicationService, lectureService, fileService));
     });
 
     it('should have set the correct default commands on init if communication is disabled', () => {
         vi.spyOn(CourseModel, 'isCommunicationEnabled').mockReturnValueOnce(false);
         component.ngOnInit();
         containDefaultActions(component.defaultActions());
-        expect(component.lectureAttachmentReferenceAction()).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
+        expect(component.lectureAttachmentReferenceAction()).toEqual(new LectureAttachmentReferenceAction(communicationService, lectureService, fileService));
     });
 
     function containDefaultActions(defaultActions: TextEditorAction[]) {
@@ -208,7 +207,7 @@ describe('PostingsMarkdownEditor', () => {
         component.ngOnInit();
         containDefaultActions(component.defaultActions());
         expect(component.defaultActions()).toEqual(expect.arrayContaining([expect.any(FaqReferenceAction)]));
-        expect(component.lectureAttachmentReferenceAction()).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
+        expect(component.lectureAttachmentReferenceAction()).toEqual(new LectureAttachmentReferenceAction(communicationService, lectureService, fileService));
     });
 
     it('should show the correct amount of characters below the markdown input', () => {
@@ -216,7 +215,7 @@ describe('PostingsMarkdownEditor', () => {
         fixture.changeDetectorRef.detectChanges();
         const charCounter = getElement(debugElement, 'p.small');
         expect(charCounter.textContent).toContain(component.maxContentLength()!.toString());
-        expect(charCounter.textContent).toContain(metisPostExerciseUser1.content!.length.toString());
+        expect(charCounter.textContent).toContain(communicationPostExerciseUser1.content!.length.toString());
         expect(charCounter.style.color).not.toBe('red');
     });
 
@@ -225,14 +224,14 @@ describe('PostingsMarkdownEditor', () => {
         fixture.changeDetectorRef.detectChanges();
         const charCounter = getElement(debugElement, 'p.small');
         expect(charCounter.textContent).toContain(component.maxContentLength()!.toString());
-        expect(charCounter.textContent).toContain(metisPostExerciseUser1.content!.length.toString());
+        expect(charCounter.textContent).toContain(communicationPostExerciseUser1.content!.length.toString());
         expect(charCounter.style.color).toBe('red');
     });
 
     it('should initialize markdown correctly with post content', () => {
         fixture.componentRef.setInput('maxContentLength', 200);
         fixture.changeDetectorRef.detectChanges();
-        expect(mockMarkdownEditorComponent.markdown).toEqual(component.content());
+        expect(mockMarkdownEditorComponent.markdown()).toEqual(component.content());
     });
 
     it('should update value if markdown change is emitted', () => {
@@ -243,8 +242,8 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should write value of form group in content variable', () => {
-        component.writeValue(metisAnswerPostUser2 as unknown as string);
-        expect(component.content()).toEqual(metisAnswerPostUser2);
+        component.writeValue(communicationAnswerPostUser2 as unknown as string);
+        expect(component.content()).toEqual(communicationAnswerPostUser2);
     });
 
     it('should write an empty string into content for undefined values', () => {

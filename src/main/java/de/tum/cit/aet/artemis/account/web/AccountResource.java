@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.account.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 
@@ -26,12 +24,12 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
 import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
 import de.tum.cit.aet.artemis.account.service.AccountService;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
@@ -45,18 +43,22 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService;
+import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 
 /**
  * REST controller for managing the current user's account.
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage(UserFeature.ACCOUNT_SETTINGS)
 @RestController
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/account/", AccountLegacyRestPaths.CORE_ACCOUNT_PREFIX })
+@RequestMapping("api/account/")
 public class AccountResource {
 
     public static final String ENTITY_NAME = "user";
@@ -64,6 +66,10 @@ public class AccountResource {
     private static final Logger log = LoggerFactory.getLogger(AccountResource.class);
 
     private final UserRepository userRepository;
+
+    private final UserVcsAccessTokenService userVcsAccessTokenService;
+
+    private final UserAiPreferenceService userAiPreferenceService;
 
     private final UserService userService;
 
@@ -78,8 +84,11 @@ public class AccountResource {
     private static final float MAX_PROFILE_PICTURE_FILESIZE_IN_MEGABYTES = 0.1f;
 
     public AccountResource(UserRepository userRepository, UserService userService, AccountService accountService, FileService fileService,
-            AccountCredentialRevocationService accountCredentialRevocationService, AccountSecurityNotificationService accountSecurityNotificationService) {
+            AccountCredentialRevocationService accountCredentialRevocationService, AccountSecurityNotificationService accountSecurityNotificationService,
+            UserVcsAccessTokenService userVcsAccessTokenService, UserAiPreferenceService userAiPreferenceService) {
         this.userRepository = userRepository;
+        this.userAiPreferenceService = userAiPreferenceService;
+        this.userVcsAccessTokenService = userVcsAccessTokenService;
         this.userService = userService;
         this.accountService = accountService;
         this.fileService = fileService;
@@ -109,6 +118,7 @@ public class AccountResource {
      * @return the ResponseEntity with status 200 (OK) when the password has been changed.
      * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the new password does not meet the requirements.
      */
+    @FeatureUsage(UserFeature.REGISTRATION_PASSWORD)
     @PostMapping("change-password")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
@@ -159,6 +169,7 @@ public class AccountResource {
      * @param expiryDate The expiry date which should be set for the token
      * @return the ResponseEntity with a userDTO containing the token: with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
+    @FeatureUsage(UserFeature.GIT_CREDENTIALS)
     @PutMapping("user-vcs-access-token")
     @EnforceAtLeastStudent
     public ResponseEntity<UserDTO> createVcsAccessToken(@RequestParam("expiryDate") ZonedDateTime expiryDate) {
@@ -168,13 +179,14 @@ public class AccountResource {
             throw new BadRequestException("Invalid expiry date provided");
         }
 
-        userRepository.updateUserVcsAccessToken(user.getId(), LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken(), expiryDate);
+        String token = LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken();
+        userVcsAccessTokenService.store(user.getId(), token, expiryDate);
         log.debug("Successfully created a VCS access token for user {}", user.getLogin());
-        user = userRepository.getUser();
         UserDTO userDTO = new UserDTO();
         userDTO.setLogin(user.getLogin());
-        userDTO.setVcsAccessToken(user.getVcsAccessToken());
-        userDTO.setVcsAccessTokenExpiryDate(user.getVcsAccessTokenExpiryDate());
+        // Returned from what was just generated rather than read back: the plaintext exists only here.
+        userDTO.setVcsAccessToken(token);
+        userDTO.setVcsAccessTokenExpiryDate(expiryDate);
         return ResponseEntity.ok(userDTO);
     }
 
@@ -183,12 +195,13 @@ public class AccountResource {
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
+    @FeatureUsage(UserFeature.GIT_CREDENTIALS)
     @DeleteMapping("user-vcs-access-token")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteVcsAccessToken() {
         User user = userRepository.getUser();
         log.debug("REST request to remove VCS access token key of user {}", user.getLogin());
-        userRepository.updateUserVcsAccessToken(user.getId(), null, null);
+        userVcsAccessTokenService.revoke(user.getId());
         log.debug("Successfully deleted VCS access token of user {}", user.getLogin());
         return ResponseEntity.ok().build();
     }
@@ -200,6 +213,7 @@ public class AccountResource {
      *
      * @return the versionControlAccessToken belonging to the provided participation and user
      */
+    @FeatureUsage(UserFeature.GIT_CREDENTIALS)
     @GetMapping("participation-vcs-access-token")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -217,6 +231,7 @@ public class AccountResource {
      *
      * @return the versionControlAccessToken belonging to the provided participation and user
      */
+    @FeatureUsage(UserFeature.GIT_CREDENTIALS)
     @PutMapping("participation-vcs-access-token")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -235,7 +250,7 @@ public class AccountResource {
      */
     @PutMapping("profile-picture")
     @EnforceAtLeastStudent
-    public ResponseEntity<UserDTO> updateProfilePicture(@RequestPart MultipartFile file) throws URISyntaxException {
+    public ResponseEntity<UserDTO> updateProfilePicture(@RequestPart MultipartFile file) {
         log.debug("REST request to update profile picture for logged-in user");
         String contentType = file.getContentType();
 
@@ -253,13 +268,14 @@ public class AccountResource {
 
         // Delete existing
         if (user.getImageUrl() != null) {
-            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
+            fileService.schedulePathForDeletion(new FileSystemLocation.ProfilePicture(user.getImageUrl()).path(), 0);
         }
 
         Path savePath = FileUtil.saveFile(file, basePath, FilePathType.PROFILE_PICTURE, false);
-        String publicPath = FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.PROFILE_PICTURE, user.getId()).toString();
-        userRepository.updateUserImageUrl(user.getId(), publicPath);
-        user.setImageUrl(publicPath);
+        // The column stores the filename; the URL the client needs is assembled on the way out, see User.getImageUrl().
+        String filename = savePath.getFileName().toString();
+        userRepository.updateUserImageUrl(user.getId(), filename);
+        user.setImageUrl(filename);
         return ResponseEntity.ok(new UserDTO(user));
     }
 
@@ -270,11 +286,11 @@ public class AccountResource {
      */
     @DeleteMapping("profile-picture")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> removeProfilePicture() throws URISyntaxException {
+    public ResponseEntity<Void> removeProfilePicture() {
         log.debug("REST request to remove profile picture for logged-in user");
         User user = userRepository.getUser();
         if (user.getImageUrl() != null) {
-            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
+            fileService.schedulePathForDeletion(new FileSystemLocation.ProfilePicture(user.getImageUrl()).path(), 0);
             userRepository.updateUserImageUrl(user.getId(), null);
         }
         return ResponseEntity.ok().build();
@@ -286,11 +302,12 @@ public class AccountResource {
      * @param memirisEnabled the boolean indicating whether Memiris is enabled or not
      * @return the ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.IRIS_MEMORY)
     @PutMapping("enable-memiris")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> setMemirisEnabled(@RequestBody boolean memirisEnabled) {
         User user = userRepository.getUser();
-        userRepository.updateMemirisEnabled(user.getId(), memirisEnabled);
+        userAiPreferenceService.setMemirisEnabled(user.getId(), memirisEnabled);
         return ResponseEntity.ok().build();
     }
 }

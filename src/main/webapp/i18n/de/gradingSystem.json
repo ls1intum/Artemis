@@ -3,9 +3,9 @@
         "gradingSystem": {
             "title": "Notenschlüssel",
             "titleCourse": "Notenschlüssel für Kurs",
-            "titleExam": "Notenschlüssel für Klausur",
+            "titleExam": "Notenschlüssel",
             "titleBonus": "Notenschlüssel für Bonus",
-            "defaultButton": "Standard Notenschlüssel Generieren",
+            "defaultButton": "Standard Notenschlüssel Setzen",
             "gradeType": {
                 "title": "Notentyp",
                 "grade": "Note",
@@ -33,8 +33,8 @@
                 "weight": "Gesamtgewichtung (%)"
             },
             "csv": {
-                "importButton": "Importieren (.csv)",
-                "exportButton": "Exportieren (.csv)"
+                "importButton": "Importiere CSV",
+                "exportButton": "Exportiere CSV"
             },
             "firstPassingGrade": "Bestanden ab",
             "min": "Min %",

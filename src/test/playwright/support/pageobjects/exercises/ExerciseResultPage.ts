@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 import { Commands } from '../../commands';
 

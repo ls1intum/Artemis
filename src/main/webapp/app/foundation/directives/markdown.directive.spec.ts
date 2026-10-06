@@ -1,50 +1,44 @@
-import { Component, signal } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { WritableSignal, inputBinding, outputBinding, signal } from '@angular/core';
+import { DirectiveFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 
-@Component({
-    template: `<div
-        class="md"
-        [jhiMarkdown]="text()"
-        [markdownPosting]="posting()"
-        [markdownContentBeforeReference]="before()"
-        (markdownRendered)="renderCount.update((count) => count + 1)"
-    ></div>`,
-    imports: [MarkdownDirective],
-})
-class TestHostComponent {
-    readonly text = signal<string | undefined>(undefined);
-    readonly posting = signal(false);
-    readonly before = signal(true);
-    readonly renderCount = signal(0);
-}
-
 describe('MarkdownDirective', () => {
-    let fixture: ComponentFixture<TestHostComponent>;
-    let host: TestHostComponent;
+    let fixture: DirectiveFixture<MarkdownDirective>;
+    let text: WritableSignal<string | undefined>;
+    let posting: WritableSignal<boolean>;
+    let renderCount: number;
 
-    const element = (): HTMLElement => fixture.nativeElement.querySelector('div.md');
+    const element = (): Element => fixture.nativeElement;
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({ imports: [TestHostComponent] }).compileComponents();
-        fixture = TestBed.createComponent(TestHostComponent);
-        host = fixture.componentInstance;
+    beforeEach(() => {
+        text = signal<string | undefined>(undefined);
+        posting = signal(false);
+        renderCount = 0;
+        fixture = TestBed.createDirective(MarkdownDirective, {
+            tagName: 'div',
+            bindings: [
+                inputBinding('jhiMarkdown', text),
+                inputBinding('markdownPosting', posting),
+                inputBinding('markdownContentBeforeReference', () => true),
+                outputBinding('markdownRendered', () => renderCount++),
+            ],
+        });
     });
 
     it('renders markdown into the host innerHTML (lazily)', async () => {
-        host.text.set('# Heading\n\nsome **bold** text');
+        text.set('# Heading\n\nsome **bold** text');
         fixture.detectChanges();
         await vi.waitFor(() => {
             fixture.detectChanges();
             expect(element().innerHTML).toContain('<h1');
         });
         expect(element().innerHTML).toContain('<strong>bold</strong>');
-        expect(host.renderCount()).toBe(1);
+        expect(renderCount).toBe(1);
     });
 
     it('renders nothing for empty content', async () => {
-        host.text.set('');
+        text.set('');
         fixture.detectChanges();
         await Promise.resolve();
         fixture.detectChanges();
@@ -52,7 +46,7 @@ describe('MarkdownDirective', () => {
     });
 
     it('highlights fenced code blocks of a registered language', async () => {
-        host.text.set('```java\npublic class A {}\n```');
+        text.set('```java\npublic class A {}\n```');
         fixture.detectChanges();
         await vi.waitFor(() => {
             fixture.detectChanges();
@@ -61,8 +55,8 @@ describe('MarkdownDirective', () => {
     });
 
     it('applies the inline-paragraph class in posting mode', async () => {
-        host.posting.set(true);
-        host.text.set('hello world');
+        posting.set(true);
+        text.set('hello world');
         fixture.detectChanges();
         await vi.waitFor(() => {
             fixture.detectChanges();

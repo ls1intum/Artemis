@@ -1,31 +1,30 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import java.time.ZonedDateTime;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Collection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.support.TransactionTemplate;
 
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
-import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
+/**
+ * Marks the Iris visibility of attachment video units as dirty from their saved slide state.
+ * <p>
+ * Used where the visibility Iris was last told about may differ from what is saved: after an exercise due date moved the hidden date of linked slides, and after an
+ * asynchronous slide split finished or failed. The snapshot is built from the current deck of the unit, so superseded slides of an earlier file never reach Iris.
+ */
 @Conditional(LectureEnabled.class)
 @Lazy
 @Service
 public class LectureUnitVisibilitySyncService {
+
+    private static final Logger log = LoggerFactory.getLogger(LectureUnitVisibilitySyncService.class);
 
     private final SlideRepository slideRepository;
 
@@ -33,71 +32,40 @@ public class LectureUnitVisibilitySyncService {
 
     private final IrisLectureUnitSyncService irisLectureUnitSyncService;
 
-    private final TransactionTemplate requiresNewTransactionTemplate;
-
     public LectureUnitVisibilitySyncService(SlideRepository slideRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
-            IrisLectureUnitSyncService irisLectureUnitSyncService, PlatformTransactionManager transactionManager) {
+            IrisLectureUnitSyncService irisLectureUnitSyncService) {
         this.slideRepository = slideRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.irisLectureUnitSyncService = irisLectureUnitSyncService;
-        this.requiresNewTransactionTemplate = new TransactionTemplate(transactionManager);
-        this.requiresNewTransactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     /**
-     * Marks an attachment video unit as visibility-dirty using its committed slide state.
+     * Marks the visibility of each given attachment video unit as dirty. A failure for one unit is logged and does not stop the others.
      *
-     * @param attachmentVideoUnitId the attachment video unit id
+     * @param attachmentVideoUnitIds the ids of the attachment video units whose slide visibility changed
      */
-    public void markVisibilityDirtyForAttachmentVideoUnit(long attachmentVideoUnitId) {
-        requiresNewTransactionTemplate.executeWithoutResult(status -> attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(attachmentVideoUnitId)
-                .map(this::buildSnapshot).ifPresent(irisLectureUnitSyncService::markVisibilityDirtyAfterCommit));
+    public void markVisibilityDirty(Collection<Long> attachmentVideoUnitIds) {
+        attachmentVideoUnitIds.forEach(this::markVisibilityDirty);
     }
 
     /**
-     * Locks the affected attachment video units in a stable order before slide rows are updated. Hidden-page edits already lock the unit before its slides; using the same order
-     * for exercise-driven visibility updates prevents deadlocks with concurrent edits.
+     * Marks the visibility of an attachment video unit as dirty, based on its saved current slide deck. A failure is logged and not rethrown, because callers run this after
+     * their own changes are already saved.
      *
-     * @param relatedSlides slides whose units must be locked
+     * @param attachmentVideoUnitId the id of the attachment video unit
      */
-    void lockAffectedAttachmentVideoUnits(List<Slide> relatedSlides) {
-        relatedSlides.stream().map(Slide::getAttachmentVideoUnit).filter(java.util.Objects::nonNull).map(AttachmentVideoUnit::getId).filter(java.util.Objects::nonNull).distinct()
-                .sorted().forEach(attachmentVideoUnitRepository::findByIdForUpdate);
-    }
-
-    void markVisibilityDirtyForSlides(List<Slide> relatedSlides) {
-        Map<Long, AttachmentVideoUnit> affectedUnitsById = new LinkedHashMap<>();
-        relatedSlides.forEach(slide -> {
-            AttachmentVideoUnit unit = slide.getAttachmentVideoUnit();
-            if (unit != null && unit.getId() != null) {
-                affectedUnitsById.putIfAbsent(unit.getId(), unit);
-            }
-        });
-
-        affectedUnitsById.values().stream().map(this::buildSnapshot).forEach(irisLectureUnitSyncService::markVisibilityDirtyAfterCommit);
-    }
-
-    private LectureContentUpdateSnapshot buildSnapshot(AttachmentVideoUnit unit) {
-        Lecture lecture = unit.getLecture();
-        Course course = lecture != null ? lecture.getCourse() : null;
-        Attachment attachment = unit.getAttachment();
-
-        return new LectureContentUpdateSnapshot(unit.getId(), unit.getName(), lecture != null ? lecture.getTitle() : null, course != null ? course.getTitle() : null,
-                course != null ? course.getDescription() : null, attachment != null ? attachment.getVersion() : null, attachment != null ? attachment.getLink() : null,
-                unit.getVideoSource(), resolveReleaseDate(unit, attachment), buildSlideHiddenUntilBySlideNumber(unit.getId()));
-    }
-
-    private Map<Integer, ZonedDateTime> buildSlideHiddenUntilBySlideNumber(Long attachmentVideoUnitId) {
-        var slideHiddenUntilBySlideNumber = new LinkedHashMap<Integer, ZonedDateTime>();
-        slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnitId).stream().sorted(Comparator.comparingInt(Slide::getSlideNumber))
-                .forEach(slide -> slideHiddenUntilBySlideNumber.put(slide.getSlideNumber(), slide.getHidden()));
-        return slideHiddenUntilBySlideNumber;
-    }
-
-    private static ZonedDateTime resolveReleaseDate(AttachmentVideoUnit unit, Attachment attachment) {
-        if (unit.getReleaseDate() != null) {
-            return unit.getReleaseDate();
+    public void markVisibilityDirty(long attachmentVideoUnitId) {
+        try {
+            attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(attachmentVideoUnitId).map(this::buildVisibilitySnapshot)
+                    .ifPresent(irisLectureUnitSyncService::markVisibilityDirty);
         }
-        return attachment != null ? attachment.getReleaseDate() : null;
+        catch (RuntimeException exception) {
+            log.error("Failed to mark the Iris visibility of attachment video unit {} as dirty: {}", attachmentVideoUnitId, exception.getMessage(), exception);
+        }
+    }
+
+    private LectureContentUpdateSnapshot buildVisibilitySnapshot(AttachmentVideoUnit unit) {
+        return new LectureContentUpdateSnapshot(unit.getId(), null, null, null, null, null, null, null, unit.resolveReleaseDate(),
+                SlideVisibilitySnapshotHelper.toSortedHiddenUntilBySlideNumber(slideRepository.findAllByAttachmentVideoUnitId(unit.getId())));
     }
 }

@@ -44,8 +44,8 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingServ
  * <li>
  * Using custom repositories for register & authenticate option requests, as the default implementation in
  * memory storage would not work on multinode systems (instead we are using hazelcast
- * {@link de.tum.cit.aet.artemis.account.repository.passkey.HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository}
- * {@link de.tum.cit.aet.artemis.account.repository.passkey.HazelcastPublicKeyCredentialRequestOptionsRepository})
+ * {@link de.tum.cit.aet.artemis.account.repository.passkey.DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository}
+ * {@link de.tum.cit.aet.artemis.account.repository.passkey.DistributedPublicKeyCredentialRequestOptionsRepository})
  * </li>
  * </ul>
  *
@@ -165,7 +165,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
 
     @Override
     public void configure(H http) {
-        WebAuthnRelyingPartyOperations rpOperations = webAuthnRelyingPartyOperations(publicKeyCredentialUserEntityRepository, userCredentialRepository);
+        WebAuthnRelyingPartyOperations rpOperations = createRelyingPartyOperations(publicKeyCredentialUserEntityRepository, userCredentialRepository);
         WebAuthnAuthenticationFilter webAuthnAuthnFilter = new ArtemisWebAuthnAuthenticationFilter(auditEventRepository, converter, jwtCookieService,
                 publicKeyCredentialRequestOptionsRepository, artemisSuccessfulLoginService);
 
@@ -189,7 +189,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
         http.addFilterBefore(authOptionsFilter, AuthorizationFilter.class);
     }
 
-    private <T> Optional<T> getBeanOrNull(Class<T> type) {
+    private <T> Optional<T> findBeanIfPresent(Class<T> type) {
         ApplicationContext context = getBuilder().getSharedObject(ApplicationContext.class);
         if (context == null) {
             return Optional.empty();
@@ -202,12 +202,12 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
         }
     }
 
-    private WebAuthnRelyingPartyOperations webAuthnRelyingPartyOperations(PublicKeyCredentialUserEntityRepository userEntities, UserCredentialRepository userCredentials) {
+    private WebAuthnRelyingPartyOperations createRelyingPartyOperations(PublicKeyCredentialUserEntityRepository userEntities, UserCredentialRepository userCredentials) {
         if (relyingPartyId == null || relyingPartyName == null) {
             throw new IllegalStateException(
                     "WebAuthn relyingPartyId and relyingPartyName must be configured for passkey authentication; rpId: " + relyingPartyId + ", rpName: " + relyingPartyName);
         }
-        Optional<WebAuthnRelyingPartyOperations> webauthnOperationsBean = getBeanOrNull(WebAuthnRelyingPartyOperations.class);
+        Optional<WebAuthnRelyingPartyOperations> webauthnOperationsBean = findBeanIfPresent(WebAuthnRelyingPartyOperations.class);
         return webauthnOperationsBean.orElseGet(() -> new Webauthn4JRelyingPartyOperations(userEntities, userCredentials,
                 PublicKeyCredentialRpEntity.builder().id(this.relyingPartyId).name(this.relyingPartyName).build(), this.allowedOrigins));
     }

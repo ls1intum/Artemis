@@ -1,5 +1,4 @@
 <jhi-assessment-layout
-    (navigateBack)="navigateBack()"
     [isLoading]="isLoading()"
     [isTeamMode]="exercise()?.teamMode || false"
     [isAssessor]="isAssessor()"
@@ -33,8 +32,18 @@
                 <div left-body>
                     <div class="row">
                         @if (submission()?.filePathUrl; as filePathUrl) {
-                            <div class="col-12 card-text" id="e2e-download-file">
-                                <a class="text-primary" (click)="downloadFile(filePathUrl)" jhiTranslate="artemisApp.fileUploadAssessment.submissionFile"></a>
+                            <div class="col-12 card-text" data-testid="e2e-download-file">
+                                <a
+                                    class="text-primary"
+                                    (click)="downloadFile(filePathUrl)"
+                                    jhiTranslate="artemisApp.fileUploadAssessment.submissionFile"
+                                    #keyboardAction36
+                                    role="button"
+                                    tabindex="0"
+                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction36.click() : undefined"
+                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction36.click() : undefined"
+                                ></a>
                                 <span class="ms-2 badge bg-info">{{ attachmentExtension(filePathUrl) | uppercase }}</span>
                             </div>
                         }

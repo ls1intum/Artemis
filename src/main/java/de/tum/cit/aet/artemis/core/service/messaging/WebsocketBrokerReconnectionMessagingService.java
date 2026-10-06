@@ -9,16 +9,13 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.cluster.Member;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.topic.ITopic;
-import com.hazelcast.topic.Message;
-import com.hazelcast.topic.MessageListener;
+import de.tum.cit.aet.artemis.core.service.distributed.NodeRegistryService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
 
 @Lazy
 @Service
@@ -27,26 +24,38 @@ public class WebsocketBrokerReconnectionMessagingService {
 
     private static final Logger log = LoggerFactory.getLogger(WebsocketBrokerReconnectionMessagingService.class);
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
+
+    private final NodeRegistryService nodeRegistryService;
 
     private final WebsocketBrokerReconnectionService websocketBrokerReconnectionService;
 
-    public WebsocketBrokerReconnectionMessagingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
+    public WebsocketBrokerReconnectionMessagingService(DistributedDataProvider distributedDataProvider, NodeRegistryService nodeRegistryService,
             WebsocketBrokerReconnectionService websocketBrokerReconnectionService) {
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataProvider = distributedDataProvider;
+        this.nodeRegistryService = nodeRegistryService;
         this.websocketBrokerReconnectionService = websocketBrokerReconnectionService;
+    }
+
+    /**
+     * A plain topic is sufficient here: a missed reconnect request is recovered by the periodic broker health check, and
+     * an admin can simply retry.
+     *
+     * @return the topic carrying broker reconnect requests
+     */
+    private DistributedTopic<WebsocketBrokerReconnectMessage> reconnectTopic() {
+        return distributedDataProvider.getTopic(MessageTopic.WEBSOCKET_BROKER_RECONNECT.toString());
     }
 
     @PostConstruct
     public void init() {
-        ITopic<WebsocketBrokerReconnectMessage> topic = hazelcastInstance.getTopic(MessageTopic.WEBSOCKET_BROKER_RECONNECT.toString());
-        topic.addMessageListener(new WebsocketReconnectListener());
+        reconnectTopic().addMessageListener(new WebsocketReconnectListener()::handleReconnectMessage);
     }
 
     /**
-     * Publish a reconnect request to the Hazelcast topic. The target node will react to the message.
+     * Publish a reconnect request to the cluster topic. The target node will react to the message.
      *
-     * @param targetNodeId hazelcast member id; use {@link WebsocketBrokerReconnectMessage#TARGET_ALL_NODES} for all nodes
+     * @param targetNodeId cluster node id; use {@link WebsocketBrokerReconnectMessage#TARGET_ALL_NODES} for all nodes
      * @param requestedBy  login of the admin that initiated the request
      */
     public void requestReconnect(String targetNodeId, String requestedBy) {
@@ -56,7 +65,7 @@ public class WebsocketBrokerReconnectionMessagingService {
     /**
      * Request a broker connect on a specific node.
      *
-     * @param targetNodeId hazelcast member id or {@link WebsocketBrokerReconnectMessage#TARGET_ALL_NODES}
+     * @param targetNodeId cluster node id or {@link WebsocketBrokerReconnectMessage#TARGET_ALL_NODES}
      * @param requestedBy  login of the admin
      */
     public void requestConnect(String targetNodeId, String requestedBy) {
@@ -66,7 +75,7 @@ public class WebsocketBrokerReconnectionMessagingService {
     /**
      * Request a broker disconnect on a specific node.
      *
-     * @param targetNodeId hazelcast member id or {@link WebsocketBrokerReconnectMessage#TARGET_ALL_NODES}
+     * @param targetNodeId cluster node id or {@link WebsocketBrokerReconnectMessage#TARGET_ALL_NODES}
      * @param requestedBy  login of the admin
      */
     public void requestDisconnect(String targetNodeId, String requestedBy) {
@@ -74,9 +83,9 @@ public class WebsocketBrokerReconnectionMessagingService {
     }
 
     /**
-     * Publish a broker control request (connect/disconnect/reconnect) to the Hazelcast topic.
+     * Publish a broker control request (connect/disconnect/reconnect) to the cluster topic.
      *
-     * @param targetNodeId hazelcast member id; use {@link WebsocketBrokerReconnectMessage#TARGET_ALL_NODES} to target all nodes
+     * @param targetNodeId cluster node id; use {@link WebsocketBrokerReconnectMessage#TARGET_ALL_NODES} to target all nodes
      * @param requestedBy  login of the admin that initiated the request
      * @param action       the action to perform on the target node(s)
      */
@@ -85,10 +94,10 @@ public class WebsocketBrokerReconnectionMessagingService {
         WebsocketBrokerReconnectMessage message = new WebsocketBrokerReconnectMessage(targetNodeId, action, requestedBy, originNodeId, Instant.now());
 
         try {
-            hazelcastInstance.<WebsocketBrokerReconnectMessage>getTopic(MessageTopic.WEBSOCKET_BROKER_RECONNECT.toString()).publish(message);
+            reconnectTopic().publish(message);
         }
         catch (Exception ex) {
-            log.warn("Failed to publish websocket broker reconnect request to Hazelcast: {}", ex.getMessage(), ex);
+            log.warn("Failed to publish websocket broker reconnect request to the cluster: {}", ex.getMessage(), ex);
             if (shouldHandleLocally(targetNodeId)) {
                 switch (action) {
                     case CONNECT -> websocketBrokerReconnectionService.triggerManualConnect();
@@ -100,20 +109,14 @@ public class WebsocketBrokerReconnectionMessagingService {
     }
 
     String localNodeId() {
-        Member localMember = hazelcastInstance.getCluster().getLocalMember();
-        return localMember.getUuid().toString();
+        return nodeRegistryService.getLocalNodeId();
     }
 
     boolean shouldHandleLocally(String targetNodeId) {
         return TARGET_ALL_NODES.equalsIgnoreCase(targetNodeId) || localNodeId().equals(targetNodeId);
     }
 
-    class WebsocketReconnectListener implements MessageListener<WebsocketBrokerReconnectMessage> {
-
-        @Override
-        public void onMessage(Message<WebsocketBrokerReconnectMessage> message) {
-            handleReconnectMessage(message.getMessageObject());
-        }
+    class WebsocketReconnectListener {
 
         void handleReconnectMessage(WebsocketBrokerReconnectMessage reconnectMessage) {
             if (shouldHandleLocally(reconnectMessage.targetNodeId())) {

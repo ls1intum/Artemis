@@ -12,14 +12,21 @@ import dayjs from 'dayjs/esm';
 import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
     templateUrl: './pdf-preview-thumbnail-grid.component.html',
     styleUrls: ['./pdf-preview-thumbnail-grid.component.scss'],
-    imports: [PdfPreviewEnlargedCanvasComponent, FaIconComponent, PdfPreviewDateBoxComponent, NgbPopover, TranslateDirective, DragDropModule],
+    imports: [PdfPreviewEnlargedCanvasComponent, FaIconComponent, PdfPreviewDateBoxComponent, NgbPopover, TranslateDirective, DragDropModule, ArtemisTranslatePipe],
 })
 export class PdfPreviewThumbnailGridComponent {
+    // Injected services
+    private readonly alertService = inject(AlertService);
+    private readonly renderer = inject(Renderer2);
+    private readonly pdfEngineService = inject(PdfEngineService);
+
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
 
     FOREVER = dayjs('9999-12-31');
@@ -49,11 +56,6 @@ export class PdfPreviewThumbnailGridComponent {
     selectedPagesOutput = output<Set<OrderedPage>>();
     hiddenPagesOutput = output<HiddenPageMap>();
     pageOrderOutput = output<OrderedPage[]>();
-
-    // Injected services
-    private readonly alertService = inject(AlertService);
-    private readonly renderer = inject(Renderer2);
-    private readonly pdfEngineService = inject(PdfEngineService);
 
     protected readonly faEye = faEye;
     protected readonly faEyeSlash = faEyeSlash;
@@ -209,7 +211,7 @@ export class PdfPreviewThumbnailGridComponent {
      */
     onHiddenPagesReceived(hiddenPageData: HiddenPage | HiddenPage[]): void {
         const pages = Array.isArray(hiddenPageData) ? hiddenPageData : [hiddenPageData];
-        const updatedHiddenPages = { ...this.hiddenPages() };
+        const updatedHiddenPages = deepClone(this.hiddenPages());
 
         pages.forEach((page) => {
             updatedHiddenPages[page.slideId] = {
@@ -239,7 +241,7 @@ export class PdfPreviewThumbnailGridComponent {
      * @param slideId - The ID of the slide to be made visible.
      */
     showPage(slideId: string): void {
-        const updatedHiddenPages = { ...this.hiddenPages() };
+        const updatedHiddenPages = deepClone(this.hiddenPages());
         delete updatedHiddenPages[slideId];
         this.hiddenPagesOutput.emit(updatedHiddenPages);
         this.hideActionButton(slideId);

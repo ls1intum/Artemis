@@ -11,7 +11,7 @@ import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
-import { TumUiButtonComponent, TumUiButtonGroupComponent, TumUiDialogComponent, TumUiInputDirective, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonGroupComponent, TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -29,6 +29,8 @@ import { BuildAgentInformation, BuildAgentStatus } from 'app/localci/shared/enti
 import { RunningJobsTableComponent } from './tables/running-jobs-table/running-jobs-table.component';
 import { QueuedJobsTableComponent } from './tables/queued-jobs-table/queued-jobs-table.component';
 import { FinishedJobsTableComponent } from './tables/finished-jobs-table/finished-jobs-table.component';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Component that provides an overview of the build queue system.
@@ -60,11 +62,12 @@ import { FinishedJobsTableComponent } from './tables/finished-jobs-table/finishe
         QueuedJobsTableComponent,
         FinishedJobsTableComponent,
         FinishedBuildsFilterModalComponent,
-        TumUiDialogComponent,
-        TumUiButtonComponent,
-        TumUiButtonGroupComponent,
-        TumUiInputDirective,
-        TumUiTagComponent,
+        TumAetUiDialogComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonGroupComponent,
+        TumAetUiInputDirective,
+        TumAetUiTagComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class BuildOverviewComponent implements OnInit, OnDestroy {
@@ -332,7 +335,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
             const start = dayjs(buildJob.buildStartDate);
             const end = dayjs(buildJob.buildCompletionDate);
             const durationSeconds = end.diff(start, 'milliseconds') / 1000;
-            return { ...buildJob, buildDuration: this.formatFinishedDuration(durationSeconds) };
+            return cloneWith(buildJob, { buildDuration: this.formatFinishedDuration(durationSeconds) });
         }
         return buildJob;
     }
@@ -555,7 +558,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
                 buildJob.jobTimingInfo.buildDuration = now.diff(start, 'seconds');
             }
             // This is necessary to update the view when the build job duration is updated
-            return { ...buildJob };
+            return deepClone(buildJob);
         });
     }
 

@@ -74,6 +74,9 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
 
+    @Autowired
+    private StudentExamService studentExamService;
+
     private Course course1;
 
     private Course course2;
@@ -376,6 +379,20 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGenerateIndividualStudentExam_ignoresStaleCallerExerciseGroups() {
+        // Simulates a caller (ExamAccessService) that loaded the exam before a concurrent exercise-group move: the
+        // in-memory exercise groups no longer match the database, which actually has exerciseGroup1 with a quiz.
+        Exam staleExam = new Exam();
+        staleExam.setId(exam1.getId());
+
+        StudentExam generated = studentExamService.generateIndividualStudentExam(staleExam, student1);
+
+        assertThat(generated.getExercises()).isNotEmpty();
+        assertThat(generated.getExercises().getFirst().getExerciseGroup().getId()).isEqualTo(exerciseGroup1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckAndGetCourseAndExamAccessForConduction_registeredUser_noStudentExamPresent_examCannotBeStarted() {
         exam1.setStudentExams(Set.of());
         exam1.setStartDate(ZonedDateTime.now().plusMinutes(7));
@@ -461,7 +478,10 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAllowedToGetExamResult_nonExamExercise() {
-        var exercise = new FileUploadExercise(); // implicitly, no exam exercise
+        var exercise = new FileUploadExercise();
+        // A course exercise, which is what makes it not an exam exercise. It needs an owner either way: an exercise
+        // belongs to a course or to an exercise group, and CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP refuses neither.
+        exercise.setCourse(course1);
         exerciseRepository.save(exercise);
 
         StudentParticipation participation = new StudentParticipation();

@@ -29,8 +29,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
@@ -101,7 +101,7 @@ public class HyperionChecklistService {
     /** Matches a JSON object wrapped in a markdown code block (```json ... ``` or ``` ... ```). */
     private static final Pattern JSON_CODE_BLOCK_PATTERN = Pattern.compile("```(?:json)?\\s*(\\{.*?})\\s*```", Pattern.DOTALL);
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final ChatClient chatClient;
 
@@ -163,7 +163,7 @@ public class HyperionChecklistService {
 
     public HyperionChecklistService(ChatClient chatClient, HyperionPromptTemplateService templates, ObservationRegistry observationRegistry,
             Optional<StandardizedCompetencyApi> standardizedCompetencyApi, Optional<CourseCompetencyApi> courseCompetencyApi, ProgrammingExerciseTaskRepository taskRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, JsonMapper objectMapper, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
         this.chatClient = chatClient;
         this.templates = templates;
         this.observationRegistry = observationRegistry;
@@ -483,7 +483,7 @@ public class HyperionChecklistService {
                 this.catalogCache.set(new CatalogSnapshot(json, Instant.now()));
                 return json;
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 log.error("Failed to serialize competency catalog", e);
                 this.catalogCache.set(new CatalogSnapshot("[]", Instant.now()));
                 return "[]";

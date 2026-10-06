@@ -22,11 +22,10 @@ import { RepositoryFileService } from 'app/programming/shared/services/repositor
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { Subscription, firstValueFrom, take, timeout } from 'rxjs';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
 import { fromPairs, pickBy } from 'lodash-es';
-import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/suggestion/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MonacoEditorLineHighlight } from 'app/editor/monaco-editor/model/monaco-editor-line-highlight.model';
 import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { FileTypeService } from 'app/programming/shared/services/file-type.service';
@@ -48,22 +47,16 @@ import {
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { parseJson } from 'app/foundation/util/json.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
-type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
 @Component({
     selector: 'jhi-code-editor-monaco',
     templateUrl: './code-editor-monaco.component.html',
     styleUrls: ['./code-editor-monaco.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [
-        MonacoEditorComponent,
-        CodeEditorHeaderComponent,
-        CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent,
-        CodeEditorTutorAssessmentInlineFeedbackComponent,
-        TranslateDirective,
-    ],
+    imports: [MonacoEditorComponent, CodeEditorHeaderComponent, CodeEditorTutorAssessmentInlineFeedbackComponent, TranslateDirective],
     providers: [RepositoryFileService],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -72,10 +65,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     static readonly CLASS_FEEDBACK_HOVER_BUTTON = 'monaco-add-feedback-button';
     static readonly CLASS_REVIEW_COMMENT_HOVER_BUTTON = 'monaco-add-review-comment-button';
     static readonly FILE_TIMEOUT = 10000;
-
-    protected readonly Feedback = Feedback;
-    protected readonly CommitState = CommitState;
-
     private readonly repositoryFileService = inject(CodeEditorRepositoryFileService);
     private readonly fileService = inject(CodeEditorFileService);
     private readonly localStorageService = inject(LocalStorageService);
@@ -84,14 +73,15 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
+    protected readonly Feedback = Feedback;
+    protected readonly CommitState = CommitState;
+
     readonly editor = viewChild.required<MonacoEditorComponent>('editor');
     readonly inlineFeedbackComponents = viewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent);
-    readonly inlineFeedbackSuggestionComponents = viewChildren(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent);
     readonly commitState = input.required<CommitState>();
     readonly editorState = input.required<EditorState>();
     readonly course = input<Course>();
     readonly feedbacks = input<Feedback[]>([]);
-    readonly feedbackSuggestions = input<Feedback[]>([]);
     readonly readOnlyManualFeedback = input<boolean>(false);
     readonly highlightDifferences = input<boolean>(false);
     readonly isTutorAssessment = input<boolean>(false);
@@ -109,8 +99,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly onFileContentChange = output<{ fileName: string; text: string }>();
     readonly onUpdateFeedback = output<Feedback[]>();
     readonly onFileLoad = output<string>();
-    readonly onAcceptSuggestion = output<Feedback>();
-    readonly onDiscardSuggestion = output<Feedback>();
     readonly onHighlightLines = output<MonacoEditorLineHighlight[]>();
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
@@ -136,19 +124,20 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     );
 
     readonly feedbackInternal = linkedSignal<Feedback[]>(() => this.feedbacks());
-    readonly feedbackSuggestionsInternal = linkedSignal<Feedback[]>(() => this.feedbackSuggestions());
     private reviewCommentManager?: ReviewCommentWidgetManager;
 
-    readonly feedbackForSelectedFile = computed<FeedbackWithLineAndReference[]>(() =>
-        this.filterFeedbackForSelectedFile(this.feedbackInternal()).map((f) => this.attachLineAndReferenceToFeedback(f)),
-    );
-    readonly feedbackSuggestionsForSelectedFile = computed<FeedbackWithLineAndReference[]>(() =>
-        this.filterFeedbackForSelectedFile(this.feedbackSuggestionsInternal()).map((f) => this.attachLineAndReferenceToFeedback(f)),
-    );
+    /**
+     * The feedback objects themselves (same references as in {@link feedbackInternal}, not clones) - the template
+     * derives `line` per item via {@link getFeedbackLine} instead of baking it into a copy. Cloning here would hand
+     * the inline feedback editor a new `feedback` object identity on every keystroke (this recomputes on every
+     * `feedbackInternal` write, i.e. on every character typed once a feedback commits live instead of on save).
+     */
+    readonly feedbackForSelectedFile = computed<Feedback[]>(() => this.filterFeedbackForSelectedFile(this.feedbackInternal()));
 
-    private attachLineAndReferenceToFeedback(feedback: Feedback): FeedbackWithLineAndReference {
-        return { ...feedback, line: Feedback.getReferenceLine(feedback) ?? -1, reference: feedback.reference ?? 'unreferenced' };
-    }
+    /** The 0-based editor line a referenced feedback belongs to; -1 for the (unreachable, since already filtered by reference) fallback case. */
+    protected getFeedbackLine = (feedback: Feedback): number => {
+        return Feedback.getReferenceLine(feedback) ?? -1;
+    };
 
     annotationsArray: Array<Annotation> = [];
     private addFeedbackKeydownListener?: Disposable;
@@ -196,7 +185,12 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             });
 
             const selectedFileChanged = selectedFile !== prev!.selectedFile;
-            const feedbacksChanged = prev!.hasObservedFeedbacksInput && feedbacks !== prev!.feedbacks;
+            // Compare by element identity, not array identity: a keystroke in the inline feedback editor
+            // round-trips the same feedback objects back through the parent's `onUpdateFeedback` (see
+            // updateFeedback() below), which re-wraps them in a new array every time. Treating that as a
+            // "real" change would tear down and rebuild every widget - including the focused one - per keystroke.
+            const feedbacksChanged =
+                prev!.hasObservedFeedbacksInput && (feedbacks.length !== prev!.feedbacks?.length || feedbacks.some((feedback, index) => feedback !== prev!.feedbacks?.[index]));
             const editorWasRefreshed = prev!.editorState === EditorState.REFRESHING && editorState === EditorState.CLEAN;
             const editorWasReset = prev!.commitState !== undefined && prev!.commitState !== CommitState.UNDEFINED && commitState === CommitState.UNDEFINED;
             const prevSelectedFile = prev!.selectedFile;
@@ -354,10 +348,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                         this.onError.emit('loadingFailed');
                     }
                 }
-                this.fileSession.set({
-                    ...this.fileSession(),
-                    [fileName]: { code: fileContent, loadingError: loadingError, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } },
-                });
+                this.fileSession.set(
+                    cloneWith(this.fileSession(), { [fileName]: { code: fileContent, loadingError: loadingError, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } } }),
+                );
             }
 
             // File fetch is async; if the user switched files while it was in flight, ignore the result
@@ -432,15 +425,16 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             const previousScrollTop = this.fileSession()[fileName].scrollTop;
 
             if (previousText !== text) {
-                this.fileSession.set({
-                    ...this.fileSession(),
-                    [fileName]: {
-                        code: text,
-                        loadingError: false,
-                        scrollTop: previousScrollTop,
-                        cursor: fileName === this.selectedFile() ? this.editor().getPosition() : this.fileSession()[fileName].cursor,
-                    },
-                });
+                this.fileSession.set(
+                    cloneWith(this.fileSession(), {
+                        [fileName]: {
+                            code: text,
+                            loadingError: false,
+                            scrollTop: previousScrollTop,
+                            cursor: fileName === this.selectedFile() ? this.editor().getPosition() : this.fileSession()[fileName].cursor,
+                        },
+                    }),
+                );
 
                 if (!this.shouldSuppressDirtySignal(fileName)) {
                     this.onFileContentChange.emit({ fileName, text });
@@ -542,22 +536,28 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
     /**
      * Updates an existing feedback item and renders it. If necessary, an unsaved feedback item will be converted into an actual feedback item.
+     *
+     * Manual feedback now commits on every keystroke instead of on an explicit save (see
+     * {@link CodeEditorTutorAssessmentInlineFeedbackComponent}), so this runs far more often than a single click.
+     * A widget is only re-rendered for the new-feedback transition, where it has to move out of the "new" bucket;
+     * updating content in place would otherwise tear down and recreate the widget's DOM node - including the
+     * focused textarea - on every character typed.
      * @param feedback The feedback item to save.
      */
     updateFeedback(feedback: Feedback) {
         const line = Feedback.getReferenceLine(feedback);
         const existingFeedbackIndex = this.feedbackInternal().findIndex((f) => f.reference === feedback.reference);
         if (existingFeedbackIndex !== -1) {
-            // Existing feedback -> update only
+            // Existing feedback -> update content only, no widget re-render needed.
             const feedbackArray = [...this.feedbackInternal()];
             feedbackArray[existingFeedbackIndex] = feedback;
             this.feedbackInternal.set(feedbackArray);
         } else {
-            // New feedback -> save as actual feedback.
+            // New feedback -> save as actual feedback and refocus its detail field once the widget is rebuilt.
             this.feedbackInternal.set([...this.feedbackInternal(), feedback]);
             this.newFeedbackLines.set(this.newFeedbackLines().filter((l) => l !== line));
+            this.renderFeedbackWidgets(line);
         }
-        this.renderFeedbackWidgets();
         this.onUpdateFeedback.emit(this.feedbackInternal());
     }
 
@@ -584,27 +584,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     }
 
     /**
-     * Accepts a feedback suggestion by storing a feedback suggestion as actual feedback.
-     * @param feedback The feedback item of the feedback suggestion.
-     */
-    acceptSuggestion(feedback: Feedback): void {
-        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((f) => f !== feedback));
-        feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
-        this.updateFeedback(feedback);
-        this.onAcceptSuggestion.emit(feedback);
-    }
-
-    /**
-     * Discards a feedback suggestion and removes its widget.
-     * @param feedback The feedback item of the feedback suggestion.
-     */
-    discardSuggestion(feedback: Feedback): void {
-        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((f) => f !== feedback));
-        this.renderFeedbackWidgets();
-        this.onDiscardSuggestion.emit(feedback);
-    }
-
-    /**
      * Renders the current state of feedback in the editor.
      * @param lineOfWidgetToFocus The line number of the widget whose text area should be focused.
      * @protected
@@ -618,13 +597,13 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         }
         this.renderScheduled = true;
         // Run after the next render so the inline feedback nodes (driven by the feedback signals) exist in the DOM.
-        // Invariant: every caller must first write a notifying feedback signal (newFeedbackLines/feedbackInternal/
-        // feedbackSuggestionsInternal) so a render is actually pending; otherwise renderScheduled would latch.
+        // Invariant: every caller must first write a notifying feedback signal (newFeedbackLines/feedbackInternal)
+        // so a render is actually pending; otherwise renderScheduled would latch.
         afterNextRender(
             () => {
                 this.renderScheduled = false;
                 this.editor().disposeWidgetsByPrefix('feedback-');
-                for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
+                for (const feedback of this.filterFeedbackForSelectedFile(this.feedbackInternal())) {
                     this.addLineWidgetWithFeedback(feedback);
                 }
 
@@ -637,7 +616,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 const focusLine = this.renderFocusLine;
                 this.renderFocusLine = undefined;
                 if (focusLine !== undefined) {
-                    this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
+                    // The inline feedback editor renders its description field through jhi-unified-feedback, which
+                    // identifies the textarea by class rather than by a (non-reusable) id.
+                    this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('.unified-feedback-detail-input')?.focus();
                 }
             },
             { injector: this.injector },
@@ -766,13 +747,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         const fileSession = this.fileSession();
         const fileState = fileSession[filePath];
         if (fileState && fileState.code !== syncedContent) {
-            this.fileSession.set({
-                ...fileSession,
-                [filePath]: {
-                    ...fileState,
-                    code: syncedContent,
-                },
-            });
+            this.fileSession.set(cloneWith(fileSession, { [filePath]: cloneWith(fileState, { code: syncedContent }) }));
         }
         this.onFileContentChange.emit({ fileName: filePath, text: syncedContent });
     }
@@ -918,7 +893,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * @param line The line (0-based) for which to retrieve the feedback node.
      */
     getInlineFeedbackNode(line: number): HTMLElement | undefined {
-        return [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()].find((comp) => comp.codeLine() === line)?.elementRef?.nativeElement;
+        return this.inlineFeedbackComponents().find((comp) => comp.codeLine() === line)?.elementRef?.nativeElement;
     }
 
     private addLineWidgetWithFeedback(feedback: Feedback): void {
@@ -969,7 +944,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             this.fileSession.set(this.fileService.updateFileReferences(this.fileSession(), fileChange));
             this.storeAnnotations([fileChange.fileName]);
         } else if (fileChange instanceof CreateFileChange && fileChange.fileType === FileType.FILE) {
-            this.fileSession.set({ ...this.fileSession(), [fileChange.fileName]: { code: '', cursor: { lineNumber: 0, column: 0 }, scrollTop: 0, loadingError: false } });
+            this.fileSession.set(cloneWith(this.fileSession(), { [fileChange.fileName]: { code: '', cursor: { lineNumber: 0, column: 0 }, scrollTop: 0, loadingError: false } }));
         }
         this.setBuildAnnotations(this.annotationsArray);
     }
@@ -984,10 +959,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
         this.localStorageService.store(
             'annotations-' + this.sessionId(),
-            JSON.stringify({
-                ...toKeep,
-                ...toUpdate,
-            }),
+            // toUpdate is built fresh by fromPairs above, so nothing else aliases it and it can be applied as overrides.
+            JSON.stringify(cloneWith(toKeep, toUpdate)),
         );
     }
 
@@ -1004,7 +977,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             this.annotationsArray = buildAnnotations.map((a) => {
                 const hash = a.fileName + a.row + a.column + a.text;
                 if (sessionAnnotations[hash] == undefined || sessionAnnotations[hash].timestamp < a.timestamp) {
-                    return { ...a, hash };
+                    return cloneWith(a, { hash });
                 } else {
                     return sessionAnnotations[hash];
                 }

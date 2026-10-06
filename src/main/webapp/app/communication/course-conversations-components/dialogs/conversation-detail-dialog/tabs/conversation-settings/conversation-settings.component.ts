@@ -24,6 +24,7 @@ import {
     canDeleteChannel,
     canLeaveConversation,
 } from 'app/communication/conversations/conversation-permissions.utils';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-conversation-settings',
@@ -32,6 +33,11 @@ import {
     imports: [TranslateDirective, DeleteButtonDirective, FaIconComponent],
 })
 export class ConversationSettingsComponent implements OnInit, OnDestroy {
+    private dialogService = inject(DialogService);
+    private channelService = inject(ChannelService);
+    private groupChatService = inject(GroupChatService);
+    private alertService = inject(AlertService);
+
     private ngUnsubscribe = new Subject<void>();
 
     activeConversation = input.required<ConversationDTO>();
@@ -56,11 +62,6 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     readonly canChangeChannelArchivalState = signal<boolean>(undefined!);
     readonly canChangeChannelPrivacyState = signal<boolean>(undefined!);
     readonly canDeleteChannel = signal<boolean>(undefined!);
-
-    private dialogService = inject(DialogService);
-    private channelService = inject(ChannelService);
-    private groupChatService = inject(GroupChatService);
-    private alertService = inject(AlertService);
 
     ngOnInit(): void {
         const conversation = this.activeConversation();
@@ -166,14 +167,16 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     }
 
     private createModal(channel: ChannelDTO, keys: { titleKey: string; questionKey: string; descriptionKey: string; confirmButtonKey: string }) {
-        return this.dialogService.open(GenericConfirmationDialogComponent, {
-            ...defaultSecondLayerDialogOptions,
-            data: {
-                translationParameters: { channelName: channel.name },
-                translationKeys: keys,
-                canBeUndone: true,
-            },
-        });
+        return this.dialogService.open(
+            GenericConfirmationDialogComponent,
+            cloneWith(defaultSecondLayerDialogOptions, {
+                data: {
+                    translationParameters: { channelName: channel.name },
+                    translationKeys: keys,
+                    canBeUndone: true,
+                },
+            }),
+        );
     }
 
     deleteChannel() {

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faBarsProgress, faBoxArchive, faBullhorn, faGraduationCap, faHashtag, faLayerGroup, faLock, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,8 +21,8 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCategory } from 'app/foundation/types/sidebar';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import { cloneDeep } from 'lodash-es';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -83,9 +83,7 @@ export type SidebarLecture = Pick<Lecture, 'id' | 'title' | 'startDate' | 'endDa
 /** The exam fields the sidebar renders; see {@link SidebarLecture}. */
 export type SidebarExam = Pick<Exam, 'id' | 'title' | 'moduleNumber' | 'startDate' | 'workingTime' | 'examMaxPoints' | 'testExam'>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CourseOverviewService {
     private participationService = inject(ParticipationService);
     private translate = inject(TranslateService);
@@ -112,26 +110,26 @@ export class CourseOverviewService {
             const earliestStart = earliest.nextSession?.start;
             const currentStart = current.nextSession?.start;
             return currentStart?.isBefore(earliestStart) ? current : earliest;
-        });
+        }, futureGroups[0]);
     }
 
     getUpcomingLecture(lectures: Lecture[] | undefined): Lecture | undefined {
         if (lectures && lectures.length) {
-            return lectures?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
+            return lectures.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b), lectures[0]);
         }
         return undefined;
     }
 
     getUpcomingExam(exams: Exam[] | undefined): Exam | undefined {
         if (exams && exams.length) {
-            return exams?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
+            return exams.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b), exams[0]);
         }
         return undefined;
     }
 
     getUpcomingExercise(exercises: Exercise[] | undefined): Exercise | undefined {
         if (exercises && exercises.length) {
-            return exercises?.reduce((a, b) => ((a?.dueDate?.valueOf() ?? 0) > (b?.dueDate?.valueOf() ?? 0) ? a : b));
+            return exercises.reduce((a, b) => ((a?.dueDate?.valueOf() ?? 0) > (b?.dueDate?.valueOf() ?? 0) ? a : b), exercises[0]);
         }
         return undefined;
     }
@@ -249,7 +247,7 @@ export class CourseOverviewService {
     }
 
     groupExercisesByDueDate(sortedExercises: Exercise[]): AccordionGroups {
-        const groupedExerciseGroups = cloneDeep(DEFAULT_UNIT_GROUPS);
+        const groupedExerciseGroups = deepClone(DEFAULT_UNIT_GROUPS);
 
         for (const exercise of sortedExercises) {
             const exerciseGroup = this.getCorrespondingExerciseGroupByDate(exercise);
@@ -260,7 +258,7 @@ export class CourseOverviewService {
         return groupedExerciseGroups;
     }
 
-    buildGroupedExerciseData(exercises: Exercise[], courseId: number): { groupedData: AccordionGroups; ungroupedData: SidebarCardElement[] } {
+    buildGroupedExerciseData(exercises: Exercise[]): { groupedData: AccordionGroups; ungroupedData: SidebarCardElement[] } {
         const groupByExerciseId = new Map<number, CourseExerciseGroup>();
         for (const group of buildGroupsFromExercises(exercises)) {
             for (const member of group.exercises ?? []) {
@@ -270,7 +268,7 @@ export class CourseOverviewService {
             }
         }
 
-        const groupedData = cloneDeep(DEFAULT_UNIT_GROUPS);
+        const groupedData = deepClone(DEFAULT_UNIT_GROUPS);
         const ungroupedData: SidebarCardElement[] = [];
         const emittedGroups = new Set<number>();
 
@@ -280,7 +278,7 @@ export class CourseOverviewService {
                 if (group.id !== undefined && !emittedGroups.has(group.id)) {
                     emittedGroups.add(group.id);
                     const members = exercises.filter((e) => e.id !== undefined && groupByExerciseId.get(e.id) === group);
-                    const card = this.groupCard(group, members, courseId);
+                    const card = this.groupCard(group, members);
                     groupedData[this.categorizeGroup(group, members)].entityData.push(card);
                     ungroupedData.push(card);
                 }
@@ -294,7 +292,7 @@ export class CourseOverviewService {
         return { groupedData, ungroupedData };
     }
 
-    private groupCard(group: CourseExerciseGroup, members: Exercise[], courseId: number): SidebarCardElement {
+    private groupCard(group: CourseExerciseGroup, members: Exercise[]): SidebarCardElement {
         const dueDate = group.dueDate ?? members[0]?.dueDate;
         return {
             title: group.title ?? '',
@@ -306,10 +304,8 @@ export class CourseOverviewService {
             subtitleLeft: dueDate?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noDueDate'),
             startDate: dueDate,
             size: 'M',
-            groupHeaderStyle: 'card',
-            groupConnected: true,
-            groupClickable: 'group',
-            routerLink: `/courses/${courseId}/exercises/group/${group.id}`,
+            // The members are not rendered as nested cards; they mark group membership so a search on a variant title
+            // still surfaces the group and the group card stays highlighted while one of its variants is open.
             groupedItems: members.map((member) => this.mapExerciseToSidebarCardElement(member)),
         };
     }
@@ -326,7 +322,7 @@ export class CourseOverviewService {
     }
 
     groupLecturesByStartDate(sortedLectures: Lecture[]): AccordionGroups {
-        const groupedLectureGroups = cloneDeep(DEFAULT_UNIT_GROUPS);
+        const groupedLectureGroups = deepClone(DEFAULT_UNIT_GROUPS);
 
         for (const lecture of sortedLectures) {
             const lectureGroup = this.getCorrespondingLectureGroupByDate(lecture.startDate, lecture?.endDate);
@@ -338,14 +334,8 @@ export class CourseOverviewService {
     }
 
     groupConversationsByChannelType(course: Course, conversations: ConversationDTO[], messagingEnabled: boolean): AccordionGroups {
-        const channelGroups = messagingEnabled
-            ? {
-                  ...DEFAULT_CHANNEL_GROUPS,
-                  groupChats: { entityData: [] },
-                  directMessages: { entityData: [] },
-              }
-            : DEFAULT_CHANNEL_GROUPS;
-        const groupedConversationGroups = cloneDeep(channelGroups);
+        const channelGroups = messagingEnabled ? cloneWith(DEFAULT_CHANNEL_GROUPS, { groupChats: { entityData: [] }, directMessages: { entityData: [] } }) : DEFAULT_CHANNEL_GROUPS;
+        const groupedConversationGroups = deepClone(channelGroups);
 
         groupedConversationGroups.savedPosts = {
             isHideCount: true,

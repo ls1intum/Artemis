@@ -1,3 +1,24 @@
 .correction-label {
     text-align: center;
 }
+
+.correction-round-badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    margin-inline-end: 0.25rem;
+    border-radius: var(--tumaet-ui-radius-sm);
+    font-size: 0.75em;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--white);
+    white-space: nowrap;
+
+    &--first {
+        background-color: var(--primary);
+    }
+
+    &--second {
+        // No Artemis semantic token matches this hue yet; scoped to this one legacy correction-round indicator.
+        background-color: #ffa561;
+    }
+}

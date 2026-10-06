@@ -1,10 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service;
 
-import java.time.ZonedDateTime;
-
 import jakarta.ws.rs.BadRequestException;
 
-import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -43,21 +40,8 @@ public class IrisMessageService {
             throw new BadRequestException("Message must have at least one content element");
         }
 
-        if (!Hibernate.isInitialized(session.getMessages())) {
-            session = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
-        }
-
-        message.setSender(sender);
-        message.setSentAt(ZonedDateTime.now());
-        message.setSession(session);
-        message.getContent().forEach(content -> content.setMessage(message));
-
-        session.getMessages().add(message);
-        // saveAndFlush so the cascaded message has its generated id; the returned managed entity
-        // replaces the previous full-session reload that ran on every message save.
-        var savedSession = irisSessionRepository.saveAndFlush(session);
-        session.setMessages(savedSession.getMessages()); // Keep the caller's session instance consistent with the managed state.
-
-        return savedSession.getMessages().getLast();
+        // The caller's own session instance is deliberately left alone: adding the message to a list it loaded
+        // earlier would give it a list index the committed rows already use.
+        return irisSessionRepository.appendMessage(session.getId(), message, sender);
     }
 }

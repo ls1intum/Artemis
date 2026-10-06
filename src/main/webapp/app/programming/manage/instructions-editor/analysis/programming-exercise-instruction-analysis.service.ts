@@ -1,8 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { uniq } from 'lodash-es';
 import { RegExpLineNumberMatchArray, matchRegexWithLineNumbers } from 'app/foundation/util/string-pure.utils';
 import { AnalysisItem, ProblemStatementAnalysis, ProblemStatementIssue } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 const TEST_CASE_REGEX = /\[[^[\]]+]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,[^(),]+(?:\([^()]*\)[^(),]*)?)*)?)\)/;
 const INVALID_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase';
@@ -11,7 +12,7 @@ const REPEATED_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseA
 /**
  * Analyzes the problem statement of a programming-exercise and provides information support concerning potential issues.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExerciseInstructionAnalysisService {
     private translateService = inject(TranslateService);
 
@@ -89,21 +90,14 @@ export class ProgrammingExerciseInstructionAnalysisService {
      * @param analysis arbitrary number of analysis objects to be merged into one.
      */
     private mergeAnalysis = (...analysis: Array<AnalysisItem[]>): ProblemStatementAnalysis => {
-        const reducer = (acc: ProblemStatementAnalysis, [lineNumber, values, issueType]: AnalysisItem): ProblemStatementAnalysis => {
-            const lineNumberValues = acc.get(lineNumber);
+        const merged: ProblemStatementAnalysis = new Map();
+        for (const [lineNumber, values, issueType] of analysis.flat()) {
+            const translatedValues = values.map((id) => this.translateService.instant(this.getTranslationByIssueType(issueType), { id }));
+            const lineNumberValues = merged.get(lineNumber);
             const issueValues = lineNumberValues?.[issueType] ?? [];
-            acc.set(lineNumber, { lineNumber, ...lineNumberValues, [issueType]: [...issueValues, ...values] });
-            return acc;
-        };
-
-        return analysis
-            .flat()
-            .map(([lineNumber, values, issueType]: AnalysisItem): AnalysisItem => [
-                lineNumber,
-                values.map((id) => this.translateService.instant(this.getTranslationByIssueType(issueType), { id })),
-                issueType,
-            ])
-            .reduce<ProblemStatementAnalysis>(reducer, new Map());
+            merged.set(lineNumber, hydrate({ lineNumber }, lineNumberValues ?? {}, { [issueType]: [...issueValues, ...translatedValues] }));
+        }
+        return merged;
     };
 
     /**

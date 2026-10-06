@@ -11,7 +11,8 @@ import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiInputDirective, TumUiMessageComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 /** Option shown in the source select, with a precomputed display label. */
 interface SourceOption {
     id?: number;
@@ -47,11 +48,11 @@ interface StandardizedCompetencyForm {
         TaxonomySelectComponent,
         MarkdownDirective,
         ArtemisTranslatePipe,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiInputDirective,
-        TumUiSelectComponent,
-        TumUiMessageComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiSelectComponent,
+        TumAetUiMessageComponent,
     ],
 })
 export class StandardizedCompetencyEditComponent {
@@ -146,7 +147,8 @@ export class StandardizedCompetencyEditComponent {
      */
     save(): void {
         const updatedValues = this.form.getRawValue();
-        const updatedCompetency: StandardizedCompetencyDTO = { ...this.competency(), ...updatedValues };
+        // updatedValues comes straight from getRawValue(), so nothing else aliases it and it can be applied as overrides.
+        const updatedCompetency: StandardizedCompetencyDTO = cloneWith(this.competency(), updatedValues);
         this.isEditing.set(false);
         this.onSave.emit(updatedCompetency);
     }

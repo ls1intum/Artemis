@@ -83,7 +83,6 @@ describe('CompetencySelection', () => {
         expect(component.selectedCompetencyLinks).toBeUndefined();
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).not.toHaveBeenCalled();
-        expect(component.isLoading()).toBeFalsy();
         expect(component.competencyLinks()).toHaveLength(2);
         expect(selector).not.toBeNull();
     });
@@ -98,7 +97,6 @@ describe('CompetencySelection', () => {
 
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading()).toBeFalsy();
         expect(component.competencyLinks()).toHaveLength(2);
         expect(component.competencyLinks()?.first()?.competency?.course).toBeUndefined();
         expect(component.competencyLinks()?.first()?.competency?.userProgress).toBeUndefined();
@@ -112,7 +110,6 @@ describe('CompetencySelection', () => {
 
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading()).toBeFalsy();
         expect(component.disabled()).toBeTruthy();
     });
 
@@ -125,7 +122,6 @@ describe('CompetencySelection', () => {
         const select = fixture.debugElement.query(By.css('select'));
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading()).toBeFalsy();
         expect(component.competencyLinks()).toHaveLength(0);
         expect(select).toBeNull();
     });
@@ -138,10 +134,6 @@ describe('CompetencySelection', () => {
         component.writeValue([new CompetencyLearningObjectLink({ id: 1, title: 'other' } as Competency, 1)]);
         expect(component.selectedCompetencyLinks).toHaveLength(1);
         expect(component.selectedCompetencyLinks?.first()?.competency?.title).toBe('test');
-        expect(component.checkboxStates()[1]).toBeTruthy();
-
-        component.writeValue(undefined);
-        expect(component.checkboxStates()[1]).toBeFalsy();
     });
 
     it('should update link weight when value is written', () => {

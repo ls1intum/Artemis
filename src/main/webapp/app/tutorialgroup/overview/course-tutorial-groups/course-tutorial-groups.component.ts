@@ -1,4 +1,4 @@
-import { Component, Signal, computed, effect, inject, signal } from '@angular/core';
+import { Component, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
@@ -30,6 +30,16 @@ import { SidebarView } from 'app/course/shared/sidebar-view.interface';
     imports: [SidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseTutorialGroupsComponent implements SidebarView {
+    private router = inject(Router);
+    private activatedRoute = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private courseStorageService = inject(CourseStorageService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
+    private lectureService = inject(LectureService);
+    private courseOverviewService = inject(CourseOverviewService);
+    private sessionStorageService = inject(SessionStorageService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
+
     protected readonly DEFAULT_COLLAPSE_STATE: CollapseState = {
         allGroups: true,
         registeredGroups: false,
@@ -46,16 +56,6 @@ export class CourseTutorialGroupsComponent implements SidebarView {
         currentTutorialLecture: false,
         furtherTutorialLectures: false,
     };
-
-    private router = inject(Router);
-    private activatedRoute = inject(ActivatedRoute);
-    private alertService = inject(AlertService);
-    private courseStorageService = inject(CourseStorageService);
-    private tutorialGroupApiService = inject(TutorialGroupApi);
-    private lectureService = inject(LectureService);
-    private courseOverviewService = inject(CourseOverviewService);
-    private sessionStorageService = inject(SessionStorageService);
-    private courseTabRefreshService = inject(CourseTabRefreshService);
 
     courseId = this.getCurrentCourseIdSignal();
     // Undefined until loaded, so a refresh that legitimately returns nothing is distinguishable from the initial state
@@ -76,7 +76,7 @@ export class CourseTutorialGroupsComponent implements SidebarView {
         effect(() => {
             const courseId = this.courseId();
             if (courseId) {
-                this.setTutorialGroupsAndTutorialLectures(courseId);
+                untracked(() => this.setTutorialGroupsAndTutorialLectures(courseId));
             }
         });
 
@@ -232,7 +232,9 @@ export class CourseTutorialGroupsComponent implements SidebarView {
             (lecture) => lecture.startDate && lecture.startDate.isSameOrBefore(now) && (!lecture.endDate || now.isSameOrBefore(lecture.endDate)),
         );
         const mostRecentlyStartedCurrentLecture =
-            currentLectures.length === 0 ? undefined : currentLectures.reduce((latest, current) => (current.startDate!.isAfter(latest.startDate) ? current : latest));
+            currentLectures.length === 0
+                ? undefined
+                : currentLectures.reduce((latest, current) => (current.startDate!.isAfter(latest.startDate) ? current : latest), currentLectures[0]);
         tutorialLectures.forEach((tutorialLecture) => {
             const tutorialLectureCardItem = this.courseOverviewService.mapLectureToSidebarCardElement(tutorialLecture);
             if (!mostRecentlyStartedCurrentLecture) {

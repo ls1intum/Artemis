@@ -7,6 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.notification.dto.payload.DeregisteredFromTutorialGroupPayloadDTO;
+import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
 /**
  * Notification that tells a student that they were deregistered from a tutorial group.
@@ -14,20 +16,14 @@ import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 @CourseNotificationType(24)
 public class DeregisteredFromTutorialGroupNotification extends CourseNotification {
 
-    protected String groupTitle;
-
-    protected Long groupId;
-
-    protected String moderatorName;
+    private final DeregisteredFromTutorialGroupPayloadDTO payload;
 
     /**
      * Default constructor used when creating the notification.
      */
     public DeregisteredFromTutorialGroupNotification(Long courseId, String courseTitle, String courseImageUrl, String groupTitle, Long groupId, String moderatorName) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.groupTitle = groupTitle;
-        this.groupId = groupId;
-        this.moderatorName = moderatorName;
+        this.payload = new DeregisteredFromTutorialGroupPayloadDTO(groupTitle, groupId, moderatorName);
     }
 
     /**
@@ -35,6 +31,7 @@ public class DeregisteredFromTutorialGroupNotification extends CourseNotificatio
      */
     public DeregisteredFromTutorialGroupNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
+        this.payload = CourseNotificationPayloads.parse(parameters, DeregisteredFromTutorialGroupPayloadDTO.class);
     }
 
     @Override
@@ -55,5 +52,10 @@ public class DeregisteredFromTutorialGroupNotification extends CourseNotificatio
     @Override
     public String getRelativeWebAppUrl() {
         return "/courses/" + courseId;
+    }
+
+    @Override
+    public DeregisteredFromTutorialGroupPayloadDTO payload() {
+        return payload;
     }
 }

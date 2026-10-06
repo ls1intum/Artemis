@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -34,6 +36,7 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionGenerationSer
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
+@FeatureUsage(UserFeature.HYPERION_QUIZ_GENERATION)
 @RestController
 @RequestMapping("api/hyperion/")
 public class HyperionQuizQuestionGenerationResource {

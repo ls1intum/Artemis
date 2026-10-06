@@ -92,10 +92,6 @@ public class TextExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new text exercise based on exercise {}", sourceExercise);
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         copyTextExerciseBasis(newExercise, sourceExercise, gradingInstructionCopyTracker);
-        if (newExercise.isExamExercise()) {
-            // Disable feedback suggestions on exam exercises (currently not supported)
-            newExercise.setFeedbackSuggestionModule(null);
-        }
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
         // Only the first save is identity-preserving (the id was cleared, so Spring Data persists newExercise itself). The
@@ -216,7 +212,13 @@ public class TextExerciseImportService extends ExerciseImportService {
             newSubmission.setText(((TextSubmission) originalSubmission).getText());
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
             newSubmission.setBlocks(copyTextBlocks(((TextSubmission) originalSubmission).getBlocks(), newSubmission));
-            newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission, gradingInstructionCopyTracker));
+            // An example submission that was never assessed has no result, and copying it must not fail on that.
+            // ModelingExerciseImportService already guards this; the text import did not, so importing an exercise
+            // with an unassessed example submission failed with a NullPointerException.
+            Result originalResult = originalSubmission.getLatestResult();
+            if (originalResult != null) {
+                newSubmission.addResult(copyExampleResult(originalResult, newSubmission, gradingInstructionCopyTracker));
+            }
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
             newSubmission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(newSubmission.getId());
 
@@ -233,8 +235,13 @@ public class TextExerciseImportService extends ExerciseImportService {
      * @param originalTextBlocks The original text blocks to be copied
      * @param newSubmission      The submission which has newly created text blocks
      */
-    private void updateFeedbackReferencesWithNewTextBlockIds(Set<TextBlock> originalTextBlocks, TextSubmission newSubmission) {
+    private void updateFeedbackReferencesWithNewTextBlockIds(Set<TextBlock> originalTextBlocks, @NonNull TextSubmission newSubmission) {
         Result newResult = newSubmission.getLatestResult();
+        if (newResult == null) {
+            // The source example submission was never assessed, so no result was copied and there is no feedback whose
+            // reference would need re-pointing at the new text blocks.
+            return;
+        }
         Set<Feedback> newFeedbackList = newResult.getFeedbacks();
         Set<TextBlock> newSubmissionTextBlocks = newSubmission.getBlocks();
 

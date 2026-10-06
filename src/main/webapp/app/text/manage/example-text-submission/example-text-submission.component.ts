@@ -33,6 +33,7 @@ import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessm
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 type ExampleSubmissionResponseType = EntityResponseType;
 
@@ -122,8 +123,12 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     /**
      * Reads route params and loads the example submission on initialWithContext.
      */
-    override async ngOnInit(): Promise<void> {
-        await super.ngOnInit();
+    override ngOnInit(): void {
+        void this.initializeExampleTextSubmissionComponent();
+    }
+
+    private async initializeExampleTextSubmissionComponent(): Promise<void> {
+        await super.initializeTextAssessmentBaseComponent();
         // (+) converts string 'id' to a number
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const exampleSubmissionId = this.route.snapshot.paramMap.get('exampleSubmissionId');
@@ -393,11 +398,14 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     private exampleSubmissionForNetwork() {
-        const exampleSubmission = Object.assign({}, this.exampleSubmission);
-        exampleSubmission.submission = Object.assign({}, this.submission);
+        const exampleSubmission = deepClone(this.exampleSubmission);
+        // `?? new TextSubmission()` keeps the previous behaviour: `Object.assign({}, undefined)` produced an empty
+        // object rather than undefined, which the branches below then mutate.
+        exampleSubmission.submission = deepClone(this.submission) ?? new TextSubmission();
 
         if (this.result()) {
-            const result = Object.assign({}, this.result());
+            // Non-null assertion is safe inside this branch; the signal read above established the result exists.
+            const result = deepClone(this.result()!);
             setLatestSubmissionResult(exampleSubmission.submission, result);
             result.feedbacks = this.assessments;
             delete result?.submission;

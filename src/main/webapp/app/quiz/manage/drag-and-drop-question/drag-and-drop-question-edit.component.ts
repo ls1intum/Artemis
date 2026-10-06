@@ -17,6 +17,7 @@ import {
 } from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
+import { dragItemPicturePath } from 'app/quiz/shared/util/drag-and-drop-file-url.util';
 import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/quiz/shared/entities/drag-state.enum';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -26,7 +27,6 @@ import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { cloneDeep } from 'lodash-es';
 import { round } from 'app/foundation/util/utils';
 import { MAX_SIZE_UNIT } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { ImageComponent, ImageLoadingStatus } from 'app/shared-ui/image/image.component';
@@ -43,7 +43,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-scoring-info-modal.component';
-import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -69,6 +69,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FileService } from 'app/foundation/service/file.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -88,7 +89,6 @@ import { FileService } from 'app/foundation/service/file.service';
         ImageComponent,
         NgClass,
         CdkDropList,
-        NgStyle,
         CdkDrag,
         CdkDragPreview,
         NgTemplateOutlet,
@@ -102,6 +102,10 @@ import { FileService } from 'app/foundation/service/file.service';
     ],
 })
 export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, QuizQuestionEdit, OnDestroy {
+    private translateService = inject(TranslateService);
+    private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
+    private fileService = inject(FileService);
+
     protected readonly faBan = faBan;
     protected readonly faPlus = faPlus;
     protected readonly faTrash = faTrash;
@@ -122,8 +126,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
 
     readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
 
-    private translateService = inject(TranslateService);
-    private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     readonly scoringTypeOptions = computed(() => {
@@ -134,7 +136,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
             { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_without_penalty'), value: ScoringType.PROPORTIONAL_WITHOUT_PENALTY },
         ];
     });
-    private fileService = inject(FileService);
 
     private readonly clickLayer = viewChild.required<ElementRef>('clickLayer');
     private readonly backgroundImage = viewChild.required<ImageComponent>('backgroundImage');
@@ -204,7 +205,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
                     this.questionUpdated.emit();
                 }
                 if (question) {
-                    this.backupQuestion = cloneDeep(question);
+                    this.backupQuestion = deepClone(question);
                 }
             });
         });
@@ -236,7 +237,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
     ngOnInit(): void {
         const question = this.question();
         // create deep copy as backup
-        this.backupQuestion = cloneDeep(question);
+        this.backupQuestion = deepClone(question);
 
         /** Initialize DropLocation and MouseEvent objects **/
         this.currentDropLocation = new DropLocation();
@@ -269,12 +270,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
                 const item = question.dragItems[dragItem];
                 const path = item.pictureFilePath;
                 if (path && !this.filePreviewPaths().has(path)) {
-                    // Map the saved image to its question-scoped file URL. Drag item ids are only unique within their question, so the flat legacy image URL no longer exists; the
-                    // stored pictureFilePath keeps the old shape, so rebuild the URL from the question and drag item ids (mirrors jhi-drag-item's imageSrc).
-                    const previewPath =
-                        question.id !== undefined && item.id !== undefined
-                            ? `drag-and-drop/questions/${question.id}/drag-items/${item.id}/${path.substring(path.lastIndexOf('/') + 1)}`
-                            : path;
+                    // Map the stored filename to the question-scoped path that serves it. A drag item id is only unique within its question, so the picture cannot be
+                    // addressed without the question id.
+                    const previewPath = question.id !== undefined && item.id !== undefined ? dragItemPicturePath(question.id, item.id, path) : path;
                     this.filePreviewPaths.update((map) => new Map(map).set(path, previewPath));
                 }
             }
@@ -853,12 +851,19 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
     resetQuestionTitle(): void {
         const question = this.question();
         question.title = this.backupQuestion.title;
+        this.questionUpdated.emit();
     }
 
     /**
      * Resets the question text
      */
     resetQuestionText(): void {
+        this.restoreQuestionText();
+        this.questionUpdated.emit();
+    }
+
+    /** Restores the text without notifying, so a full reset emits once when everything is back. */
+    private restoreQuestionText(): void {
         const question = this.question();
         question.text = this.backupQuestion.text;
         question.explanation = this.backupQuestion.explanation;
@@ -876,11 +881,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
         question.randomizeOrder = this.backupQuestion.randomizeOrder;
         question.scoringType = this.backupQuestion.scoringType;
         this.resetBackground();
-        question.dropLocations = cloneDeep(this.backupQuestion.dropLocations);
-        question.dragItems = cloneDeep(this.backupQuestion.dragItems);
-        question.correctMappings = cloneDeep(this.backupQuestion.correctMappings);
+        question.dropLocations = deepClone(this.backupQuestion.dropLocations);
+        question.dragItems = deepClone(this.backupQuestion.dragItems);
+        question.correctMappings = deepClone(this.backupQuestion.correctMappings);
         question.isHighlighted = this.backupQuestion.isHighlighted;
-        this.resetQuestionText();
+        this.restoreQuestionText();
+        this.questionUpdated.emit();
     }
 
     /**

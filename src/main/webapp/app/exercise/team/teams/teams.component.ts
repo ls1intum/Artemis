@@ -17,6 +17,7 @@ import { TeamStudentsListComponent } from '../team-participate/team-students-lis
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { SelectButton } from 'primeng/selectbutton';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export enum FilterProp {
     ALL = 'all',
@@ -61,7 +62,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
     readonly teamsForTable = computed<TeamRow[]>(() =>
         this.teams().map((team) => {
             // Clone via Object.assign rather than object spread, per the repository TypeScript guidelines.
-            const row = Object.assign({}, team) as TeamRow;
+            const row = deepClone(team) as TeamRow;
             row.studentsSearchText = team.students?.flatMap((student) => [student.login, student.name].filter(Boolean)).join(' ') ?? '';
             return row;
         }),

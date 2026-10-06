@@ -33,7 +33,6 @@ import {
     PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN,
 } from 'app/foundation/constants/input.constants';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
@@ -65,10 +64,29 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
-import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
+
+/**
+ * Reasons that already name a field rendered inside the grading form. Each of these also turns the grading
+ * component's aggregate `formValid` false, so reporting the generic grading message alongside one of them
+ * would state the same problem twice — see {@link ProgrammingExerciseUpdateComponent.validateGradingSection}.
+ */
+const GRADING_FIELD_REASON_KEYS = new Set([
+    'artemisApp.exercise.form.points.undefined',
+    'artemisApp.exercise.form.points.customMin',
+    'artemisApp.exercise.form.points.customMax',
+    'artemisApp.exercise.form.bonusPoints.undefined',
+    'artemisApp.exercise.form.bonusPoints.customMin',
+    'artemisApp.exercise.form.bonusPoints.customMax',
+    'artemisApp.exercise.form.maxPenalty.pattern',
+    'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning.required',
+    'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning.pattern',
+    'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.required',
+    'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.pattern',
+]);
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -90,7 +108,6 @@ const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerati
         FormFooterComponent,
         FeatureOverlayComponent,
     ],
-    providers: [BuildPhasesTemplateService],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
@@ -112,7 +129,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly localStorageService = inject(LocalStorageService);
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
-    private readonly buildPhasesTemplateService = inject(BuildPhasesTemplateService);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
@@ -230,19 +246,22 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     readonly isSaving = signal<boolean>(undefined!);
     goBackAfterSaving = false;
     problemStatementLoaded = false;
-    buildPlanLoaded = false;
     templateParticipationResultLoaded = true;
     notificationText?: string;
     readonly courseId = signal<number>(undefined!);
 
     rerenderSubject = new Subject<void>();
+    // Created once rather than per `asObservable()` call, because getProgrammingExerciseCreationConfig() hands this to
+    // the child components on every change-detection pass and a new wrapper each pass is a new input identity.
+    private readonly rerenderObservable = this.rerenderSubject.asObservable();
     // This is used to revert the select if the user cancels to override the new selected programming language.
     private selectedProgrammingLanguageValue!: ProgrammingLanguage; // set in ngOnInit() from the loaded exercise before the selectedProgrammingLanguage getter is read
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue?: ProjectType;
 
-    // Left undefined until categories load; code distinguishes undefined ("not yet loaded") from an empty array.
-    exerciseCategories?: ExerciseCategory[];
+    // Initialised here rather than left undefined, because getProgrammingExerciseCreationConfig() must hand the child
+    // components a stable array identity. See the comment on that getter.
+    exerciseCategories: ExerciseCategory[] = [];
     existingCategories: ExerciseCategory[] = [];
 
     formStatusSections = signal<FormSectionStatus[]>([]);
@@ -259,7 +278,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public sequentialTestRunsAllowed = false;
     public auxiliaryRepositoriesSupported = false;
     auxiliaryRepositoriesValid = signal<boolean>(true);
-    public customBuildPlansSupported = '';
     public theiaEnabled = false;
     readonly plagiarismEnabled = signal(false);
     private _hyperionEnabled = false;
@@ -279,7 +297,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     // This is a wrapper to allow modifications from the other subcomponents
     public readonly importOptions: ImportOptions = {
         recreateBuildPlans: false,
-        updateTemplate: false,
         setTestCaseVisibilityToAfterDueDate: true,
     };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
@@ -410,13 +427,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.programmingExercise.projectType = this.projectTypes?.[0];
             this.selectedProjectTypeValue = this.projectTypes?.[0];
             this.withDependenciesValue = false;
-            this.buildPlanLoaded = false;
             if (this.programmingExercise.buildConfig) {
                 this.programmingExercise.buildConfig.buildPlanConfiguration = undefined;
             } else {
                 this.programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
             }
-            this.programmingExercise.customizeBuildPlan = language === ProgrammingLanguage.EMPTY;
         }
 
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
@@ -547,7 +562,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
-            this.backupExercise = cloneDeep(this.programmingExercise);
+            this.backupExercise = deepClone(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             if (this.programmingExercise.projectType === ProjectType.MAVEN_MAVEN) {
                 this.selectedProjectTypeValue = ProjectType.PLAIN_MAVEN;
@@ -629,7 +644,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.inProductionEnvironment = this.profileService.isProduction();
         if (this.profileService.isProfileActive(PROFILE_LOCALCI)) {
             this.isLocalCIEnabled = true;
-            this.customBuildPlansSupported = PROFILE_LOCALCI;
         }
 
         this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
@@ -744,10 +758,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         loadCourseExerciseCategories(courseId, this.courseService, this.exerciseService, this.alertService).subscribe((existingCategories) => {
             this.existingCategories = existingCategories;
         });
-
-        if (this.exerciseCategories === undefined) {
-            this.exerciseCategories = [];
-        }
     }
 
     /**
@@ -756,7 +766,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * so both references must point to the same object for changes to propagate correctly.
      */
     private ensureExerciseCategoriesReference() {
-        this.exerciseCategories = this.programmingExercise.categories ?? this.exerciseCategories ?? [];
+        this.exerciseCategories = this.programmingExercise.categories ?? this.exerciseCategories;
         this.programmingExercise.categories = this.exerciseCategories;
     }
 
@@ -846,6 +856,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.isSaving() || this.isGeneratingWithAi()) {
             return;
         }
+        // Flush before isSaving / modal so pending Monaco text is on the DTO even if the user confirms
+        // immediately. A rejected parse aborts: the model still holds the previous grading criteria.
+        if (this.exerciseGradingComponent()?.prepareForSave() === false) {
+            return;
+        }
         const preUpdateModalRef = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode());
         this.determineProjectTypeIfNotSelectedAndInSimpleMode();
 
@@ -888,20 +903,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * @param emptyRepositories if true, clear sources after setup
      */
     private saveExerciseWithOptions(emptyRepositories: boolean) {
-        // trim potential whitespaces that can lead to issues
-        if (this.programmingExercise.customizeBuildPlan) {
-            const phasesJSON = this.exerciseLanguageComponent()?.programmingExerciseCustomBuildPlanComponent()?.getBuildPlanPhasesJSON();
-            if (phasesJSON) {
-                this.programmingExercise.buildConfig!.buildPlanConfiguration = phasesJSON;
-            } else {
-                this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
-            }
-            this.programmingExercise.buildConfig!.buildScript = undefined;
-        } else if (!this.isImportFromFile && !this.isImportFromSharing) {
-            this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
-            this.programmingExercise.buildConfig!.buildScript = undefined;
-        }
-
         if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig?.timeoutSeconds < 1) {
             this.programmingExercise.buildConfig.timeoutSeconds = 0;
         }
@@ -914,13 +915,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         Exercise.sanitize(this.programmingExercise);
 
         this.isSaving.set(true);
-
-        if (this.exerciseService.hasExampleSolutionPublicationDateWarning(this.programmingExercise)) {
-            this.alertService.addAlert({
-                type: AlertType.WARNING,
-                message: 'artemisApp.exercise.exampleSolutionPublicationDateWarning',
-            });
-        }
 
         /*
          If properties for an auxiliary repository were edited, the changes have to be done manually in the VCS and CIS.
@@ -1161,10 +1155,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     onStaticCodeAnalysisChanged() {
-        // On import: If SCA mode changed, activate recreation of build plans and update of the template
+        // On import: If SCA mode changed, activate recreation of build plans
         if (this.isImportFromExistingExercise && this.programmingExercise.staticCodeAnalysisEnabled !== this.originalStaticCodeAnalysisEnabled) {
             this.importOptions.recreateBuildPlans = true;
-            this.importOptions.updateTemplate = true;
         }
 
         if (!this.programmingExercise.staticCodeAnalysisEnabled) {
@@ -1172,8 +1165,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
     }
 
-    onRecreateBuildPlanOrUpdateTemplateChange() {
-        if (!this.importOptions.recreateBuildPlans || !this.importOptions.updateTemplate) {
+    onRecreateBuildPlanChange() {
+        if (!this.importOptions.recreateBuildPlans) {
             this.programmingExercise.staticCodeAnalysisEnabled = this.originalStaticCodeAnalysisEnabled;
         }
 
@@ -1257,19 +1250,35 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateTimeout(validationErrorReasons);
         this.validateCheckoutPaths(validationErrorReasons);
         this.validateExercisePlagiarism(validationErrorReasons);
+        // Must stay after the points, bonus-point, penalty and submission-limit checks: it defers to them.
         this.validateGradingSection(validationErrorReasons);
-        this.validateBuildPhaseNames(validationErrorReasons);
 
         return validationErrorReasons;
     }
 
+    /**
+     * Fallback for the grading form as a whole. It stays because the timeline it contains has no validator of
+     * its own, so this is the only thing that reports an invalid timeline. It is skipped when a grading field
+     * already reported the cause, which would otherwise duplicate e.g. missing points as a second, vaguer line.
+     *
+     * An invalid timeline is not such a duplicate: it is a separate cause that only this message names. Suppressing
+     * it alongside a field error would hide the timeline until that field is fixed, so the deduplication applies
+     * only when the named fields are the whole story.
+     */
     private validateGradingSection(validationErrorReasons: ValidationReason[]): void {
-        if (this.exerciseGradingComponent()?.formValid === false) {
-            validationErrorReasons.push({
-                translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason',
-                translateValues: {},
-            });
+        if (this.exerciseGradingComponent()?.formValid !== false) {
+            return;
         }
+        // The grading component now carries the timeline's status directly, where it used to reach into a child
+        // lifecycle component for it.
+        const isTimelineInvalid = this.exerciseGradingComponent()?.timelineStatus().valid === false;
+        if (!isTimelineInvalid && validationErrorReasons.some((reason) => GRADING_FIELD_REASON_KEYS.has(reason.translateKey))) {
+            return;
+        }
+        validationErrorReasons.push({
+            translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason',
+            translateValues: {},
+        });
     }
 
     private validateExercisePlagiarism(validationErrorReasons: ValidationReason[]) {
@@ -1293,21 +1302,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                         });
                     }
                 }
-            });
-        }
-    }
-
-    private validateBuildPhaseNames(validationErrorReasons: ValidationReason[]): void {
-        if (!this.programmingExercise.customizeBuildPlan || this.customBuildPlansSupported !== PROFILE_LOCALCI) {
-            return;
-        }
-
-        const customBuildPlanComponent = this.exerciseLanguageComponent()?.programmingExerciseCustomBuildPlanComponent();
-        const phasesValid = customBuildPlanComponent?.arePhaseNamesValid(this.buildPhasesTemplateService.buildPlan()?.phases ?? []);
-        if (!phasesValid) {
-            validationErrorReasons.push({
-                translateKey: 'artemisApp.programmingExercise.buildPhasesEditor.invalidPhaseNames',
-                translateValues: {},
             });
         }
     }
@@ -1601,7 +1595,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private createProgrammingExerciseForImportFromFile() {
-        this.programmingExercise = cloneDeep(history.state.programmingExerciseForImportFromFile);
+        this.programmingExercise = deepClone(history.state.programmingExerciseForImportFromFile);
         this.programmingExercise.id = undefined;
         this.programmingExercise.exerciseGroup = undefined;
         this.programmingExercise.course = undefined;
@@ -1650,59 +1644,65 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * effect that both reads the config and writes back a two-way model() (e.g. isAuxiliaryRepositoryInputValid)
      * then re-dirties the parent every pass, producing an infinite change-detection loop (NG0103).
      */
-    private readonly programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig = Object.assign({}) as ProgrammingExerciseCreationConfig;
+    private readonly programmingExerciseCreationConfig: Partial<ProgrammingExerciseCreationConfig> = {};
 
     getProgrammingExerciseCreationConfig(): ProgrammingExerciseCreationConfig {
-        return Object.assign(this.programmingExerciseCreationConfig, {
-            isImportFromFile: this.isImportFromFile,
-            isImportFromSharing: this.isImportFromSharing,
-            isImportFromExistingExercise: this.isImportFromExistingExercise,
-            showSummary: false,
-            isEdit: this.isEdit,
-            isExamMode: this.isExamMode(),
-            auxiliaryRepositoriesSupported: this.auxiliaryRepositoriesSupported,
-            auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
-            auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
-            checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
-            customBuildPlansSupported: this.customBuildPlansSupported,
-            invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
-            invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
-            titleNamePattern: EXERCISE_TITLE_NAME_PATTERN,
-            shortNamePattern: this.shortNamePattern,
-            updateRepositoryName: this.updateRepositoryName,
-            updateCheckoutDirectory: this.updateCheckoutDirectory,
-            refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
-            exerciseCategories: this.exerciseCategories,
-            existingCategories: this.existingCategories,
-            updateCategories: this.categoriesChanged,
-            modePickerOptions: this.modePickerOptions,
-            withDependencies: this.withDependencies,
-            onWithDependenciesChanged: this.withDependenciesChanged,
-            packageNameRequired: this.packageNameRequired,
-            packageNamePattern: this.packageNamePattern,
-            supportedLanguages: this.supportedLanguages,
-            selectedProgrammingLanguage: this.selectedProgrammingLanguage,
-            onProgrammingLanguageChange: this.programmingLanguageChanged,
-            projectTypes: this.projectTypes,
-            selectedProjectType: this.selectedProjectType,
-            onProjectTypeChange: this.projectTypeChanged,
-            sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
-            staticCodeAnalysisAllowed: this.staticCodeAnalysisAllowed,
-            onStaticCodeAnalysisChanged: this.staticCodeAnalysisChanged,
-            maxPenaltyPattern: this.maxPenaltyPattern,
-            problemStatementLoaded: this.problemStatementLoaded,
-            templateParticipationResultLoaded: this.templateParticipationResultLoaded,
-            hasUnsavedChanges: this.hasUnsavedChanges,
-            rerenderSubject: this.rerenderSubject.asObservable(),
-            validIdeSelection: this.validIdeSelection,
-            validOnlineIdeSelection: this.validOnlineIdeSelection,
-            inProductionEnvironment: this.inProductionEnvironment,
-            recreateBuildPlans: this.importOptions.recreateBuildPlans,
-            onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
-            updateTemplate: this.importOptions.updateTemplate,
-            recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
-            buildPlanLoaded: this.buildPlanLoaded,
-        });
+        // The fields are assigned onto the cached object one by one, deliberately by reference. A copy helper is
+        // wrong here: this getter runs on every change-detection pass (five template bindings use it), and handing
+        // out detached copies of the live component state would give `modePickerOptions`, `exerciseCategories`, the
+        // validation RegExps and `rerenderSubject` a fresh identity every pass — which re-creates the `track`-by-identity
+        // mode picker (NG0956), re-seeds the category selector's local working copy, and disconnects the Subject.
+        const config = this.programmingExerciseCreationConfig;
+        config.isImportFromFile = this.isImportFromFile;
+        config.isImportFromSharing = this.isImportFromSharing;
+        config.isImportFromExistingExercise = this.isImportFromExistingExercise;
+        config.showSummary = false;
+        config.isEdit = this.isEdit;
+        config.isExamMode = this.isExamMode();
+        config.auxiliaryRepositoriesSupported = this.auxiliaryRepositoriesSupported;
+        config.auxiliaryRepositoryDuplicateDirectories = this.auxiliaryRepositoryDuplicateDirectories;
+        config.auxiliaryRepositoryDuplicateNames = this.auxiliaryRepositoryDuplicateNames;
+        config.checkoutSolutionRepositoryAllowed = this.checkoutSolutionRepositoryAllowed;
+        config.invalidDirectoryNamePattern = this.invalidDirectoryNamePattern;
+        config.invalidRepositoryNamePattern = this.invalidRepositoryNamePattern;
+        config.titleNamePattern = EXERCISE_TITLE_NAME_PATTERN;
+        config.shortNamePattern = this.shortNamePattern;
+        config.updateRepositoryName = this.updateRepositoryName;
+        config.updateCheckoutDirectory = this.updateCheckoutDirectory;
+        config.refreshAuxiliaryRepositoryChecks = this.refreshAuxiliaryRepositoryChecks;
+        // Assigned directly, never with a `?? []` fallback: this getter runs on every change-detection pass, so a
+        // fallback would hand the category selector a new array identity each pass. On a creation page, where the
+        // categories start out empty, that re-seeds the selector on every pass, which re-dirties this component and
+        // loops. A production build has no dev-mode guard to break that loop, so the page stops responding entirely.
+        // The field is initialised at its declaration, which is what makes the direct assignment safe.
+        config.exerciseCategories = this.exerciseCategories;
+        config.existingCategories = this.existingCategories;
+        config.updateCategories = this.categoriesChanged;
+        config.modePickerOptions = this.modePickerOptions;
+        config.withDependencies = this.withDependencies;
+        config.onWithDependenciesChanged = this.withDependenciesChanged;
+        config.packageNameRequired = this.packageNameRequired;
+        config.packageNamePattern = this.packageNamePattern;
+        config.supportedLanguages = this.supportedLanguages;
+        config.selectedProgrammingLanguage = this.selectedProgrammingLanguage;
+        config.onProgrammingLanguageChange = this.programmingLanguageChanged;
+        config.projectTypes = this.projectTypes;
+        config.selectedProjectType = this.selectedProjectType;
+        config.onProjectTypeChange = this.projectTypeChanged;
+        config.sequentialTestRunsAllowed = this.sequentialTestRunsAllowed;
+        config.staticCodeAnalysisAllowed = this.staticCodeAnalysisAllowed;
+        config.onStaticCodeAnalysisChanged = this.staticCodeAnalysisChanged;
+        config.maxPenaltyPattern = this.maxPenaltyPattern;
+        config.problemStatementLoaded = this.problemStatementLoaded;
+        config.templateParticipationResultLoaded = this.templateParticipationResultLoaded;
+        config.hasUnsavedChanges = this.hasUnsavedChanges;
+        config.rerenderSubject = this.rerenderObservable;
+        config.validIdeSelection = this.validIdeSelection;
+        config.validOnlineIdeSelection = this.validOnlineIdeSelection;
+        config.inProductionEnvironment = this.inProductionEnvironment;
+        config.recreateBuildPlans = this.importOptions.recreateBuildPlans;
+        config.recreateBuildPlanChange = this.onRecreateBuildPlanChange;
+        return config as ProgrammingExerciseCreationConfig;
     }
 
     private updateFormSectionOnIsValidPlagiarismChange() {

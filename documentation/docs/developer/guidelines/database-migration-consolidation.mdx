@@ -1,211 +1,211 @@
+---
+id: database-migration-consolidation
+title: Database Migration Consolidation
+sidebar_label: Migration Consolidation
+---
+
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
-# Database Migration Consolidation
+Consolidation folds the accumulated Liquibase changelogs into one baseline file. A baseline is added
+alongside the changelogs it summarises and never written over them, so cutting one is a routine
+change that can be made whenever the changelog directory has grown inconvenient, rather than a
+release-shaped event.
 
-## Motivation
-
-Every major Artemis release consolidates all Liquibase changelogs from the previous release cycle into a single initial schema file (`00000000000000_initial_schema.xml`). This is necessary for two reasons:
-
-1. **Startup performance**: Liquibase processes every changelog file on startup to check whether it needs to be applied. With dozens of incremental changelogs, this significantly slows down application startup — especially in test environments where databases are created fresh for each test context (over 11,000 server tests).
-
-2. **Maintainability**: Accumulating hundreds of incremental changelogs across multiple major versions makes the migration history hard to understand and debug. Consolidation creates a clean baseline that represents the final database state.
-
-## Architecture Overview
-
-The consolidation system consists of several components:
-
-### Files
-
-| File | Purpose |
-|------|---------|
-| `00000000000000_initial_schema.xml` | The consolidated schema. Contains three changesets: main (database-agnostic), MySQL-specific, and PostgreSQL-specific. |
-| `20240331151800_cleanup.xml` | Deletes old `DATABASECHANGELOG` entries during upgrade. Gets a new changeset ID each consolidation. |
-| `master.xml` | The changelog manifest. After consolidation, only references the initial schema, cleanup, and post-consolidation changelogs. |
-| `DatabaseMigration.java` | Checks the upgrade path on startup and nullifies the initial schema checksum when upgrading from the required version. |
-| `authorities.csv` | Seed data for the `jhi_authority` table. Must be kept in sync with any authority changes. |
-
-### Changesets in the Initial Schema
-
-The initial schema contains three changesets:
-
-1. **`00000000000001`** (main): All tables, columns, indexes, and foreign keys using database-agnostic types. Columns that require database-specific types (e.g., `enum` on MySQL, `text` on PostgreSQL) are **omitted** from this changeset.
-
-2. **`00000000000002`** (MySQL/H2): Adds database-specific columns with MySQL `enum` types, and applies `varbinary` types. Only runs on MySQL and H2 (via `preConditions`).
-
-3. **`00000000000003`** (PostgreSQL): Adds database-specific columns with PostgreSQL-appropriate types (`varchar`, `text`, `bytea`). Only runs on PostgreSQL.
-
-### Migration Flow
+## The layout
 
 ```
-Fresh install:     No artemis_version → apply schema + cleanup (no-op) + new changelogs → store version
-Upgrade (correct): previousVersion >= requiredVersion → nullify checksum (once) → recalculate → cleanup → new changelogs → store version
-Upgrade (too old): previousVersion < requiredVersion → ERROR + System.exit(15)
-Subsequent runs:   Cleanup already applied → skip checksum nullification entirely
+src/main/resources/config/liquibase/
+  master.xml                  the manifest, applied in the order below
+  history/
+    master.xml                every generation, oldest first
+    v10/                      the changelogs the v10 baseline folded
+  baseline/
+    v10_initial_schema.xml    the schema as of the last cut, generated
+  changelog/                  migrations written since the cut; new changelogs go here
+  data/                       seed data, never folded
 ```
 
-## Step-by-Step Consolidation Process
+`baseline/` holds exactly one file. At the next cut the current baseline moves into the new
+generation directory under `history/`, because it is then part of the history that the new baseline
+folds.
 
-This section describes the complete process for consolidating changelogs when creating a new major version (e.g., 9.0.0 from 8.8.x). Ideally, this process is automated using the `consolidate-changelogs.sh` script described below.
-
-### Prerequisites
-
-- Docker installed (for database verification)
-- The release branch (e.g., `release/8.8.x`) must be finalized with the last bugfix tag (e.g., `8.8.6`)
-- Current `develop` branch contains the `master.xml` with all changelogs
-
-### Step 1: Identify Changelogs to Fold
-
-Compare `master.xml` between the release branch and `develop` to determine which changelogs exist only on `develop` (these must be kept as incremental migrations):
-
-```bash
-# List changelogs that exist on develop but NOT on the release branch.
-# These are the ones to KEEP as incremental migrations (not fold).
-comm -13 \
-  <(git show release/8.8.x:src/main/resources/config/liquibase/master.xml | grep 'include file' | sed 's/.*changelog\///' | sed 's/".*//' | sort) \
-  <(grep 'include file' src/main/resources/config/liquibase/master.xml | sed 's/.*changelog\///' | sed 's/".*//' | sort)
-
-# To identify the changelogs to FOLD (on release but shared with develop), use:
-comm -12 \
-  <(git show release/8.8.x:src/main/resources/config/liquibase/master.xml | grep 'include file' | sed 's/.*changelog\///' | sed 's/".*//' | sort) \
-  <(grep 'include file' src/main/resources/config/liquibase/master.xml | sed 's/.*changelog\///' | sed 's/".*//' | sort)
-```
-
-### Step 2: Edit the Initial Schema
-
-The initial schema must be modified to reflect the **net structural effect** of all folded changelogs. This means:
-
-- **Add new tables** created by the changelogs
-- **Remove dropped tables** (and their indexes/FKs)
-- **Add/remove/modify columns** on existing tables
-- **Add/remove/modify indexes and foreign keys**
-- **Skip SQL data migration statements** (these are only needed for upgrading existing databases, not for fresh installs)
+Writing a migration does not change: create `changelog/<timestamp>_changelog.xml` and add an
+`<include>` to `master.xml`, as described in [Database](./database.mdx).
 
 <Callout variant={CalloutVariant.warning}>
-  <strong>Critical:</strong> Do NOT regenerate the schema from a database dump. This introduces unnecessary type changes and formatting differences. Instead, manually apply only the structural changes from each changelog to the existing initial schema.
+
+    A changelog cherry-picked from a release branch goes in `changelog/` too, even when its timestamp is
+    older than the baseline. Filing it under `history/` would have a fresh installation record it without
+    executing it, and since the baseline predates it the change would simply be missing. The converge
+    check catches this, but it is easier not to do.
+
 </Callout>
 
-#### Database-Specific Columns
+## What runs when
 
-Columns that have different types on MySQL vs PostgreSQL must be handled specially:
+`master.xml` applies them in the order `history/`, `baseline/`, `changelog/`, `data/`.
 
-1. **Do NOT include** these columns in the main changeset (`00000000000001`)
-2. **Add** them in the MySQL changeset (`00000000000002`) with `enum`/`varbinary` types
-3. **Add** them in the PostgreSQL changeset (`00000000000003`) with `varchar`/`text`/`bytea` types
+| | `history/` | `baseline/` | `changelog/` | `data/` |
+|---|---|---|---|---|
+| Empty database | recorded, not executed | executed | executed | evaluated |
+| Existing database | already recorded | recorded, not executed | executed | evaluated |
 
-Any indexes or foreign keys that reference these columns must also be moved to the database-specific changesets.
+On an empty database `ArtemisSpringLiquibase` runs Liquibase's `changelog-sync` over
+`history/master.xml` before the update, which writes the folded changesets into `DATABASECHANGELOG`
+without executing them. The baseline then creates the schema in one step.
 
-#### Verifying Structural Equivalence
+On an existing database the folded changesets are already recorded, so Liquibase skips them, and the
+baseline marks itself as ran because its precondition finds the schema already present.
 
-After editing, the resulting schema must produce **identical database structures** on both MySQL and PostgreSQL compared to what `develop` produces. Use Docker containers to verify:
+The history is listed **before** the baseline so that `master.xml` is correct on its own. Applied by a
+plain `SpringLiquibase` to an empty database — which is what a test harness that constructs its own
+does, Zonky's embedded-database provider among them — the history executes and the baseline then finds
+the schema already there and marks itself as ran. Same schema, by the slow route. That makes the
+`changelog-sync` an optimisation rather than something correctness depends on, which matters because
+nothing in the changelog can force a harness to use our subclass.
+
+Both routes end with the same schema and the same set of recorded changesets. The `EXECTYPE` of a row
+can differ: `changelog-sync` records everything as `EXECUTED` without evaluating preconditions, while a
+real upgrade records `MARK_RAN` where a precondition did not hold. Nothing reads that column, and the
+checks compare the set of recorded changesets rather than how each one got there.
+
+### Two rules the mechanism depends on
+
+**Every changelog under `history/` pins `logicalFilePath`.** Liquibase identifies a changeset by id,
+author and filename, so moving a file into a generation directory would otherwise make it a new
+changeset and run it again on every deployed database. Pinning the path it was first applied at makes
+the move invisible.
+
+**No changeset under `history/` is gated by a context.** `changelog-sync` applies context filters
+exactly as an update does, so a folded changeset with a context would be recorded on a fresh
+installation and never executed — correct for a schema change the baseline already contains, and
+wrong for seed data, whose rows would simply be missing. Seed data belongs in `data/`, which is
+evaluated on every installation.
+
+Both rules are enforced by the layout check described below.
+
+## Cutting a baseline
 
 ```bash
-# Start test databases
-docker run -d --name mysql-dev -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -e MYSQL_DATABASE=Artemis -p 3310:3306 mysql:9
-docker run -d --name mysql-new -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -e MYSQL_DATABASE=Artemis -p 3311:3306 mysql:9
-docker run -d --name pg-dev -e POSTGRES_USER=artemis -e POSTGRES_PASSWORD=artemis -e POSTGRES_DB=Artemis -p 5440:5432 postgres:18
-docker run -d --name pg-new -e POSTGRES_USER=artemis -e POSTGRES_PASSWORD=artemis -e POSTGRES_DB=Artemis -p 5441:5432 postgres:18
-
-# Apply develop to dev containers, new branch to new containers
-# Then compare with mysqldump/pg_dump
+python3 supporting_scripts/liquibase/cut_baseline.py --generation v11
+python3 supporting_scripts/liquibase/verify_schema.py
 ```
 
-### Step 3: Update `DatabaseMigration.java`
+The script replays the current baseline and every changelog under `changelog/` onto an in-memory
+model of the schema, writes the result as the new baseline, moves the folded files into
+`history/v11/` with their `logicalFilePath` pinned, and rewrites `master.xml`. It refuses to fold
+anything it does not understand rather than skipping it, because a silently dropped change produces a
+baseline that is wrong in a way no check phrased in terms of the baseline can detect.
 
-Add a new `MigrationPath` entry:
-
-```java
-migrationPaths.add(new MigrationPath("8.8.6"));  // required for migration to 9.0.0 until 10.0.0
-```
-
-Also update the hardcoded Liquibase version string in `updateInitialChecksum()` to match the current Liquibase version from `gradle.properties`:
-
-```java
-LIQUIBASE = '5.0.2',  // must match liquibase_version in gradle.properties
-```
+It replays the changelogs' own change elements rather than reading a live database, which is what
+keeps the types portable. Generating a baseline from a database writes back the types that one engine
+spells them with — `TIMESTAMP(3) WITHOUT TIME ZONE`, `FLOAT8` — and those do not apply to the other.
 
 <Callout variant={CalloutVariant.warning}>
-  <strong>Version-dependent:</strong> If the Liquibase version changes between major releases, the hardcoded version string in <code>updateInitialChecksum()</code> must be updated to match. Check <code>gradle.properties</code> for the current <code>liquibase_version</code> value.
+    The generated baseline is not reviewed line by line and must not be edited by hand: the next cut
+    regenerates it. What establishes that it is correct is the converge check, which is why running
+    `verify_schema.py` afterwards is part of cutting a baseline and not an optional extra.
 </Callout>
 
-### Step 4: Update the Cleanup Changeset
+### Cut a new generation rather than re-cutting the current one
 
-In `20240331151800_cleanup.xml`, update the changeset ID to a new timestamp (e.g., current date in `YYYYMMDDHHmmss` format). This ensures the cleanup re-executes on upgrade:
+Re-running the cut for the generation that is already in `baseline/` rewrites the contents of
+changesets a database may have recorded. Liquibase stores a checksum over those contents and refuses
+to start when it no longer matches, so that database is stuck until someone clears the checksum by
+hand — the failure mode this whole layout exists to remove.
 
-```xml
-<changeSet id="20260406120000" author="krusche">
-    <sql>
-        DELETE FROM DATABASECHANGELOG WHERE ID not like '0000000000000%';
-    </sql>
-    <sql>
-        DELETE FROM migration_changelog;
-    </sql>
-</changeSet>
-```
+So the rule is about who has recorded the baseline, not about which release it belongs to:
 
-The `WHERE ID not like '0000000000000%'` preserves all three initial schema changesets (IDs `00000000000001`, `00000000000002`, `00000000000003`).
+- **Nothing has recorded it yet.** Re-cut freely. This is the normal state of a baseline on a branch
+  that has not been deployed anywhere, and it is how a branch absorbs changelogs that arrived on
+  `develop` while it was open: merge, re-cut, run the checks.
+- **Anything has recorded it.** Never re-cut. Cut the next generation instead, which needs no
+  migration path and leaves every recorded changeset exactly as it is.
 
-<Callout variant={CalloutVariant.warning}>
-  <strong>Important:</strong> The cleanup changeset ID is also referenced in <code>DatabaseMigration.java</code> in the <code>isSchemaConsolidationCompleted()</code> method. When you change the cleanup ID here, you <strong>must also update</strong> the hardcoded ID in that method to match. Similarly, update the <code>DELETE</code> statement to preserve any develop-only changelogs that may already be applied on test/staging servers.
-</Callout>
+"Anything" includes a test server. A Helios deployment from a branch records that branch's baseline,
+so re-cutting afterwards makes the next deployment to the same server fail validation. That is a
+stale database rather than a broken changelog, and recreating it is the fix — but it is worth knowing
+before reading the failure as a fault in the mechanism.
 
-### Step 5: Update `master.xml`
+Adding a changelog before a release does not require a re-cut at all. A changelog under `changelog/`
+runs on a fresh installation and on an upgrade alike, and `converge` compares the baseline only
+against the history it folded, so nothing there can invalidate it. Re-cutting before a release is a
+tidiness choice: it empties `changelog/` again and lets a fresh installation create the whole schema
+in one step, which is worth a few milliseconds and no more.
 
-Remove all folded changelog includes. Keep only:
-- The initial schema
-- The cleanup file
-- Any changelogs that exist only on `develop` (not on the release branch)
+### Retiring a generation
 
-### Step 6: Delete Old Changelog Files
+Delete the directory under `history/` and its include in `history/master.xml`. Liquibase does not
+mind `DATABASECHANGELOG` rows whose changelog file no longer exists, so this is safe for every
+database that already ran those changelogs.
 
-Delete all XML files for folded changelogs from `src/main/resources/config/liquibase/changelog/`. Also delete any orphaned files (files on disk but not referenced in `master.xml`).
+It is not safe for a database that has not. Add a `MigrationPath` in `DatabaseMigration.java` naming
+the last release of the oldest generation still present, and record it in the
+[Upgrade Guide](/admin/upgrade-guide). Retiring a generation is the only reason a new migration path
+is needed: from the v10 baseline on, each generation owns its own changeset ids, so the identifier
+collisions that forced a path at every major release up to 9.x cannot recur.
 
-### Step 7: Update `authorities.csv`
-
-If any changelog added new entries to `jhi_authority` via SQL `INSERT` statements, add them to `authorities.csv` instead (since the `loadData` in the initial schema loads from this file).
-
-### Step 8: Verify
-
-1. **Server tests**: `./gradlew test -x webapp` — all tests must pass (uses PostgreSQL via Testcontainers)
-2. **E2E tests**: `./run-e2e-tests-local-fast.sh` — all tests must pass
-3. **Schema comparison**: Use Docker containers to verify MySQL and PostgreSQL schemas are identical between `develop` and the new branch
-4. **Code quality**: `./gradlew spotlessCheck checkstyleMain -x webapp`
-
-## Automation Script
-
-The script `src/main/resources/config/liquibase/consolidate-changelogs.sh` automates the verification portion of this process. It:
-
-1. Starts MySQL and PostgreSQL Docker containers
-2. Applies the `develop` branch changelogs to "baseline" containers
-3. Applies the current branch changelogs to "new" containers
-4. Dumps and compares the resulting schemas
-5. Reports any differences
+## The checks
 
 ```bash
-# Usage (from the project root):
-bash src/main/resources/config/liquibase/consolidate-changelogs.sh
+python3 supporting_scripts/liquibase/verify_schema.py                      # everything
+python3 supporting_scripts/liquibase/verify_schema.py --check converge --database postgres
 ```
+
+Six checks, the last five against MySQL and PostgreSQL each. They need Docker, and they export the
+JDBC drivers through Gradle so the versions match the ones the application uses.
+
+| Check | Question it answers |
+|-------|---------------------|
+| `layout` | Does every folded changelog pin `logicalFilePath`, and is none of them gated by a context? |
+| `replay` | Does an empty database accept the whole folded history, in order? |
+| `converge` | Does the baseline describe the same schema as the history it folded? |
+| `fresh-vs-upgrade` | Do a fresh installation and one that replayed the whole folded history end up identical, in schema and in recorded changesets? |
+| `upgrade-from-floor` | Does an installation at the oldest release we support upgrading from end up matching a fresh one? |
+| `seed` | Does the seed data actually land on a fresh installation? |
+
+`converge` and `fresh-vs-upgrade` compare a model read out of `information_schema` rather than two
+schema dumps. Column *order* is deliberately not part of that model: a table the baseline creates in
+one statement lists its columns in declaration order, while the same table replayed from incremental
+changelogs has every later column appended at the end. Both are the same schema, and diffing dumps
+reports the second as a difference on nearly every table, which buries the one table that really did
+diverge.
+
+`seed` exists because nothing else notices when seed data goes missing. The seed changelogs describe
+rows rather than schema, so every other check passes whether or not a single row was inserted, and the
+symptom surfaces much later as end-to-end tests failing against an empty instance. A seed CSV also has
+to match the schema in its *final* shape: a column that a later changelog drops cannot appear in it,
+even though the seed used to run at a point in the changelog order where that column still existed.
+
+`upgrade-from-floor` is the one that verifies the upgrade a release actually promises. `fresh-vs-upgrade`
+replays *all* the folded changelogs, which describes a database that was on develop's tip — a stronger
+premise than any real installation offers. The floor check instead restores the Liquibase resources from
+the git tag of the oldest supported release, reading which release that is from the last `MigrationPath`
+in `DatabaseMigration.java` so the two cannot drift apart. It is what establishes that each baseline
+changeset's precondition holds against a schema that is missing everything written since that tag.
+
+`ci-liquibase.yml` runs all six on every pull request, including ones that touch no changelog: the
+baseline is generated, so nothing about the file itself says it still matches, and a new changelog
+filed in the wrong directory is exactly the mistake these catch.
 
 <Callout variant={CalloutVariant.info}>
-  The script requires Docker, a git worktree of the develop branch, and the Gradle Liquibase plugin. It uses ports 3310/3311 (MySQL) and 5440/5441 (PostgreSQL) — ensure these are not in use by local databases.
+    All six run against empty databases, where every backfill and every guarded `NOT NULL` passes
+    trivially. They verify structure and seeding, not data migration. Test a migration that moves or
+    backfills data against a restored dump as well, as described in the `liquibase-migration` skill.
 </Callout>
 
-## Checklist for Future Consolidations
+## Checklist
 
-When performing the next consolidation (e.g., for 10.0.0):
+- [ ] Nothing has recorded the generation being cut, or a new generation is being cut instead
+- [ ] `cut_baseline.py` run, and it reported no refusals
+- [ ] The generated baseline committed unedited
+- [ ] `verify_schema.py` green on both databases
+- [ ] A `MigrationPath` added, and the Upgrade Guide updated, if a generation was retired
+- [ ] Server tests and end-to-end tests green
 
-- [ ] Identify the last bugfix tag on the release branch (e.g., `9.x.y`)
-- [ ] Identify changelogs only on `develop` (to keep as incremental)
-- [ ] Edit `initial_schema.xml`: apply net structural effect of all folded changelogs
-- [ ] Handle database-specific columns correctly (MySQL enum vs PostgreSQL varchar/text)
-- [ ] Verify constraint names match (PK names, unique constraints, named NOT NULL constraints)
-- [ ] Add new `MigrationPath` in `DatabaseMigration.java`
-- [ ] **Check Liquibase version**: Update hardcoded version in `updateInitialChecksum()` if it changed
-- [ ] Update cleanup changeset ID in `20240331151800_cleanup.xml`
-- [ ] Update `master.xml` (remove folded, keep new)
-- [ ] Update `authorities.csv` if new roles were added
-- [ ] Delete old changelog XML files
-- [ ] Run full server test suite
-- [ ] Run full E2E test suite
-- [ ] Verify schema equivalence on MySQL and PostgreSQL using Docker containers
-- [ ] Document the new upgrade path in the [Admin Upgrade Guide](/admin/upgrade-guide)
+## Related pages
+
+- [Database](./database.mdx): entity and query guidelines for everyday changes
+- [Upgrade Guide](/admin/upgrade-guide): the operator-facing view of these upgrade paths
+- [Local database tests](../local-database-tests.mdx): running the suite against MySQL and PostgreSQL locally

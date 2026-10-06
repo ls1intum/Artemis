@@ -1,18 +1,18 @@
 import { Directive, inject, signal } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
+import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/communication.util';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Subscription } from 'rxjs';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 
 @Directive({
-    providers: [MetisService],
+    providers: [CommunicationService],
 })
 export abstract class CourseDiscussionDirective {
-    protected metisService = inject(MetisService);
+    protected communicationService = inject(CommunicationService);
 
     searchText?: string;
     currentPostContextFilter!: PostContextFilter; // set by setFilterAndSort() (implemented in subclasses) before use
@@ -40,12 +40,12 @@ export abstract class CourseDiscussionDirective {
     faLongArrowAltDown = faLongArrowAltDown;
 
     /**
-     * on changing any filter, the metis service is invoked to deliver all posts for the
+     * on changing any filter, the communication service is invoked to deliver all posts for the
      * currently set context, filtered on the server
      */
     onSelectContext(): void {
         this.setFilterAndSort();
-        this.metisService.getFilteredPosts(this.currentPostContextFilter);
+        this.communicationService.getFilteredPosts(this.currentPostContextFilter);
     }
 
     /**

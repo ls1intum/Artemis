@@ -5,9 +5,7 @@ import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { LtiService } from 'app/foundation/service/lti.service';
-import { NgStyle } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -23,6 +21,10 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { faCode } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
 
 /**
  * Minimal contract for exercise-details route components activated in the inner outlet.
@@ -70,7 +72,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     selector: 'jhi-course-exercises',
     templateUrl: './course-exercises.component.html',
     styleUrls: ['../course-overview/course-overview.scss'],
-    imports: [SidebarComponent, CourseSidebarToggleButtonComponent, NgStyle, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, TranslateDirective, ArtemisTranslatePipe, TumAetUiEmptyStateComponent],
 })
 export class CourseExercisesComponent implements SidebarView {
     private courseStorageService = inject(CourseStorageService);
@@ -118,6 +120,7 @@ export class CourseExercisesComponent implements SidebarView {
 
     protected readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
+    protected readonly faCode = faCode;
 
     constructor() {
         // Selecting the exercises tab while already on it acts as a refresh
@@ -203,6 +206,12 @@ export class CourseExercisesComponent implements SidebarView {
     }
 
     navigateToExercise() {
+        // The URL read below decides which exercise is open, but during a navigation away it already points
+        // at another course, while relativeTo still resolves against this one. Auto-selecting then replaces
+        // the destination the user picked, so leave the choice to whoever owns the new URL.
+        if (!this.router.url.startsWith(`/courses/${this._courseId()}/exercises`)) {
+            return;
+        }
         const upcomingExercise = this.courseOverviewService.getUpcomingExercise(this._course()?.exercises);
         const lastSelectedExercise = this.getLastSelectedExercise();
         let exerciseId = this.route.firstChild?.snapshot?.params.exerciseId;
@@ -277,7 +286,7 @@ export class CourseExercisesComponent implements SidebarView {
     processExercises(exercises: Exercise[]): void {
         const sortedExercises = this.courseOverviewService.sortExercises(this.preserveSidebarParticipationSnapshots(exercises));
         this._sortedExercises.set(sortedExercises);
-        const { groupedData, ungroupedData } = this.courseOverviewService.buildGroupedExerciseData(sortedExercises, this._courseId());
+        const { groupedData, ungroupedData } = this.courseOverviewService.buildGroupedExerciseData(sortedExercises);
         this._sidebarExercises.set(ungroupedData);
         this._accordionExerciseGroups.set(groupedData);
         this.updateSidebarData();
@@ -310,7 +319,7 @@ export class CourseExercisesComponent implements SidebarView {
             const updatedParticipations = currentParticipation
                 ? participations.map((participation) => (this.isSameParticipationSlot(participation, sidebarParticipation) ? sidebarParticipation : participation))
                 : participations.concat(sidebarParticipation);
-            return { ...exercise, studentParticipations: updatedParticipations };
+            return cloneWith(exercise, { studentParticipations: updatedParticipations });
         });
         return didUpdate ? updatedExercises : exercises;
     }
@@ -362,10 +371,8 @@ export class CourseExercisesComponent implements SidebarView {
             return;
         }
         // A different object has to be set: a signal only notifies when the reference changes. The exercise objects
-        // themselves are carried over by the assignment below, so live updates keep reaching what the cards render.
-        const updatedCourse = deepClone(course);
-        updatedCourse.exercises = updatedCourseExercises;
-        this._course.set(updatedCourse);
+        // themselves are carried over, so live updates keep reaching what the cards render.
+        this._course.set(cloneWith(course, { exercises: updatedCourseExercises }));
     }
 
     private updateExercisesWithParticipation(exercises: Exercise[] | undefined, changedParticipation: StudentParticipation): Exercise[] | undefined {
@@ -386,7 +393,7 @@ export class CourseExercisesComponent implements SidebarView {
             const updatedParticipations = hasParticipation
                 ? participations.map((participation) => (this.isSameParticipationSlot(participation, changedParticipation) ? changedParticipation : participation))
                 : participations.concat(changedParticipation);
-            return { ...exercise, studentParticipations: updatedParticipations };
+            return cloneWith(exercise, { studentParticipations: updatedParticipations });
         });
         return didUpdate ? updatedExercises : exercises;
     }

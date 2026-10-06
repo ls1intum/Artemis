@@ -25,12 +25,12 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
-import { cloneDeep } from 'lodash-es';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { downloadCsv } from 'app/foundation/util/csv-download.util';
 import { DialogService } from 'primeng/dynamicdialog';
 import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 vi.mock('app/foundation/util/csv-download.util', () => {
     return {
@@ -115,7 +115,7 @@ describe('GradingComponent', () => {
         } as ActivatedRoute;
 
         const gradingScaleToUse = gradingScaleBody ?? new GradingScale();
-        gradingScaleToUse.gradeSteps = cloneDeep(gradeSteps);
+        gradingScaleToUse.gradeSteps = deepClone(gradeSteps);
 
         return TestBed.configureTestingModule({
             providers: [
@@ -146,7 +146,7 @@ describe('GradingComponent', () => {
                 comp = fixture.componentInstance;
 
                 comp.gradingScale = new GradingScale();
-                comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(gradeSteps) }));
+                comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: deepClone(gradeSteps) }));
                 comp.courseId = courseId;
                 comp.examId = examId;
                 comp.firstPassingGrade.set('Pass');
@@ -252,6 +252,24 @@ describe('GradingComponent', () => {
 
         it('should have default view mode as interval', () => {
             expect(comp.viewMode()).toBe(GradingViewMode.INTERVAL);
+        });
+
+        it('announces the selected grading view after keyboard activation', () => {
+            fixture.detectChanges();
+            const interval = fixture.nativeElement.querySelector('.tab-item.interval') as HTMLElement;
+            const detailed = fixture.nativeElement.querySelector('.tab-item.detailed') as HTMLElement;
+            expect(interval.getAttribute('aria-pressed')).toBe('true');
+            expect(detailed.getAttribute('aria-pressed')).toBe('false');
+            detailed.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+            fixture.detectChanges();
+            expect(comp.viewMode()).toBe(GradingViewMode.DETAILED);
+            expect(interval.getAttribute('aria-pressed')).toBe('false');
+            expect(detailed.getAttribute('aria-pressed')).toBe('true');
+            interval.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            fixture.detectChanges();
+            expect(comp.viewMode()).toBe(GradingViewMode.INTERVAL);
+            expect(interval.getAttribute('aria-pressed')).toBe('true');
+            expect(detailed.getAttribute('aria-pressed')).toBe('false');
         });
 
         it('should switch view mode', () => {
@@ -829,7 +847,7 @@ describe('GradingComponent', () => {
         });
 
         it('should set points correctly', () => {
-            const testGradeStep = cloneDeep(gradeStep1);
+            const testGradeStep = deepClone(gradeStep1);
             testGradeStep.lowerBoundPoints = undefined;
 
             comp.setPoints(testGradeStep, true);
@@ -849,7 +867,7 @@ describe('GradingComponent', () => {
 
         it('should set percentages correctly', () => {
             comp.maxPoints.set(100);
-            const testGradeStep = cloneDeep(gradeStep2);
+            const testGradeStep = deepClone(gradeStep2);
             testGradeStep.lowerBoundPoints = 40;
             testGradeStep.upperBoundPoints = 80;
 
@@ -915,7 +933,7 @@ describe('GradingComponent', () => {
 
         it('should export grading steps to csv', () => {
             comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.GRADE }));
-            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(gradeSteps) }));
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: deepClone(gradeSteps) }));
 
             comp.exportGradingStepsToCsv();
 
@@ -974,7 +992,7 @@ describe('GradingComponent', () => {
 
         it('should delete grade step in interval mode', () => {
             comp.setViewMode(GradingViewMode.INTERVAL);
-            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: deepClone(intervalGradeSteps) }));
             const maxPoints = 200;
             comp.maxPoints.set(maxPoints);
             comp.onChangeMaxPoints(maxPoints);
@@ -990,7 +1008,7 @@ describe('GradingComponent', () => {
 
         it('should create grade step in interval mode', () => {
             comp.setViewMode(GradingViewMode.INTERVAL);
-            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: deepClone(intervalGradeSteps) }));
             comp.lowerBoundInclusivity = true;
 
             comp.createGradeStep();
@@ -1010,7 +1028,7 @@ describe('GradingComponent', () => {
         });
 
         it('should set all grade step percentage intervals correctly', () => {
-            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: deepClone(intervalGradeSteps) }));
 
             expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[0])).toBe(40);
             expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[1])).toBe(25);
@@ -1019,7 +1037,7 @@ describe('GradingComponent', () => {
         });
 
         it('should set all grade step point intervals correctly', () => {
-            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: deepClone(intervalGradeSteps) }));
 
             expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[0])).toBeUndefined();
             expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[1])).toBeUndefined();
@@ -1047,7 +1065,7 @@ describe('GradingComponent', () => {
         });
 
         it('should cascade percentage interval increase', () => {
-            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: deepClone(intervalGradeSteps) }));
             const multiplier = 2;
             const maxPoints = multiplier * 100;
             comp.maxPoints.set(maxPoints);
@@ -1072,7 +1090,7 @@ describe('GradingComponent', () => {
         });
 
         it('should cascade percentage interval decrease', () => {
-            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: deepClone(intervalGradeSteps) }));
             const multiplier = 2;
             const maxPoints = multiplier * 100;
             comp.maxPoints.set(maxPoints);
@@ -1091,8 +1109,42 @@ describe('GradingComponent', () => {
             validateGradeStepBounds(comp.gradingScale.gradeSteps[3], 85, 185, maxPoints);
         });
 
+        it('should round percentage intervals to one decimal place', () => {
+            comp.generateDefaultGradingScale();
+
+            comp.setPercentageInterval(11, 1.34);
+
+            expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[11])).toBe(1.3);
+        });
+
+        it('should expand the sticky grade step to 100 percent when a percentage interval decreases', () => {
+            const maxPoints = 120;
+            comp.maxPoints.set(maxPoints);
+            comp.generateDefaultGradingScale();
+
+            comp.setPercentageInterval(11, 4);
+
+            const stickyGradeStep = comp.gradingScale.gradeSteps.last()!;
+            validateGradeStepBounds(stickyGradeStep, 94, 100, maxPoints);
+            expect(comp.getPercentageInterval(stickyGradeStep)).toBe(6);
+            expect(comp.gradingForm().valid()).toBe(true);
+        });
+
+        it('should preserve the sticky grade step interval above 100 percent', () => {
+            const maxPoints = 100;
+            comp.maxPoints.set(maxPoints);
+            comp.generateDefaultGradingScale();
+
+            comp.setPercentageInterval(11, 6);
+
+            const stickyGradeStep = comp.gradingScale.gradeSteps.last()!;
+            validateGradeStepBounds(stickyGradeStep, 96, 101, maxPoints);
+            expect(comp.getPercentageInterval(stickyGradeStep)).toBe(5);
+            expect(comp.gradingForm().valid()).toBe(true);
+        });
+
         it('should cascade points interval increase', () => {
-            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: deepClone(intervalGradeSteps) }));
             const multiplier = 2;
             const maxPoints = multiplier * 100;
             comp.maxPoints.set(maxPoints);
@@ -1112,7 +1164,7 @@ describe('GradingComponent', () => {
         });
 
         it('should cascade points interval decrease', () => {
-            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: deepClone(intervalGradeSteps) }));
             const multiplier = 2;
             const maxPoints = multiplier * 100;
             comp.maxPoints.set(maxPoints);
@@ -1131,8 +1183,43 @@ describe('GradingComponent', () => {
             validateGradeStepBounds(comp.gradingScale.gradeSteps[3], 85, 185, maxPoints);
         });
 
+        it('should preserve precise bounds when cascading a points interval', () => {
+            const maxPoints = 120;
+            comp.maxPoints.set(maxPoints);
+            comp.generateDefaultGradingScale();
+
+            comp.setPointsInterval(11, 5);
+
+            const updatedGradeStep = comp.gradingScale.gradeSteps[11];
+            expect(comp.getPercentageInterval(updatedGradeStep)).toBe(4.2);
+            expect(updatedGradeStep.lowerBoundPercentage).toBe(90);
+            expect(updatedGradeStep.upperBoundPercentage).toBeCloseTo((113 / maxPoints) * 100);
+            expect(updatedGradeStep.lowerBoundPoints).toBe(108);
+            expect(updatedGradeStep.upperBoundPoints).toBeCloseTo(113);
+
+            const stickyGradeStep = comp.gradingScale.gradeSteps.last()!;
+            expect(stickyGradeStep.lowerBoundPercentage).toBeCloseTo((113 / maxPoints) * 100);
+            expect(stickyGradeStep.upperBoundPercentage).toBe(100);
+            expect(stickyGradeStep.lowerBoundPoints).toBeCloseTo(113);
+            expect(stickyGradeStep.upperBoundPoints).toBe(120);
+            expect(comp.gradingForm().valid()).toBe(true);
+        });
+
+        it('should expand the sticky grade step to the maximum points when a points interval decreases', () => {
+            const maxPoints = 120;
+            comp.maxPoints.set(maxPoints);
+            comp.generateDefaultGradingScale();
+
+            comp.setPointsInterval(11, 4.8);
+
+            const stickyGradeStep = comp.gradingScale.gradeSteps.last()!;
+            validateGradeStepBounds(stickyGradeStep, 94, 100, maxPoints);
+            expect(comp.getPointsInterval(stickyGradeStep)).toBe(7.2);
+            expect(comp.gradingForm().valid()).toBe(true);
+        });
+
         it('should throw on points interval change when max points are not defined', () => {
-            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: deepClone(intervalGradeSteps) }));
             expect(comp.maxPoints()).toBeUndefined();
             expect(() => {
                 comp.setPointsInterval(0, 10);
@@ -1141,7 +1228,7 @@ describe('GradingComponent', () => {
 
         it('should prevent total percentage is less than 100 when only sticky step remains', () => {
             comp.setViewMode(GradingViewMode.INTERVAL);
-            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: deepClone(intervalGradeSteps) }));
             comp.deleteGradeStep(0);
             comp.deleteGradeStep(0);
             comp.deleteGradeStep(0);
@@ -1181,7 +1268,7 @@ describe('GradingComponent', () => {
 
         it('should set inclusivity to lower bound inclusive in interval mode', () => {
             comp.setViewMode(GradingViewMode.INTERVAL);
-            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: deepClone(intervalGradeSteps) }));
             comp.lowerBoundInclusivity = true;
             comp.setInclusivity();
 
@@ -1200,7 +1287,7 @@ describe('GradingComponent', () => {
 
         it('should set inclusivity to upper bound inclusive in interval mode', () => {
             comp.setViewMode(GradingViewMode.INTERVAL);
-            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: deepClone(intervalGradeSteps) }));
             comp.lowerBoundInclusivity = false;
             comp.setInclusivity();
 
@@ -1219,7 +1306,7 @@ describe('GradingComponent', () => {
 
         it('should not show grading steps above max points warning', () => {
             comp.setViewMode(GradingViewMode.INTERVAL);
-            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: deepClone(intervalGradeSteps) }));
             const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
             expect(result).toBe(false);
         });

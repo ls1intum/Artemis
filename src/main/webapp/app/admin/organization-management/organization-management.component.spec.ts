@@ -7,7 +7,7 @@ import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { TumUiTableQueryEvent } from '@tumaet/ui-angular';
+import { TumAetUiTableQueryEvent } from '@tumaet/ui-angular';
 import { MockProvider } from 'ng-mocks';
 
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -95,7 +95,7 @@ describe('OrganizationManagementComponent', () => {
             .mockReturnValueOnce(of({ content: [organization1], totalElements: 1 }))
             .mockReturnValueOnce(of({ content: [], totalElements: 0 }));
 
-        const event: TumUiTableQueryEvent = { pageIndex: 0, pageSize: 50 };
+        const event: TumAetUiTableQueryEvent = { pageIndex: 0, pageSize: 50 };
         component.loadOrganizations(event);
 
         vi.spyOn(organizationService, 'deleteOrganization').mockReturnValue(of(new HttpResponse<void>()));
