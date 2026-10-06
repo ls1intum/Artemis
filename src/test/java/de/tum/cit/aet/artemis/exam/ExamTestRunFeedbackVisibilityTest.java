@@ -22,6 +22,8 @@ import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -58,15 +60,20 @@ class ExamTestRunFeedbackVisibilityTest extends AbstractSpringIntegrationLocalCI
     @Autowired
     private ResultWebsocketService resultWebsocketService;
 
+    @Autowired
+    private ExamTestRepository examRepository;
+
     private ProgrammingExercise examExercise;
 
     private ProgrammingExerciseTestCase alwaysVisibleTestCase;
 
     private ProgrammingExerciseTestCase hiddenUntilReleaseTestCase;
 
+    private long visibleFeedbackId;
+
     @BeforeEach
     void setup() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 2);
         examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
         List<ProgrammingExerciseTestCase> testCases = programmingExerciseUtilService.addTestCasesToProgrammingExercise(examExercise);
         alwaysVisibleTestCase = testCases.getFirst();
@@ -77,18 +84,37 @@ class ExamTestRunFeedbackVisibilityTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void instructorConductingATestRunDoesNotSeeTestCasesHiddenUntilResultsAreReleased() throws Exception {
-        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        examUtilService.generateTestRunForInstructor(examExercise.getExerciseGroup().getExam(), instructor, List.of(examExercise));
-        StudentParticipation testRunParticipation = studentParticipationRepository
-                .findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(examExercise.getId(), instructor.getId(), true).orElseThrow();
-        Submission testRunSubmission = participationUtilService.addSubmission(testRunParticipation, new ProgrammingSubmission());
-        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now(), testRunSubmission);
-        TestCaseFeedback visibleFeedback = participationUtilService.addTestCaseFeedbackToResult(result, alwaysVisibleTestCase, true, null);
-        participationUtilService.addTestCaseFeedbackToResult(result, hiddenUntilReleaseTestCase, true, null);
+        StudentParticipation testRunParticipation = createTestRunParticipation("instructor1");
+        Result result = addResultWithBothTestCases(addSubmission(testRunParticipation));
 
         List<FeedbackDTO> feedbacks = getResultDetails(testRunParticipation, result);
 
-        assertThat(feedbacks).extracting(FeedbackDTO::id).containsExactly(ProgrammingFeedbackSynthesizerService.syntheticTestCaseId(visibleFeedback.getId()));
+        assertThat(feedbacks).extracting(FeedbackDTO::id).containsExactly(visibleFeedbackId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void instructorConductingATestRunSeesAllTestCasesOnceTheExamResultsArePublished() throws Exception {
+        StudentParticipation testRunParticipation = createTestRunParticipation("instructor1");
+        Result result = addResultWithBothTestCases(addSubmission(testRunParticipation));
+        Exam exam = examExercise.getExerciseGroup().getExam();
+        exam.setPublishResultsDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam);
+
+        List<FeedbackDTO> feedbacks = getResultDetails(testRunParticipation, result);
+
+        assertThat(feedbacks).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    void otherInstructorStillSeesAllTestCasesOfATestRun() throws Exception {
+        StudentParticipation testRunParticipation = createTestRunParticipation("instructor1");
+        Result result = addResultWithBothTestCases(addSubmission(testRunParticipation));
+
+        List<FeedbackDTO> feedbacks = getResultDetails(testRunParticipation, result);
+
+        assertThat(feedbacks).hasSize(2);
     }
 
     @Test
@@ -98,9 +124,7 @@ class ExamTestRunFeedbackVisibilityTest extends AbstractSpringIntegrationLocalCI
                 (ProgrammingSubmission) new ProgrammingSubmission().submitted(true), TEST_PREFIX + "student1");
         StudentParticipation studentParticipation = (StudentParticipation) studentSubmission.getParticipation();
         assertThat(studentParticipation.isTestRun()).isFalse();
-        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now(), studentSubmission);
-        participationUtilService.addTestCaseFeedbackToResult(result, alwaysVisibleTestCase, true, null);
-        participationUtilService.addTestCaseFeedbackToResult(result, hiddenUntilReleaseTestCase, true, null);
+        Result result = addResultWithBothTestCases(studentSubmission);
 
         List<FeedbackDTO> feedbacks = getResultDetails(studentParticipation, result);
 
@@ -111,16 +135,10 @@ class ExamTestRunFeedbackVisibilityTest extends AbstractSpringIntegrationLocalCI
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void newResultPushedToInstructorConductingATestRunDoesNotContainTestCasesHiddenUntilResultsAreReleased() throws Exception {
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        examUtilService.generateTestRunForInstructor(examExercise.getExerciseGroup().getExam(), instructor, List.of(examExercise));
-        StudentParticipation participationWithSubmissions = studentParticipationRepository
-                .findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(examExercise.getId(), instructor.getId(), true).orElseThrow();
-        Submission testRunSubmission = participationUtilService.addSubmission(participationWithSubmissions, new ProgrammingSubmission());
+        Submission testRunSubmission = addSubmission(createTestRunParticipation("instructor1"));
         StudentParticipation testRunParticipation = studentParticipationRepository.findWithEagerExerciseContextByExerciseIdAndStudentId(examExercise.getId(), instructor.getId())
                 .orElseThrow();
-        Result savedResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now(), testRunSubmission);
-        participationUtilService.addTestCaseFeedbackToResult(savedResult, alwaysVisibleTestCase, true, null);
-        participationUtilService.addTestCaseFeedbackToResult(savedResult, hiddenUntilReleaseTestCase, true, null);
-        Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(savedResult.getId());
+        Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(addResultWithBothTestCases(testRunSubmission).getId());
         result.setSubmission(testRunSubmission);
         testRunSubmission.setParticipation(testRunParticipation);
 
@@ -131,6 +149,24 @@ class ExamTestRunFeedbackVisibilityTest extends AbstractSpringIntegrationLocalCI
         ResultDTO pushedResult = (ResultDTO) payload.getValue();
         assertThat(pushedResult.feedbacks()).hasSize(1);
         assertThat(pushedResult.feedbacks().getFirst().testCase().id()).isEqualTo(alwaysVisibleTestCase.getId());
+    }
+
+    private StudentParticipation createTestRunParticipation(String instructorLoginSuffix) {
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + instructorLoginSuffix);
+        examUtilService.generateTestRunForInstructor(examExercise.getExerciseGroup().getExam(), instructor, List.of(examExercise));
+        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(examExercise.getId(), instructor.getId(), true).orElseThrow();
+    }
+
+    private Submission addSubmission(StudentParticipation participation) {
+        return participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+    }
+
+    private Result addResultWithBothTestCases(Submission submission) {
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now(), submission);
+        TestCaseFeedback visibleFeedback = participationUtilService.addTestCaseFeedbackToResult(result, alwaysVisibleTestCase, true, null);
+        visibleFeedbackId = ProgrammingFeedbackSynthesizerService.syntheticTestCaseId(visibleFeedback.getId());
+        participationUtilService.addTestCaseFeedbackToResult(result, hiddenUntilReleaseTestCase, true, null);
+        return result;
     }
 
     private List<FeedbackDTO> getResultDetails(StudentParticipation participation, Result result) throws Exception {
