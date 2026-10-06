@@ -29,6 +29,7 @@
                 }
             },
             "autoToast": {
+                "noChanges": "Atlas hat {{count}} Lernobjekt(e) automatisch geprüft. Es waren keine Änderungen an den Kompetenzen nötig.",
                 "success": "Atlas wurde automatisch für {{count}} Lernobjekt(e) ausgeführt.",
                 "partial": "Atlas wurde für {{count}} Lernobjekt(e) ausgeführt: {{success}} erfolgreich, {{failure}} fehlgeschlagen.",
                 "incomplete": "Atlas hat für {{count}} Lernobjekt(e) einige Änderungen übernommen, den Lauf aber nicht abgeschlossen. Bitte überprüfe die Kompetenzen des Kurses.",

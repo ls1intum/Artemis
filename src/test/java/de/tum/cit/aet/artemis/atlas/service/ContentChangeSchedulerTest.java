@@ -12,6 +12,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Clock;
@@ -30,7 +31,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
+import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO;
+import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO.Outcome;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
@@ -100,6 +103,40 @@ class ContentChangeSchedulerTest {
     }
 
     @Test
+    void tick_twoCourses_keepDestinationsAndSummariesIsolated() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        when(accumulator.listDueCourseIds()).thenReturn(Set.of(42L, 43L));
+        var config = new CourseAutoOrchestrationConfigDTO(true, null, null);
+        when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(42L)).thenReturn(Optional.of(config));
+        when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(43L)).thenReturn(Optional.of(config));
+        when(accumulator.resolveDebounceWindowSeconds(config)).thenReturn(RESOLVED_WINDOW_SECONDS);
+        when(accumulator.resolveDailyCap(config)).thenReturn(RESOLVED_DAILY_CAP);
+        when(accumulator.claimDueBatch(42L, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(Set.of(10L), Set.of())));
+        when(accumulator.claimDueBatch(43L, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(Set.of(20L, 21L), Set.of())));
+        when(orchestrationService.runBatch(42L, Set.of(10L), Set.of())).thenReturn(CompetencyOrchestrationResultDTO.success("A", List.of()));
+        when(orchestrationService.runBatch(43L, Set.of(20L, 21L), Set.of()))
+                .thenReturn(CompetencyOrchestrationResultDTO.failed("B", CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED));
+
+        scheduler.tick();
+
+        var courseA = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
+        var courseB = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
+        verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/42"), courseA.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/43"), courseB.capture());
+        assertThat(courseA.getValue().courseId()).isEqualTo(42L);
+        assertThat(courseA.getValue().exerciseCount()).isEqualTo(1);
+        assertThat(courseA.getValue().successCount()).isEqualTo(1);
+        assertThat(courseA.getValue().failureCount()).isZero();
+        assertThat(courseA.getValue().outcome()).isEqualTo(Outcome.NO_CHANGES);
+        assertThat(courseB.getValue().courseId()).isEqualTo(43L);
+        assertThat(courseB.getValue().exerciseCount()).isEqualTo(2);
+        assertThat(courseB.getValue().successCount()).isZero();
+        assertThat(courseB.getValue().failureCount()).isEqualTo(2);
+        assertThat(courseB.getValue().outcome()).isEqualTo(Outcome.FAILED);
+        verifyNoMoreInteractions(websocketMessagingService);
+    }
+
+    @Test
     void tick_toolLimitExceeded_doesNotReplay() {
         Set<Long> exerciseIds = Set.of(10L, 11L);
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
@@ -156,7 +193,8 @@ class ContentChangeSchedulerTest {
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
         stubCourseEnabled(true);
         when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds, Set.of())));
-        CompetencyOrchestrationResultDTO result = CompetencyOrchestrationResultDTO.success("done", List.of());
+        CompetencyOrchestrationResultDTO result = CompetencyOrchestrationResultDTO.success("done",
+                List.of(AppliedActionDTO.create(1L, "Loops", "Created competency", "Exercise teaches loops")));
         when(orchestrationService.runBatch(COURSE_ID, exerciseIds, Set.of())).thenReturn(result);
 
         scheduler.tick();
@@ -260,7 +298,8 @@ class ContentChangeSchedulerTest {
             listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(blank));
             return CompetencyOrchestrationResultDTO.failed("nope", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
         });
-        when(orchestrationService.runBatch(COURSE_ID, Set.of(10L), Set.of())).thenReturn(CompetencyOrchestrationResultDTO.success("done", List.of()));
+        when(orchestrationService.runBatch(COURSE_ID, Set.of(10L), Set.of()))
+                .thenReturn(CompetencyOrchestrationResultDTO.success("done", List.of(AppliedActionDTO.create(1L, "Loops", "Created competency", "Exercise teaches loops"))));
 
         realAccumulator.record(COURSE_ID, 10L);
         listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(nonblank));
@@ -316,6 +355,48 @@ class ContentChangeSchedulerTest {
 
         // A transient failure requeues both the exercise and the lecture-unit ids of the batch.
         verify(accumulator).requeueAfterFailedRun(COURSE_ID, exerciseIds, lectureUnitIds);
+    }
+
+    @Test
+    void tick_verifiedRunWithoutChanges_broadcastsNoChangesSummary() {
+        Set<Long> exerciseIds = Set.of(10L, 11L);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
+        stubCourseEnabled(true);
+        when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds, Set.of())));
+        when(orchestrationService.runBatch(COURSE_ID, exerciseIds, Set.of())).thenReturn(CompetencyOrchestrationResultDTO.success("Nothing to change", List.of()));
+
+        scheduler.tick();
+
+        // The run completed and verified that nothing needed to change: the batch counts as processed
+        // and the instructor is told so, unlike a NO_OP batch whose exercises were all inapplicable.
+        verify(accumulator, never()).requeueAfterFailedRun(anyLong(), any(), any());
+        verify(accumulator, never()).requeueAfterConcurrentRun(anyLong(), any(), any());
+        ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
+        verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        AutoOrchestrationSummaryDTO summary = payload.getValue();
+        assertThat(summary.exerciseCount()).isEqualTo(2);
+        assertThat(summary.successCount()).isEqualTo(2);
+        assertThat(summary.failureCount()).isZero();
+        assertThat(summary.outcome()).isEqualTo(Outcome.NO_CHANGES);
+    }
+
+    @Test
+    void tick_runWithAppliedActions_broadcastsSuccessOutcome() {
+        Set<Long> exerciseIds = Set.of(10L);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
+        stubCourseEnabled(true);
+        when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds, Set.of())));
+        when(orchestrationService.runBatch(COURSE_ID, exerciseIds, Set.of()))
+                .thenReturn(CompetencyOrchestrationResultDTO.success("done", List.of(AppliedActionDTO.create(1L, "Loops", "Created competency", "Exercise teaches loops"))));
+
+        scheduler.tick();
+
+        ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
+        verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        assertThat(payload.getValue().successCount()).isEqualTo(1);
+        assertThat(payload.getValue().outcome()).isEqualTo(Outcome.SUCCESS);
     }
 
     @Test
