@@ -1054,6 +1054,41 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).allMatch(slide -> slide.getHidden() == null);
     }
 
+    /**
+     * A superseded slide belongs to an earlier file. It is not visible to students, so it must not count as the visible page that makes hiding every current slide valid.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void hidingEveryCurrentSlideIsRejectedEvenWithAVisibleSupersededSlide() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnitDTO = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+        long unitId = persistedAttachmentVideoUnitDTO.id();
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(unitId)).hasSize(SLIDE_COUNT));
+        List<Slide> currentSlides = slideRepository.findAllByAttachmentVideoUnitId(unitId);
+
+        var supersededSlide = new Slide();
+        supersededSlide.setAttachmentVideoUnit(attachmentVideoUnitRepository.findById(unitId).orElseThrow());
+        supersededSlide.setSlideNumber(1);
+        supersededSlide.setSlideImagePath("superseded_Slide_1.png");
+        supersededSlide.setSuperseded(true);
+        slideRepository.save(supersededSlide);
+
+        var persistedAttachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(unitId);
+        var persistedAttachment = attachmentRepository.findById(persistedAttachmentVideoUnitDTO.attachment().id()).orElseThrow();
+        String futureDate = ZonedDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
+        String hiddenPagesJson = currentSlides.stream().map(slide -> "{\"slideId\": \"" + slide.getId() + "\", \"date\": \"" + futureDate + "\"}")
+                .collect(Collectors.joining(",", "[", "]"));
+        var attachmentUnitPart = createAttachmentVideoUnitPart(persistedAttachmentVideoUnit, AttachmentUpdateIntent.NO_FILE_CHANGE);
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachment).getBytes());
+        var hiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, hiddenPagesJson.getBytes());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + unitId).file(attachmentUnitPart)
+                .file(attachmentPart).file(hiddenPagesPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        request.performMvcRequest(builder).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("noVisiblePages"));
+
+        assertThat(slideRepository.findAllByAttachmentVideoUnitId(unitId)).allMatch(slide -> slide.getHidden() == null);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void nullHiddenDatesAreTreatedAsVisible() throws Exception {

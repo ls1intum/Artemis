@@ -273,7 +273,9 @@ public class AttachmentVideoUnitResource {
         }
         boolean hasVisibleSlide;
         if (updateIntent == AttachmentUpdateIntent.NO_FILE_CHANGE || pageOrder == null) {
-            hasVisibleSlide = existingAttachmentVideoUnit.getSlides().stream().map(slide -> String.valueOf(slide.getId())).anyMatch(slideId -> !hiddenSlideIds.contains(slideId));
+            // Superseded slides belong to an earlier file of the unit and are not part of what students can see.
+            hasVisibleSlide = existingAttachmentVideoUnit.getSlides().stream().filter(slide -> !slide.isSuperseded()).map(slide -> String.valueOf(slide.getId()))
+                    .anyMatch(slideId -> !hiddenSlideIds.contains(slideId));
         }
         else {
             hasVisibleSlide = pageOrder.stream().map(SlideOrderDTO::slideId).anyMatch(slideId -> !hiddenSlideIds.contains(slideId));

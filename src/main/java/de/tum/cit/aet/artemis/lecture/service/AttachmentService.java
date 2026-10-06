@@ -213,24 +213,63 @@ public class AttachmentService {
      * @throws IOException if the file cannot be written
      */
     public void replaceUploadedStudentVersionFile(byte[] pdfData, Attachment attachment, long attachmentVideoUnitId, String originalFilename) throws IOException {
+        String filename = stageUploadedStudentVersionFile(pdfData, attachmentVideoUnitId, originalFilename);
+        publishStudentVersionFile(attachment, attachmentVideoUnitId, filename);
+    }
+
+    /**
+     * Validates and writes a student version uploaded by an instructor, without referencing it yet. Callers that change more than the student version stage it before their
+     * other changes, so an invalid or unwritable file fails the request before anything else changed, and publish it with {@link #publishStudentVersionFile} afterwards.
+     *
+     * @param pdfData               the uploaded PDF bytes
+     * @param attachmentVideoUnitId the id of the attachment video unit
+     * @param originalFilename      the client-provided filename
+     * @return the stored filename of the staged student version
+     * @throws IOException if the file cannot be written
+     */
+    public String stageUploadedStudentVersionFile(byte[] pdfData, long attachmentVideoUnitId, String originalFilename) throws IOException {
         String sanitizedFilename = FileUtil.checkAndSanitizeFilename(originalFilename);
         FileUtil.validateExtension(sanitizedFilename, false);
         // Always use a unique target, so the previously referenced file is never overwritten in place.
         String filename = FileUtil.generateFilename(FileUtil.generateTargetFilenameBase(FilePathType.STUDENT_VERSION_SLIDES), sanitizedFilename, false);
-        persistStudentVersionFile(pdfData, attachment, attachmentVideoUnitId, filename);
+        writeStudentVersionFile(pdfData, attachmentVideoUnitId, filename);
+        return filename;
     }
 
     /**
-     * Writes the new student version, stores its reference, and only then deletes the previous file. If storing the reference fails, the new file is deleted and the previous
-     * one stays referenced. Once the reference is stored, nothing here deletes or clears it again.
+     * Deletes a staged student version that will not be published, for example because the request that staged it failed.
+     *
+     * @param attachmentVideoUnitId  the id of the attachment video unit
+     * @param studentVersionFilename the stored filename of the staged student version
+     */
+    public void discardStagedStudentVersionFile(long attachmentVideoUnitId, String studentVersionFilename) {
+        deleteStudentVersionFile(attachmentVideoUnitId, studentVersionFilename);
+    }
+
+    /**
+     * Writes the new student version and publishes it. See {@link #publishStudentVersionFile}.
      */
     private void persistStudentVersionFile(byte[] pdfData, Attachment attachment, long attachmentVideoUnitId, String filename) throws IOException {
+        writeStudentVersionFile(pdfData, attachmentVideoUnitId, filename);
+        publishStudentVersionFile(attachment, attachmentVideoUnitId, filename);
+    }
+
+    private void writeStudentVersionFile(byte[] pdfData, long attachmentVideoUnitId, String filename) throws IOException {
         Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(String.valueOf(attachmentVideoUnitId)).resolve("student");
         Files.createDirectories(basePath);
-        Path savePath = basePath.resolve(filename);
-        String oldStudentVersion = FileSystemLocation.storedFilename(attachment.getStudentVersion());
+        tempFileUtilService.replaceFileAtomically(FilePathConverter.getAttachmentVideoUnitFileSystemPath(), basePath.resolve(filename), pdfData);
+    }
 
-        tempFileUtilService.replaceFileAtomically(FilePathConverter.getAttachmentVideoUnitFileSystemPath(), savePath, pdfData);
+    /**
+     * Stores the reference to a written student version, and only then deletes the previous file. If storing the reference fails, the new file is deleted and the previous
+     * one stays referenced. Once the reference is stored, nothing here deletes or clears it again.
+     *
+     * @param attachment            the attachment the student version belongs to
+     * @param attachmentVideoUnitId the id of the attachment video unit
+     * @param filename              the stored filename of the written student version
+     */
+    public void publishStudentVersionFile(Attachment attachment, long attachmentVideoUnitId, String filename) {
+        String oldStudentVersion = FileSystemLocation.storedFilename(attachment.getStudentVersion());
         try {
             attachmentRepository.updateStudentVersion(attachment.getId(), filename);
         }
