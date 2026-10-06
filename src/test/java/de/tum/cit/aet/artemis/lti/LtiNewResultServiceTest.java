@@ -67,4 +67,23 @@ class LtiNewResultServiceTest {
         ltiNewResultService.onNewResult(participation);
         verify(lti13Service).onNewResult(participation);
     }
+
+    @Test
+    void onNewResult_missingExercise_isIgnored() {
+        participation.setExercise(null);
+
+        ltiNewResultService.onNewResult(participation);
+
+        verifyNoInteractions(lti13Service);
+    }
+
+    @Test
+    void onNewResult_missingCourse_isIgnored() {
+        participation.getExercise().setCourse(null);
+
+        ltiNewResultService.onNewResult(participation);
+
+        verifyNoInteractions(lti13Service);
+    }
+
 }

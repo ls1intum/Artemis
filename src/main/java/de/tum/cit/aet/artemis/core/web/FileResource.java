@@ -327,7 +327,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getDragAndDropBackgroundFile(@PathVariable Long questionId) {
         log.debug("REST request to get background for drag and drop question : {}", questionId);
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
-        Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         String backgroundFilePath = question.getBackgroundFilePath();
         if (backgroundFilePath == null) {
@@ -356,7 +356,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long questionId, @PathVariable Long dragItemId) {
         log.debug("REST request to get file for drag item {} of question {}", dragItemId, questionId);
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
-        Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         DragItem dragItem = question.findDragItemById(dragItemId);
         String pictureFilePath = dragItem == null ? null : dragItem.getPictureFilePath();

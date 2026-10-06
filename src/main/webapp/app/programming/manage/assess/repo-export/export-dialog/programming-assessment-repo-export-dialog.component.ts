@@ -13,6 +13,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 interface ProgrammingAssessmentRepoExportDialogData {
     programmingExercises: ProgrammingExercise[];
@@ -27,7 +28,7 @@ interface ProgrammingAssessmentRepoExportDialogData {
     selector: 'jhi-exercise-scores-repo-export-dialog',
     templateUrl: './programming-assessment-repo-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, FormDateTimePickerComponent, FeatureToggleDirective, FaIconComponent],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, FormDateTimePickerComponent, FeatureToggleDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     private repoExportService = inject(ProgrammingAssessmentRepoExportService);
