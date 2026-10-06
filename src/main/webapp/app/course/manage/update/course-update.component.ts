@@ -97,6 +97,7 @@ const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
         labelKey: 'artemisApp.course.autoOrchestration.maxDailyOrchestrationOverride.label',
         targetId: 'field_maxDailyOrchestrationOverride',
     },
+    { control: 'courseInformationSharingMessagingCodeOfConduct', labelKey: 'artemisApp.codeOfConduct.title', targetId: 'field_codeOfConduct' },
     { control: 'enrollmentStartDate', labelKey: 'artemisApp.course.enrollmentStartDate', targetId: 'field_enrollmentStartDate_input' },
     { control: 'enrollmentEndDate', labelKey: 'artemisApp.course.enrollmentEndDate', targetId: 'field_enrollmentEndDate_input' },
     { control: 'enrollmentConfirmationMessage', labelKey: 'artemisApp.course.enrollmentConfirmationMessage', targetId: 'field_enrollmentConfirmationMessage' },
@@ -263,6 +264,17 @@ export class CourseUpdateComponent implements OnInit {
     readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
     readonly COMPLAINT_TEXT_LIMIT = 65535;
     readonly COURSE_TITLE_LIMIT = 255;
+    readonly CODE_OF_CONDUCT_LIMIT = 10000;
+
+    /**
+     * Live source-length of the code-of-conduct markdown. Readback counts UTF-16 code units,
+     * matching the server-side @Size(max = 10000) on CourseUpdateDTO so the client preview
+     * and the server rejection never disagree.
+     */
+    readonly codeOfConductLength = computed(() => {
+        this.formRevision();
+        return (this.courseForm.get('courseInformationSharingMessagingCodeOfConduct')?.value as string | null | undefined)?.length ?? 0;
+    });
 
     ngOnInit() {
         this.timeZones = (Intl as typeof Intl & { supportedValuesOf(key: string): string[] }).supportedValuesOf('timeZone');
@@ -344,7 +356,9 @@ export class CourseUpdateComponent implements OnInit {
                     },
                 ),
                 description: new FormControl(this.course.description),
-                courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct),
+                courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct, {
+                    validators: [Validators.maxLength(this.CODE_OF_CONDUCT_LIMIT)],
+                }),
                 startDate: new FormControl(this.course.startDate, { validators: [Validators.required] }),
                 endDate: new FormControl(this.course.endDate, { validators: [Validators.required] }),
                 semester: new FormControl(this.course.semester, { validators: [Validators.required] }),

@@ -609,7 +609,12 @@
                                     [tumAetUiTooltip]="'artemisApp.course.courseCommunicationSetting.messagingEnabled.tooltip' | artemisTranslate"
                                 />
                             </div>
-                            <div class="flex flex-col gap-1.5">
+                            <div
+                                class="flex flex-col gap-1.5"
+                                id="field_codeOfConduct"
+                                tabindex="-1"
+                                [attr.aria-describedby]="showError('courseInformationSharingMessagingCodeOfConduct') ? 'field_codeOfConduct_error' : null"
+                            >
                                 <span class="course-form-label flex items-center gap-1">
                                     <span jhiTranslate="artemisApp.codeOfConduct.title"></span>
                                     <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.codeOfConduct.tooltip' | artemisTranslate" />
@@ -619,6 +624,21 @@
                                     [(markdown)]="course.courseInformationSharingMessagingCodeOfConduct"
                                     (markdownChange)="updateCourseInformationSharingMessagingCodeOfConduct($event)"
                                 />
+                                <div
+                                    class="text-sm mt-1"
+                                    [class]="codeOfConductLength() > CODE_OF_CONDUCT_LIMIT ? 'text-state-danger' : 'text-muted-color'"
+                                    data-testid="course-code-of-conduct-counter"
+                                >
+                                    {{ codeOfConductLength() }} / {{ CODE_OF_CONDUCT_LIMIT }}
+                                </div>
+                                @if (showError('courseInformationSharingMessagingCodeOfConduct')) {
+                                    <div
+                                        id="field_codeOfConduct_error"
+                                        class="text-sm text-state-danger"
+                                        jhiTranslate="artemisApp.course.form.codeOfConduct.maxlength"
+                                        [translateValues]="{ max: CODE_OF_CONDUCT_LIMIT }"
+                                    ></div>
+                                }
                             </div>
                         </div>
                     }
