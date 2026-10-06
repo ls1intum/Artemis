@@ -121,7 +121,8 @@ public class TutorialGroupsConfigurationResource {
             }
             throw new EntityNotFoundException("TutorialGroupsConfiguration", courseId);
         }
-        var persistedConfiguration = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElseThrow();
+        var persistedConfiguration = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId)
+                .orElseThrow(() -> new EntityNotFoundException("TutorialGroupsConfiguration", courseId));
 
         if (persistedConfiguration.getUseTutorialGroupChannels()) {
             tutorialGroupChannelManagementService.createTutorialGroupsChannelsForAllTutorialGroupsOfCourse(course);
