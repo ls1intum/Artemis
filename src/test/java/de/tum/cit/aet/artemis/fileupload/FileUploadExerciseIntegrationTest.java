@@ -556,7 +556,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
                 // Includes the four fixed queries used to reload and enrich the response DTO, one lookup for the new competency link and
                 // the reads of the plagiarism detection configuration that the response and the version snapshot report (an exercise
                 // does not carry it by itself).
-                .hasBeenCalledAtMostTimes(54);
+                .hasBeenCalledAtMostTimes(56);
         assertThat(receivedFileUploadExercise.dueDate()).isCloseTo(dueDate, HalfSecond());
         assertThat(receivedFileUploadExercise.course()).as("course was set for normal exercise").isNotNull();
         assertThat(receivedFileUploadExercise.exerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
@@ -815,7 +815,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
                 // configuration that the response and the version snapshot report (an exercise does not carry them by itself). The
                 // ceiling is the number this flow actually performs; it guards against new N+1 queries rather than describing an
                 // optimum.
-                .hasBeenCalledAtMostTimes(58);
+                .hasBeenCalledAtMostTimes(60);
         FileUploadExercise updatedFileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(updatedFileUploadExerciseDTO.id());
         List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedFileUploadExercise);
         assertThat(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> instruction.getId().equals(usedInstruction.getId())).orElseThrow().getCredits())

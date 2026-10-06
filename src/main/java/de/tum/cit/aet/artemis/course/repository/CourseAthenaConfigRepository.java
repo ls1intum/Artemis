@@ -51,12 +51,13 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
      * The two feedback switches of a course, read as flags rather than as the entity.
      *
      * @param courseId the id of the course
-     * @return the switches, or empty if there is no such course
+     * @return the switches, which read as switched off for a course whose settings row is missing, or empty if there is no such course
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO(athenaConfig.gradingFeedbackEnabled, athenaConfig.formativeFeedbackEnabled)
-            FROM CourseAthenaConfig athenaConfig
-            WHERE athenaConfig.course.id = :courseId
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO(COALESCE(athenaConfig.gradingFeedbackEnabled, FALSE), COALESCE(athenaConfig.formativeFeedbackEnabled, FALSE))
+            FROM Course course
+                LEFT JOIN CourseAthenaConfig athenaConfig ON athenaConfig.course.id = course.id
+            WHERE course.id = :courseId
             """)
     Optional<CourseAthenaConfigDTO> findConfigByCourseId(@Param("courseId") long courseId);
 

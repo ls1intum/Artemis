@@ -308,7 +308,10 @@ public class ProgrammingExerciseCreationUpdateService {
     public ProgrammingExercise setupBuildPlansAndTriggerInitialBuilds(ProgrammingExercise programmingExercise) {
         programmingSubmissionService.createInitialSubmissions(programmingExercise);
         programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(programmingExercise);
-        return programmingExerciseRepository.findForCreationByIdElseThrow(programmingExercise.getId());
+        // The re-fetch does not carry the team assignment and plagiarism detection settings, so the stored ones are put back.
+        var refetched = programmingExerciseRepository.findForCreationByIdElseThrow(programmingExercise.getId());
+        exerciseConfigurationService.carryOver(programmingExercise, refetched);
+        return refetched;
     }
 
     private void validateAiGenerationPreconditions(ProgrammingExercise programmingExercise) {

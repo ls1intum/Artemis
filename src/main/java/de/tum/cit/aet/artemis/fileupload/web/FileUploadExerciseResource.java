@@ -467,6 +467,9 @@ public class FileUploadExerciseResource {
 
         // ========== 3. Persist changes ==========
         var persistedExercise = fileUploadExerciseRepository.save(updatedExercise);
+        // Adds the default settings rows an incomplete creation left out, so the exercise repairs itself on its next save.
+        teamAssignmentConfigRepository.ensureExistsFor(persistedExercise.getId());
+        plagiarismDetectionConfigRepository.ensureExistsFor(persistedExercise.getId());
         exerciseService.logUpdate(persistedExercise, persistedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
         // ========== 4. Handle side effects based on what changed ==========
@@ -743,6 +746,9 @@ public class FileUploadExerciseResource {
 
         // Save directly instead of delegating to updateFileUploadExercise() to avoid double side effects.
         FileUploadExercise savedExercise = fileUploadExerciseRepository.save(exerciseForReevaluation);
+        // Adds the default settings rows an incomplete creation left out, so the exercise repairs itself on its next save.
+        teamAssignmentConfigRepository.ensureExistsFor(savedExercise.getId());
+        plagiarismDetectionConfigRepository.ensureExistsFor(savedExercise.getId());
 
         // Apply all post-save side effects once with the captured originals.
         exerciseService.logUpdate(savedExercise, savedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
