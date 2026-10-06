@@ -21,7 +21,6 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
@@ -101,10 +100,13 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
     }
 
+    /** Puts the course back into the state of a course whose tutorial groups are not set up: the permanent row stays, without tutorial period dates. */
     private void deleteExampleConfiguration() {
         TutorialGroupsConfiguration configuration = tutorialGroupsConfigurationRepository.findByCourseId(courseId).orElse(null);
         if (configuration != null) {
-            tutorialGroupsConfigurationRepository.delete(configuration);
+            configuration.setTutorialPeriodStartInclusive(null);
+            configuration.setTutorialPeriodEndInclusive(null);
+            tutorialGroupsConfigurationRepository.save(configuration);
         }
     }
 
@@ -306,64 +308,6 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
     @Nested
     class TutorialGroupConfigurationDTOTests {
-
-        @Nested
-        class FromTests {
-
-            @Test
-            void shouldThrowNullPointerExceptionWhenDtoIsNull() {
-                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.from(null)).isInstanceOf(NullPointerException.class);
-            }
-
-            @Test
-            void shouldReturnEntityWithoutFreePeriodsWhenDtoHasNoFreePeriods() {
-                var dto = new TutorialGroupConfigurationDTO(14L, "2024-01-01", "2024-02-01", true, false, null);
-
-                var actual = TutorialGroupConfigurationDTO.from(dto);
-
-                assertThat(actual.getTutorialPeriodStartInclusive()).isEqualTo("2024-01-01");
-                assertThat(actual.getTutorialPeriodEndInclusive()).isEqualTo("2024-02-01");
-                assertThat(actual.getUseTutorialGroupChannels()).isTrue();
-                assertThat(actual.getUsePublicTutorialGroupChannels()).isFalse();
-                assertThat(actual.getTutorialGroupFreePeriods()).isEmpty();
-            }
-
-            @Test
-            void shouldReturnEntityWithFreePeriodsWhenDtoContainsFreePeriods() {
-                var freePeriodDTO = new TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO(18L, "2024-01-10T10:00:00Z", "2024-01-10T12:00:00Z", "Holiday");
-
-                var dto = new TutorialGroupConfigurationDTO(1L, "2024-01-01", "2024-02-01", true, true, Set.of(freePeriodDTO));
-
-                var actual = TutorialGroupConfigurationDTO.from(dto);
-
-                assertThat(actual.getTutorialGroupFreePeriods()).hasSize(1);
-            }
-        }
-
-        @Nested
-        class FreePeriodFromTests {
-
-            @Test
-            void shouldThrowNullPointerExceptionWhenFreePeriodDtoIsNull() {
-                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO.from(null)).isInstanceOf(NullPointerException.class);
-            }
-
-            @Test
-            void shouldThrowBadRequestWhenStartDateIsInvalid() {
-                var invalid = new TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO(1L, "invalid-date", null, "");
-
-                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO.from(invalid)).as("free period start date should be ISO 8601")
-                        .isInstanceOf(BadRequestAlertException.class);
-            }
-
-            @Test
-            void shouldThrowBadRequestWhenEndDateIsInvalid() {
-                var invalid = new TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO(1L, "2024-01-10T10:00:00Z", "invalid-date", "");
-
-                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO.from(invalid)).as("free period end date should be ISO 8601")
-                        .isInstanceOf(BadRequestAlertException.class);
-            }
-        }
 
         @Nested
         class OfTests {

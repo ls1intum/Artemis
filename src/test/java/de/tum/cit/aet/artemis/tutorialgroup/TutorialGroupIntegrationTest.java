@@ -458,7 +458,9 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void create_asEditorWithNoTutorialGroupsConfiguration_shouldReturnBadRequest() throws Exception {
             TutorialGroupsConfiguration configuration = tutorialGroupsConfigurationRepository.findByCourseId(exampleCourseId).orElseThrow();
-            tutorialGroupsConfigurationRepository.delete(configuration);
+            configuration.setTutorialPeriodStartInclusive(null);
+            configuration.setTutorialPeriodEndInclusive(null);
+            tutorialGroupsConfigurationRepository.save(configuration);
 
             CreateOrUpdateTutorialGroupRequestDTO createOrUpdateTutorialGroupRequestDTO = new CreateOrUpdateTutorialGroupRequestDTO("TG Mo 10", firstCourseTutor1.getId(),
                     "English", false, "Garching", 10, "Bring you machine.", null);
@@ -626,7 +628,9 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void update_asEditorWithoutTutorialGroupsConfiguration_shouldReturnBadRequest() throws Exception {
             TutorialGroupsConfiguration configuration = tutorialGroupsConfigurationRepository.findByCourseId(exampleCourseId).orElseThrow();
-            tutorialGroupsConfigurationRepository.delete(configuration);
+            configuration.setTutorialPeriodStartInclusive(null);
+            configuration.setTutorialPeriodEndInclusive(null);
+            tutorialGroupsConfigurationRepository.save(configuration);
 
             CreateOrUpdateTutorialGroupRequestDTO createOrUpdateTutorialGroupRequestDTO = new CreateOrUpdateTutorialGroupRequestDTO("TG Mon 15", firstCourseTutor1.getId(),
                     "English", false, "Garching", 15, "Updated information.", null);
