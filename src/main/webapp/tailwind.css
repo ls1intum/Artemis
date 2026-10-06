@@ -96,6 +96,7 @@
 @source './app/core/layouts/footer';
 @source './app/core/navbar/global-search/components/modal/global-search-modal.component.html';
 @source './app/course/overview/setup-passkey-modal';
+@source './app/course/sidebar';
 @source './app/notification/course-notification/course-notification-popup-overlay';
 @source './app/localci/build-agent-summary';
 @source './app/localci/build-agent-details';
