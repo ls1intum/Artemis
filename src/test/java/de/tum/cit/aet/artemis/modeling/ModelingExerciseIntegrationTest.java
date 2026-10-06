@@ -1045,7 +1045,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         exerciseToBeImported.setCourse(course2);
 
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(exerciseToBeImported);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
@@ -1075,7 +1074,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 course1);
         sourceExercise.setMode(ExerciseMode.TEAM);
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(sourceExercise);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         sourceExercise.setTeamAssignmentConfig(teamAssignmentConfig);

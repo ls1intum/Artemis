@@ -28,7 +28,7 @@ public interface CourseConfigurationRepository extends ArtemisJpaRepository<Cour
      * Finds the configuration of the given course, if one exists.
      *
      * @param courseId the id of the course
-     * @return the course configuration or an empty optional if the course has none yet
+     * @return the permanent course configuration or an empty optional for an unknown course
      */
     @Query("""
             SELECT configuration

@@ -208,6 +208,35 @@ client does not read the configuration leaves it out instead of spending a query
 
 Writing follows the key as well: the parent is saved first, then the configuration that names it.
 
+`TutorialGroupsConfiguration` and `OnlineCourseConfiguration` follow the same shape: they hold the course's key, `Course`
+carries no association to either, and the course management endpoints read them through
+`TutorialGroupsConfigurationRepository.findByCourseId` and `OnlineCourseConfigurationRepository.findByCourseId`, reached
+from the course module through `TutorialGroupApi` and `LtiApi`. Because the configuration's `course` is lazy, a query that
+returns a configuration whose course the caller reads has to fetch it (`JOIN FETCH t.course`); with open-in-view disabled,
+an unfetched proxy fails with a `LazyInitializationException` rather than loading quietly.
+
+#### Permanent configuration rows
+
+Course and exercise settings belong to the lifetime of their owner. Create default rows when the owner is created,
+including settings for optional modules that are disabled on that server. Backfill missing rows for existing owners in
+a migration, preserving their existing settings. Do not insert or delete configurations when enabling or disabling a
+feature: update its flag and keep its settings for the next time it is enabled.
+
+Create courses through `CourseRepository.saveWithDefaultConfigurations`. It stores the course and then inserts the
+default settings with plain statements, without a transaction around them, so no lock is held across the statements. A
+failure between two of them leaves the course without the settings not yet inserted, and the caller sees the exception.
+Every later save through `saveWithDefaultConfigurations` and every course update adds the missing rows
+(`CourseRepository.ensureDefaultConfigurations`), so the course repairs itself without being deleted. A row that
+already exists is never replaced, and a concurrent save that inserts the same row first is tolerated. Course edits and
+feature toggles do not use a course-row lock or a transaction spanning multiple settings operations. Online-course settings are active only while `Course.onlineCourse`
+is true. Tutorial-group settings remain inactive until both tutorial-period dates are configured; configure those defaults
+through the configuration repository's modifying query.
+
+Exercise creation initializes team and plagiarism settings through the entity's creation callback. Team settings carry no
+inverse exercise association, so reading them does not cause an additional owner lookup. Team settings are
+exposed only for team-mode exercises. Programming creation and import persist the build settings after the exercise
+exists through `ProgrammingExerciseBuildConfigRepository.saveForExercise`. Later updates retain configuration ids.
+
 #### Turning an existing association lazy
 
 `open-in-view` is disabled, so the persistence context is already closed when a response is serialized. An association the query did not fetch reads as **absent** - which surfaces either as a `LazyInitializationException` or, where the getter guards with `Hibernate.isInitialized`, as a silently wrong value.

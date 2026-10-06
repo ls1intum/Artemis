@@ -2021,7 +2021,6 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().plusHours(2), null, QuizMode.SYNCHRONIZED);
         quizExercise.setMode(ExerciseMode.TEAM);
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(quizExercise);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         quizExercise.setTeamAssignmentConfig(teamAssignmentConfig);

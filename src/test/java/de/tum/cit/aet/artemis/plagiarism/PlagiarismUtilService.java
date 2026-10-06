@@ -80,7 +80,7 @@ public class PlagiarismUtilService {
         var exercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course);
         exercise.setMode(mode);
         course.addExercises(exercise);
-        courseRepo.save(course);
+        courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return exerciseRepository.save(exercise);
     }
@@ -90,7 +90,7 @@ public class PlagiarismUtilService {
         var exercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, PAST_TIMESTAMP, FUTURE_TIMESTAMP, DiagramType.ClassDiagram, course);
         exercise.setMode(mode);
         course.addExercises(exercise);
-        courseRepo.save(course);
+        courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return exerciseRepository.save(exercise);
     }

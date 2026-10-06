@@ -15,6 +15,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -45,6 +46,7 @@ class ModelingExerciseWithSubmissionsExportServiceTest extends AbstractSpringInt
     void exportModelingExerciseWithSubmissions_writesTheExerciseDetailsWithoutTheEntityGraph() throws Exception {
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise(TEST_PREFIX);
         ModelingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
+        exercise.setMode(ExerciseMode.TEAM);
         exercise.setTeamAssignmentConfig(teamAssignmentConfig());
         exercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
         exercise = exerciseRepository.save(exercise);

@@ -179,7 +179,7 @@ public class ExamUtilService {
         Exam exam = addExamWithUser(course, user, false, visible, start, end);
         course.addExam(exam);
         addExerciseGroupsAndExercisesToExam(exam, false);
-        return courseRepo.save(course);
+        return courseRepo.saveWithDefaultConfigurations(course);
     }
 
     /**
@@ -231,7 +231,7 @@ public class ExamUtilService {
         Exam exam = addExamWithUser(course, user, false, ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1));
         course.addExam(exam);
         addExerciseGroupsAndExercisesToExam(exam, false);
-        return courseRepo.save(course);
+        return courseRepo.saveWithDefaultConfigurations(course);
     }
 
     /**
@@ -1066,7 +1066,7 @@ public class ExamUtilService {
         Exam exam = ExamFactory.generateExam(course);
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(mandatory, exam);
 
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         exam = examRepository.save(exam);
 
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
@@ -1120,7 +1120,7 @@ public class ExamUtilService {
         }
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(mandatory, exam);
 
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         exam = examRepository.save(exam);
 
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
@@ -1167,7 +1167,7 @@ public class ExamUtilService {
         Exam exam = ExamFactory.generateExamWithStudentReviewDates(course);
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(mandatory, exam);
 
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         exam = examRepository.save(exam);
 
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
@@ -1438,7 +1438,7 @@ public class ExamUtilService {
      */
     public Exam setupExamWithTwoCorrectionRounds() {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         Exam exam = addExam(course);
         exam.setNumberOfCorrectionRoundsInExam(2);
         exam.setStartDate(ZonedDateTime.now().minusHours(2));

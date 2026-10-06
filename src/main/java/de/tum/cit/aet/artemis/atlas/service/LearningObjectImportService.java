@@ -54,7 +54,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.modeling.api.ModelingExerciseImportApi;
 import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
@@ -249,7 +248,6 @@ public class LearningObjectImportService {
 
             ProgrammingExercise newExercise = programmingExerciseRepository
                     .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(programmingExercise.getId());
-            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(newExercise, programmingExerciseRepository);
             newExercise.setCourse(course);
             newExercise.forceNewProjectKey();
 

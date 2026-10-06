@@ -169,25 +169,22 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
         assertThat(updated.get("description").asString()).isEqualTo("Unrelated description change");
         // The response must still report the stored flag, so the client does not cache a course that claims Athena is off
         assertThat(updated.get("athenaGradingFeedbackEnabled").asBoolean()).isTrue();
-        assertThat(courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(course.getId()).getAthenaConfig().isGradingFeedbackEnabled())
-                .isTrue();
+        assertThat(courseRepository.findByIdWithEagerAthenaConfigAndCourseConfigurationElseThrow(course.getId()).getAthenaConfig().isGradingFeedbackEnabled()).isTrue();
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingExercise.getId());
         verify(instanceMessageSendService, never()).sendTextExerciseSchedule(textExercise.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateCourse_courseWithoutConfig_initializesItSoALaterSwitchSurvives() throws Exception {
-        // A course from before the configuration existed has a null athena_config_id. The course update gives it a
-        // configuration before loading the course, because saving a course loaded without one would write the null
-        // back and detach a configuration that a concurrent first switch had attached in between.
-        assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEmpty();
+    void updateCourse_preservesDefaultConfigurationAndLaterSwitch() throws Exception {
+        var originalConfigId = courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId());
+        assertThat(originalConfigId).isPresent();
 
         Course loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, Course.class);
         updateCourse(loaded);
 
         var configId = courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId());
-        assertThat(configId).isPresent();
+        assertThat(configId).isEqualTo(originalConfigId);
 
         // The switch reuses that configuration, and saving the course again leaves it attached.
         updateAthenaConfig(new CourseAthenaConfigUpdateDTO(true, null));
@@ -199,14 +196,13 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
-    void updateCourse_asInstructorOfAnotherCourse_isForbiddenAndCreatesNoConfig() throws Exception {
-        // The course update gives a course that predates the Athena configuration one, which must only happen once the
-        // user has been authorized for the course: an instructor of another course is rejected without leaving state.
+    void updateCourse_asInstructorOfAnotherCourse_isForbiddenAndPreservesConfig() throws Exception {
         userUtilService.addInstructor(TEST_PREFIX + "instructor2");
-        assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEmpty();
+        var originalConfigId = courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId());
+        assertThat(originalConfigId).isPresent();
 
         updateCourse(course, HttpStatus.FORBIDDEN);
 
-        assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEmpty();
+        assertThat(courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId())).isEqualTo(originalConfigId);
     }
 }

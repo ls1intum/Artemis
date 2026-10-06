@@ -130,7 +130,7 @@ public class FileUploadExerciseUtilService {
      */
     public List<FileUploadExercise> createEnrolledFileUploadExercisesWithCourse(String userPrefix) {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
 
         FileUploadExercise releasedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, "png,pdf",
@@ -186,7 +186,7 @@ public class FileUploadExerciseUtilService {
      */
     public Course addCourseWithFourFileUploadExercise() {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
 
         FileUploadExercise releasedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, "png,pdf",
                 course);
@@ -231,7 +231,7 @@ public class FileUploadExerciseUtilService {
         FileUploadExercise assessedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP, "png,pdf", course);
         assessedFileUploadExercise.setTitle("assessed");
         course.addExercises(assessedFileUploadExercise);
-        courseRepo.save(course);
+        courseRepo.saveWithDefaultConfigurations(course);
         exerciseRepository.save(assessedFileUploadExercise);
         return course;
     }

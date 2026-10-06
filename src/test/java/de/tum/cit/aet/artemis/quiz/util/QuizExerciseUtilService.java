@@ -135,7 +135,7 @@ public class QuizExerciseUtilService {
         assertThat(quizExercise.getQuizQuestions()).isNotEmpty();
         assertThat(quizExercise.isValid()).isTrue();
         course.addExercises(quizExercise);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         quizExercise = exerciseRepository.save(quizExercise);
         assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(quizExercise);
         return course;
@@ -263,7 +263,7 @@ public class QuizExerciseUtilService {
      */
     public Course createAndSaveCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
         Course course = CourseFactory.generateCourse(id, startDate, endDate, exercises);
-        courseRepo.save(course);
+        courseRepo.saveWithDefaultConfigurations(course);
         return course;
     }
 
@@ -438,7 +438,7 @@ public class QuizExerciseUtilService {
         studentParticipationRepository.save(studentParticipation);
         quizSubmissionRepository.save(quizSubmission);
         quizExercise.addParticipation(studentParticipation);
-        courseRepo.save(course);
+        courseRepo.saveWithDefaultConfigurations(course);
         quizExerciseRepository.save(quizExercise);
         return quizSubmission;
     }

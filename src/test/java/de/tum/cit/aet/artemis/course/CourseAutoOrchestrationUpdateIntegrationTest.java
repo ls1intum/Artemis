@@ -97,8 +97,8 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateCourse_enableAutoOrchestration_persistsConfiguration() throws Exception {
-        // A fresh course created through the test utilities has no configuration row at all.
-        assertThat(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(course.getId())).isEmpty();
+        // A fresh course already owns disabled default settings.
+        assertThat(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(course.getId()).orElseThrow().autoOrchestratorEnabled()).isFalse();
 
         setAutoOrchestration(course, true, null, null);
         updateCourse(course);
@@ -128,8 +128,8 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateCourse_asInstructor_changingAutoOrchestration_isRejected() throws Exception {
-        // A fresh course has no configuration row; an instructor attempting to enable auto-orchestration must be rejected.
-        assertThat(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(course.getId())).isEmpty();
+        // An instructor cannot enable auto-orchestration on the course's default settings.
+        assertThat(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(course.getId()).orElseThrow().autoOrchestratorEnabled()).isFalse();
 
         setAutoOrchestration(course, true, null, null);
 
@@ -139,7 +139,7 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
         request.performMvcRequest(builder).andExpect(status().isBadRequest());
 
         // The setting is admin-only, so no configuration row may be created by the rejected instructor request.
-        assertThat(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(course.getId())).isEmpty();
+        assertThat(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(course.getId()).orElseThrow().autoOrchestratorEnabled()).isFalse();
     }
 
     @Test

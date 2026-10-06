@@ -69,6 +69,7 @@ import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
+import de.tum.cit.aet.artemis.lti.test_repository.OnlineCourseConfigurationTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -110,6 +111,9 @@ public class CourseUtilService {
 
     @Autowired
     private CourseTestRepository courseRepo;
+
+    @Autowired
+    private OnlineCourseConfigurationTestRepository onlineCourseConfigurationRepository;
 
     @Autowired
     private LectureTestRepository lectureRepo;
@@ -223,7 +227,7 @@ public class CourseUtilService {
 
     public Course createCourse() {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
-        return courseRepo.save(course);
+        return courseRepo.saveWithDefaultConfigurations(course);
     }
 
     /**
@@ -246,7 +250,7 @@ public class CourseUtilService {
     public Course createCourseWithMessagingEnabled() {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), true);
         course.setCourseInformationSharingMessagingCodeOfConduct("Code of Conduct");
-        return courseRepo.save(course);
+        return courseRepo.saveWithDefaultConfigurations(course);
     }
 
     /**
@@ -269,7 +273,7 @@ public class CourseUtilService {
      */
     public Course createCourseWithShortName(String shortName) {
         Course course = CourseFactory.generateCourse(null, shortName, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), 3, 3, 7, 500, 500, true, true, 7);
-        return courseRepo.save(course);
+        return courseRepo.saveWithDefaultConfigurations(course);
     }
 
     /**
@@ -307,7 +311,7 @@ public class CourseUtilService {
         exerciseRepository.save(programmingExercise);
         saveBuildConfigIfMissing(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()));
 
-        return courseRepo.save(course);
+        return courseRepo.saveWithDefaultConfigurations(course);
     }
 
     /**
@@ -340,7 +344,7 @@ public class CourseUtilService {
         organizations.add(organization);
         course.setOrganizations(organizations);
         course.setEnrollmentEnabled(true);
-        return courseRepo.save(course);
+        return courseRepo.saveWithDefaultConfigurations(course);
     }
 
     /**
@@ -460,11 +464,11 @@ public class CourseUtilService {
         Lecture lecture2 = LectureFactory.generateLecture(lecture2Start, lecture2End, course1);
         course1.addLectures(lecture2);
 
-        course1 = courseRepo.save(course1);
+        course1 = courseRepo.saveWithDefaultConfigurations(course1);
         lecture1.setCourse(course1);
         lecture2.setCourse(course1);
         userUtilService.enrollPrefixedUsersInCourse(course1, userPrefix);
-        course2 = courseRepo.save(course2);
+        course2 = courseRepo.saveWithDefaultConfigurations(course2);
         userUtilService.enrollPrefixedUsersInCourse(course2, userPrefix);
 
         lectureRepo.save(lecture1);
@@ -601,7 +605,7 @@ public class CourseUtilService {
         course.addExercises(quizExercise);
 
         // Save course and exercises to database
-        Course courseSaved = courseRepo.save(course);
+        Course courseSaved = courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(courseSaved, userPrefix);
         modelingExercise = exerciseRepository.save(modelingExercise);
         textExercise = exerciseRepository.save(textExercise);
@@ -775,7 +779,7 @@ public class CourseUtilService {
         course.addExercises(quizExercise);
 
         // Save course and exercises to database
-        Course courseSaved = courseRepo.save(course);
+        Course courseSaved = courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(courseSaved, userPrefix);
         modelingExercise = exerciseRepository.save(modelingExercise);
         textExercise = exerciseRepository.save(textExercise);
@@ -931,11 +935,10 @@ public class CourseUtilService {
      * @param course The course to which online configuration should be added.
      */
     public void addOnlineCourseConfigurationToCourse(Course course) {
-        OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
+        Course savedCourse = courseRepo.saveWithDefaultConfigurations(course);
+        OnlineCourseConfiguration onlineCourseConfiguration = onlineCourseConfigurationRepository.findStoredByCourseId(savedCourse.getId()).orElseThrow();
         onlineCourseConfiguration.setUserPrefix("prefix");
-        onlineCourseConfiguration.setCourse(course);
-        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
-        courseRepo.save(course);
+        onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
     }
 
     /**
@@ -945,7 +948,7 @@ public class CourseUtilService {
      */
     public Course addEmptyCourse() {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
-        return courseRepo.save(course);
+        return courseRepo.saveWithDefaultConfigurations(course);
     }
 
     /**
@@ -969,7 +972,7 @@ public class CourseUtilService {
     public Course addCourseWithExercise(String title) {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         if ("Programming".equals(title)) {
-            course = courseRepo.save(course);
+            course = courseRepo.saveWithDefaultConfigurations(course);
 
             var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
             ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TSTEXC", "Programming", false);
@@ -987,7 +990,7 @@ public class CourseUtilService {
             TextExercise textExercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course);
             textExercise.setTitle("Text");
             course.addExercises(textExercise);
-            course = courseRepo.save(course);
+            course = courseRepo.saveWithDefaultConfigurations(course);
             exerciseRepository.save(textExercise);
         }
         else if (title.startsWith("ClassDiagram")) {
@@ -995,7 +998,7 @@ public class CourseUtilService {
                     DiagramType.ClassDiagram, course);
             modelingExercise.setTitle(title);
             course.addExercises(modelingExercise);
-            course = courseRepo.save(course);
+            course = courseRepo.saveWithDefaultConfigurations(course);
             exerciseRepository.save(modelingExercise);
         }
 
@@ -1029,7 +1032,7 @@ public class CourseUtilService {
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course);
         textExercise.setTitle("Text");
         course.addExercises(textExercise);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         exerciseRepository.save(modelingExercise);
         exerciseRepository.save(textExercise);
         return course;
@@ -1068,7 +1071,7 @@ public class CourseUtilService {
         fileUploadExercise.setTitle("FileUpload");
         course.addExercises(fileUploadExercise);
 
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         exerciseRepository.save(modelingExercise);
         exerciseRepository.save(textExercise);
         exerciseRepository.save(fileUploadExercise);
@@ -1172,7 +1175,7 @@ public class CourseUtilService {
             assessmentDueDate = FUTURE_TIMESTAMP.plusHours(2);
 
         }
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         // getTutors must be called AFTER the course is saved AND users are enrolled so that
         // the UCR table has entries and the query returns the expected tutors.
@@ -1261,7 +1264,7 @@ public class CourseUtilService {
     public Course createEnrolledCourseWithTextModelingAndFileUploadExercisesAndSubmissions(String userPrefix) throws IOException {
         Course course = addEnrolledCourseWithModelingAndTextAndFileUploadExercise(userPrefix);
         course.setEndDate(ZonedDateTime.now().minusMinutes(5));
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
 
         var fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "FileUpload");
         fileUploadExerciseUtilService.createFileUploadSubmissionWithFile(userPrefix, fileUploadExercise, "uploaded-file.png");
@@ -1331,14 +1334,14 @@ public class CourseUtilService {
      * @param course The course to be saved.
      */
     public void saveCourse(Course course) {
-        courseRepo.save(course);
+        courseRepo.saveWithDefaultConfigurations(course);
     }
 
     public void enableMessagingForCourse(Course course) {
         CourseInformationSharingConfiguration currentConfig = course.getCourseInformationSharingConfiguration();
         if (currentConfig == CourseInformationSharingConfiguration.COMMUNICATION_ONLY) {
             course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
-            courseRepo.save(course);
+            courseRepo.saveWithDefaultConfigurations(course);
         }
     }
 
@@ -1387,7 +1390,7 @@ public class CourseUtilService {
     public Course updateCourseComplaintTextLimit(Course course, int complaintTextLimit) {
         course.setMaxComplaintTextLimit(complaintTextLimit);
         assertThat(course.getMaxComplaintTextLimit()).as("course contains the correct complaint text limit").isEqualTo(complaintTextLimit);
-        return courseRepo.save(course);
+        return courseRepo.saveWithDefaultConfigurations(course);
     }
 
     /**
@@ -1400,7 +1403,7 @@ public class CourseUtilService {
     public Course updateCourseComplaintResponseTextLimit(Course course, int complaintResponseTextLimit) {
         course.setMaxComplaintResponseTextLimit(complaintResponseTextLimit);
         assertThat(course.getMaxComplaintResponseTextLimit()).as("course contains the correct complaint response text limit").isEqualTo(complaintResponseTextLimit);
-        return courseRepo.save(course);
+        return courseRepo.saveWithDefaultConfigurations(course);
     }
 
     /**
@@ -1419,7 +1422,7 @@ public class CourseUtilService {
         gradingScaleUtilService.generateAndSaveGradingScale(2, new double[] { 0, 50, 100 }, true, 1, Optional.empty(), exam);
         course.addExam(exam);
         examUtilService.addExerciseGroupsAndExercisesToExam(exam, withProgrammingExercise, withAllQuizQuestionTypes);
-        return courseRepo.save(course);
+        return courseRepo.saveWithDefaultConfigurations(course);
     }
 
     /**

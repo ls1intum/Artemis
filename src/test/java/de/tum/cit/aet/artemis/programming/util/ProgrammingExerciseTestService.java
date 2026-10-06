@@ -1022,7 +1022,6 @@ public class ProgrammingExerciseTestService {
                 courseUtilService.addEnrolledEmptyCourse(userPrefix));
         exerciseToBeImported.setMode(TEAM);
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(exerciseToBeImported);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
@@ -1055,7 +1054,6 @@ public class ProgrammingExerciseTestService {
         programmingExerciseRepository.save(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(sourceExercise);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
         sourceExercise.setTeamAssignmentConfig(teamAssignmentConfig);
@@ -1695,9 +1693,9 @@ public class ProgrammingExerciseTestService {
 
     public void exportProgrammingExerciseInstructorMaterial_withTeamConfig() throws Exception {
         TeamAssignmentConfig teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(exercise);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
+        exercise.setMode(ExerciseMode.TEAM);
         exercise.setTeamAssignmentConfig(teamAssignmentConfig);
         exercise = saveWithBuildConfig(exercise);
         programmingExerciseUtilService.saveBuildConfigIfMissing(exercise);

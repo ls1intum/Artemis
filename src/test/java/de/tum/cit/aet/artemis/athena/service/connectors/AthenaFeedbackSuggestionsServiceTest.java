@@ -189,7 +189,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
     @Test
     void testTextFeedbackSuggestionsReturnsEmptyWhenGradingFeedbackDisabled() throws NetworkingException {
-        textExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
+        textExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(new CourseAthenaConfig());
 
         List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true, null);
 
@@ -198,7 +198,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
     @Test
     void testProgrammingFeedbackSuggestionsReturnsEmptyWhenGradingFeedbackDisabled() throws NetworkingException {
-        programmingExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
+        programmingExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(new CourseAthenaConfig());
 
         List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission, true, null);
 
@@ -218,7 +218,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
     @Test
     void testModelingFeedbackSuggestionsReturnsEmptyWhenGradingFeedbackDisabled() throws NetworkingException {
-        modelingExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
+        modelingExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(new CourseAthenaConfig());
 
         List<ModelingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getModelingFeedbackSuggestions(modelingExercise, modelingSubmission, true, null);
 

@@ -16,11 +16,11 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
 import org.hibernate.Hibernate;
-import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -41,10 +41,8 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
-import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 
 /**
  * A Course.
@@ -102,14 +100,14 @@ public class Course extends DomainObject {
     @Column(name = "online_course")
     private Boolean onlineCourse = false;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "online_course_configuration_id")
-    private OnlineCourseConfiguration onlineCourseConfiguration;
+    // The online course configuration and the tutorial groups configuration are not associations of the course: each one
+    // holds the key to its course. Read them through OnlineCourseConfigurationRepository and
+    // TutorialGroupsConfigurationRepository where they are needed.
 
     // Lazy on purpose: the course table is already wide and these values are only needed in specific flows. Note that
     // getCourseConfiguration() returns null while the association is uninitialized, so every flow that needs it must
     // fetch it deliberately. The ones that do: the instructor course-settings read path
-    // (findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById), the course update path (which attaches
+    // (findWithEagerAthenaConfigAndCourseConfigurationById), the course update path (which attaches
     // it via CourseConfigurationRepository.findByCourseId so applyTo updates it in place) and the data-retention cleanup
     // queries. Do NOT add it to any other course query or entity graph.
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -236,11 +234,6 @@ public class Course extends DomainObject {
     @JsonIgnoreProperties("course")
     @OrderBy("title")
     private Set<Prerequisite> prerequisites = new HashSet<>();
-
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tutorial_groups_configuration_id")
-    @JsonIgnoreProperties("course")
-    private TutorialGroupsConfiguration tutorialGroupsConfiguration;
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -441,29 +434,43 @@ public class Course extends DomainObject {
         this.onlineCourse = onlineCourse;
     }
 
-    public @Nullable OnlineCourseConfiguration getOnlineCourseConfiguration() {
-        return Hibernate.isInitialized(onlineCourseConfiguration) ? onlineCourseConfiguration : null;
-    }
-
-    public void setOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration) {
-        this.onlineCourseConfiguration = onlineCourseConfiguration;
+    /** Initializes settings for every new course, including courses created from approved course requests. */
+    @PrePersist
+    void initializeDefaultConfigurations() {
+        if (athenaConfig == null) {
+            athenaConfig = new CourseAthenaConfig();
+        }
+        if (courseConfiguration == null) {
+            courseConfiguration = new CourseConfiguration();
+        }
+        courseConfiguration.setCourse(this);
     }
 
     public CourseConfiguration getCourseConfiguration() {
         return Hibernate.isInitialized(courseConfiguration) ? courseConfiguration : null;
     }
 
+    /**
+     * Sets the course configuration. On a stored course the replacement updates the permanent row and a null is ignored.
+     *
+     * @param courseConfiguration the settings to carry from now on
+     */
     public void setCourseConfiguration(CourseConfiguration courseConfiguration) {
+        if (getId() != null && this.courseConfiguration != null) {
+            if (courseConfiguration == null) {
+                return;
+            }
+            courseConfiguration.setId(this.courseConfiguration.getId());
+        }
         this.courseConfiguration = courseConfiguration;
     }
 
     /**
      * Whether the course is grade-relevant, driving how long its student data is retained before the GDPR cleanup resets
-     * it. A course without an explicit {@link CourseConfiguration} (i.e. one that was never edited) is treated as
-     * grade-relevant, matching the safe default. This is null-safe with respect to the lazy association: it only reflects
-     * the flag when the configuration has been initialized.
+     * it. If the lazy {@link CourseConfiguration} was not loaded, this reports the safe grade-relevant default.
+     * The stored flag is reflected when the configuration has been initialized.
      *
-     * @return {@code true} if the course is grade-relevant or has no explicit configuration, {@code false} if an
+     * @return {@code true} if the course is grade-relevant or its configuration was not loaded, {@code false} if an
      *         instructor opted out
      */
     public boolean isGradeRelevant() {
@@ -828,7 +835,18 @@ public class Course extends DomainObject {
         return athenaConfig;
     }
 
+    /**
+     * Sets the Athena configuration. On a stored course the replacement updates the permanent row and a null is ignored.
+     *
+     * @param athenaConfig the settings to carry from now on
+     */
     public void setAthenaConfig(CourseAthenaConfig athenaConfig) {
+        if (getId() != null && this.athenaConfig != null) {
+            if (athenaConfig == null) {
+                return;
+            }
+            athenaConfig.setId(this.athenaConfig.getId());
+        }
         this.athenaConfig = athenaConfig;
     }
 
@@ -856,14 +874,6 @@ public class Course extends DomainObject {
 
     public void setTimeZone(String timeZone) {
         this.timeZone = timeZone;
-    }
-
-    public TutorialGroupsConfiguration getTutorialGroupsConfiguration() {
-        return tutorialGroupsConfiguration;
-    }
-
-    public void setTutorialGroupsConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
-        this.tutorialGroupsConfiguration = tutorialGroupsConfiguration;
     }
 
     public CourseInformationSharingConfiguration getCourseInformationSharingConfiguration() {

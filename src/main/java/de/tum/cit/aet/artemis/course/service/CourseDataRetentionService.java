@@ -120,6 +120,12 @@ public class CourseDataRetentionService {
         int warned = 0;
         for (Course dueCourse : dueCourses) {
             try {
+                // Checked first: failing here, after the archive was written and the instructors were warned, would repeat both on every run.
+                CourseConfiguration configuration = dueCourse.getCourseConfiguration();
+                if (configuration == null) {
+                    log.error("Course {} has no loaded course configuration; skipping its data-privacy warning", dueCourse.getId());
+                    continue;
+                }
                 // Archive on a course loaded with exercises/lectures (required by the export); the archive path is stored
                 // on that instance.
                 Course courseWithExercises = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(dueCourse.getId());
@@ -138,12 +144,6 @@ public class CourseDataRetentionService {
                 }
                 // Persist the warning timestamp on the config-bearing instance (dueCourse has the configuration fetched),
                 // syncing the archive path set during archiving so saving this instance does not clobber it.
-                CourseConfiguration configuration = dueCourse.getCourseConfiguration();
-                if (configuration == null) {
-                    configuration = new CourseConfiguration();
-                    configuration.setCourse(dueCourse);
-                    dueCourse.setCourseConfiguration(configuration);
-                }
                 configuration.setResetWarningSentDate(ZonedDateTime.now());
                 dueCourse.setCourseArchivePath(courseWithExercises.getCourseArchivePath());
                 courseRepository.save(dueCourse);

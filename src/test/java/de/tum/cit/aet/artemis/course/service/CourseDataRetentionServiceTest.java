@@ -66,13 +66,11 @@ class CourseDataRetentionServiceTest {
         course.setTitle("Course " + id);
         course.setEndDate(endDate);
         course.setTestCourse(testCourse);
-        if (gradeRelevant != null || warnedDate != null || resetDate != null) {
-            CourseConfiguration configuration = new CourseConfiguration();
-            configuration.setGradeRelevant(gradeRelevant == null || gradeRelevant);
-            configuration.setResetWarningSentDate(warnedDate);
-            configuration.setStudentDataResetDate(resetDate);
-            course.setCourseConfiguration(configuration);
-        }
+        CourseConfiguration configuration = new CourseConfiguration();
+        configuration.setGradeRelevant(gradeRelevant == null || gradeRelevant);
+        configuration.setResetWarningSentDate(warnedDate);
+        configuration.setStudentDataResetDate(resetDate);
+        course.setCourseConfiguration(configuration);
         return course;
     }
 

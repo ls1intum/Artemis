@@ -214,10 +214,9 @@ public class ProgrammingExerciseImportBasicService {
             staticCodeAnalysisService.createDefaultCategories(newExercise);
         }
 
-        // Exam exercises are always individual and must not carry a team assignment configuration.
+        // Exam exercises are always individual; their stored team settings stay unused (the getter hides them outside team mode).
         if (newExercise.isExamExercise()) {
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
-            newExercise.setTeamAssignmentConfig(null);
         }
 
         // Copy the auxiliary repositories.

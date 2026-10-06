@@ -15,6 +15,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -44,6 +45,7 @@ class FileUploadExerciseWithSubmissionsExportServiceTest extends AbstractSpringI
     void exportFileUploadExerciseWithSubmissions_writesTheExerciseDetailsWithoutTheEntityGraph() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
         FileUploadExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, FileUploadExercise.class);
+        exercise.setMode(ExerciseMode.TEAM);
         exercise.setTeamAssignmentConfig(teamAssignmentConfig());
         exercise = exerciseRepository.save(exercise);
         assertThat(exercise.getTeamAssignmentConfig().getId()).as("the fixture stores the configuration").isNotNull();

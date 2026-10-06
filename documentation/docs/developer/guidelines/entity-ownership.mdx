@@ -219,7 +219,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | --- | --- | --- | --- | --- |
 | `LtiPlatformConfiguration` | — | Root | No | Server-wide platform registration. |
 | `LtiResourceLaunch` | User `user_id` | Required | No | `exercise_id` is nullable. |
-| `OnlineCourseConfiguration` | Course `course.online_course_configuration_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
+| `OnlineCourseConfiguration` | Course `course_id` | Required | No | Cascades on course deletion. The course carries no association to it. |
 | `UserLti` | User `user_id` | Required | No | Cascades. |
 
 ### Lecture
@@ -280,7 +280,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `BuildPlan` | Exercise `exercise.build_plan_id` | Held by the parent | **Yes** | The exercise points at it; nothing points back. |
 | `Ide` | — | Root | No | Reference data. |
 | `ParticipationVCSAccessToken` | Participation `participation_id` and User `user_id` | Required (all) | No |  |
-| `ProgrammingExerciseBuildConfig` | ProgrammingExercise, through the `programming_exercise_details` secondary table | Held by the parent | **Yes** | No foreign key in either direction. |
+| `ProgrammingExerciseBuildConfig` | Exercise `exercise_id` | Required | No | Cascades on exercise deletion. The exercise carries no association to it. |
 | `ProgrammingExerciseBuildStatistics` | — | Root | No | Keyed by exercise id as a plain column with no foreign key. |
 | `ProgrammingExerciseTask` | ProgrammingExercise `exercise_id` | Required | No |  |
 | `ProgrammingExerciseTestCase` | ProgrammingExercise `exercise_id` | Required | No |  |
@@ -318,7 +318,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `TutorialGroupRegistration` | TutorialGroup `tutorial_group_id` and User `student_id` | Required (all) | No |  |
 | `TutorialGroupSchedule` | TutorialGroup `tutorial_group_id` | Required | No |  |
 | `TutorialGroupSession` | TutorialGroup `tutorial_group_id` | Required | No |  |
-| `TutorialGroupsConfiguration` | Course `course.tutorial_groups_configuration_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
+| `TutorialGroupsConfiguration` | Course `course_id` | Required | No | Cascades on course deletion, and takes its free periods along. The course carries no association to it. |
 
 ## Finding orphans
 
@@ -422,8 +422,21 @@ UNION ALL SELECT 'long_feedback_text of that feedback (goes with it)', COUNT(*)
 UNION ALL SELECT 'quiz_question naming no exercise', COUNT(*)
   FROM quiz_question WHERE exercise_id IS NULL
 UNION ALL SELECT 'submitted_answer of those questions', COUNT(*)
-  FROM submitted_answer WHERE quiz_question_id IN (SELECT id FROM quiz_question WHERE exercise_id IS NULL);
+  FROM submitted_answer WHERE quiz_question_id IN (SELECT id FROM quiz_question WHERE exercise_id IS NULL)
+UNION ALL SELECT 'tutorial_groups_configuration no course points at', COUNT(*)
+  FROM tutorial_groups_configuration t WHERE NOT EXISTS (SELECT 1 FROM course c WHERE c.tutorial_groups_configuration_id = t.id)
+UNION ALL SELECT 'tutorial_group_free_period of those configurations', COUNT(*)
+  FROM tutorial_group_free_period WHERE tutorial_groups_configuration_id IN
+       (SELECT t.id FROM tutorial_groups_configuration t WHERE NOT EXISTS (SELECT 1 FROM course c WHERE c.tutorial_groups_configuration_id = t.id))
+UNION ALL SELECT 'online_course_configuration no course points at', COUNT(*)
+  FROM online_course_configuration o WHERE NOT EXISTS (SELECT 1 FROM course c WHERE c.online_course_configuration_id = o.id);
 ```
+
+The last three rows read the pointer a course used to carry to its tutorial groups configuration and its
+online course configuration, so they apply to a database that has not been upgraded yet. A configuration that
+no course points at configures nothing and is removed, together with the free periods below it. A session
+cancelled because of one of those free periods keeps existing under its tutorial group and merely loses the
+reference to the period.
 
 The text blocks of deleted feedback are **not** in that list, because they are not deleted. A text block
 belongs to its submission, which `text_block.submission_id` requires, so it keeps a parent and stays listed
@@ -437,9 +450,9 @@ name.
 
 ## Where orphans are still possible
 
-Of the 147 tables behind the 186 entities, 87 have a required parent, 24 are roots by design, 18 are
+Of the 147 tables behind the 186 entities, 90 have a required parent, 24 are roots by design, 18 are
 join entities whose parents are all required and five carry a check constraint over alternative
-parents. That leaves **13 tables where the schema permits an orphan**, in two shapes.
+parents. That leaves **10 tables where the schema permits an orphan**, in two shapes.
 
 ### An owning foreign key that is nullable
 
@@ -464,11 +477,10 @@ submission or participation, which is a different orphan and still reachable.
 
 ### One-to-one where the parent holds the pointer
 
-Nine tables have no foreign key of their own. Nothing in the schema connects them to anything, and
+Six tables have no foreign key of their own. Nothing in the schema connects them to anything, and
 the only thing keeping them reachable is a nullable column on the parent: `CourseAthenaConfig`,
-`CourseConfiguration`, `OnlineCourseConfiguration`, `TutorialGroupsConfiguration`,
-`TeamAssignmentConfig`, `PlagiarismDetectionConfig`, `SubmissionPolicy`, `BuildPlan` and
-`ProgrammingExerciseBuildConfig`.
+`CourseConfiguration`, `TeamAssignmentConfig`, `PlagiarismDetectionConfig`, `SubmissionPolicy` and
+`BuildPlan`.
 
 Moving the key onto the configuration is the fix, and it costs more than the migration. **The
 parent-side association has to go with it**, not merely become `mappedBy`: the non-owning side of a
@@ -478,12 +490,12 @@ which is what `CourseConfigurationLoadProfileTest` measures. So each configurati
 with its readers, onto its own repository read at the decision point — the shape
 `CourseConfigurationRepository` and `CourseAthenaConfigRepository` already have.
 
-Three of them carry a further constraint. `BuildPlan` is shared rather than owned: several
+Two of them carry a further constraint. `BuildPlan` is shared rather than owned: several
 programming exercises point at one build plan, so there is no single parent for it to name, and "at
 least one exercise still points at this row" is not a foreign key — it needs a cleanup instead.
-`SubmissionPolicy` and `ProgrammingExerciseBuildConfig` are written while a programming exercise is
-being created, before the exercise row exists, so moving their key means the exercise has to be
-saved first, reversing an order the creation path relies on in roughly a hundred places.
+`SubmissionPolicy` is written while a programming exercise is being created, before the exercise
+row exists, so moving its key means the exercise has to be saved first, reversing an order the
+creation path relies on in roughly a hundred places.
 
 `ScienceEvent.resourceId`, `ApollonDiagram.courseId` and `ProgrammingExerciseBuildStatistics` hold
 untyped pointers with no foreign key, which is why they are listed as roots above: there is no
