@@ -12,9 +12,9 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureContentProcessingService;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 
 /**
@@ -34,7 +34,7 @@ class RemovedContentCleanupIntegrationTest extends AbstractIrisIntegrationTest {
     private LectureUnitProcessingStateRepository processingStateRepository;
 
     @Autowired
-    private AttachmentVideoUnitRepository attachmentVideoUnitRepository;
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
     private AttachmentVideoUnit unit;
 
