@@ -19,6 +19,10 @@ export class CompetencyOrchestrationApiService extends BaseApiHttpService {
         return await this.post<CompetencyOrchestrationResultDTO>(`${this.basePath}/exercises/${exerciseId}/run`);
     }
 
+    async runForLectureUnit(lectureUnitId: number): Promise<CompetencyOrchestrationResultDTO> {
+        return await this.post<CompetencyOrchestrationResultDTO>(`${this.basePath}/lecture-units/${lectureUnitId}/run`);
+    }
+
     /**
      * Fetches the global default debounce window and daily run cap, used by the course-settings form
      * to show instructors what an empty per-course override resolves to.
