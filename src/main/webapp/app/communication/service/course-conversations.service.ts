@@ -208,10 +208,11 @@ export class CourseConversationsService implements OnDestroy {
     public markAsRead(conversationId: number) {
         const indexOfCachedConversation = this.conversationsOfUser.findIndex((cachedConversation) => cachedConversation.id === conversationId);
         if (indexOfCachedConversation !== -1) {
-            const conversation = this.conversationsOfUser[indexOfCachedConversation];
-            conversation.lastMessageDate = dayjs();
-            conversation.unreadMessagesCount = 0;
-            this.conversationsOfUser[indexOfCachedConversation] = conversation;
+            this.conversationsOfUser[indexOfCachedConversation] = {
+                ...this.conversationsOfUser[indexOfCachedConversation],
+                lastMessageDate: dayjs(),
+                unreadMessagesCount: 0,
+            }
             this._conversationsOfUser$.next(this.conversationsOfUser);
         }
         this.hasUnreadMessagesCheck();
@@ -226,11 +227,12 @@ export class CourseConversationsService implements OnDestroy {
         }
         const indexOfConversationToUpdate = this.conversationsOfUser.findIndex((conversation) => conversation.id === conversationId);
         if (indexOfConversationToUpdate !== -1) {
-            const conversation = this.conversationsOfUser[indexOfConversationToUpdate];
-            conversation.lastReadDate = lastReadDate;
-            conversation.unreadMessagesCount = unreadMessagesCount;
-            conversation.hasUnreadMessage = (unreadMessagesCount ?? 0) > 0;
-            this.conversationsOfUser[indexOfConversationToUpdate] = conversation;
+            this.conversationsOfUser[indexOfConversationToUpdate] = {
+                ...this.conversationsOfUser[indexOfConversationToUpdate],
+                lastReadDate,
+                unreadMessagesCount,
+                hasUnreadMessage: (unreadMessagesCount ?? 0) > 0,
+            };
             this._conversationsOfUser$.next(this.conversationsOfUser);
         }
     }
@@ -243,9 +245,12 @@ export class CourseConversationsService implements OnDestroy {
             this.activeConversation.hasUnreadMessage = false;
             const indexOfConversationToUpdate = this.conversationsOfUser.findIndex((conversation) => conversation.id === this.activeConversation!.id);
             if (indexOfConversationToUpdate !== -1) {
-                this.conversationsOfUser[indexOfConversationToUpdate].lastReadDate = dayjs();
-                this.conversationsOfUser[indexOfConversationToUpdate].unreadMessagesCount = 0;
-                this.conversationsOfUser[indexOfConversationToUpdate].hasUnreadMessage = false;
+                this.conversationsOfUser[indexOfConversationToUpdate] = {
+                    ...this.conversationsOfUser[indexOfConversationToUpdate],
+                    lastReadDate: dayjs(),
+                    unreadMessagesCount: 0,
+                    hasUnreadMessage: false,
+                };
                 this._conversationsOfUser$.next(this.conversationsOfUser);
             }
         }
@@ -565,11 +570,12 @@ export class CourseConversationsService implements OnDestroy {
         const conversationsCopy = [...this.conversationsOfUser];
         const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === conversationId);
         if (indexOfCachedConversation !== -1) {
-            const conversationCopy = conversationsCopy[indexOfCachedConversation];
-            conversationCopy.lastMessageDate = lastMessageDate;
-            conversationCopy.hasUnreadMessage = true;
-            conversationCopy.unreadMessagesCount = (conversationsCopy[indexOfCachedConversation].unreadMessagesCount ?? 0) + 1;
-            conversationsCopy[indexOfCachedConversation] = conversationCopy;
+            conversationsCopy[indexOfCachedConversation] = {
+                ...conversationsCopy[indexOfCachedConversation],
+                lastMessageDate,
+                hasUnreadMessage: true,
+                unreadMessagesCount: (conversationsCopy[indexOfCachedConversation].unreadMessagesCount ?? 0) + 1,
+            };
             if (!this.hasUnreadMessages) {
                 this.hasUnreadMessages = true;
                 this._hasUnreadMessages$.next(this.hasUnreadMessages);
