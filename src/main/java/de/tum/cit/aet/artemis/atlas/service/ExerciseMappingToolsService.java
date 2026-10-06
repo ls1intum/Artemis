@@ -438,7 +438,7 @@ public class ExerciseMappingToolsService {
     private Exercise loadAndValidateExercise(Long exerciseId, Long courseId) {
         Exercise exercise = exerciseRepository.findWithCompetenciesById(exerciseId).orElseThrow(() -> new IllegalArgumentException("Exercise not found with ID: " + exerciseId));
 
-        if (!courseId.equals(exercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+        if (!courseId.equals(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId())) {
             throw new IllegalArgumentException("Exercise " + exerciseId + " does not belong to course " + courseId);
         }
 

@@ -1,5 +1,5 @@
 <!--File-->
-<li
+<div
     class="list-group-item file-item"
     [class.node-selected]="item().checked"
     [class.text-danger]="!item().checked && hasError()"
@@ -29,6 +29,7 @@
         <span class="file-label-group">
             <span class="ms-1 rename-input-wrapper"
                 ><input
+                    [attr.aria-label]="'artemisApp.editor.fileBrowser.renameFile' | artemisTranslate"
                     #renamingInput
                     value="{{ item().text }}"
                     (keyup.enter)="renameNode($event)"
@@ -49,4 +50,4 @@
             </button>
         </span>
     }
-</li>
+</div>

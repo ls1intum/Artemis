@@ -628,8 +628,9 @@ public class SubmissionService {
      */
     public Result prepareTestRunSubmissionForAssessment(Submission submission) {
         Optional<Result> existingAutomaticResult = Optional.empty();
-        if (submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {
-            existingAutomaticResult = resultRepository.findByIdWithEagerFeedbacks(submission.getLatestResult().getId());
+        Result latestResult = submission.getLatestResult();
+        if (latestResult != null && AssessmentType.AUTOMATIC == latestResult.getAssessmentType()) {
+            existingAutomaticResult = resultRepository.findByIdWithEagerFeedbacks(latestResult.getId());
         }
 
         // we only support one correction round for test runs
