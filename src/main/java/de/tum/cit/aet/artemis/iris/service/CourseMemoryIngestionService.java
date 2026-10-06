@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -270,7 +271,7 @@ public class CourseMemoryIngestionService {
     /**
      * Bumps the version of every thread with a Course Memory version that contains content by the given user. Called right
      * before an opt-out from AI, a deactivation or the closing of an account is recorded; pass the result to
-     * {@link #outdateThreads} and {@link #refreshThreadsAsync} once it is. A refresh that never runs leaves the outdated
+     * {@link #outdateThreadsAfterChange} once it is. A refresh that never runs leaves the outdated
      * entries for the nightly sync to retract.
      *
      * @param userId the user
@@ -285,15 +286,23 @@ public class CourseMemoryIngestionService {
     }
 
     /**
-     * Bumps the given threads' versions again once the account change is saved. See
-     * {@link ConversationMessageRepository#bumpCourseMemoryVersionIfTracked} for why the threads are bumped both before and after.
+     * Bumps the threads with content by the user again once the account change is saved, and returns the threads to
+     * rebuild. See {@link ConversationMessageRepository#bumpCourseMemoryVersionIfTracked} for why the threads are bumped
+     * both before and after. The threads are selected again here: a thread stored for the first time during the change was
+     * not tracked yet when {@link #invalidateThreadsWithContentBy} ran, and its refresh may have read the account from
+     * before the change. A refresh that mints its version after this selection reads the saved change.
      *
-     * @param postIds the threads returned by {@link #invalidateThreadsWithContentBy} before the change
+     * @param userId the user
+     * @param before the threads returned by {@link #invalidateThreadsWithContentBy} before the change
+     * @return the threads bumped now, to rebuild
      */
-    public void outdateThreads(Collection<Long> postIds) {
+    public List<Long> outdateThreadsAfterChange(long userId, Collection<Long> before) {
+        Set<Long> postIds = new LinkedHashSet<>(before);
+        postIds.addAll(conversationMessageRepository.findCourseMemoryThreadIdsWithContentBy(userId));
         if (!postIds.isEmpty()) {
             conversationMessageRepository.bumpCourseMemoryVersionsIfTracked(postIds);
         }
+        return List.copyOf(postIds);
     }
 
     /**

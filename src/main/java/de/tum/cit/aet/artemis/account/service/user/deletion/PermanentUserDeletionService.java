@@ -165,7 +165,7 @@ public class PermanentUserDeletionService {
         String login = user.getLogin();
         List<Long> courseMemoryThreads = userOwnedContentDeletionService.invalidateCourseMemoryOf(userId);
         closeAccount(userId);
-        userOwnedContentDeletionService.outdateCourseMemoryThreads(courseMemoryThreads);
+        userOwnedContentDeletionService.outdateCourseMemoryThreads(userId, courseMemoryThreads);
 
         String imageUrl = user.getImageUrl();
         List<Path> filesToDelete = new ArrayList<>();

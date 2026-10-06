@@ -1437,6 +1437,24 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
+    void outdatingAfterAnAccountChange_includesAThreadStoredForTheFirstTimeDuringTheChange() {
+        // The user's thread is not stored yet when the account change starts, so the selection before the change misses it.
+        User changed = userUtilService.createAndSaveUser(TEST_PREFIX + "firststore");
+        Post thread = createQuestion("Stored for the first time during the change");
+        saveAnswer(thread, changed, "Reply by the user.", false);
+        List<Long> before = courseMemoryIngestionService.invalidateThreadsWithContentBy(changed.getId());
+        assertThat(before).doesNotContain(thread.getId());
+        // A tutor resolves it at that moment: its refresh mints the first version and reads the account from before the change.
+        long firstVersion = conversationMessageRepository.mintCourseMemoryVersion(thread.getId()).orElseThrow();
+
+        List<Long> rebuild = courseMemoryIngestionService.outdateThreadsAfterChange(changed.getId(), before);
+
+        // Selected again after the change, so that entry is outdated and rebuilt too.
+        assertThat(rebuild).contains(thread.getId());
+        assertThat(conversationMessageRepository.findCourseMemoryVersion(thread.getId()).orElseThrow()).isGreaterThan(firstVersion);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "optingout", roles = "USER")
     void optingOutOfAi_isRecordedTogetherWithTheBump() throws Exception {
         // An account of its own: the shared test users have content in the threads of other tests, all of which an

@@ -183,10 +183,9 @@ public class UserResource {
                 ? courseMemoryIngestionApi.map(api -> api.invalidateThreadsWithContentBy(user.getId())).orElse(List.of())
                 : List.of();
         userAiPreferenceService.recordDecision(user.getId(), selectedLLMUsage, hasSelectedTimestamp);
-        courseMemoryIngestionApi.ifPresent(api -> {
-            api.outdateThreads(courseMemoryThreads);
-            api.refreshThreadsInBackground(courseMemoryThreads);
-        });
+        if (selectedLLMUsage == AiSelectionDecision.NO_AI) {
+            courseMemoryIngestionApi.ifPresent(api -> api.refreshThreadsInBackground(api.outdateThreadsAfterChange(user.getId(), courseMemoryThreads)));
+        }
         var auditEvent = new AuditEvent(user.getLogin(), Constants.AI_SELECTION_DECISION, "before=" + before + ";after=" + selectedLLMUsage + ";at=" + hasSelectedTimestamp);
         auditEventRepository.add(auditEvent);
         return ResponseEntity.ok().build();

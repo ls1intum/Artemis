@@ -265,10 +265,11 @@ public class UserOwnedContentDeletionService {
      * Outdates the threads again once the account is closed. The bump after the change covers a refresh that read the
      * account while it was still open (see ConversationMessageRepository#bumpCourseMemoryVersionIfTracked).
      *
+     * @param userId  the account being deleted
      * @param threads the threads returned by {@link #invalidateCourseMemoryOf} before the account was closed
      */
-    public void outdateCourseMemoryThreads(List<Long> threads) {
-        courseMemoryIngestionApi.ifPresent(api -> api.outdateThreads(threads));
+    public void outdateCourseMemoryThreads(long userId, List<Long> threads) {
+        courseMemoryIngestionApi.ifPresent(api -> api.outdateThreadsAfterChange(userId, threads));
     }
 
     /**
