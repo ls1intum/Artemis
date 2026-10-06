@@ -220,17 +220,6 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
     Optional<Long> findConversationIdOfPost(@Param("postId") long postId);
 
     /**
-     * @param postId the id of a post
-     * @return the id of the course the post's conversation belongs to, or empty if the post does not exist
-     */
-    @Query("""
-            SELECT post.conversation.course.id
-            FROM Post post
-            WHERE post.id = :postId
-            """)
-    Optional<Long> findCourseIdOfPost(@Param("postId") long postId);
-
-    /**
      * @return the ids of all courses with at least one thread that has a Course Memory version
      */
     @Query("""

@@ -41,7 +41,6 @@ import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.CourseMemoryOperation;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
@@ -128,8 +127,6 @@ public class CourseMemoryIngestionService {
 
     private final ChannelRepository channelRepository;
 
-    private final CourseRepository courseRepository;
-
     private final UserRepository userRepository;
 
     private final UserAiPreferenceService userAiPreferenceService;
@@ -141,8 +138,7 @@ public class CourseMemoryIngestionService {
 
     public CourseMemoryIngestionService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
             AuthorizationCheckService authCheckService, ConversationMessageRepository conversationMessageRepository, AnswerPostRepository answerPostRepository,
-            ChannelRepository channelRepository, CourseRepository courseRepository, UserRepository userRepository, IrisWebsocketService irisWebsocketService,
-            UserAiPreferenceService userAiPreferenceService) {
+            ChannelRepository channelRepository, UserRepository userRepository, IrisWebsocketService irisWebsocketService, UserAiPreferenceService userAiPreferenceService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
@@ -150,7 +146,6 @@ public class CourseMemoryIngestionService {
         this.conversationMessageRepository = conversationMessageRepository;
         this.answerPostRepository = answerPostRepository;
         this.channelRepository = channelRepository;
-        this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.irisWebsocketService = irisWebsocketService;
         this.userAiPreferenceService = userAiPreferenceService;
