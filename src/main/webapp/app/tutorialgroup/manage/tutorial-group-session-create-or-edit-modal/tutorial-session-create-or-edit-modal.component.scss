@@ -1,5 +1,6 @@
 .frame {
-    width: 20rem;
+    // No dialog size is set, so the panel wraps this width; a touch wider than the small preset.
+    width: min(36rem, 90dvw);
     display: flex;
     flex-direction: column;
     gap: 2rem;
@@ -17,6 +18,22 @@
             .danger {
                 color: var(--danger);
             }
+
+            // The picker and its error message share the single grid cell opposite the label, stacked.
+            .input-cell {
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .field-error {
+                font-size: 12px;
+                color: var(--danger);
+            }
+
+            .required-asterisk {
+                color: var(--danger);
+            }
         }
     }
 
@@ -25,10 +42,5 @@
         justify-content: end;
         gap: 1rem;
         align-items: center;
-
-        span {
-            font-size: 12px;
-            color: var(--secondary);
-        }
     }
 }

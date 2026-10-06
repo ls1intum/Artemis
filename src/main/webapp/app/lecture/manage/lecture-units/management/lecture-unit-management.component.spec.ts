@@ -5,10 +5,7 @@ import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/ent
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Component, input } from '@angular/core';
-import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
-import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
-import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
+import { Component, input, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -20,16 +17,19 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
+import { faCheck, faFile, faFilePdf, faFileVideo, faLink, faScroll } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { CdkDragDrop } from '@angular/cdk/drag-drop';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
+import { Attachment } from 'app/lecture/shared/entities/attachment.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
@@ -42,16 +42,33 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
-@Component({ selector: 'jhi-competencies-popover', template: '' })
-class CompetenciesPopoverStubComponent {
-    courseId = input.required<number>();
-    competencyLinks = input<CompetencyLectureUnitLink[]>([]);
-    navigateTo = input<'competencyManagement' | 'courseStatistics'>('courseStatistics');
-}
-
 @Component({ selector: 'jhi-pdf-drop-zone', template: '' })
 class PdfDropZoneStubComponent {
     disabled = input<boolean>(false);
+    heading = input<string>();
+}
+
+/** Renders the list the way the lecture editor does, with the form of the unit that is edited in place. */
+@Component({
+    template: `
+        <ng-template #editor let-unit
+            ><p>Editing {{ unit.id }}</p></ng-template
+        >
+        <jhi-lecture-unit-management
+            [lectureId]="1"
+            [emitEditEvents]="true"
+            [showCreationCard]="false"
+            [showDropZone]="false"
+            [editingUnitId]="editingUnitId()"
+            [editorTemplate]="editor"
+            (onDoneEditingClicked)="done.push($event)"
+        />
+    `,
+    imports: [LectureUnitManagementComponent],
+})
+class EditingHostComponent {
+    readonly editingUnitId = signal<number | undefined>(undefined);
+    readonly done: LectureUnit[] = [];
 }
 
 describe('LectureUnitManagementComponent', () => {
@@ -77,17 +94,12 @@ describe('LectureUnitManagementComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
-                MockDirective(NgbTooltip),
                 FaIconComponent,
                 LectureUnitManagementComponent,
                 MockComponent(UnitCreationCardComponent),
-                CompetenciesPopoverStubComponent,
                 PdfDropZoneStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockComponent(ExerciseUnitComponent),
-                MockComponent(AttachmentVideoUnitComponent),
-                MockComponent(TextUnitComponent),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockRouterLinkDirective,
@@ -263,6 +275,11 @@ describe('LectureUnitManagementComponent', () => {
             expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBe(true);
         });
 
+        it('should return true for a PDF link with an uppercase extension', () => {
+            const lectureUnit = { type: LectureUnitType.ATTACHMENT_VIDEO, attachment: { link: 'Slides.PDF' } } as LectureUnit;
+            expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBe(true);
+        });
+
         it('should return false for file extension different than .pdf', () => {
             const lectureUnit = {
                 type: LectureUnitType.ATTACHMENT_VIDEO,
@@ -307,21 +324,6 @@ describe('LectureUnitManagementComponent', () => {
             lectureUnitManagementComponent.transcriptionStatus.set({ [attachmentVideoUnit.id!]: TranscriptionStatus.FAILED });
             expect(lectureUnitManagementComponent.isTranscriptionFailed(attachmentVideoUnit)).toBe(true);
         });
-
-        it('should return true for hasTranscriptionBadge when transcription is pending', () => {
-            lectureUnitManagementComponent.transcriptionStatus.set({ [attachmentVideoUnit.id!]: TranscriptionStatus.PENDING });
-            expect(lectureUnitManagementComponent.hasTranscriptionBadge(attachmentVideoUnit)).toBe(true);
-        });
-
-        it('should return true for hasTranscriptionBadge when transcription is completed', () => {
-            lectureUnitManagementComponent.transcriptionStatus.set({ [attachmentVideoUnit.id!]: TranscriptionStatus.COMPLETED });
-            expect(lectureUnitManagementComponent.hasTranscriptionBadge(attachmentVideoUnit)).toBe(true);
-        });
-
-        it('should return true for hasTranscriptionBadge when transcription failed', () => {
-            lectureUnitManagementComponent.transcriptionStatus.set({ [attachmentVideoUnit.id!]: TranscriptionStatus.FAILED });
-            expect(lectureUnitManagementComponent.hasTranscriptionBadge(attachmentVideoUnit)).toBe(true);
-        });
     });
 
     describe('Processing Status', () => {
@@ -350,7 +352,8 @@ describe('LectureUnitManagementComponent', () => {
                     retryCount: 0,
                 },
             });
-            expect(lectureUnitManagementComponent.isProcessingIdle(attachmentVideoUnit)).toBe(true);
+            expect(lectureUnitManagementComponent.isProcessingTranscribing(attachmentVideoUnit)).toBe(false);
+            expect(lectureUnitManagementComponent.isProcessingDone(attachmentVideoUnit)).toBe(false);
 
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: {
@@ -360,7 +363,6 @@ describe('LectureUnitManagementComponent', () => {
                 },
             });
             expect(lectureUnitManagementComponent.isProcessingTranscribing(attachmentVideoUnit)).toBe(true);
-            expect(lectureUnitManagementComponent.isProcessingInProgress(attachmentVideoUnit)).toBe(true);
 
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: {
@@ -370,7 +372,6 @@ describe('LectureUnitManagementComponent', () => {
                 },
             });
             expect(lectureUnitManagementComponent.isProcessingIngesting(attachmentVideoUnit)).toBe(true);
-            expect(lectureUnitManagementComponent.isProcessingInProgress(attachmentVideoUnit)).toBe(true);
 
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: {
@@ -389,39 +390,6 @@ describe('LectureUnitManagementComponent', () => {
                 },
             });
             expect(lectureUnitManagementComponent.isProcessingFailed(attachmentVideoUnit)).toBe(true);
-        });
-
-        it('should return true for hasProcessingBadge when processing is in progress', () => {
-            lectureUnitManagementComponent.processingStatus.set({
-                [attachmentVideoUnit.id!]: {
-                    lectureUnitId: attachmentVideoUnit.id!,
-                    phase: ProcessingPhase.TRANSCRIBING,
-                    retryCount: 0,
-                },
-            });
-            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBe(true);
-        });
-
-        it('should return true for hasProcessingBadge when processing is done', () => {
-            lectureUnitManagementComponent.processingStatus.set({
-                [attachmentVideoUnit.id!]: {
-                    lectureUnitId: attachmentVideoUnit.id!,
-                    phase: ProcessingPhase.DONE,
-                    retryCount: 0,
-                },
-            });
-            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBe(true);
-        });
-
-        it('should return true for hasProcessingBadge when processing failed', () => {
-            lectureUnitManagementComponent.processingStatus.set({
-                [attachmentVideoUnit.id!]: {
-                    lectureUnitId: attachmentVideoUnit.id!,
-                    phase: ProcessingPhase.FAILED,
-                    retryCount: 0,
-                },
-            });
-            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBe(true);
         });
 
         it('should return error key from processing status', () => {
@@ -773,5 +741,166 @@ describe('LectureUnitManagementComponent', () => {
             // Should navigate to the last created unit (id: 30)
             expect(navigateSpy).toHaveBeenCalledWith(['/course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-video-units', 30, 'edit']);
         });
+    });
+    describe('content item cards', () => {
+        function withAttachment(link: string | undefined, videoSource?: string): AttachmentVideoUnit {
+            const unit = new AttachmentVideoUnit();
+            unit.type = LectureUnitType.ATTACHMENT_VIDEO;
+            unit.attachment = link ? { link } : undefined;
+            unit.videoSource = videoSource;
+            return unit;
+        }
+
+        it.each([
+            ['a PDF', withAttachment('attachments/slides.PDF'), 'pdf', faFilePdf],
+            ['another file', withAttachment('attachments/sheet.zip'), 'file', faFile],
+            ['a video', withAttachment(undefined, 'https://live.rbg.tum.de/w/1'), 'video', faFileVideo],
+            ['a file and a video', withAttachment('attachments/slides.pdf', 'https://live.rbg.tum.de/w/1'), 'fileAndVideo', faFileVideo],
+        ])('should name a file unit with %s by what it holds', (_, unit, kind, icon) => {
+            expect(lectureUnitManagementComponent.getTypeLabelKey(unit)).toBe(`artemisApp.lectureUnit.management.type.${kind}`);
+            expect(lectureUnitManagementComponent.getTypeIcon(unit)).toBe(icon);
+        });
+
+        it.each([
+            [LectureUnitType.TEXT, 'text', faScroll],
+            [LectureUnitType.EXERCISE, 'exercise', faCheck],
+            [LectureUnitType.ONLINE, 'online', faLink],
+        ])('should name a %s unit by its kind', (type, kind, icon) => {
+            const unit = { type } as LectureUnit;
+
+            expect(lectureUnitManagementComponent.getTypeLabelKey(unit)).toBe(`artemisApp.lectureUnit.management.type.${kind}`);
+            expect(lectureUnitManagementComponent.getTypeIcon(unit)).toBe(icon);
+        });
+
+        it('should tell a unit released later from a visible one, using the release date of an exercise for its unit', () => {
+            const later = { type: LectureUnitType.TEXT, releaseDate: dayjs().add(1, 'day') } as LectureUnit;
+            const earlier = { type: LectureUnitType.TEXT, releaseDate: dayjs().subtract(1, 'day') } as LectureUnit;
+            const exerciseLater = { type: LectureUnitType.EXERCISE, exercise: { releaseDate: dayjs().add(2, 'days') } } as ExerciseUnit;
+
+            expect(lectureUnitManagementComponent.isReleasedLater(later)).toBe(true);
+            expect(lectureUnitManagementComponent.isReleasedLater(earlier)).toBe(false);
+            expect(lectureUnitManagementComponent.isReleasedLater({ type: LectureUnitType.TEXT } as LectureUnit)).toBe(false);
+            expect(lectureUnitManagementComponent.isReleasedLater(exerciseLater)).toBe(true);
+        });
+
+        it('should show one card per unit with its name and linked competencies', async () => {
+            textUnit.type = LectureUnitType.TEXT;
+            textUnit.name = 'Reading';
+            textUnit.competencyLinks = [
+                new CompetencyLectureUnitLink({ id: 7, title: 'Modeling' }, undefined, 1),
+                new CompetencyLectureUnitLink({ id: 8, title: 'Testing' }, undefined, 1),
+            ];
+            vi.spyOn(lectureUnitService, 'getLectureUnitName').mockImplementation((unit: LectureUnit) => unit.name ?? '');
+            // The first render of the setup already loaded the units, so load the changed ones again.
+            lectureUnitManagementComponent.loadData();
+            await lectureUnitManagementComponentFixture.whenStable();
+
+            const cards = lectureUnitManagementComponentFixture.debugElement.queryAll(By.css('[data-testid="lecture-unit"]'));
+            expect(cards).toHaveLength(3);
+            expect(cards[0].query(By.css('[data-testid="lecture-unit-name"]')).nativeElement.textContent.trim()).toBe('Reading');
+            expect(cards[0].queryAll(By.css('[data-testid="lecture-unit-competency"]')).map((tag) => tag.nativeElement.textContent.trim())).toEqual(['Modeling', 'Testing']);
+
+            lectureUnitManagementComponentFixture.componentRef.setInput('showCompetencies', false);
+            await lectureUnitManagementComponentFixture.whenStable();
+            expect(lectureUnitManagementComponentFixture.debugElement.queryAll(By.css('[data-testid="lecture-unit-competency"]'))).toHaveLength(0);
+        });
+
+        it('should say that the lecture has no content yet', async () => {
+            lecture.lectureUnits = [];
+            lectureUnitManagementComponent.loadData();
+            await lectureUnitManagementComponentFixture.whenStable();
+
+            expect(lectureUnitManagementComponentFixture.debugElement.query(By.css('[data-testid="lecture-unit-empty"]'))).not.toBeNull();
+            expect(lectureUnitManagementComponentFixture.debugElement.query(By.css('[data-testid="lecture-unit-list"]'))).toBeNull();
+        });
+
+        it('should announce the units to a page that works with them', () => {
+            const announced: LectureUnit[][] = [];
+            lectureUnitManagementComponent.lectureUnitsChange.subscribe((units) => announced.push(units));
+
+            lectureUnitManagementComponent.loadData();
+            TestBed.tick();
+
+            expect(announced.at(-1)).toEqual([textUnit, exerciseUnit, attachmentVideoUnit]);
+        });
+    });
+
+    describe('editing a unit in place', () => {
+        let hostFixture: ComponentFixture<EditingHostComponent>;
+        let host: EditingHostComponent;
+        const queryAll = (testId: string) => hostFixture.debugElement.queryAll(By.css(`[data-testid="${testId}"]`));
+        const list = () => hostFixture.debugElement.query(By.directive(LectureUnitManagementComponent)).componentInstance as LectureUnitManagementComponent;
+
+        beforeEach(() => {
+            hostFixture = TestBed.createComponent(EditingHostComponent);
+            host = hostFixture.componentInstance;
+            hostFixture.detectChanges();
+            host.editingUnitId.set(textUnit.id);
+            hostFixture.detectChanges();
+        });
+
+        it('should mark the edited unit, dim the others, fix the order and show its form below it', () => {
+            const rows = queryAll('lecture-unit');
+            const editingRow = rows.find((row) => row.attributes['data-editing'] === 'true')!;
+
+            expect(rows.filter((row) => row.attributes['data-editing'] === 'true')).toHaveLength(1);
+            expect(editingRow.query(By.css('[data-testid="lecture-unit-editing-tag"]'))).not.toBeNull();
+            expect(editingRow.query(By.css('[data-testid="lecture-unit-done"]'))).not.toBeNull();
+            expect(editingRow.query(By.css('[data-testid="lecture-unit-edit"]'))).toBeNull();
+            expect(editingRow.query(By.css('[data-testid="lecture-unit-editor"]')).nativeElement.textContent).toContain(`Editing ${textUnit.id}`);
+            expect(rows.filter((row) => row !== editingRow).every((row) => row.classes['opacity-60'])).toBe(true);
+            expect(queryAll('lecture-unit-editor')).toHaveLength(1);
+            expect(hostFixture.debugElement.query(By.directive(CdkDropList)).injector.get(CdkDropList).disabled).toBe(true);
+        });
+
+        it('should report Done of the edited unit', () => {
+            queryAll('lecture-unit-done')[0].nativeElement.click();
+
+            expect(host.done).toEqual([expect.objectContaining({ id: textUnit.id })]);
+        });
+
+        it('should move the keyboard focus to the Edit button of a unit once its form closed', () => {
+            host.editingUnitId.set(undefined);
+            hostFixture.detectChanges();
+
+            list().focusEditButton(textUnit.id!);
+
+            expect(document.activeElement?.getAttribute('data-unit-id')).toBe(String(textUnit.id));
+            expect(document.activeElement?.getAttribute('data-testid')).toBe('lecture-unit-edit');
+        });
+
+        it('should keep the list and the form of the edited unit while the lecture loads again', () => {
+            const reload = new Subject<HttpResponse<Lecture>>();
+            findLectureWithDetailsSpy.mockReturnValue(reload);
+            const editor = queryAll('lecture-unit-editor')[0].nativeElement;
+
+            list().loadData();
+            hostFixture.detectChanges();
+            expect(queryAll('lecture-unit')).toHaveLength(3);
+
+            const reloadedLecture = new Lecture();
+            reloadedLecture.id = 1;
+            reloadedLecture.course = course;
+            reloadedLecture.lectureUnits = [exerciseUnit, textUnit, attachmentVideoUnit].map((unit) => deepClone(unit));
+            reload.next(new HttpResponse({ body: reloadedLecture, status: 200 }));
+            reload.complete();
+            hostFixture.detectChanges();
+
+            expect(queryAll('lecture-unit-editor')[0].nativeElement).toBe(editor);
+        });
+    });
+
+    it('should show a saved unit without loading the lecture again', () => {
+        const savedUnit = new AttachmentVideoUnit();
+        savedUnit.id = attachmentVideoUnit.id;
+        savedUnit.name = 'Slides';
+        savedUnit.attachment = { link: 'attachments/slides.pdf' } as Attachment;
+        const loadCount = findLectureWithDetailsSpy.mock.calls.length;
+
+        lectureUnitManagementComponent.replaceLectureUnit(savedUnit);
+
+        expect(lectureUnitManagementComponent.lectureUnits()).toEqual([textUnit, exerciseUnit, savedUnit]);
+        expect(lectureUnitManagementComponent.viewButtonAvailable()[savedUnit.id!]).toBe(true);
+        expect(findLectureWithDetailsSpy).toHaveBeenCalledTimes(loadCount);
     });
 });

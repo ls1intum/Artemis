@@ -19,8 +19,7 @@ import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { NgClass } from '@angular/common';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
@@ -35,13 +34,12 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     selector: 'jhi-quiz-submission-exam',
     templateUrl: './quiz-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
-    styleUrls: ['../../../../quiz/overview/participation/quiz-participation.component.scss', './quiz-exam-submission.component.scss'],
+    styleUrls: ['./quiz-exam-submission.component.scss'],
     imports: [
         TranslateDirective,
         IncludedInScoreBadgeComponent,
         ExerciseSaveButtonComponent,
-        NgbTooltip,
-        NgClass,
+        TumAetUiTooltipDirective,
         MultipleChoiceQuestionComponent,
         DragAndDropQuestionComponent,
         ShortAnswerQuestionComponent,

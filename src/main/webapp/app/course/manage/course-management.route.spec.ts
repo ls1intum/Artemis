@@ -21,6 +21,14 @@ describe('courseManagementRoutes', () => {
         expect(containerRoute!.data?.['usesModuleBackground']).toBe(false);
     });
 
+    // The course creation page brings the same frame itself (title bar above a scrolling card), so the app-level card
+    // would nest a second background around it.
+    it('renders the course creation route full-bleed (usesModuleBackground: false)', () => {
+        const creationRoute = courseManagementRoutes.find((route) => route.path === 'new');
+
+        expect(creationRoute!.data?.['usesModuleBackground']).toBe(false);
+    });
+
     it('provides course grading inside the management container', () => {
         expect(containerRoute!.children?.some((route) => route.path === ':courseId/grading')).toBe(true);
     });

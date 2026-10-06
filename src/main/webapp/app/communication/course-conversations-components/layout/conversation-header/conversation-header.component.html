@@ -46,7 +46,6 @@
                             <a
                                 class="btn btn-info btn-sm"
                                 [routerLink]="['/courses', course()!.id, 'tutorial-groups', activeConversationAsChannel.tutorialGroupId]"
-                                role="button"
                                 jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"
                                 [translateValues]="{ title: activeConversationAsChannel.tutorialGroupTitle }"
                             ></a>
@@ -68,13 +67,13 @@
                                         <span>
                                             {{
                                                 showPinnedMessages()
-                                                    ? ('artemisApp.metis.showing' | artemisTranslate) +
+                                                    ? ('artemisApp.communication.showing' | artemisTranslate) +
                                                       (pinnedMessageCount() === 1
-                                                          ? ('artemisApp.metis.singlePinned' | artemisTranslate)
-                                                          : ('artemisApp.metis.multiplePinned' | artemisTranslate: { number: pinnedMessageCount() }))
+                                                          ? ('artemisApp.communication.singlePinned' | artemisTranslate)
+                                                          : ('artemisApp.communication.multiplePinned' | artemisTranslate: { number: pinnedMessageCount() }))
                                                     : pinnedMessageCount() === 1
-                                                      ? ('artemisApp.metis.singlePinned' | artemisTranslate)
-                                                      : ('artemisApp.metis.multiplePinned' | artemisTranslate: { number: pinnedMessageCount() })
+                                                      ? ('artemisApp.communication.singlePinned' | artemisTranslate)
+                                                      : ('artemisApp.communication.multiplePinned' | artemisTranslate: { number: pinnedMessageCount() })
                                             }}
                                         </span>
                                     </button>

@@ -49,10 +49,17 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
 
         const adjustedDescription = description! + 'change to enable save button again';
         await lectureCreation.typeDescription(adjustedDescription);
+        // The footer names what is unsaved, so the saved confirmation below comes from this second save.
+        await expect(lectureCreation.getSaveStatus()).toContainText('Unsaved changes');
         const lectureResponseFromEdit = await lectureCreation.save();
         const lectureFromEdit: Lecture = await readResponseJson(lectureResponseFromEdit);
         expect(lectureResponseFromEdit.status()).toBe(200);
-        await page.waitForURL(`**/${course.id}/lectures/${lectureFromEdit.id}`);
+        // Saving keeps the editor open and confirms the save in its footer; nothing is left to cancel, so the footer offers Close.
+        await expect(page).toHaveURL(`/course-management/${course.id}/lectures/${lectureFromEdit.id}/edit`);
+        await expect(lectureCreation.getSaveStatus()).toContainText('Lecture details saved at');
+        await expect(lectureCreation.getLeaveButton()).toHaveText('Close');
+
+        await Commands.gotoAndEnsureRendered(page, `/course-management/${course.id}/lectures/${lectureFromEdit.id}`);
 
         await expect(lectureManagement.getLectureTitle()).toContainText(lectureData.title);
         await expect(lectureManagement.getLectureDescription()).toContainText(adjustedDescription!);
@@ -96,7 +103,7 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
             const exercise = await exerciseAPIRequests.createModelingExercise({ course });
             await lectureManagement.openUnitsPage(lecture.id!);
             await lectureManagement.addExerciseUnit(exercise.id!);
-            await expect(page.locator('.exercise-title', { hasText: new RegExp(`^${exercise.title!}$`) })).toBeVisible();
+            await expect(page.getByTestId('lecture-unit-name').filter({ hasText: new RegExp(`^${exercise.title!}$`) })).toBeVisible();
         });
 
         test('Can open page to add attachment unit to the lecture', async ({ lectureManagement, page }) => {

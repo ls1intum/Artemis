@@ -266,7 +266,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         var result = resultEvent.getEventObject();
         var participation = result.getSubmission().getParticipation();
 
-        if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) || participation.getExercise().isExamExercise()) {
+        if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
+            return;
+        }
+        var exercise = studentParticipation.getProgrammingExercise();
+        if (exercise == null || exercise.isExamExercise()) {
             return;
         }
 
@@ -277,23 +281,25 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         var programmingSubmission = (ProgrammingSubmission) result.getSubmission();
         // Loaded once and handed down, so both branches share this lookup instead of repeating it for their own
         // `enabled()` check. The per-course legacy switch belongs to the same lookup, so it is decided here too.
-        var settings = irisSettingsService.getSettingsForCourse(studentParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember());
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
+        var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled() || !settings.legacyBuildTriggersEffective()) {
             return;
         }
         if (programmingSubmission.isBuildFailed()) {
-            onBuildFailure(studentParticipation, programmingSubmission, settings);
+            onBuildFailure(exercise, studentParticipation, programmingSubmission, settings);
         }
         else {
-            onNewResult(studentParticipation, programmingSubmission, settings);
+            onNewResult(exercise, studentParticipation, programmingSubmission, settings);
         }
     }
 
-    private void onBuildFailure(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission submission, IrisCourseSettings settings) {
+    private void onBuildFailure(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission submission,
+            IrisCourseSettings settings) {
         var user = studentParticipation.getStudent().orElseThrow();
-        var session = findExerciseSessionOrCourseFallback(studentParticipation.getProgrammingExercise(), user, PROGRAMMING_EXERCISE_CHAT);
+        var session = findExerciseSessionOrCourseFallback(exercise, user, PROGRAMMING_EXERCISE_CHAT);
         if (session.getMode() == COURSE_CHAT) {
-            applyContextChange(session, PROGRAMMING_EXERCISE_CHAT, studentParticipation.getProgrammingExercise().getId(), user);
+            applyContextChange(session, PROGRAMMING_EXERCISE_CHAT, exercise.getId(), user);
         }
         rateLimitService.checkRateLimitElseThrow(session, user);
         log.info("Build failed for user {}", user.getName());
@@ -304,7 +310,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 });
     }
 
-    private void onNewResult(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission, IrisCourseSettings settings) {
+    private void onNewResult(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission,
+            IrisCourseSettings settings) {
         // TODO: Reduce this call to the last 5 submissions or sth
         var recentSubmissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(studentParticipation.getId());
 
@@ -321,9 +328,9 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             if (needsIntervention) {
                 log.info("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
                 var user = studentParticipation.getStudent().orElseThrow();
-                var session = findExerciseSessionOrCourseFallback(studentParticipation.getProgrammingExercise(), user, PROGRAMMING_EXERCISE_CHAT);
+                var session = findExerciseSessionOrCourseFallback(exercise, user, PROGRAMMING_EXERCISE_CHAT);
                 if (session.getMode() == COURSE_CHAT) {
-                    applyContextChange(session, PROGRAMMING_EXERCISE_CHAT, studentParticipation.getProgrammingExercise().getId(), user);
+                    applyContextChange(session, PROGRAMMING_EXERCISE_CHAT, exercise.getId(), user);
                 }
                 rateLimitService.checkRateLimitElseThrow(session, user);
                 CompletableFuture.runAsync(() -> chatPipelineExecutionService.execute(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase(Locale.ROOT)),
@@ -528,7 +535,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private IrisChatSession findExerciseSessionOrCourseFallback(Exercise exercise, User user, IrisChatMode mode) {
         return irisChatSessionRepository.findLatestByEntityIdAndChatModeAndUserIdWithMessages(exercise.getId(), mode, user.getId(), Pageable.ofSize(1)).stream().findFirst()
-                .orElseGet(() -> findOrCreateEmptyCourseSession(exercise.getCourseViaExerciseGroupOrCourseMember(), user));
+                .orElseGet(() -> findOrCreateEmptyCourseSession(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user));
     }
 
     private IrisChatSession findLectureSessionOrCourseFallback(Lecture lecture, User user) {
