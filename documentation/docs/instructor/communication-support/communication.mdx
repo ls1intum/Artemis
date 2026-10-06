@@ -130,7 +130,7 @@ The course memory follows the course:
 
 * Iris only stores and cites threads from channels every student of the course can read. A thread in a private channel, in an exam channel, in a tutorial lecture channel or in the channel of an exercise that is not released yet is never used. When a channel becomes private, Iris stops citing it immediately.
 * An answer counts as verified by a tutor only if a tutor approved it or marked it as resolving the thread. If someone without tutor rights later changes its text, it counts as resolved by the community again. Answers resolved by students are offered to Iris as hints only.
-* Editing or deleting a message updates or removes the stored answer. If a student opts out of AI interaction, their messages are removed from the stored answers. If Iris cannot be reached at that moment, a nightly check removes the outdated answer.
+* Editing or deleting a message updates or removes the stored answer. If Iris cannot be reached at that moment, a nightly check removes the outdated answer. An opt-out from AI interaction applies to everything stored from then on; answers stored before stay, because they hold condensed course knowledge rather than the student's own text.
 * A response that states organizational facts, such as exam dates, rooms, deadlines or grading rules, is only posted without review if answers verified by tutors state exactly these facts. Otherwise it is held for tutor review.
 
 Confirmation after resolving a thread:
@@ -150,7 +150,7 @@ The Autonomous Tutor answers in course channels, including private channels. Gro
   <ul>
     <li><strong>Model choice</strong>: If any participant of the thread chose local AI, the whole run uses on-premise models. Otherwise the thread and the stored answers that Iris uses can be sent to cloud providers; stored answers can come from threads of students who chose local AI. The search always uses the embedding model of the Iris instance.</li>
     <li><strong>Activation</strong>: The feature is not active by default. An administrator enables it for the whole instance. Instructors can turn it off for their course by disabling Iris.</li>
-    <li><strong>Student opt-out</strong>: The text of students who have opted out of AI interaction is never sent to Iris, embedded or stored. Iris only receives a placeholder with the message id, the author id and whether the reply resolves the thread.</li>
+    <li><strong>Student opt-out</strong>: From the moment students opt out of AI interaction, their text is never sent to Iris, embedded or stored. Iris only receives a placeholder with the message id, the author id and whether the reply resolves the thread.</li>
     <li><strong>Transparency</strong>: Every Iris-generated message carries the Iris icon and a bot tag. Responses awaiting tutor review remain hidden from students until a tutor approves or edits them.</li>
     <li><strong>GDPR</strong>: Processing is purpose-limited to assisting with student support (purpose limitation, data minimisation). If your institution requires consent as the legal basis, activation must be preceded by explicit <strong>consent</strong> (Art. 6(1)(a) GDPR).</li>
   </ul>
