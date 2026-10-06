@@ -16,6 +16,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProvider } from 'ng-mocks';
+import { DialogService } from 'primeng/dynamicdialog';
 
 describe('QuizExercise Management Buttons Component', () => {
     let comp: QuizExerciseManageButtonsComponent;
@@ -268,5 +269,54 @@ describe('QuizExercise Management Buttons Component - Exam Mode', () => {
 
         expect(quizExerciseService.delete).toHaveBeenCalledWith(456);
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', 123, 'exercises']);
+    });
+});
+
+describe('QuizExercise Management Buttons Component evaluate button', () => {
+    let fixture: ComponentFixture<QuizExerciseManageButtonsComponent>;
+
+    const route = { snapshot: { paramMap: convertToParamMap({ courseId: 123 }) } } as any as ActivatedRoute;
+
+    function render(isDetailPage: boolean, canBeEvaluated: boolean | undefined) {
+        const quiz = new QuizExercise({ id: 123 } as Course, undefined);
+        quiz.id = 456;
+        quiz.quizEnded = true;
+        quiz.isAtLeastInstructor = true;
+        quiz.canBeEvaluated = canBeEvaluated;
+        fixture.componentRef.setInput('quizExercise', quiz);
+        fixture.componentRef.setInput('isDetailPage', isDetailPage);
+        fixture.detectChanges();
+        return fixture.nativeElement.querySelector('[data-testid="quiz-evaluate-button"]') as HTMLElement | null;
+    }
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                LocalStorageService,
+                SessionStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                MockProvider(DialogService),
+            ],
+        });
+        fixture = TestBed.createComponent(QuizExerciseManageButtonsComponent);
+    });
+
+    it('should offer the evaluate button on the detail page when the server accepts the evaluation', () => {
+        expect(render(true, true)).not.toBeNull();
+    });
+
+    it('should not offer the evaluate button when the server does not accept the evaluation', () => {
+        expect(render(true, false)).toBeNull();
+    });
+
+    it('should not offer the evaluate button when the server did not say that the evaluation is possible', () => {
+        expect(render(true, undefined)).toBeNull();
+    });
+
+    it('should not offer the evaluate button outside of the detail page', () => {
+        expect(render(false, true)).toBeNull();
     });
 });
