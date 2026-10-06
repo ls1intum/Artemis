@@ -88,8 +88,8 @@ class AssessmentIdValidationTest extends AbstractSpringIntegrationIndependentBat
         Fixture fixture = setUpTextFixture("FeedbackX", "FeedbackY");
 
         TextAssessmentDTO body = new TextAssessmentDTO(
-                List.of(new FeedbackDTO(fixture.otherFeedbackId(), "text", "D".repeat(1500), true, null, 1.0, true, FeedbackType.MANUAL_UNREFERENCED, null, null, null)), null,
-                null);
+                List.of(new FeedbackDTO(fixture.otherFeedbackId(), "text", "D".repeat(1500), true, null, 1.0, true, FeedbackType.MANUAL_UNREFERENCED, null, null, null, null)),
+                null, null);
         request.putAndExpectError(fixture.url(), body, HttpStatus.BAD_REQUEST, "feedbackIdMismatch");
 
         assertThat(scalar("SELECT f.result.id FROM Feedback f WHERE f.id = :id", fixture.otherFeedbackId())).as("the feedback stays on the result that owns it")
@@ -107,7 +107,8 @@ class AssessmentIdValidationTest extends AbstractSpringIntegrationIndependentBat
         String otherBlockId = otherBlock.getId();
         Object submissionBefore = scalar("SELECT b.submission.id FROM TextBlock b WHERE b.id = :id", otherBlockId);
 
-        TextAssessmentDTO body = new TextAssessmentDTO(List.of(new FeedbackDTO(null, "text", "detail", false, null, 1.0, true, FeedbackType.MANUAL_UNREFERENCED, null, null, null)),
+        TextAssessmentDTO body = new TextAssessmentDTO(
+                List.of(new FeedbackDTO(null, "text", "detail", false, null, 1.0, true, FeedbackType.MANUAL_UNREFERENCED, null, null, null, null)),
                 Set.of(new TextBlockDTO(otherBlockId, "changed block text", 0, 5, TextBlockType.MANUAL)), null);
         request.putAndExpectError(fixture.url(), body, HttpStatus.BAD_REQUEST, "textBlockSubmissionMismatch");
 
@@ -130,7 +131,7 @@ class AssessmentIdValidationTest extends AbstractSpringIntegrationIndependentBat
         Object submittedTimeBefore = scalar("SELECT cr.submittedTime FROM ComplaintResponse cr WHERE cr.id = :id", complaintResponse.getId());
 
         TextAssessmentUpdateDTO body = new TextAssessmentUpdateDTO(
-                List.of(new FeedbackDTO(fixture.otherFeedbackId(), "text", null, true, null, 1.0, true, FeedbackType.MANUAL_UNREFERENCED, null, null, null)),
+                List.of(new FeedbackDTO(fixture.otherFeedbackId(), "text", null, true, null, 1.0, true, FeedbackType.MANUAL_UNREFERENCED, null, null, null, null)),
                 new ComplaintResponseRequestDTO(complaintResponse.getId(), "rejected", new ComplaintResponseRequestDTO.ComplaintRequestDTO(complaint.getId(), false)), null,
                 Set.of());
         request.putAndExpectError("/api/text/participations/" + fixture.participationId() + "/submissions/" + fixture.submissionId() + "/text-assessment-after-complaint", body,
@@ -166,7 +167,7 @@ class AssessmentIdValidationTest extends AbstractSpringIntegrationIndependentBat
         participationUtilService.addFeedbackToResult(otherFeedback, otherResult);
 
         ModelingAssessmentDTO body = new ModelingAssessmentDTO(
-                List.of(new FeedbackDTO(otherFeedback.getId(), "text", "detail", false, null, 5.0, true, FeedbackType.MANUAL_UNREFERENCED, null, null, null)), null);
+                List.of(new FeedbackDTO(otherFeedback.getId(), "text", "detail", false, null, 5.0, true, FeedbackType.MANUAL_UNREFERENCED, null, null, null, null)), null);
         request.putAndExpectError("/api/modeling/modeling-submissions/" + submission.getId() + "/results/" + result.getId() + "/assessment?submit=false", body,
                 HttpStatus.BAD_REQUEST, "feedbackIdMismatch");
 

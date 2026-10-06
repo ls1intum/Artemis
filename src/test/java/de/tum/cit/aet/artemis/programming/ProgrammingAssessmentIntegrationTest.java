@@ -901,7 +901,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         participationUtilService.addFeedbackToResult(otherFeedback, otherResult);
 
         var feedbackOfOtherResult = new ProgrammingManualFeedbackDTO(otherFeedback.getId(), "text", "detail", false, null, 1.0, true, FeedbackType.MANUAL_UNREFERENCED, null, null,
-                null);
+                null, null);
         var body = new ProgrammingManualResultRequestDTO(null, 50.0, null, true, List.of(feedbackOfOtherResult), null);
         request.put("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", body, HttpStatus.BAD_REQUEST);
 
@@ -983,10 +983,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         String url = "/api/programming/participations/" + participationId + "/manual-results?submit=true";
 
         var feedbackOfOtherResult = new ProgrammingManualFeedbackDTO(foreignFeedbackId, "text", "detail", false, null, 1.0, true, FeedbackType.MANUAL_UNREFERENCED, null, null,
-                null);
+                null, null);
         request.put(url, new ProgrammingManualResultRequestDTO(loadedResult.getId(), 1.0, null, true, List.of(feedbackOfOtherResult), null), HttpStatus.BAD_REQUEST);
 
-        var newFeedback = new ProgrammingManualFeedbackDTO(null, null, "detail", false, null, 1.0, true, FeedbackType.MANUAL_UNREFERENCED, null, null, null);
+        var newFeedback = new ProgrammingManualFeedbackDTO(null, null, "detail", false, null, 1.0, true, FeedbackType.MANUAL_UNREFERENCED, null, null, null, null);
         long resultOfOtherParticipation = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise,
                 ParticipationFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student3", TEST_PREFIX + "tutor1", AssessmentType.SEMI_AUTOMATIC, false).getLatestResult()
                 .getId();
@@ -1081,7 +1081,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void creatingALongManualFeedbackStoresExactlyOneLongFeedbackRow(boolean submit) throws Exception {
         var longText = "abc".repeat(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH);
-        var newFeedback = new ProgrammingManualFeedbackDTO(null, null, longText, false, null, 0.0, null, FeedbackType.MANUAL_UNREFERENCED, null, null, null);
+        var newFeedback = new ProgrammingManualFeedbackDTO(null, null, longText, false, null, 0.0, null, FeedbackType.MANUAL_UNREFERENCED, null, null, null, null);
         var body = new ProgrammingManualResultRequestDTO(null, 0.0, null, true, List.of(newFeedback), null);
 
         String url = "/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results";
@@ -1532,7 +1532,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     private static ProgrammingAssessmentUpdateDTO assessmentUpdateDTO(List<Feedback> feedbacks, ComplaintResponse complaintResponse) {
         List<ProgrammingManualFeedbackDTO> feedbackDTOs = feedbacks.stream()
                 .map(feedback -> new ProgrammingManualFeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(),
-                        feedback.getReference(), feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), null, null))
+                        feedback.getReference(), feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), null, null, feedback.getSeverity()))
                 .toList();
         var complaint = complaintResponse.getComplaint();
         var complaintResponseDTO = new ProgrammingAssessmentUpdateDTO.ComplaintResponseDTO(complaintResponse.getId(), complaintResponse.getResponseText(),

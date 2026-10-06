@@ -249,7 +249,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         FeedbackDTO feedbackDTO = FeedbackDTO.of(longFeedback);
         final String editedLongText = "Edited long feedback ".repeat(100);
         FeedbackDTO editedFeedbackDTO = new FeedbackDTO(feedbackDTO.id(), feedbackDTO.text(), editedLongText, feedbackDTO.hasLongFeedbackText(), feedbackDTO.reference(),
-                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction(), feedbackDTO.testCase());
+                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction(), feedbackDTO.testCase(), null);
         TextAssessmentDTO body = new TextAssessmentDTO(List.of(editedFeedbackDTO), null, null);
         request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
                 ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
@@ -275,7 +275,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         FeedbackDTO feedbackDTO = FeedbackDTO.of(longFeedback);
         final String editedShortText = "Short edited feedback";
         FeedbackDTO editedFeedbackDTO = new FeedbackDTO(feedbackDTO.id(), feedbackDTO.text(), editedShortText, feedbackDTO.hasLongFeedbackText(), feedbackDTO.reference(),
-                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction(), feedbackDTO.testCase());
+                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction(), feedbackDTO.testCase(), null);
         TextAssessmentDTO body = new TextAssessmentDTO(List.of(editedFeedbackDTO), null, null);
         request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
                 ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());

@@ -95,6 +95,10 @@ public class Feedback extends DomainObject {
     @Column(name = "credits")
     private Double credits;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "severity")
+    private FeedbackSeverity severity;
+
     @Column(name = "positive")
     private Boolean positive;
 
@@ -293,6 +297,14 @@ public class Feedback extends DomainObject {
     public Feedback testCase(ProgrammingExerciseTestCase testCase) {
         setTestCase(testCase);
         return this;
+    }
+
+    public FeedbackSeverity getSeverity() {
+        return severity;
+    }
+
+    public void setSeverity(FeedbackSeverity severity) {
+        this.severity = severity;
     }
 
     public Double getCredits() {

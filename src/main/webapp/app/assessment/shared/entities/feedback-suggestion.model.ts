@@ -1,3 +1,5 @@
+import { FeedbackSeverity } from 'app/assessment/shared/entities/feedback.model';
+
 export class TextFeedbackSuggestion {
     constructor(
         public id: number | undefined,
@@ -24,6 +26,7 @@ export class ProgrammingFeedbackSuggestion {
         public filePath: string,
         public lineStart: number | undefined,
         public lineEnd: number | undefined,
+        public severity?: FeedbackSeverity,
     ) {}
 }
 

@@ -1,9 +1,34 @@
 @if (feedbackItem()) {
-    <p-message class="feedback-item mb-4 block" [severity]="messageSeverity(feedbackItem()!.color)" [pt]="{ content: { class: 'w-full' }, text: { class: 'w-full' } }">
+    <p-message
+        class="feedback-item mb-4 block"
+        [class.border-s-2]="feedbackItem()!.isAiFeedback && !!feedbackItem()!.feedbackReference.severity"
+        [class.border-state-danger]="feedbackItem()!.isAiFeedback && feedbackItem()!.feedbackReference.severity === 'high'"
+        [class.border-state-warning]="feedbackItem()!.isAiFeedback && feedbackItem()!.feedbackReference.severity === 'medium'"
+        [class.border-state-info]="feedbackItem()!.isAiFeedback && feedbackItem()!.feedbackReference.severity === 'low'"
+        [severity]="feedbackItem()!.isAiFeedback ? 'secondary' : messageSeverity(feedbackItem()!.color)"
+        [pt]="{ content: { class: 'w-full' }, text: { class: 'w-full' } }"
+    >
         <div class="w-full">
             <div class="flex justify-between gap-8">
-                <h4 class="feedback-item__category mb-0 text-base font-bold">{{ feedbackItem()!.name }} {{ feedbackItem()!.title && '· ' + feedbackItem()!.title }}</h4>
-                @if (feedbackItem()!.credits) {
+                <h4 class="feedback-item__category mb-0 text-base font-bold">
+                    {{ feedbackItem()!.isAiFeedback ? feedbackItem()!.title : feedbackItem()!.name + (feedbackItem()!.title ? ' · ' + feedbackItem()!.title : '') }}
+                </h4>
+                @if (feedbackItem()!.isAiFeedback) {
+                    <tumaet-ui-tag
+                        class="shrink-0 self-start"
+                        data-testid="feedback-severity"
+                        [severity]="
+                            feedbackItem()!.feedbackReference.severity === 'high'
+                                ? 'danger'
+                                : feedbackItem()!.feedbackReference.severity === 'medium'
+                                  ? 'warn'
+                                  : feedbackItem()!.feedbackReference.severity === 'low'
+                                    ? 'info'
+                                    : 'secondary'
+                        "
+                        [value]="'artemisApp.feedback.severity.' + (feedbackItem()!.feedbackReference.severity || 'unclassified') | artemisTranslate"
+                    />
+                } @else if (feedbackItem()!.credits) {
                     <span class="feedback-item__credits font-bold">
                         {{ roundValueSpecifiedByCourseSettings(feedbackItem()!.credits, course()) }}P
                         @if (feedbackItem()!.type === 'Subsequent') {
@@ -62,7 +87,7 @@
         </div>
         @if (isGroupExpanded()) {
             <div class="mx-3">
-                @for (feedbackItem of feedbackItemGroup()!.members; track feedbackItem) {
+                @for (feedbackItem of feedbackItemGroup()!.members; track $index) {
                     <jhi-feedback-node [feedbackItemNode]="feedbackItem" [course]="course()" [isPrinting]="isPrinting()" />
                 }
             </div>
