@@ -207,7 +207,7 @@
             },
             "atlasCompetencyUpdateNotification": {
                 "title": "Automatische Kompetenzaktualisierung",
-                "content": "Automatische Kompetenzaktualisierung nach Änderungen an {{exerciseCount}} Aufgabe(n): {{appliedCount}} Änderung(en) übernommen. Die Details wurden per E-Mail verschickt.",
+                "content": "Automatische Kompetenzaktualisierung nach Änderungen an {{exerciseCount}} Lernobjekt(en): {{appliedCount}} Änderung(en) übernommen. Die Details wurden per E-Mail verschickt.",
                 "settingsTitle": "Automatische Kompetenzaktualisierungen (Lehrende)"
             },
             "newMentionNotification": {

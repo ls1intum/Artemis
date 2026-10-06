@@ -136,6 +136,9 @@
                                 role="group"
                                 [attr.aria-label]="'artemisApp.lectureUnit.management.actions' | artemisTranslate: { name: unitName }"
                             >
+                                @if (currentLecture.isAtLeastInstructor && isOrchestrationAvailable(lectureUnit)) {
+                                    <jhi-atlas-orchestration-trigger [lectureUnitId]="lectureUnit.id!" [showLabel]="false" [buttonClass]="'btn btn-link btn-sm'" />
+                                }
                                 @if (currentLecture.isAtLeastEditor && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO && isProcessingFailed(lectureUnit)) {
                                     @let retryLabel = 'artemisApp.lectureUnit.retryProcessing' | artemisTranslate;
                                     <button

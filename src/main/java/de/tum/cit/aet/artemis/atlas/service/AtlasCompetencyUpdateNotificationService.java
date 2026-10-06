@@ -76,7 +76,7 @@ public class AtlasCompetencyUpdateNotificationService {
      * batch (requeue, reservation refund).
      *
      * @param courseId      the course the run belonged to
-     * @param exerciseCount the number of changed exercises in the claimed batch
+     * @param exerciseCount the number of changed learning objects (exercises and lecture units) the run covered
      * @param result        the result of the run, or {@code null} when the run threw before it changed anything
      */
     public void notifyAfterAutomaticRun(long courseId, int exerciseCount, @Nullable CompetencyOrchestrationResultDTO result) {

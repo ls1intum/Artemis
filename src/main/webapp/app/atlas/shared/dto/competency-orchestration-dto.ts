@@ -11,6 +11,7 @@ export enum CompetencyOrchestrationFailureReason {
     ToolCallLimitExceeded = 'TOOL_CALL_LIMIT_EXCEEDED',
     IncompleteOrchestration = 'INCOMPLETE_ORCHESTRATION',
     UnsupportedExercise = 'UNSUPPORTED_EXERCISE',
+    UnsupportedLearningObject = 'UNSUPPORTED_LEARNING_OBJECT',
 }
 
 export enum AppliedActionType {
@@ -26,6 +27,7 @@ export interface AppliedActionDTO {
     competencyId: number;
     competencyTitle: string;
     exerciseId?: number;
+    lectureUnitId?: number;
     weight?: number;
     detail: string;
     justification: string;

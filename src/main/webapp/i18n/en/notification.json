@@ -207,7 +207,7 @@
             },
             "atlasCompetencyUpdateNotification": {
                 "title": "Automatic competency update",
-                "content": "Automatic competency update after changes to {{exerciseCount}} exercise(s): {{appliedCount}} change(s) applied. The details were sent by email.",
+                "content": "Automatic competency update after changes to {{exerciseCount}} learning object(s): {{appliedCount}} change(s) applied. The details were sent by email.",
                 "settingsTitle": "Automatic competency updates (instructors)"
             },
             "newMentionNotification": {
