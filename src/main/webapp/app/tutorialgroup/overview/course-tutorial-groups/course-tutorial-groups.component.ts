@@ -232,7 +232,9 @@ export class CourseTutorialGroupsComponent implements SidebarView {
             (lecture) => lecture.startDate && lecture.startDate.isSameOrBefore(now) && (!lecture.endDate || now.isSameOrBefore(lecture.endDate)),
         );
         const mostRecentlyStartedCurrentLecture =
-            currentLectures.length === 0 ? undefined : currentLectures.reduce((latest, current) => (current.startDate!.isAfter(latest.startDate) ? current : latest));
+            currentLectures.length === 0
+                ? undefined
+                : currentLectures.reduce((latest, current) => (current.startDate!.isAfter(latest.startDate) ? current : latest), currentLectures[0]);
         tutorialLectures.forEach((tutorialLecture) => {
             const tutorialLectureCardItem = this.courseOverviewService.mapLectureToSidebarCardElement(tutorialLecture);
             if (!mostRecentlyStartedCurrentLecture) {

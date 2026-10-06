@@ -107,7 +107,7 @@ public class GroupNotificationService {
             return;
         }
 
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var recipients = userRepository.getStudents(course);
 
         var exerciseOpenForPracticeNotification = new ExerciseOpenForPracticeNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
@@ -169,7 +169,7 @@ public class GroupNotificationService {
             return;
         }
 
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR, CourseRole.STUDENT));
 
         var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
@@ -190,7 +190,7 @@ public class GroupNotificationService {
             return;
         }
 
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var recipients = userRepository.getUsersInCourse(course);
 
         var newExerciseNotification = new NewExerciseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
@@ -207,7 +207,7 @@ public class GroupNotificationService {
      * @param exercise that has been updated
      */
     public void notifyEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise) {
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR));
 
         ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;

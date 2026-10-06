@@ -17,6 +17,7 @@ import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { TutorialGroupStudentImportData } from 'app/openapi/model/tutorial-group-student-import-data';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export enum ImportFlowStep {
     EXPLANATION = 'EXPLANATION',
@@ -38,6 +39,7 @@ interface ImportResult {
         TranslateDirective,
         TutorialRegistrationsImportModalTableComponent,
         LoadingIndicatorOverlayComponent,
+        ArtemisTranslatePipe,
     ],
     templateUrl: './tutorial-registrations-import-modal.component.html',
     styleUrl: './tutorial-registrations-import-modal.component.scss',
