@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.course.domain.CourseRequestStatus;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseRequestDTO(Long id, String title, String shortName, String semester, ZonedDateTime startDate, ZonedDateTime endDate, boolean testCourse, String reason,
-        CourseRequestStatus status, ZonedDateTime createdDate, ZonedDateTime processedDate, String decisionReason, CourseRequestRequesterDTO requester, Long createdCourseId,
-        Integer instructorCourseCount, List<CourseRequestInstructorCourseDTO> instructorCourses) {
+public record CourseRequestDTO(Long id, String title, String shortName, String semester, ZonedDateTime startDate, ZonedDateTime endDate, boolean testCourse, boolean gradeRelevant,
+        String reason, CourseRequestStatus status, ZonedDateTime createdDate, ZonedDateTime processedDate, String decisionReason, CourseRequestRequesterDTO requester,
+        Long createdCourseId, Integer instructorCourseCount, List<CourseRequestInstructorCourseDTO> instructorCourses) {
 }

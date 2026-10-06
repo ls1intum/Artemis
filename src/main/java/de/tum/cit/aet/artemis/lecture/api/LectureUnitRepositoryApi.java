@@ -78,6 +78,10 @@ public class LectureUnitRepositoryApi extends AbstractLectureApi {
         return lectureUnitRepository.findAllByIdsWithLecture(ids);
     }
 
+    public Optional<LectureUnit> findWithLectureById(long lectureUnitId) {
+        return lectureUnitRepository.findWithLectureById(lectureUnitId);
+    }
+
     public List<LectureUnitIngestedVersionsDTO> findIngestedVersionsByCourseId(long courseId) {
         return lectureUnitRepository.findIngestedVersionsByCourseId(courseId);
     }
