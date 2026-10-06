@@ -434,48 +434,72 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void getAdminOverview_listsCoursesTheRequesterInstructs_andCountMatchesList() throws Exception {
-        User requester = userUtilService.createAndSaveUser(TEST_PREFIX + "previousinstructor");
-        Course instructedOne = courseUtilService.createCourseWithShortName("PREVINSA");
-        Course instructedTwo = courseUtilService.createCourseWithShortName("PREVINSB");
-        Course taughtAsTutor = courseUtilService.createCourseWithShortName("PREVTUTOR");
-        Course unrelated = courseUtilService.createCourseWithShortName("PREVOTHER");
-        userUtilService.enrollUserInCourse(requester, instructedOne, CourseRole.INSTRUCTOR);
-        userUtilService.enrollUserInCourse(requester, instructedTwo, CourseRole.INSTRUCTOR);
-        userUtilService.enrollUserInCourse(requester, taughtAsTutor, CourseRole.TEACHING_ASSISTANT);
-        userUtilService.enrollUserInCourse(student, unrelated, CourseRole.INSTRUCTOR);
-        CourseRequest pending = createTestCourseRequest("Previous Instructor", "PREVREQ");
-        pending.setRequester(requester);
-        courseRequestRepository.save(pending);
+    void getAdminOverview_listsCoursesPerRequesterNewestFirst_andCountMatchesList() throws Exception {
+        User firstRequester = userUtilService.createAndSaveUser(TEST_PREFIX + "previousinstructor1");
+        User secondRequester = userUtilService.createAndSaveUser(TEST_PREFIX + "previousinstructor2");
+        User otherInstructor = userUtilService.createAndSaveUser(TEST_PREFIX + "otherinstructor");
+        ZonedDateTime now = ZonedDateTime.now();
+        Course oldest = createCourseStartingAt("PREVINSA", now.minusYears(2));
+        Course newest = createCourseStartingAt("PREVINSB", now.minusMonths(1));
+        Course middle = createCourseStartingAt("PREVINSC", now.minusYears(1));
+        Course ofSecondRequester = createCourseStartingAt("PREVINSD", now.minusMonths(6));
+        Course taughtAsTutor = createCourseStartingAt("PREVTUTOR", now.minusMonths(2));
+        Course ofSomeoneElse = createCourseStartingAt("PREVOTHER", now.minusMonths(3));
+        userUtilService.enrollUserInCourse(firstRequester, oldest, CourseRole.INSTRUCTOR);
+        userUtilService.enrollUserInCourse(firstRequester, newest, CourseRole.INSTRUCTOR);
+        userUtilService.enrollUserInCourse(firstRequester, middle, CourseRole.INSTRUCTOR);
+        userUtilService.enrollUserInCourse(firstRequester, taughtAsTutor, CourseRole.TEACHING_ASSISTANT);
+        userUtilService.enrollUserInCourse(secondRequester, ofSecondRequester, CourseRole.INSTRUCTOR);
+        userUtilService.enrollUserInCourse(otherInstructor, ofSomeoneElse, CourseRole.INSTRUCTOR);
+        createTestCourseRequestFor(firstRequester, "Previous Instructor One", "PREVREQ1");
+        createTestCourseRequestFor(secondRequester, "Previous Instructor Two", "PREVREQ2");
 
         CourseRequestsAdminOverviewDTO result = request.get("/api/admin/course-requests/overview", HttpStatus.OK, CourseRequestsAdminOverviewDTO.class);
 
-        CourseRequestDTO dto = result.pendingRequests().stream().filter(candidate -> "PREVREQ".equals(candidate.shortName())).findFirst().orElseThrow();
-        assertThat(dto.instructorCourses()).extracting(CourseRequestInstructorCourseDTO::id).containsExactlyInAnyOrder(instructedOne.getId(), instructedTwo.getId());
-        assertThat(dto.instructorCourses()).extracting(CourseRequestInstructorCourseDTO::shortName).containsExactlyInAnyOrder(instructedOne.getShortName(),
-                instructedTwo.getShortName());
-        assertThat(dto.instructorCourses()).allSatisfy(course -> {
+        CourseRequestDTO first = findPending(result, "PREVREQ1");
+        assertThat(first.instructorCourses()).extracting(CourseRequestInstructorCourseDTO::id).containsExactly(newest.getId(), middle.getId(), oldest.getId());
+        assertThat(first.instructorCourses()).extracting(CourseRequestInstructorCourseDTO::shortName).containsExactly(newest.getShortName(), middle.getShortName(),
+                oldest.getShortName());
+        assertThat(first.instructorCourses()).allSatisfy(course -> {
             assertThat(course.title()).isNotBlank();
             assertThat(course.semester()).isNotBlank();
         });
-        assertThat(dto.instructorCourseCount()).isEqualTo(dto.instructorCourses().size());
+        assertThat(first.instructorCourseCount()).isEqualTo(first.instructorCourses().size());
+        CourseRequestDTO second = findPending(result, "PREVREQ2");
+        assertThat(second.instructorCourses()).extracting(CourseRequestInstructorCourseDTO::id).containsExactly(ofSecondRequester.getId());
+        assertThat(second.instructorCourseCount()).isEqualTo(1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void getAdminOverview_requesterWithoutInstructorCourses_hasZeroCountAndNoCourses() throws Exception {
         User requester = userUtilService.createAndSaveUser(TEST_PREFIX + "noinstructor");
-        Course tutorCourse = courseUtilService.createCourseWithShortName("NOINSTTUT");
+        Course tutorCourse = createCourseStartingAt("NOINSTTUT", ZonedDateTime.now().minusMonths(1));
         userUtilService.enrollUserInCourse(requester, tutorCourse, CourseRole.TEACHING_ASSISTANT);
-        CourseRequest pending = createTestCourseRequest("No Instructor", "NOINSREQ");
-        pending.setRequester(requester);
-        courseRequestRepository.save(pending);
+        createTestCourseRequestFor(requester, "No Instructor", "NOINSREQ");
 
         CourseRequestsAdminOverviewDTO result = request.get("/api/admin/course-requests/overview", HttpStatus.OK, CourseRequestsAdminOverviewDTO.class);
 
-        CourseRequestDTO dto = result.pendingRequests().stream().filter(candidate -> "NOINSREQ".equals(candidate.shortName())).findFirst().orElseThrow();
+        CourseRequestDTO dto = findPending(result, "NOINSREQ");
         assertThat(dto.instructorCourseCount()).isZero();
         assertThat(dto.instructorCourses()).isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void updateCourseRequest_keepsTheInstructorCoursesOfTheRequester() throws Exception {
+        User requester = userUtilService.createAndSaveUser(TEST_PREFIX + "updateinstructor");
+        Course instructed = createCourseStartingAt("UPDINSA", ZonedDateTime.now().minusMonths(1));
+        userUtilService.enrollUserInCourse(requester, instructed, CourseRole.INSTRUCTOR);
+        CourseRequest pending = createTestCourseRequestFor(requester, "Update Instructor", "UPDINSREQ");
+        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "UPDINSREQ", "SS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
+                "Updated reason.");
+
+        CourseRequestDTO result = request.putWithResponseBody("/api/admin/course-requests/" + pending.getId(), updateDTO, CourseRequestDTO.class, HttpStatus.OK);
+
+        assertThat(result.title()).isEqualTo("Updated Title");
+        assertThat(result.instructorCourseCount()).isEqualTo(1);
+        assertThat(result.instructorCourses()).extracting(CourseRequestInstructorCourseDTO::id).containsExactly(instructed.getId());
     }
 
     @Test
@@ -596,6 +620,22 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
                 "Updated reason.");
 
         request.put("/api/admin/course-requests/999999", updateDTO, HttpStatus.NOT_FOUND);
+    }
+
+    private Course createCourseStartingAt(String shortName, ZonedDateTime startDate) {
+        Course course = courseUtilService.createCourseWithShortName(shortName);
+        course.setStartDate(startDate);
+        return courseRepository.save(course);
+    }
+
+    private CourseRequest createTestCourseRequestFor(User requester, String title, String shortName) {
+        CourseRequest courseRequest = createTestCourseRequest(title, shortName);
+        courseRequest.setRequester(requester);
+        return courseRequestRepository.save(courseRequest);
+    }
+
+    private static CourseRequestDTO findPending(CourseRequestsAdminOverviewDTO overview, String shortName) {
+        return overview.pendingRequests().stream().filter(candidate -> shortName.equals(candidate.shortName())).findFirst().orElseThrow();
     }
 
     private CourseRequest createTestCourseRequest(String title, String shortName) {

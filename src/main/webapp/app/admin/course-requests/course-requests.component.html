@@ -67,36 +67,36 @@
                                 variant="text"
                                 severity="success"
                                 size="small"
-                                class="font-semibold"
+                                class="cursor-pointer"
                                 [tumAetUiPopoverTrigger]="instructorCoursesPopover"
                                 data-testid="instructor-courses-button"
                             >
-                                {{ 'artemisApp.courseRequest.admin.instructorCourseCountYes' | artemisTranslate: { count: instructorCourses.length } }}
+                                <!-- The font weight lives on an inner span: the button's own font-weight is set by the kit and wins over a utility here. -->
+                                <span class="font-semibold underline decoration-dotted underline-offset-4">
+                                    {{ 'artemisApp.courseRequest.admin.instructorCourseCountYes' | artemisTranslate: { count: instructorCourses.length } }}
+                                </span>
+                                <span class="sr-only">{{ 'artemisApp.courseRequest.admin.instructorCoursesShow' | artemisTranslate }}</span>
+                                <fa-icon [icon]="faChevronDown" size="xs" aria-hidden="true" />
                             </button>
                             <tumaet-ui-popover
                                 #instructorCoursesPopover
                                 placement="bottom"
                                 [ariaLabel]="'artemisApp.courseRequest.admin.instructorCoursesTitle' | artemisTranslate"
                             >
-                                <div class="w-96 max-w-[calc(100vw-2rem)]" data-testid="instructor-courses-popover">
-                                    <h3 class="mt-0 mb-2 text-base font-semibold">
-                                        {{ 'artemisApp.courseRequest.admin.instructorCoursesTitle' | artemisTranslate }}
-                                    </h3>
+                                <div class="w-80 max-w-[calc(100vw-2rem)] text-sm" data-testid="instructor-courses-popover">
+                                    <!-- A div, not a heading: unlayered Bootstrap heading rules would beat the utilities, and the panel already carries this text as its accessible name. -->
+                                    <div class="mb-2 font-semibold">{{ 'artemisApp.courseRequest.admin.instructorCoursesTitle' | artemisTranslate }}</div>
                                     <!-- Capped and scrollable: a requester with many courses must not grow the popover past the viewport. -->
                                     <ul class="m-0 flex max-h-64 list-none flex-col gap-2 overflow-y-auto p-0" data-testid="instructor-courses-list">
                                         @for (course of instructorCourses; track course.id) {
-                                            <li data-testid="instructor-course">
-                                                <a [routerLink]="['/course-management', course.id]" class="font-semibold no-underline">{{ course.title }}</a>
-                                                <div class="text-muted-color">{{ course.shortName }} &middot; {{ course.semester }}</div>
+                                            <li class="break-words" data-testid="instructor-course">
+                                                <a [routerLink]="['/course-management', course.id]" class="font-semibold no-underline">{{ course.title || course.shortName }}</a>
+                                                <div class="text-xs text-muted-color">{{ course.shortName }} &middot; {{ course.semester }}</div>
                                             </li>
                                         }
                                     </ul>
                                 </div>
                             </tumaet-ui-popover>
-                        } @else if (request.instructorCourseCount) {
-                            <span class="font-semibold text-state-success">
-                                {{ 'artemisApp.courseRequest.admin.instructorCourseCountYes' | artemisTranslate: { count: request.instructorCourseCount } }}
-                            </span>
                         } @else {
                             <span>{{ 'artemisApp.courseRequest.admin.instructorCourseCountNo' | artemisTranslate }}</span>
                         }

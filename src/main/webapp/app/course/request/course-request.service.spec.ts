@@ -231,6 +231,38 @@ describe('CourseRequestService', () => {
         });
     });
 
+    describe('updateRequest', () => {
+        it('should keep the instructor courses the server returns for the edited request', () => {
+            const payload: BaseCourseRequest = {
+                title: 'Edited Course',
+                shortName: 'EC001',
+                semester: 'WS2025',
+                startDate: dayjs('2025-01-01'),
+                endDate: dayjs('2025-06-30'),
+                testCourse: false,
+                reason: 'Edited reason',
+            };
+            const mockResponse = {
+                id: 3,
+                title: 'Edited Course',
+                shortName: 'EC001',
+                testCourse: false,
+                reason: 'Edited reason',
+                status: CourseRequestStatus.PENDING,
+                requester: { id: 1, login: 'instructor1' },
+                instructorCourseCount: 1,
+                instructorCourses: [{ id: 7, title: 'Intro', shortName: 'INTRO', semester: 'WS24/25' }],
+            };
+
+            service.updateRequest(3, payload).subscribe((result) => {
+                expect(result.instructorCourseCount).toBe(1);
+                expect(result.instructorCourses).toEqual([{ id: 7, title: 'Intro', shortName: 'INTRO', semester: 'WS24/25' }]);
+            });
+
+            httpMock.expectOne({ method: 'PUT', url: `${adminResourceUrl}/3` }).flush(mockResponse);
+        });
+    });
+
     describe('rejectRequest', () => {
         it('should reject a course request with a reason', () => {
             const courseRequestId = 2;

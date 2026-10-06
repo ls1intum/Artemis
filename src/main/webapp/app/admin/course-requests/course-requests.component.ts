@@ -12,7 +12,7 @@ import {
     TumAetUiTagComponent,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
-import { faCheck, faExternalLinkAlt, faPencil, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faChevronDown, faExternalLinkAlt, faPencil, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -71,6 +71,7 @@ export class CourseRequestsComponent implements OnInit {
 
     protected readonly CourseRequestStatus = CourseRequestStatus;
     protected readonly faCheck = faCheck;
+    protected readonly faChevronDown = faChevronDown;
     protected readonly faTimes = faTimes;
     protected readonly faExternalLinkAlt = faExternalLinkAlt;
     protected readonly faSync = faSync;

@@ -165,6 +165,24 @@ describe('CourseRequestsComponent', () => {
             expect(entries[0].querySelector('a')?.getAttribute('href')).toBe('/course-management/11');
         });
 
+        it('names what the count opens for assistive technology', () => {
+            const fixture = render({ ...mockRequest, instructorCourseCount: 2, instructorCourses });
+            const trigger = fixture.nativeElement.querySelector('[data-testid="instructor-courses-button"]') as HTMLButtonElement;
+
+            expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+            expect(trigger.querySelector('.sr-only')?.textContent).toContain('artemisApp.courseRequest.admin.instructorCoursesShow');
+        });
+
+        it('falls back to the short name for a course without a title', async () => {
+            const fixture = render({ ...mockRequest, instructorCourseCount: 1, instructorCourses: [{ id: 21, shortName: 'UNTITLED', semester: 'SS25' }] });
+
+            (fixture.nativeElement.querySelector('[data-testid="instructor-courses-button"]') as HTMLButtonElement).click();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(document.querySelector('[data-testid="instructor-course"] a')?.textContent?.trim()).toBe('UNTITLED');
+        });
+
         it('keeps the course list scrollable', async () => {
             const fixture = render({ ...mockRequest, instructorCourseCount: 2, instructorCourses });
 
@@ -183,15 +201,6 @@ describe('CourseRequestsComponent', () => {
             expect(fixture.nativeElement.querySelector('[data-testid="instructor-courses-button"]')).toBeNull();
             expect(fixture.nativeElement.querySelector('[data-testid="pending-table"] tbody td:nth-child(5)').textContent).toContain(
                 'artemisApp.courseRequest.admin.instructorCourseCountNo',
-            );
-        });
-
-        it('falls back to the plain count when only the count is known', () => {
-            const fixture = render({ ...mockRequest, instructorCourseCount: 3 });
-
-            expect(fixture.nativeElement.querySelector('[data-testid="instructor-courses-button"]')).toBeNull();
-            expect(fixture.nativeElement.querySelector('[data-testid="pending-table"] tbody td:nth-child(5)').textContent).toContain(
-                'artemisApp.courseRequest.admin.instructorCourseCountYes',
             );
         });
     });
