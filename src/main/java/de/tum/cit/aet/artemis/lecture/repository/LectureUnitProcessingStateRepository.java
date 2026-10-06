@@ -524,9 +524,10 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
 
     /**
      * Transition TRANSCRIBING to INGESTING for an enriched transcription checkpoint, atomically: same
-     * token-and-phase guard as {@link #applyHeartbeatLocked}, and the same field set {@link
-     * de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState#transitionTo} applies, so a
-     * checkpoint racing a terminal callback cannot revive a run the terminal callback already finished.
+     * token-and-phase guard as {@link #applyHeartbeatLocked}, so a checkpoint racing a terminal callback cannot
+     * revive a run the terminal callback already finished. Unlike {@link
+     * de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState#transitionTo}, it keeps the worker lease of a
+     * pulled run, which stays the same run, and it resets the retry count for the new phase.
      * The transcription version and its content hash are written in the same statement, so a checkpoint
      * that lost ownership advances neither.
      *

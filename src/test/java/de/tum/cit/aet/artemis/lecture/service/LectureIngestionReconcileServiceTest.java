@@ -953,6 +953,19 @@ class LectureIngestionReconcileServiceTest {
         }
 
         @Test
+        void shouldNotReviveAFailedUnitWhoseCensusEntryIsTruncated() {
+            state.setPhase(ProcessingPhase.FAILED);
+            state.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
+            state.setLastUpdated(ZonedDateTime.now().minusHours(2));
+            givenCensus(new IngestionCensusUnitDTO(lecture.getId(), unit.getId(), FINGERPRINT, 1, null, CURRENT_PIPELINE_VERSION, null, 10, 1, 1, 5, 3, 3, 0, 5, 1, 5, 0, 0, "en",
+                    true));
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isZero();
+
+            verify(reconcileStateRepository, never()).reviveFailedIfUnchanged(anyLong(), any(), any(), anyInt(), anyInt(), any());
+        }
+
+        @Test
         void shouldNotDeleteAnOrphanWithoutALectureId() {
             long orphanUnitId = 998L;
             IngestionCensusUnitDTO orphan = new IngestionCensusUnitDTO(null, orphanUnitId, null, 0, null, null, null, 10, 1, 1, 5, 3, 3, 0, 5, 1, 5, 0, 0, "en", false);

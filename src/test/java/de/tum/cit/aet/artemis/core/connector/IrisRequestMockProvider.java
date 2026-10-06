@@ -199,6 +199,12 @@ public class IrisRequestMockProvider {
         mockWebhookPost("/lectures/delete", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer, count);
     }
 
+    /** The lecture deletion webhook fails once, as when Pyris is temporarily unavailable. */
+    public void mockDeletionWebhookFailure() {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/lectures/delete")).andExpect(method(HttpMethod.POST))
+                .andRespond(withRawStatus(HttpStatus.SERVICE_UNAVAILABLE.value()));
+    }
+
     public void mockLectureUnitMetadataWebhookRunResponse(Consumer<PyrisLectureUnitMetadataWebhookDTO> responseConsumer, ExpectedCount count) {
         mockWebhookPost("/lectures/metadata", PyrisLectureUnitMetadataWebhookDTO.class, responseConsumer, count);
     }

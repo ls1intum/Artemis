@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.service.LectureContentProcessingScheduler;
+import de.tum.cit.aet.artemis.lecture.service.ProcessingStateCallbackService;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -67,6 +68,9 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private LectureContentProcessingScheduler scheduler;
+
+    @Autowired
+    private ProcessingStateCallbackService callbackService;
 
     @Autowired
     private PlatformTransactionManager transactionManager;
@@ -989,5 +993,24 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         assertThat(failed.getPhase()).isEqualTo(ProcessingPhase.FAILED);
         assertThat(failed.getRetryCount()).isEqualTo(1);
         assertThat(failed.getUnsettledAttempts()).isZero();
+    }
+
+    /** A pull preparation failure is charged through the real service, and only to the claim that produced it. */
+    @Test
+    void testPullPreparationFailureIsChargedOnlyToItsClaim() {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(unit);
+        state.setPhase(ProcessingPhase.IDLE);
+        processingStateRepository.save(state);
+        assertThat(processingStateRepository.claimIdleForDispatch(state.getId(), "worker-claim", ZonedDateTime.now(), MAX_ATTEMPTS)).isEqualTo(1);
+
+        callbackService.failClaimedUnitPreparation(unit.getId(), "stale-claim");
+        assertThat(processingStateRepository.findById(state.getId()).orElseThrow().getPhase()).as("a stale claim charges nothing").isEqualTo(ProcessingPhase.IDLE);
+
+        callbackService.failClaimedUnitPreparation(unit.getId(), "worker-claim");
+        LectureUnitProcessingState failed = processingStateRepository.findById(state.getId()).orElseThrow();
+        assertThat(failed.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+        assertThat(failed.getRetryCount()).as("the failure is charged").isEqualTo(1);
+        assertThat(failed.getRetryEligibleAt()).as("and retried with backoff").isNotNull();
+        assertThat(failed.getClaimToken()).isNull();
     }
 }

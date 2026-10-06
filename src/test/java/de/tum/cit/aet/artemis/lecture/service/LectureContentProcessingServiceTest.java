@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -185,6 +186,26 @@ class LectureContentProcessingServiceTest {
             assertThat(savedState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
         }
 
+        /** The content check uses the same stored-PDF rule as the payload, so an uppercase extension counts as a PDF. */
+        @Test
+        void shouldEnqueueAPdfOnlyUnitWithAnUppercaseExtension() {
+            testUnit.setVideoSource(null);
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setAttachmentType(AttachmentType.FILE);
+            pdfAttachment.setLink("attachments/SLIDES.PDF");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            service.triggerProcessing(testUnit);
+
+            ArgumentCaptor<LectureUnitProcessingState> stateCaptor = ArgumentCaptor.forClass(LectureUnitProcessingState.class);
+            verify(processingStateRepository).save(stateCaptor.capture());
+            assertThat(stateCaptor.getValue().getPhase()).as("an uppercase .PDF is processable content").isEqualTo(ProcessingPhase.IDLE);
+        }
+
         @Test
         void shouldNotProcessUnitWithNoContent() {
             testUnit.setVideoSource(null);
@@ -273,6 +294,23 @@ class LectureContentProcessingServiceTest {
             // atomic claim-bound activation rather than a plain save (see activatePushDispatch's own javadoc).
             verify(processingStateRepository).activatePushDispatch(eq(testUnit.getId()), eq(ProcessingPhase.TRANSCRIBING), eq(TEST_JOB_TOKEN), any(), any(), any());
             verify(irisLectureApi).addLectureUnitToPyrisDB(eq(testUnit), any(), anyBoolean());
+        }
+
+        @Test
+        void shouldChargeAFailureInsteadOfDispatchingAUnitAtTheAttemptLimit() {
+            testState.setUnsettledAttempts(3);
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(0L);
+            when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
+            when(processingStateRepository.failExhaustedIdleAttempts(eq(PROCESSING_STATE_ID), eq(0), eq(1), anyString(), any(), eq(3), any())).thenReturn(1);
+
+            callbackService.dispatchPendingJobs();
+
+            verify(processingStateRepository, never()).claimIdleForDispatch(anyLong(), anyString(), any(), anyInt());
+            verify(irisLectureApi, never()).addLectureUnitToPyrisDB(any(), any(), anyBoolean());
+            // Charged with backoff, so the normal retry limit bounds the unit
+            verify(processingStateRepository).failExhaustedIdleAttempts(eq(PROCESSING_STATE_ID), eq(0), eq(1),
+                    eq("artemisApp.attachmentVideoUnit.processing.error.recoveryLimitReached"), notNull(), eq(3), any());
+            verify(websocketMessagingService).sendMessage(any(WebsocketDestination.class), any(Object.class));
         }
 
         @Test

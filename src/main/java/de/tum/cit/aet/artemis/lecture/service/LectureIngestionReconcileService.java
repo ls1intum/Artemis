@@ -306,7 +306,8 @@ public class LectureIngestionReconcileService {
                     case SKIPPED -> reconcileSkippedUnit(unit, state);
                     // A FAILED unit is revived once its transient cause has had time to clear (see
                     // reconcileFailedUnit); only permanent content failures stay terminal for the manual button.
-                    case FAILED -> reconcileFailedUnit(state, censusAvailable);
+                    // A truncated entry is no evidence about this unit, so it counts as no census for the revival decision
+                    case FAILED -> reconcileFailedUnit(state, censusAvailable && !isTruncated(censusByUnitId.get(unit.getId())));
                     // IDLE, TRANSCRIBING, and INGESTING are owned by the normal dispatch and stuck-recovery machinery.
                     default -> 0;
                 };
@@ -630,6 +631,11 @@ public class LectureIngestionReconcileService {
         return transcriptionRepository.findAllByLectureUnit_IdInAndTranscriptionStatus(candidates, TranscriptionStatus.COMPLETED).stream()
                 .filter(transcription -> transcription.getSegments() != null && !transcription.getSegments().isEmpty()).map(transcription -> transcription.getLectureUnit().getId())
                 .collect(Collectors.toSet());
+    }
+
+    /** Whether the census entry of a unit undercounts it because one of its scans hit the row cap. */
+    private static boolean isTruncated(@Nullable IngestionCensusUnitDTO censusEntry) {
+        return censusEntry != null && censusEntry.truncated();
     }
 
     /**
