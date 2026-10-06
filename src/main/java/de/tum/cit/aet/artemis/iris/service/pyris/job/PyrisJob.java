@@ -23,7 +23,8 @@ public interface PyrisJob extends Serializable {
     boolean canAccess(Course course);
 
     default boolean canAccess(Exercise exercise) {
-        return this.canAccess(exercise.getCourseViaExerciseGroupOrCourseMember());
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        return course != null && this.canAccess(course);
     }
 
     default boolean canAccess(LectureUnit lectureUnit) {
