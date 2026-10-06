@@ -70,7 +70,8 @@ public class LectureApi extends AbstractLectureApi {
      * path (lecture channel, unit order derived from the lecture) rather than saving the entities directly.
      *
      * @param course the demo course the lecture belongs to.
-     * @return the lecture units of the demo lecture, so that dependent modules can link to them.
+     * @return the seeded lecture units of the demo lecture, so that dependent modules can link to them. Units that users added to the demo lecture are left out, so that
+     *         seeding never links them to anything.
      */
     public List<LectureUnit> createDemo(Course course) {
         Lecture lecture = lectureRepository.findAllByTitleAndCourseIdWithLectureUnits(DEMO_LECTURE_TITLE, course.getId()).stream().findFirst().orElseGet(() -> {
@@ -91,7 +92,7 @@ public class LectureApi extends AbstractLectureApi {
             log.info("Created demo text unit '{}' with id {}", DEMO_TEXT_UNIT_NAME, persistedUnit.getId());
         }
 
-        return lectureRepository.findByIdWithLectureUnitsElseThrow(lecture.getId()).getLectureUnits();
+        return lectureRepository.findByIdWithLectureUnitsElseThrow(lecture.getId()).getLectureUnits().stream().filter(unit -> DEMO_TEXT_UNIT_NAME.equals(unit.getName())).toList();
     }
 
     public Lecture importLecture(final Lecture importedLecture, final Course course, boolean importLectureUnits) {

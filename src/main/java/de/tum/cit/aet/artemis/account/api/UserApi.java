@@ -11,9 +11,6 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
-import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.service.CourseAccessService;
 
 /**
  * API for user functionality that other modules need to access.
@@ -24,12 +21,12 @@ import de.tum.cit.aet.artemis.course.service.CourseAccessService;
 public class UserApi extends AbstractAccountApi {
 
     /**
-     * Login of the demo student. Used as the idempotency key of {@link #createDemo(Course)}, so it must stay stable.
+     * Login of the demo student. Used as the idempotency key of {@link #createDemoStudent()}, so it must stay stable.
      */
     public static final String DEMO_STUDENT_LOGIN = "demo_student";
 
     /**
-     * Login of the demo instructor. Used as the idempotency key of {@link #createDemo(Course)}, so it must stay stable.
+     * Login of the demo instructor. Used as the idempotency key of {@link #createDemoInstructor()}, so it must stay stable.
      */
     public static final String DEMO_INSTRUCTOR_LOGIN = "demo_instructor";
 
@@ -45,37 +42,37 @@ public class UserApi extends AbstractAccountApi {
 
     private final UserCreationService userCreationService;
 
-    private final CourseAccessService courseAccessService;
-
-    public UserApi(UserRepository userRepository, UserCreationService userCreationService, CourseAccessService courseAccessService) {
+    public UserApi(UserRepository userRepository, UserCreationService userCreationService) {
         this.userRepository = userRepository;
         this.userCreationService = userCreationService;
-        this.courseAccessService = courseAccessService;
     }
 
     /**
-     * Creates the demo users if they do not exist yet and enrols them into the given course.
-     * <p>
-     * Both steps are idempotent on their own: users are looked up by login, and enrolment is a no-op when the user already holds the role.
+     * Creates the demo student if it does not exist yet, identified by {@link #DEMO_STUDENT_LOGIN}.
      *
-     * @param course the demo course the users are enrolled into.
+     * @return the demo student, whether it already existed or was created by this call.
      */
-    public void createDemo(Course course) {
-        User student = createDemoUserIfMissing(DEMO_STUDENT_LOGIN, "Demo", "Student");
-        User instructor = createDemoUserIfMissing(DEMO_INSTRUCTOR_LOGIN, "Demo", "Instructor");
+    public User createDemoStudent() {
+        return createDemoUserIfMissing(DEMO_STUDENT_LOGIN, "Demo", "Student");
+    }
 
-        courseAccessService.addUserToCourse(student, course, CourseRole.STUDENT);
-        courseAccessService.addUserToCourse(instructor, course, CourseRole.INSTRUCTOR);
+    /**
+     * Creates the demo instructor if it does not exist yet, identified by {@link #DEMO_INSTRUCTOR_LOGIN}.
+     *
+     * @return the demo instructor, whether it already existed or was created by this call.
+     */
+    public User createDemoInstructor() {
+        return createDemoUserIfMissing(DEMO_INSTRUCTOR_LOGIN, "Demo", "Instructor");
     }
 
     private User createDemoUserIfMissing(String login, String firstName, String lastName) {
         return userRepository.findOneByLogin(login).orElseGet(() -> {
             User user = userCreationService.createUser(login, DEMO_PASSWORD, firstName, lastName, login + "@artemis.local", null, null, "en", true);
-            // createUser leaves the user deactivated because the regular registration flow activates it via the activation key, which no one is going to click for a demo user.
-            user.setActivated(true);
-            User activatedUser = userCreationService.saveUser(user);
+            // createUser leaves an internal user deactivated with an activation key, because the regular registration flow activates it via that key, which no one is going to
+            // redeem for a demo user. Activate it the way an administrator would, which also discards the key.
+            userCreationService.activateUser(user);
             log.info("Created demo user '{}'", login);
-            return activatedUser;
+            return user;
         });
     }
 }

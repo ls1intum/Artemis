@@ -12,12 +12,15 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.factories.CourseFactory;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.course.service.CourseAccessService;
 import de.tum.cit.aet.artemis.course.service.CourseValidator;
 
 /**
@@ -29,7 +32,8 @@ import de.tum.cit.aet.artemis.course.service.CourseValidator;
 public class CourseApi extends AbstractCourseApi {
 
     /**
-     * Short name of the demo course. Used as the idempotency key of {@link #createDemo()}: the demo course is identified by this short name alone, so it must stay stable.
+     * Short name of the demo course. Used as the idempotency key of {@link #createDemo(User, User)}: the demo course is identified by this short name alone, so it must stay
+     * stable.
      */
     public static final String DEMO_COURSE_SHORT_NAME = "demo";
 
@@ -41,9 +45,12 @@ public class CourseApi extends AbstractCourseApi {
 
     private final ChannelService channelService;
 
-    public CourseApi(CourseRepository courseRepository, ChannelService channelService) {
+    private final CourseAccessService courseAccessService;
+
+    public CourseApi(CourseRepository courseRepository, ChannelService channelService, CourseAccessService courseAccessService) {
         this.courseRepository = courseRepository;
         this.channelService = channelService;
+        this.courseAccessService = courseAccessService;
     }
 
     /**
@@ -51,10 +58,21 @@ public class CourseApi extends AbstractCourseApi {
      * <p>
      * This mirrors the production course creation path (validation, save, default channels) rather than saving the entity directly, so that the demo course behaves like a course
      * created through the UI.
+     * <p>
+     * The demo users are enrolled whether the course is new or not: enrolment is a no-op when the user already holds the role, and a recreated user is enrolled again.
      *
+     * @param student    the demo user enrolled as student.
+     * @param instructor the demo user enrolled as instructor.
      * @return the demo course, whether it already existed or was created by this call.
      */
-    public Course createDemo() {
+    public Course createDemo(User student, User instructor) {
+        Course course = findOrCreateDemoCourse();
+        courseAccessService.addUserToCourse(student, course, CourseRole.STUDENT);
+        courseAccessService.addUserToCourse(instructor, course, CourseRole.INSTRUCTOR);
+        return course;
+    }
+
+    private Course findOrCreateDemoCourse() {
         List<Course> existingCourses = courseRepository.findAllByShortName(DEMO_COURSE_SHORT_NAME);
         if (!existingCourses.isEmpty()) {
             log.debug("Demo course '{}' already exists, skipping creation", DEMO_COURSE_SHORT_NAME);
@@ -64,7 +82,7 @@ public class CourseApi extends AbstractCourseApi {
         ZonedDateTime now = ZonedDateTime.now();
         Course course = CourseFactory.generateCourse(DEMO_COURSE_TITLE, DEMO_COURSE_SHORT_NAME, now.minusMonths(1), now.plusMonths(11), new HashSet<>(), 3, 3, 7, 2000, 2000, true,
                 true, 7);
-        course.setSemester(semesterOf(course.getStartDate()));
+        course.setSemester(semesterOf(now));
         course.setDescription("Demo course seeded on startup by the 'demo' profile. Feel free to modify it, it is only recreated once it no longer exists.");
 
         // Mirrors CourseCreateDTO.toCourse(): Athena starts disabled, and the retention configuration is attached on creation and defaults to grade-relevant.

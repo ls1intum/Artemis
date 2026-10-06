@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -71,18 +72,21 @@ public class DemoDataSeedingService {
     public void seedDemoData(DeferredEagerBeanInitializationCompletedEvent event) {
         log.info("Demo profile is active, seeding demo data");
 
-        Course course = courseApi.createDemo();
-        userApi.createDemo(course);
+        Course course = courseApi.createDemo(userApi.createDemoStudent(), userApi.createDemoInstructor());
 
         // The production creation paths resolve the acting user from the security context (the lecture channel takes its creator from there, for example), but seeding runs at
         // startup outside of any request. Act as the demo instructor, which the step above guarantees to exist, so that the demo content is owned by a plausible user.
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(UserApi.DEMO_INSTRUCTOR_LOGIN));
+        // Like SecurityUtils.runAsSystem, install a fresh context and restore the previous one afterwards, so that the caller's context is left untouched.
+        SecurityContext previousContext = SecurityContextHolder.getContext();
+        SecurityContext demoInstructorContext = SecurityContextHolder.createEmptyContext();
+        demoInstructorContext.setAuthentication(SecurityUtils.makeAuthorizationObject(UserApi.DEMO_INSTRUCTOR_LOGIN));
+        SecurityContextHolder.setContext(demoInstructorContext);
         try {
             List<LectureUnit> lectureUnits = lectureApi.map(api -> api.createDemo(course)).orElse(List.of());
             competencyApi.ifPresent(api -> api.createDemo(course, lectureUnits));
         }
         finally {
-            SecurityContextHolder.clearContext();
+            SecurityContextHolder.setContext(previousContext);
         }
 
         log.info("Finished seeding demo data for course '{}' with id {}", course.getShortName(), course.getId());
