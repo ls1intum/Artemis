@@ -71,6 +71,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
+import de.tum.cit.aet.artemis.iris.api.CourseMemoryIngestionApi;
 
 /**
  * REST controller for managing users.
@@ -123,9 +124,11 @@ public class AdminUserResource {
 
     private final PermanentUserDeletionService permanentUserDeletionService;
 
+    private final Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi;
+
     public AdminUserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AuthorityRepository authorityRepository,
             Optional<LdapUserService> ldapUserService, AuthorizationCheckService authorizationCheckService, UserDeletionPlanService userDeletionPlanService,
-            PermanentUserDeletionService permanentUserDeletionService,
+            PermanentUserDeletionService permanentUserDeletionService, Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi,
             @Nullable @Value("${artemis.user-management.internal-admin.username:#{null}}") String artemisInternalAdminUsername) {
         this.userRepository = userRepository;
         this.userService = userService;
@@ -135,6 +138,7 @@ public class AdminUserResource {
         this.authorizationCheckService = authorizationCheckService;
         this.userDeletionPlanService = userDeletionPlanService;
         this.permanentUserDeletionService = permanentUserDeletionService;
+        this.courseMemoryIngestionApi = courseMemoryIngestionApi;
         this.artemisInternalAdminUsername = artemisInternalAdminUsername;
     }
 
@@ -210,7 +214,9 @@ public class AdminUserResource {
                 throw new BadRequestAlertException("The Iris bot user cannot be modified via the API.", "userManagement", "cannotModifyIrisBot");
             }
             checkSuperAdminAuthorizationToManageAdmin(AuthorizationCheckService.isAdmin(userToBeDeactivated.getAuthorities()));
+            List<Long> courseMemoryThreads = invalidateCourseMemoryOf(userToBeDeactivated);
             userCreationService.deactivateUser(userToBeDeactivated);
+            courseMemoryIngestionApi.ifPresent(api -> api.refreshThreadsInBackground(courseMemoryThreads));
             return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deactivated", userToBeDeactivated.getLogin()))
                     .body(new UserDTO(userToBeDeactivated));
         }).orElseThrow(() -> new EntityNotFoundException("User", userId));
@@ -248,13 +254,28 @@ public class AdminUserResource {
         checkCannotRemoveSuperAdminFromDefaultAdmin(existingUser.getLogin(), managedUserVM.getAuthorities());
 
         final boolean shouldActivateUser = !existingUser.getActivated() && managedUserVM.isActivated();
+        final boolean shouldDeactivateUser = Boolean.TRUE.equals(existingUser.getActivated()) && !managedUserVM.isActivated();
+        List<Long> courseMemoryThreads = shouldDeactivateUser ? invalidateCourseMemoryOf(existingUser) : List.of();
         var updatedUser = userCreationService.updateUser(existingUser, managedUserVM);
+        courseMemoryIngestionApi.ifPresent(api -> api.refreshThreadsInBackground(courseMemoryThreads));
 
         if (shouldActivateUser) {
             userService.activateUser(updatedUser);
         }
 
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.updated", managedUserVM.getLogin())).body(new UserDTO(updatedUser));
+    }
+
+    /**
+     * Outdates the Course Memory entries that hold messages of a user who is being deactivated. Called right before the
+     * deactivation is saved, so that the entries can be rebuilt without the user's messages afterwards. If the rebuild never
+     * runs, the nightly sync retracts them.
+     *
+     * @param user the user who is being deactivated
+     * @return the threads to rebuild after the save
+     */
+    private List<Long> invalidateCourseMemoryOf(User user) {
+        return courseMemoryIngestionApi.map(api -> api.invalidateThreadsWithContentBy(user.getId())).orElse(List.of());
     }
 
     /**

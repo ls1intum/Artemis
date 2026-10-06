@@ -10,6 +10,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,6 +39,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepo
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.dto.SelectedLLMUsageDTO;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.CourseMemoryOperation;
 import de.tum.cit.aet.artemis.iris.domain.CourseMemoryStage;
@@ -1451,6 +1454,36 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         await().until(() -> retraction.get() != null);
         // Bumped together with the decision, then minted once more by the rebuild.
         assertThat(retraction.get().version()).isGreaterThan(before + 1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void deactivatingAnAccount_outdatesAndRebuildsItsThreads(boolean throughDeactivateEndpoint) throws Exception {
+        // An account of its own: the shared test users have content in the threads of other tests, all of which a
+        // deactivation would rebuild in the background.
+        // Short logins: the admin update validates the full name, which the test user derives from the login.
+        User deactivated = userUtilService.createAndSaveUser(TEST_PREFIX + (throughDeactivateEndpoint ? "dea1" : "dea2"));
+        Post othersThread = createQuestion("Thread with a reply by an account that will be deactivated");
+        saveAnswer(othersThread, deactivated, "Reply that will be redacted.", false);
+        markAsStoredInCourseMemory(othersThread);
+        long before = conversationMessageRepository.findCourseMemoryVersion(othersThread.getId()).orElseThrow();
+        // With the reply redacted the thread has nothing left to store, so its rebuild retracts the entry.
+        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> retraction = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(retraction::set);
+
+        if (throughDeactivateEndpoint) {
+            request.patch("/api/account/admin/users/" + deactivated.getId() + "/deactivate", null, HttpStatus.OK);
+        }
+        else {
+            ManagedUserVM update = new ManagedUserVM(deactivated);
+            update.setActivated(false);
+            request.put("/api/account/admin/users", update, HttpStatus.OK);
+        }
+
+        await().until(() -> retraction.get() != null);
+        // Bumped before the deactivation, then minted once more by the rebuild.
+        assertThat(retraction.get().version()).isEqualTo(before + 2);
     }
 
     @Test

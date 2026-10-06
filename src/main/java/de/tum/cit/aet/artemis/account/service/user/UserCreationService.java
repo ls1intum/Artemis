@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.iris.api.CourseMemoryIngestionApi;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -69,12 +68,10 @@ public class UserCreationService {
 
     private final UserActivityService userActivityService;
 
-    private final Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi;
-
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
             OrganizationRepository organizationRepository, AccountCredentialRevocationService accountCredentialRevocationService,
             AccountSecurityNotificationService accountSecurityNotificationService, AuditEventRepository auditEventRepository, UserRecoveryKeyService userRecoveryKeyService,
-            UserActivityService userActivityService, Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi) {
+            UserActivityService userActivityService) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
@@ -84,7 +81,6 @@ public class UserCreationService {
         this.auditEventRepository = auditEventRepository;
         this.userRecoveryKeyService = userRecoveryKeyService;
         this.userActivityService = userActivityService;
-        this.courseMemoryIngestionApi = courseMemoryIngestionApi;
     }
 
     /**
@@ -319,7 +315,7 @@ public class UserCreationService {
 
         log.debug("Changed Information for User: {}", user);
 
-        User savedUser = isBeingDeactivated ? saveDeactivatedUser(user) : saveUser(user);
+        User savedUser = saveUser(user);
         if (credentialsChanged) {
             // Stops sessions established before this change from being extended any further. Stamped after the save so it
             // is keyed on a persisted id, and outside the entity so the timestamp is not carried on every user load.
@@ -417,7 +413,7 @@ public class UserCreationService {
      */
     public void deactivateUser(User user) {
         user.setActivated(false);
-        saveDeactivatedUser(user);
+        saveUser(user);
         // Stops sessions established before the deactivation from being extended any further.
         userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
         // Web login checks `activated` on every attempt, but the git authentication paths accept a VCS access token or an
@@ -431,18 +427,6 @@ public class UserCreationService {
         userRecoveryKeyService.clearAll(user.getId());
         auditAccountStateChange(user, Constants.DEACTIVATE_USER);
         log.info("Deactivated user: {}", user);
-    }
-
-    /**
-     * Saves an account that is being deactivated. A deactivated account's messages are redacted from Course Memory: the
-     * entries holding them are outdated before the save and rebuilt after it. If the rebuild never runs, the nightly sync
-     * retracts them.
-     */
-    private User saveDeactivatedUser(User user) {
-        List<Long> courseMemoryThreads = courseMemoryIngestionApi.map(api -> api.invalidateThreadsWithContentBy(user.getId())).orElse(List.of());
-        User savedUser = saveUser(user);
-        courseMemoryIngestionApi.ifPresent(api -> api.refreshThreadsInBackground(courseMemoryThreads));
-        return savedUser;
     }
 
     /**
