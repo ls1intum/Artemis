@@ -4,7 +4,7 @@ artemis:
         atlasml:
             enabled: false
         atlasllm:
-            enabled: false
+            enabled: true # TEMP: test-server only, the Ansible env template cannot set this flag yet. Revert before merge.
     deimos:
         enabled: false
     hyperion:
