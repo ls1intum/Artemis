@@ -289,11 +289,29 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(strings = { "abc", "123", "file://", "ftp://", "http://127.0.0.1", "http://localhost:80" })
+    @ValueSource(strings = { "abc", "123", "file://", "ftp://", "http://127.0.0.1", "http://localhost:80", "http://example..com", "http://intranet", "http://-bad.example.com",
+            "http://bad_label.example.com", "http://bad-.example.com", "http://example.c0m", "http://example.c", "ftp://example.com" })
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void getOnlineResource_malformedUrl(String link) throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("link", link);
+        request.get("/api/lecture/lectures/online-units/fetch-online-resource", HttpStatus.BAD_REQUEST, OnlineResourceDTO.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void getOnlineResource_labelLongerThanLimit() throws Exception {
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("link", "http://" + "a".repeat(64) + ".com/");
+        request.get("/api/lecture/lectures/online-units/fetch-online-resource", HttpStatus.BAD_REQUEST, OnlineResourceDTO.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void getOnlineResource_domainLongerThanLimit() throws Exception {
+        String label = "a".repeat(60);
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("link", "http://" + String.join(".", label, label, label, label, label) + ".com/");
         request.get("/api/lecture/lectures/online-units/fetch-online-resource", HttpStatus.BAD_REQUEST, OnlineResourceDTO.class, params);
     }
 

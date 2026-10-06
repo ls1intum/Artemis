@@ -43,13 +43,37 @@
             }
             <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <tumaet-ui-form-field controlId="examiner" [label]="'artemisApp.examManagement.examiner' | artemisTranslate">
-                    <input tumAetUiInput class="w-full" type="text" name="examiner" id="examiner" [(ngModel)]="exam.examiner" />
+                    <input
+                        tumAetUiInput
+                        class="w-full"
+                        type="text"
+                        name="examiner"
+                        id="examiner"
+                        [attr.aria-label]="'artemisApp.examManagement.examiner' | artemisTranslate"
+                        [(ngModel)]="exam.examiner"
+                    />
                 </tumaet-ui-form-field>
                 <tumaet-ui-form-field controlId="moduleNumber" [label]="'artemisApp.examManagement.moduleNumber' | artemisTranslate">
-                    <input tumAetUiInput class="w-full" type="text" name="moduleNumber" id="moduleNumber" [(ngModel)]="exam.moduleNumber" />
+                    <input
+                        tumAetUiInput
+                        class="w-full"
+                        type="text"
+                        name="moduleNumber"
+                        id="moduleNumber"
+                        [attr.aria-label]="'artemisApp.examManagement.moduleNumber' | artemisTranslate"
+                        [(ngModel)]="exam.moduleNumber"
+                    />
                 </tumaet-ui-form-field>
                 <tumaet-ui-form-field controlId="courseName" [label]="'artemisApp.examManagement.courseName' | artemisTranslate">
-                    <input tumAetUiInput class="w-full" type="text" name="courseName" id="courseName" [(ngModel)]="exam.courseName" />
+                    <input
+                        tumAetUiInput
+                        class="w-full"
+                        type="text"
+                        name="courseName"
+                        id="courseName"
+                        [attr.aria-label]="'artemisApp.examManagement.courseName' | artemisTranslate"
+                        [(ngModel)]="exam.courseName"
+                    />
                 </tumaet-ui-form-field>
             </div>
             <hr class="my-4 border-(--border-color)" />
@@ -252,45 +276,51 @@
                                 />
                             </div>
                             <div>
-                                <jhi-date-time-picker
-                                    labelName="{{ 'artemisApp.examManagement.publishResultsDate' | artemisTranslate }}"
-                                    [(ngModel)]="exam.publishResultsDate"
-                                    [error]="!isValidPublishResultsDate"
-                                    name="publishResultsDate"
-                                    id="publishResultsDate"
+                                <tumaet-ui-date-picker
+                                    inputId="publishResultsDate"
+                                    data-testid="publishResultsDate"
+                                    labelName="artemisApp.examManagement.publishResultsDate"
+                                    [(value)]="exam.publishResultsDate"
+                                    [invalid]="!isValidPublishResultsDate"
                                 />
                             </div>
                         </div>
                         <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
-                                <jhi-date-time-picker
-                                    labelName="{{ 'artemisApp.examManagement.examSummaryPublicationDate' | artemisTranslate }}"
-                                    labelTooltip="{{ 'artemisApp.examManagement.examSummaryPublicationDateTooltip' | artemisTranslate }}"
-                                    [(ngModel)]="exam.examSummaryPublicationDate"
-                                    [error]="!isValidExamSummaryPublicationDate"
-                                    name="examSummaryPublicationDate"
-                                    id="examSummaryPublicationDate"
+                                <div class="flex items-center gap-1">
+                                    <label class="mb-0! font-bold" for="examSummaryPublicationDate">{{
+                                        'artemisApp.examManagement.examSummaryPublicationDate' | artemisTranslate
+                                    }}</label>
+                                    <jhi-help-icon text="artemisApp.examManagement.examSummaryPublicationDateTooltip" />
+                                </div>
+                                <tumaet-ui-date-picker
+                                    inputId="examSummaryPublicationDate"
+                                    data-testid="examSummaryPublicationDate"
+                                    [hideLabelName]="true"
+                                    [ariaLabel]="'artemisApp.examManagement.examSummaryPublicationDate' | artemisTranslate"
+                                    [(value)]="exam.examSummaryPublicationDate"
+                                    [invalid]="!isValidExamSummaryPublicationDate"
                                 />
                             </div>
                         </div>
                     }
                     <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
-                            <jhi-date-time-picker
-                                labelName="{{ 'artemisApp.examManagement.examStudentReviewStart' | artemisTranslate }}"
-                                [(ngModel)]="exam.examStudentReviewStart"
-                                [error]="!isValidExamStudentReviewStart"
-                                name="examStudentReviewStart"
-                                id="examStudentReviewStart"
+                            <tumaet-ui-date-picker
+                                inputId="examStudentReviewStart"
+                                data-testid="examStudentReviewStart"
+                                labelName="artemisApp.examManagement.examStudentReviewStart"
+                                [(value)]="exam.examStudentReviewStart"
+                                [invalid]="!isValidExamStudentReviewStart"
                             />
                         </div>
                         <div>
-                            <jhi-date-time-picker
-                                labelName="{{ 'artemisApp.examManagement.examStudentReviewEnd' | artemisTranslate }}"
-                                [(ngModel)]="exam.examStudentReviewEnd"
-                                [error]="!isValidExamStudentReviewEnd"
-                                name="examStudentReviewEnd"
-                                id="examStudentReviewEnd"
+                            <tumaet-ui-date-picker
+                                inputId="examStudentReviewEnd"
+                                data-testid="examStudentReviewEnd"
+                                labelName="artemisApp.examManagement.examStudentReviewEnd"
+                                [(value)]="exam.examStudentReviewEnd"
+                                [invalid]="!isValidExamStudentReviewEnd"
                             />
                             @if (!isValidExamStudentReviewEnd) {
                                 <small class="text-state-danger" jhiTranslate="artemisApp.examManagement.reviewDatesInvalidWarning"></small>
@@ -303,12 +333,17 @@
             <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.examSolutions"></h5>
             <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                    <jhi-date-time-picker
-                        name="exampleSolutionPublicationDate"
-                        labelName="{{ 'artemisApp.exam.exampleSolutionPublicationDate' | artemisTranslate }}"
-                        labelTooltip="{{ 'artemisApp.examManagement.exampleSolutionPublicationDateTooltip' | artemisTranslate }}"
-                        [(ngModel)]="exam.exampleSolutionPublicationDate"
-                        [error]="!isValidExampleSolutionPublicationDate"
+                    <div class="flex items-center gap-1">
+                        <label class="mb-0! font-bold" for="exampleSolutionPublicationDate">{{ 'artemisApp.exam.exampleSolutionPublicationDate' | artemisTranslate }}</label>
+                        <jhi-help-icon text="artemisApp.examManagement.exampleSolutionPublicationDateTooltip" />
+                    </div>
+                    <tumaet-ui-date-picker
+                        inputId="exampleSolutionPublicationDate"
+                        data-testid="exampleSolutionPublicationDate"
+                        [hideLabelName]="true"
+                        [ariaLabel]="'artemisApp.exam.exampleSolutionPublicationDate' | artemisTranslate"
+                        [(value)]="exam.exampleSolutionPublicationDate"
+                        [invalid]="!isValidExampleSolutionPublicationDate"
                     />
                 </div>
             </div>

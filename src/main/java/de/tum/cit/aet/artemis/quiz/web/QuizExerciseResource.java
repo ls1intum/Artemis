@@ -183,7 +183,7 @@ public class QuizExerciseResource {
                 var previousReleaseDate = quizExercise.getReleaseDate();
                 var releaseDateNeedsClamping = previousReleaseDate != null && previousReleaseDate.isAfter(now);
                 var newReleaseDate = releaseDateNeedsClamping ? now : previousReleaseDate;
-                var newDueDate = now.plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
+                var newDueDate = now.plusSeconds((long) quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
 
                 // getOrCreateSynchronizedQuizBatch may return a transient (id == null) batch for quizzes that never
                 // started before. save() persists it; for already-existing batches it issues a plain UPDATE. Either
@@ -217,7 +217,7 @@ public class QuizExerciseResource {
                 // endQuiz mutates the in-memory entity only (its contract, relied on by several re-evaluation tests).
                 // Persist the scalar changes via targeted UPDATEs so the full-graph cascade is avoided.
                 quizExerciseService.endQuiz(quizExercise);
-                var lastStart = quizExercise.getDueDate().minusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
+                var lastStart = quizExercise.getDueDate().minusSeconds((long) quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
                 quizExerciseRepository.updateDueDate(quizExerciseId, quizExercise.getDueDate());
                 quizBatchRepository.clampBatchStartTimesForEndNow(quizExerciseId, lastStart);
             }

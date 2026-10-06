@@ -22,6 +22,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.calendar.dto.ExamCalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -44,6 +45,25 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
 
     /**
+     * @param entityIds the ids to check
+     * @return the subset that exists
+     */
+    @Query("""
+            SELECT exam.id
+            FROM Exam exam
+            WHERE exam.id IN :entityIds
+            """)
+    Set<Long> findExistingExamIds(@Param("entityIds") Collection<Long> entityIds);
+
+    @Query("""
+            SELECT exam.id
+            FROM Exam exam
+            WHERE exam.id > :afterId
+            ORDER BY exam.id ASC
+            """)
+    List<Long> findExamIdsAfter(@Param("afterId") long afterId, Pageable pageable);
+
+    /**
      * Reads only the dates that decide whether a submission is in time.
      * <p>
      * The submission gate runs on every autosave of every student and reads nothing from the exam but these three
@@ -58,6 +78,13 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             WHERE exam.id = :examId
             """)
     Optional<ExamScheduleDTO> findScheduleById(@Param("examId") long examId);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO(e.course.id, e.id)
+            FROM Exam e
+            WHERE e.course.id IN :courseIds
+            """)
+    List<CourseEntityIdDTO> findExamIdCourseIdPairsForCourses(@Param("courseIds") Collection<Long> courseIds);
 
     List<Exam> findByCourseId(long courseId);
 

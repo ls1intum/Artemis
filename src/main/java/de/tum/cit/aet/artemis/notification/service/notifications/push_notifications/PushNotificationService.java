@@ -89,7 +89,7 @@ public abstract class PushNotificationService {
      * @param relayServerBaseUrl the url where Hermes is hosted
      */
     void sendRelayRequest(String body, String relayServerBaseUrl) {
-        RetryTemplate template = RetryTemplate.builder().exponentialBackoff(1000, 4, 60 * 1000).retryOn(RestClientException.class).maxAttempts(4).build();
+        RetryTemplate template = RetryTemplate.builder().exponentialBackoff(1000, 4, 60L * 1000).retryOn(RestClientException.class).maxAttempts(4).build();
 
         try {
             template.execute((RetryCallback<Void, RestClientException>) context -> {

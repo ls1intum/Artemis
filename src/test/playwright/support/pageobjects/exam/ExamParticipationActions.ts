@@ -12,7 +12,7 @@ export class ExamParticipationActions {
     }
 
     async selectExerciseOnOverview(index: number) {
-        await this.page.locator(`.exercise-table tr:nth-child(${index}) a`).click();
+        await this.page.getByTestId('exercise-table').locator(`tr:nth-child(${index}) a`).click();
     }
 
     async clickSaveAndContinue() {
