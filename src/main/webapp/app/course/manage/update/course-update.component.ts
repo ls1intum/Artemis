@@ -927,7 +927,11 @@ export class CourseUpdateComponent implements OnInit {
      * @param message new courseInformationSharingMessagingCodeOfConduct
      */
     updateCourseInformationSharingMessagingCodeOfConduct(message: string) {
-        this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].setValue(message);
+        const control = this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'];
+        control.setValue(message);
+        // markdownChange only fires on genuine user edits (never on the programmatic [(markdown)] load), so marking the
+        // control dirty here lets showError reveal the length error and aria-invalid while typing, not only after a save attempt.
+        control.markAsDirty();
     }
 
     /**

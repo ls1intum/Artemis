@@ -741,6 +741,35 @@ describe('Course Management Update Component', () => {
             expect(control.valid).toBe(false);
         });
 
+        it('reveals the inline error and invalid state on a user edit over the limit, before any save attempt', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            const control = comp.courseForm.get('courseInformationSharingMessagingCodeOfConduct')!;
+
+            // Baseline: an untouched, pristine control shows no error and is not flagged invalid.
+            expect(control.dirty).toBe(false);
+            expect(comp.showError('courseInformationSharingMessagingCodeOfConduct')).toBe(false);
+
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('x'.repeat(comp.CODE_OF_CONDUCT_LIMIT + 1));
+
+            // A genuine user edit marks the control dirty, so the error and aria-invalid surface without pressing save.
+            expect(control.dirty).toBe(true);
+            expect(comp.submitAttempted()).toBe(false);
+            expect(comp.showError('courseInformationSharingMessagingCodeOfConduct')).toBe(true);
+        });
+
+        it('does not flag an error on load before the user edits the code of conduct', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            const control = comp.courseForm.get('courseInformationSharingMessagingCodeOfConduct')!;
+
+            // The programmatic [(markdown)] load does not call the user-edit handler, so the control stays pristine
+            // and no error is shown until the user actually edits.
+            expect(control.dirty).toBe(false);
+            expect(control.touched).toBe(false);
+            expect(comp.showError('courseInformationSharingMessagingCodeOfConduct')).toBe(false);
+        });
+
         it('surfaces the code-of-conduct issue in the footer list once the limit is exceeded', () => {
             comp.ngOnInit();
             fixture.detectChanges();
