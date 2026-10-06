@@ -220,8 +220,8 @@ verification, cleanup, and rollback procedures.
 * The multi-node E2E runners take `--middleware hazelcast|redis` and run the identical suite on either provider:
 
 ```bash
-./run-e2e-tests-local-multinode-fast.sh --middleware redis
-./run-e2e-tests-local-multinode.sh --middleware redis --filter "ClusterFormation"
+./supporting_scripts/e2e/run-e2e-tests-local-multinode-fast.sh --middleware redis
+./supporting_scripts/e2e/run-e2e-tests-local-multinode.sh --middleware redis --filter "ClusterFormation"
 ```
 
 Hazelcast remains the default, because that is what production runs.

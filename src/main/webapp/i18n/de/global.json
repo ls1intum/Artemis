@@ -9,6 +9,7 @@
             "emptyList": "Keine Elemente verfügbar",
             "filterOptions": "Optionen filtern",
             "noMatchingOptions": "Keine passenden Optionen",
+            "selectedCount": "{{ count }} ausgewählt",
             "unset": "Nicht gesetzt",
             "create": "Erstellen",
             "start": "Start",

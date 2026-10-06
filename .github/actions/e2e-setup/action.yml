@@ -42,7 +42,7 @@ runs:
       run: |
         if [ -f "docker-tag.txt" ]; then
           ARTEMIS_DOCKER_TAG=$(cat docker-tag.txt)
-          # Defense-in-depth: the tag is a machine-generated docker/metadata-action slug, but it
+          # Defense-in-depth: the tag is a machine-generated deployment/docker/metadata-action slug, but it
           # flows into $GITHUB_ENV and a later `docker pull`, so reject anything outside the Docker
           # tag charset before trusting it — matching the release-tag validation in ci-build.yml.
           case "$ARTEMIS_DOCKER_TAG" in
@@ -60,14 +60,14 @@ runs:
 
     - name: Run cleanup script (before E2E)
       shell: bash
-      run: .ci/E2E-tests/cleanup.sh
+      run: supporting_scripts/ci/E2E-tests/cleanup.sh
 
     # Must run after the cleanup (which stops containers but leaves images) and before the tests, so
     # no build job ever races a multi-gigabyte on-demand pull. See the script header for the failure
     # this prevents.
     - name: Pre-pull exercise images
       shell: bash
-      run: .ci/E2E-tests/prepull-exercise-images.sh
+      run: supporting_scripts/ci/E2E-tests/prepull-exercise-images.sh
 
     - name: Clean old test results
       shell: bash

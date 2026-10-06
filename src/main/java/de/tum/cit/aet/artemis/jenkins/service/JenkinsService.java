@@ -122,7 +122,11 @@ public class JenkinsService implements ContinuousIntegrationService {
             return null;
         }
 
-        final var projectKey = participation.getProgrammingExercise().getProjectKey();
+        var exercise = participation.getProgrammingExercise();
+        if (exercise == null) {
+            return null;
+        }
+        final var projectKey = exercise.getProjectKey();
         final var planKey = participation.getBuildPlanId();
         return jenkinsBuildPlanService.getBuildStatusOfPlan(projectKey, planKey);
     }
