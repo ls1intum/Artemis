@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
@@ -212,10 +214,9 @@ public class AttachmentVideoUnitService {
                 }
 
                 boolean isPdfUpload = hasUploadedFile && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()));
-                // The same bytes again need no new slides, unless the unit has none: a split that failed after a re-upload leaves an empty deck, and uploading the file again
-                // is how an instructor retries it.
-                boolean splitsSlides = isPdfUpload
-                        && (fileUpdateResult.fileBytesChanged() || slideRepository.findAllByAttachmentVideoUnitId(savedAttachmentVideoUnit.getId()).isEmpty());
+                // The same bytes again need no new slides, unless the saved deck does not match them: a split that failed after a re-upload leaves an empty deck, or the
+                // previous deck after an editor change, and uploading the file again is how an instructor retries it.
+                boolean splitsSlides = isPdfUpload && (fileUpdateResult.fileBytesChanged() || !currentDeckMatches(savedAttachmentVideoUnit.getId(), pageOrder));
                 if (splitsSlides) {
                     // Split the PDF into slides, respecting a custom page order if provided
                     if (pageOrder == null) {
@@ -251,6 +252,25 @@ public class AttachmentVideoUnitService {
             attachmentService.regenerateStudentVersionOrRemoveOutdated(savedAttachmentVideoUnit.getAttachment());
         }
         return savedAttachmentVideoUnit;
+    }
+
+    /**
+     * Checks whether the saved current deck already is the one the request describes, so the stored file needs no new split.
+     *
+     * @param attachmentVideoUnitId the id of the attachment video unit
+     * @param pageOrder             the submitted page order, or null when the request describes none
+     * @return whether the unit has current slides and, if a page order was submitted, exactly those slides in that order
+     */
+    private boolean currentDeckMatches(long attachmentVideoUnitId, List<SlideOrderDTO> pageOrder) {
+        List<Slide> currentSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnitId);
+        if (currentSlides.isEmpty()) {
+            return false;
+        }
+        if (pageOrder == null) {
+            return true;
+        }
+        Map<String, Integer> slideNumberBySlideId = currentSlides.stream().collect(Collectors.toMap(slide -> String.valueOf(slide.getId()), Slide::getSlideNumber));
+        return pageOrder.size() == currentSlides.size() && pageOrder.stream().allMatch(page -> Objects.equals(slideNumberBySlideId.get(page.slideId()), page.order()));
     }
 
     private String stageStudentVersionFile(MultipartFile studentVersionFile, long attachmentVideoUnitId) {

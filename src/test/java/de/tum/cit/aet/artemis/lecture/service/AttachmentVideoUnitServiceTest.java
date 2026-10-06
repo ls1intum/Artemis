@@ -328,6 +328,28 @@ class AttachmentVideoUnitServiceTest {
         verify(attachmentService, never()).removeStudentVersionFile(any());
     }
 
+    /**
+     * A failed editor split restores the previous deck while the attachment keeps the new file. Uploading the same file with the same page order again must split it, not
+     * only update the visibility of the restored deck.
+     */
+    @Test
+    void identicalUploadSplitsWhenTheSavedDeckDoesNotMatchThePageOrder() {
+        var attachment = attachment();
+        var unit = attachmentVideoUnit("Unit", attachment);
+        var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED);
+        var uploadedFile = pdfUpload("same content");
+        var hiddenPages = List.<HiddenPageInfoDTO>of();
+        var pageOrder = List.of(new SlideOrderDTO("22", 1), new SlideOrderDTO("21", 2));
+        when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", HASH));
+        when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
+        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(slide(21L, 1, null), slide(22L, 2, null)));
+
+        service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, null, false, hiddenPages, pageOrder, Set.of());
+
+        verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(unit, hiddenPages, pageOrder));
+        verify(slideSplitterService, never()).updateSlideVisibility(any(), any());
+    }
+
     @Test
     void invalidStudentVersionFailsBeforeAnythingChanges() throws Exception {
         var attachment = attachment();
