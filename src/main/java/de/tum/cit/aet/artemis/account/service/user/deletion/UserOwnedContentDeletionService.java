@@ -255,9 +255,20 @@ public class UserOwnedContentDeletionService {
      * author, and the nightly Course Memory sync retracts the entries that still contain them.
      *
      * @param userId the account being deleted
+     * @return the affected threads, to pass to {@link #outdateCourseMemoryThreads} once the account is closed
      */
-    public void invalidateCourseMemoryOf(long userId) {
-        courseMemoryIngestionApi.ifPresent(api -> api.invalidateThreadsWithContentBy(userId));
+    public List<Long> invalidateCourseMemoryOf(long userId) {
+        return courseMemoryIngestionApi.map(api -> api.invalidateThreadsWithContentBy(userId)).orElse(List.of());
+    }
+
+    /**
+     * Outdates the threads again once the account is closed. The bump after the change covers a refresh that read the
+     * account while it was still open (see ConversationMessageRepository#bumpCourseMemoryVersionIfTracked).
+     *
+     * @param threads the threads returned by {@link #invalidateCourseMemoryOf} before the account was closed
+     */
+    public void outdateCourseMemoryThreads(List<Long> threads) {
+        courseMemoryIngestionApi.ifPresent(api -> api.outdateThreads(threads));
     }
 
     /**
@@ -275,11 +286,13 @@ public class UserOwnedContentDeletionService {
         List<Long> postIds = communicationDataCleanupRepository.findPostIdsAuthoredBy(userId);
         List<Long> answerPostIds = communicationDataCleanupRepository.findAnswerPostIdsAuthoredBy(userId);
 
-        // Course Memory entries holding any of these messages are outdated first: if the follow-up below never reaches
-        // Pyris, the nightly sync retracts them.
+        // Course Memory entries holding any of these messages are outdated before and after the deletion: if the follow-up
+        // below never reaches Pyris, the nightly sync retracts them. The bump after covers a refresh that read the messages
+        // in between (see ConversationMessageRepository#bumpCourseMemoryVersionIfTracked).
         List<CourseMemoryThreadDTO> courseMemoryThreads = communicationDataCleanupRepository.findCourseMemoryThreadsWithContentBy(userId);
-        if (!courseMemoryThreads.isEmpty()) {
-            communicationDataCleanupRepository.bumpCourseMemoryVersions(courseMemoryThreads.stream().map(CourseMemoryThreadDTO::postId).toList());
+        List<Long> courseMemoryThreadIds = courseMemoryThreads.stream().map(CourseMemoryThreadDTO::postId).toList();
+        if (!courseMemoryThreadIds.isEmpty()) {
+            communicationDataCleanupRepository.bumpCourseMemoryVersions(courseMemoryThreadIds);
         }
 
         communicationDataCleanupRepository.deleteReactionsOnAnswersAuthoredBy(userId);
@@ -287,6 +300,9 @@ public class UserOwnedContentDeletionService {
         communicationDataCleanupRepository.deleteReactionsOnPostsAuthoredBy(userId);
         communicationDataCleanupRepository.deletePosts(userId);
         communicationDataCleanupRepository.deleteReactions(userId);
+        if (!courseMemoryThreadIds.isEmpty()) {
+            communicationDataCleanupRepository.bumpCourseMemoryVersions(courseMemoryThreadIds);
+        }
         removeFromCourseMemory(courseMemoryThreads);
 
         removeFromSearchIndex(postIds, answerPostIds);

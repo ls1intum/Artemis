@@ -262,12 +262,16 @@ public class AnswerMessageService extends PostingService {
             existingAnswerMessage.withdrawSignOffs();
         }
 
-        // The thread's Course Memory version is bumped first, so an entry built from the old text is outdated once the
-        // change is saved, even if the refresh below never reaches Pyris.
+        // The thread's Course Memory version is bumped before and after the save, so an entry built from the old text is
+        // outdated even if the refresh below never reaches Pyris. The bump after covers a refresh that read the old text in
+        // between (see ConversationMessageRepository#bumpCourseMemoryVersionIfTracked).
         if (resolutionChanged || contentChanged) {
             conversationMessageRepository.bumpCourseMemoryVersionIfTracked(existingAnswerMessage.getPost().getId());
         }
         updatedAnswerMessage = answerPostRepository.save(existingAnswerMessage);
+        if (resolutionChanged || contentChanged) {
+            conversationMessageRepository.bumpCourseMemoryVersionIfTracked(existingAnswerMessage.getPost().getId());
+        }
         updatedAnswerMessage.getPost().setConversation(conversation);
 
         // Right after the change, before the work below that can fail. A resolution change can start the thread's first
@@ -352,13 +356,15 @@ public class AnswerMessageService extends PostingService {
         updatedMessage.removeAnswerPost(answerMessage);
         updatedMessage.setResolved(updatedMessage.getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
         updatedMessage.setConversation(conversation);
-        // The thread's Course Memory version is bumped first: the entry may contain this answer's text.
+        // The thread's Course Memory version is bumped before and after the deletion: the entry may contain this answer's
+        // text. The bump after covers a refresh that read the answer in between (see ConversationMessageRepository#bumpCourseMemoryVersionIfTracked).
         conversationMessageRepository.bumpCourseMemoryVersionIfTracked(updatedMessage.getId());
         // update on the message properties
         conversationMessageRepository.save(updatedMessage);
 
         // delete
         answerPostRepository.deleteById(answerMessageId);
+        conversationMessageRepository.bumpCourseMemoryVersionIfTracked(updatedMessage.getId());
         refreshCourseMemory(updatedMessage.getId(), user, course, false);
         searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.ANSWER_POST, answerMessageId));
         preparePostForBroadcast(updatedMessage);
@@ -451,6 +457,9 @@ public class AnswerMessageService extends PostingService {
         if (!answerPostRepository.verifyIfUnverified(answerMessageId, user, ZonedDateTime.now(), updatedContent)) {
             throw new BadRequestAlertException("Answer message is already verified", ANSWER_POST_ENTITY_NAME, "alreadyVerified");
         }
+        // The approval can change the thread's stored answer. Bumped after it, so an entry from a refresh that read the
+        // thread before the approval is outdated even if the refresh below never reaches Pyris (see ConversationMessageRepository#bumpCourseMemoryVersionIfTracked).
+        conversationMessageRepository.bumpCourseMemoryVersionIfTracked(existingAnswerMessage.getPost().getId());
 
         // The update above is a bulk statement and does not touch the instance read before it, so re-read what is
         // broadcast and returned. Each repository call runs in its own session, so this read sees the committed row.

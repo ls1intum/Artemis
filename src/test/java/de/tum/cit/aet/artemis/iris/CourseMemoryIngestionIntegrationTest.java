@@ -499,6 +499,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         Post post = createQuestion("What is the deadline?");
         AnswerPost answer = saveAnswer(post, tutor, "Friday.", true, true);
         markAsStoredInCourseMemory(post);
+        long before = conversationMessageRepository.findCourseMemoryVersion(post.getId()).orElseThrow();
 
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
@@ -512,6 +513,9 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(dto).isNotNull();
         assertThat(dto.postId()).isEqualTo(String.valueOf(post.getId()));
         assertThat(messageWithId(dto.thread(), "answer-" + answer.getId()).content()).isEqualTo("Friday, 23:59 CET.");
+        // Bumped before and after the change, then minted once more by the rebuild: a refresh that read the old state in
+        // between minted a version below the stored one, so it can never stay current.
+        assertThat(dto.version()).isEqualTo(before + 3);
     }
 
     @Test
@@ -540,6 +544,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         post.setResolved(true);
         Post resolvedPost = conversationMessageRepository.save(post);
         markAsStoredInCourseMemory(resolvedPost);
+        long before = conversationMessageRepository.findCourseMemoryVersion(resolvedPost.getId()).orElseThrow();
 
         AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
         irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
@@ -552,6 +557,9 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         var dto = captured.get();
         assertThat(dto).isNotNull();
         assertThat(messageWithId(dto.thread(), "post-" + resolvedPost.getId()).content()).isEqualTo("How do I run the server locally?");
+        // Bumped before and after the change, then minted once more by the rebuild: a refresh that read the old state in
+        // between minted a version below the stored one, so it can never stay current.
+        assertThat(dto.version()).isEqualTo(before + 3);
     }
 
     @Test
@@ -1452,8 +1460,9 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
         assertThat(userAiPreferenceService.findDecision(optingOut.getId())).isEqualTo(AiSelectionDecision.NO_AI);
         await().until(() -> retraction.get() != null);
-        // Bumped together with the decision, then minted once more by the rebuild.
-        assertThat(retraction.get().version()).isGreaterThan(before + 1);
+        // Bumped before and after the change, then minted once more by the rebuild: a refresh that read the old state in
+        // between minted a version below the stored one, so it can never stay current.
+        assertThat(retraction.get().version()).isEqualTo(before + 3);
     }
 
     @ParameterizedTest
@@ -1482,8 +1491,9 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         }
 
         await().until(() -> retraction.get() != null);
-        // Bumped before the deactivation, then minted once more by the rebuild.
-        assertThat(retraction.get().version()).isEqualTo(before + 2);
+        // Bumped before and after the change, then minted once more by the rebuild: a refresh that read the old state in
+        // between minted a version below the stored one, so it can never stay current.
+        assertThat(retraction.get().version()).isEqualTo(before + 3);
     }
 
     @Test
@@ -1503,8 +1513,9 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
         assertThat(answerPostRepository.findById(reply.getId())).isEmpty();
         await().until(() -> retraction.get() != null);
-        // Bumped before the deletion, then minted once more by the rebuild.
-        assertThat(retraction.get().version()).isEqualTo(before + 2);
+        // Bumped before and after the change, then minted once more by the rebuild: a refresh that read the old state in
+        // between minted a version below the stored one, so it can never stay current.
+        assertThat(retraction.get().version()).isEqualTo(before + 3);
     }
 
     @Test

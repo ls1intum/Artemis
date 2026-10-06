@@ -116,14 +116,19 @@ class PermanentUserDeletionOrderTest {
     }
 
     @Test
-    void courseMemoryIsOutdatedRightBeforeTheAccountIsClosed() {
+    void courseMemoryIsOutdatedRightBeforeAndAfterTheAccountIsClosed() {
         // Closing makes the account an inactive author, whose messages Course Memory must not keep. If the deletion then
-        // stops, nothing else outdates the entries, so this happens before the account is closed.
+        // stops, nothing else outdates the entries, so this happens before the account is closed, and again after it for a
+        // refresh that read the account in between.
+        List<Long> threads = List.of(7L);
+        when(userOwnedContentDeletionService.invalidateCourseMemoryOf(USER_ID)).thenReturn(threads);
+
         permanentUserDeletionService.deleteByAdmin(USER_ID, FINGERPRINT, "an-admin");
 
         InOrder order = inOrder(userRepository, userOwnedContentDeletionService);
         order.verify(userOwnedContentDeletionService).invalidateCourseMemoryOf(USER_ID);
         order.verify(userRepository).deactivateForDeletion(USER_ID);
+        order.verify(userOwnedContentDeletionService).outdateCourseMemoryThreads(threads);
     }
 
     @Test

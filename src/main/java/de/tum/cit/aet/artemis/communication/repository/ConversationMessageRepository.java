@@ -10,6 +10,7 @@ import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getUn
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getUnverifiedIrisAnswersSpecification;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -168,9 +169,17 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
     }
 
     /**
-     * Bumps a thread's Course Memory version if the thread has one, i.e. if anything was ever dispatched for it. Called
-     * right before a change to the thread's content, so the entry Pyris holds is outdated once the change is saved; if
-     * the refresh that follows never reaches Pyris, the nightly sync retracts the entry.
+     * Bumps a thread's Course Memory version if the thread has one, i.e. if anything was ever dispatched for it.
+     * <p>
+     * Every change that can make a stored entry outdated bumps the version twice, right before and right after it is
+     * saved, and then refreshes the thread. Without a transaction around the change (not allowed outside a single
+     * modifying query) both bumps are needed:
+     * <ul>
+     * <li>The bump before the save outdates the stored entry even if the save then fails or the process stops.</li>
+     * <li>The bump after the save covers a refresh that ran in between: it minted its version after the first bump but
+     * read the state from before the save. The second bump makes that version older than Artemis', so its entry is
+     * replaced by the follow-up refresh or, if that never runs, retracted by the nightly sync.</li>
+     * </ul>
      *
      * @param postId the id of the thread's root post
      * @return 1 if the version was bumped, 0 if the thread has no Course Memory version
@@ -199,7 +208,8 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
      * Bumps the Course Memory version of every thread with a version that contains a message by the given user. Called
      * before an account change after which the user's messages may no longer be stored (an opt-out from AI, a
      * deactivation, closing the account for deletion): if the rebuild after the change never reaches Pyris, the nightly
-     * sync retracts the outdated entries.
+     * sync retracts the outdated entries. After the change, the same threads are bumped again with
+     * {@link #bumpCourseMemoryVersionsIfTracked}; see {@link #bumpCourseMemoryVersionIfTracked} for why both are needed.
      *
      * @param userId the user
      * @return how many versions were bumped
@@ -212,6 +222,18 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
                 AND (author_id = :userId OR id IN (SELECT answer.post_id FROM answer_post answer WHERE answer.author_id = :userId))
             """, nativeQuery = true)
     int bumpCourseMemoryVersionsOfThreadsWithContentBy(@Param("userId") long userId);
+
+    /**
+     * Bumps the Course Memory version of each given thread that has one. Called right after an account change, for the
+     * threads bumped right before it; see {@link #bumpCourseMemoryVersionIfTracked} for why both bumps are needed.
+     *
+     * @param postIds the threads' root post ids
+     * @return how many versions were bumped
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query(value = "UPDATE post SET course_memory_version = course_memory_version + 1 WHERE id IN (:postIds) AND course_memory_version > 0", nativeQuery = true)
+    int bumpCourseMemoryVersionsIfTracked(@Param("postIds") Collection<Long> postIds);
 
     /**
      * @param postId the id of a post

@@ -221,7 +221,7 @@ public class AdminUserResource {
             checkSuperAdminAuthorizationToManageAdmin(AuthorizationCheckService.isAdmin(userToBeDeactivated.getAuthorities()));
             List<Long> courseMemoryThreads = invalidateCourseMemoryOf(userToBeDeactivated);
             userCreationService.deactivateUser(userToBeDeactivated);
-            courseMemoryIngestionApi.ifPresent(api -> api.refreshThreadsInBackground(courseMemoryThreads));
+            rebuildCourseMemory(courseMemoryThreads);
             return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deactivated", userToBeDeactivated.getLogin()))
                     .body(new UserDTO(userToBeDeactivated));
         }).orElseThrow(() -> new EntityNotFoundException("User", userId));
@@ -262,7 +262,7 @@ public class AdminUserResource {
         final boolean shouldDeactivateUser = Boolean.TRUE.equals(existingUser.getActivated()) && !managedUserVM.isActivated();
         List<Long> courseMemoryThreads = shouldDeactivateUser ? invalidateCourseMemoryOf(existingUser) : List.of();
         var updatedUser = userCreationService.updateUser(existingUser, managedUserVM);
-        courseMemoryIngestionApi.ifPresent(api -> api.refreshThreadsInBackground(courseMemoryThreads));
+        rebuildCourseMemory(courseMemoryThreads);
 
         if (shouldActivateUser) {
             userService.activateUser(updatedUser);
@@ -281,6 +281,20 @@ public class AdminUserResource {
      */
     private List<Long> invalidateCourseMemoryOf(User user) {
         return courseMemoryIngestionApi.map(api -> api.invalidateThreadsWithContentBy(user.getId())).orElse(List.of());
+    }
+
+    /**
+     * Outdates the threads again once the deactivation is saved, then rebuilds them without the user's messages. The bump
+     * after the save covers a refresh that read the account while it was still active (see
+     * ConversationMessageRepository#bumpCourseMemoryVersionIfTracked).
+     *
+     * @param courseMemoryThreads the threads returned by {@link #invalidateCourseMemoryOf} before the save
+     */
+    private void rebuildCourseMemory(List<Long> courseMemoryThreads) {
+        courseMemoryIngestionApi.ifPresent(api -> {
+            api.outdateThreads(courseMemoryThreads);
+            api.refreshThreadsInBackground(courseMemoryThreads);
+        });
     }
 
     /**

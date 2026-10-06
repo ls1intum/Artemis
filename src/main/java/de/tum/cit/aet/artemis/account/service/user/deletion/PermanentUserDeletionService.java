@@ -163,8 +163,9 @@ public class PermanentUserDeletionService {
     private void delete(User user, UserDeletionImpactDTO impact, UserDeletionMode mode, String actor) {
         long userId = user.getId();
         String login = user.getLogin();
-        userOwnedContentDeletionService.invalidateCourseMemoryOf(userId);
+        List<Long> courseMemoryThreads = userOwnedContentDeletionService.invalidateCourseMemoryOf(userId);
         closeAccount(userId);
+        userOwnedContentDeletionService.outdateCourseMemoryThreads(courseMemoryThreads);
 
         String imageUrl = user.getImageUrl();
         List<Path> filesToDelete = new ArrayList<>();
