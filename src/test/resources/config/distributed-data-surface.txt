@@ -9,7 +9,7 @@ record de.tum.cit.aet.artemis.account.service.OIDCExchangeCodeService$ExchangeCo
 enum de.tum.cit.aet.artemis.assessment.domain.AssessmentType serialVersionUID=0 serializable=true [AUTOMATIC,SEMI_AUTOMATIC,MANUAL,AUTOMATIC_ATHENA]
 enum de.tum.cit.aet.artemis.assessment.domain.FeedbackType serialVersionUID=0 serializable=true [MANUAL,MANUAL_UNREFERENCED,AUTOMATIC_ADAPTED,AUTOMATIC]
 enum de.tum.cit.aet.artemis.assessment.domain.Visibility serialVersionUID=0 serializable=true [ALWAYS,AFTER_DUE_DATE,NEVER]
-record de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator serialVersionUID=1 serializable=true [java.util.Set<java.lang.Long> exerciseIds, java.time.Instant lastEventTime, int dailyRunCount, java.time.LocalDate dailyRunCountDate]
+record de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator serialVersionUID=1 serializable=true [java.util.Set<java.lang.Long> exerciseIds, java.util.Set<java.lang.Long> lectureUnitIds, java.time.Instant lastEventTime, int dailyRunCount, java.time.LocalDate dailyRunCountDate]
 enum de.tum.cit.aet.artemis.atlas.domain.competency.RelationType serialVersionUID=0 serializable=true [ASSUMES,EXTENDS,MATCHES]
 record de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphEdgeDTO serialVersionUID=0 serializable=true [java.lang.String id, java.lang.String source, java.lang.String target, de.tum.cit.aet.artemis.atlas.domain.competency.RelationType relationType]
 record de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO serialVersionUID=0 serializable=true [java.lang.String id, java.lang.String label, java.time.ZonedDateTime softDueDate, java.lang.Double value, de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO$CompetencyNodeValueType valueType]

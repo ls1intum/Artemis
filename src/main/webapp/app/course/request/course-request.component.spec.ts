@@ -103,9 +103,41 @@ describe('CourseRequestComponent', () => {
                 title: 'New Course',
                 shortName: 'ABC',
                 testCourse: true,
+                gradeRelevant: false,
             }),
         );
         expect(alertService.success).toHaveBeenCalled();
+    });
+
+    it('should submit a regular course as grade relevant by default', () => {
+        courseRequestService.create.mockReturnValue(of({} as CourseRequest));
+        component.form.patchValue({
+            title: 'New Course',
+            shortName: 'ABC',
+            reason: 'A valid reason for the request',
+            startDate: dayjs('2025-01-01'),
+            endDate: dayjs('2025-02-01'),
+        });
+
+        component.submit();
+
+        expect(courseRequestService.create).toHaveBeenCalledWith(expect.objectContaining({ testCourse: false, gradeRelevant: true }));
+    });
+
+    it('should submit the choice of a course that is not grade relevant', () => {
+        courseRequestService.create.mockReturnValue(of({} as CourseRequest));
+        component.form.patchValue({
+            title: 'New Course',
+            shortName: 'ABC',
+            reason: 'A valid reason for the request',
+            startDate: dayjs('2025-01-01'),
+            endDate: dayjs('2025-02-01'),
+            gradeRelevant: false,
+        });
+
+        component.submit();
+
+        expect(courseRequestService.create).toHaveBeenCalledWith(expect.objectContaining({ testCourse: false, gradeRelevant: false }));
     });
 
     it('should handle short name conflict error and apply suggested short name', () => {
