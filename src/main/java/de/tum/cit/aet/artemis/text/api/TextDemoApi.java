@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseDates;
@@ -168,6 +169,40 @@ public class TextDemoApi extends AbstractTextApi {
             went down.
             """;
 
+    private static final String EXAM_ESSAY_TITLE = "Essay: Layered Architecture";
+
+    private static final String EXAM_ESSAY_PROBLEM_STATEMENT = """
+            # Essay: Layered Architecture
+
+            In the checkout of the fictional online bookshop **BookBarn**, the web controllers read and write the database directly, and the rules for discounts and shipping
+            costs are spread across them.
+
+            ## Your task
+
+            Write **150 to 250 words** on how a layered architecture would structure the checkout:
+
+            1. Name the layers you would introduce and what belongs in each of them.
+            2. State which layer may use which, and why.
+            3. Name one advantage the layers bring to BookBarn and one cost they introduce.
+
+            ## Assessment
+
+            | Criterion                         | Points |
+            |-----------------------------------|--------|
+            | Layers and their responsibilities | 4      |
+            | Dependencies between the layers   | 2      |
+            | An advantage for BookBarn         | 2      |
+            | A cost of the layers              | 2      |
+            """;
+
+    private static final String EXAM_ESSAY_EXAMPLE_SOLUTION = """
+            A strong answer introduces a presentation layer with the web controllers, a business logic layer that owns the rules for discounts and shipping costs, and a data
+            access layer that alone talks to the database. Each layer only uses the one directly below it, so the rules depend neither on the web framework nor on the database.
+
+            As an advantage, the rules can be tested without a browser or a database and change in one place. As a cost, even a small feature touches all three layers, and passing
+            data through them adds code.
+            """;
+
     /**
      * The essays the demo students submit for the graded essay, in turn, so that tutors see a variety of answers and scores. The weakest one comes fourth, so that it is the one
      * of {@link #COMPLAINING_STUDENT_LOGIN}.
@@ -284,12 +319,32 @@ public class TextDemoApi extends AbstractTextApi {
     }
 
     /**
-     * Creates an essay the way {@code TextExerciseCreationUpdateResource} creates a text exercise, rather than saving the entity directly.
+     * Creates the essay of the demo test exam in the given exercise group. Like every exam exercise, it belongs to its exercise group instead of the course and has no dates of
+     * its own: students work on it while they take the exam.
+     *
+     * @param exerciseGroup the exercise group of the demo test exam the essay belongs to.
+     * @return the created essay.
      */
+    public TextExercise createDemoExamExercise(ExerciseGroup exerciseGroup) {
+        TextExercise essay = TextExerciseFactory.generateTextExercise(EXAM_ESSAY_TITLE, null, EXAM_ESSAY_PROBLEM_STATEMENT, 10.0, 0.0, new ExerciseDates(null, null, null, null),
+                EXAM_ESSAY_EXAMPLE_SOLUTION, exerciseGroup.getExam().getCourse());
+        essay.setCourse(null);
+        essay.setExerciseGroup(exerciseGroup);
+        return create(essay);
+    }
+
     private TextExercise createEssay(Course course, String title, String shortName, String problemStatement, String exampleSolution, ExerciseDates dates) {
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(title, shortName, problemStatement, 10.0, 0.0, dates, exampleSolution, course);
-        textExercise.setAssessmentType(AssessmentType.MANUAL);
         textExercise.getCategories().add(ExerciseFactory.exerciseCategory("Architecture", "#691b0b"));
+        return create(textExercise);
+    }
+
+    /**
+     * Creates an essay the way {@code TextExerciseCreationUpdateResource} creates a text exercise, rather than saving the entity directly. An essay of an exam gets no channel,
+     * like in production: {@link ChannelService#createExerciseChannel} only creates channels for course exercises.
+     */
+    private TextExercise create(TextExercise textExercise) {
+        textExercise.setAssessmentType(AssessmentType.MANUAL);
         textExercise.validateGeneralSettings();
 
         TextExercise createdExercise = textExerciseRepository.save(textExercise);
@@ -298,7 +353,7 @@ public class TextDemoApi extends AbstractTextApi {
         channelService.createExerciseChannel(createdExercise, Optional.empty());
         exerciseVersionService.createExerciseVersion(createdExercise);
 
-        log.info("Created demo text exercise '{}' with id {}", title, createdExercise.getId());
+        log.info("Created demo text exercise '{}' with id {}", createdExercise.getTitle(), createdExercise.getId());
         return createdExercise;
     }
 

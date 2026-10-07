@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.api.AbstractApi;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseDates;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -78,6 +79,8 @@ public class QuizDemoApi implements AbstractApi {
     private static final String ENDED_PROBLEM_STATEMENT = """
             A short self check on the sorting and searching algorithms of the lecture. The quiz has ended: look at your result, and practice it as often as you like.
             """;
+
+    private static final String EXAM_QUIZ_TITLE = "Quiz: Algorithms and Complexity";
 
     /**
      * Working time of the demo quizzes in seconds.
@@ -241,14 +244,55 @@ public class QuizDemoApi implements AbstractApi {
     }
 
     /**
+     * Creates the quiz of the demo test exam in the given exercise group. Like every exam exercise, it belongs to its exercise group instead of the course and has no dates of
+     * its own: students answer it within the working time of the exam.
+     *
+     * @param exerciseGroup the exercise group of the demo test exam the quiz belongs to.
+     * @return the created quiz.
+     */
+    public QuizExercise createDemoExamExercise(ExerciseGroup exerciseGroup) {
+        // Neither the mode nor the duration apply to a quiz in an exam, so it keeps the ones the quiz editor of the client proposes for every new quiz.
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(EXAM_QUIZ_TITLE, null, null, new ExerciseDates(null, null, null, null), QuizMode.SYNCHRONIZED,
+                DEMO_DURATION_SECONDS, exerciseGroup.getExam().getCourse());
+        quizExercise.setCourse(null);
+        quizExercise.setExerciseGroup(exerciseGroup);
+
+        quizExercise.addQuestion(QuizExerciseFactory.generateMultipleChoiceQuestion("Big O notation", "Which of the following statements about Big O notation are correct?",
+                "Big O keeps only the dominant term and drops constant factors. It describes how the running time grows, which says little about small inputs, where an "
+                        + "algorithm of a worse complexity class can well be faster.",
+                2.0, ScoringType.PROPORTIONAL_WITHOUT_PENALTY, false,
+                List.of(QuizExerciseFactory.generateAnswerOption("`O(2n)` and `O(n)` are the same complexity class.", true, "Constant factors are dropped."),
+                        QuizExerciseFactory.generateAnswerOption("`O(n² + n)` simplifies to `O(n²)`.", true, "Only the dominant term is kept."),
+                        QuizExerciseFactory.generateAnswerOption("An algorithm in `O(n log n)` is faster than one in `O(n²)` for every input.", false,
+                                "Only for large enough inputs: for small ones, constant factors can dominate."),
+                        QuizExerciseFactory.generateAnswerOption("Big O states the exact number of steps an algorithm takes.", false,
+                                "It describes how the number of steps grows."))));
+
+        quizExercise.addQuestion(QuizExerciseFactory.generateMultipleChoiceQuestion("Comparing all pairs",
+                "A method counts the pairs of equal elements in an array of n elements by comparing every element with every element after it. What is its time complexity?",
+                "The first element is compared with n - 1 others, the second with n - 2 and so on, which adds up to n(n - 1) / 2 comparisons.", 2.0, ScoringType.ALL_OR_NOTHING,
+                true,
+                List.of(QuizExerciseFactory.generateAnswerOption("O(n)", false, "That would be a single pass over the array."),
+                        QuizExerciseFactory.generateAnswerOption("O(n log n)", false, "That is the cost of sorting the array first, which would find equal elements faster."),
+                        QuizExerciseFactory.generateAnswerOption("O(n²)", true, "Every pair of elements is compared once."),
+                        QuizExerciseFactory.generateAnswerOption("O(2ⁿ)", false, "That is the number of subsets, not of pairs."))));
+
+        quizExercise.addQuestion(QuizExerciseFactory.generateShortAnswerQuestion("Doubling the input",
+                "If the input doubles, the running time of an algorithm in O(n²) grows by a factor of [-spot 1], and the one of an algorithm in O(n) by a factor of [-spot 2].",
+                "(2n)² = 4n², while 2n is just twice n.", 1.0, 85, false, List.of("4", "2")));
+
+        return create(quizExercise);
+    }
+
+    /**
      * Creates the quiz like {@code QuizExerciseCreationUpdateResource#createCourseQuizExercise}, apart from notifying AtlasML, whose competency suggestions the demo course does
-     * not need.
+     * not need. A quiz in an exam is created like {@code QuizExerciseCreationUpdateResource#createExamQuizExercise}, which gives it no channel of its own.
      */
     private QuizExercise create(QuizExercise quizExercise) {
         // The achievable points of a quiz are the sum of its question points, so they can only be set once all questions have been added.
         quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         try {
-            QuizExercise createdQuiz = quizExerciseService.createQuizExercise(quizExercise, List.of(), false, null);
+            QuizExercise createdQuiz = quizExerciseService.createQuizExercise(quizExercise, List.of(), quizExercise.isExamExercise(), null);
             exerciseVersionService.createExerciseVersion(createdQuiz);
             log.info("Created demo quiz exercise '{}' with id {}", createdQuiz.getTitle(), createdQuiz.getId());
             return createdQuiz;

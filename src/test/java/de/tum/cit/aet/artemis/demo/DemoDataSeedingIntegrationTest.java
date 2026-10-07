@@ -204,7 +204,7 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         DemoDataSnapshot beforeRun = snapshotDemoData();
 
         DemoDataSeedingService withoutOptionalModules = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
-                new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi),
+                new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi, Optional.empty()),
                 new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty(), communicationDemoApi));
         assertThatCode(() -> withoutOptionalModules.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent()))
                 .as("seeding must work when the optional modules are disabled").doesNotThrowAnyException();
@@ -219,8 +219,9 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         TextDemoApi failingTextDemoApi = mock(TextDemoApi.class);
         when(failingTextDemoApi.createDemo(any(), any(), any())).thenThrow(new IllegalStateException("simulated failure of the text exercises"));
 
-        DemoDataSeedingService withFailingArea = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
-                new DemoExerciseSeedingService(Optional.of(failingTextDemoApi), Optional.of(modelingDemoApi), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi),
+        DemoDataSeedingService withFailingArea = new DemoDataSeedingService(
+                accountDemoApi, courseDemoApi, new DemoExerciseSeedingService(Optional.of(failingTextDemoApi), Optional.of(modelingDemoApi), Optional.empty(), quizDemoApi,
+                        programmingDemoApi, assessmentDemoApi, Optional.empty()),
                 new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty(), communicationDemoApi));
         assertThatCode(() -> withFailingArea.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("a failing area must not escape into the startup")
                 .doesNotThrowAnyException();

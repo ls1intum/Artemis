@@ -267,7 +267,8 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
         gradingScaleRepository.delete(gradingScaleRepository.findByCourseId(courseId).orElseThrow());
 
         DemoDataSeedingService withoutTextModule = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
-                new DemoExerciseSeedingService(Optional.empty(), Optional.of(modelingDemoApi), Optional.of(fileUploadDemoApi), quizDemoApi, programmingDemoApi, assessmentDemoApi),
+                new DemoExerciseSeedingService(Optional.empty(), Optional.of(modelingDemoApi), Optional.of(fileUploadDemoApi), quizDemoApi, programmingDemoApi, assessmentDemoApi,
+                        Optional.empty()),
                 new DemoCourseContentSeedingService(Optional.of(lectureDemoApi), Optional.of(atlasDemoApi), assessmentDemoApi, Optional.of(tutorialGroupDemoApi),
                         communicationDemoApi));
         assertThatCode(() -> withoutTextModule.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("seeding must work when the text module is disabled")
