@@ -25,6 +25,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
+import { MAX_PENALTY_PATTERN } from 'app/foundation/constants/input.constants';
 
 /**
  * Typed view onto the `viewChild` signals so the spec can stub them without a blanket
@@ -188,12 +189,11 @@ describe('ProgrammingExerciseGradingComponent', () => {
     });
 
     it('should update form section calculation', () => {
-        const calculateFormStatusSpy = vi.spyOn(comp, 'calculateFormStatus');
-
         const submissionPolicyUpdateComponent = { form: { valueChanges: new Subject() } } as unknown as SubmissionPolicyUpdateComponent;
         vi.spyOn(internals(comp), 'submissionPolicyUpdateComponent').mockReturnValue(submissionPolicyUpdateComponent);
 
-        comp.ngAfterViewInit();
+        fixture.detectChanges();
+        const calculateFormStatusSpy = vi.spyOn(comp, 'calculateFormStatus');
 
         (submissionPolicyUpdateComponent.form.valueChanges as Subject<boolean>).next(false);
 
@@ -203,6 +203,39 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
         expect(calculateFormStatusSpy).toHaveBeenCalledTimes(2);
         expect(comp.timelineStatus()).toEqual({ valid: false, empty: true, invalidItems: [] });
+    });
+
+    describe('fields that appear after the first render', () => {
+        const maxPenaltyInput = () => fixture.debugElement.nativeElement.querySelector('#field_maxPenalty') as HTMLInputElement | null;
+
+        const type = async (input: HTMLInputElement, value: string) => {
+            input.value = value;
+            input.dispatchEvent(new Event('input'));
+            await fixture.whenStable();
+        };
+
+        // The max penalty only exists once static code analysis is on, which is switched on after the section has rendered.
+        it('should recalculate the form status when the max penalty is edited after static code analysis was switched on', async () => {
+            fixture.componentRef.setInput(
+                'programmingExerciseCreationConfig',
+                Object.assign({}, programmingExerciseCreationConfigMock, { maxPenaltyPattern: MAX_PENALTY_PATTERN }),
+            );
+            exercise.staticCodeAnalysisEnabled = false;
+            fixture.detectChanges();
+            expect(maxPenaltyInput()).toBeNull();
+
+            fixture.componentRef.setInput('programmingExercise', Object.assign(new ProgrammingExercise(undefined, undefined), exercise, { staticCodeAnalysisEnabled: true }));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(maxPenaltyInput()).not.toBeNull();
+            const formValidBeforeEditing = comp.formValid;
+
+            await type(maxPenaltyInput()!, '150');
+            expect(comp.formValid).toBe(false);
+
+            await type(maxPenaltyInput()!, '50');
+            expect(comp.formValid).toBe(formValidBeforeEditing);
+        });
     });
 
     it('should not require points when exercise is not included in the course score', () => {

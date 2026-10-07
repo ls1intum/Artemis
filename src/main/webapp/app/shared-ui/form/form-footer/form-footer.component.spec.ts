@@ -168,6 +168,60 @@ describe('FormFooterComponent', () => {
         expect(saveSpy).not.toHaveBeenCalled();
     });
 
+    describe('when the displayed reasons may be outdated', () => {
+        const staleReasons = [{ translateKey: 'test.key', translateValues: {} }];
+        const clickSave = () => (fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement).click();
+
+        it('should emit save when the form is valid on a fresh check', () => {
+            fixture.componentRef.setInput('invalidReasons', staleReasons);
+            fixture.componentRef.setInput('revalidate', () => []);
+            fixture.detectChanges();
+            const saveSpy = vi.fn();
+            fixture.componentInstance.save.subscribe(saveSpy);
+
+            clickSave();
+
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not emit save when the fresh check still finds reasons', () => {
+            fixture.componentRef.setInput('invalidReasons', staleReasons);
+            fixture.componentRef.setInput('revalidate', () => staleReasons);
+            fixture.detectChanges();
+            const saveSpy = vi.fn();
+            fixture.componentInstance.save.subscribe(saveSpy);
+
+            clickSave();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not let a fresh check override a save that is already in progress', () => {
+            fixture.componentRef.setInput('invalidReasons', staleReasons);
+            fixture.componentRef.setInput('revalidate', () => []);
+            fixture.componentRef.setInput('isSaving', true);
+            fixture.detectChanges();
+            const saveSpy = vi.fn();
+            fixture.componentInstance.save.subscribe(saveSpy);
+
+            clickSave();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('should emit generateWithAi when the form is valid on a fresh check', () => {
+            fixture.componentRef.setInput('invalidReasons', staleReasons);
+            fixture.componentRef.setInput('revalidate', () => []);
+            fixture.detectChanges();
+            const generateSpy = vi.fn();
+            fixture.componentInstance.generateWithAi.subscribe(generateSpy);
+
+            fixture.componentInstance.onGenerateWithAi();
+
+            expect(generateSpy).toHaveBeenCalledOnce();
+        });
+    });
+
     it('should emit save when the button is not blocked', () => {
         fixture.componentRef.setInput('invalidReasons', []);
         fixture.componentRef.setInput('isDisabled', false);

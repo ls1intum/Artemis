@@ -1133,6 +1133,16 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
         });
 
+        it('does not ask for bonus points of an exercise that is not included completely in the course score', () => {
+            // the bonus points input is hidden for these exercises, so a missing value cannot be fixed by the user
+            comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+            comp.programmingExercise.bonusPoints = undefined;
+
+            const reasonKeys = comp.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(reasonKeys).not.toContain('artemisApp.exercise.form.bonusPoints.undefined');
+        });
+
         it('find validation errors for input values not matching the pattern', () => {
             comp.programmingExercise.title = '%§"$"§';
             comp.programmingExercise.shortName = '123';

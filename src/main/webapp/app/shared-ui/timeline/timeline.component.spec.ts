@@ -228,6 +228,33 @@ describe('ExerciseTimeline', () => {
         expect(item.date()).toBeUndefined();
     });
 
+    it('should clear the invalid flag when a date is picked after an invalid entry', () => {
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(undefined) };
+        fixture.componentRef.setInput('timelineItems', [item]);
+
+        component.handleBlur(item, { target: { value: 'error' } } as unknown as Event);
+        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
+
+        component.updateDate(item, new Date('2026-01-02T12:30:00'));
+
+        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(false);
+        expect(component.timelineStatus().valid).toBe(true);
+        expect(item.date()?.isSame(dayjs('2026-01-02T12:30:00'))).toBe(true);
+    });
+
+    it('should clear the invalid flag when an empty field is cleared with the clear icon after an invalid entry', () => {
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(undefined) };
+        fixture.componentRef.setInput('timelineItems', [item]);
+
+        component.handleBlur(item, { target: { value: 'error' } } as unknown as Event);
+        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
+
+        component.updateDate(item, null);
+
+        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(false);
+        expect(component.timelineStatus().valid).toBe(true);
+    });
+
     it('should keep valid manual input unchanged on blur', () => {
         const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-06-06T16:23:00')) };
         const input = { value: '07.06.2026 17:24' } as HTMLInputElement;
