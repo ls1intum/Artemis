@@ -48,6 +48,23 @@ class ExerciseConceptSelectorTest {
             """;
 
     @Test
+    void aOneTurnBudgetPreventsASecondRejectedBatch() {
+        AgentLoopRunner loop = mock(AgentLoopRunner.class);
+        SpecFidelityCritic critic = mock(SpecFidelityCritic.class);
+        when(loop.runTextSession(anyString(), eq(null), anyString(), eq(1), any(), any(), any()))
+                .thenReturn(new AgentLoopRunner.AgentLoopSession(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 1, THREE_CANDIDATES), List.of()));
+        when(critic.reviewConceptCandidates(anyString(), anyMap(), any(), any()))
+                .thenReturn(new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("No candidate meets the brief.")));
+
+        var result = new ExerciseConceptSelector(loop, critic).select("brief", "", 1, () -> false, null, null);
+
+        assertThat(result.turns()).isEqualTo(1);
+        assertThat(result.accepted()).isFalse();
+        verify(loop, times(1)).runTextSession(anyString(), eq(null), anyString(), eq(1), any(), any(), any());
+        verify(critic, times(1)).reviewConceptCandidates(anyString(), anyMap(), any(), any());
+    }
+
+    @Test
     void returnsOnlyTheReviewerSelectedGeneratorAuthoredCandidate() {
         AgentLoopRunner loop = mock(AgentLoopRunner.class);
         SpecFidelityCritic critic = mock(SpecFidelityCritic.class);
@@ -57,7 +74,7 @@ class ExerciseConceptSelectorTest {
         when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any()))
                 .thenReturn(new SpecFidelityCritic.ConceptSelectionReview(true, 2, List.of(), "Candidate 2 is selected.", "Selected candidate: 2"));
 
-        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", () -> false, null, null);
+        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", "", 2, () -> false, null, null);
 
         assertThat(result.accepted()).isTrue();
         assertThat(result.selectedConcept()).contains("## Candidate 2", "restoring fragmented radio transmissions").doesNotContain("## Candidate 1", "## Candidate 3",
@@ -98,7 +115,7 @@ class ExerciseConceptSelectorTest {
                 new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("Every candidate is scalar formula transcription.")),
                 new SpecFidelityCritic.ConceptSelectionReview(true, 2, List.of()));
 
-        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", () -> false, null, null);
+        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", "", 2, () -> false, null, null);
 
         assertThat(result.accepted()).isTrue();
         assertThat(result.turns()).isEqualTo(2);
@@ -122,7 +139,7 @@ class ExerciseConceptSelectorTest {
         when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any())).thenReturn(new SpecFidelityCritic.ConceptSelectionReview(true, null,
                 List.of("Candidate 2: difficulty — one reconciliation step"), "", "", new SpecFidelityCritic.ConceptFallback(2, 1)));
 
-        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", () -> false, null, null);
+        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", "", 2, () -> false, null, null);
 
         // The verdict stays a rejection; what is added is a usable starting point plus the exact objections raised against it.
         assertThat(result.accepted()).isFalse();
@@ -145,7 +162,7 @@ class ExerciseConceptSelectorTest {
                 new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("batch one objection"), "", "", new SpecFidelityCritic.ConceptFallback(2, 1)),
                 new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("batch two objection"), "", "", new SpecFidelityCritic.ConceptFallback(1, 4)));
 
-        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", () -> false, null, null);
+        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", "", 2, () -> false, null, null);
 
         assertThat(result.accepted()).isFalse();
         assertThat(result.fallback().failedRequiredAxes()).isEqualTo(1);
@@ -165,7 +182,7 @@ class ExerciseConceptSelectorTest {
                 new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("batch one objection"), "", "", new SpecFidelityCritic.ConceptFallback(3, 5)),
                 new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("batch two objection"), "", "", new SpecFidelityCritic.ConceptFallback(1, 2)));
 
-        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", () -> false, null, null);
+        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", "", 2, () -> false, null, null);
 
         assertThat(result.fallback().failedRequiredAxes()).isEqualTo(2);
         assertThat(result.fallback().concept()).contains("tide charts");
@@ -181,7 +198,7 @@ class ExerciseConceptSelectorTest {
                 .thenReturn(new AgentLoopRunner.AgentLoopSession(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 1, THREE_CANDIDATES), List.of()));
         when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any())).thenReturn(new SpecFidelityCritic.ConceptSelectionReview(false, null, List.of()));
 
-        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", () -> false, null, null);
+        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", "", 2, () -> false, null, null);
 
         assertThat(result.complete()).isFalse();
         assertThat(result.fallback()).isNull();
@@ -196,7 +213,7 @@ class ExerciseConceptSelectorTest {
         when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any()))
                 .thenReturn(new SpecFidelityCritic.ConceptSelectionReview(true, 2, List.of(), "Candidate 2 is selected.", "Selected candidate: 2"));
 
-        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", () -> false, null, null);
+        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", "", 2, () -> false, null, null);
 
         assertThat(result.accepted()).isTrue();
         assertThat(result.fallback()).isNull();
@@ -212,7 +229,7 @@ class ExerciseConceptSelectorTest {
         when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any()))
                 .thenReturn(new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("No candidate passed.")));
 
-        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", () -> false, null, null);
+        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", "", 2, () -> false, null, null);
 
         assertThat(result.complete()).isFalse();
         assertThat(result.accepted()).isFalse();
@@ -229,7 +246,7 @@ class ExerciseConceptSelectorTest {
                 .thenReturn(new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("No candidate passed.")));
         var events = new java.util.ArrayList<de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate>();
         var usage = new de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.WorkerUsageRecorder(100_000, 0.5, true, events::add);
-        var selection = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", () -> false, usage, null);
+        var selection = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", "", 2, () -> false, usage, null);
         assertThat(selection.accepted()).isFalse();
         assertThat(usage.snapshot().agentTurns()).isEqualTo(selection.turns()).isPositive();
         assertThat(events.stream().filter(event -> event.kind() == de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate.Kind.TURN).count()).isEqualTo(selection.turns());
@@ -287,7 +304,7 @@ class ExerciseConceptSelectorTest {
                 .thenReturn(new SpecFidelityCritic.ConceptSelectionReview(true, 2, List.of(), "Candidate 2 is selected.", "Selected candidate: 2"));
         RecordingProgressSink progress = new RecordingProgressSink();
 
-        ExerciseConceptSelector.ConceptSelection selection = new ExerciseConceptSelector(realLoop, critic).select("RAW BRIEF", () -> false, null, progress);
+        ExerciseConceptSelector.ConceptSelection selection = new ExerciseConceptSelector(realLoop, critic).select("RAW BRIEF", "", 2, () -> false, null, progress);
 
         assertThat(selection.accepted()).isTrue();
         List<GenerationActivity> waiting = progress.activities.stream().filter(java.util.Objects::nonNull).filter(GenerationActivity::waitingOnModel).toList();
@@ -315,7 +332,7 @@ class ExerciseConceptSelectorTest {
                 .thenReturn(new SpecFidelityCritic.ConceptSelectionReview(true, 2, List.of(), "Candidate 2 is selected.", "Selected candidate: 2"));
         List<String> lines = new java.util.ArrayList<>();
 
-        new ExerciseConceptSelector(realLoop, critic).select("RAW BRIEF", () -> false, null, lines::add);
+        new ExerciseConceptSelector(realLoop, critic).select("RAW BRIEF", "", 2, () -> false, null, lines::add);
 
         assertThat(lines).contains("Exploring exercise concepts", "Reviewing exercise concepts");
         assertThat(lines).noneSatisfy(line -> assertThat(line).containsAnyOf("Preparing the exercise for verification.", "Thinking about the next step."));

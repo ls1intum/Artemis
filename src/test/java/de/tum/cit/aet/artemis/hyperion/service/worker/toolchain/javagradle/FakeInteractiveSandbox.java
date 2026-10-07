@@ -74,6 +74,11 @@ public class FakeInteractiveSandbox implements InteractiveSandbox {
     public final SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
         executedCommands.add(String.join(" ", command));
         lastScript = command.length == 0 ? null : command[command.length - 1];
+        for (String argument : command) {
+            if (argument.getBytes(StandardCharsets.UTF_8).length >= 128 * 1024) {
+                return new SandboxExecResultDTO(1, "", "Argument list too long", false);
+            }
+        }
         captureBase64Write(command);
         SandboxExecResultDTO scripted = respond(command);
         SandboxExecResultDTO result = scripted == null ? defaultResult : scripted;
@@ -119,6 +124,19 @@ public class FakeInteractiveSandbox implements InteractiveSandbox {
 
     @Override
     public void copyIn(String sessionId, String destinationPath, InputStream tarArchive) {
+        try (var archive = new TarArchiveInputStream(tarArchive)) {
+            TarArchiveEntry entry;
+            while ((entry = archive.getNextEntry()) != null) {
+                if (entry.isFile()) {
+                    byte[] content = archive.readAllBytes();
+                    files.put(destinationPath + "/" + entry.getName(), new String(content, StandardCharsets.UTF_8));
+                    lastWrittenBase64 = java.util.Base64.getEncoder().encodeToString(content);
+                }
+            }
+        }
+        catch (IOException failure) {
+            throw new UncheckedIOException(failure);
+        }
     }
 
     @Override

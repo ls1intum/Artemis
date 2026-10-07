@@ -271,16 +271,17 @@ class SandboxAgentToolsTest {
                 return result;
             }
         };
-        String prefix = "preserve this prefix\n".repeat(4_000);
+        String prefix = "preserve this prefix\n".repeat(8_000);
         sandbox.withFile("/workspace/problem-statement.md", prefix + "replace this suffix");
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
 
-        assertThat(tools.readFile("problem-statement.md", 1, 1)).isEqualTo("preserve this prefix\n\n[Showing lines 1-1 of 4001. Call read_file with offset=2 to continue.]");
+        assertThat(tools.readFile("problem-statement.md", 1, 1)).isEqualTo("preserve this prefix\n\n[Showing lines 1-1 of 8001. Call read_file with offset=2 to continue.]");
         assertThat(tools.editFile("problem-statement.md", "replace this suffix", "updated suffix")).startsWith("Replaced 1");
         String written = new String(java.util.Base64.getDecoder().decode(sandbox.lastWrittenBase64()), java.nio.charset.StandardCharsets.UTF_8);
         assertThat(written).isEqualTo(prefix + "updated suffix");
         assertThat(sandbox.copiedPaths()).containsExactly("/workspace/problem-statement.md", "/workspace/problem-statement.md");
-        assertThat(sandbox.executedCommands()).noneMatch(command -> command.startsWith("cat "));
+        assertThat(sandbox.files().get("/workspace/problem-statement.md")).isEqualTo(prefix + "updated suffix");
+        assertThat(sandbox.executedCommands()).isEmpty();
     }
 
     @Test
