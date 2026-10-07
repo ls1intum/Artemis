@@ -10,17 +10,26 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
+import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.tools.ToolProvider;
+
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.opentest4j.AssertionFailedError;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -112,6 +121,57 @@ class StructuralOracleSeederTest {
             }
         }
         return entries;
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "return", "parameter", "constructor", "field" })
+    void seededGenericTestRejectsRawMembersOnNonGenericOwners(String member) throws Throwable {
+        String typedMember = switch (member) {
+            case "return" -> "public java.util.List<String> values() { return java.util.List.of(\"value\"); }";
+            case "parameter" -> "public void accept(java.util.List<String> values) {}";
+            case "constructor" -> "public Box(java.util.List<String> values) {}";
+            case "field" -> "public java.util.List<String> values = java.util.List.of(\"value\");";
+            default -> throw new IllegalArgumentException(member);
+        };
+        String typed = "public class Box { " + typedMember + " }";
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        var seeded = seederWith(sandbox, Map.of(), Map.of(), Map.of(), approvedSpec("Box", typed)).seedIfStructuralDiff(sandbox, "s", javaExercise());
+        assertThat(seeded.testNames()).contains("testGenericApi[Box]");
+        String testSource = seeded.repositoryFiles().get("test/GenericTypeTest.java");
+        String oracle = seeded.repositoryFiles().get("test/test.json");
+        executeSeededGenericTest(tempDir.resolve("typed"), typed, testSource, oracle);
+        assertThatThrownBy(() -> executeSeededGenericTest(tempDir.resolve("raw"), typed.replace("List<String>", "List"), testSource, oracle))
+                .isInstanceOf(AssertionFailedError.class).hasMessageContaining("Missing generic API contract");
+    }
+
+    private void executeSeededGenericTest(Path directory, String source, String testSource, String oracle) throws Throwable {
+        FileUtils.writeStringToFile(directory.resolve("Box.java").toFile(), source, StandardCharsets.UTF_8);
+        // Invoke the actual seeded dynamic-test body directly; Ares policy/timeout annotations are not part of this reflection check.
+        String reflectionTest = testSource.replace("import de.tum.cit.ase.ares.api.StrictTimeout;", "").replace("import de.tum.cit.ase.ares.api.Policy;", "")
+                .replace("import de.tum.cit.ase.ares.api.jupiter.Public;", "").replace("@Public", "").replace("@Policy(value = \"SecurityPolicy.yaml\")", "")
+                .replace("@StrictTimeout(10)", "");
+        FileUtils.writeStringToFile(directory.resolve("GenericTypeTest.java").toFile(), reflectionTest, StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(directory.resolve("test.json").toFile(), oracle, StandardCharsets.UTF_8);
+        var compiler = ToolProvider.getSystemJavaCompiler();
+        try (var files = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
+            List<Path> dependencies = List.of(DynamicTest.class, org.json.JSONArray.class).stream()
+                    .map(type -> Path.of(type.getProtectionDomain().getCodeSource().getLocation().getPath())).toList();
+            files.setLocationFromPaths(javax.tools.StandardLocation.CLASS_PATH, dependencies);
+            assertThat(compiler.getTask(null, files, null, List.of("-proc:none", "-d", directory.toString()), null,
+                    files.getJavaFileObjects(directory.resolve("Box.java"), directory.resolve("GenericTypeTest.java"))).call()).isTrue();
+        }
+        try (var loader = new URLClassLoader(new java.net.URL[] { directory.toUri().toURL() }, getClass().getClassLoader())) {
+            Class<?> provider = loader.loadClass("GenericTypeTest");
+            var constructor = provider.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            var factory = provider.getDeclaredMethod("genericApi");
+            factory.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            List<DynamicTest> tests = (List<DynamicTest>) factory.invoke(constructor.newInstance());
+            assertThat(tests).singleElement().extracting(DynamicTest::getDisplayName).isEqualTo("testGenericApi[Box]");
+            assertThat(loader.loadClass("Box").getTypeParameters()).isEmpty();
+            tests.getFirst().getExecutable().execute();
+        }
     }
 
     @Test
@@ -232,7 +292,7 @@ class StructuralOracleSeederTest {
         assertThat(firstOracle).isEqualTo(laterOracle).contains("\"List\"", "\"DispatchStrategy\"", "\"int\"").doesNotContain("ArrayList", "Collection", "\"long\"",
                 "\"parameters\" : [ \"String\" ]");
         assertThat(firstTests.testNames()).isEqualTo(laterTests.testNames()).containsExactlyInAnyOrder("testClass[ElevatorDispatcher]", "testMethods[ElevatorDispatcher]",
-                "testConstructors[ElevatorDispatcher]");
+                "testConstructors[ElevatorDispatcher]", "testGenericApi[ElevatorDispatcher]");
     }
 
     @Test
