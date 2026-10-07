@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.variant;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -10,6 +9,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationCapabilityService;
@@ -28,16 +28,19 @@ public class GenerationVariantDraftService {
 
     private final ProgrammingExerciseBuildConfigRepository buildConfigs;
 
+    private final TeamAssignmentConfigRepository teamConfigs;
+
     private final ProgrammingExerciseImportService imports;
 
     private final GenerationCapabilityService capabilities;
 
     public GenerationVariantDraftService(ProgrammingExerciseRepository exercises, ProgrammingExerciseBuildConfigRepository buildConfigs, ProgrammingExerciseImportService imports,
-            GenerationCapabilityService capabilities) {
+            GenerationCapabilityService capabilities, TeamAssignmentConfigRepository teamConfigs) {
         this.exercises = exercises;
         this.buildConfigs = buildConfigs;
         this.imports = imports;
         this.capabilities = capabilities;
+        this.teamConfigs = teamConfigs;
     }
 
     /**
@@ -81,11 +84,14 @@ public class GenerationVariantDraftService {
     }
 
     private ProgrammingExercise loadSource(long sourceId) {
-        return exercises.findForAuthoringImportById(sourceId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", sourceId));
+        ProgrammingExercise source = exercises.findForAuthoringImportById(sourceId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", sourceId));
+        teamConfigs.attachTo(source);
+        return source;
     }
 
     private ProgrammingExercise skeleton(ProgrammingExercise source, VariantGenerationRequestDTO request) {
         ProgrammingExercise draft = new ProgrammingExercise();
+        draft.copyImportSettingsFrom(source);
         if (source.isExamExercise()) {
             draft.setExerciseGroup(source.getExerciseGroup());
         }
@@ -99,24 +105,9 @@ public class GenerationVariantDraftService {
         draft.setShortName("Variant" + UUID.randomUUID().toString().replace("-", "").substring(0, 12));
         draft.setMaxPoints(source.getMaxPoints());
         draft.setBonusPoints(source.getBonusPoints());
-        draft.setIncludedInOverallScore(source.getIncludedInOverallScore());
         draft.setMode(source.getMode());
         draft.setTeamAssignmentConfig(source.getTeamAssignmentConfig());
         draft.setDifficulty(request.targetDifficulty() != null ? request.targetDifficulty() : source.getDifficulty());
-        draft.setCategories(new HashSet<>(source.getCategories()));
-        draft.setGradingInstructions(source.getGradingInstructions());
-        draft.setProgrammingLanguage(source.getProgrammingLanguage());
-        draft.setProjectType(source.getProjectType());
-        draft.setPackageName(source.getPackageName());
-        draft.setAllowOnlineEditor(source.isAllowOnlineEditor());
-        draft.setAllowOfflineIde(source.isAllowOfflineIde());
-        draft.setAllowOnlineIde(source.isAllowOnlineIde());
-        draft.setStaticCodeAnalysisEnabled(source.isStaticCodeAnalysisEnabled());
-        draft.setMaxStaticCodeAnalysisPenalty(source.getMaxStaticCodeAnalysisPenalty());
-        draft.setShowTestNamesToStudents(source.getShowTestNamesToStudents());
-        draft.setReleaseTestsWithExampleSolution(source.isReleaseTestsWithExampleSolution());
-        draft.setAssessmentType(source.getAssessmentType());
-        draft.setAllowComplaintsForAutomaticAssessments(source.getAllowComplaintsForAutomaticAssessments());
         return draft;
     }
 }

@@ -3,11 +3,9 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -31,6 +29,8 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
@@ -73,6 +73,10 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
@@ -102,7 +106,8 @@ public class ProgrammingExerciseImportBasicService {
             ProgrammingExerciseProjectNameService programmingExerciseProjectNameService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, UriService uriService, ChannelService channelService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyExerciseLinkService competencyExerciseLinkService,
-            ProgrammingExerciseValidationService programmingExerciseValidationService, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
+            ProgrammingExerciseValidationService programmingExerciseValidationService, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService,
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -120,6 +125,8 @@ public class ProgrammingExerciseImportBasicService {
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
     }
 
     /**
@@ -182,9 +189,18 @@ public class ProgrammingExerciseImportBasicService {
         // the test cases and the tasks created below can reference it. Competency links are added afterwards because they
         // must point at the persisted exercise.
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
+        // An exam exercise is always individual: whatever team settings the request brought along are ignored, and its permanent
+        // row keeps the defaults.
+        final var desiredTeamAssignmentConfig = newExercise.isExamExercise() ? null : newExercise.getTeamAssignmentConfig();
+        // Likewise an exam exercise keeps the default plagiarism detection settings in its permanent row.
+        final var desiredPlagiarismDetectionConfig = newExercise.isExamExercise() ? null : newExercise.getPlagiarismDetectionConfig();
         newExercise = programmingExerciseRepository.save(newExercise);
-        // The configuration names the exercise, so it is written once that exercise exists.
+        // The configurations name the exercise, so they are written once that exercise exists.
         programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, newExercise);
+        // The same two calls ExerciseConfigurationService.initialize makes; this service goes to the repositories because it
+        // is already at the limit of constructor dependencies the code quality check allows.
+        final var storedTeamAssignmentConfig = teamAssignmentConfigRepository.initializeFor(newExercise, desiredTeamAssignmentConfig);
+        final var storedPlagiarismDetectionConfig = plagiarismDetectionConfigRepository.initializeFor(newExercise, desiredPlagiarismDetectionConfig);
         if (!competencyLinks.isEmpty()) {
             competencyExerciseLinkService.addCompetencyLinksForCreation(newExercise, competencyLinks);
             newExercise = programmingExerciseRepository.save(newExercise);
@@ -214,10 +230,9 @@ public class ProgrammingExerciseImportBasicService {
             staticCodeAnalysisService.createDefaultCategories(newExercise);
         }
 
-        // Exam exercises are always individual and must not carry a team assignment configuration.
+        // Exam exercises are always individual; their stored team settings stay unused (the getter hides them outside team mode).
         if (newExercise.isExamExercise()) {
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
-            newExercise.setTeamAssignmentConfig(null);
         }
 
         // Copy the auxiliary repositories.
@@ -234,6 +249,8 @@ public class ProgrammingExerciseImportBasicService {
         // than relying on lazy proxies. saveForCreation re-fetches the complete new-exercise graph for exactly this
         // reason, so we reuse it here (the import produces a new exercise just like a regular creation).
         newExercise = programmingExerciseRepository.saveForCreation(newExercise);
+        newExercise.setTeamAssignmentConfig(storedTeamAssignmentConfig);
+        newExercise.setPlagiarismDetectionConfig(storedPlagiarismDetectionConfig);
         // Restore the transient channel name on the re-fetched exercise, so the serialized import response reports the
         // channel the caller asked for.
         newExercise.setChannelName(channelName);
@@ -352,7 +369,8 @@ public class ProgrammingExerciseImportBasicService {
      */
     private Map<Long, Long> importTestCases(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise) {
         Map<Long, Long> newIdByOldId = new HashMap<>();
-        newExercise.setTestCases(sourceExercise.getTestCases().stream().map(testCase -> {
+        newExercise.getTestCases().clear();
+        sourceExercise.getTestCases().forEach(testCase -> {
             final var copy = new ProgrammingExerciseTestCase();
 
             // Copy everything except for the referenced exercise
@@ -366,8 +384,8 @@ public class ProgrammingExerciseImportBasicService {
             copy.setType(testCase.getType());
             programmingExerciseTestCaseRepository.save(copy);
             newIdByOldId.put(testCase.getId(), copy.getId());
-            return copy;
-        }).collect(Collectors.toSet()));
+            newExercise.getTestCases().add(copy);
+        });
 
         return newIdByOldId;
     }
@@ -381,8 +399,8 @@ public class ProgrammingExerciseImportBasicService {
      * @param testCaseIdMapping a map from each source test case id to the id of its copy (see {@link #importTestCases})
      */
     private void importTasks(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise, Map<Long, Long> testCaseIdMapping) {
-        List<ProgrammingExerciseTask> newTasks = sourceExercise.getTasks().stream().map(sourceTask -> createTaskCopy(sourceTask, newExercise, testCaseIdMapping)).toList();
-        newExercise.setTasks(new ArrayList<>(newTasks));
+        newExercise.getTasks().clear();
+        sourceExercise.getTasks().forEach(sourceTask -> newExercise.getTasks().add(createTaskCopy(sourceTask, newExercise, testCaseIdMapping)));
     }
 
     /**
@@ -479,21 +497,21 @@ public class ProgrammingExerciseImportBasicService {
         newExercise.setGradingCriteria(newExercise.copyGradingCriteria(new HashMap<>()));
 
         // only copy the config for team programming exercise in courses
-        if (newExercise.getMode() == ExerciseMode.TEAM && newExercise.isCourseExercise()) {
+        if (newExercise.getMode() == ExerciseMode.TEAM && newExercise.isCourseExercise() && newExercise.getTeamAssignmentConfig() != null) {
             newExercise.setTeamAssignmentConfig(newExercise.getTeamAssignmentConfig().copyTeamAssignmentConfig());
         }
         // We have to rebuild the auxiliary repositories
         newExercise.setAuxiliaryRepositories(new LinkedHashSet<>());
 
-        if (newExercise.isTeamMode()) {
+        if (newExercise.isTeamMode() && newExercise.getTeamAssignmentConfig() != null) {
             newExercise.getTeamAssignmentConfig().setId(null);
         }
 
-        if (newExercise.isCourseExercise() && newExercise.getPlagiarismDetectionConfig() != null) {
-            newExercise.getPlagiarismDetectionConfig().setId(null);
-        }
-        else if (newExercise.isCourseExercise() && newExercise.getPlagiarismDetectionConfig() == null) {
-            newExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        // The configuration is stored once the new exercise exists, as a row of its own: only its values are carried over.
+        if (newExercise.isCourseExercise()) {
+            if (newExercise.getPlagiarismDetectionConfig() == null) {
+                newExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+            }
         }
         else {
             newExercise.setPlagiarismDetectionConfig(null);

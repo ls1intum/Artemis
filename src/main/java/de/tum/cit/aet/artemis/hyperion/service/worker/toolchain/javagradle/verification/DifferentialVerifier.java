@@ -8,6 +8,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -76,8 +77,7 @@ public class DifferentialVerifier {
     }
 
     private String readProblemStatement(InteractiveSandbox sandbox, String sessionId) {
-        SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspace.SANDBOX_READ_TIMEOUT, "cat", GenerationWorkspace.WORKSPACE + "/problem-statement.md");
-        return result.isSuccess() ? result.stdout() : "";
+        return Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, "problem-statement.md"), "");
     }
 
     /**
@@ -86,11 +86,11 @@ public class DifferentialVerifier {
      */
     private Set<String> readHiddenTestNames(InteractiveSandbox sandbox, String sessionId) {
         try {
-            SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspace.SANDBOX_READ_TIMEOUT, "cat", GenerationWorkspace.WORKSPACE + "/test-plan.json");
-            if (!result.isSuccess() || result.stdout() == null || result.stdout().isBlank()) {
+            String plan = GenerationWorkspace.readRootArtifact(sandbox, sessionId, "test-plan.json");
+            if (plan == null || plan.isBlank()) {
                 return Set.of();
             }
-            return GeneratedTestPlan.parse(result.stdout()).hiddenEntries().stream().map(GeneratedTestPlan.Entry::name).map(ProblemStatementBindingChecker::normalizeTestName)
+            return GeneratedTestPlan.parse(plan).hiddenEntries().stream().map(GeneratedTestPlan.Entry::name).map(ProblemStatementBindingChecker::normalizeTestName)
                     .collect(Collectors.toUnmodifiableSet());
         }
         catch (RuntimeException e) {
@@ -99,8 +99,7 @@ public class DifferentialVerifier {
     }
 
     private static String readWorkspaceRootFile(InteractiveSandbox sandbox, String sessionId, String filename) {
-        SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspace.SANDBOX_READ_TIMEOUT, "cat", GenerationWorkspace.WORKSPACE + "/" + filename);
-        return result.isSuccess() ? result.stdout() : "";
+        return Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, filename), "");
     }
 
     private static final int MAX_POSSIBLY_DEAD_FILES = 20;

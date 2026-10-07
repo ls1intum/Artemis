@@ -235,6 +235,16 @@ class DifferentialVerifierTest {
         }
 
         @Override
+        protected String rootFileContent(String path) {
+            return switch (path) {
+                case "/workspace/SPEC.md" -> specDocument;
+                case "/workspace/test-plan.json" -> testPlanJson;
+                case "/workspace/problem-statement.md" -> problemStatement;
+                default -> super.rootFileContent(path);
+            };
+        }
+
+        @Override
         protected SandboxExecResultDTO respond(String[] command) {
             String joined = String.join(" ", command);
             if ("cat".equals(command[0])) {
@@ -270,6 +280,7 @@ class DifferentialVerifierTest {
                     case "solution" -> repositoryTar("solution", solutionRepositoryFiles);
                     case "template" -> repositoryTar("template", templateRepositoryFiles);
                     case "tests" -> repositoryTar("tests", testsRepositoryFiles);
+                    case "SPEC.md", "test-plan.json", "problem-statement.md" -> super.copyOut(sessionId, path);
                     default -> null;
                 };
             }

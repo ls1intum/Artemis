@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationCapabilityService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -49,6 +50,9 @@ class GenerationVariantDraftServiceTest {
     @Mock
     private GenerationCapabilityService capabilities;
 
+    @Mock
+    private TeamAssignmentConfigRepository teamConfigs;
+
     private GenerationVariantDraftService service;
 
     private ProgrammingExercise source;
@@ -57,7 +61,7 @@ class GenerationVariantDraftServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GenerationVariantDraftService(exercises, buildConfigs, imports, capabilities);
+        service = new GenerationVariantDraftService(exercises, buildConfigs, imports, capabilities, teamConfigs);
         source = new ProgrammingExercise();
         source.setId(1L);
         source.setTitle("Source");
@@ -75,6 +79,8 @@ class GenerationVariantDraftServiceTest {
     @Test
     void courseDraftIsUnreleasedAndReservedInsideTheMetadataTransactionWithoutCopying() {
         source.setReleaseDate(ZonedDateTime.now().minusDays(2));
+        source.setPresentationScoreEnabled(true);
+        source.setSecondCorrectionEnabled(true);
         when(exercises.findWithAllParticipationsById(1L)).thenReturn(Optional.of(source));
         sourceGraph();
         var config = new ProgrammingExerciseBuildConfig();
@@ -109,6 +115,8 @@ class GenerationVariantDraftServiceTest {
         assertThat(source.getDifficulty()).isEqualTo(DifficultyLevel.EASY);
         assertThat(source.getReleaseDate()).isBefore(ZonedDateTime.now());
         assertThat(draft.getMaxPoints()).isEqualTo(source.getMaxPoints());
+        assertThat(draft.getPresentationScoreEnabled()).isTrue();
+        assertThat(draft.getSecondCorrectionEnabled()).isTrue();
         verify(capabilities).requireSupportedConfiguration(source);
     }
 

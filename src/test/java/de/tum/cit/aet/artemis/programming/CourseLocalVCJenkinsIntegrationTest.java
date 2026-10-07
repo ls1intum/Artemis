@@ -567,10 +567,10 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled() throws Exception {
-        var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>());
-        course = courseRepository.save(course);
+        var course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course = courseRepository.saveWithDefaultConfigurations(course);
 
-        request.performMvcRequest(courseTestService.buildUpdateCourse(1, course)).andExpect(status().isOk()).andReturn();
+        request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
 
     }
 

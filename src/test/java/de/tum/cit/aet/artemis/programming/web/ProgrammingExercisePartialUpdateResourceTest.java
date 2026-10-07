@@ -83,7 +83,7 @@ class ProgrammingExercisePartialUpdateResourceTest {
         long exerciseId = 42L;
         ProgrammingExerciseRepository programmingExerciseRepository = mock(ProgrammingExerciseRepository.class);
         ProgrammingExercise exercise = exercise(exerciseId);
-        when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId)).thenReturn(Optional.of(exercise));
+        when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(exerciseId)).thenReturn(Optional.of(exercise));
         ProgrammingExerciseCreationUpdateService updateService = mock(ProgrammingExerciseCreationUpdateService.class);
         ProgrammingExerciseMutationGuardService mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
         when(mutationGuard.claimExternalMutation(exerciseId)).thenThrow(new ConflictException("Exercise generation is running", "programmingExercise", "generationRunning"));
@@ -100,7 +100,7 @@ class ProgrammingExercisePartialUpdateResourceTest {
         ProgrammingExerciseRepository repository = mock(ProgrammingExerciseRepository.class);
         ProgrammingExercise stale = exercise(exerciseId);
         ProgrammingExercise fresh = exercise(exerciseId);
-        when(repository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId)).thenReturn(Optional.of(stale), Optional.of(fresh));
+        when(repository.findWithTemplateAndSolutionParticipationCategoriesById(exerciseId)).thenReturn(Optional.of(stale), Optional.of(fresh));
         ProgrammingExerciseCreationUpdateService updateService = mock(ProgrammingExerciseCreationUpdateService.class);
         ExerciseVersionService versionService = mock(ExerciseVersionService.class);
         ProgrammingExerciseMutationGuardService guard = realGuard();
@@ -152,7 +152,7 @@ class ProgrammingExercisePartialUpdateResourceTest {
         long exerciseId = 45L;
         ProgrammingExerciseRepository repository = mock(ProgrammingExerciseRepository.class);
         ProgrammingExercise exercise = exercise(exerciseId);
-        when(repository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId)).thenReturn(Optional.of(exercise));
+        when(repository.findWithTemplateAndSolutionParticipationCategoriesById(exerciseId)).thenReturn(Optional.of(exercise));
         ProgrammingExerciseCreationUpdateService updateService = mock(ProgrammingExerciseCreationUpdateService.class);
         when(updateService.updateProblemStatement(same(exercise), same("new statement"), same(null))).thenReturn(exercise);
         ExerciseVersionService versionService = mock(ExerciseVersionService.class);
@@ -192,7 +192,8 @@ class ProgrammingExercisePartialUpdateResourceTest {
         when(userRepository.getUserWithAuthorities()).thenReturn(user("editor"));
         return new ProgrammingExercisePartialUpdateResource(repository, userRepository, mock(AuthorizationCheckService.class), mock(ExerciseService.class), updateService,
                 mock(ProgrammingExerciseTaskService.class), versionService, mutationGuard, mock(ExerciseVariantGroupService.class),
-                mock(de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository.class));
+                mock(de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository.class),
+                mock(de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository.class));
     }
 
     private ProgrammingExerciseMutationGuardService realGuard() {

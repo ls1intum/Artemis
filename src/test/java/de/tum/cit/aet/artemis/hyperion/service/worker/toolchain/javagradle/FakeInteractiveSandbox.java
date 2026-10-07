@@ -76,7 +76,12 @@ public class FakeInteractiveSandbox implements InteractiveSandbox {
         lastScript = command.length == 0 ? null : command[command.length - 1];
         captureBase64Write(command);
         SandboxExecResultDTO scripted = respond(command);
-        return scripted == null ? defaultResult : scripted;
+        SandboxExecResultDTO result = scripted == null ? defaultResult : scripted;
+        if (result.isSuccess() && result.stdout() != null && result.stdout().length() > 50_000) {
+            return new SandboxExecResultDTO(result.exitCode(), "[stdout truncated]\n" + result.stdout().substring(result.stdout().length() - 50_000), result.stderr(),
+                    result.timedOut());
+        }
+        return result;
     }
 
     /**
@@ -122,7 +127,7 @@ public class FakeInteractiveSandbox implements InteractiveSandbox {
         try {
             var bytes = new ByteArrayOutputStream();
             try (var archive = new TarArchiveOutputStream(bytes)) {
-                String content = files.get(path);
+                String content = rootFileContent(path);
                 if (content != null) {
                     byte[] data = content.getBytes(StandardCharsets.UTF_8);
                     var entry = new TarArchiveEntry(path.substring(path.lastIndexOf('/') + 1));
@@ -137,6 +142,12 @@ public class FakeInteractiveSandbox implements InteractiveSandbox {
         catch (IOException failure) {
             throw new UncheckedIOException(failure);
         }
+    }
+
+    /** Complete file content for archive reads, separate from diagnostic command output. */
+    @Nullable
+    protected String rootFileContent(String path) {
+        return files.get(path);
     }
 
     public List<String> copiedPaths() {

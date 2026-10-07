@@ -94,7 +94,7 @@ Never flush or replace the store under running writers.
 ## Worker configuration
 
 Build the normal Artemis WAR with `./gradlew -Pprod -Pwar bootWar -x webapp`.
-The [worker image recipe](https://github.com/ls1intum/Artemis/blob/develop/docker/aiworker/worker.Dockerfile)
+The [worker image recipe](https://github.com/ls1intum/Artemis/blob/develop/deployment/docker/aiworker/worker.Dockerfile)
 uses that exact WAR and runs as UID 1000. It starts the normal `ArtemisApp` with
 `prod,aiworker`. On a worker-only node, component scanning loads only AI Worker
 services and the selected workload. The `aiworker` profile disables the HTTP

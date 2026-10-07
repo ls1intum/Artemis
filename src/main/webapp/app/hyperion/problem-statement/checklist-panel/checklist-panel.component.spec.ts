@@ -313,7 +313,7 @@ describe('ChecklistPanelComponent', () => {
             vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
 
             const createdCompetency = Object.assign(new Competency(), { id: 99, title: 'Recursion', taxonomy: CompetencyTaxonomy.ANALYZE });
-            vi.spyOn(competencyService, 'create').mockReturnValue(of(new HttpResponse({ body: createdCompetency })) as any);
+            vi.spyOn(competencyService, 'createFromHyperionChecklist').mockReturnValue(of(new HttpResponse({ body: createdCompetency })) as any);
 
             const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
             const successSpy = vi.spyOn(alertService, 'success');
@@ -325,7 +325,7 @@ describe('ChecklistPanelComponent', () => {
 
             expect(competencyService.getAllForCourse).toHaveBeenCalledWith(courseId);
             // 'Recursion' should be created (not matched by AI)
-            expect(competencyService.create).toHaveBeenCalledWith(expect.objectContaining({ title: 'Recursion' }), courseId);
+            expect(competencyService.createFromHyperionChecklist).toHaveBeenCalledWith(expect.objectContaining({ title: 'Recursion' }), courseId);
             expect(emitSpy).toHaveBeenCalled();
             const emittedLinks = emitSpy.mock.calls[0][0] as CompetencyExerciseLink[];
             // Both 'Loops' (linked) and 'Recursion' (created) should be in the emitted links
@@ -336,6 +336,8 @@ describe('ChecklistPanelComponent', () => {
             const recursionLink = emittedLinks.find((l) => l.competency?.title === 'Recursion');
             expect(loopsLink?.weight).toBe(HIGH_COMPETENCY_LINK_WEIGHT);
             expect(recursionLink?.weight).toBe(MEDIUM_COMPETENCY_LINK_WEIGHT);
+            expect(loopsLink?.generatedByAi).toBe(true);
+            expect(recursionLink?.generatedByAi).toBe(true);
             expect(successSpy).toHaveBeenCalled();
             expect(component.isSyncingCompetencies()).toBeFalsy();
         });
@@ -358,14 +360,14 @@ describe('ChecklistPanelComponent', () => {
             // No course competency matches 'Recursion'
             vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
             const createdCompetency = Object.assign(new Competency(), { id: 99, title: 'Recursion', taxonomy: CompetencyTaxonomy.ANALYZE });
-            vi.spyOn(competencyService, 'create').mockReturnValue(of(new HttpResponse({ body: createdCompetency })) as any);
+            vi.spyOn(competencyService, 'createFromHyperionChecklist').mockReturnValue(of(new HttpResponse({ body: createdCompetency })) as any);
             const emitSpy = vi.spyOn(component.competencyLinksChange, 'emit');
 
             component.applyCompetencies();
 
             await new Promise<void>((resolve) => setTimeout(resolve));
 
-            expect(competencyService.create).toHaveBeenCalledWith(expect.objectContaining({ title: 'Recursion' }), courseId);
+            expect(competencyService.createFromHyperionChecklist).toHaveBeenCalledWith(expect.objectContaining({ title: 'Recursion' }), courseId);
             expect(emitSpy).toHaveBeenCalled();
             expect(component.isSyncingCompetencies()).toBeFalsy();
         });
@@ -1125,7 +1127,7 @@ describe('ChecklistPanelComponent', () => {
             });
             vi.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [mockCourseCompetency] })) as any);
 
-            const createSpy = vi.spyOn(competencyService, 'create').mockImplementation((comp: Competency) => {
+            const createSpy = vi.spyOn(competencyService, 'createFromHyperionChecklist').mockImplementation((comp: Competency) => {
                 return of(new HttpResponse({ body: Object.assign(new Competency(), { ...comp, id: 99 }) })) as any;
             });
 

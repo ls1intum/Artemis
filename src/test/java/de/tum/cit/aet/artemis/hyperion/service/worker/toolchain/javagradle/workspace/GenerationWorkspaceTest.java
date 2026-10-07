@@ -13,6 +13,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
@@ -31,6 +32,23 @@ class GenerationWorkspaceTest {
     private final GenerationInput exercise = new GenerationInput(1, "de.test", "Existing statement", false, Set.of());
 
     private final RecordingSandbox sandbox = new RecordingSandbox();
+
+    @ParameterizedTest
+    @ValueSource(strings = { "SPEC.md", "test-plan.json", "problem-statement.md" })
+    void completeArchiveReadsPreserveLargeArtifactPrefixes(String fileName) {
+        String content = "opening contract\n" + "artifact detail\n".repeat(4_000);
+        FakeInteractiveSandbox files = new FakeInteractiveSandbox().withFile("/workspace/" + fileName, content);
+        assertThat(files.exec("session", java.time.Duration.ofSeconds(1), "cat", "/workspace/" + fileName).stdout()).doesNotContain("opening contract");
+
+        assertThat(GenerationWorkspace.readRootArtifact(files, "session", fileName)).isEqualTo(content);
+        assertThat(files.copiedPaths()).containsExactly("/workspace/" + fileName);
+    }
+
+    @Test
+    void missingOrUnsupportedRootArtifactsCannotBeReadAsEmptySuccess() {
+        assertThat(GenerationWorkspace.readRootArtifact(new FakeInteractiveSandbox(), "session", "SPEC.md")).isNull();
+        assertThat(GenerationWorkspace.readRootArtifact(new FakeInteractiveSandbox().withFile("/workspace/other", "text"), "session", "other")).isNull();
+    }
 
     @Test
     void generateClearsAuthoredRootsButPreservesHarnessBytesAndModes() {
@@ -93,12 +111,18 @@ class GenerationWorkspaceTest {
     @EnumSource(Mode.class)
     void reMaterializationRestoresTheWholeCapturedCandidateWithoutLosingBinaryModesOrRootArtifacts(Mode mode) {
         byte[] binary = { 0, 42, (byte) 0xff };
+        String spec = "approved opening contract\n" + "detail\n".repeat(10_000);
+        String plan = "{\"tests\":[]}" + " ".repeat(60_000);
+        FakeInteractiveSandbox authored = new FakeInteractiveSandbox().withFile("/workspace/SPEC.md", spec).withFile("/workspace/test-plan.json", plan);
+        String capturedSpec = GenerationWorkspace.readRootArtifact(authored, "session", "SPEC.md");
+        String capturedPlan = GenerationWorkspace.readRootArtifact(authored, "session", "test-plan.json");
+        sandbox.resetSession("session");
         service.materializeRepositoryFiles(sandbox, "session", exercise, mode, Map.of(RepositoryRole.TESTS, Map.of("gradlew", "#!/bin/sh")),
                 Map.of(RepositoryRole.TESTS, new GenerationWorkspace.RepositorySeedMetadata(Map.of("wrapper.jar", WorkspaceArchive.sha256(binary)), Set.of("gradlew"))),
-                Map.of(RepositoryRole.TESTS, Map.of("wrapper.jar", new GenerationWorkspace.BinarySeedFile(binary))), "statement", "approved specification", "plan");
+                Map.of(RepositoryRole.TESTS, Map.of("wrapper.jar", new GenerationWorkspace.BinarySeedFile(binary))), "statement", capturedSpec, capturedPlan);
 
-        assertThat(sandbox.contents.textFiles()).containsEntry("tests/gradlew", "#!/bin/sh").containsEntry("problem-statement.md", "statement")
-                .containsEntry("SPEC.md", "approved specification").containsEntry("test-plan.json", "plan").containsKey("verify.sh");
+        assertThat(sandbox.contents.textFiles()).containsEntry("tests/gradlew", "#!/bin/sh").containsEntry("problem-statement.md", "statement").containsEntry("SPEC.md", spec)
+                .containsEntry("test-plan.json", plan).containsKey("verify.sh");
         assertThat(sandbox.contents.binaryDigests()).containsEntry("tests/wrapper.jar", WorkspaceArchive.sha256(binary));
         assertThat(sandbox.contents.executableFiles()).containsExactly("tests/gradlew");
         assertThat(sandbox.contents.textFiles().containsKey("reference/problem-statement.md")).isEqualTo(mode == Mode.GENERATE);

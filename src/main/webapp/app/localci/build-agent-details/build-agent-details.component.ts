@@ -29,6 +29,7 @@ import { RunningJobsTableComponent } from 'app/localci/build-queue/tables/runnin
 import { FinishedJobsTableComponent } from 'app/localci/build-queue/tables/finished-jobs-table/finished-jobs-table.component';
 import { extractHost, looksLikeAddress } from 'app/localci/shared/build-agent-address.utils';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Component that displays detailed information about a specific build agent.
@@ -60,6 +61,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         RunningJobsTableComponent,
         FinishedJobsTableComponent,
         FinishedBuildsFilterModalComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.variant;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.HashSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -14,6 +15,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAdmittedEvent;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
@@ -21,6 +24,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationVariantPreparation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -40,6 +45,9 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
 
     @Value("${artemis.version-control.default-branch}")
     private String defaultBranch;
+
+    @Autowired
+    private TeamAssignmentConfigRepository teamConfigurations;
 
     private ProgrammingExercise source;
 
@@ -62,6 +70,16 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
 
     @Test
     void realImportStaysInvisibleUntilReservationReturnsAndTransactionCommits() {
+        source.setMode(ExerciseMode.TEAM);
+        programmingExerciseRepository.save(source);
+        var teamConfig = teamConfigurations.findByExerciseId(source.getId()).orElseThrow();
+        teamConfig.setMinTeamSize(2);
+        teamConfig.setMaxTeamSize(4);
+        teamConfigurations.save(teamConfig);
+        source.setProblemStatement("Solve the tasks.");
+        var sourceTestCases = programmingExercises.addTestCasesToProgrammingExercise(source);
+        source.setTestCases(new HashSet<>(sourceTestCases));
+        programmingExercises.addTasksToProgrammingExercise(source);
         var result = drafts.prepare(source.getId(), request, destination -> {
             programmingExerciseRepository.flush();
             try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
@@ -75,6 +93,18 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
         var destination = programmingExerciseRepository.findByIdElseThrow(result);
         assertThat(destination.getId()).isNotEqualTo(source.getId());
         assertThat(destination.getDifficulty()).isEqualTo(DifficultyLevel.HARD);
+        var imported = programmingExerciseRepository.findForAuthoringImportById(result).orElseThrow();
+        assertThat(imported.getTestCases()).hasSize(3).extracting(ProgrammingExerciseTestCase::getId)
+                .doesNotContainAnyElementsOf(sourceTestCases.stream().map(ProgrammingExerciseTestCase::getId).toList());
+        assertThat(imported.getTasks()).hasSize(3).flatExtracting(ProgrammingExerciseTask::getTestCases)
+                .allSatisfy(testCase -> assertThat(testCase.getExercise().getId()).isEqualTo(result));
+        var unchangedSource = programmingExerciseRepository.findForAuthoringImportById(source.getId()).orElseThrow();
+        assertThat(unchangedSource.getTestCases()).hasSize(3);
+        assertThat(unchangedSource.getTasks()).hasSize(3);
+        var destinationTeamConfig = teamConfigurations.findByExerciseId(result).orElseThrow();
+        assertThat(destinationTeamConfig.getMinTeamSize()).isEqualTo(2);
+        assertThat(destinationTeamConfig.getMaxTeamSize()).isEqualTo(4);
+        assertThat(teamConfigurations.findByExerciseId(source.getId()).orElseThrow().getMaxTeamSize()).isEqualTo(4);
         assertThat(destination.getReleaseDate()).isAfter(java.time.ZonedDateTime.now());
         assertThat(configurations.getProgrammingExerciseBuildConfigElseThrow(result).getBranch()).isEqualTo(defaultBranch);
         assertThat(configurations.getProgrammingExerciseBuildConfigElseThrow(source.getId()).getBranch()).isEqualTo("teaching");

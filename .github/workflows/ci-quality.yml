@@ -64,6 +64,11 @@ jobs:
       - name: Dependency Families
         run: ./gradlew verifyDependencyFamilies -x webapp
         if: ${{ !cancelled() }}
+      # Libraries with a known vulnerability must stay at their patched version on the build-script (plugin) classpath,
+      # which GitHub's dependency graph reports separately from the shipped WAR. Same reason for running it explicitly.
+      - name: Build-Script Classpath Pins
+        run: ./gradlew verifyBuildscriptClasspathPins -x webapp
+        if: ${{ !cancelled() }}
       - name: Java Architecture Tests
         run: ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
         if: ${{ !cancelled() }}

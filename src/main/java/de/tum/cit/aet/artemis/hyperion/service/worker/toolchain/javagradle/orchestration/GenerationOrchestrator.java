@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatResponse;
 
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
-import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationProgress.FileChange;
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
@@ -486,17 +485,7 @@ public class GenerationOrchestrator {
 
     @Nullable
     static String readWorkspaceRootFile(@Nullable InteractiveSandbox sandbox, @Nullable String sessionId, String fileName) {
-        if (sandbox == null || sessionId == null) {
-            return null;
-        }
-        try {
-            SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspace.SANDBOX_READ_TIMEOUT, "cat", GenerationWorkspace.WORKSPACE + "/" + fileName);
-            return result != null && result.isSuccess() ? result.stdout() : null;
-        }
-        catch (RuntimeException e) {
-            log.debug("Could not read {} after generation for diagnostics: {}", fileName, e.getMessage());
-            return null;
-        }
+        return GenerationWorkspace.readRootArtifact(sandbox, sessionId, fileName);
     }
 
     /** Opens the single teardown gate for a freshly created session, so cancel hook, terminal close, and error paths all destroy it through the same route. */
