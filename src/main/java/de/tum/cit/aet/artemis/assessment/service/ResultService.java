@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -556,7 +557,16 @@ public class ResultService {
                 continue;
             }
 
-            Optional<Submission> optionalSubmission = submissionFilterService.getLatestSubmissionWithResult(participation.getSubmissions(), true);
+            // Export official grades only. Filter before submission selection so a newer Athena-only submission cannot hide an older official result.
+            // These detached submissions are used only for the export; the stored results and student-facing AI feedback remain intact.
+            Set<Submission> submissionsWithOfficialResults = new HashSet<>();
+            for (Submission submission : participation.getSubmissions()) {
+                submission.setResults(submission.getResults().stream().filter(result -> !result.isAthenaBased()).collect(Collectors.toSet()));
+                if (!submission.getResults().isEmpty()) {
+                    submissionsWithOfficialResults.add(submission);
+                }
+            }
+            Optional<Submission> optionalSubmission = submissionFilterService.getLatestSubmissionWithResult(submissionsWithOfficialResults, true);
             if (optionalSubmission.isEmpty() || optionalSubmission.get().getLatestResult() == null) {
                 continue;
             }
