@@ -255,6 +255,7 @@ describe('ExamResultSummaryComponent', () => {
         const exportToPDFButton = fixture.debugElement.query(By.css('#exportToPDFButton'));
 
         expect(exportToPDFButton).not.toBeNull();
+        expect(exportToPDFButton.nativeElement.getAttribute('data-testid')).toBe('exam-summary-export-button');
 
         component.exerciseInfos()[1].isCollapsed = true;
         component.exerciseInfos()[2].isCollapsed = true;
@@ -684,6 +685,7 @@ describe('ExamResultSummaryComponent', () => {
             fixture.detectChanges();
 
             const button = element('#back-to-overview-button')!;
+            expect(button.getAttribute('data-testid')).toBe('exam-summary-back-button');
             expect(button.classList).toContain('tumaet:text-sm');
             expect(button.classList).not.toContain('tumaet:text-base');
         });
@@ -696,8 +698,9 @@ describe('ExamResultSummaryComponent', () => {
             // the important modifiers are needed because the unlayered Bootstrap heading rules would win otherwise
             expect(heading.classList).toContain('text-base!');
             expect(heading.classList).toContain('font-semibold!');
+            expect(heading.getAttribute('data-testid')).toBe('exam-summary-heading');
             expect(heading.classList).toContain('mb-3!');
-            expect(element('fa-icon.info-icon')!.parentElement!.classList).toContain('mb-4');
+            expect(element('fa-icon.info-icon')!.parentElement!.classList).toContain('mb-6!');
         });
 
         it('adds no margins around the complaint area that would open an empty line above it', () => {

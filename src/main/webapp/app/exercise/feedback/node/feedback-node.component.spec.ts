@@ -130,11 +130,11 @@ describe('FeedbackNodeComponent', () => {
             const bar: HTMLElement = fixture.nativeElement.querySelector('.feedback-group');
             expect(bar.classList).toContain('feedback-group--danger');
             expect(bar.classList).toContain('min-h-10');
-            expect(bar.classList).toContain('px-3');
+            expect(bar.classList).toContain('px-4!');
             expect(bar.classList).toContain('py-2');
             expect(bar.classList).toContain('mb-2');
-            expect(bar.classList).not.toContain('p-4');
-            expect(bar.classList).not.toContain('mb-4');
+            expect(bar.classList).not.toContain('p-6!');
+            expect(bar.classList).not.toContain('mb-6!');
 
             const title: HTMLElement = bar.querySelector('h4')!;
             expect(title.classList).toContain('m-0!');

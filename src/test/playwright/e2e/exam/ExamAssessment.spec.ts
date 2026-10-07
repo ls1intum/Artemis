@@ -18,6 +18,8 @@ import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
 import examStatisticsSample from '../../fixtures/exam/statistics.json';
 import { ExamScoresPage } from '../../support/pageobjects/exam/ExamScoresPage';
 import { SEED_COURSES } from '../../support/seedData';
+import { expectComplaintAreaLayout, expectExamSummaryLayout } from '../../support/examLayoutAssertions';
+import { forEachViewport } from '../../support/layout';
 
 const course = { id: SEED_COURSES.examAssessment.id } as any;
 let studentOneName: string;
@@ -214,6 +216,12 @@ test.describe('Exam assessment', () => {
 
         test('Complaints about text exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
             await handleComplaint(course, exam, true, ExerciseType.TEXT, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment, false);
+
+            // The student reads the response in the summary, which here holds a result and a complaint as well, and keeps its layout contract with both.
+            await forEachViewport(page, async (viewport) => {
+                await expectExamSummaryLayout(page, viewport);
+                await expectComplaintAreaLayout(page, viewport);
+            });
         });
 
         test.afterAll('Delete exam', async ({ browser }) => {
