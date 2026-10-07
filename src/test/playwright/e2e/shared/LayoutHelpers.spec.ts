@@ -6,6 +6,7 @@ import {
     expectBelow,
     expectComputedStyle,
     expectFillsParent,
+    expectGap,
     expectHeight,
     expectInset,
     expectInside,
@@ -154,16 +155,67 @@ test.describe('Layout helpers', { tag: '@fast' }, () => {
         await render(
             page,
             `<div id="card" style="position: absolute; top: 50px; left: 200px; width: 500px; height: 300px"></div>
-             <div id="title" style="position: absolute; top: 62px; left: 216px; width: 100px; height: 20px"></div>
-             <div id="late" style="position: absolute; top: 62px; left: 224px; width: 100px; height: 20px"></div>`,
+             <div id="title" style="position: absolute; top: 62px; left: 212px; width: 100px; height: 20px"></div>
+             <div id="late" style="position: absolute; top: 62px; left: 224px; width: 100px; height: 20px"></div>
+             <div id="wide" style="position: absolute; top: 62px; left: 212px; width: 476px; height: 20px"></div>`,
         );
         const card = page.locator('#card');
 
-        await expectInset(page.locator('#title'), card, 'left', 16);
+        await expectInset(page.locator('#title'), card, 'left', 12);
         await expectInset(page.locator('#title'), card, 'top', 12);
-        await expect(expectInset(page.locator('#late'), card, 'left', 16, { ...FAILING, name: 'title of the quiz page' })).rejects.toThrow(
-            /title of the quiz page at 800x600: its left edge is 24px inside locator\('#card'\), expected 16px \(tolerance 0.5px\)/,
+        await expectInset(page.locator('#wide'), card, 'right', 12);
+        await expect(expectInset(page.locator('#late'), card, 'left', 12, { ...FAILING, name: 'title of the quiz page' })).rejects.toThrow(
+            /title of the quiz page at 800x600: its left edge is 24px inside locator\('#card'\), expected 12px \(tolerance 0.5px\)/,
         );
+        await expect(expectInset(page.locator('#wide'), card, 'right', 16, FAILING)).rejects.toThrow(/its right edge is 12px inside locator\('#card'\), expected 16px/);
+    });
+
+    test('expectInset does not count the room of a scrollbar as inset once the scroll container is named', async ({ page }) => {
+        // Headless Chromium hides its scrollbars, so there is no room to read. The room of a 10px scrollbar at the right and bottom edge (as
+        // `scrollbar-gutter: stable` or a classic scrollbar takes it) is simulated by the client size of the scroll container.
+        await render(
+            page,
+            `<div id="card" style="position: absolute; top: 0; left: 0; width: 400px; height: 200px; overflow: scroll; box-sizing: border-box">
+                <div id="content" style="margin: 12px; width: 366px; height: 166px"></div>
+             </div>`,
+        );
+        const [card, content] = [page.locator('#card'), page.locator('#content')];
+        await card.evaluate((element) => {
+            Object.defineProperty(element, 'clientWidth', { get: () => 390 });
+            Object.defineProperty(element, 'clientHeight', { get: () => 190 });
+        });
+
+        await expectInset(content, card, 'left', 12);
+        await expectInset(content, card, 'top', 12);
+        await expectInset(content, card, 'right', 12, { scrollers: [card] });
+        await expectInset(content, card, 'bottom', 12, { scrollers: [card] });
+        // the room is not counted only where the scroll container is named
+        await expect(expectInset(content, card, 'right', 12, FAILING)).rejects.toThrow(/its right edge is 22px inside locator\('#card'\), expected 12px/);
+        await expect(expectInset(content, card, 'right', 16, { ...FAILING, scrollers: [card] })).rejects.toThrow(
+            /its right edge is 12px inside locator\('#card'\) \(not counting 10px of scrollbar\), expected 16px/,
+        );
+    });
+
+    test('expectGap fails when two neighbours are set at another distance from each other, or overlap', async ({ page }) => {
+        await render(
+            page,
+            `<div id="left" style="position: absolute; top: 0; left: 0; width: 300px; height: 200px"></div>
+             <div id="right" style="position: absolute; top: 0; left: 306px; width: 200px; height: 200px"></div>
+             <div id="far" style="position: absolute; top: 0; left: 340px; width: 200px; height: 200px"></div>
+             <div id="over" style="position: absolute; top: 0; left: 296px; width: 200px; height: 200px"></div>
+             <div id="below" style="position: absolute; top: 206px; left: 0; width: 300px; height: 100px"></div>`,
+        );
+        const [left, right, far, over, below] = ['#left', '#right', '#far', '#over', '#below'].map((selector) => page.locator(selector));
+
+        await expectGap(left, right, 'horizontal', 6);
+        await expectGap(left, below, 'vertical', 6);
+        await expectGap(left, far, 'horizontal', 40, { tolerance: 0 });
+        await expect(expectGap(left, far, 'horizontal', 6, { ...FAILING, name: 'the divider of the exercise' })).rejects.toThrow(
+            /the divider of the exercise at 800x600: the gap to locator\('#far'\) is 40px, expected 6px \(tolerance 0.5px\)/,
+        );
+        await expect(expectGap(left, over, 'horizontal', 6, FAILING)).rejects.toThrow(/the gap to locator\('#over'\) is -4px \(they overlap\), expected 6px/);
+        // the other axis is not the one the panels are laid out on
+        await expect(expectGap(left, right, 'vertical', 6, FAILING)).rejects.toThrow(/the gap to locator\('#right'\) is -200px \(they overlap\), expected 6px/);
     });
 
     test('expectBelow and expectNoOverlap tell what lies below an element and what covers another', async ({ page }) => {

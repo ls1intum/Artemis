@@ -235,17 +235,54 @@ export async function expectInside(
 
 /**
  * Expects the child to lie exactly `expected` px inside its container at one edge, within the tolerance: the title of a page that
- * starts 16px from the left edge of its card.
+ * starts 12px from the left edge of its card.
+ * <p>
+ * A scroll container takes the room of its scrollbar at the right and bottom edge, as much as the platform draws (none for an overlay
+ * scrollbar, about 8px for a thin one, 15px for a classic one) and always with `scrollbar-gutter: stable`. That room is no inset of the
+ * content, so pass the scroll containers between the child and the container (the container itself included) as `options.scrollers`:
+ * their scrollbars are read on every attempt and not counted, which keeps the expectation the same on every platform.
  */
-export async function expectInset(child: Locator, container: Locator, edge: BoxEdge, expected: number, options: LayoutOptions = {}): Promise<void> {
+export async function expectInset(
+    child: Locator,
+    container: Locator,
+    edge: BoxEdge,
+    expected: number,
+    options: LayoutOptions & { scrollers?: readonly Locator[] } = {},
+): Promise<void> {
     const tolerance = options.tolerance ?? DEFAULT_TOLERANCE;
     await retry(async () => {
         const lookup = lookupTimeout(options);
         const [childBox, containerBox] = await Promise.all([measure(child, { name: options.name, timeout: lookup }), measure(container, { timeout: lookup })]);
-        const actual = spaceInside(childBox, containerBox, edge);
+        let scrollbars = 0;
+        if (edge === 'right' || edge === 'bottom') {
+            for (const scroller of options.scrollers ?? []) {
+                scrollbars += (await scroller.evaluate(readScrollbarRoom, undefined, { timeout: lookup }))[edge];
+            }
+        }
+        const actual = spaceInside(childBox, containerBox, edge) - scrollbars;
         if (Math.abs(actual - expected) > tolerance) {
             throw new Error(
-                `${label(child, options)}${at(child.page())}: its ${edge} edge is ${px(actual)} inside ${String(container)}, expected ${px(expected)} (tolerance ${px(tolerance)})`,
+                `${label(child, options)}${at(child.page())}: its ${edge} edge is ${px(actual)} inside ${String(container)}${scrollbars > 0 ? ` (not counting ${px(scrollbars)} of scrollbar)` : ''}, expected ${px(expected)} (tolerance ${px(tolerance)})`,
+            );
+        }
+    }, options.timeout);
+}
+
+/**
+ * Expects the space between two neighbours to be `expected` px, within the tolerance: the divider between two panels. `horizontal`
+ * measures from the right edge of the first element to the left edge of the second (panels side by side), `vertical` from the bottom
+ * edge of the first to the top edge of the second (one panel above the other). Elements that overlap have a negative gap and fail,
+ * so a divider that is too narrow is told from one that is missing.
+ */
+export async function expectGap(first: Locator, second: Locator, axis: 'horizontal' | 'vertical', expected: number, options: LayoutOptions = {}): Promise<void> {
+    const tolerance = options.tolerance ?? DEFAULT_TOLERANCE;
+    await retry(async () => {
+        const lookup = lookupTimeout(options);
+        const [firstBox, secondBox] = await Promise.all([measure(first, { timeout: lookup }), measure(second, { timeout: lookup })]);
+        const actual = axis === 'horizontal' ? secondBox.left - firstBox.right : secondBox.top - firstBox.bottom;
+        if (Math.abs(actual - expected) > tolerance) {
+            throw new Error(
+                `${options.name ?? String(first)}${at(first.page())}: the gap to ${String(second)} is ${px(actual)}${actual < 0 ? ' (they overlap)' : ''}, expected ${px(expected)} (tolerance ${px(tolerance)})`,
             );
         }
     }, options.timeout);
@@ -540,6 +577,15 @@ function readSettledBox(element: Element): Promise<LayoutBox | null> {
         };
         nextFrame(tick);
     });
+}
+
+/** Runs in the browser, so it must not use anything of this module. The room the scrollbars of the element take at its right and bottom edge, borders not counted. */
+function readScrollbarRoom(element: Element): { right: number; bottom: number } {
+    const style = getComputedStyle(element);
+    const { offsetWidth, clientWidth, offsetHeight, clientHeight } = element as HTMLElement;
+    const right = offsetWidth - clientWidth - parseFloat(style.borderLeftWidth) - parseFloat(style.borderRightWidth);
+    const bottom = offsetHeight - clientHeight - parseFloat(style.borderTopWidth) - parseFloat(style.borderBottomWidth);
+    return { right: Math.max(0, right), bottom: Math.max(0, bottom) };
 }
 
 /**

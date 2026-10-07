@@ -146,11 +146,13 @@ describe('ExamParticipationCoverComponent', () => {
         expect(element.querySelector('[data-testid="exam-start-header"]')).toBeNull();
     });
 
-    it('should inset the hand-in page by the 16px of the exam bar, so that its title starts where the title of the bar starts', () => {
+    it('should inset the hand-in page by the 12px of the exam bar, so that its title starts where the title of the bar starts', () => {
         flushInputs();
 
         const card: HTMLElement = fixture.nativeElement.firstElementChild;
-        expect(card.classList).toContain('px-4!');
+        expect(card.getAttribute('data-testid')).toBe('exam-cover');
+        expect(card.classList).toContain('px-3!');
+        expect(card.classList).not.toContain('px-4!');
         expect(card.classList).not.toContain('px-6!');
         // the same 12px between the rule and the content as on the pages of the exam
         expect(fixture.nativeElement.querySelector('[data-testid="exam-finished-header"]').classList).toContain('mb-3!');

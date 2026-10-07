@@ -5,7 +5,6 @@
 .editor-wrapper {
     display: grid;
     grid-template-rows: min-content auto auto;
-    row-gap: 10px;
 
     /* In assessment context, the wrapper is inside assessment-layout which handles scrolling */
 
@@ -15,8 +14,9 @@
         overflow: hidden;
     }
 
+    /* A collapsed side panel keeps the divider next to it, like the collapsed panel of the course exercise page. */
     .collapsed--horizontal {
-        width: 50px !important;
+        width: calc(50px + var(--spacing-divider)) !important;
     }
 
     .collapsed--vertical {
@@ -24,6 +24,7 @@
     }
 
     .editor-statusbar {
+        margin-bottom: 10px;
         padding: 0.5rem 0;
 
         /* The toolbar can be moved out of the bar by the page that shows the editor (the exam puts it in its title row). The bar then takes no room.
@@ -33,11 +34,13 @@
         }
     }
 
+    /* The divider below the panels is the second grid row of the main area. It lies outside the height of the area, in the margin
+       that is as high as the divider, so the build output starts right below it. */
     .editor-main {
         display: grid;
         grid-template-rows: auto auto;
         height: 500px;
-        margin-bottom: 10px;
+        margin-bottom: var(--spacing-divider);
 
         &__content {
             display: flex;
@@ -105,14 +108,21 @@
             height: inherit;
         }
 
-        /* Pin the resize grip to the panel's visible bottom edge. As a normal flex child it inherited the panel
+        /* Pin the resize divider to the panel's visible bottom edge. As a normal flex child it inherited the panel
            height and was pushed below the scrolled-out area, where overflow:auto clipped it - leaving no grabbable
-           handle, so the build output could not be resized. Sticky keeps it reachable at the bottom while scrolling. */
+           handle, so the build output could not be resized. Sticky keeps it reachable at the bottom while scrolling.
+           The negative margin lays it over the bottom edge of the panel instead of below it, so it does not make the panel scroll. */
         > .rg-bottom-bottom {
-            height: auto;
+            height: var(--spacing-divider);
+            margin-top: calc(-1 * var(--spacing-divider));
             position: sticky;
             bottom: 0;
         }
+    }
+
+    /* The area below the build output of a tutor assessment keeps the distance it had before the dividers became thin. */
+    .editor-assessment-bottom {
+        margin-top: 10px;
     }
 
     /* In non-assessment mode, constrain the bottom section to fit in the viewport */
@@ -330,45 +340,89 @@
    Resizable drag elements
    ========================================================================== */
 
-/* stylelint-disable no-descending-specificity -- These selectors are used in different contexts */
+/* The divider between two panels is one `--spacing-divider` wide and carries the same small grip as the split of the course exercise
+   page. Its box is the gap between the panels. The grab area reaches 4px into the panel that follows the divider, and never into the
+   one before it, whose scrollbar sits on that edge. */
 .rg-main-bottom,
 .rg-bottom-bottom,
 .rg-sidebar-left,
 .rg-sidebar-right {
-    align-self: center;
-    color: var(--code-editor-grid-grip-lines-color);
-    justify-self: center;
-    font-size: 0.7rem;
-    opacity: 1;
-    transition: opacity 0.2s;
-
-    &:hover {
-        opacity: 0.8;
-    }
-}
-
-/* stylelint-enable no-descending-specificity */
-
-.rg-main-bottom {
-    cursor: row-resize;
-}
-
-.rg-sidebar-left,
-.rg-sidebar-right {
-    cursor: col-resize;
-    margin-left: 0;
-    margin-right: 0;
+    position: relative;
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
 
     /* easier to grab + avoid selecting editor text while dragging */
-    padding: 0;
     -webkit-user-select: none;
     user-select: none;
     touch-action: none;
     z-index: 3;
+
+    &::after {
+        content: '';
+        box-sizing: border-box;
+        border: 0 solid var(--body-color);
+        border-radius: 1px;
+    }
+
+    &:hover::after {
+        border-color: var(--primary);
+    }
 }
 
-.separator {
-    margin: 0;
+/* While a drag is in progress the pointer is captured by the panel and may no longer be over the divider. */
+.card-resizable > :is(.rg-main-bottom, .rg-bottom-bottom, .rg-sidebar-left, .rg-sidebar-right)::after {
+    border-color: var(--primary);
+}
+
+.rg-sidebar-left,
+.rg-sidebar-right {
+    width: var(--spacing-divider);
+    cursor: col-resize;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: -4px;
+        bottom: 0;
+        left: 0;
+    }
+
+    &::after {
+        width: 5px;
+        height: 12px;
+        border-inline-width: 2px;
+    }
+}
+
+.rg-main-bottom,
+.rg-bottom-bottom {
+    height: var(--spacing-divider);
+    cursor: row-resize;
+
+    &::after {
+        width: 12px;
+        height: 5px;
+        border-block-width: 2px;
+    }
+}
+
+/* The build output is the panel that follows. The divider at the bottom edge of the build output has nothing to reach into. */
+.rg-main-bottom::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: -4px;
+    left: 0;
+}
+
+/* Takes the place of the divider while its panel is collapsed, so that the gap to the editor stays as wide. */
+.editor-wrapper .separator {
+    flex: none;
+    width: var(--spacing-divider);
 }
 
 /* ==========================================================================

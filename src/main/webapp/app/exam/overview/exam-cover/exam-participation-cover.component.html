@@ -1,7 +1,7 @@
 <!-- Since the design of welcome page is changed, we use different alignments for startView and endView
      However, it includes some duplicated code and ids and should be refactored with e.g. ngTemplates
       -->
-<div class="overflow-auto px-4! pb-3!" [class.scrollable-content-exam-cover]="!testRunStartTime() && startView()">
+<div class="overflow-auto px-3! pb-3!" data-testid="exam-cover" [class.scrollable-content-exam-cover]="!testRunStartTime() && startView()">
     @if (startView()) {
         <!-- The same 40px title row with the rule below it as the header of every exercise page (see jhi-exam-exercise-header). -->
         <div

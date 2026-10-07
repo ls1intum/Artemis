@@ -5,6 +5,7 @@ import {
     expectBelow,
     expectComputedStyle,
     expectFillsParent,
+    expectGap,
     expectHeight,
     expectInset,
     expectInside,
@@ -23,23 +24,28 @@ const TITLE_ROW_HEIGHT = 40;
 /** The height of the exam bar above the sidebar and the content. */
 export const EXAM_BAR_HEIGHT = 40;
 
-/** The height of a small TUM AET UI button outside a title row: the start and hand-in buttons, the hand-in early button of the exam bar, the back button of the summary. */
+/** The height of a small TUM AET UI button outside a title row: the start and hand-in buttons and the back button of the summary. */
 export const SMALL_BUTTON_HEIGHT = 34;
 
 /**
- * The height of a button in a title row: the save button, the export button of the summary and the actions of the programming page. 30px leaves
- * 4.5px of air above and below it in the 40px row, where a small button of 34px would sit 3px from the rule below the title.
+ * The height of a button in a title row: the save button, the export button of the summary, the actions of the programming page and the hand-in
+ * early button of the exam bar, which is 40px high like a title row. 30px leaves 4.5px of air above and below it in the 40px row, where a small
+ * button of 34px would sit 3px from the rule below the title.
  */
 export const TITLE_ROW_BUTTON_HEIGHT = 30;
 
 /** The air a button in a title row keeps above it and below it, inside the row, in px. The row is 40px and the button 30px, so 4.5px are there; the rest is margin for rounding. */
 const TITLE_ROW_BUTTON_AIR = 4;
 
-/** The distance in px between the left edge of a card of the exam and the title in it, and between the left edge of the exam bar and its title. */
-const CARD_INSET = 16;
+/**
+ * The distance in px between a card of the exam and what is in it, on every side: the title row of a page to the left, top and right edge of
+ * the card, the end of the page to its bottom edge, and in the exam bar the title and the hand-in early button to the left and right edge.
+ * The card does not waste the room around the content.
+ */
+const CARD_INSET = 12;
 
-/** The distance in px between the top of the card that holds a page of the exam and the title row of that page. */
-const CARD_TOP_INSET = 12;
+/** The width in px of the divider between two panels, the same everywhere in the application: `--spacing-divider` of the shell. */
+export const DIVIDER_WIDTH = 6;
 
 /** From this width in px the Code button, the result, Refresh and Submit of the programming page sit in its title row: the title keeps its room next to them. */
 const PROGRAMMING_ACTIONS_IN_ROW_MIN_WIDTH = 1280;
@@ -49,6 +55,12 @@ const PROGRAMMING_ACTIONS_BELOW_MAX_WIDTH = 480;
 
 /** The width in px the title of a page keeps at least next to the programming actions (the product keeps 256px, a name that is cut off there is still readable). */
 const MIN_TITLE_WIDTH_NEXT_TO_ACTIONS = 200;
+
+/** From this width in px the panel of the file upload page has room for the file input and the Upload button in one row; below it the button wraps below the input. */
+const FILE_UPLOAD_ROW_MIN_WIDTH = 1280;
+
+/** The distance in px between the file input and the Upload button when they are in one row. */
+const FILE_UPLOAD_GAP = 8;
 
 /** The rule below the title row. The row draws it itself, inside its 40px, so a row without it is 40px high all the same. */
 const TITLE_RULE_WIDTH = '1px';
@@ -113,18 +125,70 @@ export async function expectTitleRowButton(button: Locator, row: Locator, name: 
 }
 
 /**
- * Expects the title of a page of the running exam to start 16px from the left edge of the card that holds the page, and its title row 12px
- * from the top of it. The exam bar has the same inset (see {@link expectExamBarTitleInset}), so the titles of the bar and of every page
- * are set the same distance inside their card, and the card does not waste the room around the content.
+ * Expects the title of a page to start 12px from the left edge of the card that holds the page, and its title row to be 12px from the top and
+ * the right edge of it. The exam bar has the same inset (see {@link expectExamBarInsets}), so the titles of the bar and of every page are set
+ * the same distance inside their card, and the card does not waste the room around the content.
+ * @param scrollers the scroll containers the row sits in up to the card, whose scrollbars take room at the right edge (see {@link expectInset})
  */
-export async function expectTitleInCard(row: Locator, title: Locator, card: Locator, name: string): Promise<void> {
+export async function expectTitleInCard(row: Locator, title: Locator, card: Locator, name: string, scrollers: readonly Locator[] = []): Promise<void> {
     await expectInset(title, card, 'left', CARD_INSET, { name: `title of ${name}` });
-    await expectInset(row, card, 'top', CARD_TOP_INSET, { name: `title row of ${name}` });
+    await expectInset(row, card, 'top', CARD_INSET, { name: `title row of ${name}` });
+    await expectInset(row, card, 'right', CARD_INSET, { name: `title row of ${name}`, scrollers });
 }
 
-/** Expects the title of the exam bar to start 16px from the left edge of the bar, the same inset as the titles of the pages in their card. */
-export async function expectExamBarTitleInset(page: Page): Promise<void> {
-    await expectInset(page.getByTestId('exam-bar-title'), page.getByTestId('exam-bar'), 'left', CARD_INSET, { name: 'title of the exam bar' });
+/**
+ * Expects the page of the running exam the student has open to keep 12px to the card on all four sides: its title row to the left, top and
+ * right edge (see {@link expectTitleInCard}), and the scroller that holds the page to keep 12px below it. The bottom edge is the padding of the
+ * scroller and not the end of what is inside it, because the content of a page is as high as the page wants and may reach beyond the column
+ * of a small window, where the scroller then ends flush with it.
+ * @param name what the page is, e.g. `the quiz page`
+ */
+export async function expectExamContentInsets(page: Page, row: Locator, title: Locator, name: string): Promise<void> {
+    const scroller = page.getByTestId('exam-content-scroller');
+    // The scroller is shared by all pages and keeps its position when the student switches, so the top of the new page is not necessarily in view.
+    await scroller.evaluate((element) => (element.scrollTop = 0));
+    await expectTitleInCard(row, title, page.getByTestId('exam-content'), name, [scroller]);
+    await expectComputedStyle(scroller, 'padding-bottom', `${CARD_INSET}px`, { name: `the space below ${name}` });
+}
+
+/**
+ * Expects the welcome page to keep 12px to the edge of its cover: the title row to the left, top and right edge, and the space below the last
+ * line, which is the padding of the cover because the page ends where its content ends.
+ */
+export async function expectStartViewInsets(page: Page): Promise<void> {
+    const cover = page.getByTestId('exam-cover');
+    const header = page.getByTestId('exam-start-header');
+    for (const edge of ['left', 'top', 'right'] as const) {
+        await expectInset(header, cover, edge, CARD_INSET, { name: 'title row of the welcome page', scrollers: [cover] });
+    }
+    await expectComputedStyle(cover, 'padding-bottom', `${CARD_INSET}px`, { name: 'the space below the welcome page' });
+}
+
+/**
+ * Expects the hand-in page to keep 12px to the edge of its card, which is as wide as the exam bar above it: the title row to the left, top and
+ * right edge, and the space below the last line, which is the padding of the cover inside the card.
+ */
+export async function expectHandInInsets(page: Page): Promise<void> {
+    const card = page.getByTestId('exam-end-view');
+    const header = page.getByTestId('exam-finished-header');
+    const scrollers = [card, page.getByTestId('exam-cover')];
+    for (const edge of ['left', 'top', 'right'] as const) {
+        await expectInset(header, card, edge, CARD_INSET, { name: 'title row of the hand-in page', scrollers });
+    }
+    await expectComputedStyle(page.getByTestId('exam-cover'), 'padding-bottom', `${CARD_INSET}px`, { name: 'the space below the hand-in page' });
+}
+
+/**
+ * Expects the exam bar to keep 12px to its edges: the title to the left edge, like the titles of the pages in their card, and the hand-in early
+ * button to the right edge, where the label is hidden below the `sm` breakpoint but the button keeps its place. The button is a button of
+ * a 40px row, so it is 30px high with air above and below it (see {@link expectTitleRowButton}).
+ */
+export async function expectExamBarInsets(page: Page): Promise<void> {
+    const bar = page.getByTestId('exam-bar');
+    const handInEarly = page.getByTestId('hand-in-early');
+    await expectInset(page.getByTestId('exam-bar-title'), bar, 'left', CARD_INSET, { name: 'title of the exam bar' });
+    await expectInset(handInEarly, bar, 'right', CARD_INSET, { name: 'hand-in early button of the exam bar' });
+    await expectTitleRowButton(handInEarly, bar, 'hand-in early button of the exam bar');
 }
 
 /**
@@ -167,6 +231,137 @@ export async function expectProgrammingActions(page: Page, row: Locator, viewpor
 }
 
 /**
+ * Expects the file input of the file upload page and its Upload button to belong together: both are as high as a small button, and where the
+ * panel has room (from 1280px) the button follows the input in the same row, 8px from its end and at the same vertical centre, instead of
+ * floating at the far end of the panel; where it has not, the button is below the input and starts at the same edge.
+ */
+export async function expectFileUploadRow(page: Page, viewport: LayoutViewport): Promise<void> {
+    const field = page.getByTestId('file-upload-field').filter({ visible: true });
+    const upload = page.getByTestId('file-upload-submit').filter({ visible: true });
+    await expectHeight(field, SMALL_BUTTON_HEIGHT, { name: 'the file input' });
+    await expectHeight(upload, SMALL_BUTTON_HEIGHT, { name: 'the Upload button' });
+    if (viewport.width >= FILE_UPLOAD_ROW_MIN_WIDTH) {
+        // both are 34px high, so the same top is the same vertical centre
+        await expectAligned([field, upload], 'top', { name: 'the file input and the Upload button' });
+        await expectGap(field, upload, 'horizontal', FILE_UPLOAD_GAP, { name: 'the file input and the Upload button' });
+    } else {
+        await expectBelow([upload], field, { name: 'the Upload button' });
+        await expectAligned([field, upload], 'left', { name: 'the file input and the Upload button' });
+    }
+}
+
+/** The panel of the solution and the panel of the problem statement of the text, modeling and file upload page the student has open. */
+function problemStatementPanels(page: Page): { left: Locator; right: Locator; collapsed: Locator } {
+    return {
+        left: page.getByTestId('resizeable-container-left').filter({ visible: true }),
+        right: page.getByTestId('resizeable-container-right').filter({ visible: true }),
+        collapsed: page.getByTestId('resizeable-container-collapsed').filter({ visible: true }),
+    };
+}
+
+/**
+ * Expects the divider between the solution and the problem statement of a text, modeling or file upload page to be 6px wide, the same as the
+ * divider of every other page of the application, and not a handle of 30 to 40px with a grip icon. Unlike the course exercise page, which has
+ * a panel layout of its own, these pages use the shared resizeable container, so a gap that grows again is a regression of that component.
+ * @param name what the page is, e.g. `the text page`
+ */
+export async function expectProblemStatementDivider(page: Page, name: string): Promise<void> {
+    const { left, right } = problemStatementPanels(page);
+    await expectGap(left, right, 'horizontal', DIVIDER_WIDTH, { name: `the divider between the solution and the problem statement of ${name}` });
+}
+
+/**
+ * Expects the problem statement to keep the divider when the student collapses it and expands it again: the collapsed tab is 6px from the panel
+ * of the solution as well. Leaves the problem statement expanded.
+ * @param name what the page is, e.g. `the text page`
+ */
+export async function expectProblemStatementDividerWhileCollapsed(page: Page, name: string): Promise<void> {
+    const { left, right, collapsed } = problemStatementPanels(page);
+    // the header of the problem statement is the first button in its panel, and a click on it collapses the panel
+    await right.getByRole('button').first().click();
+    await expectGap(left, collapsed, 'horizontal', DIVIDER_WIDTH, { name: `the collapsed problem statement of ${name}` });
+    await collapsed.click();
+    await expectGap(left, right, 'horizontal', DIVIDER_WIDTH, { name: `the divider of ${name} after the problem statement was expanded again` });
+}
+
+/**
+ * Drags a divider with the mouse by `drag` px and expects the panel it resizes to change its width by `change` px, so that a divider that
+ * got thinner is still one the student can take hold of. Drags back afterwards, so that the page keeps its size.
+ * @param divider the handle between two panels
+ * @param panel the panel that is resized by it
+ */
+export async function expectDividerResizesPanel(page: Page, divider: Locator, panel: Locator, drag: number, change: number, name: string): Promise<void> {
+    const before = (await measure(panel)).width;
+    const dragDivider = async (by: number) => {
+        const handle = await measure(divider);
+        const x = (handle.left + handle.right) / 2;
+        const y = (handle.top + handle.bottom) / 2;
+        await page.mouse.move(x, y);
+        await page.mouse.down();
+        await page.mouse.move(x + by, y, { steps: 8 });
+        await page.mouse.up();
+    };
+    await dragDivider(drag);
+    await expect
+        .poll(async () => Math.abs((await measure(panel)).width - (before + change)), {
+            message: `${name}: dragging the divider by ${drag}px should change the width of the panel from ${before}px by ${change}px`,
+        })
+        .toBeLessThanOrEqual(1);
+    await dragDivider(-drag);
+    await expect
+        .poll(async () => Math.abs((await measure(panel)).width - before), { message: `${name}: dragging the divider back should restore the width of the panel (${before}px)` })
+        .toBeLessThanOrEqual(1);
+}
+
+/**
+ * Expects the panel of the problem statement to be resized by its divider: dragging 100px to the left makes it 100px wider.
+ * @param name what the page is, e.g. `the text page`
+ */
+export async function expectProblemStatementDividerResizes(page: Page, name: string): Promise<void> {
+    await expectDividerResizesPanel(
+        page,
+        page.getByTestId('resizeable-container-divider').filter({ visible: true }),
+        problemStatementPanels(page).right,
+        -100,
+        100,
+        `the divider of ${name}`,
+    );
+}
+
+/**
+ * Expects the panels of the online code editor on the programming page to be set apart by the 6px divider: the file browser, the editor and
+ * the instructions side by side, and the build output below all three. Each divider is as thin as the one between the solution and the
+ * problem statement of the other pages, where it used to be 20px wide and high.
+ */
+export async function expectProgrammingPanelDividers(page: Page): Promise<void> {
+    const files = page.getByTestId('cardFiles').filter({ visible: true });
+    const editor = page.getByTestId('cardEditor').filter({ visible: true });
+    const instructions = page.getByTestId('cardInstructions').filter({ visible: true });
+    const buildOutput = page.getByTestId('cardBuildOutput').filter({ visible: true });
+    await expectGap(files, editor, 'horizontal', DIVIDER_WIDTH, { name: 'the divider between the file browser and the editor' });
+    await expectGap(editor, instructions, 'horizontal', DIVIDER_WIDTH, { name: 'the divider between the editor and the instructions' });
+    for (const [panel, name] of [
+        [files, 'the file browser'],
+        [editor, 'the editor'],
+        [instructions, 'the instructions'],
+    ] as const) {
+        await expectGap(panel, buildOutput, 'vertical', DIVIDER_WIDTH, { name: `the divider between ${name} and the build output` });
+    }
+}
+
+/** Expects the file browser of the online code editor to be resized by its divider: dragging 60px to the right makes it 60px wider. */
+export async function expectFileBrowserDividerResizes(page: Page): Promise<void> {
+    await expectDividerResizesPanel(
+        page,
+        page.getByTestId('draggableIconForFileBrowser'),
+        page.getByTestId('cardFiles').filter({ visible: true }),
+        60,
+        60,
+        'the divider of the file browser',
+    );
+}
+
+/**
  * Expects the exam summary the student has open to keep its layout at the current viewport: the title row and the buttons have their
  * sizes, the section headings look alike, the scroller fills the page that holds it and ends inside the window, and the page does not
  * scroll sideways.
@@ -179,6 +374,11 @@ export async function expectExamSummaryLayout(page: Page, viewport: LayoutViewpo
 
     const scroller = page.getByTestId('exam-summary-scroll');
     await expectFillsParent(scroller, scroller.locator('xpath=..'), ['top', 'right', 'bottom', 'left'], { name: 'the scroller of the summary' });
+    // the scroller is the card of the summary: the title row keeps the 12px of every card of the exam, and so does the end of the page
+    for (const edge of ['left', 'top', 'right'] as const) {
+        await expectInset(row, scroller, edge, CARD_INSET, { name: 'title row of the summary', scrollers: [scroller] });
+    }
+    await expectComputedStyle(scroller, 'padding-bottom', `${CARD_INSET}px`, { name: 'the space below the summary' });
     // The scroller and the page that holds it both take a percentage of the same chain of heights. Should the chain lose its definite
     // height, both grow to the height of their content and still agree, and the summary no longer scrolls inside its card.
     await expectWithinViewport(scroller, ['bottom'], { name: 'the scroller of the summary' });

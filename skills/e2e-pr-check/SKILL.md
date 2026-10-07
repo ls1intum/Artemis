@@ -117,11 +117,14 @@ measure in the browser. Never compare screenshots, and never find an element by 
 2. Find the elements by `data-testid`; add one to the template when it is missing.
 3. Assert inside `forEachViewport` from `src/test/playwright/support/layout.ts` with
    `expectHeight`, `expectAligned`, `expectFillsParent`, `expectInside` (with a `margin` for air),
-   `expectInset`, `expectBelow`, `expectNoOverlap`, `expectInsideOrBelow` (a layout that depends on
-   the room), `expectWithinViewport`, `expectNoHorizontalOverflow`, `expectNoHorizontalScrollAround`
-   or `expectSameComputedStyle`, and give each element a `name`. A page in a card that scrolls on its
-   own needs both sideways-scroll helpers, because the document keeps the width of the window. A
-   click that must not move the page runs inside `expectScrollPositionKept`.
+   `expectInset` (name the scroll containers as `scrollers`, so that their scrollbars are not
+   counted as inset), `expectGap` (the divider between two panels), `expectBelow`, `expectNoOverlap`,
+   `expectInsideOrBelow` (a layout that depends on the room), `expectWithinViewport`,
+   `expectNoHorizontalOverflow`, `expectNoHorizontalScrollAround` or `expectSameComputedStyle`, and
+   give each element a `name`. A page in a card that scrolls on its own needs both sideways-scroll
+   helpers, because the document keeps the width of the window. A click that must not move the page
+   runs inside `expectScrollPositionKept`. A divider that is dragged keeps the width it was given in
+   px, which a smaller window does not undo, so drag it after the viewport matrix.
 4. For a new or changed helper, add a case that holds and one that must fail to
    `src/test/playwright/e2e/shared/LayoutHelpers.spec.ts`.
 
