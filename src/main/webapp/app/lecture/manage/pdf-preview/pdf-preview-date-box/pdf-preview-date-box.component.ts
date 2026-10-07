@@ -10,6 +10,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 interface CategorizedExercise {
     type: ExerciseType;
@@ -23,7 +24,7 @@ const FOREVER = dayjs('9999-12-31');
     templateUrl: './pdf-preview-date-box.component.html',
     styleUrls: ['./pdf-preview-date-box.component.scss'],
     standalone: true,
-    imports: [FontAwesomeModule, NgbTooltipModule, RouterModule, TranslateDirective, CommonModule, FormsModule],
+    imports: [FontAwesomeModule, NgbTooltipModule, RouterModule, TranslateDirective, CommonModule, FormsModule, ArtemisTranslatePipe],
 })
 export class PdfPreviewDateBoxComponent implements OnInit {
     // Injected services

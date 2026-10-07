@@ -86,7 +86,7 @@ class ProgrammingExerciseCreationResourceMutationGuardTest {
         var requestBuildConfig = mock(de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseBuildConfigDTO.class);
         when(request.buildConfig()).thenReturn(requestBuildConfig);
         when(requestBuildConfig.toEntity()).thenReturn(new ProgrammingExerciseBuildConfig());
-        var response = resource.createProgrammingExercise(request, false);
+        var response = resource.createProgrammingExercise(request, false, java.util.Set.of());
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody().id()).isEqualTo(EXERCISE_ID);
@@ -100,23 +100,23 @@ class ProgrammingExerciseCreationResourceMutationGuardTest {
     void generateStructureOracleRefetchesAuthoritativeMutationDataAndCreatesVersionSynchronously() throws Exception {
         ProgrammingExercise authorizationExercise = exercise("authorization", false);
         ProgrammingExercise authoritativeExercise = exercise("authoritative", true);
-        when(repository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(EXERCISE_ID)).thenReturn(authorizationExercise, authoritativeExercise);
+        when(repository.findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(EXERCISE_ID)).thenReturn(authorizationExercise, authoritativeExercise);
         when(creationUpdateService.generateStructureOracleFile(authoritativeExercise.getVcsSolutionRepositoryUri(), authoritativeExercise.getVcsTemplateRepositoryUri(),
                 authoritativeExercise.getVcsTestRepositoryUri(), "structural/test/authoritative", user)).thenReturn(true);
 
         var response = resource.generateStructureOracleForExercise(EXERCISE_ID);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        verify(repository, times(2)).findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(EXERCISE_ID);
+        verify(repository, times(2)).findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(EXERCISE_ID);
         verify(creationUpdateService).generateStructureOracleFile(authoritativeExercise.getVcsSolutionRepositoryUri(), authoritativeExercise.getVcsTemplateRepositoryUri(),
                 authoritativeExercise.getVcsTestRepositoryUri(), "structural/test/authoritative", user);
         verify(exerciseVersionService).createExerciseVersionSynchronously(authoritativeExercise, user);
 
         var order = inOrder(repository, authCheckService, mutationGuard, creationUpdateService, exerciseVersionService, leaseRelease);
-        order.verify(repository).findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(EXERCISE_ID);
+        order.verify(repository).findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(EXERCISE_ID);
         order.verify(authCheckService).checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, authorizationExercise, user);
         order.verify(mutationGuard).claimExternalMutation(EXERCISE_ID);
-        order.verify(repository).findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(EXERCISE_ID);
+        order.verify(repository).findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(EXERCISE_ID);
         order.verify(creationUpdateService).generateStructureOracleFile(authoritativeExercise.getVcsSolutionRepositoryUri(), authoritativeExercise.getVcsTemplateRepositoryUri(),
                 authoritativeExercise.getVcsTestRepositoryUri(), "structural/test/authoritative", user);
         order.verify(exerciseVersionService).createExerciseVersionSynchronously(authoritativeExercise, user);
@@ -126,16 +126,16 @@ class ProgrammingExerciseCreationResourceMutationGuardTest {
     @Test
     void generateStructureOraclePreservesMutationGuardConflict() {
         ProgrammingExercise authorizationExercise = exercise("authorization", false);
-        when(repository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(EXERCISE_ID)).thenReturn(authorizationExercise);
+        when(repository.findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(EXERCISE_ID)).thenReturn(authorizationExercise);
         when(mutationGuard.claimExternalMutation(EXERCISE_ID)).thenThrow(new ConflictException("Generation is running", "programmingExercise", "generationRunning"));
 
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.generateStructureOracleForExercise(EXERCISE_ID));
 
         var order = inOrder(repository, authCheckService, mutationGuard);
-        order.verify(repository).findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(EXERCISE_ID);
+        order.verify(repository).findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(EXERCISE_ID);
         order.verify(authCheckService).checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, authorizationExercise, user);
         order.verify(mutationGuard).claimExternalMutation(EXERCISE_ID);
-        verify(repository).findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(EXERCISE_ID);
+        verify(repository).findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(EXERCISE_ID);
         verifyNoInteractions(creationUpdateService, exerciseVersionService, leaseRelease);
     }
 
@@ -143,7 +143,7 @@ class ProgrammingExerciseCreationResourceMutationGuardTest {
     void generateStructureOracleReleasesLeaseAfterSynchronousVersionFailure() throws Exception {
         ProgrammingExercise authorizationExercise = exercise("authorization", false);
         ProgrammingExercise authoritativeExercise = exercise("authoritative", false);
-        when(repository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(EXERCISE_ID)).thenReturn(authorizationExercise, authoritativeExercise);
+        when(repository.findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(EXERCISE_ID)).thenReturn(authorizationExercise, authoritativeExercise);
         when(creationUpdateService.generateStructureOracleFile(authoritativeExercise.getVcsSolutionRepositoryUri(), authoritativeExercise.getVcsTemplateRepositoryUri(),
                 authoritativeExercise.getVcsTestRepositoryUri(), "test/authoritative", user)).thenReturn(true);
         var versionFailure = new IllegalStateException("version failure");

@@ -124,7 +124,7 @@ train. Both are pinned in `gradle.properties`.
 readiness and liveness endpoints and look for "Started ArtemisApp" in the log; a single unconfigured
 optional integration pulls the aggregate down.
 
-**Port already in use.** `./run-e2e-tests-local-fast.sh --stop` frees 8080 and 9000 by killing the
+**Port already in use.** `./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --stop` frees 8080 and 9000 by killing the
 server and client. The LocalVC SSH listener on 7921 lives inside the server JVM, so it goes with it.
 
 ## Running things
@@ -132,7 +132,7 @@ server and client. The LocalVC SSH listener on 7921 lives inside the server JVM,
 ```bash
 ./gradlew test -x webapp        # server tests, needs Docker
 pnpm run vitest                 # client tests, watch mode
-./run-e2e-tests-local-fast.sh   # E2E, brings up everything it needs
+./supporting_scripts/e2e/run-e2e-tests-local-fast.sh   # E2E, brings up everything it needs
 pnpm run lint                   # client lint
 ./gradlew spotlessApply         # fix Java formatting
 ```
