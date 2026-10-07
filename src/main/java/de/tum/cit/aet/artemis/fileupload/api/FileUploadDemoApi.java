@@ -112,13 +112,14 @@ public class FileUploadDemoApi extends AbstractFileModuleApi {
      * {@code FileUploadExerciseResource} rather than saving the entity directly, including that file upload exercises are always assessed manually.
      *
      * @param course the demo course the exercise belongs to.
+     * @return the demo exercise, whether it already existed or was created by this call.
      */
-    public void createDemo(Course course) {
-        boolean exerciseExists = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).stream()
-                .anyMatch(exercise -> DEMO_EXERCISE_TITLE.equals(exercise.getTitle()));
-        if (exerciseExists) {
+    public FileUploadExercise createDemo(Course course) {
+        Optional<FileUploadExercise> existingExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).stream()
+                .filter(exercise -> DEMO_EXERCISE_TITLE.equals(exercise.getTitle())).findFirst();
+        if (existingExercise.isPresent()) {
             log.debug("Demo file upload exercise already exists, skipping creation");
-            return;
+            return existingExercise.get();
         }
 
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(DEMO_EXERCISE_TITLE, DEMO_EXERCISE_SHORT_NAME, DEMO_PROBLEM_STATEMENT, 10.0,
@@ -134,5 +135,6 @@ public class FileUploadDemoApi extends AbstractFileModuleApi {
         channelService.createExerciseChannel(createdExercise, Optional.empty());
 
         log.info("Created demo file upload exercise '{}' with id {}", DEMO_EXERCISE_TITLE, createdExercise.getId());
+        return createdExercise;
     }
 }
