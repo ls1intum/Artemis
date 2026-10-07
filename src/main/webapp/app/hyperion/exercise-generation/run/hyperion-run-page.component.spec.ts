@@ -9,6 +9,7 @@ import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import hyperionGenerationEn from 'src/main/webapp/i18n/en/hyperionExerciseGeneration.json';
 import programmingExerciseEn from 'src/main/webapp/i18n/en/programmingExercise.json';
 import programmingExerciseDe from 'src/main/webapp/i18n/de/programmingExercise.json';
 import programmingLanguageEn from 'src/main/webapp/i18n/en/programmingLanguage.json';
@@ -33,6 +34,7 @@ const COURSE_ID = 7;
 
 function exercise(): ProgrammingExercise {
     const programmingExercise = { id: EXERCISE_ID, title: 'Bounded Stack' } as ProgrammingExercise;
+    programmingExercise.isAtLeastEditor = true;
     programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
     programmingExercise.projectType = ProjectType.GRADLE_GRADLE;
     programmingExercise.difficulty = DifficultyLevel.MEDIUM;
@@ -423,6 +425,43 @@ describe('HyperionRunPageComponent', () => {
         enterPrompt('  Implement a bounded stack with generics.  ');
         confirmPrompt();
         expect(service.generate).toHaveBeenCalledExactlyOnceWith(EXERCISE_ID, { mode, prompt: 'Implement a bounded stack with generics.' });
+    });
+
+    it('allows a new generation after replay expires while preserving the undo baseline', () => {
+        TestBed.inject(TranslateService).setTranslation('en', hyperionGenerationEn, true);
+        TestBed.inject(TranslateService).use('en');
+        render(status({ revertAvailable: true, revertMode: 'GENERATE', events: [] }));
+        expect(fixture.componentInstance['status']()).toBe('historyExpired');
+        expect(fixture.componentInstance['canRevert']()).toBe(true);
+        expect(fixture.componentInstance['jobId']()).toBe('job-1');
+        expect(testId('hyperion-run-not-started')!.textContent).toContain('Run history is no longer available');
+        testId('hyperion-run-start')!.querySelector('button')!.click();
+        fixture.detectChanges();
+        enterPrompt('Implement a bounded stack with generics.');
+        confirmPrompt();
+        expect(service.generate).toHaveBeenCalledExactlyOnceWith(EXERCISE_ID, { mode: 'GENERATE', prompt: 'Implement a bounded stack with generics.' });
+    });
+
+    it('allows an authorized editor to start after another instructor finishes, without exposing private details', () => {
+        render(status({ ownedByCaller: false, events: [event({ type: 'DONE', completionStatus: 'SUCCESS' })], input: { prompt: 'Private brief' } }));
+        expect(fixture.componentInstance['cancelAvailable']()).toBe(false);
+        expect(fixture.componentInstance['runInput']()).toBeUndefined();
+        expect(fixture.componentInstance['spend']()).toBeUndefined();
+        testId('hyperion-run-run-again')!.querySelector('button')!.click();
+        fixture.detectChanges();
+        enterPrompt('Implement a bounded stack with generics.');
+        confirmPrompt();
+        expect(service.generate).toHaveBeenCalledExactlyOnceWith(EXERCISE_ID, { mode: 'GENERATE', prompt: 'Implement a bounded stack with generics.' });
+    });
+
+    it('does not offer a new run to a reader without editor rights even if they owned the previous run', () => {
+        render(status({ events: [event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
+        routeData.next({ programmingExercise: { ...exercise(), isAtLeastEditor: false } });
+        fixture.detectChanges();
+        expect(testId('hyperion-run-run-again')).toBeNull();
+        fixture.componentInstance['openStartDialog']();
+        expect(service.generate).not.toHaveBeenCalled();
+        expect(fixture.componentInstance['startDialogVisible']()).toBe(false);
     });
 
     it('can cancel a new run without submitting anything', () => {

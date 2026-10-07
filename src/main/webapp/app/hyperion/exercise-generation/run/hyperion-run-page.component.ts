@@ -40,7 +40,7 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 /** The status word shown next to the dot, and the dot state that goes with it. */
-type RunStatus = 'queued' | 'running' | 'cancelling' | 'saved' | 'needsReview' | 'partial' | 'failed' | 'cancelled' | 'notStarted' | 'unknown';
+type RunStatus = 'queued' | 'running' | 'cancelling' | 'saved' | 'needsReview' | 'partial' | 'failed' | 'cancelled' | 'notStarted' | 'historyExpired' | 'unknown';
 
 const STATUS_DOT_STATE: Record<RunStatus, TumAetUiStatusDotState> = {
     queued: 'queued',
@@ -52,6 +52,7 @@ const STATUS_DOT_STATE: Record<RunStatus, TumAetUiStatusDotState> = {
     failed: 'danger',
     cancelled: 'neutral',
     notStarted: 'neutral',
+    historyExpired: 'neutral',
     unknown: 'unknown',
 };
 
@@ -196,6 +197,7 @@ export class HyperionRunPageComponent {
             // Another instructor's run streams no events to this reader, yet it is running, not waiting to start.
             return this.events().length > 0 || !this.ownedByCaller() ? 'running' : 'queued';
         }
+        if (this.historyExpired()) return 'historyExpired';
         if (this.facade.jobId() !== undefined) {
             return 'queued';
         }
@@ -223,9 +225,18 @@ export class HyperionRunPageComponent {
     /** Nothing has ever run for this exercise: no job, and no outstanding or failed status check to explain why. */
     protected readonly notStarted = computed(() => this.facade.jobId() === undefined && !this.statusLoading() && !this.statusLoadFailed());
 
+    /** An authoritative idle response can retain undo metadata after its replay events expire. */
+    protected readonly historyExpired = computed(
+        () => this.jobId() !== undefined && !this.running() && this.events().length === 0 && !this.statusLoading() && !this.statusLoadFailed(),
+    );
+    protected readonly idleTitleKey = computed(() => `artemisApp.hyperion.generation.run.${this.historyExpired() ? 'historyExpiredTitle' : 'notStartedTitle'}`);
+    protected readonly idleHintKey = computed(() => `artemisApp.hyperion.generation.run.${this.historyExpired() ? 'historyExpiredHint' : 'notStartedHint'}`);
+
     protected readonly cancelAvailable = computed(() => !this.terminal() && this.running() && this.ownedByCaller() && this.facade.cancellable());
     /** Whether starting a run is this deployment's and this instructor's to do at all; why the exercise may still refuse one is {@link startBlockedReason}. */
-    protected readonly generationOffered = computed(() => this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION) && this.ownedByCaller());
+    protected readonly generationOffered = computed(
+        () => this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION) && (this.exercise()?.isAtLeastEditor ?? false),
+    );
     /** Translation key for what about the exercise prevents a run, so the start button can say it instead of vanishing. */
     protected readonly startBlockedReason = computed(() => {
         const exercise = this.exercise();
@@ -233,7 +244,7 @@ export class HyperionRunPageComponent {
         return blocker ? HYPERION_GENERATION_BLOCKER_KEY + blocker : undefined;
     });
     protected readonly runAgainAvailable = computed(() => this.generationOffered() && this.terminal() && !this.starting());
-    protected readonly startAvailable = computed(() => this.generationOffered() && this.notStarted() && !this.starting());
+    protected readonly startAvailable = computed(() => this.generationOffered() && (this.notStarted() || this.historyExpired()) && !this.starting());
     private readonly canStart = computed(() => (this.runAgainAvailable() || this.startAvailable()) && this.startBlockedReason() === undefined);
 
     /** How long a finished run took, for the folded stage strip. Static: a terminal run has no clock left to tick. */
