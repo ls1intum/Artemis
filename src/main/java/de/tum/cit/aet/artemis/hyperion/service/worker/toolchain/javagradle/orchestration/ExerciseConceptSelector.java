@@ -112,21 +112,18 @@ public class ExerciseConceptSelector {
         this.critic = critic;
     }
 
-    public ConceptSelection select(String brief, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress) {
-        return select(brief, "", cancelled, usageSink, progress);
-    }
-
     /**
      * Generates and reviews exercise concepts, carrying property-level feedback from a rejected specification into a fresh concept batch.
      *
      * @param brief           the instructor brief
      * @param initialFeedback feedback that the next independent concept batch must address
+     * @param maxTurns        maximum candidate-generation turns available in this attempt
      * @param cancelled       cooperative cancellation signal
      * @param usageSink       optional token-usage sink
      * @param progress        optional progress sink
      * @return the selected concept and its review evidence, or an unsuccessful result
      */
-    public ConceptSelection select(String brief, String initialFeedback, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
+    public ConceptSelection select(String brief, String initialFeedback, int maxTurns, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
             @Nullable Consumer<String> progress) {
         // Concept discovery is its own substep: it runs before, and context-isolated from, the staged authoring phases, so it has no GenerationStage of its own to derive from.
         GenerationActivityTracker activity = AgentActivitySink.trackerOf(progress);
@@ -143,7 +140,7 @@ public class ExerciseConceptSelector {
         // The best-scoring rejected candidate seen so far, across every batch this call explores. Rejection is not monotonic across batches — a replacement batch generated from
         // review feedback can be worse than the one it replaced — so the caller is offered the best, not the most recent.
         ConceptFallback fallback = null;
-        for (int attempt = 1; attempt <= MAX_BATCHES; attempt++) {
+        for (int attempt = 1; attempt <= MAX_BATCHES && turns < maxTurns; attempt++) {
             if (cancelled.getAsBoolean()) {
                 return new ConceptSelection(false, null, null, turns, transcript, "Concept discovery was cancelled.", audit.toString(), fallback);
             }
