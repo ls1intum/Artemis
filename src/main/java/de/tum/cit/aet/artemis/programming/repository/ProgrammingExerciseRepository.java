@@ -67,6 +67,15 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
+     * Reads only the exam identity before a draft transaction starts, so its first consistent read follows the exam lock.
+     *
+     * @param exerciseId protected source exercise
+     * @return its exam identity, or empty for a course exercise or a missing source
+     */
+    @Query("SELECT pe.exerciseGroup.exam.id FROM ProgrammingExercise pe WHERE pe.id = :exerciseId")
+    Optional<Long> findExamIdById(@Param("exerciseId") long exerciseId);
+
+    /**
      * Atomically couples the metadata compare-and-set with its database-only task synchronization.
      *
      * @param exerciseId               the exercise to update

@@ -59,13 +59,11 @@ public class GenerationVariantDraftService {
      * @return result after the destination transaction commits
      */
     public <T> T prepare(long sourceId, VariantGenerationRequestDTO request, Function<ProgrammingExercise, T> reserve) {
+        // The source reservation keeps this identity stable. Read it before MySQL can establish the draft's REPEATABLE READ snapshot.
+        Optional<Long> examId = exercises.findExamIdById(sourceId);
         return exercises.prepareAuthoringDraft(() -> {
-            ProgrammingExercise source = exercises.findWithAllParticipationsById(sourceId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", sourceId));
-            if (source.isExamExercise()) {
-                return exams.orElseThrow().withExerciseSelectionLock(source.getExerciseGroup().getExam().getId(), exam -> {
-                    capabilities.requireMutable(source);
-                    return prepareAndReserve(sourceId, request, reserve);
-                });
+            if (examId.isPresent()) {
+                return exams.orElseThrow().withExerciseSelectionLock(examId.get(), exam -> prepareAndReserve(sourceId, request, reserve));
             }
             return prepareAndReserve(sourceId, request, reserve);
         });
@@ -73,6 +71,9 @@ public class GenerationVariantDraftService {
 
     private <T> T prepareAndReserve(long sourceId, VariantGenerationRequestDTO request, Function<ProgrammingExercise, T> reserve) {
         ProgrammingExercise source = loadSource(sourceId);
+        if (source.isExamExercise()) {
+            capabilities.requireMutable(source);
+        }
         capabilities.requireSupportedConfiguration(source);
         ProgrammingExercise destination = skeleton(source, request);
         ProgrammingExercise prepared = imports.prepareImport(source, buildConfigs.getProgrammingExerciseBuildConfigElseThrow(sourceId), destination, null);

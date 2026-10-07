@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +30,6 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 @Lazy
 @RestController
 @Profile(PROFILE_CORE)
-@ConditionalOnProperty(name = "artemis.hyperion.exercise-generation.enabled", havingValue = "true")
 @RequestMapping("api/hyperion/admin/exercises/")
 @EnforceAdmin
 @FeatureUsage(UserFeature.HYPERION_GENERATION_RECOVERY)

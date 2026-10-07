@@ -85,7 +85,6 @@ class GenerationVariantDraftServiceTest {
         source.setReleaseDate(ZonedDateTime.now().minusDays(2));
         source.setPresentationScoreEnabled(true);
         source.setSecondCorrectionEnabled(true);
-        when(exercises.findWithAllParticipationsById(1L)).thenReturn(Optional.of(source));
         sourceGraph();
         var config = new ProgrammingExerciseBuildConfig();
         when(buildConfigs.getProgrammingExerciseBuildConfigElseThrow(1L)).thenReturn(config);
@@ -132,7 +131,8 @@ class GenerationVariantDraftServiceTest {
         group.setExam(exam);
         source.setCourse(null);
         source.setExerciseGroup(group);
-        when(exercises.findWithAllParticipationsById(1L)).thenReturn(Optional.of(source));
+        when(exercises.findExamIdById(1L)).thenReturn(Optional.of(20L));
+        sourceGraph();
         AtomicBoolean inTransaction = new AtomicBoolean();
         when(exercises.prepareAuthoringDraft(any())).thenAnswer(invocation -> {
             inTransaction.set(true);
