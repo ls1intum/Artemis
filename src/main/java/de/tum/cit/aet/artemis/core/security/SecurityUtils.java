@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -24,6 +25,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 
 /**
@@ -173,22 +175,23 @@ public final class SecurityUtils {
     }
 
     /**
-     * Runs work as the user with the given login and restores the previous security context afterwards.
+     * Runs work as the given user and restores the previous security context afterwards.
      *
      * <p>
      * For work a specific user would trigger but that runs outside of their request, like the demo data seeded on startup:
-     * the production paths it reuses resolve the acting user from the security context. Like {@link #runAsSystem(Runnable)},
-     * this installs a fresh context instead of modifying the current one, so the caller's context is left untouched.
+     * the production paths it reuses resolve the acting user from the security context. The user acts with their own
+     * authorities, so they have to be loaded. Like {@link #runAsSystem(Runnable)}, this installs a fresh context instead of
+     * modifying the current one, so the caller's context is left untouched.
      *
-     * @param login the login of the user to act as
-     * @param work  the work to run
-     * @param <T>   the type of the result of the work
+     * @param user the user to act as, with their authorities loaded
+     * @param work the work to run
+     * @param <T>  the type of the result of the work
      * @return the result of the work
      */
-    public static <T> T runAs(String login, Supplier<T> work) {
+    public static <T> T runAs(User user, Supplier<T> work) {
         SecurityContext previousContext = SecurityContextHolder.getContext();
         SecurityContext userContext = SecurityContextHolder.createEmptyContext();
-        userContext.setAuthentication(makeAuthorizationObject(login));
+        userContext.setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), null, user.getGrantedAuthorities()));
         SecurityContextHolder.setContext(userContext);
         try {
             return work.get();
@@ -199,13 +202,13 @@ public final class SecurityUtils {
     }
 
     /**
-     * Runs work without a result as the user with the given login, see {@link #runAs(String, Supplier)}.
+     * Runs work without a result as the given user, see {@link #runAs(User, Supplier)}.
      *
-     * @param login the login of the user to act as
-     * @param work  the work to run
+     * @param user the user to act as, with their authorities loaded
+     * @param work the work to run
      */
-    public static void runAs(String login, Runnable work) {
-        runAs(login, () -> {
+    public static void runAs(User user, Runnable work) {
+        runAs(user, () -> {
             work.run();
             return null;
         });

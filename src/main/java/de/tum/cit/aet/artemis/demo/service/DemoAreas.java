@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.demo.service;
 
 import java.util.function.Supplier;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,12 +42,12 @@ final class DemoAreas {
      * @param <T>      the type of the result.
      * @return the result of the area, or the fallback if it failed.
      */
-    static <T> T seed(String area, Supplier<T> step, T fallback) {
+    static <T> @Nullable T seed(String area, Supplier<T> step, @Nullable T fallback) {
         try {
             return step.get();
         }
         catch (RuntimeException exception) {
-            log.error("Could not seed the demo {}, continuing with the remaining demo data", area, exception);
+            log.error("Could not seed the demo {}", area, exception);
             return fallback;
         }
     }

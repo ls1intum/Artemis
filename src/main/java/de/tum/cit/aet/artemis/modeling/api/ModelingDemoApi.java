@@ -294,7 +294,7 @@ public class ModelingDemoApi extends AbstractModelingApi {
      * the diagram into that submission through {@code ModelingSubmissionResource}.
      */
     private void submitAsStudent(ModelingExercise exercise, User student, String model) {
-        SecurityUtils.runAs(student.getLogin(), () -> {
+        SecurityUtils.runAs(student, () -> {
             StudentParticipation participation = participationService.startExercise(exercise, student, true);
             ModelingSubmission submission = new ModelingSubmission();
             submission.setId(submissionRepository.findLatestSubmissionByParticipationId(participation.getId()).orElseThrow().getId());
