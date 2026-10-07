@@ -183,7 +183,7 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
 
         DemoDataSeedingService withoutOptionalModules = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
                 new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi),
-                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi));
+                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty()));
         assertThatCode(() -> withoutOptionalModules.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent()))
                 .as("seeding must work when the optional modules are disabled").doesNotThrowAnyException();
 
@@ -199,7 +199,7 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
 
         DemoDataSeedingService withFailingArea = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
                 new DemoExerciseSeedingService(Optional.of(failingTextDemoApi), Optional.of(modelingDemoApi), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi),
-                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi));
+                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty()));
         assertThatCode(() -> withFailingArea.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("a failing area must not escape into the startup")
                 .doesNotThrowAnyException();
 

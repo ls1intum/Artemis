@@ -201,7 +201,7 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
 
         DemoDataSeedingService withoutModeling = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
                 new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi),
-                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi));
+                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty()));
         assertThatCode(() -> withoutModeling.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("seeding must work when the modeling module is disabled")
                 .doesNotThrowAnyException();
 

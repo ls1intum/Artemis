@@ -262,7 +262,7 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
         Map<Long, List<Long>> lecturesBefore = snapshotLectures();
         AtlasDemoApi atlasDemoApi = mock(AtlasDemoApi.class);
         DemoDataSeedingService withoutLectures = new DemoDataSeedingService(accountDemoApi, courseDemoApi, demoExerciseSeedingService,
-                new DemoCourseContentSeedingService(Optional.empty(), Optional.of(atlasDemoApi), assessmentDemoApi));
+                new DemoCourseContentSeedingService(Optional.empty(), Optional.of(atlasDemoApi), assessmentDemoApi, Optional.empty()));
 
         assertThatCode(() -> withoutLectures.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("seeding must work when the lecture module is disabled")
                 .doesNotThrowAnyException();

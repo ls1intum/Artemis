@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.demo.service.DemoExerciseSeedingService.DemoExerci
 import de.tum.cit.aet.artemis.lecture.api.LectureDemoApi;
 import de.tum.cit.aet.artemis.lecture.api.dtos.DemoLectures;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupDemoApi;
 
 /**
  * Seeds the content of the demo course around its exercises, see {@link DemoDataSeedingService}.
@@ -37,10 +38,14 @@ public class DemoCourseContentSeedingService {
 
     private final AssessmentDemoApi assessmentDemoApi;
 
-    public DemoCourseContentSeedingService(Optional<LectureDemoApi> lectureDemoApi, Optional<AtlasDemoApi> atlasDemoApi, AssessmentDemoApi assessmentDemoApi) {
+    private final Optional<TutorialGroupDemoApi> tutorialGroupDemoApi;
+
+    public DemoCourseContentSeedingService(Optional<LectureDemoApi> lectureDemoApi, Optional<AtlasDemoApi> atlasDemoApi, AssessmentDemoApi assessmentDemoApi,
+            Optional<TutorialGroupDemoApi> tutorialGroupDemoApi) {
         this.lectureDemoApi = lectureDemoApi;
         this.atlasDemoApi = atlasDemoApi;
         this.assessmentDemoApi = assessmentDemoApi;
+        this.tutorialGroupDemoApi = tutorialGroupDemoApi;
     }
 
     /**
@@ -57,5 +62,6 @@ public class DemoCourseContentSeedingService {
         DemoAreas.seed("competencies",
                 () -> atlasDemoApi.ifPresent(api -> api.createDemo(course, lectures.architecture().stream().filter(unit -> !(unit instanceof ExerciseUnit)).toList())));
         DemoAreas.seed("grading scale", () -> assessmentDemoApi.createDemoGradingScale(course));
+        DemoAreas.seed("tutorial groups", () -> tutorialGroupDemoApi.ifPresent(api -> api.createDemo(course, users.tutor(), users.students())));
     }
 }
