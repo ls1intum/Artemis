@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -28,6 +29,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -41,11 +43,13 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.factories.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.service.AttachmentVideoUnitService;
 import de.tum.cit.aet.artemis.lecture.service.AttachmentVideoUnitSlideSplitJob;
+import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
 
 /**
@@ -173,13 +177,16 @@ public class LectureDemoApi extends AbstractLectureApi {
 
     private final ChannelService channelService;
 
+    private final LectureUnitService lectureUnitService;
+
     public LectureDemoApi(LectureRepository lectureRepository, ExerciseUnitRepository exerciseUnitRepository, AttachmentVideoUnitService attachmentVideoUnitService,
-            SlideSplitterService slideSplitterService, ChannelService channelService) {
+            SlideSplitterService slideSplitterService, ChannelService channelService, LectureUnitService lectureUnitService) {
         this.lectureRepository = lectureRepository;
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.attachmentVideoUnitService = attachmentVideoUnitService;
         this.slideSplitterService = slideSplitterService;
         this.channelService = channelService;
+        this.lectureUnitService = lectureUnitService;
     }
 
     /**
@@ -205,6 +212,23 @@ public class LectureDemoApi extends AbstractLectureApi {
         ZonedDateTime thisWeek = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
         return new DemoLectures(seedArchitectureLecture(course, thisWeek.minusWeeks(3), architectureExercises),
                 seedAlgorithmsLecture(course, thisWeek.minusWeeks(2), algorithmsExercises), seedModelingLecture(course, thisWeek.minusWeeks(1), modelingExercises));
+    }
+
+    /**
+     * Lets the demo student complete lecture units the way they tick off a unit in the client, which calls {@code LectureUnitResource#completeLectureUnit}: the demo student
+     * worked through the lecture about software architecture and read the text of the lecture about algorithms, but has not started on the lecture about object-oriented
+     * modeling of last week yet. Exercise units are completed through their exercise, so they are left out. Completing a unit again changes nothing, so only the missing
+     * completions are created.
+     * <p>
+     * The resource also updates the competency progress of the student, which only covers the competencies the unit is linked to already. The demo units are linked
+     * afterwards, so the progress is left to the seeding of the competencies, which updates it once all links exist.
+     *
+     * @param lectures the seeded units of the demo lectures.
+     * @param student  the demo student.
+     */
+    public void completeDemoUnits(DemoLectures lectures, User student) {
+        Stream.concat(lectures.architecture().stream().filter(unit -> !(unit instanceof ExerciseUnit)), lectures.algorithms().stream().filter(TextUnit.class::isInstance))
+                .forEach(unit -> lectureUnitService.setLectureUnitCompletion(unit, student, true));
     }
 
     private List<LectureUnit> seedArchitectureLecture(Course course, ZonedDateTime startDate, List<Exercise> exercises) {
