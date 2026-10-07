@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.demo;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.within;
 
@@ -20,7 +19,6 @@ import org.springframework.http.HttpStatus;
 import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -192,8 +190,7 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         DemoDataSeedingService withoutExamModule = new DemoDataSeedingService(accountDemoApi, courseDemoApi, new DemoExerciseSeedingService(Optional.of(textDemoApi),
                 Optional.of(modelingDemoApi), Optional.of(fileUploadDemoApi), quizDemoApi, programmingDemoApi, assessmentDemoApi, Optional.empty()),
                 demoCourseContentSeedingService);
-        assertThatCode(() -> withoutExamModule.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("seeding must work when the exam module is disabled")
-                .doesNotThrowAnyException();
+        DemoSeeding.seed(withoutExamModule);
         assertThat(demoExam()).as("a disabled exam module creates no exam").isEmpty();
 
         seed();
@@ -204,7 +201,7 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     private void seed() {
-        demoDataSeedingService.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent());
+        DemoSeeding.seed(demoDataSeedingService);
     }
 
     private Course demoCourse() {

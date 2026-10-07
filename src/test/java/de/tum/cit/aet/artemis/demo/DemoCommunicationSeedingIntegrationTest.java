@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
-import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -189,7 +188,7 @@ class DemoCommunicationSeedingIntegrationTest extends AbstractSpringIntegrationI
     }
 
     private void seed() {
-        demoDataSeedingService.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent());
+        DemoSeeding.seed(demoDataSeedingService);
     }
 
     private Course demoCourse() {

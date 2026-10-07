@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.demo;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -26,13 +28,14 @@ import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
+import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
-import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.demo.service.DemoCourseContentSeedingService;
@@ -58,7 +61,8 @@ import de.tum.cit.aet.artemis.text.api.TextDemoApi;
  * published in tests, so the tests invoke the listener directly. That exercises the real APIs against the real database.
  * <p>
  * Seeding deliberately uses fixed identifiers, so these tests write a course named {@code demo} and the demo users into the shared test database instead of prefixed test data.
- * That is safe precisely because seeding is idempotent, which is also why every test can seed first and still be correct regardless of what ran before it. The methods must not run
+ * That is safe precisely because seeding is idempotent, which is also why every test can seed first and still be correct regardless of which demo test ran before it. The methods
+ * must not run
  * in parallel though, hence {@link ExecutionMode#SAME_THREAD}.
  */
 @Execution(ExecutionMode.SAME_THREAD)
@@ -106,6 +110,12 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     @Autowired
     private ConductAgreementService conductAgreementService;
 
+    @Autowired
+    private GradingScaleRepository gradingScaleRepository;
+
+    @Autowired
+    private ResourceLoaderService resourceLoaderService;
+
     @Test
     void seedsUsersWithTheirCourseRoles() {
         seed();
@@ -125,16 +135,17 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    void seedsCourseReadyToBeExplored() {
+    void seedsCourseReadyToBeExplored() throws IOException {
         seed();
 
         Course course = demoCourse().orElseThrow();
         assertThat(courseRepository.ensureDefaultConfigurations(course.getId())).as("demo course owns all of its default settings rows").isZero();
         assertThat(course.getSemester()).as("demo course has a semester in the format the client expects").matches("SS\\d{2}|WS\\d{2}/\\d{2}");
         assertThat(course.isOnboardingDone()).as("the demo instructor lands on the course instead of the setup wizard").isTrue();
-        assertThat(course.getTimeZone()).as("tutorial groups need the time zone of their course").isNotBlank();
+        assertThat(course.getTimeZone()).as("tutorial groups need the time zone of their course").isEqualTo("Europe/Berlin");
         assertThat(course.getPresentationScore()).as("no presentations are seeded, so the course does not ask for any").isZero();
-        assertThat(course.getCourseInformationSharingMessagingCodeOfConduct()).as("the demo course has the code of conduct of a course created through the UI").isNotBlank();
+        assertThat(course.getCourseInformationSharingMessagingCodeOfConduct()).as("the demo course has the code of conduct of a course created through the UI")
+                .isEqualTo(resourceLoaderService.getResource(Path.of("templates", "codeofconduct", "README.md")).getContentAsString(StandardCharsets.UTF_8));
     }
 
     @Test
@@ -164,7 +175,7 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
 
         assertThat(ongoingExercises).as("one ongoing exercise of every type that this context can seed").hasSize(4).extracting(Exercise::getClass).map(Class::getSimpleName)
                 .containsExactlyInAnyOrder("TextExercise", "ModelingExercise", "FileUploadExercise", "QuizExercise");
-        assertThat(exercises).allSatisfy(exercise -> {
+        assertThat(exercises).isNotEmpty().allSatisfy(exercise -> {
             assertThat(exercise.isVisibleToStudents()).as("%s is released", exercise.getTitle()).isTrue();
             assertThat(exercise.getProblemStatement()).as("%s explains what students have to do", exercise.getTitle()).isNotBlank();
         });
@@ -202,20 +213,22 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     void seedsWithoutOptionalModules() {
         seed();
         DemoDataSnapshot beforeRun = snapshotDemoData();
+        deleteGradingScale();
 
         DemoDataSeedingService withoutOptionalModules = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
                 new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi, Optional.empty()),
                 new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty(), communicationDemoApi));
-        assertThatCode(() -> withoutOptionalModules.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent()))
-                .as("seeding must work when the optional modules are disabled").doesNotThrowAnyException();
+        DemoSeeding.seed(withoutOptionalModules);
 
         assertThat(snapshotDemoData()).as("disabled modules must not change existing demo data").isEqualTo(beforeRun);
+        assertThat(gradingScaleRepository.findByCourseId(demoCourse().orElseThrow().getId())).as("the areas of the enabled modules are still seeded").isPresent();
     }
 
     @Test
     void continuesWithRemainingAreasWhenOneFails() {
         seed();
         DemoDataSnapshot beforeRun = snapshotDemoData();
+        deleteGradingScale();
         TextDemoApi failingTextDemoApi = mock(TextDemoApi.class);
         when(failingTextDemoApi.createDemo(any(), any(), any())).thenThrow(new IllegalStateException("simulated failure of the text exercises"));
 
@@ -223,14 +236,38 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
                 accountDemoApi, courseDemoApi, new DemoExerciseSeedingService(Optional.of(failingTextDemoApi), Optional.of(modelingDemoApi), Optional.empty(), quizDemoApi,
                         programmingDemoApi, assessmentDemoApi, Optional.empty()),
                 new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty(), communicationDemoApi));
-        assertThatCode(() -> withFailingArea.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("a failing area must not escape into the startup")
-                .doesNotThrowAnyException();
+        List<String> errors = DemoSeeding.seedAndCollectErrors(withFailingArea);
 
-        assertThat(snapshotDemoData()).as("the areas after the failing one are still seeded and leave the existing demo data alone").isEqualTo(beforeRun);
+        assertThat(errors).as("the failing area is logged instead of escaping into the startup").containsExactly("Could not seed the demo text exercises");
+        assertThat(gradingScaleRepository.findByCourseId(demoCourse().orElseThrow().getId())).as("the areas after the failing one are still seeded").isPresent();
+        assertThat(snapshotDemoData()).as("the remaining areas leave the existing demo data alone").isEqualTo(beforeRun);
+    }
+
+    @Test
+    void seedsNothingElseWithoutItsUsers() {
+        seed();
+        DemoDataSnapshot beforeRun = snapshotDemoData();
+        deleteGradingScale();
+        AccountDemoApi failingAccountDemoApi = mock(AccountDemoApi.class);
+        when(failingAccountDemoApi.createDemoUsers()).thenThrow(new IllegalStateException("simulated failure of the users"));
+
+        List<String> errors = DemoSeeding.seedAndCollectErrors(new DemoDataSeedingService(failingAccountDemoApi, courseDemoApi,
+                new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi, Optional.empty()),
+                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty(), communicationDemoApi)));
+
+        assertThat(errors).as("the demo content belongs to the demo users, so nothing else is seeded without them").containsExactly("Could not seed the demo users",
+                "Skipping the remaining demo data, because it belongs to the demo course and its users");
+        assertThat(gradingScaleRepository.findByCourseId(demoCourse().orElseThrow().getId())).as("no area runs without the users").isEmpty();
+        assertThat(snapshotDemoData()).isEqualTo(beforeRun);
+        seed();
+    }
+
+    private void deleteGradingScale() {
+        gradingScaleRepository.findByCourseId(demoCourse().orElseThrow().getId()).ifPresent(gradingScaleRepository::delete);
     }
 
     private void seed() {
-        demoDataSeedingService.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent());
+        DemoSeeding.seed(demoDataSeedingService);
     }
 
     /**

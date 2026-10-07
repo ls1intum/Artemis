@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.demo;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
@@ -40,7 +39,6 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasDemoApi;
 import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
-import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
@@ -57,7 +55,6 @@ import de.tum.cit.aet.artemis.modeling.api.ModelingDemoApi;
 import de.tum.cit.aet.artemis.programming.api.ProgrammingDemoApi;
 import de.tum.cit.aet.artemis.quiz.api.QuizDemoApi;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
-import de.tum.cit.aet.artemis.text.api.TextDemoApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.dto.TextParticipationDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -72,6 +69,10 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupDemoApi;
 @Execution(ExecutionMode.SAME_THREAD)
 class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
+    private static final String ONGOING_ESSAY_TITLE = "Essay: Monolith or Microservices?";
+
+    private static final String GRADED_ESSAY_TITLE = "Essay: The Value of Code Reviews";
+
     @Autowired
     private DemoDataSeedingService demoDataSeedingService;
 
@@ -80,9 +81,6 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
 
     @Autowired
     private CourseDemoApi courseDemoApi;
-
-    @Autowired
-    private TextDemoApi textDemoApi;
 
     @Autowired
     private AssessmentDemoApi assessmentDemoApi;
@@ -271,15 +269,14 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
                         Optional.empty()),
                 new DemoCourseContentSeedingService(Optional.of(lectureDemoApi), Optional.of(atlasDemoApi), assessmentDemoApi, Optional.of(tutorialGroupDemoApi),
                         communicationDemoApi));
-        assertThatCode(() -> withoutTextModule.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("seeding must work when the text module is disabled")
-                .doesNotThrowAnyException();
+        DemoSeeding.seed(withoutTextModule);
 
         assertThat(gradingScaleRepository.findByCourseId(courseId)).as("the missing grading scale is recreated without the text module").isPresent();
         assertThat(textActivity(courseId)).as("a disabled text module leaves the existing text exercises alone").isEqualTo(textActivity);
     }
 
     private void seed() {
-        demoDataSeedingService.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent());
+        DemoSeeding.seed(demoDataSeedingService);
     }
 
     private DemoUsers demoUsers() {
@@ -293,9 +290,12 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
     /**
      * The ongoing and the finished demo essay, which already exist because every test seeds first.
      */
+    /**
+     * The essays of the demo course, the ongoing one first, looked up instead of seeded, so that a test only sees what seeding left behind.
+     */
     private List<TextExercise> demoEssays() {
-        DemoUsers users = demoUsers();
-        return textDemoApi.createDemo(demoCourse(), users.students(), users.tutor());
+        List<TextExercise> essays = textExerciseRepository.findByCourseIdWithCategories(demoCourse().getId());
+        return Stream.of(ONGOING_ESSAY_TITLE, GRADED_ESSAY_TITLE).map(title -> essays.stream().filter(essay -> title.equals(essay.getTitle())).findFirst().orElseThrow()).toList();
     }
 
     private TextExercise finishedEssay() {
