@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 import static de.tum.cit.aet.artemis.hyperion.web.HyperionWebsocketTopics.EXERCISE_GENERATION_JOB;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -439,6 +440,22 @@ class GenerationTaskServiceTest {
         verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
         assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
         assertThat(sentEvents().getLast().liveExerciseChanged()).isNotEqualTo(Boolean.TRUE);
+    }
+
+    @Test
+    void sealingFailureAfterASuccessfulSave_stillReleasesTheSlotAndBudget() {
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any()))
+                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(RepositoryType.SOLUTION, "solution-commit"), exercise.getProblemStatement(),
+                        exercise.getTitle(), "main", true, null, GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY));
+        Mockito.doThrow(new IllegalStateException("accounting store unavailable")).when(jobService).sealTokenAccountingOnWorkerExit(EXERCISE_ID, JOB_ID);
+        GenerationOutcome outcome = outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()), SpecFidelityReport.empty(),
+                Map.of(RepositoryType.SOLUTION, Map.of("src/Stack.java", "class Stack {}")), "# Bounded stack", "");
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> run(GenerationMode.GENERATE, outcome)).withMessage("accounting store unavailable");
+
+        verify(persistenceService).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
+        verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
+        verify(generationBudgetService).releaseReservation(null);
     }
 
     @Test
