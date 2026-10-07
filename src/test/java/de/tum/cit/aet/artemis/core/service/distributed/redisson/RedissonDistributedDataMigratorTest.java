@@ -7,10 +7,12 @@ import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSch
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.keyFor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.entry;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.redisson.Redisson;
+import org.redisson.api.RMap;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RSet;
 import org.redisson.api.RedissonClient;
@@ -36,6 +39,8 @@ import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.Car
 import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.StructureKind;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 
 /**
  * Covers the namespace migration against a real Redis, which is the only way to exercise the drain: the semantics that
@@ -307,5 +312,114 @@ class RedissonDistributedDataMigratorTest {
         Long moved = ReflectionTestUtils.invokeMethod(migrationService(), "drain", UNVERSIONED, VERSION, new CarriedOverStructure("emptySet", StructureKind.SET));
 
         assertThat(moved).isZero();
+    }
+
+    /**
+     * How schema version 1 encoded a {@link Feature} map key, captured from the build that still had {@code AtlasML}:
+     * the class name, then the constant's position plus one. Golden bytes rather than an encoding computed here, because
+     * the current enum can no longer produce them.
+     */
+    private static final String V1_FEATURE_KEY_PREFIX = "010064652e74756d2e6369742e6165742e617274656d69732e636f72652e736572766963652e666561747572652e466561747572e5";
+
+    private static byte[] v1FeatureKey(int v1Position) {
+        return HexFormat.of().parseHex(V1_FEATURE_KEY_PREFIX + HexFormat.of().toHexDigits((byte) (v1Position + 1)));
+    }
+
+    private static byte[] encodedToggle(boolean enabled) throws Exception {
+        ByteBuf encoded = new BackwardCompatibleSerializationCodec().getMapValueEncoder().encode(enabled);
+        try {
+            return ByteBufUtil.getBytes(encoded);
+        }
+        finally {
+            encoded.release();
+        }
+    }
+
+    private static RMap<byte[], byte[]> rawFeatures(int version) {
+        return redissonClient.getMap(keyFor(version, "features"), ByteArrayCodec.INSTANCE);
+    }
+
+    private static void claimVersion(int version) {
+        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set(String.valueOf(version));
+    }
+
+    /**
+     * Removing {@code AtlasML} moved every later constant one position up. A v1 AtlasAgent key read with the current enum
+     * would be Memiris, so the migration must resolve each key against the v1 order, not copy its bytes.
+     */
+    @Test
+    void testV1ToV2KeepsEveryFeatureToggleUnderItsOwnName() throws Exception {
+        claimVersion(1);
+        RMap<byte[], byte[]> v1 = rawFeatures(1);
+        v1.put(v1FeatureKey(4), encodedToggle(false));  // Science, before AtlasML
+        v1.put(v1FeatureKey(7), encodedToggle(true));   // AtlasML, removed in v2
+        v1.put(v1FeatureKey(8), encodedToggle(true));   // AtlasAgent, now one position up
+        v1.put(v1FeatureKey(9), encodedToggle(false));  // Memiris
+        v1.put(v1FeatureKey(17), encodedToggle(true));  // GlobalSearchReconcileOrphan
+        v1.put(v1FeatureKey(18), encodedToggle(false)); // PresentationAssessments, the last v1 constant
+
+        migrationService().migrateToCurrentVersion();
+
+        RMap<Feature, Boolean> features = redissonClient.getMap(keyFor(2, "features"));
+        assertThat(features.readAllMap()).containsOnly(entry(Feature.Science, false), entry(Feature.AtlasAgent, true), entry(Feature.Memiris, false),
+                entry(Feature.GlobalSearchReconcileOrphan, true), entry(Feature.PresentationAssessments, false));
+        assertThat(rawFeatures(1).isExists()).isFalse();
+        assertThat(storedVersion()).isEqualTo("2");
+    }
+
+    @Test
+    void testV1ToV2MovesTheOtherStructuresUnchanged() {
+        claimVersion(1);
+        redissonClient.getQueue(keyFor(1, "buildResultQueue")).add("result-1");
+        redissonClient.getQueue(keyFor(1, "deferredBuildResultQueue")).addAll(List.of("deferred-1", "deferred-2"));
+        redissonClient.getPriorityQueue(keyFor(1, "buildJobQueue")).add("job-1");
+        redissonClient.getMap(keyFor(1, "processingJobs")).put("running", "agent-1");
+        redissonClient.getMapCache(keyFor(1, "pyris-job-map")).put("job-1", "session-1", 1, TimeUnit.HOURS);
+        redissonClient.getMapCache(keyFor(1, "pyris-job-map-v2")).put("job-2", "session-2", 1, TimeUnit.HOURS);
+        redissonClient.getMap(keyFor(1, "buildAgentInformation")).put("agent-1", "details");
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.getQueue(keyFor(2, "buildResultQueue")).readAll()).containsExactly("result-1");
+        assertThat(redissonClient.getQueue(keyFor(2, "deferredBuildResultQueue")).readAll()).containsExactly("deferred-1", "deferred-2");
+        assertThat(redissonClient.getPriorityQueue(keyFor(2, "buildJobQueue")).readAll()).containsExactly("job-1");
+        assertThat(redissonClient.getMap(keyFor(2, "processingJobs"))).containsEntry("running", "agent-1");
+        assertThat(redissonClient.getMapCache(keyFor(2, "pyris-job-map")).get("job-1")).isEqualTo("session-1");
+        RMapCache<Object, Object> activePyrisJobs = redissonClient.getMapCache(keyFor(2, "pyris-job-map-v2"));
+        assertThat(activePyrisJobs.get("job-2")).isEqualTo("session-2");
+        assertThat(activePyrisJobs.remainTimeToLive("job-2")).isPositive().isLessThanOrEqualTo(Duration.ofHours(1).toMillis());
+        // Not carried over, and the whole v1 namespace is deleted once the step completes.
+        assertThat(redissonClient.getMap(keyFor(2, "buildAgentInformation")).isEmpty()).isTrue();
+        assertThat(redissonClient.getKeys().getKeysByPattern("artemis:v1:*")).isEmpty();
+    }
+
+    /**
+     * A toggle is written to v2 before it is removed from v1, so a crash in between leaves it in both. The rerun has to
+     * overwrite the v2 entry, not add a second one under another encoding.
+     */
+    @Test
+    void testV1ToV2RerunAfterAPartialFeatureMoveDoesNotDuplicateToggles() throws Exception {
+        claimVersion(1);
+        rawFeatures(1).put(v1FeatureKey(8), encodedToggle(true));
+        redissonClient.getMap(keyFor(2, "features")).put(Feature.AtlasAgent, Boolean.TRUE);
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(2, "features")).readAllMap()).containsOnly(entry(Feature.AtlasAgent, true));
+    }
+
+    /**
+     * An unreadable toggle must not keep the instance from starting: it is dropped and startup seeds its default again.
+     */
+    @Test
+    void testV1ToV2DropsAFeatureToggleItCannotRead() throws Exception {
+        claimVersion(1);
+        rawFeatures(1).put("not-a-feature".getBytes(StandardCharsets.UTF_8), encodedToggle(true));
+        rawFeatures(1).put(v1FeatureKey(0), encodedToggle(true));
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(2, "features")).readAllMap()).containsOnly(entry(Feature.ProgrammingExercises, true));
+        assertThat(storedVersion()).isEqualTo("2");
     }
 }

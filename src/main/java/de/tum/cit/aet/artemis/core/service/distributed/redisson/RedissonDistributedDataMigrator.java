@@ -1,16 +1,20 @@
 package de.tum.cit.aet.artemis.core.service.distributed.redisson;
 
+import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.FEATURES;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.LEGACY_TO_V1_STRUCTURES;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.MIGRATION_LOCK_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.RELEASE_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.UNVERSIONED;
+import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.V1_TO_V2_WIRE_COMPATIBLE_STRUCTURES;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.VERSION;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.VERSION_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.keyFor;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.keyPatternFor;
 
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.redisson.api.RBucket;
@@ -230,15 +234,65 @@ class RedissonDistributedDataMigrator {
      * decision and a custom old-format decoder when a required representation is no longer wire-compatible.
      */
     private List<MigrationStep> migrationSteps() {
-        return List.of(new MigrationStep(UNVERSIONED, 1, () -> migrateWireCompatibleStructures(UNVERSIONED, 1, LEGACY_TO_V1_STRUCTURES)));
+        return List.of(new MigrationStep(UNVERSIONED, 1, () -> migrateWireCompatibleStructures(UNVERSIONED, 1, LEGACY_TO_V1_STRUCTURES)),
+                new MigrationStep(1, 2, this::migrateV1ToV2));
     }
 
     private void migrateWireCompatibleStructures(int fromVersion, int toVersion, List<CarriedOverStructure> structures) {
+        carryOver(fromVersion, toVersion, structures);
+        discardRemainderOf(fromVersion);
+    }
+
+    private void carryOver(int fromVersion, int toVersion, List<CarriedOverStructure> structures) {
         for (CarriedOverStructure structure : structures) {
             long moved = drain(fromVersion, toVersion, structure);
             log.info("Carried {} entries of '{}' over to schema version {}", moved, structure.name(), toVersion);
         }
-        discardRemainderOf(fromVersion);
+    }
+
+    /**
+     * Version 2 removed {@code Feature.AtlasML}. Everything but the feature map keeps its bytes; the feature map's keys are
+     * re-encoded, see {@link V1FeatureKeyCodec}.
+     */
+    private void migrateV1ToV2() {
+        carryOver(1, 2, V1_TO_V2_WIRE_COMPATIBLE_STRUCTURES);
+        long moved = migrateV1FeatureKeys();
+        log.info("Carried {} entries of '{}' over to schema version 2", moved, FEATURES);
+        discardRemainderOf(1);
+    }
+
+    /**
+     * Moves every feature toggle with its key re-encoded and its value bytes unchanged, writing before removing like
+     * {@link #drainMap}. A toggle whose feature no longer exists, or whose key cannot be read, is dropped: startup seeds
+     * its default again, which costs at most one runtime change, while refusing to start would take the instance down.
+     *
+     * @return how many toggles were moved
+     */
+    private long migrateV1FeatureKeys() {
+        RMap<byte[], byte[]> source = redissonClient.getMap(keyFor(1, FEATURES), ByteArrayCodec.INSTANCE);
+        RMap<byte[], byte[]> target = redissonClient.getMap(keyFor(2, FEATURES), ByteArrayCodec.INSTANCE);
+        V1FeatureKeyCodec keyCodec = new V1FeatureKeyCodec();
+        long moved = 0;
+        for (byte[] key : source.keySet()) {
+            byte[] value = source.get(key);
+            if (value == null) {
+                continue;
+            }
+            Optional<byte[]> currentKey;
+            try {
+                currentKey = keyCodec.reencode(key);
+            }
+            catch (IllegalArgumentException e) {
+                log.warn("Dropping the feature toggle with unreadable key {}; its default is seeded again at startup", HexFormat.of().formatHex(key), e);
+                currentKey = Optional.empty();
+            }
+            if (currentKey.isPresent()) {
+                target.put(currentKey.get(), value);
+                moved++;
+            }
+            source.remove(key);
+        }
+        return moved;
     }
 
     /**

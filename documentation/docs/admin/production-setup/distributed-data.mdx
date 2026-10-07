@@ -2,7 +2,7 @@
 id: distributed-data
 title: Distributed Data with Redis or Valkey
 sidebar_label: Distributed Data with Redis or Valkey
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-06
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -19,7 +19,7 @@ and follows the same procedure. Redis and Valkey persist queues, maps, sets, and
 restart. Hazelcast does not retain this data after its cluster stops and therefore needs no persistent-data migration.
 
 Artemis assigns a schema version to its Redis or Valkey data. Stored structures use versioned keys such as
-`artemis:v1:{buildJobQueue}`. The metadata keys are deliberately readable without an Artemis-specific codec:
+`artemis:v2:{buildJobQueue}`. The metadata keys are deliberately readable without an Artemis-specific codec:
 
 ```text
 artemis:distributed-data-schema
@@ -29,6 +29,7 @@ artemis:distributed-data-schema:release
 The first Artemis release with this mechanism treats existing unversioned data as schema version `0` and migrates it
 to schema version `1` during startup. A release declaring a later schema runs every step in between during the same
 startup, so a store that has never been migrated goes from `0` through `1` to the version the release expects.
+The current schema version is `2`.
 
 ## Prepare an upgrade
 
@@ -65,6 +66,11 @@ these structures:
 | `features` | Contains runtime feature-toggle changes made by an administrator. |
 | `pyris-job-map` | Tracks in-flight Iris jobs and their remaining expiry time. |
 
+The schema `1` to `2` migration preserves `buildJobQueue`, `processingJobs`, `buildResultQueue`,
+`deferredBuildResultQueue`, and the current Iris job map, `pyris-job-map-v2`. It also removes the obsolete `AtlasML`
+feature toggle and rewrites the keys of `features`, because stored keys identify a toggle by its position in the
+list of features. Every other runtime toggle keeps its value.
+
 `deferredBuildResultQueue` was introduced after schema `1`. It holds results awaiting exercise result-processing admission;
 future schema migrations must preserve it alongside `buildResultQueue`. Deferred results remain visible in the admin
 result-queue listing and are retried every five seconds without queue-listener events. The admin clear operation
@@ -96,6 +102,8 @@ The first new node logs messages similar to:
 Distributed store predates schema versions, treating its contents as version 0
 Migrating distributed data from schema version 0 to 1
 Distributed data is now at schema version 1
+Migrating distributed data from schema version 1 to 2
+Distributed data is now at schema version 2
 ```
 
 A store that is already at a numbered version logs only the steps that are still missing.
@@ -105,7 +113,7 @@ Read the metadata with `redis-cli` or the equivalent `valkey-cli` commands:
 ```bash
 redis-cli GET artemis:distributed-data-schema
 redis-cli GET artemis:distributed-data-schema:release
-redis-cli --scan --pattern 'artemis:v1:*'
+redis-cli --scan --pattern 'artemis:v2:*'
 ```
 
 The first command must report the schema expected by the release. The second reports the Artemis release that last

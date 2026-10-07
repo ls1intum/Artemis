@@ -20,7 +20,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { TumAetUiCheckboxComponent, TumAetUiSelectComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 
 describe('CompetencySelection', () => {
     let fixture: ComponentFixture<CompetencySelectionComponent>;

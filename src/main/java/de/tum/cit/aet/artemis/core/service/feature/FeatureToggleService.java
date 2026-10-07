@@ -115,13 +115,13 @@ public class FeatureToggleService {
         features = distributedDataProvider.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features (except Science, TutorSuggestions, AtlasML, AtlasAgent, RateLimit, GlobalSearch, AutonomousTutor, Deimos, and the retired ones) are
+        // This ensures that all features (except Science, TutorSuggestions, AtlasAgent, RateLimit, GlobalSearch, AutonomousTutor, Deimos, and the retired ones) are
         // enabled once
         // the
         // system starts up
         for (Feature feature : Feature.values()) {
             if (!features.containsKey(feature) && !RETIRED_FEATURES.contains(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions
-                    && feature != Feature.AtlasML && feature != Feature.AtlasAgent && feature != Feature.RateLimit && feature != Feature.GlobalSearch
+                    && feature != Feature.AtlasAgent && feature != Feature.RateLimit && feature != Feature.GlobalSearch
                     && feature != Feature.AutonomousTutor && feature != Feature.Deimos && feature != Feature.GlobalSearchReconcile
                     && feature != Feature.GlobalSearchReconcileOrphan) {
                 features.put(feature, true);
@@ -138,10 +138,6 @@ public class FeatureToggleService {
 
         if (!features.containsKey(Feature.TutorSuggestions)) {
             features.put(Feature.TutorSuggestions, false);
-        }
-
-        if (!features.containsKey(Feature.AtlasML)) {
-            features.put(Feature.AtlasML, false);
         }
 
         RETIRED_FEATURES.forEach(features::remove);

@@ -370,8 +370,7 @@ public class QuizDemoService {
     }
 
     /**
-     * Creates the quiz like {@code QuizExerciseCreationUpdateResource#createCourseQuizExercise}, apart from notifying AtlasML, whose competency suggestions the demo course does
-     * not need. A quiz in an exam is created like {@code QuizExerciseCreationUpdateResource#createExamQuizExercise}, which gives it no channel of its own.
+     * Creates the quiz like {@code QuizExerciseCreationUpdateResource#createCourseQuizExercise}. A quiz in an exam is created like {@code QuizExerciseCreationUpdateResource#createExamQuizExercise}, which gives it no channel of its own.
      */
     private QuizExercise create(QuizExercise quizExercise) {
         return create(quizExercise, List.of());
