@@ -324,6 +324,9 @@ public class HyperionExerciseGenerationResource {
                             consistent.set(true);
                             revertibleJobId.ifPresent(jobId -> jobService.discardRetainedRun(exerciseId, jobId));
                         }
+                        else if (!result.mutationAttempted()) {
+                            consistent.set(!jobService.isRevertRecoveryRetry(revertSlot));
+                        }
                         ExerciseGenerationRevertResultDTO body = new ExerciseGenerationRevertResultDTO(result.fullyReverted(),
                                 result.revertedRepositories().stream().map(HyperionExerciseGenerationResource::repositoryLabel).toList(), Instant.now());
                         return result.fullyReverted() ? ResponseEntity.ok(body) : ResponseEntity.status(HttpStatus.CONFLICT).body(body);

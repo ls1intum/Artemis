@@ -253,8 +253,8 @@ class HyperionExerciseGenerationResourceTest {
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
         when(generationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("adapt-job"));
-        when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class)))
-                .thenReturn(Optional.of(new ExerciseGenerationRevertService.RevertResult(true, List.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS))));
+        when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class))).thenReturn(
+                Optional.of(new ExerciseGenerationRevertService.RevertResult(true, List.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS), true)));
 
         ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L);
 
@@ -275,7 +275,7 @@ class HyperionExerciseGenerationResourceTest {
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
         when(generationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("adapt-job"));
         when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class)))
-                .thenReturn(Optional.of(new ExerciseGenerationRevertService.RevertResult(false, List.of(RepositoryType.SOLUTION))));
+                .thenReturn(Optional.of(new ExerciseGenerationRevertService.RevertResult(false, List.of(RepositoryType.SOLUTION), true)));
 
         ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L);
 
@@ -305,6 +305,28 @@ class HyperionExerciseGenerationResourceTest {
         }
         else {
             verify(jobService).clearRevertSlot(1L, "revert-slot");
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void revertExerciseGeneration_whenPreflightRefuses_preservesOnlyAnExistingRecoveryGuard(boolean recovering) {
+        when(programmingExerciseRepository.findWithAllParticipationsById(1L)).thenReturn(Optional.of(testExercise));
+        when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
+        when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
+        when(jobService.isRevertRecoveryRetry("revert-slot")).thenReturn(recovering);
+        when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class)))
+                .thenReturn(Optional.of(new ExerciseGenerationRevertService.RevertResult(false, List.of(), false)));
+
+        assertThat(resource.revertExerciseGeneration(1L).getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+
+        if (recovering) {
+            verify(jobService, never()).clearRevertSlot(1L, "revert-slot");
+            verify(jobService).retainRevertRecoverySlot(1L, "revert-slot");
+        }
+        else {
+            verify(jobService).clearRevertSlot(1L, "revert-slot");
+            verify(jobService, never()).retainRevertRecoverySlot(1L, "revert-slot");
         }
     }
 
