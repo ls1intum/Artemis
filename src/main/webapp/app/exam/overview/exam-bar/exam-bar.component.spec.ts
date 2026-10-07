@@ -64,6 +64,12 @@ describe('ExamBarComponent', () => {
         expect(comp.examAboutToEnd.emit).toHaveBeenCalledOnce();
     });
 
+    it('should mark the bar itself, not its host, for the layout contract', () => {
+        const bar: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exam-bar"]');
+        expect(bar.classList).toContain('exam-bar');
+        expect(bar.classList).toContain('h-10');
+    });
+
     it('should hand in the exam early', () => {
         vi.spyOn(comp.onExamHandInEarly, 'emit');
         vi.spyOn(comp, 'saveExercise');

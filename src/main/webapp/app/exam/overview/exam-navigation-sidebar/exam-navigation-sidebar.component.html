@@ -1,4 +1,4 @@
-<div class="sidebar flex flex-col rounded-lg bg-(--module-bg)" [class.collapsed]="isCollapsed()">
+<div class="sidebar flex flex-col rounded-lg bg-(--module-bg)" data-testid="exam-sidebar" [class.collapsed]="isCollapsed()">
     <!-- Since the exam navigation includes lots of functionalities and in-line adjustments,
          we use duplicated code here in order to keep the functionality of exam navigation apart from
          sidebar-card implementations.
@@ -73,7 +73,12 @@
     </div>
 
     <!-- Same height as the connection status bar beside it, so the two bottom rows read as one line. -->
-    <div class="sidebar-footer flex items-center border-t border-(--border-color) px-2" [class.justify-end]="!isCollapsed()" [class.justify-center]="isCollapsed()">
+    <div
+        class="sidebar-footer flex items-center border-t border-(--border-color) px-2"
+        data-testid="exam-sidebar-footer"
+        [class.justify-end]="!isCollapsed()"
+        [class.justify-center]="isCollapsed()"
+    >
         <button
             id="test-collapse"
             type="button"
