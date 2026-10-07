@@ -28,11 +28,14 @@ public class JGitServletConfiguration {
 
     private final ArtemisGitServletService artemisGitServlet;
 
+    private final LocalVCServletService localVCServletService;
+
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCBasePath;
 
-    public JGitServletConfiguration(ArtemisGitServletService artemisGitServlet) {
+    public JGitServletConfiguration(ArtemisGitServletService artemisGitServlet, LocalVCServletService localVCServletService) {
         this.artemisGitServlet = artemisGitServlet;
+        this.localVCServletService = localVCServletService;
     }
 
     /**
@@ -64,6 +67,22 @@ public class JGitServletConfiguration {
         // Run as the outermost filter for git requests so it wraps the response before any downstream filter or the git
         // servlet can commit a 401.
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        return registration;
+    }
+
+    /**
+     * Registers the filter that admits git requests before JGit resolves the repository, so that the authentication rate
+     * limit and the build-agent exemption apply identically to a missing and an existing repository. It is ordered
+     * immediately inside the response-masking filter and before the git servlet.
+     *
+     * @return the registration of the {@link LocalVCGitRequestAdmissionFilter}.
+     */
+    @Bean
+    public FilterRegistrationBean<LocalVCGitRequestAdmissionFilter> localVCGitRequestAdmissionFilter() {
+        FilterRegistrationBean<LocalVCGitRequestAdmissionFilter> registration = new FilterRegistrationBean<>(new LocalVCGitRequestAdmissionFilter(localVCServletService));
+        registration.addUrlPatterns("/git/*");
+        // Immediately inside the response-masking filter (which stays outermost) and before the git servlet.
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
         return registration;
     }
 
