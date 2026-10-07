@@ -238,18 +238,10 @@ export function stagePosition(stages: readonly HyperionStage[]): number | undefi
 }
 
 /**
- * A stage's state, raised to the most critical state any of its substeps is in.
- *
- * Precedence: failed, then running, then complete, then skipped, then pending. A substep reporting a failure while its
- * parent still shows a spinner is a lie the ladder would tell once per repair round, and it is asserted here rather
- * than in a template so every surface that renders the ladder tells the same story.
- *
- * Today {@link substepStates} derives each substep from its parent, so this can only ever confirm the parent. It is
- * the guard for the moment the server starts reporting a substep outcome independently, which is the point at which a
- * template-level fix would be forgotten.
+ * Preserve an interrupted parent's skipped state. Otherwise use the most critical child state.
  */
 export function mostCriticalState(parent: HyperionStepState, substeps: readonly HyperionSubstep[] | undefined): HyperionStepState {
-    if (!substeps?.length) {
+    if (parent === 'skipped' || !substeps?.length) {
         return parent;
     }
     const order: HyperionStepState[] = ['failed', 'current', 'complete', 'skipped', 'pending'];
