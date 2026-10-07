@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
 import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
@@ -80,6 +81,9 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Autowired
     private AssessmentDemoApi assessmentDemoApi;
+
+    @Autowired
+    private CommunicationDemoApi communicationDemoApi;
 
     @Autowired
     private UserCourseRoleRepository userCourseRoleRepository;
@@ -183,7 +187,7 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
 
         DemoDataSeedingService withoutOptionalModules = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
                 new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi),
-                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty()));
+                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty(), communicationDemoApi));
         assertThatCode(() -> withoutOptionalModules.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent()))
                 .as("seeding must work when the optional modules are disabled").doesNotThrowAnyException();
 
@@ -199,7 +203,7 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
 
         DemoDataSeedingService withFailingArea = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
                 new DemoExerciseSeedingService(Optional.of(failingTextDemoApi), Optional.of(modelingDemoApi), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi),
-                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty()));
+                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty(), communicationDemoApi));
         assertThatCode(() -> withFailingArea.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("a failing area must not escape into the startup")
                 .doesNotThrowAnyException();
 

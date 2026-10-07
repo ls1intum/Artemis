@@ -30,6 +30,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
+import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
@@ -82,6 +83,9 @@ class DemoTutorialGroupSeedingIntegrationTest extends AbstractSpringIntegrationI
 
     @Autowired
     private AssessmentDemoApi assessmentDemoApi;
+
+    @Autowired
+    private CommunicationDemoApi communicationDemoApi;
 
     @Autowired
     private TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
@@ -224,7 +228,7 @@ class DemoTutorialGroupSeedingIntegrationTest extends AbstractSpringIntegrationI
         TutorialGroupData beforeRun = snapshot();
 
         DemoDataSeedingService withoutTutorialGroups = new DemoDataSeedingService(accountDemoApi, courseDemoApi, demoExerciseSeedingService,
-                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty()));
+                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty(), communicationDemoApi));
         assertThatCode(() -> withoutTutorialGroups.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent()))
                 .as("seeding must work when the tutorial group module is disabled").doesNotThrowAnyException();
 
