@@ -67,8 +67,10 @@ public class DemoCourseContentSeedingService {
                 () -> lectureDemoApi.map(api -> api.createDemo(course, exercises.architecture(), exercises.algorithms(), exercises.modeling())).orElse(NO_LECTURES), NO_LECTURES);
         // Before the competencies, which update the progress of the demo students once everything is linked.
         DemoAreas.seed("lecture unit completions", () -> lectureDemoApi.ifPresent(api -> api.completeDemoUnits(lectures, users.student())));
-        DemoAreas.seed("competencies", () -> atlasDemoApi.ifPresent(api -> api.createDemo(course, learningObjects(exercises.architecture(), lectures.architecture()),
-                learningObjects(exercises.algorithms(), lectures.algorithms()), learningObjects(exercises.modeling(), lectures.modeling()), users.students())));
+        DemoAreas.seed("competencies",
+                () -> atlasDemoApi.ifPresent(api -> api.createDemo(course, learningObjects(exercises.architecture(), lectures.architecture()),
+                        learningObjects(exercises.algorithms(), lectures.algorithms()), learningObjects(exercises.modeling(), lectures.modeling()), exercises.communication(),
+                        users.students())));
         DemoAreas.seed("grading scale", () -> assessmentDemoApi.createDemoGradingScale(course));
         DemoAreas.seed("tutorial groups", () -> tutorialGroupDemoApi.ifPresent(api -> api.createDemo(course, users.tutor(), users.students())));
         // The students discuss the ongoing essay, the first exercise about software architecture, in its channel.

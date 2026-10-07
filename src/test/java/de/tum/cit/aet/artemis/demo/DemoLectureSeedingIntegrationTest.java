@@ -136,7 +136,9 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(algorithms.getStartDate()).as("the lectures follow the storyline week by week").isBefore(modeling.getStartDate());
 
         long courseId = demoCourse().getId();
-        Set<Long> architectureExercises = courseExerciseIds(courseId, TextExercise.class);
+        // The graded essay is about code reviews, which no lecture covers on its own, so only the open essay belongs to the architecture lecture.
+        Set<Long> architectureExercises = courseExerciseIds(courseId, TextExercise.class).stream()
+                .filter(essayId -> exerciseRepository.findByIdElseThrow(essayId).getDueDate().isAfter(ZonedDateTime.now())).collect(Collectors.toSet());
         Set<Long> algorithmsExercises = courseExerciseIds(courseId, FileUploadExercise.class, QuizExercise.class, ProgrammingExercise.class);
         Set<Long> modelingExercises = courseExerciseIds(courseId, ModelingExercise.class);
         assertThat(unitTypes(architecture)).as("the architecture lecture has its text, slides and further reading, followed by its exercises")
@@ -240,8 +242,8 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
                 .doesNotThrowAnyException();
 
         // The competencies are still seeded, with the exercises of their topics alone.
-        verify(atlasDemoApi).createDemo(any(Course.class), argThat(DemoLectureSeedingIntegrationTest::withoutLectureUnits),
-                argThat(DemoLectureSeedingIntegrationTest::withoutLectureUnits), argThat(DemoLectureSeedingIntegrationTest::withoutLectureUnits), anyList());
+        verify(atlasDemoApi).createDemo(any(Course.class), argThat(DemoLectureSeedingIntegrationTest::onlyExercises), argThat(DemoLectureSeedingIntegrationTest::onlyExercises),
+                argThat(DemoLectureSeedingIntegrationTest::onlyExercises), argThat(DemoLectureSeedingIntegrationTest::onlyExercises), anyList());
         assertThat(snapshotLectures()).as("a disabled lecture module leaves the existing lectures alone").isEqualTo(lecturesBefore);
     }
 
@@ -291,8 +293,8 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
                 .map(Exercise::getId).collect(Collectors.toSet());
     }
 
-    private static boolean withoutLectureUnits(Collection<? extends LearningObject> learningObjects) {
-        return learningObjects.stream().noneMatch(LectureUnit.class::isInstance);
+    private static boolean onlyExercises(Collection<? extends LearningObject> learningObjects) {
+        return !learningObjects.isEmpty() && learningObjects.stream().allMatch(Exercise.class::isInstance);
     }
 
     /**
