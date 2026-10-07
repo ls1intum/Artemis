@@ -631,7 +631,12 @@ public class GenerationJobService {
                 job -> claimSlot(key(exerciseId), job, "Exercise authoring or another mutation is running; wait before reverting.", "exerciseGenerationRunning"));
     }
 
-    /** Keeps a completed, uncertain save fenced until an administrator reconciles its repositories. */
+    /**
+     * Keeps a completed, uncertain save fenced until an administrator reconciles its repositories.
+     *
+     * @param exerciseId exercise to protect
+     * @param jobId      exact completed generation job
+     */
     public void retainIncompleteGenerationSlot(long exerciseId, String jobId) {
         GenerationRecoverySlots.retainGeneration(jobMap, exerciseId, jobId, localNodeId);
     }
