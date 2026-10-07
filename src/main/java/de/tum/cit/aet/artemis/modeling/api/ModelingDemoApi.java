@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseDates;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseFactory;
@@ -138,6 +139,29 @@ public class ModelingDemoApi extends AbstractModelingApi {
             | Enumeration and composition             | 2      |
             """;
 
+    private static final String EXAM_EXERCISE_TITLE = "Class Diagram: Course Enrollment";
+
+    private static final String EXAM_PROBLEM_STATEMENT = """
+            # Class Diagram: Course Enrollment
+
+            The university wants software to manage the enrollments in its courses. Model the domain as a **UML class diagram**:
+
+            - A **student** has a matriculation number and a name.
+            - A **course** has a title and a number of credits. It is taught by exactly one **lecturer**, who can teach several courses.
+            - Students **enroll** in courses. An enrollment records the semester and, once the course is over, the grade.
+
+            Your diagram must contain the classes with their attributes, the associations with **multiplicities on both ends**, and the enrollment modelled so that it can hold
+            the semester and the grade.
+
+            ## Assessment
+
+            | Criterion                          | Points |
+            |------------------------------------|--------|
+            | Classes with sensible attributes   | 4      |
+            | Associations and multiplicities    | 4      |
+            | Enrollment with semester and grade | 2      |
+            """;
+
     /**
      * The class diagrams the demo students submit to the exercise in assessment, handed out in turn: a complete solution and two with the gaps a tutor has to find. They are in the
      * format the modeling editor of the client saves.
@@ -205,14 +229,34 @@ public class ModelingDemoApi extends AbstractModelingApi {
     }
 
     /**
-     * Creates a class diagram exercise the way {@code ModelingExerciseResource#createModelingExercise} does, rather than saving the entity directly.
+     * Creates the class diagram exercise of the demo test exam in the given exercise group. Like every exam exercise, it belongs to its exercise group instead of the course and
+     * has no dates of its own: students work on it while they take the exam.
+     *
+     * @param exerciseGroup the exercise group of the demo test exam the exercise belongs to.
+     * @return the created exercise.
      */
+    public ModelingExercise createDemoExamExercise(ExerciseGroup exerciseGroup) {
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(EXAM_EXERCISE_TITLE, null, EXAM_PROBLEM_STATEMENT, 10.0, 0.0,
+                new ExerciseDates(null, null, null, null), DiagramType.ClassDiagram, null, null, exerciseGroup.getExam().getCourse());
+        modelingExercise.setCourse(null);
+        modelingExercise.setExerciseGroup(exerciseGroup);
+        return create(modelingExercise);
+    }
+
     private ModelingExercise createExercise(Course course, String title, String shortName, String problemStatement, ExerciseDates dates) {
         // No example solution model: a full Apollon diagram is not needed to participate, and an empty one would show up as a broken example solution.
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(title, shortName, problemStatement, 10.0, 0.0, dates, DiagramType.ClassDiagram, null,
                 null, course);
-        modelingExercise.setAssessmentType(AssessmentType.MANUAL);
         modelingExercise.getCategories().add(ExerciseFactory.exerciseCategory("Modeling", "#9dca53"));
+        return create(modelingExercise);
+    }
+
+    /**
+     * Creates a class diagram exercise the way {@code ModelingExerciseResource#createModelingExercise} does, rather than saving the entity directly. An exercise of an exam gets
+     * no channel, like in production: {@link ChannelService#createExerciseChannel} only creates channels for course exercises.
+     */
+    private ModelingExercise create(ModelingExercise modelingExercise) {
+        modelingExercise.setAssessmentType(AssessmentType.MANUAL);
         modelingExercise.validateGeneralSettings();
 
         ModelingExercise createdExercise = modelingExerciseRepository.save(modelingExercise);
@@ -222,7 +266,7 @@ public class ModelingDemoApi extends AbstractModelingApi {
         channelService.createExerciseChannel(createdExercise, Optional.empty());
         exerciseVersionService.createExerciseVersion(createdExercise);
 
-        log.info("Created demo modeling exercise '{}' with id {}", title, createdExercise.getId());
+        log.info("Created demo modeling exercise '{}' with id {}", createdExercise.getTitle(), createdExercise.getId());
         return createdExercise;
     }
 

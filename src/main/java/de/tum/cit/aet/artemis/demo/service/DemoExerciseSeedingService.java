@@ -3,8 +3,11 @@ package de.tum.cit.aet.artemis.demo.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO_AND_SCHEDULING;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.SequencedMap;
+import java.util.function.Function;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -13,6 +16,8 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.api.AccountDemoApi.DemoUsers;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.api.ExamDemoApi;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadDemoApi;
 import de.tum.cit.aet.artemis.modeling.api.ModelingDemoApi;
@@ -40,18 +45,22 @@ public class DemoExerciseSeedingService {
 
     private final AssessmentDemoApi assessmentDemoApi;
 
+    private final Optional<ExamDemoApi> examDemoApi;
+
     public DemoExerciseSeedingService(Optional<TextDemoApi> textDemoApi, Optional<ModelingDemoApi> modelingDemoApi, Optional<FileUploadDemoApi> fileUploadDemoApi,
-            QuizDemoApi quizDemoApi, ProgrammingDemoApi programmingDemoApi, AssessmentDemoApi assessmentDemoApi) {
+            QuizDemoApi quizDemoApi, ProgrammingDemoApi programmingDemoApi, AssessmentDemoApi assessmentDemoApi, Optional<ExamDemoApi> examDemoApi) {
         this.textDemoApi = textDemoApi;
         this.modelingDemoApi = modelingDemoApi;
         this.fileUploadDemoApi = fileUploadDemoApi;
         this.quizDemoApi = quizDemoApi;
         this.programmingDemoApi = programmingDemoApi;
         this.assessmentDemoApi = assessmentDemoApi;
+        this.examDemoApi = examDemoApi;
     }
 
     /**
-     * Seeds the exercises of the demo course and groups them by the topic of the course they belong to, so that lectures and competencies can refer to them.
+     * Seeds the exercises of the demo course and groups them by the topic of the course they belong to, so that lectures and competencies can refer to them. The exercises of the
+     * test exam are not among them, because they belong to the exam instead of the course.
      *
      * @param course the demo course.
      * @param users  the demo users.
@@ -69,8 +78,20 @@ public class DemoExerciseSeedingService {
         DemoAreas.seed("file upload exercises", () -> fileUploadDemoApi.ifPresent(api -> algorithms.add(api.createDemo(course))));
         DemoAreas.seed("quiz exercises", () -> algorithms.addAll(quizDemoApi.createDemo(course, users.students())));
         DemoAreas.seed("programming exercises", () -> programmingDemoApi.createDemo(course).ifPresent(algorithms::add));
+        DemoAreas.seed("exam", () -> examDemoApi.ifPresent(api -> api.createDemo(course, examExerciseCreators())));
 
         return new DemoExercises(architecture, algorithms, modeling);
+    }
+
+    /**
+     * The creators of the exercises of the test exam by the title of their exercise group: one exercise per topic of the course, as far as its module is enabled.
+     */
+    private SequencedMap<String, Function<ExerciseGroup, ? extends Exercise>> examExerciseCreators() {
+        SequencedMap<String, Function<ExerciseGroup, ? extends Exercise>> creators = new LinkedHashMap<>();
+        textDemoApi.ifPresent(api -> creators.put("Software Architecture", api::createDemoExamExercise));
+        modelingDemoApi.ifPresent(api -> creators.put("Object-Oriented Modeling", api::createDemoExamExercise));
+        creators.put("Algorithms and Complexity", quizDemoApi::createDemoExamExercise);
+        return creators;
     }
 
     /**
