@@ -1,4 +1,6 @@
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { vi } from 'vitest';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -29,6 +31,16 @@ import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect
 
 // Capture the global ResizeObserver provided by the test setup so it can be restored after each test.
 const originalResizeObserver = globalThis.ResizeObserver;
+
+@Component({
+    template: `
+        <jhi-markdown-editor-monaco>
+            <div id="previewMonaco"><span class="preview-probe"></span></div>
+        </jhi-markdown-editor-monaco>
+    `,
+    imports: [MarkdownEditorMonacoComponent],
+})
+class PreviewHostComponent {}
 
 describe('MarkdownEditorMonacoComponent', () => {
     let fixture: ComponentFixture<MarkdownEditorMonacoComponent>;
@@ -619,5 +631,37 @@ describe('MarkdownEditorMonacoComponent', () => {
         const result = comp.getSelection();
 
         expect(result).toBeUndefined();
+    });
+
+    describe('projected preview content', () => {
+        let hostFixture: ComponentFixture<PreviewHostComponent>;
+        let editor: MarkdownEditorMonacoComponent;
+
+        const probe = () => hostFixture.nativeElement.querySelector('.preview-probe') as HTMLElement | null;
+
+        beforeEach(() => {
+            hostFixture = TestBed.createComponent(PreviewHostComponent);
+            hostFixture.detectChanges();
+            editor = hostFixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
+        });
+
+        // Preview content that renders into the document at startup (task test statuses, PlantUML diagrams) finds its anchors with a
+        // document query, so it has to be connected from the start and not only after the preview tab was opened.
+        it('should be connected to the document before the preview tab is opened', () => {
+            expect(probe()?.isConnected).toBe(true);
+            expect(probe()?.closest('.hidden')).not.toBeNull();
+        });
+
+        it('should be shown while the preview tab is active and hidden again on leaving it', () => {
+            editor.onTabChange(MarkdownEditorMonacoComponent.TAB_PREVIEW);
+            hostFixture.detectChanges();
+            expect(probe()?.isConnected).toBe(true);
+            expect(probe()?.closest('.hidden')).toBeNull();
+
+            editor.onTabChange(MarkdownEditorMonacoComponent.TAB_EDIT);
+            hostFixture.detectChanges();
+            expect(probe()?.isConnected).toBe(true);
+            expect(probe()?.closest('.hidden')).not.toBeNull();
+        });
     });
 });
