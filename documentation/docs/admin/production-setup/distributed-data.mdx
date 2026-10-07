@@ -18,7 +18,7 @@ and follows the same procedure. Redis and Valkey persist queues, maps, sets, and
 restart. Hazelcast does not retain this data after its cluster stops and therefore needs no persistent-data migration.
 
 Artemis assigns a schema version to its Redis or Valkey data. Stored structures use versioned keys such as
-`artemis:v1:{buildJobQueue}`. The metadata keys are deliberately readable without an Artemis-specific codec:
+`artemis:v2:{buildJobQueue}`. The metadata keys are deliberately readable without an Artemis-specific codec:
 
 ```text
 artemis:distributed-data-schema
@@ -28,6 +28,7 @@ artemis:distributed-data-schema:release
 The first Artemis release with this mechanism treats existing unversioned data as schema version `0` and migrates it
 to schema version `1` during startup. A release declaring a later schema runs every step in between during the same
 startup, so a store that has never been migrated goes from `0` through `1` to the version the release expects.
+The current schema version is `2`.
 
 ## Prepare an upgrade
 
@@ -64,6 +65,10 @@ these structures:
 | `features` | Contains runtime feature-toggle changes made by an administrator. |
 | `pyris-job-map` | Tracks in-flight Iris jobs and their remaining expiry time. |
 
+The schema `1` to `2` migration carries the same structures. It removes the obsolete `AtlasML` feature toggle and
+rewrites the keys of `features`, because the stored keys identify a toggle by its position in the list of features.
+Every other runtime toggle keeps its value.
+
 Other distributed structures start empty in the new namespace. They contain reconstructible or transient state such as
 build-agent registrations, websocket presence, caches, and topic messages. A user whose short-lived operation was in
 progress, for example an LTI launch, may need to retry it after the maintenance window.
@@ -79,6 +84,8 @@ The first new node logs messages similar to:
 Distributed store predates schema versions, treating its contents as version 0
 Migrating distributed data from schema version 0 to 1
 Distributed data is now at schema version 1
+Migrating distributed data from schema version 1 to 2
+Distributed data is now at schema version 2
 ```
 
 A store that is already at a numbered version logs only the steps that are still missing.
@@ -88,7 +95,7 @@ Read the metadata with `redis-cli` or the equivalent `valkey-cli` commands:
 ```bash
 redis-cli GET artemis:distributed-data-schema
 redis-cli GET artemis:distributed-data-schema:release
-redis-cli --scan --pattern 'artemis:v1:*'
+redis-cli --scan --pattern 'artemis:v2:*'
 ```
 
 The first command must report the schema expected by the release. The second reports the Artemis release that last

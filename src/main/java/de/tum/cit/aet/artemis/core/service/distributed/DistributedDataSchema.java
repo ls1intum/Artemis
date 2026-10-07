@@ -23,7 +23,7 @@ public final class DistributedDataSchema {
     /**
      * The version of the distributed data written by this build. See the class documentation for when to bump it.
      */
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
 
     /**
      * The store as it was before schema versions existed, with every structure under its plain name. A deployment that
@@ -92,6 +92,20 @@ public final class DistributedDataSchema {
             new CarriedOverStructure("features", StructureKind.MAP),
             // Iris jobs waiting for a Pyris callback. Obtained as an expiring map, so its entries have to move with
             // their remaining lifetime or a job whose callback never arrives would sit in the new namespace forever.
+            new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
+
+    /**
+     * The name of the map holding the runtime feature toggles, keyed by {@link de.tum.cit.aet.artemis.core.service.feature.Feature}.
+     */
+    public static final String FEATURES = "features";
+
+    /**
+     * The structures the v1-to-v2 migration moves byte-for-byte. Version 2 removed {@code Feature.AtlasML}, and Kryo
+     * encodes an enum by its position, so every feature key after it changed its bytes: {@link #FEATURES} is therefore
+     * not listed here but transformed key by key, and everything else is unchanged and keeps its bytes.
+     */
+    public static final List<CarriedOverStructure> V1_TO_V2_WIRE_COMPATIBLE_STRUCTURES = List.of(new CarriedOverStructure("buildJobQueue", StructureKind.PRIORITY_QUEUE),
+            new CarriedOverStructure("processingJobs", StructureKind.MAP), new CarriedOverStructure("buildResultQueue", StructureKind.QUEUE),
             new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
 
     private DistributedDataSchema() {
