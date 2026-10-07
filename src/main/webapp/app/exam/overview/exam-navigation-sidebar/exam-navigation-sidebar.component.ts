@@ -10,10 +10,10 @@ import { ButtonTooltipType, ExamParticipationService } from 'app/exam/overview/s
 import { map } from 'rxjs/operators';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faChevronRight, faFileLines, faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
+import { faAnglesLeft, faAnglesRight, faFileLines, faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
@@ -30,7 +30,7 @@ export enum ExerciseButtonStatus {
 
 @Component({
     selector: 'jhi-exam-navigation-sidebar',
-    imports: [ArtemisTranslatePipe, FontAwesomeModule, TumAetUiTooltipDirective, TranslateDirective],
+    imports: [ArtemisTranslatePipe, FontAwesomeModule, TumAetUiButtonDirective, TumAetUiTooltipDirective, TranslateDirective],
     templateUrl: './exam-navigation-sidebar.component.html',
     styleUrl: './exam-navigation-sidebar.component.scss',
 })
@@ -46,7 +46,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     readonly exerciseIndex = input(0);
     readonly examSessions = input<ExamSession[] | undefined>([]);
     readonly examTimeLineView = input(false);
-    readonly isTestRun = input(0);
     readonly onPageChanged = output<{
         overViewChange: boolean;
         exercise?: Exercise;
@@ -58,7 +57,8 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
 
     // Icons
     readonly faFileLines = faFileLines;
-    readonly faChevronRight = faChevronRight;
+    readonly faAnglesLeft = faAnglesLeft;
+    readonly faAnglesRight = faAnglesRight;
 
     readonly isCollapsed = signal(false);
 
