@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.demo;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -33,7 +32,6 @@ import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
-import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -229,14 +227,13 @@ class DemoTutorialGroupSeedingIntegrationTest extends AbstractSpringIntegrationI
 
         DemoDataSeedingService withoutTutorialGroups = new DemoDataSeedingService(accountDemoApi, courseDemoApi, demoExerciseSeedingService,
                 new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty(), communicationDemoApi));
-        assertThatCode(() -> withoutTutorialGroups.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent()))
-                .as("seeding must work when the tutorial group module is disabled").doesNotThrowAnyException();
+        DemoSeeding.seed(withoutTutorialGroups);
 
         assertThat(snapshot()).as("a disabled tutorial group module leaves the existing tutorial groups alone").isEqualTo(beforeRun);
     }
 
     private void seed() {
-        demoDataSeedingService.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent());
+        DemoSeeding.seed(demoDataSeedingService);
     }
 
     private Course demoCourse() {

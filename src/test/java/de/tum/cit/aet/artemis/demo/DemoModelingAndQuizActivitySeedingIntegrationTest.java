@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.demo;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
@@ -27,7 +26,6 @@ import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
-import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -165,8 +163,9 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
             assertThat(result.getScore()).isNotNull();
             assertThat(result.getCompletionDate()).isNotNull();
         });
-        assertThat(results).extracting(Result::getScore).as("some students answered everything right, others only part of it").contains(100.0)
-                .anyMatch(score -> score > 0 && score < 100);
+        // The eleven students hand in the four answer sheets in turn, worth 9, 10, 5 and 2 of the 10 points, which is what the statistics of the quiz show.
+        assertThat(results).extracting(Result::getScore).as("the scores of the answer sheets the demo students handed in").containsExactlyInAnyOrder(90.0, 100.0, 50.0, 20.0, 90.0,
+                100.0, 50.0, 20.0, 90.0, 100.0, 50.0);
 
         assertThat(quizStatisticsService.getOverview(quiz).participantsRated()).as("the statistics count every demo student").isEqualTo(studentLogins().size());
 
@@ -207,8 +206,7 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
         DemoDataSeedingService withoutModeling = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
                 new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi, Optional.empty()),
                 new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty(), communicationDemoApi));
-        assertThatCode(() -> withoutModeling.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("seeding must work when the modeling module is disabled")
-                .doesNotThrowAnyException();
+        DemoSeeding.seed(withoutModeling);
 
         Map<String, ExerciseActivity> reseeded = snapshotActivity();
         ExerciseActivity recreatedQuiz = reseeded.get(ENDED_QUIZ_TITLE);
@@ -220,7 +218,7 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
     }
 
     private void seed() {
-        demoDataSeedingService.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent());
+        DemoSeeding.seed(demoDataSeedingService);
     }
 
     private Course demoCourse() {

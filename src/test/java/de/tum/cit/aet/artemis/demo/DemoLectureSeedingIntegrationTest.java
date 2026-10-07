@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.demo;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -34,7 +33,6 @@ import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.atlas.api.AtlasDemoApi;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
-import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.demo.service.DemoCourseContentSeedingService;
@@ -238,8 +236,7 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
         DemoDataSeedingService withoutLectures = new DemoDataSeedingService(accountDemoApi, courseDemoApi, demoExerciseSeedingService,
                 new DemoCourseContentSeedingService(Optional.empty(), Optional.of(atlasDemoApi), assessmentDemoApi, Optional.empty(), communicationDemoApi));
 
-        assertThatCode(() -> withoutLectures.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("seeding must work when the lecture module is disabled")
-                .doesNotThrowAnyException();
+        DemoSeeding.seed(withoutLectures);
 
         // The competencies are still seeded, with the exercises of their topics alone.
         verify(atlasDemoApi).createDemo(any(Course.class), argThat(DemoLectureSeedingIntegrationTest::onlyExercises), argThat(DemoLectureSeedingIntegrationTest::onlyExercises),
@@ -248,7 +245,7 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     private void seed() {
-        demoDataSeedingService.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent());
+        DemoSeeding.seed(demoDataSeedingService);
     }
 
     private Course demoCourse() {
