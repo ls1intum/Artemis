@@ -254,9 +254,9 @@ public class AssessmentService {
      * @return true if the user is allowed to be the assessor, false otherwise
      */
     private boolean isAllowedToBeAssessorOfResult(Result result, Exercise exercise, StudentParticipation participation, User user) {
-        if (exercise.isTeamMode()) {
-            // for team exercises only the team tutor is allowed to be the assessor
-            return participation.getTeam().orElseThrow().isOwner(user);
+        if (exercise.isTeamMode() && participation.getTeam().isPresent()) {
+            // for team exercises only the team tutor is allowed to be the assessor (a practice participation belongs to a student and has no team tutor)
+            return participation.getTeam().get().isOwner(user);
         }
         else if (result != null) {
             // for individual exercises a tutor can be the assessor if they already are the assessor or if there is no assessor yet

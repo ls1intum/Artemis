@@ -19,7 +19,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -33,6 +33,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import dayjs from 'dayjs/esm';
 import { Subject } from 'rxjs';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 
 describe('ExerciseHeaderActionsComponent', () => {
     let fixture: ComponentFixture<ExerciseHeaderActionsComponent>;
@@ -121,6 +122,30 @@ describe('ExerciseHeaderActionsComponent', () => {
             fixture.componentInstance.startExercise();
             expect(startExerciseStub).toHaveBeenCalledTimes(2);
         });
+    });
+
+    describe('practice mode of a team exercise', () => {
+        it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])(
+            'should offer starting practice for a team %s exercise after the due date until the own practice participation exists',
+            (type) => {
+                const teamParticipation = { id: 10, testRun: false, initializationState: InitializationState.FINISHED } as StudentParticipation;
+                const exercise = new ProgrammingExercise(undefined, undefined);
+                exercise.type = type;
+                exercise.teamMode = true;
+                exercise.studentAssignedTeamId = 3;
+                exercise.dueDate = dayjs().subtract(1, 'hour');
+                exercise.studentParticipations = [teamParticipation];
+                createComponent(exercise);
+
+                expect(fixture.componentInstance.isStartPracticeAvailable()).toBe(true);
+
+                fixture.componentInstance.receiveNewParticipation({ id: 20, testRun: true, initializationState: InitializationState.INITIALIZED } as StudentParticipation);
+
+                expect(fixture.componentInstance.isStartPracticeAvailable()).toBe(false);
+                expect(fixture.componentInstance.gradedParticipation()?.id).toBe(10);
+                expect(fixture.componentInstance.practiceParticipation()?.id).toBe(20);
+            },
+        );
     });
 
     describe('feedback button participation', () => {

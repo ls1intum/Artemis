@@ -298,7 +298,8 @@ public class ResultService {
             // participant score recalculation here for single-result deletions. For bulk deletions
             // (shouldClearParticipantScore=false), the caller handles scores separately.
             if (shouldClearParticipantScore && participantScoreScheduleService.isPresent() && result.getSubmission() != null
-                    && result.getSubmission().getParticipation() instanceof StudentParticipation participation && participation.getParticipant() != null) {
+                    && result.getSubmission().getParticipation() instanceof StudentParticipation participation
+                    && ParticipantScoreScheduleService.hasParticipantScore(participation)) {
                 participantScoreScheduleService.get().scheduleTask(participation.getExercise().getId(), participation.getParticipant().getId(), resultId);
             }
             assessmentNoteRepository.deleteByResultId(resultId);

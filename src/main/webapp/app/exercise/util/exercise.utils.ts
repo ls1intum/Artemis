@@ -180,7 +180,7 @@ export const isResumeExerciseAvailable = (exercise: Exercise, participation?: St
 /**
  * The start practice button should be available for programming, quiz, text, and modeling exercises
  * - For quizzes when they are open for practice and the regular work period is over
- * - For programming, text, and modeling exercises when it's after the due date and the exercise is not a team exercise
+ * - For programming, text, and modeling exercises when it's after the due date, also for a team exercise, which is practiced individually by each student
  * @param exercise the exercise that the student wants to practice
  * @param participation the potentially existing participation
  */
@@ -189,13 +189,25 @@ export const isStartPracticeAvailable = (exercise: Exercise, participation?: Stu
         case ExerciseType.QUIZ:
             return hasDueDatePassed(exercise);
         case ExerciseType.PROGRAMMING:
-            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !exercise.teamMode && (!participation || programmingSetupNotFinished(participation));
+            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && (!participation || programmingSetupNotFinished(participation));
         case ExerciseType.TEXT:
         case ExerciseType.MODELING:
-            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !exercise.teamMode && !isPracticeMode(participation);
+            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !isPracticeMode(participation);
         default:
             return false;
     }
+};
+
+/**
+ * The participations of a team exercise after the team assignment of the student changed.
+ * The assignment delivers the participations of the team only. The practice participation of the student is individual, it belongs to the student rather than to the team,
+ * so it has to survive the replacement.
+ * @param current the participations the exercise currently has
+ * @param delivered the participations that the team assignment delivers
+ */
+export const withPracticeParticipations = (current: StudentParticipation[] | undefined, delivered: StudentParticipation[]): StudentParticipation[] => {
+    const practiceParticipations = (current ?? []).filter((participation) => isPracticeMode(participation) && !delivered.some((other) => other.id === participation.id));
+    return [...delivered, ...practiceParticipations];
 };
 
 /**

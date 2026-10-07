@@ -10,6 +10,7 @@ import {
     isStartExerciseAvailable,
     isStartPracticeAvailable,
     validateStrictDateSequence,
+    withPracticeParticipations,
 } from 'app/exercise/util/exercise.utils';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -130,11 +131,13 @@ describe('ExerciseUtils', () => {
         });
 
         it.each([
-            { type: ExerciseType.TEXT, teamMode: false, startPracticeAvailable: true },
-            { type: ExerciseType.TEXT, teamMode: true, startPracticeAvailable: false },
-            { type: ExerciseType.MODELING, teamMode: false, startPracticeAvailable: true },
-            { type: ExerciseType.MODELING, teamMode: true, startPracticeAvailable: false },
-        ])('should only allow practicing a $type exercise after the due date if it is not a team exercise (teamMode: $teamMode)', ({ type, teamMode, startPracticeAvailable }) => {
+            { type: ExerciseType.PROGRAMMING, teamMode: false },
+            { type: ExerciseType.PROGRAMMING, teamMode: true },
+            { type: ExerciseType.TEXT, teamMode: false },
+            { type: ExerciseType.TEXT, teamMode: true },
+            { type: ExerciseType.MODELING, teamMode: false },
+            { type: ExerciseType.MODELING, teamMode: true },
+        ])('should allow practicing a $type exercise after the due date, also for a team exercise (teamMode: $teamMode)', ({ type, teamMode }) => {
             const exercise: Exercise = {
                 numberOfAssessmentsOfCorrectionRounds: [],
                 secondCorrectionEnabled: false,
@@ -144,7 +147,33 @@ describe('ExerciseUtils', () => {
                 dueDate: dayjs().subtract(1, 'day'),
             };
 
-            expect(isStartPracticeAvailable(exercise)).toBe(startPracticeAvailable);
+            expect(isStartPracticeAvailable(exercise)).toBe(true);
+        });
+
+        it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])('should not allow practicing a team %s exercise before the due date', (type) => {
+            const exercise: Exercise = {
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+                type,
+                teamMode: true,
+                dueDate: dayjs().add(1, 'day'),
+            };
+
+            expect(isStartPracticeAvailable(exercise)).toBe(false);
+        });
+
+        it('should not offer starting practice again once the practice participation of a team text exercise exists', () => {
+            const exercise: Exercise = {
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+                type: ExerciseType.TEXT,
+                teamMode: true,
+                dueDate: dayjs().subtract(1, 'day'),
+            };
+
+            expect(isStartPracticeAvailable(exercise, { testRun: true })).toBe(false);
         });
 
         it.each([ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD, undefined])('should not allow practicing for other exercises', (type) => {
@@ -214,6 +243,30 @@ describe('ExerciseUtils', () => {
             [{ type: ExerciseType.QUIZ, dueDate: dayjs().subtract(1, 'hour') } as Exercise, false],
         ])('should correctly determine if manual results are allowed', (exercise: Exercise, expected: boolean) => {
             expect(areManualResultsAllowed(exercise)).toBe(expected);
+        });
+    });
+
+    describe('withPracticeParticipations()', () => {
+        const teamParticipation = { id: 1, testRun: false } as StudentParticipation;
+        const practiceParticipation = { id: 2, testRun: true } as StudentParticipation;
+
+        it('should keep the own practice participation when the team assignment replaces the participations of the team', () => {
+            const newTeamParticipation = { id: 3, testRun: false } as StudentParticipation;
+
+            const result = withPracticeParticipations([teamParticipation, practiceParticipation], [newTeamParticipation]);
+
+            expect(result).toEqual([newTeamParticipation, practiceParticipation]);
+        });
+
+        it('should not duplicate a practice participation that the assignment delivers as well', () => {
+            const delivered = { id: 2, testRun: true } as StudentParticipation;
+
+            expect(withPracticeParticipations([teamParticipation, practiceParticipation], [teamParticipation, delivered])).toEqual([teamParticipation, delivered]);
+        });
+
+        it('should return the delivered participations when no practice participation exists', () => {
+            expect(withPracticeParticipations([teamParticipation], [])).toEqual([]);
+            expect(withPracticeParticipations(undefined, [teamParticipation])).toEqual([teamParticipation]);
         });
     });
 });

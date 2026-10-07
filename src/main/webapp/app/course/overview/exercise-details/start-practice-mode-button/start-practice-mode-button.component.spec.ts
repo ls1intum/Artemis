@@ -137,6 +137,31 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         fixture.destroy();
     });
 
+    it('should not offer the graded participation as baseline for a team exercise', async () => {
+        const gradedTeamPart = { id: 1, initializationState: InitializationState.FINISHED, testRun: false } as StudentParticipation;
+        const exercise = {
+            id: 45,
+            type: ExerciseType.PROGRAMMING,
+            teamMode: true,
+            dueDate: dayjs().subtract(5, 'minutes'),
+            studentParticipations: [gradedTeamPart],
+        } as ProgrammingExercise;
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('smallButtons', false);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        // the graded participation belongs to the team, so the practice repository always starts from the template
+        expect(comp.gradedStudentParticipation()).toBeUndefined();
+
+        fixture.componentRef.setInput('exercise', { ...exercise, teamMode: false });
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        expect(comp.gradedStudentParticipation()).toEqual(gradedTeamPart);
+    });
+
     it('should ignore a second start while starting the practice mode is in flight', () => {
         const exercise = { id: 44, type: ExerciseType.PROGRAMMING, studentParticipations: [] as StudentParticipation[] } as ProgrammingExercise;
         const participationSubject = new Subject<StudentParticipation>();

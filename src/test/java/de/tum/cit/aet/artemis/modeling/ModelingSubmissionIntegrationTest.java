@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -74,6 +76,9 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Autowired
     private ModelingSubmissionTestRepository modelingSubmissionRepo;
+
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
     private SubmissionVersionRepository submissionVersionRepository;
@@ -318,6 +323,37 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         userUtilService.changeUser(TEST_PREFIX + "student2");
         Optional<SubmissionVersion> newVersion = submissionVersionRepository.findLatestVersion(returnedSubmission.id());
         assertThat(newVersion.orElseThrow().getId()).as("submission version was not created").isEqualTo(version.get().getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2")
+    void saveAndSubmitModelingSubmission_afterDueDate_practiceParticipationOfTeamExercise_savedIndividually() throws Exception {
+        useCaseExercise.setMode(ExerciseMode.TEAM);
+        useCaseExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        useCaseExercise = exerciseRepository.save(useCaseExercise);
+        Team team = new Team();
+        team.setName("Team");
+        team.setShortName(TEST_PREFIX + "practiceteam");
+        team.setExercise(useCaseExercise);
+        team.addStudents(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
+        team.addStudents(userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow());
+        teamRepository.save(useCaseExercise, team);
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(useCaseExercise, team.getId());
+        StudentParticipation practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(useCaseExercise, TEST_PREFIX + "student2");
+
+        String emptyUseCaseModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
+        ModelingSubmissionResponseDTO returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(),
+                ParticipationFactory.generateModelingSubmission(emptyUseCaseModel, false));
+
+        // the submission is the student's own, saved against the practice participation, which is reported with the student instead of the team
+        assertThat(returnedSubmission.participation().id()).isEqualTo(practiceParticipation.getId());
+        assertThat(returnedSubmission.participation().testRun()).isTrue();
+        assertThat(returnedSubmission.participation().team()).isNull();
+        assertThat(returnedSubmission.participation().student().login()).isEqualTo(TEST_PREFIX + "student2");
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedSubmission.id(), emptyUseCaseModel);
+        assertThat(submissionRepository.findAllByParticipationId(practiceParticipation.getId())).extracting(Submission::getId).contains(returnedSubmission.id());
+        assertThat(submissionRepository.findAllByParticipationId(teamParticipation.getId())).as("the team's graded participation is not touched").isEmpty();
+        assertThat(submissionVersionRepository.findLatestVersion(returnedSubmission.id())).as("an individual practice submission has no team versions").isEmpty();
     }
 
     @Test

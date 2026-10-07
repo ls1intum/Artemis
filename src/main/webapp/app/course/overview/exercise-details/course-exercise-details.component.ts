@@ -25,7 +25,7 @@ function isStudentParticipationChange(participation: Participation | undefined):
 }
 import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
+import { hasExerciseDueDatePassed, withPracticeParticipations } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
@@ -564,7 +564,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 if (this.exercise && teamAssignment.studentParticipations) {
                     const updatedExercise = deepClone(this.exercise);
                     updatedExercise.studentAssignedTeamId = teamAssignment.teamId;
-                    updatedExercise.studentParticipations = teamAssignment.studentParticipations;
+                    updatedExercise.studentParticipations = withPracticeParticipations(this.exercise.studentParticipations, teamAssignment.studentParticipations);
                     this.exercise = updatedExercise;
                     this.mergeResultsAndSubmissionsForParticipations();
                 }

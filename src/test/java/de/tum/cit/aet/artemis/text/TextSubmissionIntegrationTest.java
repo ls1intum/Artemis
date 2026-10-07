@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -45,6 +46,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
@@ -74,6 +76,9 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private SubmissionVersionRepository submissionVersionRepository;
+
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
     private StudentParticipationTestRepository participationRepository;
@@ -457,6 +462,54 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         // Note: Cleanup of participations through orphan removal is not possible here because
         // the participations have submissions that are not cascade-deleted. The test database
         // is reset between test runs, so explicit cleanup is not required.
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void submitExercise_afterDueDate_practiceParticipationOfTeamExercise_savedIndividually() throws Exception {
+        releasedTextExercise.setMode(ExerciseMode.TEAM);
+        releasedTextExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        releasedTextExercise = exerciseRepository.save(releasedTextExercise);
+        Team team = new Team();
+        team.setName("Team");
+        team.setShortName("teampractice");
+        team.setExercise(releasedTextExercise);
+        team.addStudents(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
+        team.addStudents(userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow());
+        teamRepository.save(releasedTextExercise, team);
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(releasedTextExercise, team.getId());
+        StudentParticipation practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(releasedTextExercise, TEST_PREFIX + "student2");
+
+        TextSubmissionResponseDTO submission = request.putWithResponseBody("/api/text/exercises/" + releasedTextExercise.getId() + "/text-submissions",
+                toRequestDTO(textSubmission), TextSubmissionResponseDTO.class, HttpStatus.OK);
+
+        // the submission is the student's own, saved against the practice participation, which is reported with the student instead of the team
+        assertThat(submission.participation().id()).isEqualTo(practiceParticipation.getId());
+        assertThat(submission.participation().testRun()).isTrue();
+        assertThat(submission.participation().team()).isNull();
+        assertThat(submission.participation().student().getLogin()).isEqualTo(TEST_PREFIX + "student2");
+        assertThat(submissionRepository.findAllByParticipationId(practiceParticipation.getId())).extracting(Submission::getId).contains(submission.id());
+        assertThat(submissionRepository.findAllByParticipationId(teamParticipation.getId())).as("the team's graded participation is not touched").isEmpty();
+        assertThat(submissionVersionRepository.findLatestVersion(submission.id())).as("an individual practice submission has no team versions").isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void submitExercise_afterDueDate_teamExerciseWithoutPracticeParticipation_forbidden() throws Exception {
+        releasedTextExercise.setMode(ExerciseMode.TEAM);
+        releasedTextExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        releasedTextExercise = exerciseRepository.save(releasedTextExercise);
+        Team team = new Team();
+        team.setName("Team");
+        team.setShortName("teamnopractice");
+        team.setExercise(releasedTextExercise);
+        team.addStudents(userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow());
+        teamRepository.save(releasedTextExercise, team);
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(releasedTextExercise, team.getId());
+        teamParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
+        participationRepository.save(teamParticipation);
+
+        request.put("/api/text/exercises/" + releasedTextExercise.getId() + "/text-submissions", toRequestDTO(textSubmission), HttpStatus.FORBIDDEN);
     }
 
     @Test

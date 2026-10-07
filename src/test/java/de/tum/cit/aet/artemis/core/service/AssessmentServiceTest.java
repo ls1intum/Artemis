@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -339,5 +340,25 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, null, null, false);
         assertThat(isAllowed).isFalse();
+    }
+
+    /**
+     * A student who practices a team exercise on their own has a participation without a team, so there is no team tutor. The check must not fail on it, and the tutor of the
+     * course can assess the practice work like any other.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testIsAllowedToCreateOrOverrideResult_practiceParticipationOfTeamExercise() {
+        TextExercise teamExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, course1);
+        teamExercise.setMode(ExerciseMode.TEAM);
+        StudentParticipation practiceParticipation = new StudentParticipation();
+        practiceParticipation.setExercise(teamExercise);
+        practiceParticipation.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        practiceParticipation.setPracticeMode(true);
+
+        boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, teamExercise, practiceParticipation, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"),
+                false);
+
+        assertThat(isAllowed).isTrue();
     }
 }

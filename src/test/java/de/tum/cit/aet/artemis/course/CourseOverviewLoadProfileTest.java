@@ -583,6 +583,29 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
     }
 
     /**
+     * A student practices a team exercise on their own. That participation is keyed by the student, not by the team, so the team query of the overview does not find it and the
+     * exercise card would not know that the practice exists.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReportTheIndividualPracticeParticipationOfATeamExercise() throws Exception {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        TextExercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, ZonedDateTime.now().minusDays(4), ZonedDateTime.now().minusDays(3),
+                ZonedDateTime.now().minusDays(2));
+        Team team = teamUtilService.createTeam(Set.of(student), userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"), teamExercise, TEST_PREFIX + "practiceoverviewteam");
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(teamExercise, team.getId());
+        StudentParticipation practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(teamExercise, TEST_PREFIX + "student1");
+
+        var overview = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class);
+
+        var participations = overview.exercises().stream().filter(exercise -> exercise.id().equals(teamExercise.getId())).findFirst()
+                .orElseThrow(() -> new AssertionError("the team exercise must be part of the overview")).studentParticipations();
+        assertThat(participations).extracting(ParticipationOverviewDTO::id).containsExactlyInAnyOrder(teamParticipation.getId(), practiceParticipation.getId());
+        assertThat(participations).filteredOn(participation -> Boolean.TRUE.equals(participation.testRun())).extracting(ParticipationOverviewDTO::id)
+                .containsExactly(practiceParticipation.getId());
+    }
+
+    /**
      * The same outer-join hazard, reached through the test-run path: the overview always asks for test runs, so an
      * instructor's untouched test run is enough to break the tab for them even when no student ever started anything.
      */

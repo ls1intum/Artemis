@@ -49,7 +49,10 @@ export class StartPracticeModeButtonComponent {
                 if (!exercise) {
                     return;
                 }
-                this._gradedStudentParticipation.set(this.participationService.getSpecificStudentParticipation(exercise.studentParticipations ?? [], false));
+                // The graded participation of a team exercise belongs to the team: its practice is individual and always starts from the template.
+                this._gradedStudentParticipation.set(
+                    exercise.teamMode ? undefined : this.participationService.getSpecificStudentParticipation(exercise.studentParticipations ?? [], false),
+                );
             });
         });
     }

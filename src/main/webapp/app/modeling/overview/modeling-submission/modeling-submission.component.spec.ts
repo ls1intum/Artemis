@@ -224,6 +224,24 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.participation()).toEqual(participation);
     });
 
+    it.each([
+        { teamMode: false, testRun: false, expected: false },
+        { teamMode: false, testRun: true, expected: false },
+        { teamMode: true, testRun: false, expected: true },
+        { teamMode: true, testRun: true, expected: false },
+    ])('should enable team collaboration only for the graded participation of a team exercise (%o)', ({ teamMode, testRun, expected }) => {
+        createModelingSubmissionComponent();
+
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        modelingExercise.teamMode = teamMode;
+        const participation = new StudentParticipation();
+        participation.testRun = testRun;
+        comp.modelingExercise.set(modelingExercise);
+        comp.participation.set(participation);
+
+        expect(comp.teamCollaborationEnabled()).toBe(expected);
+    });
+
     it('should initialize with submissionId (Feedback View Mode)', () => {
         const route = {
             params: of({ courseId: 5, exerciseId: 22, participationId: 1, submissionId: 20 }),
