@@ -4,10 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityKind;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityState;
@@ -15,10 +16,10 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 
 class PyrisChatStatusUpdateDTOTest {
 
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     @Test
-    void deserializesPartialFields() throws JsonProcessingException {
+    void deserializesPartialFields() throws JacksonException {
         String json = """
                 {
                     "runState": "RUNNING",
@@ -35,7 +36,42 @@ class PyrisChatStatusUpdateDTOTest {
     }
 
     @Test
-    void deserializesActivities() throws JsonProcessingException {
+    void deserializesSuggestedContext() throws JacksonException {
+        String json = """
+                {
+                    "runState": "RUNNING",
+                    "result": "answer",
+                    "final": true,
+                    "suggestedContext": {
+                        "mode": "PROGRAMMING_EXERCISE_CHAT",
+                        "entityId": 42
+                    }
+                }
+                """;
+
+        var dto = objectMapper.readValue(json, PyrisChatStatusUpdateDTO.class);
+
+        assertThat(dto.suggestedContext()).isNotNull();
+        assertThat(dto.suggestedContext().mode()).isEqualTo(IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
+        assertThat(dto.suggestedContext().entityId()).isEqualTo(42L);
+    }
+
+    @Test
+    void deserializesWithoutSuggestedContext() throws JacksonException {
+        String json = """
+                {
+                    "runState": "RUNNING",
+                    "result": "answer"
+                }
+                """;
+
+        var dto = objectMapper.readValue(json, PyrisChatStatusUpdateDTO.class);
+
+        assertThat(dto.suggestedContext()).isNull();
+    }
+
+    @Test
+    void deserializesActivities() throws JacksonException {
         String json = """
                 {
                     "runState": "RUNNING",
@@ -66,7 +102,7 @@ class PyrisChatStatusUpdateDTOTest {
     }
 
     @Test
-    void deserializesAndSerializesFinalFlagWithReservedJsonName() throws JsonProcessingException {
+    void deserializesAndSerializesFinalFlagWithReservedJsonName() throws JacksonException {
         String json = """
                 {
                     "runState": "RUNNING",
@@ -87,7 +123,7 @@ class PyrisChatStatusUpdateDTOTest {
     }
 
     @Test
-    void serializesWithoutStagesField() throws JsonProcessingException {
+    void serializesWithoutStagesField() throws JacksonException {
         var dto = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, null, null);
 
         String json = objectMapper.writeValueAsString(dto);

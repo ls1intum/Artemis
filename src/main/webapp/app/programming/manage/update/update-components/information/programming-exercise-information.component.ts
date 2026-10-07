@@ -62,6 +62,10 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
     ],
 })
 export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnInit, OnDestroy {
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly alertService = inject(AlertService);
+    private readonly profileService = inject(ProfileService);
+
     protected readonly ProjectType = ProjectType;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
@@ -84,7 +88,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     shortNameField = viewChild<NgModel>('shortName');
     checkoutSolutionRepositoryField = viewChild<NgModel>('checkoutSolutionRepository');
     recreateBuildPlansField = viewChild<NgModel>('recreateBuildPlans');
-    updateTemplateFilesField = viewChild<NgModel>('updateTemplateFiles');
     programmingExerciseEditCheckoutDirectories = viewChild(ProgrammingExerciseEditCheckoutDirectoriesComponent);
 
     readonly auxRepoNameTemplate = viewChild<CellTemplateRef<AuxiliaryRepository>>('auxRepoNameTemplate');
@@ -115,10 +118,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
             templateRef: this.auxDescriptionTemplate(),
         },
     ]);
-
-    private readonly exerciseService = inject(ExerciseService);
-    private readonly alertService = inject(AlertService);
-    private readonly profileService = inject(ProfileService);
 
     isShortNameFieldValid = signal<boolean>(false);
     isShortNameFromAdvancedMode = signal<boolean>(false);
@@ -191,7 +190,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         this.inputFieldSubscriptions.push(this.shortNameField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.checkoutSolutionRepositoryField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.recreateBuildPlansField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
-        this.inputFieldSubscriptions.push(this.updateTemplateFilesField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.programmingExerciseEditCheckoutDirectories()?.formValidChanges.subscribe(() => this.calculateFormValid()));
         // viewChildren() is a signal of the current list; subscribe directly. Re-registration when the
         // list changes is driven by the registerInputFieldsWhenChildComponentsAreReady effect, which reads
@@ -256,7 +254,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
     isUpdateTemplateFilesValid(): boolean {
         return (
-            this.updateTemplateFilesField()?.valid ||
             !this.programmingExerciseCreationConfig().isImportFromExistingExercise ||
             this.programmingExercise().projectType === ProjectType.PLAIN_GRADLE ||
             this.programmingExercise().projectType === ProjectType.GRADLE_GRADLE

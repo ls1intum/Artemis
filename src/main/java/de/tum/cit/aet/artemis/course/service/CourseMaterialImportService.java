@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.course.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -36,8 +37,11 @@ import de.tum.cit.aet.artemis.modeling.api.ModelingExerciseImportApi;
 import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
+import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
@@ -73,6 +77,8 @@ public class CourseMaterialImportService {
 
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
+    private final SubmissionPolicyRepository submissionPolicyRepository;
+
     private final GradingCriterionRepository gradingCriterionRepository;
 
     private final QuizExerciseImportService quizExerciseImportService;
@@ -101,8 +107,8 @@ public class CourseMaterialImportService {
     public CourseMaterialImportService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
             Optional<ExamRepositoryApi> examRepositoryApi, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            GradingCriterionRepository gradingCriterionRepository, QuizExerciseImportService quizExerciseImportService, QuizExerciseRepository quizExerciseRepository,
-            Optional<ModelingExerciseImportApi> modelingExerciseImportApi, Optional<ModelingRepositoryApi> modelingRepositoryApi,
+            SubmissionPolicyRepository submissionPolicyRepository, GradingCriterionRepository gradingCriterionRepository, QuizExerciseImportService quizExerciseImportService,
+            QuizExerciseRepository quizExerciseRepository, Optional<ModelingExerciseImportApi> modelingExerciseImportApi, Optional<ModelingRepositoryApi> modelingRepositoryApi,
             Optional<TextExerciseImportApi> textExerciseImportApi, Optional<FileUploadImportApi> fileUploadImportApi, Optional<LectureImportApi> lectureImportApi,
             Optional<ExamImportApi> examImportApi, Optional<CompetencyImportApi> competencyImportApi, Optional<TutorialGroupImportApi> tutorialGroupImportApi,
             FaqImportService faqImportService) {
@@ -113,6 +119,7 @@ public class CourseMaterialImportService {
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
+        this.submissionPolicyRepository = submissionPolicyRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.quizExerciseImportService = quizExerciseImportService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -139,7 +146,6 @@ public class CourseMaterialImportService {
         log.info("Starting course material import from course {} to course {}", options.sourceCourseId(), targetCourseId);
 
         Course targetCourse = courseRepository.findByIdElseThrow(targetCourseId);
-        Course sourceCourse = courseRepository.findByIdElseThrow(options.sourceCourseId());
 
         List<String> errors = new ArrayList<>();
         int exercisesImported = 0;
@@ -247,7 +253,7 @@ public class CourseMaterialImportService {
                 }
             }
             catch (Exception e) {
-                log.error("Failed to import exercise {}: {}", exercise.getTitle(), e.getMessage());
+                log.error("Failed to import exercise {}", exercise.getTitle(), e);
                 errors.add("Failed to import exercise '" + exercise.getTitle() + "': " + e.getMessage());
             }
         }
@@ -258,7 +264,7 @@ public class CourseMaterialImportService {
     /**
      * Import a single exercise based on its type.
      */
-    private Optional<? extends Exercise> importSingleExercise(Exercise exercise, Course targetCourse) throws Exception {
+    private Optional<? extends Exercise> importSingleExercise(Exercise exercise, Course targetCourse) throws IOException {
         return switch (exercise.getExerciseType()) {
             case PROGRAMMING -> importProgrammingExercise((ProgrammingExercise) exercise, targetCourse);
             case QUIZ -> importQuizExercise((QuizExercise) exercise, targetCourse);
@@ -270,7 +276,7 @@ public class CourseMaterialImportService {
 
     private Optional<ProgrammingExercise> importProgrammingExercise(ProgrammingExercise exercise, Course targetCourse) {
         var optionalOriginal = programmingExerciseRepository
-                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigCategories(exercise.getId());
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesTemplateAndSolutionParticipationsAndAuxReposAndCategories(exercise.getId());
         if (optionalOriginal.isEmpty()) {
             return Optional.empty();
         }
@@ -285,20 +291,22 @@ public class CourseMaterialImportService {
         // Create new exercise for the target course
         ProgrammingExercise newExercise = new ProgrammingExercise();
         newExercise.setCourse(targetCourse);
-        newExercise.setTitle(originalExercise.getTitle());
+        copyImportOverrides(originalExercise, newExercise);
+        newExercise.setShortName(originalExercise.getShortName());
+        newExercise.copyImportSettingsFrom(originalExercise);
+        // A copy, not the managed entity: the import service clears the id of whatever policy the skeleton carries.
+        SubmissionPolicy sourcePolicy = submissionPolicyRepository.findByProgrammingExerciseId(originalExercise.getId());
+        if (sourcePolicy != null) {
+            newExercise.setSubmissionPolicy(SubmissionPolicyDTO.of(sourcePolicy).withoutId().toEntity());
+        }
         newExercise.forceNewProjectKey();
 
-        try {
-            return Optional.of(programmingExerciseImportService.importProgrammingExercise(originalExercise, newExercise, false, false, false));
-        }
-        catch (Exception e) {
-            log.error("Failed to import programming exercise: {}", e.getMessage());
-            return Optional.empty();
-        }
+        // Not caught here: importExercises reports the failure to the caller instead of counting a failed import as skipped.
+        return Optional.of(programmingExerciseImportService.importProgrammingExercise(originalExercise, newExercise, false, false));
     }
 
-    private Optional<QuizExercise> importQuizExercise(QuizExercise exercise, Course targetCourse) {
-        var optionalOriginal = quizExerciseRepository.findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(exercise.getId());
+    private Optional<QuizExercise> importQuizExercise(QuizExercise exercise, Course targetCourse) throws IOException {
+        var optionalOriginal = quizExerciseRepository.findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(exercise.getId());
         if (optionalOriginal.isEmpty()) {
             return Optional.empty();
         }
@@ -307,13 +315,8 @@ public class CourseMaterialImportService {
         newExercise.setCourse(targetCourse);
         copyImportOverrides(optionalOriginal.get(), newExercise);
 
-        try {
-            return Optional.of(quizExerciseImportService.importQuizExercise(newExercise, optionalOriginal.get(), null));
-        }
-        catch (Exception e) {
-            log.error("Failed to import quiz exercise: {}", e.getMessage());
-            return Optional.empty();
-        }
+        // Not caught here: importExercises reports the failure to the caller instead of counting a failed import as skipped.
+        return Optional.of(quizExerciseImportService.importQuizExercise(newExercise, optionalOriginal.get(), null));
     }
 
     private Optional<ModelingExercise> importModelingExercise(ModelingExercise exercise, Course targetCourse) {
@@ -375,7 +378,7 @@ public class CourseMaterialImportService {
         skeleton.setGradingCriteria(null);
         // Note: mode is intentionally not copied here. A TEAM source would also need its teamAssignmentConfig, which the
         // course-material fetch does not load; preserving team mode + config for course-material import is left as a
-        // follow-up together with the categories / plagiarism-config fetch-graph expansion.
+        // follow-up together with the plagiarism-config fetch-graph expansion.
     }
 
     /**

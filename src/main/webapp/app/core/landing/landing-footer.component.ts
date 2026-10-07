@@ -99,7 +99,7 @@ import { FOOTER_LINK_GROUPS, FooterLinkGroup } from 'app/core/landing/landing-da
             display: flex;
             flex-direction: column;
             gap: 16px;
-            width: 500px;
+            width: 360px;
         }
 
         .footer-logo {
@@ -157,8 +157,10 @@ import { FOOTER_LINK_GROUPS, FooterLinkGroup } from 'app/core/landing/landing-da
         .link-columns {
             display: flex;
             flex: 1;
+            flex-wrap: wrap;
+            gap: 32px;
             justify-content: space-between;
-            max-width: 720px;
+            max-width: 860px;
         }
 
         .link-group {
@@ -351,9 +353,10 @@ import { FOOTER_LINK_GROUPS, FooterLinkGroup } from 'app/core/landing/landing-da
     `,
 })
 export class LandingFooterComponent {
+    private router: Router = inject(Router);
+
     protected readonly faLink: IconDefinition = faLink;
 
-    private router: Router = inject(Router);
     linkGroups: FooterLinkGroup[] = FOOTER_LINK_GROUPS;
     currentYear: number = new Date().getFullYear();
 

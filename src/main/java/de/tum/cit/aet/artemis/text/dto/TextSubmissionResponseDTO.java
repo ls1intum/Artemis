@@ -3,9 +3,9 @@ package de.tum.cit.aet.artemis.text.dto;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.hibernate.Hibernate;
-import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -25,8 +25,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TextSubmissionResponseDTO(Long id, String submissionExerciseType, String text, Language language, Boolean submitted, ZonedDateTime submissionDate,
-        SubmissionType type, Boolean exampleSubmission, StudentParticipationDTO participation, List<@Nullable ResultDTO> results, List<TextBlockDTO> blocks)
-        implements Serializable {
+        SubmissionType type, Boolean exampleSubmission, StudentParticipationDTO participation, List<ResultDTO> results, List<TextBlockDTO> blocks) implements Serializable {
 
     /**
      * Converts a {@link TextSubmission} into a {@link TextSubmissionResponseDTO} without the participation's student.
@@ -45,14 +44,37 @@ public record TextSubmissionResponseDTO(Long id, String submissionExerciseType, 
      * @param includeStudent whether the participation's student should be included
      * @return the converted DTO, or {@code null} if the submission is {@code null}
      */
+    /**
+     * Converts a submission whose participation was resolved as a projection rather than loaded.
+     * <p>
+     * The submit path never reads the participation back off the submission - there it is only a foreign key - so the
+     * participation it reports is mapped by the caller and passed in.
+     *
+     * @param submission    the saved submission
+     * @param participation the participation the response should report
+     * @return the converted DTO
+     */
+    public static TextSubmissionResponseDTO of(TextSubmission submission, StudentParticipationDTO participation) {
+        TextSubmissionResponseDTO mapped = of(submission, false);
+        return new TextSubmissionResponseDTO(mapped.id(), mapped.submissionExerciseType(), mapped.text(), mapped.language(), mapped.submitted(), mapped.submissionDate(),
+                mapped.type(), mapped.exampleSubmission(), participation, mapped.results(), mapped.blocks());
+    }
+
+    /**
+     * Converts a {@link TextSubmission} into a {@link TextSubmissionResponseDTO}.
+     *
+     * @param submission     the submission to convert (may be {@code null})
+     * @param includeStudent whether the participation's student should be included
+     * @return the converted DTO, or {@code null} if the submission is {@code null}
+     */
     public static TextSubmissionResponseDTO of(TextSubmission submission, boolean includeStudent) {
         if (submission == null) {
             return null;
         }
 
-        List<@Nullable ResultDTO> results = null;
+        List<ResultDTO> results = null;
         if (Hibernate.isInitialized(submission.getResults()) && submission.getResults() != null) {
-            results = submission.getResults().stream().map(result -> result == null ? null : ResultDTO.of(result)).toList();
+            results = submission.getResults().stream().filter(Objects::nonNull).map(ResultDTO::of).toList();
         }
 
         List<TextBlockDTO> blocks = null;

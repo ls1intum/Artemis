@@ -1,9 +1,18 @@
 @use 'sass:meta';
+@use 'sass:string';
 @use 'src/main/webapp/content/scss/themes/default-variables';
 @use 'src/main/webapp/content/scss/themes/dark-variables';
 
 @mixin generate($theme) {
     @each $name, $value in meta.module-variables($theme) {
         --#{$name}: #{$value};
+    }
+}
+
+@mixin generate-prefixed($theme, $prefix) {
+    @each $name, $value in meta.module-variables($theme) {
+        @if string.index($name, $prefix) == 1 {
+            --#{$name}: #{$value};
+        }
     }
 }

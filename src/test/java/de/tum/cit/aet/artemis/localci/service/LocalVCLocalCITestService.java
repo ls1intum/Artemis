@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
@@ -22,7 +23,10 @@ import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.transport.CredentialItem;
+import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.URIish;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -42,10 +46,13 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCRepositoryTestService;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -54,7 +61,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 /**
  * This class contains helper methods for all tests of the local VC and local CI system..
@@ -91,6 +97,15 @@ public class LocalVCLocalCITestService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCBasePath;
 
+    @Value("${artemis.temp-path}")
+    private Path tempPath;
+
+    @Autowired
+    private LocalVCRepositoryTestService localVCRepositoryTestService;
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
+
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
@@ -110,7 +125,7 @@ public class LocalVCLocalCITestService {
     }
 
     public String getRepositorySlug(String projectKey, String repositoryTypeOrUserName) {
-        return (projectKey + "-" + repositoryTypeOrUserName).toLowerCase();
+        return (projectKey + "-" + repositoryTypeOrUserName).toLowerCase(Locale.ROOT);
     }
 
     /**
@@ -176,54 +191,49 @@ public class LocalVCLocalCITestService {
     }
 
     /**
-     * Create and configure a LocalRepository that works for the local VC system, i.e. the remote folder adheres to the folder structure required for local VC and the remote
-     * repository is bare.
+     * Returns a working copy of a LocalVC repository, creating the repository first if it does not exist yet.
+     * <p>
+     * The repository itself is created by {@link LocalVCRepositoryTestService}, which calls the same version control service the server uses. The working copy is a real
+     * clone of it, so a test commits and pushes exactly the way a user does.
      *
-     * @param projectKey     the project key of the exercise this repository is to be created for.
-     * @param repositorySlug the repository slug of the repository to be created (e.g. "someprojectkey-solution" or "someprojectkey-practice-student1").
-     * @return the configured LocalRepository that contains Git handles to the remote and local repository.
+     * @param projectKey     the project key of the exercise the repository belongs to
+     * @param repositorySlug the slug of the repository, without the {@code .git} suffix
+     * @return the bare repository together with a working copy cloned from it
      */
-    public LocalRepository createAndConfigureLocalRepository(String projectKey, String repositorySlug) throws GitAPIException, IOException, URISyntaxException {
-        Path localRepositoryFolder = createRepositoryFolder(projectKey, repositorySlug);
-        LocalRepository repository = new LocalRepository(defaultBranch);
-        repository.configureRepos(localVCBasePath, "localRepo", localRepositoryFolder);
-
-        // Create an initial commit in both the working copy and bare repository
-        // so that copy operations and other Git operations that require a HEAD commit work correctly
-        de.tum.cit.aet.artemis.localvc.service.GitService.commit(repository.workingCopyGitRepo).setMessage("Initial commit").setAllowEmpty(true).call();
-        repository.workingCopyGitRepo.push().call();
-
-        return repository;
+    public LocalVCTestRepository createRepositoryWithWorkingCopy(String projectKey, String repositorySlug) throws GitAPIException, IOException {
+        createRepository(projectKey, repositorySlug);
+        return cloneWorkingCopy(projectKey, repositorySlug);
     }
 
     /**
-     * Create a folder in the temporary directory with the project key as its name and another folder inside there that gets the name of the repository slug + ".git".
-     * This is consistent with the repository folder structure used for the local VC system (though the repositories for the local VC system are not saved in the temporary
-     * directory).
+     * Creates a LocalVC repository without a working copy, for tests that only need the repository to exist.
      *
-     * @param projectKey     the project key of the repository.
-     * @param repositorySlug the repository slug of the repository.
-     * @return the path to the repository folder.
+     * @param projectKey     the project key of the exercise the repository belongs to
+     * @param repositorySlug the slug of the repository, without the {@code .git} suffix
      */
-    private Path createRepositoryFolder(String projectKey, String repositorySlug) throws IOException {
+    public void createRepository(String projectKey, String repositorySlug) {
+        localVCRepositoryTestService.ensureRepositoryExists(projectKey, repositorySlug);
+    }
 
-        Path projectFolder = localVCBasePath.resolve(projectKey);
+    /**
+     * Clones an existing LocalVC repository into a fresh working copy.
+     *
+     * @param projectKey     the project key of the exercise the repository belongs to
+     * @param repositorySlug the slug of the repository, without the {@code .git} suffix
+     * @return the bare repository together with the new working copy
+     */
+    public LocalVCTestRepository cloneWorkingCopy(String projectKey, String repositorySlug) throws GitAPIException, IOException {
+        Path bareRepositoryPath = localVCBasePath.resolve(projectKey).resolve(repositorySlug + ".git");
+        Path workingCopyPath = tempFileUtilService.createTempDirectory(workingCopyBasePath(), repositorySlug + "-");
+        Git workingCopy = Git.cloneRepository().setURI(bareRepositoryPath.toUri().toString()).setDirectory(workingCopyPath.toFile()).setBranch(defaultBranch).call();
+        return new LocalVCTestRepository(projectKey, repositorySlug, bareRepositoryPath, Git.open(bareRepositoryPath.toFile()), workingCopyPath, workingCopy);
+    }
 
-        // Create the project folder if it does not exist.
-        if (!Files.exists(projectFolder)) {
-            Files.createDirectories(projectFolder);
-        }
-
-        // Create the repository folder.
-        Path repositoryFolder = projectFolder.resolve(repositorySlug + ".git");
-        try {
-            Files.createDirectories(repositoryFolder);
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        return repositoryFolder;
+    private Path workingCopyBasePath() throws IOException {
+        // Working copies are scratch data and deliberately live outside the LocalVC folder structure, where they cannot be mistaken for a repository the server serves.
+        Path base = tempPath.resolve("localvc-working-copies");
+        Files.createDirectories(base);
+        return base;
     }
 
     /**
@@ -256,8 +266,8 @@ public class LocalVCLocalCITestService {
                 userInfo += ":" + password;
             }
         }
-        return UriComponentsBuilder.fromUri(localVCBaseUri).port(port).userInfo(userInfo).pathSegment("git", projectKey.toUpperCase(), repositorySlug + ".git").build().toUri()
-                .toString();
+        return UriComponentsBuilder.fromUri(localVCBaseUri).port(port).userInfo(userInfo).pathSegment("git", projectKey.toUpperCase(Locale.ROOT), repositorySlug + ".git").build()
+                .toUri().toString();
     }
 
     /**
@@ -365,11 +375,40 @@ public class LocalVCLocalCITestService {
                 .withMessageContaining(expectedMessage);
     }
 
+    /**
+     * Answers no credential request, so that the credentials in the repository URI are the only ones a git command
+     * here can authenticate with.
+     * <p>
+     * {@code BuildJobGitService.configureSsh} installs a JVM-wide default provider that accepts every request, and the
+     * server shares this JVM with the tests. Without pinning a provider, a command that is correctly refused with 401
+     * answers the challenge from that default and retries instead of failing, so a test asserting that a credential is
+     * rejected watched the fetch succeed. Which class ran first decided whether the default was installed yet, which
+     * is what made those failures come and go.
+     */
+    public static final CredentialsProvider ONLY_THE_CREDENTIALS_IN_THE_URI = new CredentialsProvider() {
+
+        @Override
+        public boolean isInteractive() {
+            return false;
+        }
+
+        @Override
+        public boolean supports(CredentialItem... items) {
+            return false;
+        }
+
+        @Override
+        public boolean get(URIish uri, CredentialItem... items) {
+            return false;
+        }
+    };
+
     private void performFetch(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException, URISyntaxException {
         String repositoryUri = buildLocalVCUri(username, password, projectKey, repositorySlug);
         FetchCommand fetchCommand = repositoryHandle.fetch();
         // Set the remote URL.
         fetchCommand.setRemote(repositoryUri);
+        fetchCommand.setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI);
         // Set the refspec to fetch all branches.
         fetchCommand.setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*"));
         // Execute the fetch.
@@ -498,6 +537,7 @@ public class LocalVCLocalCITestService {
         PushCommand pushCommand = repositoryHandle.push();
         // Set the remote URL.
         pushCommand.setRemote(repositoryUri);
+        pushCommand.setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI);
         // Execute the push.
         pushCommand.call();
     }

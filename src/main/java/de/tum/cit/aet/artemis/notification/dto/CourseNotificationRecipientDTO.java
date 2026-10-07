@@ -16,13 +16,11 @@ import de.tum.cit.aet.artemis.account.domain.User;
 public record CourseNotificationRecipientDTO(Long id, String login, String email, String langKey, String firstName, String lastName) {
 
     /**
-     * Returns the recipient's full name in the format used by the mail templates.
+     * Returns the recipient's display name in the format used by the mail templates, falling back to the login when the account
+     * has no name (see {@link User#displayName}).
      */
     public String getName() {
-        if (lastName != null && !lastName.isEmpty()) {
-            return firstName + " " + lastName;
-        }
-        return firstName;
+        return User.displayName(firstName, lastName, login);
     }
 
     public static CourseNotificationRecipientDTO from(User user) {

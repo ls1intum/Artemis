@@ -1,9 +1,10 @@
-import { Component, Injector, OnInit, Renderer2, afterNextRender, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, Injector, OnInit, afterNextRender, inject, input, signal, viewChild } from '@angular/core';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -21,12 +22,15 @@ import { ComplaintRequestComponent } from 'app/assessment/overview/complaint-req
 import { ComplaintResponseComponent } from 'app/assessment/manage/complaint-response/complaint-response.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-complaint-student-view',
     templateUrl: './complaints-student-view.component.html',
     styleUrls: ['../complaints.scss'],
-    imports: [TranslateDirective, FaIconComponent, ComplaintsFormComponent, ComplaintRequestComponent, ComplaintResponseComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FaIconComponent, ComplaintsFormComponent, ComplaintRequestComponent, ComplaintResponseComponent, ArtemisTranslatePipe, TumAetUiButtonDirective],
+    // A custom element is inline by default; its block child then splits it, so margins on the host are ignored and an empty line box appears above the area.
+    host: { class: 'block', 'data-testid': 'complaint-student-view' },
 })
 export class ComplaintsStudentViewComponent implements OnInit {
     private injector = inject(Injector);
@@ -34,23 +38,22 @@ export class ComplaintsStudentViewComponent implements OnInit {
     private serverDateService = inject(ArtemisServerDateService);
     private accountService = inject(AccountService);
     private courseService = inject(CourseManagementService);
-    private renderer = inject(Renderer2);
+
+    // Every complaint view renders its own anchor, and the exam summary shows one view per exercise, so the anchor of this view
+    // must not be looked up by id: a document-wide lookup finds the anchor of the first view and scrolls the page to that exercise.
+    private readonly complaintScrollpoint = viewChild<ElementRef<HTMLElement>>('complaintScrollpoint');
 
     readonly exercise = input.required<Exercise>();
     readonly participation = input.required<StudentParticipation>();
     readonly result = input<Result>();
     readonly exam = input<Exam>();
     readonly isCurrentUserSubmissionAuthor = input<boolean>();
-    // flag to indicate exam test run. Default set to false.
     readonly testRun = input(false);
 
     submission!: Submission; // set in ngOnInit() from the participation's submissions before loadPotentialComplaint() reads it
-    // Async-loaded, template-bound state — signals so they render after their subscriptions resolve under zoneless.
     readonly complaint = signal<Complaint | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
-    // Indicates what type of complaint is currently created by the student. Undefined if the student didn't click on a button yet.
     readonly formComplaintType = signal<ComplaintType | undefined>(undefined);
-    // The number of complaints that the student is still allowed to submit in the course.
     readonly remainingNumberOfComplaints = signal(0);
     readonly isCorrectUserToFileAction = signal(false);
     readonly isExamMode = signal<boolean>(undefined!);
@@ -60,7 +63,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
 
     ComplaintType = ComplaintType;
 
-    // Icons
     faInfoCircle = faInfoCircle;
 
     ngOnInit(): void {
@@ -72,7 +74,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
             if (participation.submissions && participation.submissions.length > 0) {
                 this.submission = participation.submissions.sort((a, b) => b.id! - a.id!)[0];
             }
-            // for course exercises we track the number of allowed complaints
             if (this.course()?.complaintsEnabled) {
                 this.courseService.getNumberOfAllowedComplaintsInCourse(this.course()!.id!, this.exercise().teamMode).subscribe((allowedComplaints: number) => {
                     this.remainingNumberOfComplaints.set(allowedComplaints);
@@ -101,9 +102,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
         }
     }
 
-    /**
-     * Sets the complaint if complaint and a valid result exist
-     */
     loadPotentialComplaint(): void {
         this.complaintService
             .findBySubmissionId(this.submission.id!)
@@ -113,10 +111,10 @@ export class ComplaintsStudentViewComponent implements OnInit {
             });
     }
 
-    /**
-     * Determines whether to show the section
-     */
     private getSectionVisibility(): boolean {
+        if (!this.isAboutAnAssessment()) {
+            return false;
+        }
         if (this.isExamMode()) {
             return this.isWithinExamReviewPeriod();
         } else {
@@ -125,8 +123,22 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     /**
-     * Checks whether the student is allowed to submit a complaint or not for exam and course exercises.
+     * Whether there is a tutor assessment to complain about at all.
+     *
+     * Practice participations are not graded, so there is nothing to review, and the server rejects a complaint on one.
+     * Preliminary Athena feedback is a suggestion the student requested rather than an assessment: it carries no
+     * assessor, so a complaint about it would go to a tutor who has not looked at the submission yet.
+     *
+     * `testRun` on the participation means practice mode for a course exercise; the component's own `testRun` input is
+     * the unrelated exam test run, which does allow complaints.
      */
+    private isAboutAnAssessment(): boolean {
+        if (!this.isExamMode() && isPracticeMode(this.participation())) {
+            return false;
+        }
+        return this.result()?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA;
+    }
+
     private isTimeOfComplaintValid(): boolean {
         if (!this.isExamMode()) {
             const course = this.course();
@@ -139,9 +151,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
         return this.isWithinExamReviewPeriod();
     }
 
-    /**
-     * Checks whether the student is allowed to submit a more feedback request. This is only possible for course exercises.
-     */
     private isTimeOfFeedbackRequestValid(): boolean {
         const course = this.course();
         if (!this.isExamMode() && course?.maxRequestMoreFeedbackTimeDays) {
@@ -151,10 +160,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
         return false;
     }
 
-    /**
-     * A guard function used to indicate whether complaint submissions are valid.
-     * These are only allowed if they are submitted within the student review period.
-     */
     private isWithinExamReviewPeriod(): boolean {
         if (this.testRun()) {
             return true;
@@ -164,19 +169,14 @@ export class ComplaintsStudentViewComponent implements OnInit {
         return false;
     }
 
-    /**
-     * Function to set the complaint type (which opens the complaint form) and scrolls to the complaint form
-     */
     openComplaintForm(complainType: ComplaintType): void {
         this.formComplaintType.set(complainType);
         // Scroll once the complaint form has rendered (signal write schedules CD; afterNextRender runs after that render).
         afterNextRender(() => this.scrollToComplaint(), { injector: this.injector });
     }
 
-    /**
-     * Function to scroll to the complaint form
-     */
     private scrollToComplaint(): void {
-        this.renderer.selectRootElement('#complaintScrollpoint', true).scrollIntoView({ behavior: 'smooth', block: 'end' });
+        // `nearest` moves the page only when the form would otherwise open below the visible area.
+        this.complaintScrollpoint()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 }

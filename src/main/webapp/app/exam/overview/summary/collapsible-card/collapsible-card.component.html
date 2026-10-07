@@ -1,12 +1,27 @@
-<div class="question card">
-    <div class="card-header d-flex align-items-center justify-content-between" (click)="toggleCollapse()()">
-        <ng-content select=".header" />
-        <button class="btn rotate-icon" [class.rotated]="!isCardContentCollapsed()" [attr.aria-expanded]="isCardContentCollapsed()" [attr.aria-controls]="isCardContentCollapsed()">
-            <fa-icon size="2x" [icon]="faAngleRight" />
-        </button>
+<div class="mb-(--spacing-divider) box-border w-full min-w-0 rounded-md border border-(--border-color) bg-(--course-exercise-card-background) break-words">
+    <!-- Exactly 40px like every other title bar. The rule only exists while the content is open, otherwise it would double the card border. -->
+    <div
+        class="flex h-10 cursor-pointer items-center gap-2 border-(--border-color) px-[16px]"
+        [class.border-b]="!isCardContentCollapsed()"
+        data-testid="collapsible-card-toggle"
+        (click)="toggleCollapse()()"
+        #keyboardAction2
+        role="button"
+        tabindex="0"
+        [attr.aria-expanded]="!isCardContentCollapsed()"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+    >
+        <div class="min-w-0 flex-1" data-testid="collapsible-card-header">
+            <ng-content select=".header" />
+        </div>
+        <span class="inline-flex size-6 shrink-0 items-center justify-center transition-transform duration-300" [class.rotate-90]="!isCardContentCollapsed()" aria-hidden="true">
+            <fa-icon [icon]="faAngleRight" />
+        </span>
     </div>
 
-    <div class="card-body question-card-body" [ngbCollapse]="isCardContentCollapsed()">
+    <div class="px-[16px] py-[12px]" data-testid="collapsible-card-content" [class.hidden]="isCardContentCollapsed()">
         <ng-content select=".collapsible-content" />
     </div>
 </div>

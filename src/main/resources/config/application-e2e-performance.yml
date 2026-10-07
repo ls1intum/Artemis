@@ -3,7 +3,7 @@
 #
 # Activates runtime slow-query detection during E2E test runs.
 # This profile is NOT for production. It is added to SPRING_PROFILES_INCLUDE
-# in docker/artemis/config/playwright.env (CI E2E runs only).
+# in deployment/docker/artemis/config/playwright.env (CI E2E runs only).
 #
 # What it does:
 #   - Wraps the HikariCP DataSource with a datasource-proxy interceptor.

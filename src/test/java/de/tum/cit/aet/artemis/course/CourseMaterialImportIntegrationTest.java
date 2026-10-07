@@ -123,6 +123,26 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getImportSummary_asInstructorOfAnotherCourseOnly_shouldReturnForbidden() throws Exception {
+        // The user may read the source course, but is no member of the target course
+        Course foreignTargetCourse = courseUtilService.createCourse();
+
+        request.get("/api/course/courses/" + foreignTargetCourse.getId() + "/import-summary?sourceCourseId=" + sourceCourse.getId(), HttpStatus.FORBIDDEN, CourseSummaryDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importMaterial_asInstructorOfAnotherCourseOnly_shouldReturnForbiddenAndImportNothing() throws Exception {
+        Course foreignTargetCourse = courseUtilService.createCourse();
+        CourseMaterialImportOptionsDTO options = new CourseMaterialImportOptionsDTO(sourceCourse.getId(), false, false, false, false, false, true);
+
+        request.post("/api/course/courses/" + foreignTargetCourse.getId() + "/import-material", options, HttpStatus.FORBIDDEN);
+
+        assertThat(faqRepository.findAllByCourseIdOrderByCreatedDateDesc(foreignTargetCourse.getId())).isEmpty();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void importMaterial_asStudent_shouldReturnForbidden() throws Exception {
         CourseMaterialImportOptionsDTO options = new CourseMaterialImportOptionsDTO(sourceCourse.getId(), false, false, false, false, false, true);
@@ -332,6 +352,6 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     private QuizExercise reloadQuiz(long id) {
-        return quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(id);
+        return quizExerciseRepository.findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(id);
     }
 }

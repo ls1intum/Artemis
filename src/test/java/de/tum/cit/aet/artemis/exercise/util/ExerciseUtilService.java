@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.fail;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -34,10 +35,14 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -48,6 +53,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -67,6 +73,15 @@ public class ExerciseUtilService {
 
     @Autowired
     private ExerciseTestRepository exerciseTestRepository;
+
+    @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
+
+    @Autowired
+    private TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    @Autowired
+    private PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepo;
@@ -120,7 +135,9 @@ public class ExerciseUtilService {
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(10.0);
-        return exerciseTestRepository.save(exercise);
+        var savedExercise = exerciseTestRepository.save(exercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 
     /**
@@ -243,7 +260,9 @@ public class ExerciseUtilService {
                     assertThat(modelForModelingExercise).isNotEmpty();
                     ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(modelForModelingExercise.get(), true);
                     var user = userUtilService.getUserByLogin(userPrefix + "student" + j);
-                    modelSubmissionService.handleModelingSubmission(submission, (ModelingExercise) exercise, user);
+                    submission = modelSubmissionService.handleModelingSubmission(submission, (ModelingExercise) exercise, user, null).submission();
+                    // the save wrote the foreign key from an id; this utility holds the participation itself
+                    submission.setParticipation(participation);
                     studentParticipationRepo.save(participation);
                 }
                 return course;
@@ -333,6 +352,7 @@ public class ExerciseUtilService {
             ((ProgrammingExercise) exercise).setBuildAndTestStudentSubmissionsAfterDueDate(newDueDate);
         }
         exerciseTestRepository.save(exercise);
+        exerciseConfigurationService.initialize(exercise);
     }
 
     /**
@@ -346,6 +366,7 @@ public class ExerciseUtilService {
                 .orElseThrow(() -> new IllegalArgumentException("Exercise with given ID " + exerciseId + " could not be found"));
         exercise.setAssessmentDueDate(newDueDate);
         exerciseTestRepository.save(exercise);
+        exerciseConfigurationService.initialize(exercise);
     }
 
     /**
@@ -486,5 +507,85 @@ public class ExerciseUtilService {
             plagiarismCase.setVerdictPointDeduction(1);
         }
         plagiarismCaseRepository.save(plagiarismCase);
+    }
+
+    /**
+     * Gives an exercise that is saved already its permanent configuration rows, as the flows that create exercises do, and
+     * applies the given team settings to its row. The rows hold the key to their exercise and the exercise carries no mapped
+     * association to them, so saving an exercise through its repository does not create them. Calling this again is safe.
+     *
+     * @param exercise the saved exercise
+     * @param config   the team settings to apply, or null to keep the stored ones (the defaults for a new row)
+     * @param <E>      the exercise type
+     * @return the exercise, whose slot now carries the stored configuration
+     */
+    public <E extends Exercise> E saveTeamAssignmentConfig(E exercise, TeamAssignmentConfig config) {
+        exerciseConfigurationService.initialize(exercise, config, null);
+        return exercise;
+    }
+
+    /**
+     * Gives an exercise that is saved already its permanent configuration rows with the default settings, exactly as the
+     * flows that create exercises do. Calling this again is safe.
+     *
+     * @param exercise the saved exercise
+     * @param <E>      the exercise type
+     * @return the exercise, whose slots now carry the stored configurations
+     */
+    public <E extends Exercise> E initializeConfigurations(E exercise) {
+        exerciseConfigurationService.initialize(exercise);
+        return exercise;
+    }
+
+    /**
+     * Asserts that an exercise created or imported through the application owns its permanent configuration rows: one team
+     * assignment configuration and one plagiarism detection configuration, whatever its type and mode.
+     *
+     * @param exerciseId the id of the created or imported exercise
+     */
+    public void assertHasPermanentConfigurations(long exerciseId) {
+        assertThat(teamAssignmentConfigRepository.findAllByExerciseIdIn(List.of(exerciseId))).as("team assignment configuration rows of exercise " + exerciseId).hasSize(1);
+        assertThat(plagiarismDetectionConfigRepository.findAllByExerciseIdIn(List.of(exerciseId))).as("plagiarism detection configuration rows of exercise " + exerciseId)
+                .hasSize(1);
+    }
+
+    /**
+     * Reads the stored team assignment configuration of an exercise onto it, as the flows that report it do. An exercise read
+     * from the database does not carry it.
+     *
+     * @param exercise the exercise
+     * @param <E>      the exercise type
+     * @return the exercise, whose slot now carries the stored configuration
+     */
+    public <E extends Exercise> E attachTeamAssignmentConfig(E exercise) {
+        teamAssignmentConfigRepository.attachTo(exercise);
+        return exercise;
+    }
+
+    /**
+     * Gives an exercise that is saved already its permanent configuration rows, as the flows that create exercises do, and
+     * applies the given plagiarism detection settings to its row. Calling this again is safe.
+     *
+     * @param exercise the saved exercise
+     * @param config   the plagiarism detection settings to apply, or null to keep the stored ones (the defaults for a new row)
+     * @param <E>      the exercise type
+     * @return the exercise, whose slot now carries the stored configuration
+     */
+    public <E extends Exercise> E savePlagiarismDetectionConfig(E exercise, PlagiarismDetectionConfig config) {
+        exerciseConfigurationService.initialize(exercise, null, config);
+        return exercise;
+    }
+
+    /**
+     * Reads the stored plagiarism detection configuration of an exercise onto it, as the flows that report it do. An exercise
+     * read from the database does not carry it.
+     *
+     * @param exercise the exercise
+     * @param <E>      the exercise type
+     * @return the exercise, whose slot now carries the stored configuration
+     */
+    public <E extends Exercise> E attachPlagiarismDetectionConfig(E exercise) {
+        plagiarismDetectionConfigRepository.attachTo(exercise);
+        return exercise;
     }
 }

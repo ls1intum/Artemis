@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.config.DataCleanupProperties;
@@ -71,6 +72,9 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
 
     @Autowired
     private DataCleanupService dataCleanupService;
+
+    @Autowired
+    private UserActivityService userActivityService;
 
     @Autowired
     private CourseTestRepository courseRepository;
@@ -150,7 +154,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(studentParticipationRepository.findById(resetParticipation.getId())).isPresent();
         User notEnrolledAfter = userRepository.findById(inactiveNotEnrolled.getId()).orElseThrow();
         assertThat(notEnrolledAfter.isDeleted()).isFalse();
-        assertThat(notEnrolledAfter.getDeletionWarningSentDate()).isNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(notEnrolledAfter.getId())).isNull();
         assertThat(feedbackRepository.findByResult(oldNonLatestFeedbackResult)).isNotEmpty();
         assertThat(submissionVersionRepository.findById(oldSubmissionVersion.getId())).isPresent();
         assertThat(plagiarismCaseRepository.findById(oldPlagiarismCaseId)).isPresent();
@@ -170,7 +174,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         // Eligibility is re-checked at reset time, so the course also has to be past its retention deadline (1 year for
         // a non-grade-relevant course); the fixture course ends far in the future.
         course.setEndDate(ZonedDateTime.now().minusYears(2));
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         scheduleService(false, true, false, false, false, false, false).resetOldCourses();
 
@@ -204,7 +208,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         configuration.setResetWarningSentDate(ZonedDateTime.now().minusDays(40)); // warned > grace (30d) ago -> due
         course.setCourseConfiguration(configuration);
         course.setEndDate(ZonedDateTime.now().minusYears(2));
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         scheduleService(false, true, false, false, false, false, false).resetOldCourses();
 
@@ -227,18 +231,17 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         scheduleService(false, false, false, false, true, false, false).warnNotEnrolledUsers();
 
         verify(mailSendingService, atLeastOnce()).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
-        assertThat(userRepository.findById(inactive.getId())).get().extracting(User::getDeletionWarningSentDate).isNotNull();
-        assertThat(userRepository.findById(recent.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(inactive.getId())).isNotNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(recent.getId())).isNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "ADMIN")
-    void scheduledDeleteNotEnrolledUsersSoftDeletesOnlyWarnedPastGraceWhenEnabled() {
+    void scheduledDeleteNotEnrolledUsersPermanentlyDeletesOnlyWarnedPastGraceWhenEnabled() {
         Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
         // Warned > 30-day grace ago, no login since the warning -> deleted.
         User due = warnedNotEnrolledUser(TEST_PREFIX + "delcand", longAgo, ZonedDateTime.now().minusDays(31).toInstant());
         long dueId = due.getId();
-        String dueLogin = due.getLogin();
         // Warned only 5 days ago (still within grace) -> survives.
         User withinGrace = warnedNotEnrolledUser(TEST_PREFIX + "delgrace", longAgo, ZonedDateTime.now().minusDays(5).toInstant());
         // Warned > grace ago, but logged in AFTER the warning -> came back, so survives and the warning is cleared.
@@ -246,14 +249,11 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
 
         scheduleService(false, false, false, false, false, true, false).deleteNotEnrolledUsers();
 
-        User deleted = userRepository.findById(dueId).orElseThrow();
-        assertThat(deleted.isDeleted()).isTrue();
-        assertThat(deleted.getActivated()).isFalse();
-        assertThat(deleted.getLogin()).isNotEqualTo(dueLogin); // anonymized
+        assertThat(userRepository.findById(dueId)).isEmpty();
         assertThat(userRepository.findById(withinGrace.getId())).get().extracting(User::isDeleted).isEqualTo(false);
         User returnedAfter = userRepository.findById(returned.getId()).orElseThrow();
         assertThat(returnedAfter.isDeleted()).isFalse();
-        assertThat(returnedAfter.getDeletionWarningSentDate()).isNull(); // warning cleared because the user logged in after being warned
+        assertThat(userActivityService.findDeletionWarningSentDate(returnedAfter.getId())).isNull(); // warning cleared because the user logged in after being warned
     }
 
     @Test
@@ -262,10 +262,10 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         Submission submission = oldCourseSubmission();
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         Result nonLatest = participationUtilService.generateResult(submission, instructor); // rated
-        Feedback nonLatestFeedback = feedbackRepository.save(new Feedback());
+        Feedback nonLatestFeedback = new Feedback();
         participationUtilService.addFeedbackToResult(nonLatestFeedback, nonLatest);
         Result latest = participationUtilService.generateResult(submission, instructor); // rated, newer id -> latest
-        Feedback latestFeedback = feedbackRepository.save(new Feedback());
+        Feedback latestFeedback = new Feedback();
         participationUtilService.addFeedbackToResult(latestFeedback, latest);
 
         scheduleService(false, false, true, false, false, false, false).deleteOldFeedback();
@@ -316,7 +316,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         configuration.setGradeRelevant(false);
         configuration.setResetWarningSentDate(ZonedDateTime.now().minusDays(40));
         course.setCourseConfiguration(configuration);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
         return participation;
     }
 
@@ -352,7 +352,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         Submission submission = oldCourseSubmission();
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         Result nonLatest = participationUtilService.generateResult(submission, instructor);
-        Feedback feedback = feedbackRepository.save(new Feedback());
+        Feedback feedback = new Feedback();
         participationUtilService.addFeedbackToResult(feedback, nonLatest);
         // A newer rated result makes the first one non-latest (so its feedback is a deletion candidate).
         participationUtilService.generateResult(submission, instructor);
@@ -365,14 +365,14 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
 
     private User backdatedNotEnrolledUser(String login) {
         User user = userUtilService.createAndSaveUser(login);
-        userRepository.updateLastLoginDate(user.getLogin(), ZonedDateTime.now().minusYears(1).toInstant());
+        userActivityService.recordLogin(user.getLogin(), ZonedDateTime.now().minusYears(1).toInstant());
         return user;
     }
 
     private User warnedNotEnrolledUser(String login, Instant lastLogin, Instant warningDate) {
         User user = userUtilService.createAndSaveUser(login);
-        userRepository.updateLastLoginDate(user.getLogin(), lastLogin);
-        userRepository.updateDeletionWarningSentDate(user.getLogin(), warningDate);
+        userActivityService.recordLogin(user.getLogin(), lastLogin);
+        userActivityService.recordDeletionWarning(user.getLogin(), warningDate);
         return user;
     }
 }

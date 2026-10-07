@@ -11,12 +11,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -58,6 +60,7 @@ import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.util.ResourceUtils;
@@ -81,58 +84,134 @@ class FileUtilUnitTest {
         RepositoryExportTestUtil.safeDeleteDirectory(exportTestRootPath);
     }
 
+    /**
+     * The containment check in {@link FileUtil#resolveWithinDirectoryElseThrow(Path, String)} is lexical, so a symlink
+     * already sitting at the destination would point outside the directory. Exclusive creation is what refuses it:
+     * the write must fail and the link target must be left untouched.
+     */
     @Test
-    void validPathShouldPass() {
-        URI path = URI.create("/api/core/uploads/images/drag-and-drop/backgrounds/1/BackgroundFile.jpg");
-        URI subPath = URI.create("/api/core/uploads/images/drag-and-drop");
-        assertThatNoException().isThrownBy(() -> FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(path, subPath));
+    void refusesToWriteThroughASymlinkPlantedAtTheDestination(@TempDir Path tempDir) throws Exception {
+        Path insideDirectory = Files.createDirectories(tempDir.resolve("temp"));
+        Path outsideTarget = tempDir.resolve("escaped.txt");
+        FileUtils.writeStringToFile(outsideTarget.toFile(), "original", StandardCharsets.UTF_8);
+        Path plantedLink = insideDirectory.resolve("Temp_1_lecture.pdf");
+        try {
+            Files.createSymbolicLink(plantedLink, outsideTarget);
+        }
+        catch (UnsupportedOperationException | IOException e) {
+            // Creating symlinks needs privileges this platform may withhold; nothing to assert if we cannot plant one.
+            return;
+        }
+
+        try (InputStream inputStream = new ByteArrayInputStream("attacker".getBytes(StandardCharsets.UTF_8))) {
+            assertThatThrownBy(() -> FileUtil.writeNewFileElseThrow(inputStream, plantedLink)).isInstanceOf(FileAlreadyExistsException.class);
+        }
+
+        assertThat(Files.readString(outsideTarget)).isEqualTo("original");
     }
 
     @Test
-    void invalidPathShouldThrow() {
-        URI path = URI.create("/api/core/uploads/images/drag-and-drop/drag-items/1/PictureFile.jpg");
-        URI subPath = URI.create("/api/core/uploads/images/drag-and-drop/backgrounds");
+    void writesANewFileAndCreatesMissingParentDirectories(@TempDir Path tempDir) throws Exception {
+        Path target = tempDir.resolve("nested").resolve("created").resolve("file.txt");
 
-        assertThatThrownBy(() -> FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(path, subPath)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid path");
+        try (InputStream inputStream = new ByteArrayInputStream("content".getBytes(StandardCharsets.UTF_8))) {
+            FileUtil.writeNewFileElseThrow(inputStream, target);
+        }
+
+        assertThat(Files.readString(target)).isEqualTo("content");
+    }
+
+    /**
+     * CREATE_NEW creates the file before the first byte is copied, and the caller only registers the path for deletion
+     * once the write returns, so a failure part-way through must not leave a truncated file nobody will clean up.
+     */
+    @Test
+    void removesThePartialFileWhenTheTransferFails(@TempDir Path tempDir) {
+        Path target = tempDir.resolve("partial.txt");
+        InputStream failingHalfWay = new InputStream() {
+
+            private int remaining = 8;
+
+            @Override
+            public int read() throws IOException {
+                if (remaining-- > 0) {
+                    return 'x';
+                }
+                throw new IOException("stream broke after writing bytes");
+            }
+        };
+
+        assertThatThrownBy(() -> FileUtil.writeNewFileElseThrow(failingHalfWay, target)).isInstanceOf(IOException.class).hasMessageContaining("stream broke");
+
+        assertThat(Files.exists(target)).as("the truncated file must not be left behind").isFalse();
+    }
+
+    /**
+     * The counterpart to the cleanup above: when the open itself fails the path belongs to something else - the planted
+     * symlink case - and deleting it would destroy exactly what the exclusive create is there to protect.
+     */
+    @Test
+    void keepsAnExistingFileWhenTheOpenIsRefused(@TempDir Path tempDir) throws Exception {
+        Path target = tempDir.resolve("existing.txt");
+        FileUtils.writeStringToFile(target.toFile(), "original", StandardCharsets.UTF_8);
+
+        try (InputStream inputStream = new ByteArrayInputStream("replacement".getBytes(StandardCharsets.UTF_8))) {
+            assertThatThrownBy(() -> FileUtil.writeNewFileElseThrow(inputStream, target)).isInstanceOf(FileAlreadyExistsException.class);
+        }
+
+        assertThat(Files.readString(target)).isEqualTo("original");
     }
 
     @Test
-    void pathWithPathTraversalShouldThrow() {
-        URI path = URI.create("/api/core/uploads/images/drag-and-drop/drag-items/../../exam-users/1/PictureFile.jpg");
-        URI subPath = URI.create("/api/core/uploads/images/drag-and-drop/drag-items");
+    void refusesToOverwriteAnExistingFile(@TempDir Path tempDir) throws Exception {
+        Path target = tempDir.resolve("file.txt");
+        FileUtils.writeStringToFile(target.toFile(), "original", StandardCharsets.UTF_8);
 
-        assertThatThrownBy(() -> FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(path, subPath)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid path");
+        try (InputStream inputStream = new ByteArrayInputStream("replacement".getBytes(StandardCharsets.UTF_8))) {
+            assertThatThrownBy(() -> FileUtil.writeNewFileElseThrow(inputStream, target)).isInstanceOf(FileAlreadyExistsException.class);
+        }
+
+        assertThat(Files.readString(target)).isEqualTo("original");
     }
 
     @Test
-    void validPathWithRedundantElementsShouldPass() {
-        URI path = URI.create("/api/core/../core/uploads/./images/drag-and-drop/backgrounds/1/BackgroundFile.jpg");
-        URI subPath = URI.create("/api/core/uploads/images/drag-and-drop");
-        assertThatNoException().isThrownBy(() -> FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(path, subPath));
+    void resolveWithinDirectoryShouldReturnContainedPath() {
+        Path baseDirectory = Path.of("/tmp/artemis/files/temp");
+        assertThat(FileUtil.resolveWithinDirectoryElseThrow(baseDirectory, "Temp_42_lecture.pdf")).isEqualTo(baseDirectory.resolve("Temp_42_lecture.pdf"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "../../../etc/passwd", "..", "../sibling.pdf", "sub/../../escape.pdf", "/etc/passwd" })
+    void resolveWithinDirectoryShouldRejectEscapingFilenames(String filename) {
+        Path baseDirectory = Path.of("/tmp/artemis/files/temp");
+        assertThatThrownBy(() -> FileUtil.resolveWithinDirectoryElseThrow(baseDirectory, filename)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid filename");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", "   " })
+    void resolveWithinDirectoryShouldRejectBlankFilenames(String filename) {
+        assertThatThrownBy(() -> FileUtil.resolveWithinDirectoryElseThrow(Path.of("/tmp/artemis/files/temp"), filename)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("must not be blank");
     }
 
     @Test
-    void subPathLongerThanPathShouldThrow() {
-        URI path = URI.create("/api/core/uploads");
-        URI subPath = URI.create("/api/core/uploads/images");
-        assertThatThrownBy(() -> FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(path, subPath)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid path");
+    void resolveWithinDirectoryShouldRejectSiblingDirectorySharingNamePrefix() {
+        // "temp-evil" shares a character prefix with "temp" but is a different directory, so a character-wise
+        // comparison would wrongly accept it. Path.startsWith() compares elements, which is why this throws.
+        assertThatThrownBy(() -> FileUtil.resolveWithinDirectoryElseThrow(Path.of("/tmp/artemis/files/temp"), "../temp-evil/file.pdf")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid filename");
     }
 
     @Test
-    void pathAndSubPathEqualShouldPass() {
-        URI path = URI.create("/api/core/uploads/images/drag-and-drop");
-        URI subPath = URI.create("/api/core/uploads/images/drag-and-drop");
-        assertThatNoException().isThrownBy(() -> FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(path, subPath));
-    }
-
-    @Test
-    void rootPathShouldPass() {
-        URI path = URI.create("/api");
-        URI subPath = URI.create("/");
-        assertThatNoException().isThrownBy(() -> FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(path, subPath));
+    void resolveWithinDirectoryShouldContainEverySanitizedFilename() {
+        // The guard has to accept whatever sanitizeFilename() produces, otherwise it would reject legitimate uploads.
+        Path baseDirectory = Path.of("/tmp/artemis/files/temp");
+        for (String hostile : List.of("../../etc/passwd", "..\\..\\windows\\system32", "/absolute/path.pdf", "..", "....//....//x.pdf")) {
+            String sanitized = "Temp_1_" + FileUtil.sanitizeFilename(hostile);
+            assertThatNoException().isThrownBy(() -> FileUtil.resolveWithinDirectoryElseThrow(baseDirectory, sanitized));
+            assertThat(FileUtil.resolveWithinDirectoryElseThrow(baseDirectory, sanitized).getParent()).isEqualTo(baseDirectory);
+        }
     }
 
     @ParameterizedTest

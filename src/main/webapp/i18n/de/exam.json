@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "exam": {
+            "details": "Details",
             "detail": {
                 "sections": {
                     "general": "Informationen"
@@ -12,6 +13,10 @@
                 "introText": "Dieser Dialog kann zum Hochladen von PDF-Dateien und zum Extrahieren von Bildern für registrierte Studenten verwendet werden.",
                 "dialogText": "Jeder Eintrag in der Eingabedatei muss entweder einen Wert für die Matrikelnummer, das Login oder die E-Mail enthalten.\nDie Angaben zu Name und Vorname sind optional.",
                 "pdfExampleText": "Beispiel für ein gültiges PDF-Dateiformat:",
+                "pdfExampleAlt": "Beispiel-PDF-Seite mit Kopfzeile und zwei Spalten mit Studierendenfotos und Angaben zur Identifizierung",
+                "studentPhotoAlt": "Foto von {{ login }}",
+                "studentPhotoMissingAlt": "Kein Foto für {{ login }} verfügbar",
+                "studentSignatureAlt": "Unterschrift von {{ login }}",
                 "pdfFile": {
                     "label": "PDF-Datei auswählen",
                     "tooltip": "Bitte wähle eine PDF-Datei aus, die das Bild des registrierten Studenten und seine Matrikelnummer enthält."
@@ -44,6 +49,7 @@
                     "number": "Raumnummer",
                     "name": "Name",
                     "building": "Gebäude",
+                    "registeredStudentsUnknown": "Die Anzahl der registrierten Studierenden liegt noch nicht vor oder konnte nicht geladen werden. Du kannst die Studierenden verteilen, sobald sie bekannt ist; falls diese Meldung bleibt, schließe den Dialog und öffne ihn erneut.",
                     "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Studierenden unterbringen.",
                     "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Studierenden unterbringen ({{ percentage }}%).",
                     "distribute": "Verteilen",
@@ -114,7 +120,7 @@
                 "feedbackRequested": "KI-Feedback angefordert",
                 "feedbackRequestSent": "KI-Feedback wurde für alle Text- und Modellierungsaufgaben angefordert. Die Ergebnisse erscheinen in Kürze.",
                 "feedbackUsageLoadFailed": "Die verbleibenden KI-Feedback-Anfragen konnten nicht geladen werden. Bitte lade die Seite neu, um es erneut zu versuchen.",
-                "noFeedbackSuggestionModuleConfigured": "Für keine der Aufgaben in dieser Prüfung ist KI-Feedback konfiguriert.",
+                "noCourseLevelAthenaFormativeEnabled": "KI-Feedback ist für diesen Kurs nicht aktiviert.",
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "submissionLinkedToCommit": "Die abgegebene Lösung ist mit folgendem Commit verknüpft: ",
                 "noCommitHash": "Es hat kein Commit stattgefunden",
@@ -388,6 +394,7 @@
                 "explanation": "Deine Abgabe und deine Ergebnisse sind auf dem Server gespeichert, es ist nichts verloren. Bitte überprüfe deine Internetverbindung und versuche es erneut.",
                 "retry": "Erneut versuchen"
             },
+            "programmingActions": "Aktionen der Programmieraufgabe",
             "saveExercise": "Aufgabe speichern",
             "exerciseSaved": "Aufgabe gespeichert",
             "reloadWarning": "Durch das Neuladen der Seite gehen alle ungespeicherten Änderungen verloren. Bist du sicher, dass du die Seite neu laden möchtest?"
@@ -489,6 +496,7 @@
         "examManagement": {
             "reviewDatesInvalidWarning": "Das Ende der Klausureinsicht ist falsch definiert oder fehlt",
             "reviewDatesInvalidExplanation": "Ist ein Beginn der Klausureinsicht definiert, muss auch ein Ende definiert werden. Zusätzlich muss das Ende der Klausureinsicht immer nach dem Beginn datiert sein.",
+            "titleMissingOrNotValid": "'Titel' fehlt/ungültig",
             "sections": {
                 "configuration": "Klausurkonfiguration",
                 "conduction": "Klausurdurchführung",
@@ -498,10 +506,15 @@
                 "text": "Klausurtexte",
                 "examSolutions": "Klausurlösungen"
             },
-            "title": "Klausurverwaltung",
+            "title": "Klausuren",
             "createExam": "Erstelle eine neue Klausur",
             "importExam": "Importiere eine Klausur",
-            "editExam": "Bearbeite eine existierende Klausur",
+            "empty": {
+                "title": "Noch keine Klausuren",
+                "description": "Erstelle eine Klausur oder importiere eine aus einem anderen Kurs, um zu beginnen.",
+                "documentation": "Mehr über Klausuren erfahren"
+            },
+            "editExam": "Bearbeiten",
             "courseTitle": "Kursname",
             "examId": "Klausur ID",
             "examTitle": "Klausurname",
@@ -529,7 +542,6 @@
                 "title": "Erreichbare Punktzahl",
                 "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für die Prüfung aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl. Dies wirkt sich auch auf die Noten aller Studierenden in der Prüfung aus!"
             },
-            "numberOfExerciseGroups": "Anzahl Aufgabengruppen:",
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
             "numberOfExercisesInExamTooltip": "Die Anzahl der Aufgaben muss mit der Anzahl der Aufgabengruppen übereinstimmen",
             "numberOfCorrectionRoundsInExam": "Anzahl der Korrekturrunden der Klausur",
@@ -570,10 +582,12 @@
             },
             "testRun": {
                 "testRun": "Testlauf",
-                "title": "Testlaufverwaltung: ",
+                "title": "Testlaufverwaltung",
                 "setup": "Testlauf Erstellen",
                 "author": "Autor:in",
                 "setWorkingTime": "Lege eine Bearbeitungszeit fest (Minuten und Sekunden):",
+                "workingTimeMinutes": "Bearbeitungszeit Minuten",
+                "workingTimeSeconds": "Bearbeitungszeit Sekunden",
                 "setupHint": "Wähle für jede Aufgabengruppe eine Aufgabe aus, indem du auf die Aufgabe klickst.\n<strong>Hinweis:</strong> Wenn du bereits einen Testlauf mit einer der Aufgaben erstellt hast, dann wird diese bereits eine Abgabe und Ergebnis enthalten.",
                 "assess": "Deine Testläufe Bewerten",
                 "manage": "Arbeitszeit verwalten",
@@ -651,15 +665,11 @@
                     "AttendanceNotChecked": "Anwesenheitsprüfung fehlgeschlagen",
                     "AttendanceChecked": "Anwesenheitsprüfung bestanden"
                 },
-                "filterGroup": {
-                    "progress": "Fortschritt",
-                    "attendance": "Anwesenheit"
-                },
                 "menu": {
-                    "manageStudents": "Studierende registrieren",
-                    "examLogistics": "Klausurlogistik",
-                    "manageStudentExams": "Individuelle Klausuren verwalten",
-                    "addStudents": "Hinzufügen",
+                    "manageStudents": "Studierende",
+                    "examLogistics": "Logistik",
+                    "manageStudentExams": "Individuelle Klausuren",
+                    "addStudents": "Registrieren",
                     "importUsers": "Importieren aus CSV",
                     "exportUsers": "Exportieren als CSV",
                     "registerCourseStudents": "Alle Studierenden des Kurses anmelden",
@@ -691,18 +701,23 @@
             },
             "exerciseGroups": "Aufgabengruppen",
             "exerciseGroup": {
-                "create": "Neue Aufgabengruppe erstellen",
+                "create": "Aufgabengruppe erstellen",
                 "import": "Aufgabengruppe importieren",
                 "selectExerciseGroup": "Aufgabengruppen auswählen",
                 "selectExerciseGroupExplanation": "Wähle durch Klicken die individuellen Aufgaben aus, welche mit den Aufgabengruppen importiert werden sollen",
                 "noExerciseGroup": "Die ausgewählte Klausur {{examTitle}} hat keine Aufgabengruppen",
                 "update": "Aufgabengruppe bearbeiten",
+                "addExercise": "Aufgabe hinzufügen",
+                "editNotPossibleExamStarted": "Eine Bearbeitung ist nicht möglich, da die Klausur bereits begonnen hat.",
+                "editGroup": "Gruppe bearbeiten",
+                "deleteGroup": "Gruppe löschen",
                 "type": "Typ",
                 "title": "Titel",
                 "points": "Punktzahl",
                 "mandatory": "Verpflichtend",
                 "optional": "Optional",
                 "noExercises": "Es wurden noch keine Aufgaben hinzugefügt.",
+                "noExerciseGroups": "Es wurden noch keine Aufgabengruppen erstellt.",
                 "titleInfo": "Der Name der Aufgabengruppe wird den Studierenden als Aufgabenname angezeigt.",
                 "delete": {
                     "question": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden ebenfalls gelöscht.",
@@ -918,9 +933,9 @@
             }
         },
         "studentExamDetail": {
-            "studentExam": "Studierenden Klausur ({{ examTitle }})",
-            "studentTestExam": "Studierenden Test Klausur ({{ examTitle }})",
-            "testRun": "Testlauf ({{ examTitle }})",
+            "studentExam": "Studierenden Klausur",
+            "studentTestExam": "Studierenden Test Klausur",
+            "testRun": "Testlauf",
             "exercises": "Aufgaben",
             "overview": "Übersicht",
             "downloadPDF": " PDF herunterladen",

@@ -19,10 +19,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
     template: '',
 })
 class StubModelingEditorComponent {
+    tile = input(false);
     umlModel = input<UMLModel>();
     diagramType = input<UMLDiagramType>();
+    problemStatement = input<string>();
     readOnly = input(false);
     withExplanation = input(false);
+    savedStatus = input<{ isChanged?: boolean; isSaving?: boolean }>();
     explanation = model<string>('');
 
     getCurrentModel(): UMLModel {
@@ -49,6 +52,7 @@ describe('ModelingExamSubmissionComponent', () => {
 
     let mockSubmission: ModelingSubmission;
     let mockExercise: ModelingExercise;
+    const editedModel = { nodes: [{ id: 'new-class' }], edges: [] } as unknown as UMLModel;
 
     const resetComponent = () => {
         if (comp) {
@@ -160,11 +164,12 @@ describe('ModelingExamSubmissionComponent', () => {
             expect(modelingEditor).not.toBeNull();
             const umlModel = modelingEditor.componentInstance.umlModel();
             expect(umlModel).toBeDefined();
-            expect(umlModel.version).toBe('4.0.0');
+            expect(umlModel.version).toMatch(/^4\.\d+\.\d+$/);
             expect(umlModel.type).toBe('ClassDiagram');
             expect(modelingEditor.componentInstance.withExplanation()).toBe(true);
             expect(modelingEditor.componentInstance.explanation()).toEqual(mockSubmission.explanationText);
             expect(modelingEditor.componentInstance.diagramType()).toEqual(UMLDiagramType.ClassDiagram);
+            expect(modelingEditor.componentInstance.problemStatement()).toBe(mockExercise.problemStatement);
         });
 
         it('should show problem statement if there is any', () => {
@@ -215,7 +220,7 @@ describe('ModelingExamSubmissionComponent', () => {
             comp.explanationText.set(explanationText);
             comp.updateSubmissionFromView();
             expect(comp.studentSubmission().model).toEqual(JSON.stringify(newModel));
-            expect(currentModelStub).toHaveBeenCalledTimes(2);
+            expect(currentModelStub).toHaveBeenCalledOnce();
             expect(comp.studentSubmission().explanationText).toEqual(explanationText);
         });
     });
@@ -234,8 +239,46 @@ describe('ModelingExamSubmissionComponent', () => {
     describe('modelChanged', () => {
         it('should set isSynced to false', () => {
             comp.studentSubmission().isSynced = true;
-            comp.modelChanged({} as UMLModel);
+            comp.modelChanged(editedModel);
             expect(comp.studentSubmission().isSynced).toBe(false);
+        });
+
+        it('should keep the submission synced when Apollon reports the loaded diagram again (selection change)', () => {
+            mockSubmission.isSynced = true;
+            fixture.detectChanges();
+            const notify = vi.spyOn(TestBed.inject(ExamParticipationService), 'notifySubmissionSyncStateChanged');
+
+            comp.modelChanged(comp.umlModel());
+
+            expect(mockSubmission.isSynced).toBe(true);
+            expect(notify).not.toHaveBeenCalled();
+        });
+
+        it('should keep a submission without a model synced when Apollon reports the empty diagram', () => {
+            mockSubmission.model = undefined;
+            mockSubmission.isSynced = true;
+            fixture.detectChanges();
+
+            comp.modelChanged({ nodes: [], edges: [] } as unknown as UMLModel);
+
+            expect(mockSubmission.isSynced).toBe(true);
+        });
+
+        it('should treat the diagram handed to a save as the new baseline', () => {
+            mockSubmission.isSynced = true;
+            fixture.detectChanges();
+            const stub = fixture.debugElement.query(By.directive(StubModelingEditorComponent)).componentInstance as StubModelingEditorComponent;
+            vi.spyOn(comp, 'modelingEditor').mockReturnValue(stub as unknown as ModelingEditorComponent);
+            vi.spyOn(stub, 'getCurrentModel').mockReturnValue(editedModel);
+
+            comp.modelChanged(editedModel);
+            expect(mockSubmission.isSynced).toBe(false);
+
+            comp.updateSubmissionFromView();
+            mockSubmission.isSynced = true;
+            comp.modelChanged(editedModel);
+
+            expect(mockSubmission.isSynced).toBe(true);
         });
     });
 
@@ -249,7 +292,7 @@ describe('ModelingExamSubmissionComponent', () => {
         });
     });
 
-    it('should update the model on submission version change', async () => {
+    it('should update the model synchronously on submission version change', () => {
         vi.spyOn(comp, 'modelingEditor').mockReturnValue({
             apollonEditor: { nextRender: Promise.resolve(), model: {} } as unknown as ApollonEditor,
         } as unknown as ModelingEditorComponent);
@@ -257,11 +300,11 @@ describe('ModelingExamSubmissionComponent', () => {
             content:
                 'Model: {"version":"3.0.0","type":"ClassDiagram","size":{"width":220,"height":420},"interactive":{"elements":{},"relationships":{}},"elements":{},"relationships":{},"assessments":{}}; Explanation: explanation',
         } as unknown as SubmissionVersion;
-        await comp.setSubmissionVersion(submissionVersion);
+        expect(comp.setSubmissionVersion(submissionVersion)).toBeUndefined();
 
         expect(comp.submissionVersion).toEqual(submissionVersion);
         expect(comp.umlModel()).toBeDefined();
-        expect(comp.umlModel()!.version).toBe('4.0.0');
+        expect(comp.umlModel()!.version).toMatch(/^4\.\d+\.\d+$/);
         expect(comp.umlModel()!.type).toBe('ClassDiagram');
         expect(comp.explanationText()).toBe('explanation');
     });
@@ -274,10 +317,58 @@ describe('ModelingExamSubmissionComponent', () => {
         const examParticipationService = TestBed.inject(ExamParticipationService);
         const notify = vi.spyOn(examParticipationService, 'notifySubmissionSyncStateChanged');
 
-        comp.modelChanged({} as UMLModel);
+        comp.modelChanged(editedModel);
         comp.explanationChanged('some explanation');
 
         expect(comp.studentSubmission().isSynced).toBe(false);
         expect(notify).toHaveBeenCalledTimes(2);
+    });
+
+    describe('overlay save status', () => {
+        // the status handed to the editor's "All changes saved" overlay must agree with the exam sidebar icon and the save button
+        const overlayStatus = () => fixture.debugElement.query(By.directive(StubModelingEditorComponent)).componentInstance.savedStatus();
+
+        it('should show unsaved changes as soon as the model is edited and all saved once the save succeeded', () => {
+            const examParticipationService = TestBed.inject(ExamParticipationService);
+            mockSubmission.isSynced = true;
+            fixture.detectChanges();
+            expect(overlayStatus()).toEqual({ isChanged: false, isSaving: false });
+
+            comp.modelChanged(editedModel);
+            fixture.detectChanges();
+            expect(overlayStatus()).toEqual({ isChanged: true, isSaving: false });
+
+            examParticipationService.setSubmissionSaving(mockSubmission, true);
+            fixture.detectChanges();
+            expect(overlayStatus()).toEqual({ isChanged: true, isSaving: true });
+
+            // what the exam participation does when the save succeeded
+            examParticipationService.setSubmissionSaving(mockSubmission, false);
+            mockSubmission.isSynced = true;
+            examParticipationService.notifySubmissionSyncStateChanged();
+            fixture.detectChanges();
+            expect(overlayStatus()).toEqual({ isChanged: false, isSaving: false });
+        });
+
+        it('should show unsaved changes as soon as the explanation text is edited', () => {
+            mockSubmission.isSynced = true;
+            fixture.detectChanges();
+
+            comp.explanationChanged('another explanation');
+            fixture.detectChanges();
+
+            expect(overlayStatus()).toEqual({ isChanged: true, isSaving: false });
+        });
+
+        it('should hand the editor the same status object while the sync state did not change', () => {
+            mockSubmission.isSynced = true;
+            fixture.detectChanges();
+            const status = overlayStatus();
+
+            TestBed.inject(ExamParticipationService).notifySubmissionSyncStateChanged();
+            fixture.detectChanges();
+
+            expect(overlayStatus()).toBe(status);
+        });
     });
 });

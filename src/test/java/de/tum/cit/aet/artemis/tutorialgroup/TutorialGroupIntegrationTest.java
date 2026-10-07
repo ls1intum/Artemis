@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -456,15 +457,25 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void create_asEditorWithNoTutorialGroupsConfiguration_shouldReturnBadRequest() throws Exception {
-            Course course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(exampleCourseId);
-            TutorialGroupsConfiguration configuration = course.getTutorialGroupsConfiguration();
-            course.setTutorialGroupsConfiguration(null);
-            configuration.setCourse(null);
-            courseRepository.save(course);
-            tutorialGroupsConfigurationRepository.delete(configuration);
+            TutorialGroupsConfiguration configuration = tutorialGroupsConfigurationRepository.findByCourseId(exampleCourseId).orElseThrow();
+            configuration.setTutorialPeriodStartInclusive(null);
+            configuration.setTutorialPeriodEndInclusive(null);
+            tutorialGroupsConfigurationRepository.save(configuration);
 
             CreateOrUpdateTutorialGroupRequestDTO createOrUpdateTutorialGroupRequestDTO = new CreateOrUpdateTutorialGroupRequestDTO("TG Mo 10", firstCourseTutor1.getId(),
                     "English", false, "Garching", 10, "Bring you machine.", null);
+
+            request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", createOrUpdateTutorialGroupRequestDTO, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
+        void create_asEditorWithScheduleMissingFirstSession_shouldReturnBadRequest() throws Exception {
+            // A schedule sent without its first session is a malformed request, so it has to be rejected as one
+            // rather than reaching the mapping code and failing there.
+            TutorialGroupScheduleDTO scheduleWithoutFirstSession = new TutorialGroupScheduleDTO(null, FIRST_AUGUST_MONDAY_12_00, 1, FOURTH_AUGUST_MONDAY, "01.03.12");
+            CreateOrUpdateTutorialGroupRequestDTO createOrUpdateTutorialGroupRequestDTO = new CreateOrUpdateTutorialGroupRequestDTO("TG Mo 10", firstCourseTutor1.getId(),
+                    "English", false, "Garching", 10, "Bring your machine.", scheduleWithoutFirstSession);
 
             request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", createOrUpdateTutorialGroupRequestDTO, HttpStatus.BAD_REQUEST);
         }
@@ -616,12 +627,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void update_asEditorWithoutTutorialGroupsConfiguration_shouldReturnBadRequest() throws Exception {
-            Course course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(exampleCourseId);
-            TutorialGroupsConfiguration configuration = course.getTutorialGroupsConfiguration();
-            course.setTutorialGroupsConfiguration(null);
-            configuration.setCourse(null);
-            courseRepository.save(course);
-            tutorialGroupsConfigurationRepository.delete(configuration);
+            TutorialGroupsConfiguration configuration = tutorialGroupsConfigurationRepository.findByCourseId(exampleCourseId).orElseThrow();
+            configuration.setTutorialPeriodStartInclusive(null);
+            configuration.setTutorialPeriodEndInclusive(null);
+            tutorialGroupsConfigurationRepository.save(configuration);
 
             CreateOrUpdateTutorialGroupRequestDTO createOrUpdateTutorialGroupRequestDTO = new CreateOrUpdateTutorialGroupRequestDTO("TG Mon 15", firstCourseTutor1.getId(),
                     "English", false, "Garching", 15, "Updated information.", null);
@@ -639,6 +648,17 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
             CreateOrUpdateTutorialGroupRequestDTO createOrUpdateTutorialGroupRequestDTO = new CreateOrUpdateTutorialGroupRequestDTO("TG Mon 15", firstCourseTutor1.getId(),
                     "English", false, "Garching", 15, "Updated information.", null);
+
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(),
+                    createOrUpdateTutorialGroupRequestDTO, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
+        void update_asEditorWithScheduleMissingFirstSession_shouldReturnBadRequest() throws Exception {
+            TutorialGroupScheduleDTO scheduleWithoutFirstSession = new TutorialGroupScheduleDTO(null, FIRST_AUGUST_MONDAY_12_00, 1, FOURTH_AUGUST_MONDAY, "01.03.12");
+            CreateOrUpdateTutorialGroupRequestDTO createOrUpdateTutorialGroupRequestDTO = new CreateOrUpdateTutorialGroupRequestDTO("TG Mon 15", firstCourseTutor1.getId(),
+                    "English", false, "Garching", 15, "Updated information.", scheduleWithoutFirstSession);
 
             request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(),
                     createOrUpdateTutorialGroupRequestDTO, HttpStatus.BAD_REQUEST);
@@ -703,7 +723,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     }
 
     private void assertTutorialGroupChannelHasExpectedProperties(Channel channel, TutorialGroup tutorialGroup, User currentTutor) {
-        var cleanedTitle = tutorialGroup.getTitle().replaceAll("\\s", "-").toLowerCase();
+        var cleanedTitle = tutorialGroup.getTitle().replaceAll("\\s", "-").toLowerCase(Locale.ROOT);
         var expectedChannelName = "tutorgroup-" + cleanedTitle.substring(0, Math.min(cleanedTitle.length(), 18));
         assertThat(channel).isNotNull();
         assertThat(channel.getName()).isEqualTo(expectedChannelName);

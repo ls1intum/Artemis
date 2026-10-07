@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
@@ -12,15 +13,22 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * Holds course-level configuration values that are only needed in specific flows and should not widen the (already large)
- * {@code course} table nor be loaded on every course fetch. The association from {@link Course} is lazy, so this entity is
- * only materialized when explicitly accessed (e.g. the course settings form or the data-privacy cleanup logic).
+ * {@code course} table nor be loaded on every course fetch. The configuration holds the key to its course and the course
+ * carries no mapped association to it, so this entity is only read when a flow asks for it explicitly (e.g. the course
+ * settings form or the data-privacy cleanup logic).
  * <p>
  * Currently stores the grade-relevance flag that drives the GDPR retention period for a course's student data
  * (grade-relevant courses are retained longer than non-grade-relevant ones), the data-retention hold that suspends that
- * cleanup entirely, and the timestamps recording the retention lifecycle.
+ * cleanup entirely, the timestamps recording the retention lifecycle, and the per-course Atlas auto-orchestration
+ * settings.
+ * <p>
+ * The auto-orchestration settings live here rather than in an Atlas-owned table because they must be readable and
+ * writable even when the Atlas module is disabled: the course update flow has to preserve them, and it cannot go
+ * through an {@code @Conditional(AtlasEnabled)} bean to do so.
  */
 @Entity
 @Table(name = "course_configuration")
@@ -29,9 +37,24 @@ public class CourseConfiguration extends DomainObject {
 
     public static final String ENTITY_NAME = "courseConfiguration";
 
-    @OneToOne(mappedBy = "courseConfiguration", fetch = FetchType.LAZY)
+    /**
+     * The course this configuration belongs to. The key lives here rather than on the course: the course carries no
+     * mapped association to its configuration, so loading a course can never pull this row in, and the configuration
+     * cannot outlive the course. Read it through {@code CourseConfigurationRepository} where it is needed.
+     */
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "course_id", nullable = false, unique = true)
     @JsonIgnore
+    @Parent
     private Course course;
+
+    /**
+     * The key of {@link #course}, read without touching the lazy association, so that the configurations of many courses
+     * can be matched to their courses after one query. Written through {@link #course} only.
+     */
+    @JsonIgnore
+    @Column(name = "course_id", insertable = false, updatable = false)
+    private Long courseId;
 
     /**
      * Whether the course is grade-relevant (e.g. its results count towards official grades / exam records). Grade-relevant
@@ -66,6 +89,31 @@ public class CourseConfiguration extends DomainObject {
      */
     @Column(name = "student_data_reset_date")
     private ZonedDateTime studentDataResetDate;
+
+    /**
+     * Hard per-course kill switch for the Atlas auto-orchestration pipeline. Even with the global {@code Feature.AtlasAgent}
+     * toggle on, a course only participates in the debounce / scheduler pipeline when this flag is set.
+     */
+    @Column(name = "auto_orchestrator_enabled", nullable = false)
+    private boolean autoOrchestratorEnabled = false;
+
+    /**
+     * Per-course override (in seconds) of the auto-orchestration debounce window. When {@code null} the global default from
+     * {@code AtlasOrchestratorProperties#debounceWindowSeconds()} applies.
+     */
+    @Column(name = "debounce_window_seconds_override")
+    private Integer debounceWindowSecondsOverride;
+
+    /**
+     * Per-course override of the daily auto-orchestration run cap. When {@code null} the global default from
+     * {@code AtlasOrchestratorProperties#maxDailyOrchestrations()} applies.
+     */
+    @Column(name = "max_daily_orchestration_override")
+    private Integer maxDailyOrchestrationOverride;
+
+    public Long getCourseId() {
+        return courseId;
+    }
 
     public Course getCourse() {
         return course;
@@ -107,5 +155,29 @@ public class CourseConfiguration extends DomainObject {
 
     public void setStudentDataResetDate(ZonedDateTime studentDataResetDate) {
         this.studentDataResetDate = studentDataResetDate;
+    }
+
+    public boolean isAutoOrchestratorEnabled() {
+        return autoOrchestratorEnabled;
+    }
+
+    public void setAutoOrchestratorEnabled(boolean autoOrchestratorEnabled) {
+        this.autoOrchestratorEnabled = autoOrchestratorEnabled;
+    }
+
+    public Integer getDebounceWindowSecondsOverride() {
+        return debounceWindowSecondsOverride;
+    }
+
+    public void setDebounceWindowSecondsOverride(Integer debounceWindowSecondsOverride) {
+        this.debounceWindowSecondsOverride = debounceWindowSecondsOverride;
+    }
+
+    public Integer getMaxDailyOrchestrationOverride() {
+        return maxDailyOrchestrationOverride;
+    }
+
+    public void setMaxDailyOrchestrationOverride(Integer maxDailyOrchestrationOverride) {
+        this.maxDailyOrchestrationOverride = maxDailyOrchestrationOverride;
     }
 }

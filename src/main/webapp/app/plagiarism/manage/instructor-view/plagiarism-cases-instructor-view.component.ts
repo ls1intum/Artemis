@@ -17,6 +17,10 @@ import { ProgressBarComponent } from 'app/exercise/dashboards/tutor-participatio
 import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-plagiarism-cases-instructor-view',
@@ -31,6 +35,9 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         PlagiarismCaseVerdictComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        CourseTitleBarActionsDirective,
+        CourseTitleBarTitleDirective,
+        TumAetUiButtonDirective,
     ],
 })
 export class PlagiarismCasesInstructorViewComponent implements OnInit {
@@ -52,6 +59,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
 
     readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'PlagiarismChecks';
+    readonly faDownload = faDownload;
 
     constructor() {
         // effect needs to be in constructor context, due to the possibility of ngOnInit being called from a non-injection
@@ -186,7 +194,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     exportPlagiarismCases(): void {
         const headers = ['Student Login', 'Matr. Nr.', 'Exercise', 'Verdict', 'Verdict Date', 'Verdict By'];
         const blobParts: string[] = [headers.join(';') + '\n'];
-        this.plagiarismCases().reduce((acc, plagiarismCase) => {
+        this.plagiarismCases().forEach((plagiarismCase) => {
             const fields = [
                 this.sanitizeCSVField(plagiarismCase.student?.login),
                 this.sanitizeCSVField(plagiarismCase.student?.visibleRegistrationNumber),
@@ -201,9 +209,8 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
             } else {
                 fields.push('No verdict yet', '-', '-');
             }
-            acc.push(fields.join(';') + '\n');
-            return acc;
-        }, blobParts);
+            blobParts.push(fields.join(';') + '\n');
+        });
 
         try {
             downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');

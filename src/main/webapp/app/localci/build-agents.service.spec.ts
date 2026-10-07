@@ -39,6 +39,18 @@ describe('BuildAgentsService', () => {
         req.flush(expectedResponse); // Flush an array of elements
     });
 
+    it('should return the registered build agent addresses', () => {
+        const expectedResponse = [{ agentName: 'buildAgent1', addresses: ['10.0.0.5'], withinAllowlist: true }];
+
+        service.getBuildAgentAddresses().subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-agent-addresses`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+    });
+
     it('should return build agent details', () => {
         const expectedResponse = element;
 

@@ -36,14 +36,18 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { IrisSlidesContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { IrisActivityItem, IrisActivityKind, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
+import { IrisCommand } from 'app/iris/shared/entities/iris-command.model';
 import dayjs from 'dayjs/esm';
+import { IrisMaterialVersionService } from 'app/iris/overview/services/iris-material-version.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('IrisChatService', () => {
     let service: IrisChatService;
     let httpService: IrisChatHttpService;
     let wsMock: IrisWebsocketService;
-    let routerMock: { url: string };
+    let routerMock: { url: string; navigate: ReturnType<typeof vi.fn> };
     let accountService: AccountService;
+    let materialVersionService: IrisMaterialVersionService;
 
     const id = 123;
     const courseId = 234;
@@ -71,7 +75,7 @@ describe('IrisChatService', () => {
     };
 
     beforeEach(() => {
-        routerMock = { url: '' };
+        routerMock = { url: '', navigate: vi.fn().mockResolvedValue(true) };
 
         TestBed.configureTestingModule({
             providers: [
@@ -82,6 +86,8 @@ describe('IrisChatService', () => {
                 { provide: UserService, useValue: userMock },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: Router, useValue: routerMock },
+                MockProvider(IrisMaterialVersionService),
+                { provide: AlertService, useValue: { warning: vi.fn(), error: vi.fn() } },
             ],
         });
 
@@ -89,6 +95,11 @@ describe('IrisChatService', () => {
         httpService = TestBed.inject(IrisChatHttpService);
         wsMock = TestBed.inject(IrisWebsocketService);
         accountService = TestBed.inject(AccountService);
+        materialVersionService = TestBed.inject(IrisMaterialVersionService);
+
+        // The chat service subscribes to the per-session command channel alongside the message channel;
+        // give it a default subscribeable stream so session loads do not throw in tests that don't care.
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValue(of());
 
         accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
 
@@ -97,6 +108,7 @@ describe('IrisChatService', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should commit the course context and subscribe to its session via openChat', async () => {
@@ -192,6 +204,19 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         const messages = await firstValueFrom(service.currentMessages());
         expect(messages).toHaveLength(mockConversation.messages!.length);
+    });
+
+    it('should hide stored conversation summaries', async () => {
+        const compaction = { id: 99, sender: IrisSender.SUMMARY, content: [], sentAt: dayjs() };
+        const session: IrisSession = { ...mockConversation, messages: [...mockConversation.messages!, compaction] };
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: session } as HttpResponse<IrisSession>));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        service.openChat(ChatServiceMode.COURSE, id);
+        await waitForSessionId();
+        const messages = await firstValueFrom(service.currentMessages());
+        expect(messages).toHaveLength(mockConversation.messages!.length);
+        expect(messages.some((message) => message.sender === IrisSender.SUMMARY)).toBe(false);
     });
 
     describe('stagePendingContext', () => {
@@ -431,7 +456,7 @@ describe('IrisChatService', () => {
         await waitForSessionId();
         await firstValueFrom(service.resendMessage(message));
 
-        expect(httpService.resendMessage).toHaveBeenCalledWith(mockConversation.id, message);
+        expect(httpService.resendMessage).toHaveBeenCalledWith(mockConversation.id, message, wsMock.clientId);
         const messages = await firstValueFrom(service.currentMessages());
         expect(messages).toHaveLength(mockConversation.messages!.length);
         expect(messages.first()).toEqual(message);
@@ -589,6 +614,328 @@ describe('IrisChatService', () => {
         });
     });
 
+    it('should add an incoming COMMAND marker message without emitting point-out navigation', async () => {
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        const commandPayload = {
+            type: IrisChatWebsocketPayloadType.MESSAGE,
+            message: {
+                id: 99,
+                sender: IrisSender.COMMAND,
+                content: [{ type: 'json', attributes: { type: 'pointOut', lectureUnitId: 42, page: 3 } }],
+            },
+        } as unknown as IrisChatWebsocketDTO;
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(commandPayload));
+        const navigationSpy = vi.fn();
+        service.pointOut$.subscribe(navigationSpy);
+
+        service.openChat(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+
+        // Navigation already happened at command time; the marker is only a clickable history entry.
+        const messages = await firstValueFrom(service.currentMessages());
+        expect(messages.last()).toMatchObject({ id: 99, sender: IrisSender.COMMAND });
+        expect(navigationSpy).not.toHaveBeenCalled();
+    });
+
+    it('should emit a point-out in place while its own lecture is the one on screen', () => {
+        const emitted = vi.fn();
+        service.pointOut$.subscribe(emitted);
+
+        // A point-out that names no lecture has nothing to route by and can only be carried out where it is.
+        service.navigateToPointOut({ lectureUnitId: 7, page: 2, forceOpen: true });
+
+        expect(emitted).toHaveBeenCalledExactlyOnceWith({ lectureUnitId: 7, page: 2, forceOpen: true });
+
+        // The combined view is right there and can move without a reload, so the marker must not route anywhere.
+        service['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+        service['contextService'].setPageContext({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, timestamp: 42, forceOpen: true });
+
+        expect(emitted).toHaveBeenCalledTimes(2);
+        expect(routerMock.navigate).not.toHaveBeenCalled();
+    });
+
+    it('should route a point-out to its lecture when the session is open from somewhere else', () => {
+        // Chat history opens a lecture session from anywhere, the course Iris page above all. The unit that carries a
+        // point-out out only listens while it is on screen, so emitting here would leave the click doing nothing at
+        // all. The deep link reaches the same position through the route instead.
+        service['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+        service['contextService'].setPageContext({ mode: ChatServiceMode.COURSE, entityId: courseId });
+        const emitted = vi.fn();
+        service.pointOut$.subscribe(emitted);
+
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, displayPage: 8, timestamp: 42, forceOpen: true });
+
+        // combined asks for the view Iris pointed in, so the click lands the same way from either page.
+        expect(routerMock.navigate).toHaveBeenCalledWith(['/courses', courseId, 'lectures', 27], {
+            queryParams: { unit: 7, combined: true, page: 2, timestamp: 42 },
+        });
+        // Nothing is emitted, so a lecture page opened later does not act on a stale target as well.
+        expect(emitted).not.toHaveBeenCalled();
+
+        // A point-out that names no page is routed without one, rather than with an empty parameter.
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, timestamp: 42, forceOpen: true });
+
+        expect(routerMock.navigate).toHaveBeenLastCalledWith(['/courses', courseId, 'lectures', 27], { queryParams: { unit: 7, combined: true, timestamp: 42 } });
+    });
+
+    it('should route a point-out to the lecture it was made in after the chat moved to another one', () => {
+        // A conversation can be switched to another lecture, and the markers made before that keep pointing where they
+        // pointed then. Reading the lecture off the session's context would send this click into lecture 99, which
+        // does not even hold the unit it names.
+        service['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 99 });
+        service['contextService'].setPageContext({ mode: ChatServiceMode.LECTURE, entityId: 99 });
+        const emitted = vi.fn();
+        service.pointOut$.subscribe(emitted);
+
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, forceOpen: true });
+
+        expect(routerMock.navigate).toHaveBeenCalledWith(['/courses', courseId, 'lectures', 27], { queryParams: { unit: 7, combined: true, page: 2 } });
+        expect(emitted).not.toHaveBeenCalled();
+    });
+
+    it('should only use a marker point-out exact position while its pinned material version is current', () => {
+        const getMaterialVersions = vi.spyOn(materialVersionService, 'getMaterialVersions');
+        const warning = vi.spyOn(TestBed.inject(AlertService), 'warning');
+        getMaterialVersions.mockReturnValueOnce(of({ attachmentVersion: 3 })).mockReturnValueOnce(of({ attachmentVersion: 4 }));
+
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, pinnedVersion: { kind: 'attachment', version: 3 }, forceOpen: true });
+
+        expect(routerMock.navigate).toHaveBeenNthCalledWith(1, ['/courses', courseId, 'lectures', 27], {
+            queryParams: { unit: 7, combined: true, page: 2 },
+        });
+
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, pinnedVersion: { kind: 'attachment', version: 3 }, forceOpen: true });
+
+        expect(warning).toHaveBeenCalledExactlyOnceWith('artemisApp.iris.pointOut.outdated.stale');
+        expect(routerMock.navigate).toHaveBeenNthCalledWith(2, ['/courses', courseId, 'lectures', 27], {
+            queryParams: { unit: 7, combined: true },
+        });
+    });
+
+    it('reopens the same lecture unit on every stale marker click without reusing coordinates', () => {
+        service['contextService'].setPageContext({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+        vi.spyOn(materialVersionService, 'getMaterialVersions').mockReturnValue(of({ attachmentVersion: 4 }));
+        const emitted = vi.fn();
+        service.pointOut$.subscribe(emitted);
+        const marker = { lectureUnitId: 7, lectureId: 27, page: 2, timestamp: 42, pinnedVersion: { kind: 'attachment' as const, version: 3 }, forceOpen: true };
+        service.navigateToPointOut(marker);
+        service.navigateToPointOut(marker);
+        expect(emitted).toHaveBeenCalledTimes(2);
+        expect(emitted).toHaveBeenLastCalledWith(expect.objectContaining({ lectureUnitId: 7, forceOpen: true, page: undefined, displayPage: undefined, timestamp: undefined }));
+        expect(routerMock.navigate).not.toHaveBeenCalled();
+    });
+
+    it('ignores a delayed marker check after a newer marker click', () => {
+        const first = new Subject<{ attachmentVersion: number }>();
+        vi.spyOn(materialVersionService, 'getMaterialVersions')
+            .mockReturnValueOnce(first)
+            .mockReturnValueOnce(of({ attachmentVersion: 3 }));
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, pinnedVersion: { kind: 'attachment', version: 3 } });
+        service.navigateToPointOut({ lectureUnitId: 8, lectureId: 28, page: 4, pinnedVersion: { kind: 'attachment', version: 3 } });
+        first.next({ attachmentVersion: 3 });
+        expect(routerMock.navigate).toHaveBeenCalledExactlyOnceWith(['/courses', courseId, 'lectures', 28], { queryParams: { unit: 8, combined: true, page: 4 } });
+    });
+
+    it('never routes a live command and refuses a check that completes after its deadline', async () => {
+        vi.spyOn(Date, 'now').mockReturnValue(1_000);
+        const commands = new Subject<IrisCommand>();
+        const delayed = new Subject<{ attachmentVersion: number }>();
+        const ack = vi.spyOn(wsMock, 'sendCommandAck');
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commands);
+        vi.spyOn(materialVersionService, 'getMaterialVersions')
+            .mockReturnValueOnce(of({ attachmentVersion: 3 }))
+            .mockReturnValueOnce(delayed)
+            .mockReturnValueOnce(of({ attachmentVersion: 3 }))
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        service['contextService'].setPageContext({ mode: ChatServiceMode.COURSE, entityId: courseId });
+        const emitted = vi.fn();
+        service.pointOut$.subscribe(emitted);
+        service.openChat(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+        commands.next({ type: 'pointOut', parameters: { lectureUnitId: 7, lectureId: 27, page: 2 }, correlationId: 'legacy', expiresAt: 5_000 });
+        const parameters = { lectureUnitId: 7, lectureId: 27, page: 2, materialType: 'attachment', materialVersion: 3 };
+        commands.next({ type: 'pointOut', parameters, correlationId: 'current', expiresAt: 5_000 });
+        commands.next({ type: 'pointOut', parameters, correlationId: 'expired', expiresAt: 5_000 });
+        vi.spyOn(Date, 'now').mockReturnValue(6_000);
+        delayed.next({ attachmentVersion: 3 });
+        expect(routerMock.navigate).not.toHaveBeenCalled();
+        vi.spyOn(Date, 'now').mockReturnValue(1_000);
+        commands.next({ type: 'pointOut', parameters: { lectureUnitId: 7, page: 2, materialType: 'attachment', materialVersion: 0 }, correlationId: 'unknown', expiresAt: 5_000 });
+        commands.next({ type: 'pointOut', parameters, correlationId: 'unavailable', expiresAt: 5_000 });
+        expect(ack).toHaveBeenCalledWith({ correlationId: 'unknown', applied: false });
+        expect(ack).toHaveBeenCalledWith({ correlationId: 'unavailable', applied: false });
+        expect(emitted).toHaveBeenCalledTimes(2);
+        expect(ack).toHaveBeenCalledWith({ correlationId: 'expired', applied: false });
+    });
+
+    it('treats version zero as unverified and only opens the unit', () => {
+        vi.spyOn(materialVersionService, 'getMaterialVersions').mockReturnValue(of({ attachmentVersion: 3 }));
+        const warning = vi.spyOn(TestBed.inject(AlertService), 'warning');
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, pinnedVersion: { kind: 'attachment', version: 0 } });
+        expect(warning).toHaveBeenCalledWith('artemisApp.iris.pointOut.outdated.unverified');
+        expect(routerMock.navigate).toHaveBeenCalledWith(['/courses', courseId, 'lectures', 27], { queryParams: { unit: 7, combined: true } });
+    });
+
+    it('should drop an unverified PDF page from routed and in-place video point-outs', () => {
+        const getMaterialVersions = vi.spyOn(materialVersionService, 'getMaterialVersions');
+        getMaterialVersions.mockReturnValue(of({ videoVersion: 7, hasVideo: true, attachmentVersion: 4 }));
+        const pointOut = {
+            lectureUnitId: 7,
+            lectureId: 27,
+            page: 2,
+            displayPage: 8,
+            timestamp: 42,
+            pinnedVersion: { kind: 'video' as const, version: 7 },
+            forceOpen: true,
+        };
+        const emitted = vi.fn();
+        service.pointOut$.subscribe(emitted);
+
+        // The video transcription is still current, but the independently uploaded PDF is not covered by its version.
+        service.navigateToPointOut(pointOut);
+
+        expect(routerMock.navigate).toHaveBeenCalledExactlyOnceWith(['/courses', courseId, 'lectures', 27], {
+            queryParams: { unit: 7, combined: true, timestamp: 42 },
+        });
+
+        service['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+        service['contextService'].setPageContext({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+        service.navigateToPointOut(pointOut);
+
+        expect(emitted).toHaveBeenCalledExactlyOnceWith({
+            lectureUnitId: 7,
+            lectureId: 27,
+            page: undefined,
+            displayPage: undefined,
+            timestamp: 42,
+            pinnedVersion: { kind: 'video', version: 7 },
+            forceOpen: true,
+        });
+    });
+
+    it('should forward point-out commands addressed to this tab or to any tab', async () => {
+        vi.spyOn(Date, 'now').mockReturnValue(1_000);
+        const commandSubject = new Subject<IrisCommand>();
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
+        const navigated = vi.fn();
+        service.pointOut$.subscribe(navigated);
+
+        service.openChat(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'corr-1', expiresAt: 5_000 });
+        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 4 }, correlationId: 'corr-2', targetClientId: wsMock.clientId, expiresAt: 5_000 });
+
+        expect(navigated).toHaveBeenNthCalledWith(1, { lectureUnitId: 42, page: 3, correlationId: 'corr-1', expiresAt: 5_000 });
+        expect(navigated).toHaveBeenNthCalledWith(2, { lectureUnitId: 42, page: 4, correlationId: 'corr-2', expiresAt: 5_000 });
+    });
+
+    it('should reject a versioned live point-out when its material changed and emit it when the version still matches', async () => {
+        vi.spyOn(Date, 'now').mockReturnValue(1_000);
+        const commandSubject = new Subject<IrisCommand>();
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
+        vi.spyOn(materialVersionService, 'getMaterialVersions')
+            .mockReturnValueOnce(of({ videoVersion: 8, hasVideo: true }))
+            .mockReturnValueOnce(of({ videoVersion: 7, hasVideo: true }));
+        const ackSpy = vi.spyOn(wsMock, 'sendCommandAck');
+        const navigated = vi.fn();
+        service.pointOut$.subscribe(navigated);
+
+        service.openChat(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+        const parameters = { lectureUnitId: 42, timestamp: 30, materialType: 'video', materialVersion: 7 };
+        commandSubject.next({ type: 'pointOut', parameters, correlationId: 'stale', expiresAt: 5_000 });
+        commandSubject.next({ type: 'pointOut', parameters, correlationId: 'current', expiresAt: 5_000 });
+
+        expect(ackSpy).toHaveBeenCalledExactlyOnceWith({ correlationId: 'stale', applied: false });
+        expect(navigated).toHaveBeenCalledExactlyOnceWith({
+            lectureUnitId: 42,
+            timestamp: 30,
+            pinnedVersion: { kind: 'video', version: 7 },
+            correlationId: 'current',
+            expiresAt: 5_000,
+        });
+    });
+
+    it('should reject a point-out whose server deadline is missing or expired', async () => {
+        vi.spyOn(Date, 'now').mockReturnValue(5_000);
+        const commandSubject = new Subject<IrisCommand>();
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
+        const ackSpy = vi.spyOn(wsMock, 'sendCommandAck');
+        const navigated = vi.fn();
+        service.pointOut$.subscribe(navigated);
+
+        service.openChat(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'missing' });
+        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 4 }, correlationId: 'expired', expiresAt: 5_000 });
+
+        expect(navigated).not.toHaveBeenCalled();
+        expect(ackSpy).toHaveBeenNthCalledWith(1, { correlationId: 'missing', applied: false });
+        expect(ackSpy).toHaveBeenNthCalledWith(2, { correlationId: 'expired', applied: false });
+    });
+
+    it('should ignore commands addressed to another tab', async () => {
+        const commandSubject = new Subject<IrisCommand>();
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
+        const ackSpy = vi.spyOn(wsMock, 'sendCommandAck');
+        const navigated = vi.fn();
+        service.pointOut$.subscribe(navigated);
+        service.openChat(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'corr-3', targetClientId: 'another-tab' });
+        commandSubject.next({ type: 'highlightTerm', parameters: { slide: 4 }, correlationId: 'corr-4', targetClientId: 'another-tab' });
+
+        expect(navigated).not.toHaveBeenCalled();
+        expect(ackSpy).not.toHaveBeenCalled();
+    });
+
+    it('should acknowledge an unsupported command for this tab as not applied', async () => {
+        const commandSubject = new Subject<IrisCommand>();
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
+        const ackSpy = vi.spyOn(wsMock, 'sendCommandAck');
+        service.openChat(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+        commandSubject.next({ type: 'highlightTerm', parameters: { slide: 4 }, correlationId: 'corr-5', targetClientId: wsMock.clientId });
+
+        expect(ackSpy).toHaveBeenCalledExactlyOnceWith({ correlationId: 'corr-5', applied: false });
+    });
+
+    it('should send the tab client id along with a user message', async () => {
+        // Without it the server cannot address a mid-answer command back to the tab the student is sitting in front of.
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        const createdMessage = mockUserMessageWithContent('test message');
+        const stub = vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
+
+        service.openChat(ChatServiceMode.COURSE, id);
+        await waitForSessionId();
+        await firstValueFrom(service.sendMessage('test message'));
+
+        expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ clientId: wsMock.clientId }));
+    });
+
     it('should set live assistant draft from websocket partial without incrementing new message counter', async () => {
         const websocketSubject = new Subject<IrisChatWebsocketDTO>();
         await startSessionWithWebsocket(websocketSubject);
@@ -630,6 +977,52 @@ describe('IrisChatService', () => {
         service.openChat(ChatServiceMode.PROGRAMMING_EXERCISE, id + 1);
 
         expect(await firstValueFrom(service.currentLiveAssistantDraft())).toBeUndefined();
+    });
+
+    describe('automatic context switch adoption', () => {
+        const ctxswapMessage = (marker: Record<string, unknown>): IrisChatWebsocketDTO => ({
+            type: IrisChatWebsocketPayloadType.MESSAGE,
+            message: {
+                sender: IrisSender.CTXSWAP,
+                id: 77,
+                content: [{ type: 'json', attributes: marker }],
+                sentAt: '2024-01-01T10:00:00Z',
+            },
+        });
+
+        it('should commit the marker context and update the sidebar entry on an incoming CTXSWAP message', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            const sidebarSessions = [{ id, title: 'Chat', creationDate: new Date(), mode: ChatServiceMode.COURSE, entityId: id } as IrisSessionDTO];
+            await startSessionWithWebsocket(websocketSubject, sidebarSessions);
+
+            websocketSubject.next(ctxswapMessage({ transition: 'added', entityMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 11, name: 'Sorting' }));
+
+            expect(service.committedContext()).toEqual({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 11, entityName: 'Sorting' });
+            expect(service.chatSessions.getValue().find((session) => session.id === id)).toMatchObject({
+                mode: ChatServiceMode.PROGRAMMING_EXERCISE,
+                entityId: 11,
+                entityName: 'Sorting',
+            });
+        });
+
+        it('should commit the course context on a removed transition', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+
+            websocketSubject.next(ctxswapMessage({ transition: 'removed' }));
+
+            expect(service.committedContext()).toEqual({ mode: ChatServiceMode.COURSE, entityId: courseId });
+        });
+
+        it('should ignore a CTXSWAP message with an incomplete marker', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+            const committedBefore = service.committedContext();
+
+            websocketSubject.next(ctxswapMessage({ transition: 'changed' }));
+
+            expect(service.committedContext()).toEqual(committedBefore);
+        });
     });
 
     describe('run-state frame policy', () => {
@@ -1285,6 +1678,8 @@ describe('IrisChatService', () => {
                     { provide: UserService, useValue: userMock },
                     { provide: AccountService, useValue: customAccountService },
                     { provide: Router, useValue: routerMock },
+                    MockProvider(IrisMaterialVersionService),
+                    { provide: AlertService, useValue: { warning: vi.fn(), error: vi.fn() } },
                 ],
             });
             scopedService = TestBed.inject(IrisChatService);

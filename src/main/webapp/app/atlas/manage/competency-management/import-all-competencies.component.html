@@ -8,9 +8,21 @@
     <div class="modal-body d-flex flex-column flex-grow-1 overflow-hidden">
         <div class="form-group form-inline mb-3">
             <span jhiTranslate="artemisApp.competency.importAll.search"></span>
-            <input [(ngModel)]="searchTerm" class="form-control ms-2" name="searchCourse" type="text" />
+            <input
+                [attr.aria-label]="'artemisApp.competency.importAll.search' | artemisTranslate"
+                [(ngModel)]="searchTerm"
+                class="form-control ms-2"
+                name="searchCourse"
+                type="text"
+            />
             <span class="ms-3" jhiTranslate="artemisApp.competency.import.importRelations"></span>
-            <input type="checkbox" class="ms-2" [(ngModel)]="importRelations" name="importRelations" />
+            <input
+                [attr.aria-label]="'artemisApp.competency.import.importRelations' | artemisTranslate"
+                type="checkbox"
+                class="ms-2"
+                [(ngModel)]="importRelations"
+                name="importRelations"
+            />
             @if (loading()) {
                 <span class="ms-3" jhiTranslate="loading"></span>
             }

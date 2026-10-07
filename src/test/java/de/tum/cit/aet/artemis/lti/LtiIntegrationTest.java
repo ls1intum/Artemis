@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.lti;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -21,7 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.hibernate.Hibernate;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,9 +30,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
@@ -51,6 +50,13 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
 
     private static final ZonedDateTime COURSE_END_DATE = ZonedDateTime.parse("2024-01-02T00:00:00Z");
 
+    @BeforeEach
+    void setUpAdmin() {
+        // The admin endpoints resolve the authenticated login against the database, so the account the tests
+        // authenticate as has to exist there with the admin authority rather than only in the mock security context.
+        userUtilService.addAdmin(TEST_PREFIX);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void dynamicRegistrationFailsAsStudent() throws Exception {
@@ -61,7 +67,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "admin1", roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void dynamicRegistrationFailsWithoutOpenIdConfiguration() throws Exception {
         request.postWithoutResponseBody("/api/lti/admin/lti13/dynamic-registration", HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
     }
@@ -85,7 +91,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
 
         String jsonContent = mvcResult.getResponse().getContentAsString();
         List<LtiPlatformConfigurationDTO> actualPlatforms = objectMapper.readValue(jsonContent, new TypeReference<>() {
-            // Empty block intended for type inference by Jackson's ObjectMapper
+            // Empty block intended for type inference by Jackson's JsonMapper
         });
 
         assertThat(actualPlatforms).containsExactlyInAnyOrderElementsOf(expectedPlatforms.getContent().stream().map(LtiPlatformConfigurationDTO::of).toList());
@@ -212,7 +218,6 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         LtiPlatformConfiguration savedPlatform = ltiPlatformConfigurationRepository.save(platform);
         doReturn(Optional.empty()).when(ltiPlatformConfigurationRepository).findByRegistrationId(anyString());
         doReturn(savedPlatform).when(ltiPlatformConfigurationRepository).findByIdElseThrow(savedPlatform.getId());
-        doReturn(savedPlatform).when(ltiPlatformConfigurationRepository).findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(anyLong());
 
         Course savedCourse = createOnlineCourseWithConfiguration();
 
@@ -270,37 +275,23 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         assertThat(ltiPlatformConfigurationRepository.findByIdElseThrow(savedPlatformConfiguration.getId())).isEqualTo(savedPlatformConfiguration);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testFindLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow() {
-        LtiPlatformConfiguration newPlatformConfiguration = new LtiPlatformConfiguration();
-        fillLtiPlatformConfig(newPlatformConfiguration);
-        LtiPlatformConfiguration savedPlatformConfiguration = ltiPlatformConfigurationRepository.save(newPlatformConfiguration);
-
-        LtiPlatformConfiguration fetchedPlatformConfiguration = ltiPlatformConfigurationRepository
-                .findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(savedPlatformConfiguration.getId());
-
-        assertThat(fetchedPlatformConfiguration).isEqualTo(savedPlatformConfiguration);
-        assertThat(Hibernate.isInitialized(fetchedPlatformConfiguration.getOnlineCourseConfigurations())).isTrue();
-    }
-
     private Course createOnlineCourseWithConfiguration() {
         Course course = CourseFactory.generateCourse(null, COURSE_START_DATE, COURSE_END_DATE, new HashSet<>());
         course.setOnlineCourse(true);
 
-        OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
+        Course savedCourse = courseRepository.saveWithDefaultConfigurations(course);
+        OnlineCourseConfiguration onlineCourseConfiguration = onlineCourseConfigurationRepository.findStoredByCourseId(savedCourse.getId()).orElseThrow();
         onlineCourseConfiguration.setUserPrefix("prefix");
         onlineCourseConfiguration.setRequireExistingUser(false);
-        onlineCourseConfiguration.setCourse(course);
-        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
-        Course savedCourse = courseRepository.saveAndFlush(course);
+        onlineCourseConfiguration.setCourse(savedCourse);
+        onlineCourseConfigurationRepository.saveAndFlush(onlineCourseConfiguration);
         userUtilService.enrollPrefixedUsersInCourse(savedCourse, TEST_PREFIX);
         return savedCourse;
     }
 
     private ObjectNode onlineCourseConfigurationPayload(Course savedCourse, ObjectNode platformPayload) {
         ObjectNode payload = objectMapper.createObjectNode();
-        payload.put("id", savedCourse.getOnlineCourseConfiguration().getId());
+        payload.put("id", onlineCourseConfigurationRepository.findByCourseId(savedCourse.getId()).orElseThrow().getId());
         payload.put("userPrefix", "prefix");
         payload.put("requireExistingUser", false);
         payload.set("ltiPlatformConfiguration", platformPayload);

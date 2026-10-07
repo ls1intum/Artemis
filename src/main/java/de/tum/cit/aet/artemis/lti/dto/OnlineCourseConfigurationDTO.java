@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.lti.dto;
 
-import java.util.Objects;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -38,8 +36,8 @@ public record OnlineCourseConfigurationDTO(@Nullable Long id, @NotBlank String u
     public static OnlineCourseConfiguration from(OnlineCourseConfigurationDTO dto) {
         OnlineCourseConfiguration config = new OnlineCourseConfiguration();
         config.setId(dto.id());
-        config.setUserPrefix(Objects.requireNonNull(dto.userPrefix()));
-        config.setRequireExistingUser(Objects.requireNonNull(dto.requireExistingUser()));
+        config.setUserPrefix(dto.userPrefix());
+        config.setRequireExistingUser(dto.requireExistingUser());
         return config;
     }
 }

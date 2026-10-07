@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.plagiarism;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -13,15 +16,27 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.UserRole;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.domain.FeatureKind;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
@@ -59,18 +74,36 @@ class ContinuousPlagiarismControlServiceTest {
 
     private final PlagiarismResultRepository plagiarismResultRepository = mock();
 
-    private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismChecksService, plagiarismComparisonRepository,
-            plagiarismCaseService, plagiarismCaseRepository, plagiarismPostService, plagiarismResultRepository);
+    private final UserTestRepository userRepository = mock();
+
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository = mock();
+
+    private final FeatureUsageCollector featureUsageCollector = mock();
+
+    private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismDetectionConfigRepository,
+            plagiarismChecksService, plagiarismComparisonRepository, plagiarismCaseService, plagiarismCaseRepository, plagiarismPostService, plagiarismResultRepository,
+            userRepository, Optional.of(featureUsageCollector));
+
+    /**
+     * The control only runs for a course that has an instructor to act on the findings, so every test that expects a
+     * check to happen needs one. The test for the opposite case overrides this.
+     */
+    @BeforeEach
+    void setUp() {
+        when(userRepository.getInstructors(any())).thenReturn(Set.of(createUser(7L)));
+    }
 
     @Test
     void shouldExecuteChecks() throws IOException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
         // given: text exercise with cpc enabled
         var textExercise = new TextExercise();
+        textExercise.setCourse(new Course());
         textExercise.setId(101L);
         textExercise.setDueDate(null);
 
         // and: modeling exercise with cpc and post due date checks enabled
         var modelingExercise = new ModelingExercise();
+        modelingExercise.setCourse(new Course());
         modelingExercise.setId(102L);
         modelingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
         modelingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
@@ -78,6 +111,7 @@ class ContinuousPlagiarismControlServiceTest {
 
         // and: programing exercise with cpc enabled
         var programmingExercise = new ProgrammingExercise();
+        programmingExercise.setCourse(new Course());
         programmingExercise.setId(103L);
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
 
@@ -87,7 +121,7 @@ class ContinuousPlagiarismControlServiceTest {
 
         // and: results of plagiarism checks
         var textPlagiarismResult = new PlagiarismResult();
-        textPlagiarismResult.setComparisons(Set.of(new PlagiarismComparison()));
+        textPlagiarismResult.setComparisons(Set.of(createPlagiarismComparison(11, 1, 2)));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenReturn(textPlagiarismResult);
         var programmingPlagiarismResult = new PlagiarismResult();
         when(plagiarismChecksService.checkProgrammingExercise(programmingExercise)).thenReturn(programmingPlagiarismResult);
@@ -110,6 +144,11 @@ class ContinuousPlagiarismControlServiceTest {
         var exercise = new TextExercise();
         exercise.setId(99L);
         exercise.setTitle("Exercise 1");
+        var course = new Course();
+        course.setId(42L);
+        exercise.setCourse(course);
+        var instructor = createUser(7L);
+        when(userRepository.getInstructors(any())).thenReturn(Set.of(createUser(9L), instructor));
 
         var participationText1 = createStudentParticipation(1);
         var participationText2 = createStudentParticipation(2);
@@ -138,8 +177,43 @@ class ContinuousPlagiarismControlServiceTest {
         verify(plagiarismComparisonRepository).updatePlagiarismComparisonStatus(12L, PlagiarismStatus.CONFIRMED);
         verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionA(), true);
         verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionB(), true);
-        verify(plagiarismPostService, times(2)).createContinuousPlagiarismControlPlagiarismCasePost(any());
+        // the control runs on a schedule, so the post is written in the name of the course instructor with the lowest id
+        var posts = ArgumentCaptor.forClass(Post.class);
+        verify(plagiarismPostService, times(2)).createContinuousPlagiarismControlPlagiarismCasePost(posts.capture());
+        assertThat(posts.getAllValues()).hasSize(2).allSatisfy(post -> {
+            assertThat(post.getAuthor()).as("the post has an author").isEqualTo(instructor);
+            assertThat(post.getAuthorRole()).as("the author is shown as an instructor").isEqualTo(UserRole.INSTRUCTOR);
+        });
         verifyNoMoreInteractions(plagiarismComparisonRepository, plagiarismCaseService, plagiarismPostService, plagiarismResultRepository);
+    }
+
+    @Test
+    void shouldSkipTheCheckWhenTheCourseHasNoInstructor() {
+        var exercise = new TextExercise();
+        exercise.setId(99L);
+        exercise.setTitle("Exercise 1");
+        var course = new Course();
+        course.setId(42L);
+        exercise.setCourse(course);
+        exercise.setStudentParticipations(Set.of(createStudentParticipation(1), createStudentParticipation(2)));
+        when(userRepository.getInstructors(any())).thenReturn(Set.of());
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(exercise));
+
+        service.executeChecks();
+
+        // nobody could act on the findings, so the expensive check does not even start
+        verifyNoInteractions(plagiarismChecksService, plagiarismComparisonRepository, plagiarismCaseService, plagiarismPostService);
+    }
+
+    @Test
+    void shouldSkipTheCheckWhenTheExerciseHasNoCourse() {
+        var exercise = new TextExercise();
+        exercise.setId(99L);
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(exercise));
+
+        assertThatNoException().isThrownBy(service::executeChecks);
+
+        verifyNoInteractions(userRepository, plagiarismChecksService, plagiarismComparisonRepository, plagiarismCaseService, plagiarismPostService);
     }
 
     @Test
@@ -205,6 +279,7 @@ class ContinuousPlagiarismControlServiceTest {
     void shouldSilentAnyJPlagExceptionsThrown() {
         // given
         var textExercise = new TextExercise();
+        textExercise.setCourse(new Course());
         textExercise.setId(123L);
         when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(textExercise));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenThrow(new NullPointerException("null"));
@@ -218,6 +293,7 @@ class ContinuousPlagiarismControlServiceTest {
     void shouldSilentAnyUnknownExceptionsThrown() {
         // given
         var textExercise = new TextExercise();
+        textExercise.setCourse(new Course());
         textExercise.setId(101L);
         when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(textExercise));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenThrow(new IllegalStateException());
@@ -225,6 +301,48 @@ class ContinuousPlagiarismControlServiceTest {
         // then
         assertThatNoException().isThrownBy(service::executeChecks);
         verify(plagiarismResultRepository).deletePlagiarismResultsByExerciseId(101L);
+    }
+
+    /**
+     * A silenced exception is still a failure of the feature. Recording it as a success would make the error rate of
+     * continuous plagiarism control zero by construction, so a broken JPlag setup would appear on the admin page as
+     * healthy usage - which is the opposite of what the error column is for.
+     */
+    @Test
+    void shouldRecordASilencedFailureAsAFailedRun() {
+        var textExercise = new TextExercise();
+        textExercise.setCourse(new Course());
+        textExercise.setId(123L);
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(textExercise));
+        when(plagiarismChecksService.checkTextExercise(textExercise)).thenThrow(new IllegalStateException("JPlag is misconfigured"));
+
+        service.executeChecks();
+
+        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("plagiarism"), eq("continuous-plagiarism-control/text"),
+                eq(UserFeature.CONTINUOUS_PLAGIARISM_CONTROL), eq(FeatureInteraction.ACTION), eq(Role.ANONYMOUS), eq(true), anyLong());
+    }
+
+    /**
+     * The counterpart, and the reason the failure is not derived from a null result: modeling, file upload and quiz
+     * exercises have no plagiarism check at all, so they produce no result on a perfectly healthy run.
+     */
+    @Test
+    void shouldRecordAnExerciseTypeWithoutAPlagiarismCheckAsASuccess() {
+        var modelingExercise = new ModelingExercise();
+        modelingExercise.setCourse(new Course());
+        modelingExercise.setId(102L);
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(modelingExercise));
+
+        service.executeChecks();
+
+        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("plagiarism"), eq("continuous-plagiarism-control/modeling"),
+                eq(UserFeature.CONTINUOUS_PLAGIARISM_CONTROL), eq(FeatureInteraction.ACTION), eq(Role.ANONYMOUS), eq(false), anyLong());
+    }
+
+    private static User createUser(long id) {
+        var user = new User();
+        user.setId(id);
+        return user;
     }
 
     private static StudentParticipation createStudentParticipation(long submissionId) {

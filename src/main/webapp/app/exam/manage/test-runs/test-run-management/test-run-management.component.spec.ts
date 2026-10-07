@@ -1,6 +1,6 @@
+import { EmbeddedViewRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -16,12 +16,14 @@ import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-m
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SortService } from 'app/foundation/service/sort.service';
 import { MockDirective } from 'ng-mocks';
-import { Subject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { By } from '@angular/platform-browser';
+import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal/create-test-run-modal.component';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -30,7 +32,6 @@ describe('Test Run Management Component', () => {
     let fixture: ComponentFixture<TestRunManagementComponent>;
     let examManagementService: ExamManagementService;
     let accountService: AccountService;
-    let dialogService: DialogService;
     let userSpy: ReturnType<typeof vi.spyOn>;
 
     const course = { id: 1, isAtLeastInstructor: true } as Course;
@@ -50,8 +51,8 @@ describe('Test Run Management Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 MockDirective(TranslateDirective),
-                { provide: DialogService, useValue: { open: vi.fn() } },
                 { provide: AccountService, useClass: MockAccountService },
+                // the delete button directive injects the shared PrimeNG dialog service
             ],
         })
             .compileComponents()
@@ -60,7 +61,6 @@ describe('Test Run Management Component', () => {
                 component = fixture.componentInstance;
                 examManagementService = TestBed.inject(ExamManagementService);
                 accountService = TestBed.inject(AccountService);
-                dialogService = TestBed.inject(DialogService);
                 vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: exam })));
                 vi.spyOn(examManagementService, 'findAllTestRunsForExam').mockReturnValue(of(new HttpResponse({ body: studentExams })));
                 userSpy = vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
@@ -69,8 +69,23 @@ describe('Test Run Management Component', () => {
             });
     });
 
+    const projectedViews: EmbeddedViewRef<unknown>[] = [];
+
+    function renderTitleBarActions(): HTMLElement {
+        const service = TestBed.inject(CourseTitleBarService);
+        const template = service.actionsTemplate();
+        expect(template, 'the test-run-management page does not project a title bar actions template').toBeDefined();
+        const view = template!.createEmbeddedView({});
+        projectedViews.push(view);
+        view.detectChanges();
+        const host = document.createElement('div');
+        view.rootNodes.forEach((node) => host.appendChild(node));
+        return host;
+    }
+
     afterEach(() => {
         vi.restoreAllMocks();
+        projectedViews.splice(0).forEach((view) => view.destroy());
     });
 
     describe('onInit', () => {
@@ -110,20 +125,21 @@ describe('Test Run Management Component', () => {
             const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
             exam.exerciseGroups = [exerciseGroup];
 
-            const onCloseSubject = new Subject<CreateTestRunDTO | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: onCloseSubject.asObservable() } as DynamicDialogRef);
             const createdTestRun: StudentExamDTO = { id: 3, testRun: true, user: { id: 90 } };
             const createTestRunSpy = vi.spyOn(examManagementService, 'createTestRun').mockReturnValue(of(new HttpResponse({ body: createdTestRun })));
             fixture.detectChanges();
 
             expect(component.examContainsExercises()).toBeTruthy();
-            const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton'));
+            const actionsHost = renderTitleBarActions();
+            const createTestRunButton = actionsHost.querySelector<HTMLButtonElement>('#createTestRunButton');
             expect(createTestRunButton).toBeTruthy();
-            expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
-            createTestRunButton.nativeElement.click();
+            expect(createTestRunButton!.disabled).toBeFalsy();
+            createTestRunButton!.click();
+            fixture.detectChanges();
+            expect(component.createTestRunDialogVisible()).toBe(true);
 
             const testRunConfiguration: CreateTestRunDTO = { examId: exam.id!, exerciseIds: [exercise.id!], workingTime: 3600 };
-            onCloseSubject.next(testRunConfiguration);
+            fixture.debugElement.query(By.directive(CreateTestRunModalComponent)).componentInstance.testRunCreate.emit(testRunConfiguration);
 
             await Promise.resolve();
 
@@ -139,41 +155,44 @@ describe('Test Run Management Component', () => {
             exam.exerciseGroups = [exerciseGroup];
             const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
 
-            const onCloseSubject = new Subject<CreateTestRunDTO | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: onCloseSubject.asObservable() } as DynamicDialogRef);
             const createTestRunSpy = vi.spyOn(examManagementService, 'createTestRun').mockReturnValue(throwError(() => httpError));
             vi.spyOn(alertService, 'error');
             fixture.detectChanges();
 
             expect(component.examContainsExercises()).toBeTruthy();
-            const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton'));
+            const actionsHost = renderTitleBarActions();
+            const createTestRunButton = actionsHost.querySelector<HTMLButtonElement>('#createTestRunButton');
             expect(createTestRunButton).toBeTruthy();
-            expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
-            createTestRunButton.nativeElement.click();
+            expect(createTestRunButton!.disabled).toBeFalsy();
+            createTestRunButton!.click();
+            fixture.detectChanges();
+            expect(component.createTestRunDialogVisible()).toBe(true);
 
             const testRunConfiguration: CreateTestRunDTO = { examId: exam.id!, exerciseIds: [exercise.id!], workingTime: 3600 };
-            onCloseSubject.next(testRunConfiguration);
+            fixture.debugElement.query(By.directive(CreateTestRunModalComponent)).componentInstance.testRunCreate.emit(testRunConfiguration);
 
             await Promise.resolve();
             expect(createTestRunSpy).toHaveBeenCalledWith(course.id!, exam.id!, testRunConfiguration);
             expect(alertService.error).toHaveBeenCalledOnce();
         });
 
-        it('should not create test run when dialog closes without configuration', async () => {
+        it('should not create test run when the dialog is cancelled', async () => {
             const exercise = { id: 1 } as Exercise;
             const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
             exam.exerciseGroups = [exerciseGroup];
 
-            const onCloseSubject = new Subject<CreateTestRunDTO | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: onCloseSubject.asObservable() } as DynamicDialogRef);
             const createTestRunSpy = vi.spyOn(examManagementService, 'createTestRun');
             fixture.detectChanges();
 
-            const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton'));
-            createTestRunButton.nativeElement.click();
-            onCloseSubject.next(undefined);
+            const actionsHost = renderTitleBarActions();
+            const createTestRunButton = actionsHost.querySelector<HTMLButtonElement>('#createTestRunButton');
+            createTestRunButton!.click();
+            fixture.detectChanges();
+            fixture.debugElement.query(By.directive(CreateTestRunModalComponent)).componentInstance.cancel();
+            fixture.detectChanges();
 
             await Promise.resolve();
+            expect(component.createTestRunDialogVisible()).toBe(false);
             expect(createTestRunSpy).not.toHaveBeenCalled();
         });
     });
@@ -194,6 +213,15 @@ describe('Test Run Management Component', () => {
     });
 
     describe('sort rows', () => {
+        it('should sort by the column chosen in the table header', () => {
+            fixture.detectChanges();
+
+            component.onSortChange({ field: 'workingTime', order: -1 });
+
+            expect(component.predicate()).toBe('workingTime');
+            expect(component.ascending()).toBe(false);
+        });
+
         it('should forward request to', async () => {
             const sortService = TestBed.inject(SortService);
             vi.spyOn(sortService, 'sortByProperty').mockReturnValue(studentExams);

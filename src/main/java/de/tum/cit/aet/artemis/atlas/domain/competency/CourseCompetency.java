@@ -23,9 +23,11 @@ import org.hibernate.annotations.ConcreteProxy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 
@@ -38,7 +40,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @ConcreteProxy
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
 // @formatter:off
 @JsonSubTypes({
     @JsonSubTypes.Type(value = Competency.class, name = "competency"),
@@ -59,6 +61,9 @@ public abstract class CourseCompetency extends BaseCompetency {
     @Column(name = "optional")
     private boolean optional;
 
+    @Column(name = "generated_by_ai", nullable = false)
+    private boolean generatedByAi;
+
     @ManyToOne
     @JoinColumn(name = "linked_standardized_competency_id")
     @JsonIgnoreProperties({ "competencies" })
@@ -77,8 +82,9 @@ public abstract class CourseCompetency extends BaseCompetency {
     private Set<CompetencyProgress> userProgress = new HashSet<>();
 
     @ManyToOne
-    @JoinColumn(name = "course_id")
+    @JoinColumn(name = "course_id", nullable = false)
     @JsonIgnoreProperties({ "competencies", "prerequisites" })
+    @Parent
     private Course course;
 
     @ManyToOne
@@ -122,7 +128,15 @@ public abstract class CourseCompetency extends BaseCompetency {
         this.optional = optional;
     }
 
-    @ManyToOne
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public boolean isGeneratedByAi() {
+        return generatedByAi;
+    }
+
+    public void setGeneratedByAi(boolean generatedByAi) {
+        this.generatedByAi = generatedByAi;
+    }
+
     public Course getCourse() {
         return course;
     }

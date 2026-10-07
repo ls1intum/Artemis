@@ -16,6 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -23,11 +25,13 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEvent;
 import de.tum.cit.aet.artemis.lecture.dto.TextUnitDTO;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
+@RecordApplicationEvents
 class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "textunitintegrationtest";
@@ -36,6 +40,9 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
     @Autowired
     private LectureTestRepository lectureRepository;
+
+    @Autowired
+    private ApplicationEvents applicationEvents;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -129,7 +136,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     void updateTextUnit_asEditor_shouldKeepOrdering() throws Exception {
         persistTextUnitWithLecture();
 
-        var databaseLecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        var databaseLecture = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
         assertThat(databaseLecture.getLectureUnits()).hasSize(1);
         // Add a second lecture unit
         TextUnit secondTextUnit = lectureUtilService.createTextUnit(lecture);
@@ -137,18 +144,47 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         lecture = lectureRepository.save(lecture);
 
         assertThat(lecture.getLectureUnits()).hasSize(2);
-        databaseLecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        databaseLecture = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
         assertThat(databaseLecture.getLectureUnits()).hasSize(2);
 
         List<LectureUnit> orderedUnits = lecture.getLectureUnits();
 
         // Updating the lecture unit should not change order attribute
         request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", TextUnitDTO.of(secondTextUnit), TextUnitDTO.class, HttpStatus.OK);
-        databaseLecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        databaseLecture = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
         assertThat(lecture.getLectureUnits()).hasSize(2);
 
         List<LectureUnit> updatedOrderedUnits = databaseLecture.getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void updateTextUnit_textUnitDoesNotExist_shouldReturnNotFound() throws Exception {
+        persistTextUnitWithLecture();
+        request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", textUnitDtoWithId(21312321L), TextUnitDTO.class, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void updateTextUnit_ofAnotherLecture_shouldReturnBadRequest() throws Exception {
+        persistTextUnitWithLecture();
+        Lecture otherLecture = lectureUtilService.createLecture(lecture.getCourse());
+
+        request.putWithResponseBody("/api/lecture/lectures/" + otherLecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void createTextUnit_withId_shouldReturnBadRequest() throws Exception {
+        request.postWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", textUnitDtoWithId(21312321L), TextUnitDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getTextUnit_textUnitDoesNotExist_shouldReturnNotFound() throws Exception {
+        // Administrators pass the access check without the text unit, so the text unit itself is looked up.
+        request.get("/api/lecture/lectures/" + lecture.getId() + "/text-units/21312321", HttpStatus.NOT_FOUND, TextUnitDTO.class);
     }
 
     @Test
@@ -185,12 +221,39 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textUnit), eq(Optional.empty()));
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void createTextUnit_withContent_publishesContentChangedEvent() throws Exception {
+        request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.CREATED);
+        // Creating a unit with non-blank content is a content change: the Atlas pipeline event must fire exactly once.
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void updateTextUnit_changedContent_publishesContentChangedEvent() throws Exception {
+        persistTextUnitWithLecture();
+        textUnit.setContent("Genuinely changed content");
+        request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.OK);
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void updateTextUnit_unchangedContent_doesNotPublishContentChangedEvent() throws Exception {
+        persistTextUnitWithLecture();
+        // Keep the same content ("This is a Test") but change only the name — no content-bearing field changed.
+        textUnit.setName("Renamed but same content");
+        request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.OK);
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).isEmpty();
+    }
+
     private TextUnitDTO textUnitDtoWithId(Long id) {
         return new TextUnitDTO(id, textUnit.getName(), textUnit.getReleaseDate(), textUnit.getContent(), TextUnitDTO.of(textUnit).competencyLinks(), null);
     }
 
     private void persistTextUnitWithLecture() {
-        lecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        lecture = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
         assertThat(lecture.getLectureUnits()).isEmpty();
         lecture.addLectureUnit(textUnit);
         lecture = lectureRepository.save(lecture);
@@ -199,7 +262,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         // use the saved text unit with id from now on
         textUnit = (TextUnit) lecture.getLectureUnits().getFirst();
 
-        lecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        lecture = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow();
         assertThat(lecture.getLectureUnits()).hasSize(1);
 
         assertThat(textUnit.getLecture()).isNotNull();

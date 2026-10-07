@@ -6,12 +6,11 @@
  * The entire Angular client runs on Vitest, so the spec/coverage globs are broad (all of
  * src/main/webapp/app) rather than an explicit per-module allowlist. The only exceptions:
  *   - the Monaco editor *integration* specs run against the real Monaco package and therefore live
- *     in a separate project (see vitest.monaco.config.ts); they are excluded here.
+ *     in a separate project (see config/testing/vitest.monaco.config.ts); they are excluded here.
  *   - generated code (openapi) and non-testable config/model/route files are excluded from coverage.
  */
 import { defineConfig } from 'vitest/config';
 import angular from '@analogjs/vite-plugin-angular';
-import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'node:path';
 
 const isCI = process.env.CI === 'true';
@@ -24,6 +23,10 @@ export default defineConfig({
             'monaco-editor': path.resolve(__dirname, 'src/test/javascript/spec/helpers/mocks/mock-monaco-editor.ts'),
             app: path.resolve(__dirname, 'src/main/webapp/app'),
             test: path.resolve(__dirname, 'src/test/javascript/spec'),
+            src: path.resolve(__dirname, 'src'),
+            // Mirrors the tsconfig `paths` entry: the package's own `exports` map only exposes
+            // `./styles.css`, so the bare specifier resolves through the built library instead.
+            '@tumaet/ui-angular': path.resolve(__dirname, 'packages/tum-aet-ui/dist'),
         },
     },
     css: {
@@ -40,7 +43,7 @@ export default defineConfig({
     },
     // JIT mode required for ng-mocks compatibility; fastCompile is required under Angular 22 so the
     // plugin inlines external templateUrl/styleUrl (the two-pass JIT path's compiler markers are gone).
-    plugins: [angular({ jit: true, fastCompile: true }), tsconfigPaths({ projects: ['tsconfig.app.json', 'tsconfig.spec.json'] })],
+    plugins: [angular({ jit: true, fastCompile: true })],
     test: {
         globals: true,
         pool: 'forks',
@@ -50,7 +53,7 @@ export default defineConfig({
             'src/main/webapp/app/**/*.spec.ts', // entire Angular client runs on Vitest
             'src/test/javascript/spec/integration/code-editor/**/*.spec.ts', // code-editor integration specs (mock Monaco)
         ],
-        // The Monaco editor integration specs need the real Monaco package; they run in vitest.monaco.config.ts.
+        // The Monaco editor integration specs need the real Monaco package; they run in config/testing/vitest.monaco.config.ts.
         exclude: ['**/node_modules/**', '**/build/**', '**/integration/monaco-editor/**'],
         testTimeout: 10000,
         reporters: ['default', 'junit'],

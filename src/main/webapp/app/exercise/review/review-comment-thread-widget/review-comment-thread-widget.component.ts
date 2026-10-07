@@ -36,6 +36,10 @@ interface RelatedThreadLocation {
     providers: [ConfirmationService],
 })
 export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
+    private readonly translateService = inject(TranslateService);
+    private readonly reviewCommentService = inject(ExerciseReviewCommentService);
+    private readonly confirmationService = inject(ConfirmationService);
+
     readonly thread = input.required<CommentThread>();
     readonly initialCollapsed = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
@@ -65,9 +69,6 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly suggestedInlineFixDiffEditor = viewChild(MonacoDiffEditorComponent);
 
     private readonly destroyed$ = new Subject<void>();
-    private readonly translateService = inject(TranslateService);
-    private readonly reviewCommentService = inject(ExerciseReviewCommentService);
-    private readonly confirmationService = inject(ConfirmationService);
     readonly deleteCommentDialogKey = computed(() => `review-comment-delete-${this.thread().id}`);
     readonly orderedComments = computed(() => sortCommentsByCreatedDateThenId(this.thread().comments));
     readonly renderedComments = computed(() => {

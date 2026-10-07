@@ -27,7 +27,7 @@ import org.springframework.validation.annotation.Validated;
  * @param oldSubmissionVersionsCutoffWeeks       Weeks after a course ends before its submission versions (editor keystroke
  *                                                   history) are purged.
  * @param notEnrolledUsersInactivityMonths       Months of inactivity (by last login, falling back to creation date) required
- *                                                   before a user enrolled in no course is warned and later soft-deleted.
+ *                                                   before a user enrolled in no course is warned and later permanently deleted when no domain reference blocks it.
  * @param notEnrolledUsersWarningGracePeriodDays Days between warning a not-enrolled, inactive user and actually deleting the
  *                                                   account, giving them time to log in (which cancels the deletion).
  * @param oldCoursesWarningScheduleEnabled       Whether the scheduled "warn + archive old courses" job runs automatically.

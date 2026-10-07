@@ -13,17 +13,20 @@ import jakarta.validation.constraints.PositiveOrZero;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.course.domain.Course;
 
 @Entity
 public class QuizTrainingLeaderboard extends DomainObject {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn
+    @JoinColumn(nullable = false)
+    @Parent
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn
+    @JoinColumn(nullable = false)
+    @Parent
     private Course course;
 
     // The league the student is in (1-5)

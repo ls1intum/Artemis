@@ -338,7 +338,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                             const sortedTestCaseNames = testCases
                                 .filter((testCase) => testCase.active)
                                 .map((testCase) => testCase.testName!)
-                                .sort();
+                                .sort((a, b) => a.localeCompare(b));
                             return of(sortedTestCaseNames);
                         } else if (this.exercise().templateParticipation) {
                             // Legacy case: If there are no test cases, but a template participation, use its feedbacks for generating test names.
@@ -376,7 +376,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 feedbacks!
                     .map((feedback) => feedback.text ?? feedback.testCase?.testName)
                     .filter((name): name is string => name != undefined)
-                    .sort(),
+                    .sort((a, b) => a.localeCompare(b)),
             ),
             catchError(() => of([])),
         );

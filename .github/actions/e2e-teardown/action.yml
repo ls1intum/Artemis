@@ -11,9 +11,24 @@ inputs:
     required: false
     default: 'warn'
 
+outputs:
+  junit-artifact-name:
+    description: >-
+      Name of the uploaded JUnit artifact. It includes the run attempt: a re-run keeps the
+      run id, so an unqualified name would also match the first attempt's artifact and a
+      download by name could return stale results.
+    value: ${{ steps.junit-artifact-name.outputs.name }}
+
 runs:
   using: 'composite'
   steps:
+    - name: Determine JUnit artifact name
+      id: junit-artifact-name
+      shell: bash
+      env:
+        ARTIFACT_NAME: JUnit Test Results${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }} (attempt ${{ github.run_attempt }})
+      run: echo "name=$ARTIFACT_NAME" >> "$GITHUB_OUTPUT"
+
     - name: Drop intermediate Playwright XML files
       shell: bash
       # Playwright emits results-parallel.xml, results-sequential.xml, and a merged
@@ -25,21 +40,35 @@ runs:
 
     - name: Upload JUnit Test Results
       if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: JUnit Test Results${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }}
+        name: ${{ steps.junit-artifact-name.outputs.name }}
         if-no-files-found: ${{ inputs.require-tests }}
         path: src/test/playwright/test-reports/*.xml
 
     - name: Upload Client Test Coverage Report
       if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: E2E Client Coverage Report${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }}
         path: src/test/playwright/test-reports/client-coverage
+
+    - name: Upload Playwright Failure Artifacts
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: Playwright Failure Artifacts${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }}
+        # playwright.config.ts records a trace and a video on the first retry, and Playwright writes an
+        # error-context.md beside them; all of it lands in test-results/ and was being deleted with the runner.
+        # Every investigation of an E2E failure so far has had to be reconstructed from interleaved container
+        # logs because the artifact that answers the question directly was never uploaded.
+        # Only failing and retried tests leave anything here, so on a green run this uploads nothing.
+        path: src/test/playwright/test-results
+        if-no-files-found: ignore
+        retention-days: 7
 
     - name: Run cleanup script (after E2E)
       shell: bash
       # Best-effort: tearing down containers/networks must not flip the E2E job result.
       continue-on-error: true
-      run: .ci/E2E-tests/cleanup.sh
+      run: supporting_scripts/ci/E2E-tests/cleanup.sh

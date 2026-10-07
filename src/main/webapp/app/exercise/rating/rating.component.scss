@@ -1,3 +1,43 @@
+/* The rating is an optional reaction to the feedback above it, so it stays quiet: no tinted box, a small muted prompt, and stars that
+   take their colour only when they are hovered or chosen. */
+:host {
+    display: block;
+}
+
+.rating {
+    /* Both colours reach 3:1 against the content surface in the light and the dark theme: the selected one is the warning colour
+       darkened (light theme) or lightened (dark theme) towards the text colour. */
+    --rating-star-muted: var(--text-body-secondary);
+    --rating-star-selected: color-mix(in srgb, var(--warning) 65%, var(--body-color));
+
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.rating__label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+    color: var(--text-body-secondary);
+}
+
 .non-clickable * {
     cursor: default;
+}
+
+/* One row where there is width for it, stacked where there is not: the stars
+   must never be pushed out of a narrow panel. The host sets the colour of the prompt. */
+.rating--inline {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.25rem 0.75rem;
+    flex-wrap: wrap;
+
+    .rating__label {
+        font-weight: 600;
+        line-height: inherit;
+        color: inherit;
+    }
 }

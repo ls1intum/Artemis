@@ -1,9 +1,14 @@
-<tum-ui-dialog [(visible)]="visible" [header]="'entity.action.editSelected' | artemisTranslate" [closable]="true" [closeOnEscape]="true" [dismissableMask]="false" size="large">
+<tumaet-ui-dialog [(visible)]="visible" [header]="'entity.action.editSelected' | artemisTranslate" [closable]="true" [closeOnEscape]="true" [dismissableMask]="false" size="large">
     @if (failureOccurred()) {
         <div class="row justify-content-center">
             <span class="mb-1" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorOccurred"></span>
             <div class="table-responsive m-2 p-1">
                 <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col" jhiTranslate="artemisApp.exercise.title"></th>
+                        </tr>
+                    </thead>
                     <tbody>
                         @for (failedExercise of failedExercises(); track failedExercise) {
                             <tr>
@@ -22,6 +27,11 @@
                 <span style="font-weight: bold" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.currentlyEdited"></span>
                 <div class="table-responsive m-2 p-1">
                     <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col" jhiTranslate="artemisApp.exercise.title"></th>
+                            </tr>
+                        </thead>
                         <tbody>
                             @for (programmingExercise of selectedProgrammingExercises(); track programmingExercise) {
                                 <tr>
@@ -39,11 +49,12 @@
                     <div class="form-group-narrow mt-2">
                         @let exampleSolutionPublicationDateSet =
                             !!newProgrammingExercise.exampleSolutionPublicationDate || !!newProgrammingExercise.exerciseGroup?.exam?.exampleSolutionPublicationDate;
-                        <jhi-programming-exercise-update-timeline
+                        <jhi-programming-exercise-timeline
                             id="timeline"
                             [isExamMode]="false"
                             [exampleSolutionPublicationDateSet]="exampleSolutionPublicationDateSet"
                             [skipAutomaticAfterDueDatePreview]="true"
+                            (timelineStatus)="timelineStatus.set($event)"
                             [exercise]="newProgrammingExercise"
                             [(releaseDate)]="newProgrammingExercise.releaseDate"
                             [(startDate)]="newProgrammingExercise.startDate"
@@ -52,13 +63,18 @@
                             [(assessmentDueDate)]="newProgrammingExercise.assessmentDueDate"
                             [(exampleSolutionPublicationDate)]="newProgrammingExercise.exampleSolutionPublicationDate"
                             [(assessmentType)]="newProgrammingExercise.assessmentType"
-                            [(allowFeedbackRequests)]="newProgrammingExercise.allowFeedbackRequests"
                             [(allowComplaintsForAutomaticAssessments)]="newProgrammingExercise.allowComplaintsForAutomaticAssessments"
                             [(releaseTestsWithExampleSolution)]="newProgrammingExercise.releaseTestsWithExampleSolution"
-                            [(feedbackSuggestionModule)]="newProgrammingExercise.feedbackSuggestionModule"
                             [(showTestNamesToStudents)]="newProgrammingExercise.showTestNamesToStudents"
                         />
-                        <jhi-button class="text-center" id="save-entity" [icon]="faSave" [title]="'entity.action.save'" [isLoading]="isSaving()">
+                        <jhi-button
+                            class="text-center"
+                            id="save-entity"
+                            [icon]="faSave"
+                            [title]="'entity.action.save'"
+                            [disabled]="!timelineStatus().valid"
+                            [isLoading]="isSaving()"
+                        >
                             <fa-icon [icon]="faSave" />
                             <span jhiTranslate="entity.action.save"></span>
                         </jhi-button>
@@ -67,4 +83,4 @@
             </div>
         </div>
     }
-</tum-ui-dialog>
+</tumaet-ui-dialog>

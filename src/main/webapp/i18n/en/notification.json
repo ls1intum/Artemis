@@ -2,6 +2,8 @@
     "artemisApp": {
         "notification": {
             "notifications": "Notifications",
+            "expandPopup": "Expand notifications",
+            "collapsePopup": "Collapse notifications",
             "noNotifications": "No notifications available",
             "title": "Title",
             "text": "Text",
@@ -202,6 +204,11 @@
                 "title": "Iris reply needs review",
                 "content": "{{replyMarkdownContent}}",
                 "settingsTitle": "Iris reply needs review"
+            },
+            "atlasCompetencyUpdateNotification": {
+                "title": "Automatic competency update",
+                "content": "Automatic competency update after changes to {{exerciseCount}} learning object(s): {{appliedCount}} change(s) applied. The details were sent by email.",
+                "settingsTitle": "Automatic competency updates (instructors)"
             },
             "newMentionNotification": {
                 "title": "You were mentioned",

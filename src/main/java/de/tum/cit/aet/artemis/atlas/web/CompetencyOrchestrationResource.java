@@ -6,17 +6,24 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
+import de.tum.cit.aet.artemis.atlas.dto.OrchestratorDefaultsDTO;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for the autonomous competency management orchestrator.
@@ -25,8 +32,9 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
  * {@link Feature#AtlasAgent} feature toggle — the same toggle that controls the Atlas Companion
  * chat agent. No separate orchestrator toggle exists.
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 @Lazy
+@FeatureUsage(UserFeature.COMPETENCY_ORCHESTRATION)
 @RestController
 @RequestMapping("api/atlas/orchestrator/")
 public class CompetencyOrchestrationResource {
@@ -35,8 +43,25 @@ public class CompetencyOrchestrationResource {
 
     private final CompetencyOrchestrationService competencyOrchestrationService;
 
-    public CompetencyOrchestrationResource(CompetencyOrchestrationService competencyOrchestrationService) {
+    private final AtlasOrchestratorProperties orchestratorProperties;
+
+    public CompetencyOrchestrationResource(CompetencyOrchestrationService competencyOrchestrationService, AtlasOrchestratorProperties orchestratorProperties) {
         this.competencyOrchestrationService = competencyOrchestrationService;
+        this.orchestratorProperties = orchestratorProperties;
+    }
+
+    /**
+     * {@code GET defaults} : the global default debounce window and daily run cap that a course's
+     * per-course overrides fall back to when left empty. Surfaced to the course-settings form so it
+     * can show the instructor what "use default" actually resolves to, rather than a blank value.
+     *
+     * @return {@code 200 OK} with the {@link OrchestratorDefaultsDTO}
+     */
+    @GetMapping("defaults")
+    @EnforceAtLeastInstructor
+    @FeatureToggle(Feature.AtlasAgent)
+    public ResponseEntity<OrchestratorDefaultsDTO> getDefaults() {
+        return ResponseEntity.ok(new OrchestratorDefaultsDTO(orchestratorProperties.debounceWindowSeconds(), orchestratorProperties.maxDailyOrchestrations()));
     }
 
     @PostMapping("exercises/{exerciseId}/run")
@@ -48,7 +73,16 @@ public class CompetencyOrchestrationResource {
         return ResponseEntity.status(httpStatusFor(result)).body(result);
     }
 
-    /** Maps orchestration outcome to HTTP status so frontend error handling does not need to parse the response body. */
+    @PostMapping("lecture-units/{lectureUnitId}/run")
+    @EnforceAtLeastInstructorInLectureUnit
+    @FeatureToggle(Feature.AtlasAgent)
+    public ResponseEntity<CompetencyOrchestrationResultDTO> runForLectureUnit(@PathVariable Long lectureUnitId) {
+        log.info("REST request to run Atlas orchestrator for lecture unit: {}", lectureUnitId);
+        CompetencyOrchestrationResultDTO result = competencyOrchestrationService.runLectureUnitWithQueuedFlush(lectureUnitId);
+        return ResponseEntity.status(httpStatusFor(result)).body(result);
+    }
+
+    /** Maps orchestration outcomes to HTTP statuses so the web client does not need to parse the response body for error handling. */
     private static HttpStatus httpStatusFor(CompetencyOrchestrationResultDTO result) {
         return switch (result.status()) {
             case SUCCESS, NO_OP -> HttpStatus.OK;
@@ -56,9 +90,10 @@ public class CompetencyOrchestrationResource {
             case IN_PROGRESS -> HttpStatus.CONFLICT;
             case FAILED -> switch (result.failureReason()) {
                 case NO_CHAT_CLIENT -> HttpStatus.SERVICE_UNAVAILABLE;
+                case TOOL_CALL_LIMIT_EXCEEDED, INCOMPLETE_ORCHESTRATION -> HttpStatus.UNPROCESSABLE_CONTENT;
                 case LLM_ERROR -> HttpStatus.BAD_GATEWAY;
                 case INTERNAL_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
-                case UNSUPPORTED_EXERCISE -> HttpStatus.UNPROCESSABLE_CONTENT;
+                case UNSUPPORTED_EXERCISE, UNSUPPORTED_LEARNING_OBJECT -> HttpStatus.UNPROCESSABLE_CONTENT;
             };
         };
     }

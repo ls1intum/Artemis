@@ -14,7 +14,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
@@ -25,6 +32,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
  * REST controller for managing Iris tutor suggestion sessions.
  */
 @Conditional(IrisEnabled.class)
+@FeatureUsage(UserFeature.IRIS_TUTOR_SUGGESTIONS)
 @RestController
 @RequestMapping("api/iris/tutor-suggestion/")
 @Lazy
@@ -38,27 +46,32 @@ public class IrisTutorSuggestionSessionResource {
 
     private final IrisTutorSuggestionSessionRepository irisTutorSuggestionSessionRepository;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     protected IrisTutorSuggestionSessionResource(PostRepository postRepository, UserRepository userRepository,
-            IrisTutorSuggestionSessionRepository irisTutorSuggestionSessionRepository, IrisSettingsService irisSettingsService) {
+            IrisTutorSuggestionSessionRepository irisTutorSuggestionSessionRepository, IrisSettingsService irisSettingsService,
+            AuthorizationCheckService authorizationCheckService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.irisTutorSuggestionSessionRepository = irisTutorSuggestionSessionRepository;
         this.irisSettingsService = irisSettingsService;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
-     * POST /{postId}/sessions/current : Get the current session for the post or create a new one if it does not exist.
+     * POST /posts/{postId}/sessions/current : Get the current session for the post or create a new one if it does not exist.
      *
      * @param postId post ID
      * @return the ResponseEntity with status 200 (OK) and the current session, or status 201 (Created) and the new session
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping({ "posts/{postId}/sessions/current", "{postId}/sessions/current" })
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @PostMapping("posts/{postId}/sessions/current")
     public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long postId) throws URISyntaxException {
         var user = userRepository.getUserWithAuthorities();
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
-        var course = post.getCoursePostingBelongsTo();
-        if (!userRepository.isAtLeastTeachingAssistantInCourse(user.getLogin(), course.getId())) {
+        var course = courseOfPostElseThrow(post);
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
@@ -72,19 +85,19 @@ public class IrisTutorSuggestionSessionResource {
     }
 
     /**
-     * POST /{postId}/sessions : Create a new session for the post.
+     * POST /posts/{postId}/sessions : Create a new session for the post.
      *
      * @param postId post ID
      * @return the ResponseEntity with status 201 (Created) and the new session
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping({ "posts/{postId}/sessions", "{postId}/sessions" })
+    @PostMapping("posts/{postId}/sessions")
     public ResponseEntity<IrisChatSessionResponseDTO> createSessionForPost(@PathVariable Long postId) throws URISyntaxException {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
 
-        var course = post.getCoursePostingBelongsTo();
+        var course = courseOfPostElseThrow(post);
         var user = userRepository.getUserWithAuthorities();
-        if (!userRepository.isAtLeastTeachingAssistantInCourse(user.getLogin(), course.getId())) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
@@ -95,4 +108,11 @@ public class IrisTutorSuggestionSessionResource {
         return ResponseEntity.created(new URI(uriString)).body(IrisChatSessionResponseDTO.of(session));
     }
 
+    private static Course courseOfPostElseThrow(Post post) {
+        var course = post.getCoursePostingBelongsTo();
+        if (course == null) {
+            throw new IllegalStateException("The course of post " + post.getId() + " cannot be resolved");
+        }
+        return course;
+    }
 }

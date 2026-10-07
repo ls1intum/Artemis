@@ -1,4 +1,4 @@
-<div [id]="'exercise-' + modelingExercise()?.id">
+<div class="modeling-submission" [id]="'exercise-' + modelingExercise()?.id">
     @if (modelingExercise()) {
         <jhi-resizeable-container
             [isExerciseParticipation]="true"
@@ -7,125 +7,165 @@
             [collapsed]="isFeedbackView()"
             [showRightPanel]="showProblemStatement() && examMode()"
         >
-            <!--region Left Panel-->
             <ng-container left-body>
                 @if (!submission() || submission().submitted || !isExamSummary()) {
-                    <div class="w-100">
+                    <div class="modeling-submission-content w-100">
                         <div class="submission-container d-flex flex-column w-100">
-                            <jhi-fullscreen>
-                                <div class="column" style="display: flex; flex-direction: column; flex-grow: 1">
-                                    <div class="row" style="flex-grow: 1; display: flex">
-                                        @if (
-                                            submission() &&
-                                            (isActive || isLate()) &&
-                                            !(result() && !isAutomaticResult) &&
-                                            (!isLate() || !submission().submitted) &&
-                                            !isFeedbackView()
-                                        ) {
-                                            <div class="col-12 editor-large">
-                                                <jhi-modeling-editor
-                                                    [readOnly]="!isOwnerOfParticipation()"
-                                                    [umlModel]="umlModel()"
-                                                    [diagramType]="modelingExercise().diagramType!"
-                                                    [withExplanation]="true"
-                                                    [collaborationEnabled]="modelingExercise().teamMode ?? false"
-                                                    [collaborationUser]="apollonCollaborationUser()"
-                                                    [(explanation)]="explanation"
-                                                    [resizeOptions]="resizeOptions"
-                                                    [savedStatus]="{ isChanged: isChanged(), isSaving: isSaving() }"
-                                                    (onModelPatch)="onModelPatch($event)"
-                                                />
-                                                <fa-icon [icon]="faGripLines" class="rg-bottom text-lightgrey"> <span></span></fa-icon>
-                                                <!-- Gate team sync on the resolved collaboration user so it does not start the Yjs/awareness handshake
-                                                     before the (user-gated) Apollon editor exists — otherwise early peer replies would be dropped. -->
-                                                @if (modelingExercise().teamMode && apollonCollaborationUser()) {
-                                                    <jhi-team-submission-sync
-                                                        [exerciseType]="modelingExercise().type!"
-                                                        [submissionObservable]="submissionObservable"
-                                                        [submissionPatchObservable]="submissionPatchObservable"
-                                                        [participation]="participation()"
-                                                        (receiveSubmissionPatch)="onReceiveSubmissionPatchFromTeam($event)"
-                                                        (reconnected)="onTeamSyncReconnected()"
-                                                    />
-                                                }
-                                            </div>
+                            <div class="modeling-submission-surface">
+                                @if (shouldShowLiveEditor()) {
+                                    <div class="modeling-submission-editor-tile">
+                                        <jhi-modeling-editor
+                                            [readOnly]="!isOwnerOfParticipation()"
+                                            [umlModel]="umlModel()"
+                                            [diagramType]="modelingExercise().diagramType!"
+                                            [tile]="true"
+                                            [withExplanation]="true"
+                                            [problemStatement]="modelingExercise().problemStatement"
+                                            [collaborationEnabled]="modelingExercise().teamMode ?? false"
+                                            [collaborationUser]="apollonCollaborationUser()"
+                                            [(explanation)]="explanation"
+                                            [savedStatus]="modelingExercise().teamMode ? undefined : { isChanged: isChanged(), isSaving: isSaving() }"
+                                            (onModelPatch)="onModelPatch($event)"
+                                        />
+                                        @if (modelingExercise().teamMode && apollonCollaborationUser()) {
+                                            <jhi-team-submission-sync
+                                                [exerciseType]="modelingExercise().type!"
+                                                [submissionObservable]="submissionObservable"
+                                                [submissionPatchObservable]="submissionPatchObservable"
+                                                [participation]="participation()"
+                                                (receiveSubmissionPatch)="onReceiveSubmissionPatchFromTeam($event)"
+                                                (reconnected)="onTeamSyncReconnected()"
+                                            />
                                         }
+                                    </div>
+                                } @else {
+                                    <div class="modeling-submission-assessment-layout">
                                         @if (((!isActive || (result() && !isAutomaticResult)) && (!isLate() || submission().submitted)) || isFeedbackView()) {
-                                            <div class="col-8 editor-assessment">
+                                            <div class="modeling-submission-assessment-layout__canvas">
                                                 <jhi-modeling-assessment
+                                                    #assessmentCanvas
                                                     [umlModel]="umlModel()"
                                                     [resultFeedbacks]="assessmentResult()?.feedbacks || []"
                                                     [diagramType]="modelingExercise().diagramType!"
-                                                    [maxScore]="modelingExercise().maxPoints || 0"
-                                                    [maxBonusPoints]="modelingExercise().bonusPoints || 0"
                                                     [readOnly]="true"
-                                                    [enablePopups]="false"
-                                                    [displayPoints]="false"
-                                                    [course]="course()"
+                                                    [enablePopups]="true"
                                                     (selectedElementIdsChanged)="onSelectedElementIdsChanged($event)"
+                                                    [highlightedElements]="highlightedFeedbackElements()"
                                                     [explanation]="explanation"
-                                                />
-                                            </div>
-                                        }
-                                        @if ((submission()?.submitted && (!isActive || result())) || isFeedbackView()) {
-                                            <div class="col-4 pt-5 editor-assessment overflow-auto">
-                                                <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title"></h4>
-                                                @if (!assessmentResult() || !assessmentResult()!.feedbacks || assessmentResult()!.feedbacks!.length === 0) {
-                                                    <p jhiTranslate="artemisApp.modelingSubmission.assessment.noAssessment"></p>
-                                                }
-                                                @if (assessmentResult() && assessmentResult()!.feedbacks && assessmentResult()!.feedbacks!.length > 0) {
-                                                    <p jhiTranslate="artemisApp.modelingSubmission.assessment.instructions"></p>
-                                                    <div class="feedback-list">
-                                                        <div id="component-feedback-table">
-                                                            @for (feedback of referencedFeedback; track feedback.id) {
-                                                                @if (shouldBeDisplayed(feedback)) {
-                                                                    <jhi-unified-feedback
-                                                                        [feedbackContent]="buildFeedbackTextForReview(feedback)"
-                                                                        [points]="feedback.credits || 0"
-                                                                        [feedback]="feedback"
-                                                                        [assessmentsNames]="assessmentsNames()"
-                                                                        [scoreAccuracy]="course()?.accuracyOfScores"
-                                                                    />
-                                                                }
-                                                            }
-                                                        </div>
-
-                                                        <div id="additional-feedback">
-                                                            @for (feedback of unreferencedFeedback; track feedback.id) {
-                                                                <jhi-unified-feedback
-                                                                    [feedbackContent]="buildFeedbackTextForReview(feedback)"
-                                                                    [points]="feedback.credits || 0"
-                                                                    [feedback]="feedback"
-                                                                    [scoreAccuracy]="course()?.accuracyOfScores"
-                                                                />
-                                                            }
-                                                        </div>
+                                                    [panelLabel]="'artemisApp.modelingSubmission.assessment.title' | artemisTranslate"
+                                                >
+                                                    <div modelingAssessmentTopRight class="apollon-glass apollon-chrome-cluster">
+                                                        <button
+                                                            type="button"
+                                                            class="artemis-apollon-chrome-action apollon-chrome-iconbtn"
+                                                            (click)="assessmentCanvas.toggleFullscreen()"
+                                                            [attr.aria-label]="
+                                                                (assessmentCanvas.fullscreenActive()
+                                                                    ? 'artemisApp.modelingEditor.fullscreen.exitButtonText'
+                                                                    : 'artemisApp.modelingEditor.fullscreen.enterButtonText'
+                                                                ) | artemisTranslate
+                                                            "
+                                                            [title]="
+                                                                (assessmentCanvas.fullscreenActive()
+                                                                    ? 'artemisApp.modelingEditor.fullscreen.exitButtonText'
+                                                                    : 'artemisApp.modelingEditor.fullscreen.enterButtonText'
+                                                                ) | artemisTranslate
+                                                            "
+                                                        >
+                                                            <fa-icon [icon]="assessmentCanvas.fullscreenActive() ? faExitFullscreen : faEnterFullscreen" />
+                                                            <span
+                                                                [jhiTranslate]="
+                                                                    assessmentCanvas.fullscreenActive()
+                                                                        ? 'artemisApp.modelingEditor.fullscreen.exitButtonText'
+                                                                        : 'artemisApp.modelingEditor.fullscreen.enterButtonText'
+                                                                "
+                                                            ></span>
+                                                        </button>
                                                     </div>
-                                                }
+                                                    <div [modelingAssessmentPanel]="hasAssessmentToShow()" class="modeling-submission-feedback">
+                                                        @if (!assessmentResult()?.feedbacks?.length) {
+                                                            <p class="modeling-submission-feedback__empty" jhiTranslate="artemisApp.modelingSubmission.assessment.noAssessment"></p>
+                                                        } @else {
+                                                            @if (referencedFeedback?.length) {
+                                                                <h4 class="feedback-group__title">
+                                                                    <span jhiTranslate="artemisApp.modelingSubmission.assessment.onDiagram"></span>
+                                                                    <span class="feedback-group__count">{{ referencedFeedback?.length }}</span>
+                                                                </h4>
+                                                                <ul class="feedback-list" data-testid="component-feedback-table">
+                                                                    @for (feedback of referencedFeedback; track feedback.id) {
+                                                                        <li
+                                                                            class="feedback-row"
+                                                                            [attr.role]="feedback.referenceId ? 'button' : null"
+                                                                            [attr.tabindex]="feedback.referenceId ? 0 : null"
+                                                                            [attr.aria-current]="isFeedbackForSelection(feedback) ? 'true' : null"
+                                                                            [class.feedback-row--selected]="isFeedbackForSelection(feedback)"
+                                                                            (click)="showFeedbackOnDiagram(feedback)"
+                                                                            (keydown.enter)="showFeedbackOnDiagram(feedback)"
+                                                                            (keydown.space)="showFeedbackOnDiagram(feedback)"
+                                                                            (mouseenter)="previewFeedbackTarget(feedback)"
+                                                                            (mouseleave)="clearFeedbackPreview()"
+                                                                            (focusin)="previewFeedbackTarget(feedback)"
+                                                                            (focusout)="clearFeedbackPreview()"
+                                                                        >
+                                                                            <span class="feedback-row__score" [attr.data-tone]="feedbackTone(feedback)">
+                                                                                <fa-icon [icon]="feedbackToneIcon(feedback)" />
+                                                                                {{ feedbackPoints(feedback) }}
+                                                                            </span>
+                                                                            <span class="feedback-row__name">{{ feedbackElementName(feedback) }}</span>
+                                                                            <p class="feedback-row__text" [innerHTML]="buildFeedbackTextForReview(feedback)"></p>
+                                                                        </li>
+                                                                    }
+                                                                </ul>
+                                                            }
+                                                            @if (unreferencedFeedback?.length) {
+                                                                <h4 class="feedback-group__title">
+                                                                    <span jhiTranslate="artemisApp.modelingSubmission.assessment.general"></span>
+                                                                    <span class="feedback-group__count">{{ unreferencedFeedback?.length }}</span>
+                                                                </h4>
+                                                                <ul class="feedback-list" id="additional-feedback">
+                                                                    @for (feedback of unreferencedFeedback; track feedback.id) {
+                                                                        <li class="feedback-row">
+                                                                            <span class="feedback-row__score" [attr.data-tone]="feedbackTone(feedback)">
+                                                                                <fa-icon [icon]="feedbackToneIcon(feedback)" />
+                                                                                {{ feedbackPoints(feedback) }}
+                                                                            </span>
+                                                                            <p class="feedback-row__text" [innerHTML]="buildFeedbackTextForReview(feedback)"></p>
+                                                                        </li>
+                                                                    }
+                                                                </ul>
+                                                            }
+                                                        }
+                                                        @if (result()) {
+                                                            <jhi-rating
+                                                                class="modeling-submission-feedback__rating"
+                                                                [result]="result()"
+                                                                [participation]="participation()"
+                                                                starSize="18"
+                                                                layout="inline"
+                                                            />
+                                                        }
+                                                        @if (showComplaintSection()) {
+                                                            <div class="modeling-submission-feedback__complaint">
+                                                                <ng-container [ngTemplateOutlet]="complaintSection" />
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </jhi-modeling-assessment>
                                             </div>
                                         }
                                     </div>
-                                </div>
-                            </jhi-fullscreen>
+                                }
+                            </div>
                         </div>
 
-                        @if (result()) {
-                            <div class="row">
-                                <jhi-rating class="mt-2 alert alert-info" [result]="result()" [participation]="participation()" />
+                        @if (showComplaintSection() && shouldShowLiveEditor()) {
+                            <div class="modeling-submission-complaint">
+                                <ng-container [ngTemplateOutlet]="complaintSection" />
                             </div>
-                        }
-                        @if (result() && !examMode() && !isFeedbackView()) {
-                            <jhi-complaint-student-view
-                                [exercise]="modelingExercise()"
-                                [participation]="participation()"
-                                [result]="resultWithComplaint() ? resultWithComplaint() : result()"
-                            />
                         }
                     </div>
                 }
             </ng-container>
-            <!--endregion-->
-            <!--region Right Panel-->
             <fa-icon right-header [icon]="farListAlt" />&nbsp;
             <span right-header id="problem-statement" jhiTranslate="artemisApp.modelingSubmission.problemStatement"></span>
             <p right-body class="mb-3 markdown-preview">
@@ -133,7 +173,9 @@
                     <span [jhiMarkdown]="modelingExercise()!.problemStatement!"></span>
                 }
             </p>
-            <!--endregion-->
         </jhi-resizeable-container>
     }
 </div>
+<ng-template #complaintSection>
+    <jhi-complaint-student-view [exercise]="modelingExercise()!" [participation]="participation()" [result]="resultWithComplaint() ? resultWithComplaint() : result()" />
+</ng-template>

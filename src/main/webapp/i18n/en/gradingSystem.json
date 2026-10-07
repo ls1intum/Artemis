@@ -3,9 +3,9 @@
         "gradingSystem": {
             "title": "Grading Key",
             "titleCourse": "Grading Key for Course",
-            "titleExam": "Grading Key for Exam",
+            "titleExam": "Grading Key",
             "titleBonus": "Grading Key for Bonus",
-            "defaultButton": "Generate Default Grading Key",
+            "defaultButton": "Set Default Grading Key",
             "gradeType": {
                 "title": "Grade Type",
                 "grade": "Grade",
@@ -33,8 +33,8 @@
                 "weight": "Combined Weight (%)"
             },
             "csv": {
-                "importButton": "Import (.csv)",
-                "exportButton": "Export (.csv)"
+                "importButton": "Import CSV",
+                "exportButton": "Export CSV"
             },
             "firstPassingGrade": "First Passing Grade",
             "min": "Min %",

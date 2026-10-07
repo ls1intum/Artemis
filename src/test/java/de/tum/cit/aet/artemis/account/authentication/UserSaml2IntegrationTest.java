@@ -13,9 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.saml2.provider.service.authentication.DefaultSaml2AuthenticatedPrincipal;
-import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
-import org.springframework.security.saml2.provider.service.authentication.Saml2Authentication;
+import org.springframework.security.saml2.provider.service.authentication.Saml2AssertionAuthentication;
+import org.springframework.security.saml2.provider.service.authentication.Saml2ResponseAssertion;
+import org.springframework.security.saml2.provider.service.authentication.Saml2ResponseAssertionAccessor;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -32,7 +32,15 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
 
     private static final String STUDENT_NAME = "student_saml_test";
 
+    /**
+     * The same identifier as {@link #STUDENT_NAME}, but as an identity provider may well send it. The login is stored
+     * lowercase, so this is what makes the difference between the derived and the stored value observable.
+     */
+    private static final String MIXED_CASE_STUDENT_NAME = "Student_SAML_Test";
+
     private static final String STUDENT_PASSWORD = "test1234";
+
+    private static final String OTHER_STUDENT_NAME = "other_student_saml_test";
 
     private static final String STUDENT_REGISTRATION_NUMBER = "12345678";
 
@@ -42,6 +50,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
     @AfterEach
     void clearExistingUser() {
         userTestRepository.findOneByLogin(STUDENT_NAME).ifPresent(userTestRepository::delete);
+        userTestRepository.findOneByLogin(OTHER_STUDENT_NAME).ifPresent(userTestRepository::delete);
     }
 
     @AfterEach
@@ -65,10 +74,25 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
     void testValidSaml2Registration() throws Exception {
         assertStudentNotExists();
 
-        authenticate(createPrincipal(STUDENT_REGISTRATION_NUMBER));
+        authenticate(createAssertion(STUDENT_REGISTRATION_NUMBER));
 
         assertStudentExists();
         assertRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+    }
+
+    @Test
+    void testSaml2RegistrationRejectsEmailUsedByAnotherAccount() throws Exception {
+        assertStudentNotExists();
+        User existingUser = new User();
+        existingUser.setLogin(OTHER_STUDENT_NAME);
+        existingUser.setActivated(true);
+        existingUser.setEmail(STUDENT_NAME + "@invalid");
+        userTestRepository.save(existingUser);
+
+        mockSAMLAuthentication(createAssertion(STUDENT_REGISTRATION_NUMBER));
+        request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.BAD_REQUEST);
+
+        assertStudentNotExists();
     }
 
     /**
@@ -80,7 +104,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
     void testValidSaml2RegistrationExtractingRegistrationNumber() throws Exception {
         assertStudentNotExists();
 
-        authenticate(createPrincipal("somePrefix1234someSuffix"));
+        authenticate(createAssertion("somePrefix1234someSuffix"));
 
         assertStudentExists();
         assertRegistrationNumber("1234");
@@ -95,7 +119,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
     void testValidSaml2RegistrationNonMatchingRegistrationNumberExtraction() throws Exception {
         assertStudentNotExists();
 
-        authenticate(createPrincipal("nonMatchingRegNum"));
+        authenticate(createAssertion("nonMatchingRegNum"));
 
         assertStudentExists();
         assertRegistrationNumber("nonMatchingRegNum");
@@ -110,7 +134,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
     void testValidSaml2RegistrationEmptyRegistrationNumber() throws Exception {
         assertStudentNotExists();
 
-        authenticate(createPrincipal(""));
+        authenticate(createAssertion(""));
 
         assertStudentExists();
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getRegistrationNumber()).isNull();
@@ -132,7 +156,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
         createUser(identifyingEmail);
         assertStudentExists();
 
-        authenticate(createPrincipal(STUDENT_REGISTRATION_NUMBER));
+        authenticate(createAssertion(STUDENT_REGISTRATION_NUMBER));
 
         assertStudentExists();
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getEmail()).as("Email identifies already created user").isEqualTo(identifyingEmail);
@@ -154,15 +178,52 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
         createUser(identifyingEmail);
         assertStudentExists();
 
-        authenticate(createPrincipal(STUDENT_REGISTRATION_NUMBER));
+        authenticate(createAssertion(STUDENT_REGISTRATION_NUMBER));
         assertStudentExists();
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getFirstName()).isEqualTo("FirstName");
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getLastName()).isEqualTo("LastName");
 
         // Use updated data for login
-        authenticate(createPrincipal(STUDENT_REGISTRATION_NUMBER, "NewFirstName", "NewLastName"));
+        authenticate(createAssertion(STUDENT_REGISTRATION_NUMBER, "NewFirstName", "NewLastName"));
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getFirstName()).isEqualTo("NewFirstName");
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getLastName()).isEqualTo("NewLastName");
+    }
+
+    /**
+     * The attribute values come from the identity provider, so a name containing a regex replacement character must be
+     * stored verbatim rather than read as a group reference.
+     *
+     * @throws Exception if something went wrong.
+     */
+    @Test
+    void testValidSaml2RegistrationWithReplacementCharactersInAttributes() throws Exception {
+        assertStudentNotExists();
+
+        authenticate(createAssertion(STUDENT_REGISTRATION_NUMBER, "Ann$a", "O\\Brien"));
+
+        assertStudentExists();
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getFirstName()).isEqualTo("Ann$a");
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getLastName()).isEqualTo("O\\Brien");
+    }
+
+    /**
+     * The username pattern is filled from identity provider attributes, which may contain an uppercase letter, and the
+     * login is stored lowercase. Both logins therefore have to resolve to the same account: without normalizing the
+     * derived login the second one finds nothing, tries to create the user again and fails on the duplicate email.
+     *
+     * @throws Exception if something went wrong.
+     */
+    @Test
+    void testValidSaml2RepeatedLoginWithMixedCaseUsernameAttribute() throws Exception {
+        assertStudentNotExists();
+
+        authenticate(createAssertion(MIXED_CASE_STUDENT_NAME, STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"));
+        assertStudentExists();
+
+        authenticate(createAssertion(MIXED_CASE_STUDENT_NAME, STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"));
+
+        assertStudentExists();
+        assertThat(userTestRepository.findAllByEmailOrUsernameIgnoreCase(STUDENT_NAME + "@invalid")).as("The second login reuses the account the first one created").hasSize(1);
     }
 
     /**
@@ -214,17 +275,22 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
         assertStudentNotExists();
     }
 
-    private void authenticate(Saml2AuthenticatedPrincipal principal) throws Exception {
-        mockSAMLAuthentication(principal);
+    private void authenticate(Saml2ResponseAssertionAccessor assertion) throws Exception {
+        mockSAMLAuthentication(assertion);
         request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.OK);
     }
 
     private void mockSAMLAuthentication() throws Exception {
-        mockSAMLAuthentication(createPrincipal(STUDENT_REGISTRATION_NUMBER));
+        mockSAMLAuthentication(createAssertion(STUDENT_REGISTRATION_NUMBER));
     }
 
-    private void mockSAMLAuthentication(Saml2AuthenticatedPrincipal principal) throws Exception {
-        Authentication authentication = new Saml2Authentication(principal, "Secret Credentials", null);
+    /**
+     * Builds the authentication Spring Security's SAML2 provider produces: a {@link Saml2AssertionAuthentication} whose
+     * credentials are the accessor for the validated response. The production code reads the user attributes from that
+     * accessor, so the stub has to carry them there rather than on the principal.
+     */
+    private void mockSAMLAuthentication(Saml2ResponseAssertionAccessor assertion) throws Exception {
+        Authentication authentication = new Saml2AssertionAuthentication(assertion, List.of(), "artemis");
         TestSecurityContextHolder.setAuthentication(authentication);
     }
 
@@ -244,19 +310,27 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
         userTestRepository.save(user);
     }
 
-    private Saml2AuthenticatedPrincipal createPrincipal(String registrationNumber) {
-        return createPrincipal(registrationNumber, "FirstName", "LastName");
+    private Saml2ResponseAssertionAccessor createAssertion(String registrationNumber) {
+        return createAssertion(registrationNumber, "FirstName", "LastName");
     }
 
-    private Saml2AuthenticatedPrincipal createPrincipal(String registrationNumber, String firstName, String lastName) {
+    private Saml2ResponseAssertionAccessor createAssertion(String registrationNumber, String firstName, String lastName) {
+        return createAssertion(STUDENT_NAME, registrationNumber, firstName, lastName);
+    }
+
+    /**
+     * The email stays derived from {@link #STUDENT_NAME} regardless of the uid, so that two assertions differing only in
+     * the case of the uid still describe the same person.
+     */
+    private Saml2ResponseAssertionAccessor createAssertion(String uid, String registrationNumber, String firstName, String lastName) {
         Map<String, List<Object>> attributes = new HashMap<>();
-        attributes.put("uid", List.of(STUDENT_NAME));
+        attributes.put("uid", List.of(uid));
         attributes.put("first_name", List.of(firstName));
         attributes.put("last_name", List.of(lastName));
         attributes.put("email", List.of(STUDENT_NAME + "@invalid"));
         attributes.put("registration_number", List.of(registrationNumber));
 
-        return new DefaultSaml2AuthenticatedPrincipal(STUDENT_NAME, attributes);
+        return Saml2ResponseAssertion.withResponseValue("response").nameId(uid).sessionIndexes(List.of()).attributes(attributes).build();
     }
 
     private void assertStudentNotExists() {

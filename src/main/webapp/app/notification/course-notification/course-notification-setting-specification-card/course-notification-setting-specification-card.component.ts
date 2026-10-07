@@ -1,5 +1,7 @@
 import { Component, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseNotificationComponent } from 'app/notification/course-notification/course-notification/course-notification.component';
 import dayjs from 'dayjs/esm';
@@ -17,7 +19,7 @@ import { CourseNotificationService } from 'app/notification/course-notification/
  */
 @Component({
     selector: 'jhi-course-notification-setting-specification-card',
-    imports: [TranslateDirective, CourseNotificationComponent, FormsModule],
+    imports: [TranslateDirective, CourseNotificationComponent, FormsModule, TumAetUiToggleSwitchComponent, ArtemisTranslatePipe],
     templateUrl: './course-notification-setting-specification-card.component.html',
     styleUrls: ['./course-notification-setting-specification-card.component.scss'],
 })
@@ -54,17 +56,21 @@ export class CourseNotificationSettingSpecificationCardComponent {
                     CourseNotificationCategory.GENERAL,
                     CourseNotificationViewingStatus.SEEN,
                     dayjs(),
+                    'Patterns in Software Engineering',
+                    undefined,
+                    // A preview renders whichever notification type the card is for, so it offers a placeholder for
+                    // every type at once. The names below appear in one payload or another, which is why this is
+                    // accepted as one: it is a sample for the translation, never a notification the server sent.
                     {
                         authorName: 'Maria Muster',
-                        courseName: 'Patterns in Software Engineering',
-                        courseTitle: 'Patterns in Software Engineering',
                         postMarkdownContent: 'Can anybody tell me how to bake chocolate cookies?',
                         replyMarkdownContent: 'Can anybody tell me how to bake chocolate cookies?',
-                        courseIconUrl: undefined,
                         channelName: 'tech-support',
                         exerciseTitle: 'Modeling 123',
                         unitName: 'Modeling 123',
                         groupTitle: 'Grp 123',
+                        appliedCount: 3,
+                        exerciseCount: 2,
                     },
                     '/',
                 ),

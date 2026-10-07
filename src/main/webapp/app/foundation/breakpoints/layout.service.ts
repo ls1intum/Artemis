@@ -1,12 +1,10 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { BreakpointsService } from './breakpoints.service';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class LayoutService {
     private breakpointObserver = inject(BreakpointObserver);
     private breakpointService = inject(BreakpointsService);
@@ -20,7 +18,7 @@ export class LayoutService {
     parseBreakpointsResponse(breakpoints: { [key: string]: boolean }): string[] {
         this.activeBreakpoints = [];
 
-        Object.keys(breakpoints).map((key) => {
+        Object.keys(breakpoints).forEach((key) => {
             if (breakpoints[key]) {
                 this.activeBreakpoints.push(this.breakpointService.getBreakpointName(key));
             }

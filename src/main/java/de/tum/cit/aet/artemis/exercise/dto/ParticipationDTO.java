@@ -27,12 +27,22 @@ public record ParticipationDTO(Long id, boolean testRun, String type, Initializa
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ParticipationExerciseDTO(Long id, ExerciseType exerciseType, String type, AssessmentType assessmentType, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
-            Double maxPoints, CourseDTO course) implements Serializable {
+            Double maxPoints, @Nullable CourseDTO course) implements Serializable {
 
+        /**
+         * Maps an {@link Exercise} to a {@link ParticipationExerciseDTO}. An exam exercise whose exam was masked out for
+         * a student-facing payload resolves to a {@code null} course.
+         *
+         * @param exercise the exercise to convert (may be {@code null})
+         * @return the corresponding DTO, or {@code null} if the input was {@code null}
+         */
         @Nullable
         public static ParticipationExerciseDTO of(Exercise exercise) {
-            return Optional.ofNullable(exercise).map(e -> new ParticipationExerciseDTO(e.getId(), e.getExerciseType(), e.getType(), e.getAssessmentType(), e.getDueDate(),
-                    e.getAssessmentDueDate(), e.getMaxPoints(), CourseDTO.of(e.getCourseViaExerciseGroupOrCourseMember()))).orElse(null);
+            return Optional.ofNullable(exercise).map(e -> {
+                Course course = e.getCourseViaExerciseGroupOrCourseMember();
+                return new ParticipationExerciseDTO(e.getId(), e.getExerciseType(), e.getType(), e.getAssessmentType(), e.getDueDate(), e.getAssessmentDueDate(), e.getMaxPoints(),
+                        CourseDTO.of(course));
+            }).orElse(null);
         }
     }
 

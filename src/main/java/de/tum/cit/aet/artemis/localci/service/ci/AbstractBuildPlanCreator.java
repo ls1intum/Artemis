@@ -13,7 +13,7 @@ public abstract class AbstractBuildPlanCreator {
 
     private final BuildPlanRepository buildPlanRepository;
 
-    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+    protected final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Value("${server.url}")
     private URL artemisServerUrl;
@@ -38,9 +38,9 @@ public abstract class AbstractBuildPlanCreator {
      * @return The build plan URL.
      */
     public String generateBuildPlanURL(final ProgrammingExercise exercise) {
-        programmingExerciseBuildConfigRepository.generateBuildPlanAccessSecretIfNotExists(exercise.getBuildConfig());
-        return "%s/api/localci/public/programming-exercises/%d/build-plan?secret=%s".formatted(artemisServerUrl, exercise.getId(),
-                exercise.getBuildConfig().getBuildPlanAccessSecret());
+        var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId());
+        programmingExerciseBuildConfigRepository.generateBuildPlanAccessSecretIfNotExists(buildConfig);
+        return "%s/api/localci/public/programming-exercises/%d/build-plan?secret=%s".formatted(artemisServerUrl, exercise.getId(), buildConfig.getBuildPlanAccessSecret());
     }
 
     /**

@@ -3,8 +3,10 @@ package de.tum.cit.aet.artemis.text.service;
 import static java.lang.Integer.compare;
 
 import java.text.BreakIterator;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -38,6 +40,16 @@ public class TextBlockService {
 
     public Set<TextBlock> findAllBySubmissionId(Long id) {
         return this.textBlockRepository.findAllBySubmissionId(id);
+    }
+
+    /**
+     * Returns the stored text blocks for the given ids, independent of the submission they belong to.
+     *
+     * @param ids the ids to look up
+     * @return the text blocks that exist for those ids
+     */
+    public List<TextBlock> findAllById(Collection<String> ids) {
+        return this.textBlockRepository.findAllById(ids);
     }
 
     public Set<TextBlock> computeTextBlocksForSubmissionBasedOnSyntax(TextSubmission textSubmission) {

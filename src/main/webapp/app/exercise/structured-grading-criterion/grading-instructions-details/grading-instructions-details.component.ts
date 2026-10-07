@@ -1,9 +1,9 @@
-import { AfterContentInit, Component, Injector, OnInit, afterNextRender, inject, input, signal, viewChild, viewChildren } from '@angular/core';
+import { Component, DestroyRef, DoCheck, OnInit, computed, inject, input, linkedSignal, output, signal, viewChild } from '@angular/core';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { isEqual } from 'lodash-es';
 import { faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
-import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
 import { GradingCreditsAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-credits.action';
 import { GradingScaleAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-scale.action';
 import { GradingDescriptionAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-description.action';
@@ -12,33 +12,139 @@ import { GradingUsageCountAction } from 'app/editor/monaco-editor/model/actions/
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { GradingCriterionAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-criterion.action';
 import { GradingInstructionAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-instruction.action';
-import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { AssessmentCriteriaGenerationService } from 'app/exercise/structured-grading-criterion/assessment-criteria-generation.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { defer, finalize } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { facArtemisIntelligence } from 'app/foundation/icons/icons';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiInputDirective,
+    TumAetUiSelectButtonComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
+import { AccountService } from 'app/core/auth/account.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+
+const GRADING_INSTRUCTION_PLACEHOLDER = 'Add Assessment Instruction text here';
+const ASSESSMENT_CRITERIA_CONFIRMATION_KEY = 'assessment-criteria-generation-confirmation';
+
+/** Template state derived from the mutable exercise entity. */
+interface AssessmentCriteriaGenerationState {
+    /** Whether the current user and exercise permit showing the generation action. */
+    canShowButton: boolean;
+    /** Translation key explaining which generation prerequisite is missing. */
+    disabledReason?: string;
+}
+
+/** Which persisted entity each parsed row would reclaim, decided before anything is mutated. */
+type ReconciliationPlan = {
+    parsedCriterion: GradingCriterion;
+    previousCriterion?: GradingCriterion;
+    instructions: { parsedInstruction: GradingInstruction; previousInstruction?: GradingInstruction }[];
+}[];
 
 @Component({
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
-    styleUrls: ['./grading-instructions-details.component.scss'],
-    imports: [NgClass, TranslateDirective, FormsModule, FaIconComponent, HelpIconComponent, NgbTooltip, MarkdownEditorMonacoComponent, ArtemisTranslatePipe],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        FaIconComponent,
+        HelpIconComponent,
+        MarkdownEditorMonacoComponent,
+        ArtemisTranslatePipe,
+        TumAetUiButtonComponent,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiInputDirective,
+        TumAetUiSelectButtonComponent,
+        TumAetUiTooltipDirective,
+    ],
+    providers: [TumAetUiConfirmationService],
 })
-export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit {
-    private injector = inject(Injector);
+export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
+    private readonly profileService = inject(ProfileService);
+    private readonly generationService = inject(AssessmentCriteriaGenerationService);
+    private readonly alertService = inject(AlertService);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
+    private readonly translateService = inject(TranslateService);
+    private readonly destroyRef = inject(DestroyRef);
+    private readonly accountService = inject(AccountService);
 
-    private readonly markdownEditors = viewChildren<MarkdownEditorMonacoComponent>('markdownEditors');
-    private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
+    private readonly markdownEditor = viewChild<MarkdownEditorMonacoComponent>('markdownEditor');
+    /** Exercise whose assessment instructions are displayed and edited. */
     readonly exercise = input.required<Exercise>();
+    /** Whether the user may edit or generate assessment criteria. */
+    readonly editable = input(true);
+    /** Optional example solution supplied as generation context. */
+    readonly exampleSolution = input<string>();
+    /** Supplies exercise-type-specific context immediately before a generation request. */
+    readonly additionalGenerationContext = input<() => string | undefined>(() => undefined);
+    /** Synchronizes editor-owned state with the exercise immediately before generation. */
+    readonly synchronizeExercise = input<() => void>(() => undefined);
+    /** Emitted after generated criteria have replaced the current structured criteria. */
+    readonly criteriaGenerated = output<void>();
     private instructions: GradingInstruction[] = [];
     private readonly criteria = signal<GradingCriterion[]>(undefined!);
+    /**
+     * Persisted criteria and instructions remain candidates across partial parses and live clears.
+     * An empty buffer committed by prepareForSave drops both baselines.
+     */
+    private identityBaseline: GradingCriterion[] = [];
+    private readonly instructionBaseline = new Map<GradingCriterion, GradingInstruction[]>();
+    private parseAccepted = true;
 
-    backupExercise!: Exercise; // set in ngOnInit() as a deep clone of the exercise() input before any edit-restore reads it
     readonly markdownEditorText = signal('');
     readonly showEditMode = signal<boolean>(undefined!);
+    /** Whether an assessment-criteria request is currently in flight. */
+    readonly isGenerating = signal(false);
+    /** Whether the server profile enables Hyperion. */
+    readonly hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    private readonly generationState = signal<AssessmentCriteriaGenerationState>(
+        { canShowButton: false },
+        { equal: (previous, current) => previous.canShowButton === current.canShowButton && previous.disabledReason === current.disabledReason },
+    );
+    /** Whether the generation action is applicable to the current exercise and user. */
+    readonly canShowGenerationButton = computed(() => this.generationState().canShowButton);
+    /** Translation key explaining why generation is unavailable, if applicable. */
+    readonly generationDisabledReason = computed(() => this.generationState().disabledReason);
+    /** Whether the generation action must currently be disabled. */
+    readonly isGenerationDisabled = computed(() => this.generationDisabledReason() !== undefined || this.isGenerating());
+
+    /** Refreshes signal-backed generation state when fields of the legacy mutable exercise entity change. */
+    ngDoCheck(): void {
+        const exercise = this.exercise();
+        const course = exercise.course ?? exercise.exerciseGroup?.exam?.course;
+        const canShowButton =
+            this.hyperionEnabled &&
+            this.editable() &&
+            course?.id !== undefined &&
+            !!(exercise.isAtLeastEditor || course.isAtLeastEditor || this.accountService.isAtLeastEditorForExercise(exercise));
+        let disabledReason: string | undefined;
+        if (!exercise.problemStatement?.trim()) {
+            disabledReason = 'artemisApp.exercise.assessmentCriteriaGeneration.disabledProblemStatement';
+        } else if (exercise.maxPoints === undefined || !Number.isFinite(exercise.maxPoints) || exercise.maxPoints <= 0) {
+            disabledReason = 'artemisApp.exercise.assessmentCriteriaGeneration.disabledMaxPoints';
+        } else if (
+            exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY &&
+            exercise.bonusPoints !== undefined &&
+            (!Number.isFinite(exercise.bonusPoints) || exercise.bonusPoints < 0)
+        ) {
+            disabledReason = 'artemisApp.exercise.assessmentCriteriaGeneration.disabledBonusPoints';
+        }
+        this.generationState.set({ canShowButton, disabledReason });
+    }
 
     creditsAction = new GradingCreditsAction();
     gradingScaleAction = new GradingScaleAction();
@@ -58,49 +164,34 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.gradingCriterionAction,
     ];
 
-    domainActionsForGradingInstructionParsing: TextEditorDomainAction[] = [
-        this.creditsAction,
-        this.gradingScaleAction,
-        this.descriptionAction,
-        this.feedbackAction,
-        this.usageCountAction,
-    ];
-
     // Icons
     faPlus = faPlus;
     faTrash = faTrash;
     faUndo = faUndo;
+    facArtemisIntelligence = facArtemisIntelligence;
+
+    readonly editModeOptions = [
+        { value: 'structured', labelKey: 'entity.action.edit' },
+        { value: 'text', labelKey: 'artemisApp.exercise.editText' },
+    ] as const;
+
+    /** Select model; writable so a rejected switch can push 'text' back after the CVA committed 'structured'. */
+    readonly editModeValue = linkedSignal<'structured' | 'text'>(() => (this.showEditMode() ? 'structured' : 'text'));
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
     ngOnInit() {
         this.criteria.set(this.exercise().gradingCriteria || []);
-        this.backupExercise = deepClone(this.exercise());
-        this.markdownEditorText.set(this.generateMarkdown());
-        this.showEditMode.set(true);
-    }
-
-    ngAfterContentInit() {
-        if (this.exercise().gradingInstructionFeedbackUsed) {
-            this.markdownEditorText.set(this.initializeExerciseGradingInstructionText());
-            this.initializeMarkdown();
+        this.identityBaseline = this.exercise().gradingCriteria || [];
+        for (const criterion of this.identityBaseline) {
+            this.instructionBaseline.set(
+                criterion,
+                (criterion.structuredGradingInstructions ?? []).filter((instruction) => instruction.id != undefined),
+            );
         }
-    }
-
-    initializeMarkdown() {
-        // Defer until after the next render so the markdown editor view children (driven by the criteria @for) exist.
-        afterNextRender(
-            () => {
-                let index = 0;
-                this.criteria().forEach((criterion) => {
-                    criterion.structuredGradingInstructions.forEach((instruction) => {
-                        this.markdownEditors().at(index)!.setMarkdown(this.generateInstructionText(instruction));
-                        index += 1;
-                    });
-                });
-            },
-            { injector: this.injector },
-        );
+        this.markdownEditorText.set(this.generateMarkdown());
+        // Always start in the structured field editor; edit-as-text remains available via the mode toggle.
+        this.showEditMode.set(true);
     }
 
     generateMarkdown(): string {
@@ -109,12 +200,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         const gradingCriteria = this.exercise().gradingCriteria;
         if (gradingCriteria) {
             for (const criterion of gradingCriteria) {
-                if (criterion.title == undefined) {
-                    // if it is a dummy criterion, leave out the action identifier
-                    markdownText += this.generateInstructionsMarkdown(criterion);
-                } else {
-                    markdownText += `${GradingCriterionAction.IDENTIFIER} ${criterion.title}\n\t${this.generateInstructionsMarkdown(criterion)}`;
-                }
+                markdownText += `${GradingCriterionAction.IDENTIFIER}${criterion.title ? ` ${criterion.title}` : ''}\n\t${this.generateInstructionsMarkdown(criterion)}`;
             }
         }
         return markdownText;
@@ -161,6 +247,15 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         );
     }
 
+    /**
+     * Strips a legacy `{@id:N}` prefix if present. Markers are no longer emitted or used for identity;
+     * leftover text from older sessions must not become part of the title.
+     */
+    private stripLegacyIdentityMarker(text: string): string {
+        const match = /^\{@id:\d+}\s*(.*)$/s.exec(text);
+        return match ? match[1] : text;
+    }
+
     generateCreditsText(instruction: GradingInstruction): string {
         const creditsText = GradingCreditsAction.TEXT;
         const creditsIdentifier = GradingCreditsAction.IDENTIFIER;
@@ -199,16 +294,65 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     initializeExerciseGradingInstructionText(): string {
-        return `${this.exercise().gradingInstructions || 'Add Assessment Instruction text here'}\n\n`;
+        return `${this.exercise().gradingInstructions || GRADING_INSTRUCTION_PLACEHOLDER}\n\n`;
     }
 
-    prepareForSave(): void {
+    /**
+     * Debounced Monaco edits. Keeps the model in sync without committing an empty buffer (so a
+     * cut → paste can still reclaim ids by content).
+     */
+    onMarkdownChange(): void {
+        this.flushMarkdown(false);
+    }
+
+    /**
+     * Flushes the live Monaco buffer into the exercise model. Hosts must call this synchronously
+     * before setting isSaving (which sets editable=false and would no-op this method) or sending
+     * the update DTO, otherwise a save inside the markdownChange debounce window keeps stale text.
+     *
+     * @returns false when instruction identity cannot be reconciled unambiguously.
+     */
+    prepareForSave(): boolean {
+        return this.flushMarkdown(true);
+    }
+
+    private flushMarkdown(commitEmpty: boolean): boolean {
+        if (!this.editable() || this.showEditMode()) {
+            return true;
+        }
+        const previousGradingInstructions = this.exercise().gradingInstructions;
         this.cleanupExerciseGradingInstructions();
-        this.markdownEditor().parseMarkdown();
-        if (this.exercise().gradingInstructionFeedbackUsed) {
-            this.markdownEditors().forEach((component) => {
-                component.parseMarkdown(this.domainActionsForGradingInstructionParsing);
-            });
+        const editor = this.markdownEditor();
+        editor?.flushLiveMarkdownAndParse();
+        // parseMarkdown emits textWithDomainActionsFound only for non-empty markdown, so an emptied
+        // buffer never reaches onDomainActionsFound and would otherwise keep the previous criteria.
+        // Only clear when the live buffer is known empty — undefined means the editor did not report
+        // a value (e.g. tests / unavailable Monaco), so leave whatever flush already applied.
+        const liveMarkdown = editor?.currentMarkdown?.();
+        if (liveMarkdown !== undefined && !liveMarkdown.trim()) {
+            this.clearGradingCriteria(commitEmpty);
+            this.parseAccepted = true;
+        }
+        if (!this.parseAccepted) {
+            this.exercise().gradingInstructions = previousGradingInstructions;
+            if (commitEmpty) {
+                this.alertService.error('artemisApp.exercise.gradingInstructionsAmbiguousEdit');
+            }
+        }
+        return this.parseAccepted;
+    }
+
+    /**
+     * @param clearBaseline when true, also drops the identity baseline (committed empty buffer).
+     * Live clears leave the baseline so a subsequent paste of the same content can reclaim ids.
+     */
+    private clearGradingCriteria(clearBaseline = false): void {
+        this.instructions = [];
+        this.criteria.set([]);
+        this.exercise().gradingCriteria = [];
+        if (clearBaseline) {
+            this.identityBaseline = [];
+            this.instructionBaseline.clear();
         }
     }
 
@@ -217,6 +361,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @desc Clear the exercise grading instruction text to avoid double assignments
      */
     cleanupExerciseGradingInstructions() {
+        if (!this.editable()) {
+            return;
+        }
         this.exercise().gradingInstructions = undefined;
     }
 
@@ -229,6 +376,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     createSubInstructionActions(textWithDomainActions: TextWithDomainAction[]): void {
+        if (!this.editable()) {
+            return;
+        }
         let instructionActions;
         let criterionActions;
         let endOfInstructionsAction = 0;
@@ -259,12 +409,16 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     setParentForInstructionsWithNoCriterion(textWithDomainActions: TextWithDomainAction[]): void {
+        if (!this.editable()) {
+            return;
+        }
         const criteria = [...this.criteria()];
-        for (const { action } of textWithDomainActions) {
+        for (const { text, action } of textWithDomainActions) {
             this.setExerciseGradingInstructionText(textWithDomainActions);
             if (action instanceof GradingInstructionAction) {
                 const dummyCriterion = new GradingCriterion();
                 const newInstruction = new GradingInstruction();
+                this.stripLegacyIdentityMarker(text);
                 dummyCriterion.structuredGradingInstructions = [];
                 dummyCriterion.structuredGradingInstructions.push(newInstruction);
                 this.instructions.push(newInstruction);
@@ -282,13 +436,16 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     groupInstructionsToCriteria(textWithDomainActions: TextWithDomainAction[]): void {
+        if (!this.editable()) {
+            return;
+        }
         const initialCriterionActions = textWithDomainActions;
         const exercise = this.exercise();
         const gradingCriteria = exercise.gradingCriteria ?? (exercise.gradingCriteria = []);
         for (const { text, action } of textWithDomainActions) {
             if (action instanceof GradingCriterionAction) {
                 const newCriterion = new GradingCriterion();
-                newCriterion.title = text;
+                newCriterion.title = this.stripLegacyIdentityMarker(text);
                 gradingCriteria.push(newCriterion);
                 newCriterion.structuredGradingInstructions = [];
                 const arrayWithoutCriterion = textWithDomainActions.slice(1); // remove the identifier after creating its criterion object
@@ -298,6 +455,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
                     endOfCriterion++;
                     if (instrAction instanceof GradingInstructionAction) {
                         const newInstruction = new GradingInstruction(); // create instruction objects that belong to the above created criterion
+                        this.stripLegacyIdentityMarker(remainingTextWithDomainAction.text);
                         newCriterion.structuredGradingInstructions.push(newInstruction);
                         this.instructions.push(newInstruction);
                     }
@@ -316,6 +474,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     setInstructionParameters(textWithDomainActions: TextWithDomainAction[]): void {
+        if (!this.editable()) {
+            return;
+        }
         let index = 0;
         for (const { text, action } of textWithDomainActions) {
             if (!this.instructions[index]) {
@@ -341,54 +502,302 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     onDomainActionsFound(textWithDomainActions: TextWithDomainAction[]): void {
+        if (!this.editable()) {
+            return;
+        }
+        let awaitingUsageCount = false;
+        for (const { action } of textWithDomainActions) {
+            if (action instanceof GradingInstructionAction || action instanceof GradingCriterionAction) {
+                if (awaitingUsageCount) {
+                    this.parseAccepted = false;
+                    return;
+                }
+                awaitingUsageCount = action instanceof GradingInstructionAction;
+            } else if (action instanceof GradingUsageCountAction) {
+                if (!awaitingUsageCount) {
+                    this.parseAccepted = false;
+                    return;
+                }
+                awaitingUsageCount = false;
+            }
+        }
+        if (awaitingUsageCount) {
+            this.parseAccepted = false;
+            return;
+        }
+        const previousCriteria = this.exercise().gradingCriteria ?? [];
+        const previousInstructions = this.instructions;
+        const previousGradingInstructions = this.exercise().gradingInstructions;
         this.instructions = [];
         this.criteria.set([]);
         this.exercise().gradingCriteria = [];
         this.createSubInstructionActions(textWithDomainActions);
-    }
-
-    onInstructionChange(textWithDomainActions: TextWithDomainAction[], instruction: GradingInstruction): void {
-        this.instructions = [instruction];
-        this.setInstructionParameters(textWithDomainActions);
+        const previousGroup = previousCriteria.length === 1 ? previousCriteria[0] : undefined;
+        const parsedCriteria = this.exercise().gradingCriteria ?? [];
+        if (
+            previousGroup &&
+            !previousGroup.title &&
+            (previousGroup.structuredGradingInstructions?.length ?? 0) > 1 &&
+            parsedCriteria.length === previousGroup.structuredGradingInstructions.length &&
+            parsedCriteria.every((criterion) => !criterion.title && criterion.structuredGradingInstructions.length === 1)
+        ) {
+            // Older text omitted the criterion marker; use the existing group for its boundaries.
+            const group = new GradingCriterion();
+            group.title = previousGroup.title;
+            group.structuredGradingInstructions = parsedCriteria.flatMap((criterion) => criterion.structuredGradingInstructions);
+            this.exercise().gradingCriteria = [group];
+            this.criteria.set([group]);
+        }
+        this.parseAccepted = this.reconcileParsedCriteria(previousCriteria);
+        if (!this.parseAccepted) {
+            this.instructions = previousInstructions;
+            this.criteria.set(previousCriteria);
+            this.exercise().gradingCriteria = previousCriteria;
+            this.exercise().gradingInstructions = previousGradingInstructions;
+        }
     }
 
     /**
-     * @function resetInstruction
-     * @desc Resets the whole instruction
-     * @param instruction {GradingInstruction} the instruction, which will be reset
-     * @param criterion {GradingCriterion} the criteria, which includes the instruction that will be reset
+     * Reuses previously persisted criterion/instruction objects so unchanged (or positionally leftover)
+     * rows keep their database IDs and feedback links. Identity is content-only — no markers in text.
      */
-    resetInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
-        const criterionIndex = this.findCriterionIndex(criterion, this.exercise());
-        const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
-        const instructionIndex = this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
-        let backupInstructionIndex = undefined;
-
-        if (backupCriterionIndex >= 0) {
-            backupInstructionIndex = this.findInstructionIndex(instruction, this.backupExercise, backupCriterionIndex);
-
-            if (backupInstructionIndex != undefined && backupInstructionIndex >= 0) {
-                this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions[instructionIndex] = deepClone(
-                    this.backupExercise.gradingCriteria![backupCriterionIndex].structuredGradingInstructions[backupInstructionIndex],
-                );
+    private reconcileParsedCriteria(previousCriteria: GradingCriterion[]): boolean {
+        const parsedCriteria = this.exercise().gradingCriteria ?? [];
+        const plan = this.planReconciliation(previousCriteria, parsedCriteria);
+        if (!plan) {
+            return false;
+        }
+        for (const criterion of previousCriteria) {
+            if (criterion.id != undefined) {
+                const baseline = this.instructionBaseline.get(criterion) ?? [];
+                for (const instruction of criterion.structuredGradingInstructions ?? []) {
+                    if (instruction.id != undefined && !baseline.includes(instruction)) {
+                        baseline.push(instruction);
+                    }
+                }
+                this.instructionBaseline.set(criterion, baseline);
             }
         }
-        if (backupCriterionIndex < 0 || backupInstructionIndex == undefined || backupInstructionIndex < 0) {
-            this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions[instructionIndex] = new GradingInstruction();
+        const reconciled = plan.map(({ parsedCriterion, previousCriterion, instructions }) => {
+            const criterion = previousCriterion ?? parsedCriterion;
+            if (!previousCriterion) {
+                delete criterion.id;
+            }
+            criterion.title = parsedCriterion.title;
+            criterion.structuredGradingInstructions = instructions.map(({ parsedInstruction, previousInstruction }) => {
+                if (!previousInstruction) {
+                    delete parsedInstruction.id;
+                    return parsedInstruction;
+                }
+                return this.applyInstructionFields(previousInstruction, parsedInstruction);
+            });
+            return criterion;
+        });
+        this.exercise().gradingCriteria = reconciled;
+        this.criteria.set(reconciled);
+        this.identityBaseline = [...new Set([...this.identityBaseline, ...previousCriteria, ...reconciled].filter((criterion) => criterion.id != undefined))];
+        return true;
+    }
+
+    /**
+     * Decides which persisted criterion / instruction each parsed row reclaims, without mutating
+     * anything. Criteria match by full content, then instruction-set fingerprint (so a title tweak
+     * keeps the id), then title, then a sole leftover pair (so a title-less instruction edit keeps
+     * the id when only one criterion remains unmatched). Never zip multiple leftovers by position —
+     * that would hand an unrelated criterion’s id to an insert/reorder. Reject ambiguous criterion
+     * and instruction leftovers before changing persisted objects.
+     */
+    private planReconciliation(previousCriteria: GradingCriterion[], parsedCriteria: GradingCriterion[]): ReconciliationPlan | undefined {
+        const unusedCriteria = [...previousCriteria];
+        const unusedFallbackCriteria = this.identityBaseline.filter((criterion) => criterion.id != undefined && !previousCriteria.includes(criterion));
+        const candidates = [...unusedCriteria, ...unusedFallbackCriteria];
+        const signatures = candidates.map((criterion) => this.criterionSignature(criterion));
+        // A changed duplicate count cannot identify which persisted criterion was edited or copied.
+        for (const signature of new Set(candidates.filter((criterion) => criterion.id != undefined).map((criterion) => this.criterionSignature(criterion)))) {
+            const previousCount = signatures.filter((candidate) => candidate === signature).length;
+            const parsedCount = parsedCriteria.filter((criterion) => this.criterionSignature(criterion) === signature).length;
+            if ((previousCount > 1 || parsedCount > 1) && parsedCount !== previousCount) {
+                return undefined;
+            }
         }
-        this.initializeMarkdown();
+        const criterionEntries = parsedCriteria.map((parsedCriterion) => ({
+            parsedCriterion,
+            previousCriterion: undefined as GradingCriterion | undefined,
+        }));
+        for (const { match, fallback } of [
+            {
+                match: (unused: GradingCriterion[], parsed: GradingCriterion) => this.takeContentMatch(unused, parsed, (criterion) => this.criterionSignature(criterion)),
+                fallback: true,
+            },
+            {
+                match: (unused: GradingCriterion[], parsed: GradingCriterion) => this.takeContentMatch(unused, parsed, (criterion) => this.instructionsSignature(criterion)),
+                fallback: true,
+            },
+            { match: (unused: GradingCriterion[], parsed: GradingCriterion) => this.takeByTitle(unused, parsed), fallback: false },
+        ]) {
+            for (const entry of criterionEntries) {
+                if (!entry.previousCriterion) {
+                    entry.previousCriterion = match(unusedCriteria, entry.parsedCriterion) ?? (fallback ? match(unusedFallbackCriteria, entry.parsedCriterion) : undefined);
+                }
+            }
+        }
+        // Sole remainder only when the leftover pair still shares identity affinity — title-less↔title-less
+        // or at least one instruction fingerprint. Otherwise a full replace of the only criterion would
+        // inherit the old id. Never zip multiple leftovers by position.
+        const unmatched = criterionEntries.filter((entry) => !entry.previousCriterion);
+        if (unmatched.length === 1 && unusedCriteria.length === 1) {
+            const previous = unusedCriteria[0];
+            const parsed = unmatched[0].parsedCriterion;
+            if (this.criteriaShareIdentityAffinity(previous, parsed)) {
+                unmatched[0].previousCriterion = unusedCriteria.shift();
+            } else if (previous.id != undefined && this.exercise().gradingInstructionFeedbackUsed) {
+                return undefined;
+            }
+        }
+        if (
+            this.exercise().gradingInstructionFeedbackUsed &&
+            unmatched.some((entry) => !entry.previousCriterion && unusedFallbackCriteria.some((candidate) => this.criteriaShareIdentityAffinity(candidate, entry.parsedCriterion)))
+        ) {
+            return undefined;
+        }
+        // Multiple unmatched rows cannot safely replace used or multiple persisted leftovers.
+        const unusedPersistedCount = [...unusedCriteria, ...unusedFallbackCriteria].filter((criterion) => criterion.id != undefined).length;
+        if (unmatched.length > 1 && (unusedPersistedCount > 1 || (unusedPersistedCount > 0 && this.exercise().gradingInstructionFeedbackUsed))) {
+            return undefined;
+        }
+
+        const plan: ReconciliationPlan = [];
+        for (const { parsedCriterion, previousCriterion } of criterionEntries) {
+            const unusedInstructions = [...(previousCriterion?.structuredGradingInstructions ?? [])];
+            const unusedFallbackInstructions = (previousCriterion ? (this.instructionBaseline.get(previousCriterion) ?? []) : []).filter(
+                (instruction) => !unusedInstructions.includes(instruction),
+            );
+            const instructionEntries = (parsedCriterion.structuredGradingInstructions ?? []).map((parsedInstruction) => ({
+                parsedInstruction,
+                previousInstruction: undefined as GradingInstruction | undefined,
+            }));
+            const candidates = [...unusedInstructions, ...unusedFallbackInstructions];
+            const fingerprints = candidates.map((instruction) => this.instructionFingerprint(instruction));
+            // A changed duplicate count cannot identify which persisted copy was edited or copied.
+            for (const fingerprint of new Set(candidates.filter((instruction) => instruction.id != undefined).map((instruction) => this.instructionFingerprint(instruction)))) {
+                const previousCount = fingerprints.filter((candidate) => candidate === fingerprint).length;
+                const parsedCount = instructionEntries.filter(({ parsedInstruction }) => this.instructionFingerprint(parsedInstruction) === fingerprint).length;
+                if ((previousCount > 1 || parsedCount > 1) && parsedCount !== previousCount) {
+                    return undefined;
+                }
+            }
+            for (const entry of instructionEntries) {
+                entry.previousInstruction =
+                    this.takeContentMatch(unusedInstructions, entry.parsedInstruction, (instruction) => this.instructionFingerprint(instruction)) ??
+                    this.takeContentMatch(unusedFallbackInstructions, entry.parsedInstruction, (instruction) => this.instructionFingerprint(instruction));
+            }
+            const unmatchedInstructions = instructionEntries.filter((entry) => !entry.previousInstruction);
+            if (unmatchedInstructions.length === 1 && unusedInstructions.length === 1) {
+                unmatchedInstructions[0].previousInstruction = unusedInstructions[0];
+            } else if (unmatchedInstructions.length > 0 && unusedInstructions.length > 0) {
+                return undefined;
+            }
+            if (
+                this.exercise().gradingInstructionFeedbackUsed &&
+                unmatchedInstructions.some(
+                    (entry) =>
+                        !entry.previousInstruction && unusedFallbackInstructions.some((candidate) => this.instructionsShareIdentityAffinity(candidate, entry.parsedInstruction)),
+                )
+            ) {
+                return undefined;
+            }
+            plan.push({ parsedCriterion, previousCriterion, instructions: instructionEntries });
+        }
+        return plan;
+    }
+
+    /** Title-only claim; skips title-less rows so dummy criteria are not equated by empty string. */
+    private takeByTitle(unused: GradingCriterion[], parsed: GradingCriterion): GradingCriterion | undefined {
+        const title = parsed.title;
+        if (!title) {
+            return undefined;
+        }
+        const matchIndex = unused.findIndex((criterion) => criterion.title === title);
+        return matchIndex < 0 ? undefined : unused.splice(matchIndex, 1)[0];
+    }
+
+    /** Same title, title-less pair, or shared instruction fingerprint indicates identity affinity. */
+    private criteriaShareIdentityAffinity(previous: GradingCriterion, parsed: GradingCriterion): boolean {
+        if (previous.title && previous.title === parsed.title) {
+            return true;
+        }
+        if (!previous.title && !parsed.title) {
+            return true;
+        }
+        const previousFingerprints = new Set((previous.structuredGradingInstructions ?? []).map((instruction) => this.instructionFingerprint(instruction)));
+        return (parsed.structuredGradingInstructions ?? []).some((instruction) => previousFingerprints.has(this.instructionFingerprint(instruction)));
+    }
+
+    private instructionsShareIdentityAffinity(previous: GradingInstruction, parsed: GradingInstruction): boolean {
+        return (
+            (!!previous.instructionDescription && previous.instructionDescription === parsed.instructionDescription) ||
+            (!!previous.feedback && previous.feedback === parsed.feedback)
+        );
+    }
+
+    /**
+     * Removes and returns the persisted entity the parsed row reclaims by content.
+     */
+    private takeContentMatch<T>(unused: T[], parsed: T, signature: (entity: T) => string, weakKey?: (entity: T) => string | undefined): T | undefined {
+        let matchIndex = unused.findIndex((entity) => signature(entity) === signature(parsed));
+        if (matchIndex < 0) {
+            const key = weakKey?.(parsed);
+            matchIndex = key != undefined ? unused.findIndex((entity) => weakKey!(entity) === key) : -1;
+        }
+        return matchIndex < 0 ? undefined : unused.splice(matchIndex, 1)[0];
+    }
+
+    /** Identifies a criterion by its own title plus the content of its instructions. */
+    private criterionSignature(criterion: GradingCriterion): string {
+        return [criterion.title ?? '', this.instructionsSignature(criterion)].join('\u0001');
+    }
+
+    /** Title-agnostic instruction multiset — stable across criterion title edits. */
+    private instructionsSignature(criterion: GradingCriterion): string {
+        return (criterion.structuredGradingInstructions ?? []).map((instruction) => this.instructionFingerprint(instruction)).join('\u0001');
+    }
+
+    private applyInstructionFields(existingInstruction: GradingInstruction, parsedInstruction: GradingInstruction): GradingInstruction {
+        existingInstruction.credits = parsedInstruction.credits;
+        existingInstruction.gradingScale = parsedInstruction.gradingScale;
+        existingInstruction.instructionDescription = parsedInstruction.instructionDescription;
+        existingInstruction.feedback = parsedInstruction.feedback;
+        existingInstruction.usageCount = parsedInstruction.usageCount;
+        return existingInstruction;
+    }
+
+    private instructionFingerprint(instruction: GradingInstruction): string {
+        return [instruction.credits ?? '', instruction.gradingScale ?? '', instruction.instructionDescription ?? '', instruction.feedback ?? '', instruction.usageCount ?? ''].join(
+            '\0',
+        );
     }
 
     findCriterionIndex(criterion: GradingCriterion, exercise: Exercise) {
-        return exercise.gradingCriteria!.findIndex((gradingCriteria) => {
-            return gradingCriteria.id === criterion.id;
-        });
+        const gradingCriteria = exercise.gradingCriteria ?? [];
+        const objectIndex = gradingCriteria.indexOf(criterion);
+        if (objectIndex >= 0 || criterion.id === undefined) {
+            return objectIndex;
+        }
+        return gradingCriteria.findIndex((gradingCriteria) => gradingCriteria.id === criterion.id);
     }
 
     findInstructionIndex(instruction: GradingInstruction, exercise: Exercise, criterionIndex: number) {
-        return exercise.gradingCriteria![criterionIndex].structuredGradingInstructions?.findIndex((gradingInstruction) => {
-            return gradingInstruction.id === instruction.id;
-        });
+        const gradingCriteria = exercise.gradingCriteria;
+        const criterion = gradingCriteria?.[criterionIndex];
+        if (criterion === undefined) {
+            return -1;
+        }
+        const instructions = criterion.structuredGradingInstructions ?? [];
+        const objectIndex = instructions.indexOf(instruction);
+        if (objectIndex >= 0 || instruction.id === undefined) {
+            return objectIndex;
+        }
+        return instructions.findIndex((gradingInstruction) => gradingInstruction.id === instruction.id);
     }
 
     /**
@@ -398,14 +807,12 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param criterion {GradingCriterion} the criteria, which includes the instruction that will be deleted
      */
     deleteInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
+        if (!this.editable()) {
+            return;
+        }
         const criterionIndex = this.exercise().gradingCriteria!.indexOf(criterion);
         const instructionIndex = this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
         this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions.splice(instructionIndex, 1);
-    }
-
-    addInstruction(criterion: GradingCriterion) {
-        this.addNewInstruction(criterion);
-        this.initializeMarkdown();
     }
 
     /**
@@ -413,17 +820,18 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param criterion The grading criterion that contains the instruction to insert.
      */
     addNewInstruction(criterion: GradingCriterion) {
+        if (!this.editable()) {
+            return;
+        }
         const criterionIndex = this.exercise().gradingCriteria!.indexOf(criterion);
         const instruction = new GradingInstruction();
         this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions.push(instruction);
     }
 
-    addGradingCriterion() {
-        this.addNewGradingCriterion();
-        this.initializeMarkdown();
-    }
-
     addNewGradingCriterion() {
+        if (!this.editable()) {
+            return;
+        }
         const criterion = new GradingCriterion();
         criterion.structuredGradingInstructions = [];
         criterion.structuredGradingInstructions.push(new GradingInstruction());
@@ -435,21 +843,17 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     onCriterionTitleChange($event: Event, criterion: GradingCriterion) {
+        if (!this.editable()) {
+            return;
+        }
         const criterionIndex = this.exercise().gradingCriteria!.indexOf(criterion);
         this.exercise().gradingCriteria![criterionIndex].title = ($event.target as HTMLInputElement).value;
     }
 
-    resetCriterionTitle(criterion: GradingCriterion) {
-        const criterionIndex = this.findCriterionIndex(criterion, this.exercise());
-        const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
-        if (backupCriterionIndex >= 0) {
-            this.exercise().gradingCriteria![criterionIndex].title = deepClone(this.backupExercise.gradingCriteria![backupCriterionIndex].title);
-        } else {
-            criterion.title = '';
-        }
-    }
-
     deleteGradingCriterion(criterion: GradingCriterion) {
+        if (!this.editable()) {
+            return;
+        }
         const criterionIndex = this.exercise().gradingCriteria!.indexOf(criterion);
         this.exercise().gradingCriteria!.splice(criterionIndex, 1);
     }
@@ -459,27 +863,161 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     setExerciseGradingInstructionText(textWithDomainActions: TextWithDomainAction[]): void {
+        if (!this.editable()) {
+            return;
+        }
         if (!textWithDomainActions.length) {
             return;
         }
         const { text, action } = textWithDomainActions[0];
-        if (action === undefined && text.length > 0) {
+        if (action === undefined && text.length > 0 && text.trim() !== GRADING_INSTRUCTION_PLACEHOLDER) {
             this.exercise().gradingInstructions = text;
         }
     }
 
-    /**
-     * Switches edit mode
-     * Updates markdown text between mode switches
-     */
-    switchMode() {
-        this.showEditMode.update((mode) => !mode);
+    /** Sets the structured editor mode and refreshes the markdown snapshot used by the text editor. */
+    setEditMode(editMode: unknown) {
+        const next = editMode === true || editMode === 'structured';
+        if (!this.editable() || this.showEditMode() === next) {
+            return;
+        }
+        // Flush Monaco before destroying it when leaving text mode — textChanged is debounced (~200ms).
+        if (next && !this.prepareForSave()) {
+            this.editModeValue.set('text');
+            return;
+        }
+        this.showEditMode.set(next);
         this.markdownEditorText.set(this.generateMarkdown());
     }
 
+    /** Validates current editor state and asks for confirmation before replacing existing criteria. */
+    generateAssessmentCriteria(): void {
+        if (!this.editable()) {
+            return;
+        }
+        if (this.isGenerationDisabled()) {
+            return;
+        }
+
+        if (!this.showEditMode()) {
+            if (!this.prepareForSave()) {
+                return;
+            }
+            if (!this.hasValidParsedCriteria()) {
+                this.alertService.error('artemisApp.exercise.assessmentCriteriaGeneration.invalidSyntax');
+                return;
+            }
+        }
+        this.synchronizeExercise()();
+
+        if (this.exercise().gradingCriteria?.length) {
+            const usedCriteriaWarning = this.exercise().gradingInstructionFeedbackUsed
+                ? ` ${this.translateService.instant('artemisApp.exercise.assessmentCriteriaGeneration.confirmationUsed')}`
+                : '';
+            this.confirmationService.confirm({
+                key: ASSESSMENT_CRITERIA_CONFIRMATION_KEY,
+                header: this.translateService.instant('artemisApp.exercise.assessmentCriteriaGeneration.confirmationHeader'),
+                message: this.translateService.instant('artemisApp.exercise.assessmentCriteriaGeneration.confirmation') + usedCriteriaWarning,
+                rejectLabel: this.translateService.instant('entity.action.cancel'),
+                acceptLabel: this.translateService.instant('artemisApp.exercise.assessmentCriteriaGeneration.replaceAndGenerate'),
+                acceptSeverity: 'danger',
+                accept: () => this.requestAssessmentCriteria(),
+            });
+            return;
+        }
+        this.requestAssessmentCriteria();
+    }
+
+    /** Requests criteria and applies the response only if all generation inputs are unchanged. */
+    private requestAssessmentCriteria(): void {
+        if (!this.editable() || this.isGenerating()) {
+            return;
+        }
+        const exercise = this.exercise();
+        const exampleSolution = this.exampleSolution();
+        const additionalContext = this.additionalGenerationContext()();
+        const generationSnapshot = {
+            problemStatement: exercise.problemStatement,
+            maxPoints: exercise.maxPoints,
+            bonusPoints: exercise.bonusPoints,
+            includedInOverallScore: exercise.includedInOverallScore,
+            gradingInstructions: exercise.gradingInstructions,
+            gradingCriteria: deepClone(exercise.gradingCriteria),
+            exampleSolution,
+            additionalContext,
+            gradingInstructionFeedbackUsed: exercise.gradingInstructionFeedbackUsed,
+        };
+        this.isGenerating.set(true);
+        defer(() => this.generationService.generate(exercise, { exampleSolution, additionalContext }))
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => this.isGenerating.set(false)),
+            )
+            .subscribe({
+                next: (criteria) => {
+                    if (!this.editable()) {
+                        return;
+                    }
+                    const currentExercise = this.exercise();
+                    const currentSnapshot = {
+                        problemStatement: currentExercise.problemStatement,
+                        maxPoints: currentExercise.maxPoints,
+                        bonusPoints: currentExercise.bonusPoints,
+                        includedInOverallScore: currentExercise.includedInOverallScore,
+                        gradingInstructions: currentExercise.gradingInstructions,
+                        gradingCriteria: deepClone(currentExercise.gradingCriteria),
+                        exampleSolution: this.exampleSolution(),
+                        additionalContext: this.additionalGenerationContext()(),
+                        gradingInstructionFeedbackUsed: currentExercise.gradingInstructionFeedbackUsed,
+                    };
+                    if (!isEqual(generationSnapshot, currentSnapshot)) {
+                        return;
+                    }
+                    this.identityBaseline = [];
+                    this.instructionBaseline.clear();
+                    currentExercise.gradingCriteria = criteria;
+                    this.criteria.set(criteria);
+                    this.criteriaGenerated.emit();
+                    this.markdownEditorText.set(this.generateMarkdown());
+                    if (!this.showEditMode()) {
+                        this.markdownEditor()?.setMarkdown(this.markdownEditorText());
+                    }
+                    this.alertService.success('artemisApp.exercise.assessmentCriteriaGeneration.success');
+                },
+                error: (error) => onError(this.alertService, error),
+            });
+    }
+
+    /** Returns whether all criteria parsed from markdown contain the required generation context. */
+    private hasValidParsedCriteria(): boolean {
+        return (this.exercise().gradingCriteria ?? []).every(
+            (criterion) =>
+                !!criterion.title?.trim() &&
+                !!criterion.structuredGradingInstructions?.length &&
+                criterion.structuredGradingInstructions.every(
+                    (instruction) =>
+                        Number.isFinite(instruction.credits) &&
+                        !!instruction.gradingScale?.trim() &&
+                        !!instruction.instructionDescription?.trim() &&
+                        !!instruction.feedback?.trim() &&
+                        Number.isInteger(instruction.usageCount) &&
+                        instruction.usageCount! >= 0,
+                ),
+        );
+    }
+
     updateGradingInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
-        const criterionIndex = this.exercise().gradingCriteria!.indexOf(criterion);
-        const instructionIndex = this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
+        if (!this.editable()) {
+            return;
+        }
+        const criterionIndex = this.findCriterionIndex(criterion, this.exercise());
+        if (criterionIndex < 0) {
+            return;
+        }
+        const instructionIndex = this.findInstructionIndex(instruction, this.exercise(), criterionIndex);
+        if (instructionIndex < 0) {
+            return;
+        }
         this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions[instructionIndex] = instruction;
     }
 }

@@ -11,7 +11,9 @@
     }
 </ng-template>
 <article class="bonus-form-start">
-    <h2 jhiTranslate="artemisApp.bonus.title"></h2>
+    <div *titleBarTitle class="flex items-center">
+        <h5 class="mb-0" jhiTranslate="artemisApp.bonus.title"></h5>
+    </div>
     <div class="row mt-4">
         <div class="bonus-form-step col-1"></div>
         <div class="form-group col">
@@ -34,15 +36,17 @@
         <div class="row mt-4">
             <div class="bonus-form-step col-1"></div>
             <div class="form-group col">
-                <label class="no-flex-shrink h5" jhiTranslate="artemisApp.bonus.bonusSource.title"></label>
+                <label for="bonus-source-grading-scale" class="no-flex-shrink h5" jhiTranslate="artemisApp.bonus.bonusSource.title"></label>
                 <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.bonusSource.helpText' }" />
                 <select
+                    id="bonus-source-grading-scale"
+                    [attr.aria-label]="'artemisApp.bonus.bonusSource.title' | artemisTranslate"
                     class="form-select mt-1"
                     [(ngModel)]="bonus.sourceGradingScale"
                     (ngModelChange)="onBonusSourceChange($event)"
                     [title]="'artemisApp.bonus.bonusSource.title' | artemisTranslate"
                 >
-                    @for (sourceGradingScale of sourceGradingScales(); track sourceGradingScale) {
+                    @for (sourceGradingScale of sourceGradingScales(); track sourceGradingScale.id) {
                         <option [ngValue]="sourceGradingScale">{{ getGradingScaleTitle(sourceGradingScale) }}</option>
                     }
                 </select>
@@ -69,7 +73,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for (gradeStep of bonus.sourceGradingScale?.gradeSteps; track gradeStep; let i = $index; let last = $last) {
+                        @for (gradeStep of bonus.sourceGradingScale?.gradeSteps; track gradeStep.id ?? gradeStep.gradeName; let last = $last) {
                             <tr>
                                 <td>{{ gradeStep.gradeName }}</td>
                                 <td>
@@ -139,7 +143,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @for (example of examples(); track example) {
+                            @for (example of examples(); track $index) {
                                 <tr>
                                     <td>{{ example.studentPointsOfBonusTo }}</td>
                                     <td>{{ example.examGrade }}</td>
@@ -171,6 +175,7 @@
                             <tr>
                                 <td class="ps-0">
                                     <input
+                                        [attr.aria-label]="'accessibility.bonusTargetPoints' | artemisTranslate"
                                         [(ngModel)]="dynamicExample.studentPointsOfBonusTo"
                                         (change)="calculateDynamicExample()"
                                         type="number"
@@ -182,6 +187,7 @@
                                 <td>{{ dynamicExample.examGrade }}</td>
                                 <td class="ps-0">
                                     <input
+                                        [attr.aria-label]="'accessibility.bonusSourcePoints' | artemisTranslate"
                                         [(ngModel)]="dynamicExample.studentPointsOfBonusSource"
                                         (change)="calculateDynamicExample()"
                                         type="number"
@@ -221,14 +227,19 @@
                     </table>
                 </div>
             }
-            <div>
-                <button (click)="save()" [disabled]="isLoading()" class="btn btn-primary mr-1 mb-1" type="button">
-                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
+            <ng-template titleBarActions>
+                <button tumAetUiButton severity="primary" size="small" (click)="save()" [disabled]="isLoading()" type="button" [title]="'entity.action.save' | artemisTranslate">
+                    <fa-icon [icon]="faSave" /><span class="title-bar-collapsible-label" jhiTranslate="entity.action.save"></span>
                 </button>
                 @if (bonus.id) {
                     <button
-                        class="mb-1"
+                        type="button"
+                        [title]="'entity.action.delete' | artemisTranslate"
                         jhiDeleteButton
+                        tumAetUiButton
+                        severity="danger"
+                        size="small"
+                        [renderButtonStyle]="false"
                         [entityTitle]="''"
                         [buttonSize]="ButtonSize.MEDIUM"
                         deleteQuestion="artemisApp.bonus.deleteQuestion"
@@ -236,10 +247,10 @@
                         [dialogError]="dialogError$"
                         [disabled]="isLoading()"
                     >
-                        <fa-icon [icon]="faTimes"><span jhiTranslate="entity.action.delete"></span></fa-icon>
+                        <fa-icon [icon]="faTrash" /><span class="title-bar-collapsible-label" jhiTranslate="entity.action.delete"></span>
                     </button>
                 }
-            </div>
+            </ng-template>
         }
     </div>
 </article>

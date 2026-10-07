@@ -11,16 +11,21 @@
                         <p jhiTranslate="artemisApp.course.quickActions.description"></p>
                     </div>
                     @if (course()!.isAtLeastInstructor) {
-                        <button class="section-header-action" (click)="quickActions.openImportDialog()">
+                        <button type="button" class="section-header-action" (click)="quickActions.openImportDialog()">
                             <fa-icon [icon]="faFileImport" class="me-1" />
                             <span jhiTranslate="artemisApp.course.import.button"></span>
                         </button>
                     }
                 </div>
                 <div class="section-body d-flex flex-column flex-xl-row">
-                    <jhi-quick-actions #quickActions [course]="course()!" class="mb-3 mb-xl-0" [class.me-xl-3]="course()!.isAtLeastInstructor && irisEnabled()" />
-                    @if (course()!.isAtLeastInstructor && irisEnabled()) {
-                        <jhi-control-center [course]="course()!" [irisEnabled]="irisEnabled()" />
+                    <jhi-quick-actions
+                        #quickActions
+                        [course]="course()!"
+                        class="mb-3 mb-xl-0"
+                        [class.me-xl-3]="course()!.isAtLeastInstructor && (irisEnabled() || isAthenaEnabled())"
+                    />
+                    @if (course()!.isAtLeastInstructor && (irisEnabled() || isAthenaEnabled())) {
+                        <jhi-control-center [course]="course()!" [irisEnabled]="irisEnabled()" [athenaEnabled]="isAthenaEnabled()" />
                     }
                 </div>
             </div>

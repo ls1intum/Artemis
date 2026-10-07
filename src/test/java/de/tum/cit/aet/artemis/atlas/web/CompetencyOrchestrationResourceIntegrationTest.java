@@ -1,20 +1,32 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
+import static org.mockito.Mockito.doReturn;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
+import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
+import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.FailureReason;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -31,11 +43,16 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
+    private AtlasOrchestratorProperties orchestratorProperties;
+
+    @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
     private Course course;
 
     private ProgrammingExercise programmingExercise;
+
+    private TextUnit textUnit;
 
     @BeforeEach
     void setup() {
@@ -44,6 +61,8 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
         // Only TEST_PREFIX instructor is enrolled; OTHER_PREFIX instructor has no UCR entry and will be denied.
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
+        Lecture lecture = lectureUtilService.createLecture(course);
+        textUnit = lectureUtilService.createTextUnit(lecture);
         featureToggleService.enableFeature(Feature.AtlasAgent);
     }
 
@@ -52,10 +71,56 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
         featureToggleService.disableFeature(Feature.AtlasAgent);
     }
 
+    @ParameterizedTest
+    @EnumSource(value = FailureReason.class, names = { "TOOL_CALL_LIMIT_EXCEEDED", "INCOMPLETE_ORCHESTRATION" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void terminalFailureWithoutActionsReturns422(FailureReason reason) throws Exception {
+        var result = CompetencyOrchestrationResultDTO.failed("Verification remains incomplete.", reason);
+        doReturn(result).when(orchestrationService).runWithQueuedFlush(programmingExercise.getId());
+        request.performMvcRequest(post("/api/atlas/orchestrator/exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.status").value("FAILED")).andExpect(jsonPath("$.failureReason").value(reason.name()))
+                .andExpect(jsonPath("$.summary").value("Verification remains incomplete."));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = FailureReason.class, names = { "TOOL_CALL_LIMIT_EXCEEDED", "INCOMPLETE_ORCHESTRATION" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void terminalFailureAfterActionsReturns207AndPreservesSummary(FailureReason reason) throws Exception {
+        var action = AppliedActionDTO.create(1L, "Loops", "Created Loops", "Exercise teaches loops");
+        var result = CompetencyOrchestrationResultDTO.partial("Created Loops; verification remains incomplete.", List.of(action), reason);
+        doReturn(result).when(orchestrationService).runWithQueuedFlush(programmingExercise.getId());
+        request.performMvcRequest(post("/api/atlas/orchestrator/exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isMultiStatus()).andExpect(jsonPath("$.status").value("PARTIAL")).andExpect(jsonPath("$.failureReason").value(reason.name()))
+                .andExpect(jsonPath("$.summary").value("Created Loops; verification remains incomplete.")).andExpect(jsonPath("$.appliedActions[0].competencyId").value(1))
+                .andExpect(jsonPath("$.appliedActions[0].competencyTitle").value("Loops"));
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void runForExercise_student_returnsForbidden() throws Exception {
         request.performMvcRequest(post("/api/atlas/orchestrator/exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void runForLectureUnit_student_returnsForbidden() throws Exception {
+        request.performMvcRequest(post("/api/atlas/orchestrator/lecture-units/{lectureUnitId}/run", textUnit.getId()).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void runForLectureUnit_wrongCourseInstructor_returnsForbidden() throws Exception {
+        request.performMvcRequest(post("/api/atlas/orchestrator/lecture-units/{lectureUnitId}/run", textUnit.getId()).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void runForLectureUnit_atlasAgentFeatureDisabled_returnsForbidden() throws Exception {
+        featureToggleService.disableFeature(Feature.AtlasAgent);
+        request.performMvcRequest(post("/api/atlas/orchestrator/lecture-units/{lectureUnitId}/run", textUnit.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
     }
 
@@ -115,6 +180,36 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
         ProgrammingExercise examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
 
         request.performMvcRequest(post("/api/atlas/orchestrator/exercises/{exerciseId}/run", examExercise.getId()).contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.status").value("FAILED")).andExpect(jsonPath("$.failureReason").value("UNSUPPORTED_EXERCISE"));
+                .andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.status").value("FAILED")).andExpect(jsonPath("$.failureReason").value("UNSUPPORTED_EXERCISE"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getDefaults_instructor_returnsDefaultsFromProperties() throws Exception {
+        // @EnforceAtLeastInstructor is a global role gate (not course-scoped), so the configured
+        // server-side defaults are returned verbatim. Asserting against the autowired properties
+        // keeps the test robust if the configured values change.
+        request.performMvcRequest(get("/api/atlas/orchestrator/defaults")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.debounceWindowSeconds").value(orchestratorProperties.debounceWindowSeconds()))
+                .andExpect(jsonPath("$.maxDailyOrchestrations").value(orchestratorProperties.maxDailyOrchestrations()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getDefaults_student_returnsForbidden() throws Exception {
+        request.performMvcRequest(get("/api/atlas/orchestrator/defaults")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getDefaults_atlasAgentFeatureDisabled_returnsForbidden() throws Exception {
+        featureToggleService.disableFeature(Feature.AtlasAgent);
+        request.performMvcRequest(get("/api/atlas/orchestrator/defaults")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getDefaults_anonymous_returnsUnauthorized() throws Exception {
+        request.performMvcRequest(get("/api/atlas/orchestrator/defaults")).andExpect(status().isUnauthorized());
     }
 }

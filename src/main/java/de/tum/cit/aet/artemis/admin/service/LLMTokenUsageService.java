@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -38,11 +39,6 @@ public class LLMTokenUsageService {
     private static final Logger log = LoggerFactory.getLogger(LLMTokenUsageService.class);
 
     private static final Pattern DATE_SUFFIX_PATTERN = Pattern.compile("-?\\d{4}-\\d{2}-\\d{2}$");
-
-    /**
-     * Default value used when token-count metadata is missing ({@code null}).
-     */
-    private static final int DEFAULT_TOKEN_COUNT = 0;
 
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
@@ -137,6 +133,10 @@ public class LLMTokenUsageService {
         llmTokenUsageRequest.setNumOutputTokens(llmRequest.numOutputTokens());
         llmTokenUsageRequest.setCostPerMillionInputTokens(llmRequest.costPerMillionInputToken());
         llmTokenUsageRequest.setCostPerMillionOutputTokens(llmRequest.costPerMillionOutputToken());
+        llmTokenUsageRequest.setNumCachedInputTokens(llmRequest.numCachedInputTokens());
+        llmTokenUsageRequest.setCostPerMillionCachedInputTokens(llmRequest.costPerMillionCachedInputToken());
+        llmTokenUsageRequest.setNumCacheWriteInputTokens(llmRequest.numCacheWriteInputTokens());
+        llmTokenUsageRequest.setCostPerMillionCacheWriteInputTokens(llmRequest.costPerMillionCacheWriteInputToken());
         llmTokenUsageRequest.setServicePipelineId(llmRequest.pipelineId());
         return llmTokenUsageRequest;
     }
@@ -175,14 +175,34 @@ public class LLMTokenUsageService {
     public void trackChatResponseTokenUsage(@Nullable ChatResponse chatResponse, LLMServiceType serviceType, String pipelineId,
             Function<LLMTokenUsageBuilder, LLMTokenUsageBuilder> builderFunction) {
         try {
-            if (chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {
+            if (chatResponse == null) {
+                log.warn("Failed to store token usage for pipeline [{}]: chat response is missing.", pipelineId);
                 return;
             }
             ChatResponseMetadata metadata = chatResponse.getMetadata();
+            if (metadata == null) {
+                log.warn("Failed to store token usage for pipeline [{}]: response metadata is missing.", pipelineId);
+                return;
+            }
             Usage usage = metadata.getUsage();
-            String model = metadata.getModel() != null ? metadata.getModel() : "";
-            LLMRequest llmRequest = buildLLMRequest(model, usage.getPromptTokens() != null ? usage.getPromptTokens() : DEFAULT_TOKEN_COUNT,
-                    usage.getCompletionTokens() != null ? usage.getCompletionTokens() : DEFAULT_TOKEN_COUNT, pipelineId);
+            if (usage == null) {
+                log.warn("Failed to store token usage for pipeline [{}]: usage metadata is missing.", pipelineId);
+                return;
+            }
+            if (usage instanceof org.springframework.ai.chat.metadata.EmptyUsage) {
+                return;
+            }
+            Integer promptTokens = usage.getPromptTokens();
+            Integer completionTokens = usage.getCompletionTokens();
+            // Defaulting a missing count to zero would persist a record that understates usage and cost; reported zeros are kept.
+            if (promptTokens == null || completionTokens == null) {
+                log.warn("Failed to store token usage for pipeline [{}]: usage metadata is incomplete (prompt tokens: {}, completion tokens: {}).", pipelineId, promptTokens,
+                        completionTokens);
+                return;
+            }
+            // The model is defaulted because mocked metadata (tests) can return null
+            String model = Objects.requireNonNullElse(metadata.getModel(), "");
+            LLMRequest llmRequest = buildLLMRequest(model, promptTokens, completionTokens, pipelineId);
             saveLLMTokenUsage(List.of(llmRequest), serviceType, builderFunction);
         }
         catch (Exception e) {

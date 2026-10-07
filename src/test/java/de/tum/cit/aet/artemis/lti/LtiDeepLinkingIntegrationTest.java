@@ -56,13 +56,13 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
     void deepLinkingFailsAsStudent() throws Exception {
         var params = getDeepLinkingRequestParamsForExercise();
 
-        request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.FORBIDDEN, params);
+        request.postWithoutResponseBody("/api/lti/lti13/courses/" + course.getId() + "/deep-linking", HttpStatus.FORBIDDEN, params);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deepLinkingFailsWithoutContentIdAndType() throws Exception {
-        request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody("/api/lti/lti13/courses/" + course.getId() + "/deep-linking", HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
     }
 
     @Test
@@ -73,7 +73,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
         params.add("ltiIdToken", createJwtForTest());
         params.add("clientRegistrationId", "registration-id");
 
-        request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
+        request.postWithoutResponseBody("/api/lti/lti13/courses/" + course.getId() + "/deep-linking", HttpStatus.BAD_REQUEST, params);
     }
 
     @Test
@@ -84,19 +84,18 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
         params.add("ltiIdToken", createJwtForTest());
         params.add("clientRegistrationId", "registration-id");
 
-        request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
+        request.postWithoutResponseBody("/api/lti/lti13/courses/" + course.getId() + "/deep-linking", HttpStatus.BAD_REQUEST, params);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deepLinkingFailsForNonOnlineCourse() throws Exception {
         course.setOnlineCourse(false);
-        course.setOnlineCourseConfiguration(null);
         courseRepository.save(course);
 
         var params = getDeepLinkingRequestParamsForExercise();
 
-        request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
+        request.postWithoutResponseBody("/api/lti/lti13/courses/" + course.getId() + "/deep-linking", HttpStatus.BAD_REQUEST, params);
     }
 
     @Test
@@ -116,7 +115,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
         doReturn(JWK.parse(jwkJsonString)).when(oAuth2JWKSService).getJWK(any());
         var params = getDeepLinkingRequestParamsForExercise();
 
-        request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
+        request.postWithoutResponseBody("/api/lti/lti13/courses/" + course.getId() + "/deep-linking", HttpStatus.BAD_REQUEST, params);
     }
 
     @Test
@@ -131,7 +130,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
         doReturn(mockRsaKey).when(oAuth2JWKSService).getJWK(any());
         var params = getDeepLinkingRequestParamsForExercise();
 
-        request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.OK, params);
+        request.postWithoutResponseBody("/api/lti/lti13/courses/" + course.getId() + "/deep-linking", HttpStatus.OK, params);
     }
 
     @Test
@@ -142,7 +141,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
         params.add("ltiIdToken", createJwtForTest());
         params.add("clientRegistrationId", "registration-id");
 
-        request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
+        request.postWithoutResponseBody("/api/lti/lti13/courses/" + course.getId() + "/deep-linking", HttpStatus.BAD_REQUEST, params);
     }
 
     private LinkedMultiValueMap<String, String> getDeepLinkingRequestParamsForExercise() {

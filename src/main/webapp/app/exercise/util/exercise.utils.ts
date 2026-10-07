@@ -7,10 +7,9 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { Observable, from, of } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
-import { ExerciseServicable, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
+import type { ExerciseServicable, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
 import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
 import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
-import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -21,6 +20,25 @@ export enum EditType {
     UPDATE,
 }
 
+/**
+ * Validates that every configured preceding date is strictly before the date to validate and that the date to validate is strictly before every configured following date.
+ * Missing dates do not violate the sequence.
+ */
+export function validateStrictDateSequence(
+    shouldPrecede: (dayjs.Dayjs | undefined)[],
+    dateToValidate: dayjs.Dayjs | undefined,
+    shouldFollow: (dayjs.Dayjs | undefined)[],
+): boolean {
+    return (
+        shouldPrecede.every((precedingDate) => isStrictlyBeforeIfBothDefined(precedingDate, dateToValidate)) &&
+        shouldFollow.every((followingDate) => isStrictlyBeforeIfBothDefined(dateToValidate, followingDate))
+    );
+}
+
+function isStrictlyBeforeIfBothDefined(previousDate: dayjs.Dayjs | undefined, laterDate: dayjs.Dayjs | undefined): boolean {
+    return previousDate === undefined || laterDate === undefined || previousDate.isBefore(laterDate);
+}
+
 export class SaveExerciseCommand<T extends Exercise> {
     constructor(
         private modalService: NgbModal,
@@ -28,7 +46,6 @@ export class SaveExerciseCommand<T extends Exercise> {
         private exerciseService: ExerciseServicable<T>,
         private backupExercise: T,
         private editType: EditType,
-        private alertService: AlertService,
     ) {}
 
     save(exercise: T, isExamMode: boolean, notificationText?: string): Observable<T> {
@@ -42,13 +59,6 @@ export class SaveExerciseCommand<T extends Exercise> {
         };
 
         type SaveStep = [shouldReevaluate: boolean, requestOptions?: ExerciseUpdateRequestOptions];
-
-        if (exercise.exampleSolutionPublicationDateWarning) {
-            this.alertService.addAlert({
-                type: AlertType.WARNING,
-                message: 'artemisApp.exercise.exampleSolutionPublicationDateWarning',
-            });
-        }
 
         const callServer = ([shouldReevaluate, requestOptions]: SaveStep) => {
             const ex = Exercise.sanitize(exercise);
@@ -170,7 +180,7 @@ export const isResumeExerciseAvailable = (exercise: Exercise, participation?: St
 /**
  * The start practice button should be available for programming, quiz, text, and modeling exercises
  * - For quizzes when they are open for practice and the regular work period is over
- * - For programming, text, and modeling exercises when it's after the due date
+ * - For programming, text, and modeling exercises when it's after the due date and the exercise is not a team exercise
  * @param exercise the exercise that the student wants to practice
  * @param participation the potentially existing participation
  */
@@ -182,7 +192,7 @@ export const isStartPracticeAvailable = (exercise: Exercise, participation?: Stu
             return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !exercise.teamMode && (!participation || programmingSetupNotFinished(participation));
         case ExerciseType.TEXT:
         case ExerciseType.MODELING:
-            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !isPracticeMode(participation);
+            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !exercise.teamMode && !isPracticeMode(participation);
         default:
             return false;
     }

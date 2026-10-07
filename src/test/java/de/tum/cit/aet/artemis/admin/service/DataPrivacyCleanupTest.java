@@ -27,6 +27,7 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
@@ -50,9 +51,11 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismSubmissionRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -65,8 +68,8 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
  * ({@link CourseDataRetentionService#warnAndArchiveDueCourses()}) produces a real archive that actually contains the
  * students' submissions, and the real reset phase ({@link CourseDataRetentionService#resetDueCourses()}) then deletes the
  * student data while keeping the course material and the archive backup, and</li>
- * <li>the not-enrolled-user soft-delete ({@link DataCleanupService#deleteNotEnrolledUsers()}), which anonymizes user
- * accounts.</li>
+ * <li>the not-enrolled-user permanent deletion ({@link DataCleanupService#deleteNotEnrolledUsers()}), which only removes
+ * accounts after all blocking domain references have been cleaned.</li>
  * </ul>
  * These are the operations where a wrong gate would silently destroy data, so every test asserts both the intended
  * deletion <b>and</b> that everything outside the gate survives. The selection/gating logic in isolation is additionally
@@ -79,6 +82,9 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private CourseDataRetentionService courseDataRetentionService;
+
+    @Autowired
+    private UserActivityService userActivityService;
 
     @Autowired
     private DataCleanupService dataCleanupService;
@@ -121,6 +127,9 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private PlagiarismSubmissionRepository plagiarismSubmissionRepository;
+
+    @Autowired
+    private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -174,7 +183,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
                 TEST_PREFIX + "student1");
         attachConfig(heldCourse, now.minusDays(40), null);
         heldCourse.getCourseConfiguration().setDataRetentionHold(true);
-        courseRepository.save(heldCourse);
+        courseUtilService.saveWithConfigurations(heldCourse);
 
         // The count preview and the actual selection must agree (both derive from findCoursesDueForReset).
         List<Course> dueForReset = courseDataRetentionService.findCoursesDueForReset();
@@ -244,34 +253,31 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         User enrolled = enrolledUser(TEST_PREFIX + "enrolled", longAgo); // enrolled -> keep
         User recent = notEnrolledUser(TEST_PREFIX + "recent", ZonedDateTime.now().toInstant()); // recently active -> keep
 
-        // The Iris bot matches the query but is explicitly excluded by the service; set it up (already warned past grace)
-        // only if the deployment did not already seed it, so that ONLY the service's bot filter can save it on delete.
+        // The Iris bot is excluded from both query phases; set it up (already warned past grace) only if the deployment
+        // did not already seed it, so this test also verifies that it remains untouched.
         User irisBot = userUtilService.userExistsWithLogin(User.IRIS_BOT_LOGIN) ? null : notEnrolledUser(User.IRIS_BOT_LOGIN, longAgo);
         if (irisBot != null) {
-            userRepository.updateDeletionWarningSentDate(User.IRIS_BOT_LOGIN, ZonedDateTime.now().minusDays(31).toInstant());
+            userActivityService.recordDeletionWarning(User.IRIS_BOT_LOGIN, ZonedDateTime.now().minusDays(31).toInstant());
         }
 
-        // Phase 1 (warn): exactly the one candidate is counted (enrolled, recent, and the already-warned bot excluded).
+        // Phase 1 (warn): exactly the one candidate is counted (enrolled, recent, and the bot excluded).
         assertThat(dataCleanupService.countNotEnrolledUsersWarning().users()).isEqualTo(baselineWarnCount + 1);
         dataCleanupService.warnNotEnrolledUsers();
         verify(mailSendingService, atLeastOnce()).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
-        assertThat(userRepository.findById(toDeleteId)).get().extracting(User::getDeletionWarningSentDate).isNotNull();
-        assertThat(userRepository.findById(enrolled.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
-        assertThat(userRepository.findById(recent.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(toDeleteId)).isNotNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(enrolled.getId())).isNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(recent.getId())).isNull();
 
         // Immediately after warning the account is within grace -> the delete phase deletes nobody yet.
         dataCleanupService.deleteNotEnrolledUsers();
         assertThat(userRepository.findById(toDeleteId)).get().extracting(User::isDeleted).isEqualTo(false);
 
         // Backdate the warning past the 30-day grace; now the account is due for deletion.
-        userRepository.updateDeletionWarningSentDate(originalLogin, ZonedDateTime.now().minusDays(31).toInstant());
+        userActivityService.recordDeletionWarning(originalLogin, ZonedDateTime.now().minusDays(31).toInstant());
         dataCleanupService.deleteNotEnrolledUsers();
 
-        // The warned, past-grace account is soft-deleted and anonymized (login/email replaced, deactivated).
-        User deleted = userRepository.findById(toDeleteId).orElseThrow();
-        assertThat(deleted.isDeleted()).isTrue();
-        assertThat(deleted.getActivated()).isFalse();
-        assertThat(deleted.getLogin()).isNotEqualTo(originalLogin);
+        // The warned, past-grace account has no blocking references and is physically deleted.
+        assertThat(userRepository.findById(toDeleteId)).isEmpty();
 
         // Enrolled and recently-active users are untouched; the Iris bot is never deleted even when warned past grace.
         assertThat(userRepository.findById(enrolled.getId())).get().extracting(User::isDeleted).isEqualTo(false);
@@ -297,7 +303,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         dataCleanupService.warnNotEnrolledUsers();
 
         verify(mailSendingService, atLeastOnce()).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
-        assertThat(userRepository.findById(sendFails.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(sendFails.getId())).isNull();
 
         // No warning was ever stamped, so phase 2 cannot delete the account (even though it is well past the grace period).
         dataCleanupService.deleteNotEnrolledUsers();
@@ -316,7 +322,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         dataCleanupService.warnNotEnrolledUsers();
 
         verify(mailSendingService, never()).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
-        assertThat(userRepository.findById(candidate.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(candidate.getId())).isNull();
     }
 
     @Test
@@ -337,7 +343,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         configuration.setCourse(course);
         configuration.setGradeRelevant(false);
         course.setCourseConfiguration(configuration);
-        course = courseRepository.save(course);
+        course = courseUtilService.saveWithConfigurations(course);
         long courseId = course.getId();
         // so getInstructors() finds an eligible instructor: enrollment is a course role, not a group name
         userUtilService.enrollUserInCourse(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), course, CourseRole.INSTRUCTOR);
@@ -419,9 +425,14 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         // Attach a plagiarism submission whose plagiarism_case_id FK is RESTRICT. The delete must null this FK (via the
         // per-submission modifying query) BEFORE removing the case; without that null-out the case delete would throw an
         // FK violation. This makes the test fail if that null-out loop is ever removed.
+        PlagiarismComparison oldComparison = new PlagiarismComparison();
+        oldComparison.setPlagiarismResult(textExerciseUtilService.createPlagiarismResultForExercise(oldExercise));
+        oldComparison = plagiarismComparisonRepository.save(oldComparison);
         PlagiarismSubmission oldSubmission = new PlagiarismSubmission();
         oldSubmission.setStudentLogin(student.getLogin());
         oldSubmission.setSubmissionId(123L);
+        // A plagiarism submission belongs to the comparison it came out of; the case is the secondary link this test is about.
+        oldComparison.setSubmissionA(oldSubmission);
         oldSubmission.setPlagiarismCase(oldCasesBefore.getFirst());
         long oldSubmissionId = plagiarismSubmissionRepository.save(oldSubmission).getId();
 
@@ -471,14 +482,14 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         // delete an actively-used account. This drives the real audit path (add -> isLoginSuccess -> recordLastLogin).
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
-        userRepository.updateLastLoginDate(user.getLogin(), longAgo);
+        userActivityService.recordLogin(user.getLogin(), longAgo);
 
         Instant loginTime = ZonedDateTime.now().toInstant();
         auditEventRepository.add(new AuditEvent(loginTime, user.getLogin(), AuditEventConstants.AUTHENTICATION_SUCCESS, Map.of()));
 
         // The successful login moved lastLoginDate forward from the backdated value to ~now (compared with a margin
         // because the column stores millisecond precision), proving the audit hook records the activity signal.
-        Instant recorded = userRepository.findById(user.getId()).orElseThrow().getLastLoginDate();
+        Instant recorded = userActivityService.findLastLoginDate(user.getId());
         assertThat(recorded).isAfter(longAgo).isBetween(loginTime.minusSeconds(60), loginTime.plusSeconds(60));
     }
 
@@ -504,7 +515,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
             configuration.setResetWarningSentDate(warnedDate);
             course.setCourseConfiguration(configuration);
         }
-        return courseRepository.save(course);
+        return courseUtilService.saveWithConfigurations(course);
     }
 
     /**
@@ -524,12 +535,12 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         configuration.setStudentDataResetDate(resetDate);
         course.setCourseConfiguration(configuration);
         course.setEndDate(endDate);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
     }
 
     private User notEnrolledUser(String login, Instant lastLoginDate) {
         User user = userUtilService.createAndSaveUser(login);
-        userRepository.updateLastLoginDate(user.getLogin(), lastLoginDate);
+        userActivityService.recordLogin(user.getLogin(), lastLoginDate);
         return user;
     }
 
@@ -537,7 +548,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         User user = userUtilService.createAndSaveUser(login);
         // enrollment is a course role now, so a plain group name would no longer make the user count as enrolled
         userUtilService.enrollUserInCourse(user, courseUtilService.createCourse(), CourseRole.STUDENT);
-        userRepository.updateLastLoginDate(user.getLogin(), lastLoginDate);
+        userActivityService.recordLogin(user.getLogin(), lastLoginDate);
         return user;
     }
 }

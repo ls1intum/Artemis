@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
+import { BuildAgentAddressInfo, BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
 import { faCircleCheck, faFilter, faPause, faPauseCircle, faPlay, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -7,7 +7,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonComponent, TumUiInputDirective, TumUiMessageComponent, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
@@ -29,6 +29,7 @@ import { RunningJobsTableComponent } from 'app/localci/build-queue/tables/runnin
 import { FinishedJobsTableComponent } from 'app/localci/build-queue/tables/finished-jobs-table/finished-jobs-table.component';
 import { extractHost, looksLikeAddress } from 'app/localci/shared/build-agent-address.utils';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Component that displays detailed information about a specific build agent.
@@ -45,10 +46,10 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
     imports: [
         FontAwesomeModule,
         RouterModule,
-        TumUiButtonComponent,
-        TumUiTagComponent,
-        TumUiMessageComponent,
-        TumUiInputDirective,
+        TumAetUiButtonComponent,
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
+        TumAetUiInputDirective,
         TranslateDirective,
         ArtemisDatePipe,
         BuildJobStatisticsComponent,
@@ -60,6 +61,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         RunningJobsTableComponent,
         FinishedJobsTableComponent,
         FinishedBuildsFilterModalComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
@@ -72,6 +74,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     /** Current build agent information including status and configuration */
     buildAgent = signal<BuildAgentInformation | undefined>(undefined);
+
+    /** The addresses this agent is registered to connect from, undefined while unknown or unavailable. */
+    registeredAddressInfo = signal<BuildAgentAddressInfo | undefined>(undefined);
 
     /** Whether the build agent was not found (offline/removed) */
     agentNotFound = signal(false);
@@ -102,6 +107,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     /** Subscription for initial agent details REST API load */
     agentDetailsSubscription?: Subscription;
+
+    /** Subscription for the registered network addresses of this agent */
+    registeredAddressesSubscription?: Subscription;
 
     /** Interval timer for updating running build job durations every second */
     buildDurationInterval!: ReturnType<typeof setInterval>; // set in ngOnInit() before any read
@@ -211,6 +219,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         this.runningJobsWebsocketSubscription?.unsubscribe();
         this.agentDetailsSubscription?.unsubscribe();
         this.runningJobsSubscription?.unsubscribe();
+        this.registeredAddressesSubscription?.unsubscribe();
         clearInterval(this.buildDurationInterval);
         this.routeParamsSubscription?.unsubscribe();
     }
@@ -310,6 +319,25 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Loads the network addresses this agent is registered to connect from.
+     *
+     * A separate request because the addresses are recorded by the core nodes rather than reported by the agent, which
+     * is what makes them meaningful: a clone is only served from an address the agent is actually connected from.
+     */
+    private loadRegisteredAddresses() {
+        this.registeredAddressesSubscription?.unsubscribe();
+        this.registeredAddressesSubscription = this.buildAgentsService.getBuildAgentAddresses().subscribe({
+            next: (addressInfos) => {
+                this.registeredAddressInfo.set(addressInfos.find((addressInfo) => addressInfo.agentName === this.agentName()));
+            },
+            error: () => {
+                // Not worth an alert: the addresses are supplementary information on a page that is otherwise complete
+                this.registeredAddressInfo.set(undefined);
+            },
+        });
+    }
+
+    /**
      * Loads agent details from the API.
      */
     private loadAgentDetails() {
@@ -327,6 +355,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                 // Initialize filter with this agent's address to show only its finished jobs
                 this.finishedBuildJobFilter.set(new FinishedBuildJobFilter(buildAgent.buildAgent?.memberAddress));
                 this.loadFinishedBuildJobs();
+                this.loadRegisteredAddresses();
             },
             error: (error: HttpErrorResponse) => {
                 if (error.status === 404) {

@@ -1,22 +1,23 @@
 @if (complaint(); as complaint) {
-    @if (complaint !== undefined && complaint.complaintResponse) {
-        <div>
-            <p class="col-12 mt-4">
-                {{
-                    complaint.complaintType === ComplaintType.COMPLAINT
-                        ? ('artemisApp.complaint.responseExists' | artemisTranslate)
-                        : ('artemisApp.moreFeedback.responseExists' | artemisTranslate)
-                }}
-                <span [ngbTooltip]="complaint.complaintResponse.submittedTime | artemisDate">{{ complaint.complaintResponse.submittedTime | artemisTimeAgo }}</span
-                >:
-            </p>
+    @if (complaint.complaintResponse; as response) {
+        <div class="row-span-2 grid grid-rows-subgrid gap-y-2 rounded-lg border border-(--border-color) bg-(--module-bg) p-4!" data-testid="complaint-response-card">
+            <div class="flex flex-wrap content-start items-center gap-x-3! gap-y-1 text-sm">
+                <p class="m-0!">
+                    {{
+                        complaint.complaintType === ComplaintType.COMPLAINT
+                            ? ('artemisApp.complaint.responseExists' | artemisTranslate)
+                            : ('artemisApp.moreFeedback.responseExists' | artemisTranslate)
+                    }}
+                    <span [ngbTooltip]="response.submittedTime | artemisDate">{{ response.submittedTime | artemisTimeAgo }}</span>
+                </p>
+            </div>
             <textarea
-                id="complainResponseTextArea"
-                class="col-12 px-1"
+                [attr.aria-label]="'artemisApp.complaintResponse.title' | artemisTranslate"
+                data-testid="complainResponseTextArea"
+                class="h-full w-full resize-none! overflow-auto border-0 bg-transparent! p-0 text-(color:--body-color)! focus-visible:outline-offset-4"
                 rows="4"
-                [(ngModel)]="complaint.complaintResponse.responseText"
+                [value]="response.responseText ?? ''"
                 [readOnly]="true"
-                [disabled]="true"
                 [maxLength]="maxComplaintResponseTextLimit()"
             ></textarea>
         </div>

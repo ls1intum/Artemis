@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exam.test_repository;
 
 import java.util.List;
+import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
@@ -17,6 +18,20 @@ import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 @Repository
 @Primary
 public interface StudentExamTestRepository extends StudentExamRepository {
+
+    /**
+     * Only tests assert on the whole set of student exams of an exam; production code reads what it needs by id.
+     *
+     * @param examId the exam to query for
+     * @return the non test-run student exams of the exam
+     */
+    @Query("""
+            SELECT se
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
+                AND se.testRun = FALSE
+            """)
+    Set<StudentExam> findByExamId(@Param("examId") long examId);
 
     List<StudentExam> findAllByExamId_AndTestRunIsTrue(Long examId);
 

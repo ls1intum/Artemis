@@ -1,3 +1,5 @@
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
@@ -9,7 +11,7 @@ describe('FormStatusBarComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [],
-            providers: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
@@ -27,6 +29,20 @@ describe('FormStatusBarComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('labels every status circle with its translated section title', () => {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockImplementation((key) => `Translated ${key}`);
+        const scroll = vi.spyOn(comp, 'scrollToHeadline').mockImplementation(() => {});
+        fixture.detectChanges();
+        const circles = Array.from(fixture.nativeElement.querySelectorAll('.form-status-circle')) as HTMLElement[];
+        expect(circles).toHaveLength(2);
+        circles.forEach((circle, index) => {
+            const title = comp.formStatusSections()[index].title;
+            expect(circle.getAttribute('aria-label')).toBe(`Translated ${title}`);
+            circle.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            expect(scroll).toHaveBeenLastCalledWith(title);
+        });
     });
 
     it('should scroll to correct headline', () => {

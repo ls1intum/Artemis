@@ -4,10 +4,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
@@ -19,6 +21,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 @Lazy
 @Service
 public class ParticipationVcsAccessTokenService {
+
+    private static final String ENTITY_NAME = "participationVcsAccessToken";
 
     private final ParticipationVCSAccessTokenRepository participationVcsAccessTokenRepository;
 
@@ -67,22 +71,37 @@ public class ParticipationVcsAccessTokenService {
     }
 
     /**
-     * Checks if the participationVCSAccessToken for a User,Participation pair exists, and creates a new one if not; if the user owns the participation
+     * Creates a new participationVCSAccessToken for a User,Participation pair, if the user owns the participation and does not own a token for it yet. Creating a second token is
+     * rejected rather than returning the existing one, because the caller is expected to fetch an existing token instead of creating one.
      *
-     * @param user            the user's id which is owner of the token
+     * @param user            the user which is owner of the token
      * @param participationId the participation's id which the token belongs to
-     * @return an Optional participationVCSAccessToken,
+     * @return the newly created participationVCSAccessToken
      */
     public ParticipationVCSAccessToken createVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, long participationId) {
-        participationVcsAccessTokenRepository.findByUserIdAndParticipationIdAndThrowIfExists(user.getId(), participationId);
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         loadTeamStudentsForTeamExercise(participation);
-        if (participation.isOwnedBy(user)) {
-            return createParticipationVCSAccessToken(user, participation);
-        }
-        else {
+        if (!participation.isOwnedBy(user)) {
             throw new AccessForbiddenException("Participation not owned by user");
         }
+        if (participationVcsAccessTokenRepository.existsByUserIdAndParticipationId(user.getId(), participationId)) {
+            throw alreadyExists();
+        }
+        try {
+            return createParticipationVCSAccessToken(user, participation);
+        }
+        catch (DataIntegrityViolationException e) {
+            // A concurrent request for the same (user, participation) inserted the token first and tripped the unique constraint. Report the same conflict as the check above
+            // instead of failing with an internal server error, but only if the token really is the reason, so unrelated constraint violations still surface.
+            if (participationVcsAccessTokenRepository.existsByUserIdAndParticipationId(user.getId(), participationId)) {
+                throw alreadyExists();
+            }
+            throw e;
+        }
+    }
+
+    private ConflictException alreadyExists() {
+        return new ConflictException("A VCS access token for this participation already exists", ENTITY_NAME, "participationVcsAccessTokenAlreadyExists");
     }
 
     /**

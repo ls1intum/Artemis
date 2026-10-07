@@ -1,3 +1,5 @@
+@use '../artemis-variables' as artemis;
+
 // === BOOTSTRAP ===
 // Mostly default values, including them here for completeness and comparison
 
@@ -208,31 +210,31 @@ $md-editor-background: white;
 $md-file-input-border-color: $border-color;
 $md-resize-icon-color: rgba(0, 0, 0, 0.125);
 
-// Metis
-$metis-conversation-sidebar: $gray-600;
-$metis-conversation-sidebar-active: $gray-900;
-$metis-conversation-sidebar-muted: $gray-500;
-$metis-conversation-sidebar-button-background-hover: $gray-400;
+// Communication
+$communication-conversation-sidebar: $gray-600;
+$communication-conversation-sidebar-active: $gray-900;
+$communication-conversation-sidebar-muted: $gray-500;
+$communication-conversation-sidebar-button-background-hover: $gray-400;
 
-$metis-light-gray: #979797;
-$metis-gray: #6a737d;
-$metis-blue: $link-color;
-$metis-light-blue: #e3ecf3;
-$metis-green: #33cd32;
-$metis-course-discussion-select-bg: white;
+$communication-light-gray: #979797;
+$communication-gray: #6a737d;
+$communication-blue: $link-color;
+$communication-light-blue: #e3ecf3;
+$communication-green: #33cd32;
+$communication-course-discussion-select-bg: white;
 
-$metis-pinned-post-highlight-color: lighten($metis-blue, 46%);
+$communication-pinned-post-highlight-color: lighten($communication-blue, 46%);
 
-$metis-answer-post-background-color: rgba(0, 0, 0, 0.02);
+$communication-answer-post-background-color: rgba(0, 0, 0, 0.02);
 
 $reaction-button-default-color: rgba(242, 242, 242);
 $reaction-button-hover-color: rgba(255, 255, 255);
-$reaction-button-reacted-color: $metis-light-blue;
-$reaction-button-reacted-accent-color: $metis-blue;
+$reaction-button-reacted-color: $communication-light-blue;
+$reaction-button-reacted-accent-color: $communication-blue;
 $reaction-button-emoji-count-color: black;
 
-$metis-selection-option-background: white;
-$metis-selection-option-hover-background: $gray-200;
+$communication-selection-option-background: white;
+$communication-selection-option-hover-background: $gray-200;
 
 // Component: plagiarism-case-instructor-detail-view.component.scss
 $plagiarism-verdict-disabled-overlay-color: rgba($gray-300, 0.9);
@@ -381,7 +383,6 @@ $code-editor-file-browser-selected-file-background: #428bca;
 $code-editor-file-browser-badge-background: $code-editor-file-browser-tree-hover;
 $code-editor-diff-newline-background: rgba(63, 185, 80, 0.4);
 $code-editor-gutter-newline-background: rgba(63, 185, 80, 0.8);
-$code-editor-grid-grip-lines-color: $gray-500;
 
 // Monaco editor
 $monaco-suggest-widget-background: $white;
@@ -420,10 +421,6 @@ $lecture-unit-card-body-background: white;
 $lecture-unit-card-header-background: rgba($overview-light-border-color, 0.3);
 $lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
 $lecture-unit-card-hover-shadow: $primary;
-$lecture-unit-create-row-hover-background: $gray-400;
-
-// Lecture Attachments
-$lecture-attachment-edit-overlay-color: rgba($gray-300, 0.9);
 
 // Notification sidebar
 $notification-sb-background: $brighter-body-bg;
@@ -440,7 +437,6 @@ $text-editor-color: black;
 $text-editor-border-color: #cbd5e1;
 
 // Exam (Manage)
-$exam-checklist-exercise-group-table-background: white;
 
 $exercise-group-border-color: #ccc;
 $exercise-group-header-background: #e2e8f0;
@@ -482,7 +478,6 @@ $exam-navigation-bar-exercise-index-color: black;
 $exam-timer-label-color: #212529;
 $exam-timer-remaining-time-background: white;
 $exam-timer-critical-background: $warning;
-$exam-exercise-overview-table-background: white;
 $exam-participation-footer-background: white;
 $exam-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
 $exam-participation-footer-connected-background: #d1ecf1;
@@ -532,14 +527,68 @@ $close-circle-opacity: 0.7;
 
 // Apollon
 $apollon-primary: $primary;
-$apollon-primary-contrast: $gray-900;
-$apollon-secondary: $gray-600;
-$apollon-warning-yellow: $warning;
-$apollon-background: white;
+$apollon-primary-foreground: $white;
+$apollon-foreground: $body-color;
+$apollon-secondary: $secondary;
+$apollon-background: $module-bg;
 $apollon-background-variant: $gray-100;
 $apollon-gray: $gray-200;
 $apollon-gray-variant: $gray-700;
 $apollon-grid: rgba(36, 39, 36, 0.1);
+$apollon-guide-vertical: $danger;
+$apollon-guide-horizontal: $primary;
+$apollon-danger: $danger;
+$apollon-surface: $card-bg;
+$apollon-surface-sunken: $gray-100;
+$apollon-border: $border-color;
+$apollon-border-subtle: $gray-200;
+
+// Apollon paints its embedded @tumaet/ui primitives (the popover's buttons and
+// inputs, selects, menus) from this scale, so it has to be the SAME ramp the rest
+// of Artemis uses — not the legacy Bootstrap $border-radius-* values, which are
+// roughly half the size and made the editor's buttons read as visibly squarer
+// than every other TUM AET UI button on the page.
+$apollon-radius: var(--tumaet-ui-radius-md);
+$apollon-radius-sm: var(--tumaet-ui-radius-sm);
+$apollon-radius-md: var(--tumaet-ui-radius-md);
+$apollon-radius-lg: var(--tumaet-ui-radius-md);
+$apollon-shadow: 0 0.25rem 0.75rem rgba($black, 0.18);
+$apollon-hover-neutral: rgba($body-color, 0.075);
+$apollon-interactive-selection: $warning;
+$apollon-dropzone-accent: $primary;
+$apollon-dropzone-accent-fill: rgba($primary, 0.4);
+$apollon-on-collaboration-cursor: $white;
+$apollon-assessment-positive-text: $artemis-alert-success-color;
+$apollon-assessment-positive-bg: $artemis-alert-success-background;
+$apollon-assessment-negative-text: $artemis-alert-danger-color;
+$apollon-assessment-negative-bg: $artemis-alert-danger-background;
+$apollon-assessment-zero-text: $artemis-alert-info-color;
+$apollon-assessment-zero-bg: $artemis-alert-info-background;
+$apollon-assessment-ungraded-text: $artemis-alert-neutral-color;
+$apollon-assessment-ungraded-bg: $artemis-alert-neutral-background;
+$apollon-collaboration-color-1: $yellow;
+$apollon-collaboration-color-2: $green;
+$apollon-collaboration-color-3: $blue;
+$apollon-collaboration-color-4: $red;
+$apollon-collaboration-color-5: $purple;
+$apollon-collaboration-color-6: $teal;
+$apollon-collaboration-color-7: $orange;
+$apollon-collaboration-color-8: $cyan;
+$apollon-swatch-slate: $gray-700;
+$apollon-swatch-red: $red;
+$apollon-swatch-orange: $orange;
+$apollon-swatch-amber: $yellow;
+$apollon-swatch-green: $green;
+$apollon-swatch-teal: $teal;
+$apollon-swatch-blue: $blue;
+$apollon-swatch-violet: $purple;
+$apollon-swatch-pink: $pink;
+$apollon-chrome-accent: $apollon-primary;
+$apollon-chrome-radius-sm: artemis.$border-radius;
+$apollon-chrome-radius-md: artemis.$border-radius-lg;
+$apollon-chrome-radius-lg: artemis.$border-radius-xl;
+$apollon-chrome-edge: 10px;
+$apollon-chrome-gap: 12px;
 
 // Feedback Suggestions (Athena)
 $feedback-suggestions-primary: rgb(181, 78, 254, 1);
@@ -556,10 +605,6 @@ $graph-green: rgba(40, 164, 40, 1);
 $graph-red: rgba(204, 0, 0, 1);
 $graph-yellow: rgba(230, 174, 6, 1);
 $graph-black: rgba(53, 61, 71, 1);
-
-// Chart text and grid line colors (consumed by chart.js via ChartColorService)
-$chart-text-color: #666;
-$chart-grid-color: rgba(0, 0, 0, 0.1);
 
 // User-Management
 $user-management-background-color: rgba($black, 0.02);
@@ -637,6 +682,11 @@ $ai-modal-description-color: $gray-600;
 $ai-modal-bg: rgba(0, 0, 0, 0.85);
 $ai-modal-subtitle: $black;
 $ai-modal-shadow-hover: rgba(0, 0, 0, 0.4);
+
+// Exercise variant AI wizard
+// Colour only — each call site keeps its own offsets and blur, so one token covers both the
+// option-card hover lift and the smaller icon-tile depth.
+$variant-wizard-elevation-shadow: rgba(0, 0, 0, 0.1);
 
 // Global search navbar (same in both themes since navbar bg is always artemis-dark)
 $global-search-navbar-kbd-bg: #6c757d;

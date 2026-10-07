@@ -16,15 +16,14 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -39,6 +38,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -62,6 +62,9 @@ public class ModelingExerciseUtilService {
     private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
 
     @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
+
+    @Autowired
     private CourseTestRepository courseRepo;
 
     @Autowired
@@ -75,9 +78,6 @@ public class ModelingExerciseUtilService {
 
     @Autowired
     private ModelingSubmissionTestRepository modelingSubmissionRepo;
-
-    @Autowired
-    private FeedbackRepository feedbackRepo;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -109,7 +109,9 @@ public class ModelingExerciseUtilService {
         modelingExercise.setTitle("Modeling Exercise");
         course.addExercises(modelingExercise);
         course.setMaxComplaintTimeDays(14);
-        return exerciseRepository.save(modelingExercise);
+        var savedExercise = exerciseRepository.save(modelingExercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 
     /**
@@ -138,8 +140,9 @@ public class ModelingExerciseUtilService {
         modelingExercise.setTitle(title);
         course.addExercises(modelingExercise);
         course.setMaxComplaintTimeDays(14);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         modelingExercise = exerciseRepository.save(modelingExercise);
+        exerciseConfigurationService.initialize(modelingExercise);
         assertThat(course.getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(modelingExercise);
         assertThat(modelingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
         return course;
@@ -150,8 +153,9 @@ public class ModelingExerciseUtilService {
                 course);
         modelingExercise.setTitle("ClassDiagram");
         course.addExercises(modelingExercise);
-        courseRepo.save(course);
+        courseRepo.saveWithDefaultConfigurations(course);
         modelingExercise = exerciseRepository.save(modelingExercise);
+        exerciseConfigurationService.initialize(modelingExercise);
         return modelingExercise;
     }
 
@@ -162,7 +166,9 @@ public class ModelingExerciseUtilService {
      * @return The updated ModelingExercise
      */
     public ModelingExercise updateExercise(ModelingExercise exercise) {
-        return modelingExerciseRepository.save(exercise);
+        var savedExercise = modelingExerciseRepository.save(exercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 
     /**
@@ -232,18 +238,29 @@ public class ModelingExerciseUtilService {
         finishedExercise.setTitle("finished");
         course.addExercises(finishedExercise);
 
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         exerciseRepository.save(classExercise);
+        exerciseConfigurationService.initialize(classExercise);
         exerciseRepository.save(activityExercise);
+        exerciseConfigurationService.initialize(activityExercise);
         exerciseRepository.save(objectExercise);
+        exerciseConfigurationService.initialize(objectExercise);
         exerciseRepository.save(useCaseExercise);
+        exerciseConfigurationService.initialize(useCaseExercise);
         exerciseRepository.save(communicationExercise);
+        exerciseConfigurationService.initialize(communicationExercise);
         exerciseRepository.save(componentExercise);
+        exerciseConfigurationService.initialize(componentExercise);
         exerciseRepository.save(deploymentExercise);
+        exerciseConfigurationService.initialize(deploymentExercise);
         exerciseRepository.save(petriNetExercise);
+        exerciseConfigurationService.initialize(petriNetExercise);
         exerciseRepository.save(syntaxTreeExercise);
+        exerciseConfigurationService.initialize(syntaxTreeExercise);
         exerciseRepository.save(flowchartExercise);
+        exerciseConfigurationService.initialize(flowchartExercise);
         exerciseRepository.save(finishedExercise);
+        exerciseConfigurationService.initialize(finishedExercise);
         Course storedCourse = courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
         Set<Exercise> exercises = storedCourse.getExercises();
         assertThat(exercises).as("eleven exercises got stored").hasSize(11);
@@ -265,7 +282,9 @@ public class ModelingExerciseUtilService {
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(model, true);
         var user = userUtilService.getUserByLogin(login);
-        submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user);
+        submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user, null).submission();
+        // the save wrote the foreign key from an id; this utility holds the participation itself and saves again below
+        submission.setParticipation(participation);
         Result result = new Result();
         result.setSubmission(submission);
         result.setExerciseId(exercise.getId());
@@ -383,7 +402,7 @@ public class ModelingExerciseUtilService {
      * @param submissionId The id of the ModelingSubmission
      * @param sentModel    The model that should have been stored
      */
-    public void checkModelingSubmissionCorrectlyStored(Long submissionId, String sentModel) throws JsonProcessingException {
+    public void checkModelingSubmissionCorrectlyStored(Long submissionId, String sentModel) throws JacksonException {
         Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepo.findById(submissionId);
         assertThat(modelingSubmission).as("submission correctly stored").isPresent();
         checkModelsAreEqual(modelingSubmission.orElseThrow().getModel(), sentModel);
@@ -395,8 +414,8 @@ public class ModelingExerciseUtilService {
      * @param storedModel The model that has been stored
      * @param sentModel   The model that should have been stored
      */
-    public void checkModelsAreEqual(String storedModel, String sentModel) throws JsonProcessingException {
-        ObjectMapper objectMapper = JsonObjectMapper.get();
+    public void checkModelsAreEqual(String storedModel, String sentModel) throws JacksonException {
+        JsonMapper objectMapper = JsonObjectMapper.get();
         JsonNode sentModelNode = objectMapper.readTree(sentModel);
         JsonNode storedModelNode = objectMapper.readTree(storedModel);
         assertThat(storedModelNode).as("model correctly stored").isEqualTo(sentModelNode);
@@ -433,11 +452,11 @@ public class ModelingExerciseUtilService {
      * @return The created Result
      */
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String login, boolean submit) {
-        Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1"));
-        Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("detail2"));
+        // Left unsaved: the assessment below attaches them to the result it creates and writes them from there, and
+        // result_id is not nullable, so saving them detached first fails the insert.
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(feedback1);
-        feedbacks.add(feedback2);
+        feedbacks.add(new Feedback().detailText("detail1"));
+        feedbacks.add(new Feedback().detailText("detail2"));
 
         Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbacks, null, null, submit);
         result.setAssessor(userUtilService.getUserByLogin(login));

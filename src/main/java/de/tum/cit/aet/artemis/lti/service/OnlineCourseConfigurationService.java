@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration.ENTITY
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -18,7 +19,6 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
@@ -35,6 +35,9 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.LTIAuthorizationGrantTy
 public class OnlineCourseConfigurationService implements ClientRegistrationRepository {
 
     private static final Logger log = LoggerFactory.getLogger(OnlineCourseConfigurationService.class);
+
+    /** The shared login expression, compiled once. {@code Constants.LOGIN_REGEX} stays a string because request mappings interpolate it. */
+    private static final Pattern LOGIN_PATTERN = Pattern.compile(LOGIN_REGEX);
 
     private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
@@ -57,24 +60,12 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
     }
 
     /**
-     * Creates an initial configuration for online courses with default and random values
-     *
-     * @param course the online course we create a configuration for
-     */
-    public void createOnlineCourseConfiguration(Course course) {
-        OnlineCourseConfiguration ocConfiguration = new OnlineCourseConfiguration();
-        ocConfiguration.setCourse(course);
-        ocConfiguration.setUserPrefix(course.getShortName());
-        course.setOnlineCourseConfiguration(ocConfiguration);
-    }
-
-    /**
      * Validates the online course configuration
      *
      * @param ocConfiguration the online course configuration being validated
      */
     public void validateOnlineCourseConfiguration(OnlineCourseConfiguration ocConfiguration) {
-        if (StringUtils.isBlank(ocConfiguration.getUserPrefix()) || !ocConfiguration.getUserPrefix().matches(LOGIN_REGEX)) {
+        if (StringUtils.isBlank(ocConfiguration.getUserPrefix()) || !LOGIN_PATTERN.matcher(ocConfiguration.getUserPrefix()).matches()) {
             throw new BadRequestAlertException("Invalid user prefix, must match login regex defined in Constants.java", ENTITY_NAME, "invalidUserPrefix");
         }
 
@@ -114,21 +105,4 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
         }
     }
 
-    /**
-     * Associates an online course configuration with an LTI platform configuration.
-     * If the provided online course configuration has a linked LTI platform configuration,
-     * it is added to the platform's list of online course configurations.
-     *
-     * @param onlineCourseConfiguration The online course configuration to be associated.
-     */
-    public void addOnlineCourseConfigurationToLtiConfigurations(OnlineCourseConfiguration onlineCourseConfiguration) {
-        if (onlineCourseConfiguration.getLtiPlatformConfiguration() != null) {
-            Long platformId = onlineCourseConfiguration.getLtiPlatformConfiguration().getId();
-            LtiPlatformConfiguration platformConfiguration = ltiPlatformConfigurationRepository.findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(platformId);
-
-            var setOfOnlineCourses = platformConfiguration.getOnlineCourseConfigurations();
-            setOfOnlineCourses.add(onlineCourseConfiguration);
-            onlineCourseConfiguration.setLtiPlatformConfiguration(platformConfiguration);
-        }
-    }
 }

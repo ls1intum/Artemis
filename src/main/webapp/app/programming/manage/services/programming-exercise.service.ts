@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -11,7 +11,7 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/progr
 import { toUpdateProgrammingExerciseDTO } from 'app/programming/manage/services/update-programming-exercise-dto.model';
 import { toProgrammingExerciseTimelineUpdateDTO } from 'app/programming/manage/services/programming-exercise-timeline-update-dto.model';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getNewestResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -49,7 +49,7 @@ export type ProgrammingExerciseResetOptions = {
     recreateBuildPlans: boolean;
 };
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExerciseService {
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);
@@ -68,7 +68,7 @@ export class ProgrammingExerciseService {
         let copy = this.convertDataFromClient(programmingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         ExerciseService.stringifyExerciseCategories(copy);
-        const params = new HttpParams().set('emptyRepositories', String(emptyRepositories));
+        const params = this.addHyperionChecklistProvenanceParams(new HttpParams().set('emptyRepositories', String(emptyRepositories)), programmingExercise);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response', params })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
@@ -149,7 +149,8 @@ export class ProgrammingExerciseService {
      */
     importExercise(adaptedSourceProgrammingExercise: ProgrammingExercise, importOptions: ImportOptions): Observable<EntityResponseType> {
         const options = createRequestOption(importOptions);
-        const exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(adaptedSourceProgrammingExercise);
+        // Route through convertDataFromClient like automaticSetup and importFromFile do, so competency-link back-references are stripped.
+        const exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(this.convertDataFromClient(adaptedSourceProgrammingExercise));
 
         ExerciseService.stringifyExerciseCategories(exercise);
         return this.http
@@ -166,11 +167,27 @@ export class ProgrammingExerciseService {
      * @param req optional request options
      */
     update(programmingExercise: ProgrammingExercise, req?: Parameters<typeof createRequestOption>[0]): Observable<EntityResponseType> {
-        const options = createRequestOption(req);
+        const options = this.addHyperionChecklistProvenanceParams(createRequestOption(req), programmingExercise);
         const dto = toUpdateProgrammingExerciseDTO(programmingExercise);
         return this.http
             .put<ProgrammingExercise>(this.resourceUrl, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
+    }
+
+    /**
+     * Adds Hyperion-inferred competency IDs to the exercise save itself so the server persists links and provenance together.
+     */
+    private addHyperionChecklistProvenanceParams(params: HttpParams, exercise: ProgrammingExercise): HttpParams {
+        const competencyIds = new Set(
+            (exercise.competencyLinks ?? [])
+                .filter((link) => link.generatedByAi)
+                .map((link) => link.competency?.id)
+                .filter((id): id is number => id !== undefined),
+        );
+        for (const competencyId of competencyIds) {
+            params = params.append('hyperionCompetencyId', competencyId);
+        }
+        return params;
     }
 
     /**
@@ -323,11 +340,10 @@ export class ProgrammingExerciseService {
 
         // important: sort to get the latest submission (the order of the server can be random)
         this.sortService.sortByProperty(submissions, 'submissionDate', true);
-        const results = submissions.sort().last()?.results;
-        if (results && results.length > 0) {
-            return results.last();
-        }
-        return undefined;
+        // No second sort here: sortByProperty above established the order, and calling sort() without a comparator
+        // on the submissions would compare them as strings, where every element is equal and nothing is reordered.
+        // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
+        return getNewestResult(submissions.last()?.results);
     }
 
     /**
@@ -370,10 +386,10 @@ export class ProgrammingExerciseService {
     /**
      * Deletes the programming exercise with the corresponding programming exercise Id
      * @param programmingExerciseId of the programming exercise to delete
-     * @param deleteStudentReposBuildPlans indicates if the StudentReposBuildPlans should be also deleted or not
-     * @param deleteBaseReposBuildPlans indicates if the BaseReposBuildPlans should be also deleted or not
+     * @param deleteStudentReposBuildPlans indicates if the StudentReposBuildPlans should be also deleted or not; omit both flags to use the server defaults
+     * @param deleteBaseReposBuildPlans indicates if the BaseReposBuildPlans should be also deleted or not; omit both flags to use the server defaults
      */
-    delete(programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<void>> {
+    delete(programmingExerciseId: number, deleteStudentReposBuildPlans?: boolean, deleteBaseReposBuildPlans?: boolean): Observable<HttpResponse<void>> {
         let params = new HttpParams();
         if (deleteBaseReposBuildPlans != undefined && deleteStudentReposBuildPlans != undefined) {
             params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
@@ -398,6 +414,10 @@ export class ProgrammingExerciseService {
         }
         if (copy.solutionParticipation) {
             copy.solutionParticipation = _omit(copy.solutionParticipation, ['exercise', 'results']);
+        }
+        // Each competency link back-references this exercise, which would make the payload circular.
+        if (copy.competencyLinks) {
+            copy.competencyLinks = copy.competencyLinks.map((link) => _omit(link, ['exercise']));
         }
 
         return copy as ProgrammingExercise;
@@ -483,7 +503,7 @@ export class ProgrammingExerciseService {
      * @param req optional request options
      */
     reevaluateAndUpdate(programmingExercise: ProgrammingExercise, req?: Parameters<typeof createRequestOption>[0]): Observable<EntityResponseType> {
-        const options = createRequestOption(req);
+        const options = this.addHyperionChecklistProvenanceParams(createRequestOption(req), programmingExercise);
         const dto = toUpdateProgrammingExerciseDTO(programmingExercise);
         return this.http
             .put<ProgrammingExercise>(`${this.resourceUrl}/${programmingExercise.id}/re-evaluate`, dto, {
@@ -548,8 +568,9 @@ export class ProgrammingExerciseService {
         const exerciseBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });
         formData.append('programmingExercise', exerciseBlob);
         const url = `api/programming/courses/${courseId}/programming-exercises/import-from-file`;
+        const params = this.addHyperionChecklistProvenanceParams(new HttpParams(), exercise);
         return this.http
-            .post<ProgrammingExercise>(url, formData, { observe: 'response' })
+            .post<ProgrammingExercise>(url, formData, { observe: 'response', params })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 

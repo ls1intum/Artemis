@@ -1,11 +1,3 @@
-/* Additional styles to ensure the quiz content fills the space */
-.quiz-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    width: 100%;
-}
-
 .quiz-content {
     flex: 1; /* Allow the content to grow and fill available space */
     display: flex;
@@ -13,21 +5,61 @@
     justify-content: space-between;
 }
 
-.quiz-question {
-    flex: 1; /* Allow the question to take up available space */
-    margin-bottom: 20px;
+/* The question navigation sticks to the top and scrolls on its own if there are more questions than space. */
+.stepwizardquiz {
+    position: sticky;
+    top: 0;
+    z-index: 18;
+    max-height: calc(100vh - var(--navbar-height) - 12rem);
+    overflow-y: auto;
 }
 
-.quiz-options {
-    flex: 1; /* Allow the options to take up available space */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-}
+/* The round button of a question: its color tells the question type, and it changes once the question has an answer. */
+.quiz-nav-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--quiz-participation-btn-circle-light-border-color);
+    border-radius: 15px;
+    color: var(--tumaet-ui-text-color);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    cursor: help;
 
-@media print {
-    .quiz-container {
-        height: auto;
-        break-inside: avoid;
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: 2px;
     }
+
+    @media (max-width: 990px) {
+        width: 23px;
+        height: 23px;
+        font-size: 10px;
+    }
+
+    @media (max-width: 767.98px) {
+        width: 16px;
+        height: 16px;
+        font-size: 6px;
+    }
+}
+
+.draganddropcolor-question {
+    background-color: var(--quiz-participation-footer-dnd-background);
+}
+
+.multiplechoicecolor-question {
+    background-color: var(--quiz-participation-footer-mc-background);
+}
+
+.shortanswercolor-question {
+    background-color: var(--quiz-participation-footer-sa-background);
+}
+
+/* Declared last, so that it wins over the color of the question type. */
+.changed-question {
+    background-color: var(--quiz-participation-footer-changed-background);
 }

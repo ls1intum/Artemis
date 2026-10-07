@@ -16,20 +16,18 @@
         },
         "entities": {
             "tutorialGroup": {
-                "locationTime": "Ort/Zeit",
                 "plural": "Tutorien",
                 "title": "Titel",
-                "isOnline": "Online",
                 "campus": "Campus",
-                "language": "Sprache",
                 "teachingAssistant": "Tutor:in",
                 "registrationsWithCapacity": "Registrierungen / Kapazität",
-                "nextSession": "Nächste Sitzung",
-                "channel": "Chat",
                 "channelReverse": "Kanal der Übungsgruppe {{ title }}",
                 "utilization": "Auslastung",
                 "utilizationHelp": "Durchschnittliche Anwesenheit geteilt durch Kapazität (falls definiert). Die durchschnittliche Anwesenheit bezieht sich auf die letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt.",
-                "averageAttendance": "Durchschnittliche Anwesenheit: {{ averageAttendance }}"
+                "averageAttendance": "Durchschnittliche Anwesenheit: {{ averageAttendance }}",
+                "room": "Raum",
+                "schedule": "Termin",
+                "noAttendanceRecorded": "Noch keine Anwesenheit erfasst."
             },
             "tutorialFreePeriod": {
                 "startDate": "Startdatum",
@@ -40,6 +38,7 @@
         "forms": {
             "tutorialFreePeriodForm": {
                 "timeFrame": {
+                    "label": "Zeitraum",
                     "periodWithinDay": "Freier Zeitraum innerhalb eines Tages",
                     "period": "Freier Zeitraum",
                     "day": "Freier Tag"
@@ -59,10 +58,15 @@
                 }
             },
             "configurationForm": {
+                "hero": {
+                    "title": "Übungsgruppen-Konfiguration",
+                    "description": "Standardeinstellungen für alle Übungsgruppen dieses Kurses."
+                },
                 "timeZoneInput": {
                     "label": "Übungsgruppen-Zeitzone",
                     "changeWarning": "Die Zeitzone wurde geändert. Alle individuell erstellten Sitzungen und freien Tage werden gelöscht. In der neuen Zeitzone werden nur Sitzungen, die einem Zeitplan folgen neu erstellt. Soll das wirklich gemacht werden?",
-                    "explanation": "Die Zeitzone, in der die Übungsgruppen auftreten. Dies wird verwendet, um die Start- und Endzeiten der Übungsgruppen zu interpretieren. In das Feld tippen, um nach einer Zeitzone zu suchen."
+                    "explanation": "Die Zeitzone, in der die Übungsgruppen auftreten. Dies wird verwendet, um die Start- und Endzeiten der Übungsgruppen zu interpretieren. In das Feld tippen, um nach einer Zeitzone zu suchen.",
+                    "invalidTimeZone": "Bitte wähle eine gültige Zeitzone aus der Liste der Vorschläge aus."
                 },
                 "periodInput": {
                     "label": "Übungsgruppen-Zeitraum",
@@ -81,6 +85,7 @@
         "pages": {
             "tutorialGroupsManagement": {
                 "intro": "Willkommen auf der Seite zur Verwaltung der Übungsgruppen! Sie ermöglicht es, wöchentliche Online- und Offline-Übungsgruppen zu verwalten. Du kannst damit beginnen, Übungsgruppen aus einer CSV-Datei zu importieren oder manuell eine neue Übungsgruppe zu erstellen.",
+                "noTutorialGroupsTitle": "Noch keine Übungsgruppen",
                 "title": "Übungsgruppen-Verwaltung",
                 "freePeriodsButtons": "Freie Tage",
                 "creatTutorialGroupButton": "Neue Übungsgruppe",
@@ -90,17 +95,25 @@
                 "deleteDialog": {
                     "question": "Sicher, dass die Übungsgruppe mit dem Titel {{ title }} gelöscht werden soll?",
                     "confirm": "Bitte den Titel der Übungsgruppe zur Bestätigung eingeben"
+                },
+                "searchPlaceholder": "Suchen…",
+                "noMatchingGroups": "Keine Übungsgruppe entspricht deiner Suche.",
+                "actions": {
+                    "import": "Importieren",
+                    "export": "Exportieren",
+                    "create": "Erstellen"
                 }
             },
             "checklist": {
                 "title": "Checkliste für Übungsgruppen",
                 "explanation": "Bevor du mit der Nutzung der Übungsgruppenfunktion beginnen kannst, musst du einige Konfigurationsschritte durchführen",
+                "heroTitle": "Übungsgruppen einrichten",
                 "timeZone": "Der Kurs hat eine Zeitzone konfiguriert",
                 "timeZoneExplanation": "Für den Kurs muss eine Zeitzone konfiguriert werden, damit die Übungsgruppen-Termine entsprechend dieser Zeitzone korrekt geplant werden können.",
                 "configurationExplanation": "Der Kurs benötigt eine kursweite Konfiguration für die Übungsgruppen. Diese Konfiguration enthält Standardeinstellungen für alle Übungsgruppen.",
                 "configuration": "Der Kurs hat eine Konfiguration für die Übungsgruppen",
                 "createConfiguration": "Konfiguration erstellen",
-                "continueToManagement": "Weiter zur Übungsgruppen-Verwaltung"
+                "continueToManagement": "Weiter"
             },
             "tutorialGroupRegistrations": {
                 "title": "Tutorialregistrierungen",
@@ -244,7 +257,7 @@
                 "tutorChatLinkLabel": "Tutor Chat",
                 "groupChannelLinkLabel": "Gruppen Channel",
                 "registrationsLinkLabel": "Registrierungen",
-                "newSessionButtonLabel": "Neue Session",
+                "newSessionButtonLabel": "Session erstellen",
                 "confirmationDialog": {
                     "deleteGroup": {
                         "header": "Gruppe löschen?",
@@ -299,6 +312,7 @@
                         "attendance": "Anwesenheiten"
                     },
                     "validationError": {
+                        "dateInvalid": "Bitte ein gültiges Datum eingeben.",
                         "dateRequired": "Bitte wähle ein Datum.",
                         "startTimeRequired": "Bitte wähle eine Startzeit.",
                         "endTimeRequired": "Bitte wähle eine Endzeit.",
@@ -309,12 +323,48 @@
                 }
             },
             "tutorialFreePeriodsManagement": {
-                "explanation": "Definiere kursweite Tage, an denen keine Übungsgruppen stattfinden sollen. Dies kann verwendet werden, um Feiertage oder andere Tage zu definieren, an denen keine Übungsgruppen stattfinden sollen.",
-                "title": "Freie Zeiträume verwalten",
-                "createFreePeriodButton": "Neuen freien Zeitraum hinzufügen",
+                "title": "Feiertage",
+                "explanation": "Lege kursweite Tage fest, an denen keine Übungsgruppentermine stattfinden.",
+                "allHolidays": "Alle Feiertage",
+                "addHoliday": "Feiertag hinzufügen",
+                "loadFailed": "Die Feiertage konnten nicht geladen werden.",
+                "retry": "Erneut versuchen",
+                "editHoliday": "Feiertag bearbeiten",
+                "wholeDay": "Ganztägig",
+                "noHolidays": "Noch keine Feiertage.",
+                "sessionsCancelled": "{{ count }} Termine",
+                "pastHidden": "{{ count }} vergangene Feiertage werden im Filter „Bevorstehend“ ausgeblendet.",
+                "filter": {
+                    "upcoming": "Bevorstehend",
+                    "all": "Alle"
+                },
+                "calendar": {
+                    "today": "Heute",
+                    "previousMonth": "Vorheriger Monat",
+                    "nextMonth": "Nächster Monat",
+                    "sessionsShort": "{{ count }} Term.",
+                    "fromTime": "ab {{ time }}",
+                    "untilTime": "bis {{ time }}",
+                    "addHolidayOn": "Feiertag am {{ date }} hinzufügen"
+                },
+                "form": {
+                    "from": "Von",
+                    "to": "Bis",
+                    "create": "Erstellen",
+                    "reason": "Grund",
+                    "reasonPlaceholder": "z. B. Weihnachtsferien",
+                    "invalidRange": "Das Ende muss nach dem Beginn liegen.",
+                    "overlapsHoliday": "Überschneidet sich mit „{{ reason }}“. Zwei Feiertage dürfen nicht denselben Zeitraum abdecken, da eine abgesagte Sitzung einen davon als Grund nennt.",
+                    "overlapsExistingHoliday": "Dieser Feiertag überschneidet sich mit einem, der zwischenzeitlich hinzugefügt wurde. Die Seite wurde aktualisiert; bitte wähle einen Zeitraum, den er nicht abdeckt.",
+                    "sessionsWillBeCancelled": "{{ count }} Termine in diesem Zeitraum werden abgesagt."
+                },
                 "deleteDialog": {
-                    "question": "Sicher, dass der freie Tag {{ title }} gelöscht werden soll?"
-                }
+                    "header": "Feiertag löschen",
+                    "question": "Sicher, dass der Feiertag {{ reason }} gelöscht werden soll?",
+                    "multiDayQuestion": "{{ reason }} umfasst {{ count }} Tage und ist als ein Feiertag gespeichert. Beim Löschen entfallen daher alle. Wirklich löschen?"
+                },
+                "editHolidayNamed": "{{ reason }} bearbeiten",
+                "deleteHolidayNamed": "{{ reason }} löschen"
             },
             "createOrEditTutorialFreePeriodTitle": {
                 "create": "Freien Tag erstellen",
@@ -324,8 +374,7 @@
                 "title": "Sitzungsverwaltung"
             },
             "createTutorialGroupsConfiguration": {
-                "title": "Globalen Übungsgruppen Konfiguration erstellen",
-                "explanation": "Bevor Übungsgruppen erstellt werden können, müssen einige Eigenschaften angeben werden, die alle Übungsgruppen betreffen. Dies kann auch später geändert werden."
+                "title": "Globalen Übungsgruppen Konfiguration erstellen"
             },
             "editTutorialGroupsConfiguration": {
                 "title": "Globale Konfiguration bearbeiten"

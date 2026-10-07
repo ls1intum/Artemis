@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -24,7 +24,7 @@ class OAuth2JWKSIntegrationTest extends AbstractLtiIntegrationTest {
     void getKeysetIsPublicAndReturnsJson() throws Exception {
 
         String keyset = request.get("/.well-known/jwks.json", HttpStatus.OK, String.class);
-        ObjectMapper objectMapper = JsonObjectMapper.get();
+        JsonMapper objectMapper = JsonObjectMapper.get();
         JsonNode jsonKeyset = objectMapper.readTree(keyset);
         assertThat(jsonKeyset.get("keys")).isNotNull();
     }
@@ -32,9 +32,8 @@ class OAuth2JWKSIntegrationTest extends AbstractLtiIntegrationTest {
     @Test
     @WithAnonymousUser
     void getKeysetHasKey() throws Exception {
-        Course course = new Course();
-        course.setId(1L);
-        courseRepository.save(course);
+        Course course = CourseFactory.generateMinimalCourse();
+        course = courseRepository.saveWithDefaultConfigurations(course);
         OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "prefix", "url");
         LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
         ltiPlatformConfiguration.setRegistrationId(TEST_PREFIX + "registrationId");
@@ -44,11 +43,12 @@ class OAuth2JWKSIntegrationTest extends AbstractLtiIntegrationTest {
         ltiPlatformConfiguration.setJwkSetUri("jwkUri");
 
         ltiPlatformConfigurationRepository.save(ltiPlatformConfiguration);
+        onlineCourseConfiguration.setId(onlineCourseConfigurationRepository.findStoredByCourseId(course.getId()).orElseThrow().getId());
         onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
         oAuth2JWKSService.updateKey(TEST_PREFIX + "registrationId");
 
         String keyset = request.get("/.well-known/jwks.json", HttpStatus.OK, String.class);
-        ObjectMapper objectMapper = JsonObjectMapper.get();
+        JsonMapper objectMapper = JsonObjectMapper.get();
         JsonNode jsonKeyset = objectMapper.readTree(keyset);
 
         assertThat(jsonKeyset).isNotNull();

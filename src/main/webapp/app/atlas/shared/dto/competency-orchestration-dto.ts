@@ -3,12 +3,16 @@ export enum CompetencyOrchestrationStatus {
     Partial = 'PARTIAL',
     Failed = 'FAILED',
     InProgress = 'IN_PROGRESS',
+    NoOp = 'NO_OP',
 }
 
 export enum CompetencyOrchestrationFailureReason {
     NoChatClient = 'NO_CHAT_CLIENT',
     LlmError = 'LLM_ERROR',
+    ToolCallLimitExceeded = 'TOOL_CALL_LIMIT_EXCEEDED',
+    IncompleteOrchestration = 'INCOMPLETE_ORCHESTRATION',
     UnsupportedExercise = 'UNSUPPORTED_EXERCISE',
+    UnsupportedLearningObject = 'UNSUPPORTED_LEARNING_OBJECT',
 }
 
 export enum AppliedActionType {
@@ -24,6 +28,7 @@ export interface AppliedActionDTO {
     competencyId: number;
     competencyTitle: string;
     exerciseId?: number;
+    lectureUnitId?: number;
     weight?: number;
     detail: string;
     justification: string;

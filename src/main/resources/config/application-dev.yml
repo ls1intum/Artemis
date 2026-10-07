@@ -26,12 +26,12 @@ spring:
             enabled: true
         livereload:
             enabled: false # we use the Angular dev server
-    jackson:
-        serialization:
-            indent-output: true
+    # Note: no indent-output. Under Jackson 2 the spring.jackson prefix configured a mapper the application did not
+    # use, so this setting never took effect; Jackson 3 honours it, and turning it on now would make dev and the E2E
+    # profile emit pretty-printed responses that no longer match production byte for byte. Re-enable deliberately.
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+        url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
         username: root
         password:
         hikari:
@@ -83,27 +83,22 @@ jhipster:
                 base64-secret: bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=
                 # Token is valid 24 hours
                 token-validity-in-seconds: 86400
-                token-validity-in-seconds-for-remember-me: 2592000
+                token-validity-in-seconds-for-remember-me: 604800 # 7 days of inactivity; an active session is silently extended, up to 30 days from the login
     mail: # specific JHipster mail property, for standard properties see MailProperties
         from: artemis@localhost
         base-url: http://127.0.0.1:8080
-    logging:
-        use-json-format: false # By default, logs are not in Json format
-        logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration
-            enabled: false
-            host: localhost
-            port: 5000
-            ring-buffer-size: 512
     audit-events:
-        retention-period: 365 # Number of days before audit events are deleted.
+        # Nothing reads this key (see application-prod.yml); the audit logs are pruned via artemis.audit-events.*.
+        retention-period: 365
 
 # Properties to be exposed on the /info management endpoint
 info:
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to true for development environment
     textAssessmentAnalyticsEnabled: true
-    operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page and sent to the telemetry service (e.g. the name of the university "Technische Universität München")
-    operatorAdminName: Admin # Can be set to be shown in the about us page, and to be sent to the telemetry service
+    operatorName: # Optional in development, displayed on the About page when set; required on production core nodes
+    operatorAdminName: # Optional in development, displayed on the About page when set; required on production core nodes
+    universityName: # Optional in development, displayed on the About page when set; required on production core nodes
     contact: admin@uni.de # The admins contact email address, shown in the about us page, and sent to the telemetry service
     localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
 
@@ -130,10 +125,11 @@ theia:
 
 artemis:
     audit-events:
-        # The audit table is pruned on two schedules: the login record is high-volume and short-lived, while deliberate
-        # actions on courses, exercises, exams and accounts may still be needed years later (e.g. an exam dispute).
-        general-retention-period: 365 # Days before login/logout audit events are deleted (one year).
-        application-retention-period: 1825 # Days before all other audit events are deleted (five years).
+        # The audit log is split into three tables, each pruned on its own schedule: login records are high-volume and
+        # short-lived, while security and application records may be needed years later (e.g. to resolve an exam dispute).
+        general-retention-period: 365 # Days before general/authentication audit events are deleted (one year).
+        security-retention-period: 1825 # Days before security audit events are deleted (five years).
+        application-retention-period: 1825 # Days before application audit events are deleted (five years).
     push-notification-relay: https://hermes-staging.artemis.cit.tum.de
     # Telemetry service: disabled for development
     telemetry:
@@ -157,15 +153,44 @@ artemis:
         grpc-port: 50051                  # Weaviate gRPC port for better performance
         scheme: http                      # http scheme for development (https should be used in production environments)
         collection-prefix: Artemis_       # Prefix for all Weaviate collection names to avoid naming conflicts (e.g. with Pyris)
-        vectorizer-module: none           # Vectorizer module: "none" (docker/weaviate.yml), "text2vec-transformers" (docker/weaviate-embeddings.yml), or "text2vec-openai" (for OpenAI-compatible APIs like Ollama)
+        vectorizer-module: none           # Vectorizer module: "none" (deployment/docker/weaviate.yml), "text2vec-transformers" (deployment/docker/weaviate-embeddings.yml), or "text2vec-openai" (for OpenAI-compatible APIs like Ollama)
         # Weaviate server authentication (optional). When set, the client authenticates using API key auth.
-        # The Weaviate server must have API key authentication enabled (see docker/weaviate/*.env).
+        # The Weaviate server must have API key authentication enabled (see deployment/docker/weaviate/*.env).
         # api-key: admin-key                                         # API key matching AUTHENTICATION_APIKEY_ALLOWED_KEYS in the Weaviate server config
         # The following properties are only required when using vectorizer-module: text2vec-openai
         # See docs: admin/global-search-weaviate
         # open-ai-embedding-model: your-embedding-model              # Embedding model name served by the OpenAI-compatible API
         # open-ai-base-url: http://host.docker.internal:11434        # Base URL for the OpenAI-compatible API (e.g. Ollama); note: no /v1 suffix; use https://your-openai-compatible-endpoint for a remote GPU server
         # gpu-api-key: yourApiKey                                    # API key for the remote server (use any non-empty value for Ollama)
+        # Outbox dispatcher and schema-migration tuning for the durable global-search metadata sync. The values below
+        # are the built-in defaults; uncomment and change only to override. Freshness is driven by an after-commit
+        # nudge, so the drain interval is only a cross-node safety net.
+        # outbox:
+        #     drain-interval-seconds: 5              # Cadence of the safety-net drain tick
+        #     batch-size: 100                        # Outbox rows processed per drain batch
+        #     base-backoff-seconds: 10               # First retry delay after a failed Weaviate write (doubles each attempt)
+        #     max-backoff-seconds: 300               # Cap on the retry backoff
+        # migration:
+        #     initial-delay-seconds: 30              # Delay before the first schema-migration attempt after startup
+        #     max-attempts: 5                        # Bounded in-process retries for a failed schema migration
+        #     retry-delay-seconds: 120               # Delay between schema-migration retries
+        # Reconcile passes that heal the index against the database. Missing and drift are on by default; orphan is off,
+        # since it is the only one whose deletions are inferred from the index alone. Switch it on last.
+        # reconcile:
+        #     missing-sweep-enabled: true            # Queue writes for entities the index has never confirmed holding
+        #     drift-sweep-enabled: true              # Re-derive entities and queue a repair where content no longer matches
+        #     orphan-sweep-enabled: false            # Scan the index for rows whose entity is gone or whose content disagrees
+        #     entity-types: [course, lecture, lecture_unit, exam, exercise, faq, channel]  # Posts are excluded on purpose (volume)
+        #     max-outbox-depth: 500                  # Stop queueing above this; bounds how long a live write waits behind reconcile work.
+        #                                             # Checked once per tick, not per row, so every batch below stays well under
+        #                                             # it even in the worst case (a cold ledger, where a whole batch needs a write)
+        #     missing-batch-size: 100                # Entity ids examined per tick
+        #     drift-batch-size: 200                  # Entities re-derived per tick (each one is loaded, hence far smaller)
+        #     orphan-page-size: 1000                 # Index rows per page
+        #     orphan-pages-per-tick: 5               # Pages read per tick
+        #     orphan-delete-cap-per-tick: 100        # Most rows one tick may queue for deletion
+        #     orphan-repair-cap-per-tick: 100        # Most rows one tick may queue for a content rewrite
+        #     orphan-abort-ratio: 0.25               # Abort instead if this share of scanned rows looks orphaned
 
 # Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
 sentry:

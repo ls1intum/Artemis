@@ -320,10 +320,15 @@ export abstract class TextEditorAction implements Disposable {
      */
     toggleFullscreen(editor: TextEditor, element?: HTMLElement): void {
         const fullscreenElement = element ?? editor.getDomNode();
+        const ownerDocument = fullscreenElement?.ownerDocument ?? document;
+        const layoutAfterTransition = () => window.requestAnimationFrame(() => editor.layout());
+        ownerDocument.addEventListener('fullscreenchange', layoutAfterTransition, { once: true });
         if (isFullScreen()) {
             exitFullscreen();
         } else if (fullscreenElement) {
             enterFullscreen(fullscreenElement);
+        } else {
+            ownerDocument.removeEventListener('fullscreenchange', layoutAfterTransition);
         }
         editor.layout();
     }

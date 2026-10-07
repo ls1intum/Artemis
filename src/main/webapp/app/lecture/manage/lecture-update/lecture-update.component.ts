@@ -1,38 +1,52 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Component, DestroyRef, ElementRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Observable, Subscription, of } from 'rxjs';
 import { FormsModule } from '@angular/forms';
+import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBan, faCircleInfo, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { faCircleCheck, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
-import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/foundation/constants/file-extensions.constants';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal, onError } from 'app/foundation/util/global.utils';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
+import { FormSectionStatus } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { LectureTitleChannelNameComponent } from '../lecture-title-channel-name/lecture-title-channel-name.component';
 import { LectureSeriesCreateComponent } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { LectureTimelineComponent } from 'app/lecture/manage/lecture-period/lecture-timeline.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { SelectButtonModule } from 'primeng/selectbutton';
-import { CheckboxModule } from 'primeng/checkbox';
-import { TooltipModule } from 'primeng/tooltip';
 import { TranslateService } from '@ngx-translate/core';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { LectureService } from '../services/lecture.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnsavedChangesComponent } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
-import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonGroupComponent,
+    TumAetUiCheckboxComponent,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationRequest,
+    TumAetUiConfirmationService,
+    TumAetUiMessageComponent,
+    TumAetUiSelectButtonComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { LectureEditFooterComponent } from 'app/lecture/manage/lecture-update/lecture-edit-footer/lecture-edit-footer.component';
+import { PDF_UPLOAD_CONFIRMATION_STATE_KEY, PdfUploadConfirmation } from 'app/lecture/manage/lecture-update/pdf-upload-confirmation.model';
+import { isSingleLineField } from 'app/lecture/manage/single-line-field.util';
+
+/** Navigation state that carries the time a new lecture was saved to its editor, which the router creates anew for the edit route. */
+const DETAILS_SAVED_AT_STATE_KEY = 'lectureDetailsSavedAt';
 
 export enum LectureCreationMode {
     SINGLE = 'single',
@@ -44,40 +58,47 @@ interface CreateLectureOption {
     mode: LectureCreationMode;
 }
 
+/** The translation keys and values of the confirmation shown after PDFs were dropped on the lecture list. */
+interface PdfUploadConfirmationText {
+    title: string;
+    body: string;
+    params: Record<string, string | number>;
+    release?: string;
+    releaseDate?: Dayjs;
+}
+
 @Component({
     selector: 'jhi-lecture-update',
     templateUrl: './lecture-update.component.html',
     styleUrls: ['./lecture-update.component.scss'],
+    // Enter is handled on the host: the sections it saves are no controls themselves, so they take no key handlers.
+    host: { '(window:beforeunload)': 'onBeforeUnload($event)', '(keydown.enter)': 'onEnterInDetails($event)' },
     imports: [
         FormsModule,
         TranslateDirective,
         DocumentationButtonComponent,
-        FormStatusBarComponent,
         LectureTitleChannelNameComponent,
         MarkdownEditorMonacoComponent,
         LectureTimelineComponent,
         FaIconComponent,
         LectureUpdateUnitsComponent,
-        NgbTooltip,
         ArtemisTranslatePipe,
-        SelectButtonModule,
         LectureSeriesCreateComponent,
-        CheckboxModule,
-        TooltipModule,
         CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
+        TumAetUiButtonComponent,
+        TumAetUiButtonGroupComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiMessageComponent,
+        TumAetUiSelectButtonComponent,
+        TumAetUiTooltipDirective,
+        ArtemisDatePipe,
+        LectureEditFooterComponent,
     ],
+    providers: [TumAetUiConfirmationService],
 })
 export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComponent {
-    protected readonly documentationType: DocumentationType = 'Lecture';
-    protected readonly faQuestionCircle = faQuestionCircle;
-    protected readonly faSave = faSave;
-    protected readonly faPuzzleProcess = faPuzzlePiece;
-    protected readonly faBan = faBan;
-    protected readonly faCircleInfo = faCircleInfo;
-    protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
-    protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
-    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
-
     private readonly alertService = inject(AlertService);
     private readonly lectureService = inject(LectureService);
     private readonly activatedRoute = inject(ActivatedRoute);
@@ -85,67 +106,75 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     private readonly calendarService = inject(CalendarService);
     private readonly translateService = inject(TranslateService);
     private readonly router = inject(Router);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
+    private readonly location = inject(Location);
+    private readonly destroyRef = inject(DestroyRef);
+
+    /**
+     * Read while the router creates the page: without zone.js, ngOnInit runs at the first change detection, after the navigation has ended.
+     * It keeps the objects the previous page handed over, whereas the browser history only holds structured clones of them.
+     */
+    private readonly navigationState = this.router.currentNavigation()?.extras.state;
+
+    protected readonly documentationType: DocumentationType = 'Lecture';
+    protected readonly faCircleInfo = faCircleInfo;
+    protected readonly faCircleCheck = faCircleCheck;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 
     titleSection = viewChild(LectureTitleChannelNameComponent);
     unitSection = viewChild(LectureUpdateUnitsComponent);
-    formStatusBar = viewChild(FormStatusBarComponent);
+    private readonly detailsSection = viewChild<ElementRef<HTMLElement>>('detailsSection');
+    private readonly periodSection = viewChild<ElementRef<HTMLElement>>('periodSection');
     courseId = signal<number | undefined>(undefined);
     lecture = signal<Lecture>(new Lecture());
     lectureOnInit!: Lecture; // set in ngOnInit() (and re-cloned on save success)
     existingLectures = signal<Lecture[]>([]);
     isEditMode = signal<boolean>(false);
     readonly isSaving = signal<boolean>(undefined!);
-    readonly isProcessing = signal<boolean>(undefined!);
-    readonly processUnitMode = signal<boolean>(undefined!);
     readonly formStatusSections = signal<FormSectionStatus[]>(undefined!);
     domainActionsDescription = [new FormulaAction()];
-    file?: File;
-    readonly fileName = signal<string>(undefined!);
-    fileInputTouched = false;
-    isNewlyCreatedExercise = false;
     readonly isChangeMadeToTitleOrPeriodSection = signal(false);
-    readonly timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: true });
+    /** Translation keys of the sections whose unsaved changes the footer names. */
+    readonly changedSections = signal<string[]>([]);
+    /** Translation keys of the sections whose changes leaving the page would discard: the details, and content that could not be saved. */
+    protected readonly unsavedSections = computed(() =>
+        this.unitSection()?.hasUnsavedContent() ? [...this.changedSections(), 'artemisApp.lecture.sections.units'] : this.changedSections(),
+    );
+    /** What leaving the page would discard: the single-lecture form is not shown while a series is created. */
+    readonly hasUnsavedChanges = computed(() => !this.isLectureSeriesCreationMode() && (this.isChangeMadeToTitleOrPeriodSection() || !!this.unitSection()?.hasUnsavedContent()));
+    /** When the lecture details were last saved on this page, for the footer's confirmation. */
+    readonly lastSavedAt = signal<dayjs.Dayjs | undefined>(undefined);
+    /** Set when the lecture list opened this page after PDFs were dropped on it; cleared when the user dismisses it. */
+    readonly pdfUploadConfirmation = signal<PdfUploadConfirmation | undefined>(undefined);
+    readonly pdfUploadConfirmationText = computed(() => this.computePdfUploadConfirmationText());
+    readonly isPeriodValid = signal(true);
+    /** Translation key of why the lecture details cannot be saved, or undefined when they can. */
+    readonly saveBlockedReason = computed(() => this.computeSaveBlockedReason());
+    /** The lecture as last sent to the server, which becomes the saved state when the server accepts it. */
+    private sentLecture?: Lecture;
+    /** Set when this editor replaced the creation page, which may have been the first page of the browser tab. */
+    private openedAfterCreation = false;
+    /** The decision about leaving that Close or Cancel of the footer waits for; a newer attempt or leaving the page ends it. */
+    private leaveAttempt?: Subscription;
     shouldDisplayDismissWarning = true;
-    areSectionsValid = computed(() => this.computeAreSectionsValid());
     createLectureOptions = computed(() => this.computeCreateLectureOptions());
     selectedCreateLectureOption = signal<LectureCreationMode>(LectureCreationMode.SINGLE);
     isLectureSeriesCreationMode = computed(() => !this.isEditMode() && this.selectedCreateLectureOption() === LectureCreationMode.SERIES);
     isTutorialLecture = signal(false);
-    tutorialLectureTooltip = computed<string>(() => this.computeTutorialLectureTooltip());
 
     constructor() {
-        // The title/channel-name fields are signal-based models without dedicated change outputs
-        // (the explicit titleChange/channelNameChange outputs were removed to resolve the Angular 22
-        // NG1054 model/output conflict). Track the model signals directly so the "changes made to
-        // title/period section" flag stays reactive to user edits.
-        effect(() => {
-            if (this.selectedCreateLectureOption() === LectureCreationMode.SERIES) return;
-            const titleChannelNameComponent = this.titleSection()?.titleChannelNameComponent();
-            if (titleChannelNameComponent) {
-                titleChannelNameComponent.title();
-                titleChannelNameComponent.channelName();
-                this.updateIsChangesMadeToTitleOrPeriodSection();
-            }
-        });
-
+        this.destroyRef.onDestroy(() => this.leaveAttempt?.unsubscribe());
         effect(() => {
             this.updateFormStatusBar();
-        });
-
-        effect(() => {
-            if (this.unitSection() && this.isNewlyCreatedExercise) {
-                this.isNewlyCreatedExercise = false;
-                this.formStatusBar()?.scrollToHeadline('artemisApp.lecture.sections.period');
-            }
         });
 
         // Reviewed for the effect()-debt cleanup (P2.2) and intentionally kept as an effect(): it writes the
         // isTutorialLecture toggle into the (non-signal) lecture entity in place, a side effect that a computed()
         // cannot perform, so the value is present on the object that save() later sends, and refreshes the derived
-        // "changes made" flag. (The other effects above track model signals and scroll the DOM, so they are genuine
-        // side effects too.)
+        // "changes made" flag. (The effect above refreshes the section links, so it is a genuine side effect too.)
         effect(() => {
             this.lecture().isTutorialLecture = this.isTutorialLecture();
             this.updateIsChangesMadeToTitleOrPeriodSection();
@@ -154,8 +183,6 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
 
     ngOnInit() {
         this.isSaving.set(false);
-        this.processUnitMode.set(false);
-        this.isProcessing.set(false);
         this.activatedRoute.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'] as Lecture;
@@ -176,8 +203,43 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         this.isEditMode.set(!this.router.url.endsWith('/new'));
         this.lectureOnInit = deepClone(this.lecture());
 
-        const existingLectures = (this.router.currentNavigation()?.extras.state?.['existingLectures'] ?? []) as Lecture[];
-        this.existingLectures.set(existingLectures);
+        this.existingLectures.set((this.navigationState?.['existingLectures'] ?? []) as Lecture[]);
+        const detailsSavedAt = this.navigationState?.[DETAILS_SAVED_AT_STATE_KEY];
+        if (typeof detailsSavedAt === 'string') {
+            this.lastSavedAt.set(dayjs(detailsSavedAt));
+            this.openedAfterCreation = true;
+            // The router restores the state of a history entry on reload and on back or forward, where the time would be stale.
+            const { [DETAILS_SAVED_AT_STATE_KEY]: _savedAt, ...remainingState } = this.historyState();
+            this.location.replaceState(this.location.path(), '', remainingState);
+        }
+        // Read from the history entry rather than the navigation, so the confirmation stays after a reload until it is dismissed.
+        this.pdfUploadConfirmation.set(this.historyState()[PDF_UPLOAD_CONFIRMATION_STATE_KEY] as PdfUploadConfirmation | undefined);
+    }
+
+    /**
+     * Hides the confirmation and takes it out of the browser history entry, so reloading the page does not confirm the upload a second time.
+     */
+    dismissPdfUploadConfirmation(): void {
+        this.pdfUploadConfirmation.set(undefined);
+        const { [PDF_UPLOAD_CONFIRMATION_STATE_KEY]: _dismissed, ...remainingState } = this.historyState();
+        this.location.replaceState(this.location.path(), '', remainingState);
+        // The focused dismiss button is gone, so the keyboard focus continues at the details.
+        document.getElementById('artemisApp.lecture.sections.title')?.focus({ preventScroll: true });
+    }
+
+    private historyState(): Record<string, unknown> {
+        return (this.location.getState() ?? {}) as Record<string, unknown>;
+    }
+
+    /**
+     * Scrolls a section of the editor into view.
+     * @param sectionId the id of the section's heading, which is the translation key of its title
+     */
+    scrollToSection(sectionId: string): void {
+        const heading = document.getElementById(sectionId);
+        heading?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Keyboard and screen reader users continue in the section they jumped to.
+        heading?.focus({ preventScroll: true });
     }
 
     updateFormStatusBar() {
@@ -186,11 +248,11 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         updatedFormStatusSections.push(
             {
                 title: 'artemisApp.lecture.sections.title',
-                valid: this.titleSection()?.titleChannelNameComponent().isValid() ?? false,
+                valid: this.titleSection()?.isValid() ?? false,
             },
             {
                 title: 'artemisApp.lecture.sections.period',
-                valid: this.timelineStatus().valid,
+                valid: this.isPeriodValid(),
             },
         );
 
@@ -209,7 +271,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
             this.lecture().title !== this.lectureOnInit.title ||
             this.lecture().channelName !== this.lectureOnInit.channelName ||
             (this.lecture().description ?? '') !== (this.lectureOnInit.description ?? '') ||
-            this.lecture().isTutorialLecture !== this.lectureOnInit.isTutorialLecture
+            (this.lecture().isTutorialLecture ?? false) !== (this.lectureOnInit.isTutorialLecture ?? false)
         );
     }
 
@@ -217,27 +279,157 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         const { startDate, endDate } = this.lecture();
         const { startDate: startDateOnInit, endDate: endDateOnInit } = this.lectureOnInit;
 
-        const isInvalid = (date: Dayjs | undefined) => !dayjs(date).isValid();
-        const isSame = (date1: Dayjs | undefined, date2: Dayjs | undefined) => dayjs(date1).isSame(dayjs(date2));
+        // A missing and an invalid date both mean "no date". Comparing instants avoids dayjs(undefined), which is "now" and differs between two calls.
+        const instant = (date: Dayjs | undefined) => (date && dayjs(date).isValid() ? dayjs(date).valueOf() : undefined);
 
-        const emptyStartDateWasCleared = !startDateOnInit && isInvalid(startDate);
-        const emptyEndDateWasCleared = !endDateOnInit && isInvalid(endDate);
-
-        return (!isSame(startDate, startDateOnInit) && !emptyStartDateWasCleared) || (!isSame(endDate, endDateOnInit) && !emptyEndDateWasCleared);
+        return instant(startDate) !== instant(startDateOnInit) || instant(endDate) !== instant(endDateOnInit);
     }
 
     protected updateIsChangesMadeToTitleOrPeriodSection() {
-        this.isChangeMadeToTitleOrPeriodSection.set(this.isChangeMadeToTitleSection() || this.isChangeMadeToPeriodSection());
+        const changedSections: string[] = [];
+        if (this.isChangeMadeToTitleSection()) {
+            changedSections.push('artemisApp.lecture.sections.title');
+        }
+        if (this.isChangeMadeToPeriodSection()) {
+            changedSections.push('artemisApp.lecture.sections.period');
+        }
+        this.changedSections.set(changedSections);
+        this.isChangeMadeToTitleOrPeriodSection.set(changedSections.length > 0);
     }
 
     /**
-     * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the detail page if there is no previous state, and we edited an existing lecture
-     * Returns to the overview page if there is no previous state, and we created a new lecture
+     * Asks the browser to confirm a reload or closing the tab while something would be lost: unsaved lecture details, content that could
+     * not be saved, or content that is still being saved. The unsaved changes guard covers navigation within Artemis.
+     * @param event the beforeunload event
+     */
+    onBeforeUnload(event: BeforeUnloadEvent): void {
+        if (!this.shouldDisplayDismissWarning) {
+            return;
+        }
+        // Text typed just before, which the markdown editor still holds back, counts as content that is being saved.
+        this.unitSection()?.flushBufferedEdits();
+        if (this.hasUnsavedChanges() || !!this.unitSection()?.isSavingContent()) {
+            event.preventDefault();
+        }
+    }
+
+    /**
+     * Decides whether the editor can be left now. Text the content still holds back is sent first. Then the user is asked when leaving would
+     * discard changes, or while content is still being saved, which would be lost if its save fails after leaving.
+     * Emits once: true when the page may be left, false when the user keeps editing.
+     */
+    confirmLeave(): Observable<boolean> {
+        this.unitSection()?.flushBufferedEdits();
+        if (this.hasUnsavedChanges()) {
+            return this.confirmDiscardChanges();
+        }
+        if (this.unitSection()?.isSavingContent()) {
+            return this.confirmLeaveWhileSaving();
+        }
+        return of(true);
+    }
+
+    /**
+     * Asks whether to discard the unsaved changes of the lecture details and content, naming the sections that hold them.
+     * Emits once: true when the user discards the changes, false when they keep editing or close the dialog.
+     */
+    private confirmDiscardChanges(): Observable<boolean> {
+        const sections = this.unsavedSections()
+            .map((section) => this.translateService.instant(section))
+            .join(', ');
+        let message = this.translateService.instant('artemisApp.lecture.dismissChangesModal.message', { sections });
+        if (this.unitSection()?.isSavingContent()) {
+            message += ' ' + this.translateService.instant('artemisApp.lecture.dismissChangesModal.stillSaving');
+        }
+        return this.decide({
+            header: this.translateService.instant('artemisApp.lecture.dismissChangesModal.title'),
+            message,
+            acceptLabel: this.translateService.instant('entity.action.discardChanges'),
+            acceptSeverity: 'danger',
+        });
+    }
+
+    /** Asks whether to leave while content is still being saved. Keeping the user on the page is the default, also when they close the dialog. */
+    private confirmLeaveWhileSaving(): Observable<boolean> {
+        return this.decide({
+            header: this.translateService.instant('artemisApp.lecture.leaveWhileSavingModal.title'),
+            message: this.translateService.instant('artemisApp.lecture.leaveWhileSavingModal.message'),
+            acceptLabel: this.translateService.instant('artemisApp.lecture.leaveWhileSavingModal.leave'),
+            acceptSeverity: 'secondary',
+            rejectSeverity: 'primary',
+        });
+    }
+
+    /**
+     * Shows a decision about leaving. Emits once: true when the user leaves, false when they keep editing, press Escape or close the dialog.
+     * @param request the texts and styles of the dialog; Keep editing is always the button that stays
+     */
+    private decide(request: Pick<TumAetUiConfirmationRequest, 'header' | 'message' | 'acceptLabel' | 'acceptSeverity' | 'rejectSeverity'>): Observable<boolean> {
+        return new Observable<boolean>((subscriber) => {
+            const decide = (leave: boolean) => {
+                subscriber.next(leave);
+                subscriber.complete();
+            };
+            const ownRequest: TumAetUiConfirmationRequest = {
+                header: request.header,
+                message: request.message,
+                icon: faTriangleExclamation,
+                acceptLabel: request.acceptLabel,
+                acceptSeverity: request.acceptSeverity,
+                rejectLabel: this.translateService.instant('artemisApp.lecture.dismissChangesModal.keepEditing'),
+                rejectSeverity: request.rejectSeverity,
+                accept: () => decide(true),
+                reject: () => decide(false),
+            };
+            this.confirmationService.confirm(ownRequest);
+            // A navigation that is superseded before the user decides unsubscribes; its dialog closes, but not a newer one that replaced it.
+            return () => {
+                if (this.confirmationService.request(undefined) === ownRequest) {
+                    this.confirmationService.close(undefined);
+                }
+            };
+        });
+    }
+
+    /**
+     * Leaves the editor, equivalent to pressing the back button of the browser: back to where the user came from, else to the lecture's detail page
+     * when it exists, else to the lecture list. Unsaved changes and content that is still being saved are not dropped silently; the user is asked first.
      */
     previousState() {
-        this.shouldDisplayDismissWarning = false;
-        this.navigationUtilService.navigateBackWithOptional(['course-management', this.lecture().course!.id!.toString(), 'lectures'], this.lecture().id?.toString());
+        // Ask before navigating: a back navigation that the unsaved changes guard cancels would leave the editor in the history entry it left.
+        this.leaveAttempt?.unsubscribe();
+        this.leaveAttempt = this.confirmLeave().subscribe((leave) => {
+            if (leave) {
+                this.shouldDisplayDismissWarning = false;
+                this.leave();
+            }
+        });
+    }
+
+    private leave(): void {
+        const lectureListUrl = ['course-management', this.lecture().course!.id!.toString(), 'lectures'];
+        if (this.openedAfterCreation) {
+            // Going back could leave Artemis: the creation page this editor replaced may have opened the browser tab.
+            void this.router.navigate(lectureListUrl);
+            return;
+        }
+        this.navigationUtilService.navigateBackWithOptional(lectureListUrl, this.lecture().id?.toString());
+    }
+
+    /**
+     * Enter in a single-line field of the details or the period saves the details, as the form of the page did.
+     * @param event the keydown event
+     */
+    onEnterInDetails(event: Event): void {
+        const inDetails = [this.detailsSection(), this.periodSection()].some((section) => section?.nativeElement.contains(event.target as Node));
+        if (!inDetails || !isSingleLineField(event.target) || event.defaultPrevented) {
+            return;
+        }
+        if (!this.isChangeMadeToTitleOrPeriodSection() || this.saveBlockedReason() || this.isSaving()) {
+            return;
+        }
+        event.preventDefault();
+        this.save();
     }
 
     /**
@@ -245,37 +437,19 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
      * This function is called by pressing save after creating or editing a lecture
      */
     save() {
-        this.shouldDisplayDismissWarning = false;
+        // A new lecture leaves this page for its editor once it is saved, which must not ask. An existing lecture stays on this page, so leaving it while
+        // its details are saved still asks about what the save does not cover, such as content that could not be saved.
+        if (!this.isEditMode()) {
+            this.shouldDisplayDismissWarning = false;
+        }
         this.isSaving.set(true);
+        this.sentLecture = deepClone(this.lecture());
         if (this.lecture().id !== undefined) {
             this.subscribeToSaveResponse(this.lectureService.update(this.lecture()));
         } else {
             // Newly created lectures must have a channel name, which cannot be undefined
             this.subscribeToSaveResponse(this.lectureService.create(this.lecture()));
         }
-    }
-
-    proceedToUnitSplit() {
-        this.isProcessing.set(true);
-        this.save();
-    }
-
-    /**
-     * Activate or deactivate the processUnitMode mode for automatic lecture units creation.
-     * This function is called by checking Automatic unit processing checkbox when creating a new lecture
-     */
-    onSelectProcessUnit() {
-        this.processUnitMode.update((value) => !value);
-    }
-
-    onFileChange(event: Event): void {
-        const input = event.target as HTMLInputElement;
-        if (!input.files?.length) {
-            this.fileName.set('');
-            return;
-        }
-        this.file = input.files[0];
-        this.fileName.set(this.file.name);
     }
 
     /**
@@ -300,27 +474,45 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
             return;
         }
 
-        if (this.processUnitMode()) {
-            this.isProcessing.set(false);
-            this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture().id !== undefined ? 'updated' : 'created'}.`);
-            void this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'unit-management', 'attachment-video-units', 'process'], {
-                state: { file: this.file, fileName: this.fileName() },
-            });
-        } else if (this.isEditMode()) {
-            void this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id]);
-        } else {
-            // after create we stay on the edit page, as now lecture units are available (we need the lecture id to save them)
-            this.isNewlyCreatedExercise = true;
-            this.isEditMode.set(true);
-            this.lectureOnInit = deepClone(lecture);
-            this.lecture.set(lecture);
+        if (this.isEditMode()) {
+            // Saving keeps the editor open: the content below is edited on this page too, and Close leaves it. The response describes the
+            // lecture only in part (its course lacks the communication settings, for example), so the page keeps its own lecture and takes
+            // what it sent as the saved state; whatever was typed while the request ran stays unsaved.
+            this.lectureOnInit = this.sentLecture ?? deepClone(this.lecture());
+            this.lastSavedAt.set(dayjs());
             this.updateIsChangesMadeToTitleOrPeriodSection();
-
-            void this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'edit']);
-            this.shouldDisplayDismissWarning = true;
+        } else {
+            // A saved lecture can hold content, which is added in its editor. The router creates that editor anew for the edit route, so the
+            // creation page is left without asking. Replacing it in the history lets the browser's back button skip the now empty form.
+            void this.router
+                .navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'edit'], {
+                    replaceUrl: true,
+                    state: { [DETAILS_SAVED_AT_STATE_KEY]: dayjs().toISOString() },
+                })
+                .then(
+                    (navigated) => {
+                        if (!navigated) {
+                            this.keepCreatedLecture(lecture.id!);
+                        }
+                    },
+                    () => this.keepCreatedLecture(lecture.id!),
+                );
         }
 
         this.calendarService.reloadEvents();
+    }
+
+    /**
+     * Stays on the creation page when its editor could not be opened. The lecture exists now, so a second Save updates it instead of creating another one.
+     * @param lectureId the id of the created lecture
+     */
+    private keepCreatedLecture(lectureId: number): void {
+        const createdLecture = deepClone(this.lecture());
+        createdLecture.id = lectureId;
+        this.lecture.set(createdLecture);
+        this.lectureOnInit = deepClone(createdLecture);
+        this.updateIsChangesMadeToTitleOrPeriodSection();
+        this.shouldDisplayDismissWarning = true;
     }
 
     /**
@@ -329,6 +521,8 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
      */
     protected onSaveError(errorRes: HttpErrorResponse) {
         this.isSaving.set(false);
+        // The changes were not saved, so leaving the page has to ask again.
+        this.shouldDisplayDismissWarning = true;
 
         if (errorRes.error && errorRes.error.title) {
             this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
@@ -339,19 +533,33 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
 
     onLectureChange(updatedLecture: Lecture): void {
         this.lecture.set(updatedLecture);
+        this.updateIsChangesMadeToTitleOrPeriodSection();
     }
 
-    private computeAreSectionsValid(): boolean {
-        const titleSection = this.titleSection();
-        const unitSection = this.unitSection();
-        if (titleSection) {
-            if (unitSection) {
-                return titleSection.titleChannelNameComponent().isValid() && this.timelineStatus().valid && unitSection.isUnitConfigurationValid();
-            } else {
-                return titleSection.titleChannelNameComponent().isValid() && this.timelineStatus().valid;
-            }
+    private computeSaveBlockedReason(): string | undefined {
+        if (!(this.titleSection()?.isValid() ?? false)) {
+            return 'artemisApp.lecture.editFooter.detailsIncomplete';
         }
-        return false;
+        if (!this.isPeriodValid()) {
+            return 'artemisApp.lecture.editFooter.periodInvalid';
+        }
+        return undefined;
+    }
+
+    private computePdfUploadConfirmationText(): PdfUploadConfirmationText | undefined {
+        const confirmation = this.pdfUploadConfirmation();
+        if (!confirmation) {
+            return undefined;
+        }
+        const single = confirmation.fileNames.length === 1;
+        const kind = confirmation.lectureCreated ? 'created' : 'added';
+        return {
+            title: `artemisApp.lecture.pdfUpload.${kind}Title`,
+            body: `artemisApp.lecture.pdfUpload.${kind}${single ? 'Single' : 'Multiple'}`,
+            params: { title: this.lecture().title ?? '', fileName: confirmation.fileNames[0] ?? '', count: confirmation.fileNames.length },
+            release: confirmation.releaseDate ? `artemisApp.lecture.pdfUpload.${single ? 'releaseSingle' : 'releaseMultiple'}` : undefined,
+            releaseDate: confirmation.releaseDate ? dayjs(confirmation.releaseDate) : undefined,
+        };
     }
 
     private computeCreateLectureOptions(): CreateLectureOption[] {
@@ -360,10 +568,5 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
             { label: this.translateService.instant('artemisApp.lecture.creationMode.singleLectureLabel'), mode: LectureCreationMode.SINGLE },
             { label: this.translateService.instant('artemisApp.lecture.creationMode.lectureSeriesLabel'), mode: LectureCreationMode.SERIES },
         ];
-    }
-
-    private computeTutorialLectureTooltip(): string {
-        this.currentLocale();
-        return this.translateService.instant('artemisApp.lecture.tutorialLecture.tutorialLectureTooltip');
     }
 }

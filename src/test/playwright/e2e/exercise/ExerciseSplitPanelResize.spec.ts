@@ -30,25 +30,36 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
         await page.mouse.up();
     }
 
-    /** Polls the panel width until two consecutive reads agree, so the splitter has finished its initial layout. */
+    /**
+     * Polls the panel width until two consecutive reads agree, so the splitter has finished its initial layout.
+     * <p>
+     * Only a width that repeated is returned. A panel that is still being laid out reports a different width on every
+     * poll, and returning the last of those as "settled" hands an in-flight layout to the resize assertion, which then
+     * compares against a number that was never the panel's resting width.
+     */
     async function waitForSettledWidth(panel: Locator): Promise<number> {
-        let previous = -1;
+        let previous: number | undefined;
         for (let i = 0; i < 20; i++) {
             // No box means the panel is between renders, which is the opposite of settled: keep polling instead of
             // dereferencing null, which turned a panel that was still laying itself out into a TypeError.
             const box = await panel.boundingBox();
-            if (box) {
-                if (Math.abs(box.width - previous) < 1 && box.width > 0) {
+            if (box && box.width > 0) {
+                if (previous !== undefined && Math.abs(box.width - previous) < 1) {
                     return box.width;
                 }
                 previous = box.width;
+            } else {
+                // The reads have to be consecutive: keeping the width from before a render gap would let it agree with
+                // one from after the gap and pass a layout that was never stable across two polls as settled.
+                previous = undefined;
             }
             await panel.page().waitForTimeout(100);
         }
-        if (previous <= 0) {
-            throw new Error('The panel never reported a measurable width, so there is no settled layout to compare a resize against.');
-        }
-        return previous;
+        throw new Error(
+            previous === undefined
+                ? 'The panel never reported a measurable width, so there is no settled layout to compare a resize against.'
+                : `The panel width never settled, last read ${previous}px, so there is no resting layout to compare a resize against.`,
+        );
     }
 
     test('repartitions the panels by dragging the splitter gutter', async ({ login, page, courseOverview }) => {
@@ -56,10 +67,8 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
         await courseOverview.startExercise(textExercise.id!);
 
         const splitter = page.locator('jhi-resizable-panels p-splitter').first();
-        const gutter = splitter.locator('.p-splitter-gutter').first();
-        // The current PrimeNG Splitter renders its panels as `p-splitterpanel`. This class name has
-        // changed across PrimeNG majors, so revisit this selector when upgrading PrimeNG.
-        const leftPanel = splitter.locator('.p-splitterpanel').first();
+        const gutter = splitter.getByTestId('splitter-gutter').first();
+        const leftPanel = splitter.getByTestId('splitter-panel').first();
 
         await expect(gutter).toBeVisible({ timeout: 30_000 });
         await expect(leftPanel).toBeVisible();
@@ -77,9 +86,13 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
         }).toPass({ timeout: 10_000 });
         const leftAfterGrow = (await leftPanel.boundingBox())!.width;
 
-        // Drag the gutter back to the left -> the left panel shrinks again.
-        await dragGutter(page, gutter, -240);
-        const leftAfterShrink = (await leftPanel.boundingBox())!.width;
-        expect(leftAfterShrink).toBeLessThan(leftAfterGrow - 60);
+        // Drag the gutter back to the left -> the left panel shrinks again. Polled for the same reason as the grow
+        // drag above: a pointerdown can land while the splitter is re-laying out, and the gesture is then lost. The
+        // observed failure was exactly that - the panel moved about 20px instead of 240.
+        await expect(async () => {
+            await dragGutter(page, gutter, -240);
+            const width = (await leftPanel.boundingBox())!.width;
+            expect(width).toBeLessThan(leftAfterGrow - 60);
+        }).toPass({ timeout: 10_000 });
     });
 });

@@ -1,0 +1,463 @@
+package de.tum.cit.aet.artemis.atlas.service;
+
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.jspecify.annotations.Nullable;
+import org.springframework.ai.chat.model.ToolContext;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+
+/**
+ * Static utilities shared by every orchestrator tool service ({@link OrchestratorReadToolsService},
+ * {@link OrchestratorPlanningToolsService}, {@link CreatorToolsService}, {@link EditorToolsService},
+ * {@link AssignerToolsService}). Centralises {@link ToolContext} access, the per-run write-quota
+ * reservation, JSON serialisation fallbacks, taxonomy parsing, course-membership checks, and the
+ * shared input validation so the tool bodies stay focused on the mutation they actually perform.
+ * <p>
+ * All methods are null-safe and never throw — an unexpected state returns an error JSON payload that
+ * the tool body returns verbatim to the LLM, satisfying the rule that {@code @Tool} methods never
+ * propagate exceptions.
+ */
+public final class OrchestratorToolHelpers {
+
+    /**
+     * Allowed weight bands for {@code assignExerciseToCompetency}. The system prompt forbids any
+     * other value; enforced here too because LLMs occasionally output {@code 0.7} or
+     * {@code 0.30000001}. Comparison uses a small epsilon to absorb float-formatting drift.
+     */
+    static final Set<Double> ALLOWED_WEIGHTS = Set.of(1.0, 0.5, 0.3);
+
+    /**
+     * Match tolerance for {@link #ALLOWED_WEIGHTS}. The bands are at least 0.2 apart, so even a
+     * generous tolerance cannot blur two bands together; sized to absorb realistic LLM rounding
+     * (e.g. {@code 0.30000001}) without admitting actual drift like {@code 0.7}.
+     */
+    static final double WEIGHT_TOLERANCE = 1e-6;
+
+    /**
+     * Soft cap on the LLM-supplied justification text shown verbatim in the audit log. One full
+     * sentence rarely exceeds this; longer values are almost always model hallucination or
+     * copy-pasted prompt text and would bloat the per-action JSON returned to the UI.
+     */
+    static final int MAX_JUSTIFICATION_LENGTH = 500;
+
+    /**
+     * Hard cap on competency title length for LLM-driven create/edit. Matches Hibernate's default
+     * {@code varchar(255)} for unannotated String columns on {@code BaseCompetency.title}.
+     */
+    static final int MAX_TITLE_LENGTH = 255;
+
+    /**
+     * Hard cap on competency description length for LLM-driven create/edit. The {@code description}
+     * column is unbounded {@code text}; this cap prevents a hallucinating or prompt-injected model
+     * from bloating the per-action JSON and the underlying row.
+     */
+    static final int MAX_DESCRIPTION_LENGTH = 10_000;
+
+    private static final String MISSING_COURSE_CONTEXT_MESSAGE = "No course context available for this tool call.";
+
+    private OrchestratorToolHelpers() {
+    }
+
+    /**
+     * Extract the course id stashed by {@link CompetencyOrchestrationService} on the tool context.
+     *
+     * @param toolContext the Spring AI tool context (may be {@code null})
+     * @return the course id, or {@code null} if the context is missing or the entry is not numeric
+     */
+    @Nullable
+    static Long courseIdFromContext(@Nullable ToolContext toolContext) {
+        if (toolContext == null || toolContext.getContext() == null) {
+            return null;
+        }
+        Object value = toolContext.getContext().get(OrchestratorToolContextKeys.COURSE_ID_KEY);
+        return value instanceof Number number ? number.longValue() : null;
+    }
+
+    /**
+     * Resolve the per-run {@link OrchestratorToolContextKeys.AppliedActionsBuffer} from the tool context.
+     *
+     * @param toolContext the Spring AI tool context (may be {@code null})
+     * @return the buffer, or {@code null} when absent
+     */
+    static OrchestratorToolContextKeys.@Nullable AppliedActionsBuffer appliedActionsBufferFromContext(@Nullable ToolContext toolContext) {
+        if (toolContext == null || toolContext.getContext() == null) {
+            return null;
+        }
+        Object value = toolContext.getContext().get(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY);
+        return value instanceof OrchestratorToolContextKeys.AppliedActionsBuffer buffer ? buffer : null;
+    }
+
+    /**
+     * Append a successful-mutation audit entry to the per-run buffer on the tool context. The list
+     * inside the buffer is a synchronized list so concurrent tool callbacks cannot race. A missing
+     * buffer silently no-ops so the LLM tool never sees an exception.
+     *
+     * @param toolContext the Spring AI tool context
+     * @param action      the audit entry to append
+     */
+    static void appendAction(@Nullable ToolContext toolContext, AppliedActionDTO action) {
+        OrchestratorToolContextKeys.AppliedActionsBuffer buffer = appliedActionsBufferFromContext(toolContext);
+        if (buffer != null) {
+            buffer.actions().add(action);
+        }
+    }
+
+    /**
+     * Atomically reserve one slot against {@link OrchestratorToolContextKeys#MAX_WRITE_CALLS} for
+     * this run. Reservation happens before any persistence or external notification so a
+     * hallucinating model cannot exceed the cap even under parallel tool-call execution.
+     *
+     * @param toolContext the Spring AI tool context
+     * @return {@code true} if a slot was reserved (or no buffer is present), {@code false} once the cap is reached
+     */
+    static boolean tryReserveWriteSlot(@Nullable ToolContext toolContext) {
+        OrchestratorToolContextKeys.AppliedActionsBuffer buffer = appliedActionsBufferFromContext(toolContext);
+        return buffer == null || buffer.tryReserveSlot(OrchestratorToolContextKeys.MAX_WRITE_CALLS);
+    }
+
+    /** Atomically reserves one nested worker round against the request-scoped delegation cap. */
+    static boolean tryReserveDelegationSlot(@Nullable ToolContext toolContext) {
+        Object value = contextValue(toolContext, OrchestratorToolContextKeys.DELEGATION_COUNT_KEY);
+        if (!(value instanceof AtomicInteger counter)) {
+            return false;
+        }
+        while (true) {
+            int current = counter.get();
+            if (current >= OrchestratorToolContextKeys.MAX_DELEGATION_CALLS) {
+                return false;
+            }
+            if (counter.compareAndSet(current, current + 1)) {
+                return true;
+            }
+        }
+    }
+
+    /**
+     * Records one successful course-scoped read when invoked inside a worker request. A successful read is also a
+     * completed read outcome, so it counts towards both the success-only and the any-outcome evidence counters.
+     *
+     * @param toolContext worker context in which the read is recorded
+     */
+    static void markWorkerRead(@Nullable ToolContext toolContext) {
+        incrementCounter(toolContext, OrchestratorToolContextKeys.WORKER_READ_COUNT_KEY);
+        markWorkerReadOutcome(toolContext);
+    }
+
+    /** Records a completed read outcome (successful or not) without treating it as a successful read. */
+    private static void markWorkerReadOutcome(@Nullable ToolContext toolContext) {
+        incrementCounter(toolContext, OrchestratorToolContextKeys.WORKER_READ_OUTCOME_COUNT_KEY);
+    }
+
+    /**
+     * Records a failed read as a completed worker read outcome and serialises its error payload. The failure is
+     * terminal evidence for a {@code success=false} completion (the worker can report the specific blocker), but it
+     * never counts as a successful read, so it cannot back a {@code success=true} completion on its own.
+     *
+     * @param objectMapper the mapper
+     * @param message      the error message
+     * @param toolContext  worker context in which the read outcome is recorded
+     * @return the JSON error string
+     */
+    static String readErrorJson(JsonMapper objectMapper, String message, @Nullable ToolContext toolContext) {
+        markWorkerReadOutcome(toolContext);
+        return errorJson(objectMapper, message);
+    }
+
+    private static void incrementCounter(@Nullable ToolContext toolContext, String key) {
+        if (contextValue(toolContext, key) instanceof AtomicInteger counter) {
+            counter.incrementAndGet();
+        }
+    }
+
+    /** Records a completed mutation outcome without treating it as a successful write. */
+    private static void markWorkerMutationOutcome(@Nullable ToolContext toolContext) {
+        incrementCounter(toolContext, OrchestratorToolContextKeys.WORKER_MUTATION_OUTCOME_COUNT_KEY);
+    }
+
+    /** Serialises an explicit idempotent no-op and records it as worker completion evidence. */
+    static String mutationNoOpJson(JsonMapper objectMapper, String message, @Nullable ToolContext toolContext) {
+        markWorkerMutationOutcome(toolContext);
+        return toJson(objectMapper, Map.of("status", "noop", "message", message));
+    }
+
+    /** Records that a worker mutation tool returned an error outcome. */
+    static void markWorkerMutationError(@Nullable ToolContext toolContext) {
+        Object value = contextValue(toolContext, OrchestratorToolContextKeys.WORKER_MUTATION_ERROR_KEY);
+        if (value instanceof AtomicBoolean mutationError) {
+            mutationError.set(true);
+        }
+    }
+
+    /** Returns whether any mutation tool in the current worker returned an error outcome. */
+    static boolean hasWorkerMutationError(@Nullable ToolContext toolContext) {
+        Object value = contextValue(toolContext, OrchestratorToolContextKeys.WORKER_MUTATION_ERROR_KEY);
+        return value instanceof AtomicBoolean mutationError && mutationError.get();
+    }
+
+    /** Records one worker tool invocation and returns its sequence position. */
+    static long markWorkerToolActivity(@Nullable ToolContext toolContext) {
+        AtomicLong sequence = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY);
+        AtomicLong completion = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.WORKER_COMPLETION_SEQUENCE_KEY);
+        return sequence == null || completion == null ? 0L : sequence.incrementAndGet();
+    }
+
+    /** Records the sequence position of the accepted worker terminal call. */
+    static void markWorkerCompletion(@Nullable ToolContext toolContext, long completionSequence) {
+        AtomicLong marker = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.WORKER_COMPLETION_SEQUENCE_KEY);
+        if (marker != null) {
+            marker.set(completionSequence);
+        }
+    }
+
+    /** Returns whether the accepted worker completion was the final tool invocation in the round. */
+    static boolean isWorkerCompletionTerminal(@Nullable ToolContext toolContext) {
+        AtomicLong sequence = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY);
+        AtomicLong completion = atomicLongFromContext(toolContext, OrchestratorToolContextKeys.WORKER_COMPLETION_SEQUENCE_KEY);
+        return sequence != null && completion != null && completion.get() > 0L && completion.get() == sequence.get();
+    }
+
+    @Nullable
+    private static Object contextValue(@Nullable ToolContext toolContext, String key) {
+        if (toolContext == null || toolContext.getContext() == null) {
+            return null;
+        }
+        return toolContext.getContext().get(key);
+    }
+
+    @Nullable
+    private static AtomicLong atomicLongFromContext(@Nullable ToolContext toolContext, String key) {
+        Object value = contextValue(toolContext, key);
+        return value instanceof AtomicLong marker ? marker : null;
+    }
+
+    /**
+     * True if this competency belongs to the expected course (checked before every write so a
+     * malicious LLM cannot mutate competencies in another course via a valid id).
+     *
+     * @param competency the competency to check
+     * @param courseId   the expected course id
+     * @return {@code true} if the competency belongs to the course
+     */
+    static boolean belongsToCourse(CourseCompetency competency, long courseId) {
+        return competency.getCourse() != null && Objects.equals(courseId, competency.getCourse().getId());
+    }
+
+    /**
+     * Analogue of {@link #belongsToCourse(CourseCompetency, long)} for exercises. Rejects exam
+     * exercises (defense-in-depth) so a tool call cannot walk the lazy {@code exam.course} chain
+     * outside a transaction.
+     *
+     * @param exercise the exercise to check
+     * @param courseId the expected course id
+     * @return {@code true} if the exercise is a non-exam exercise owned by the course
+     */
+    static boolean exerciseBelongsToCourse(Exercise exercise, long courseId) {
+        if (exercise.isExamExercise()) {
+            return false;
+        }
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        return course != null && Objects.equals(courseId, course.getId());
+    }
+
+    /**
+     * Analogue of {@link #exerciseBelongsToCourse(Exercise, long)} for lecture units. A lecture unit
+     * is owned by a course through its lecture ({@code lectureUnit.lecture.course}); the check refuses
+     * a unit with no lecture or a lecture with no course so a tool call cannot walk a broken chain or
+     * cross course boundaries via a forged id. Callers must load the lecture (and its course) eagerly —
+     * the tool path runs with no open session.
+     *
+     * @param lectureUnit the lecture unit to check
+     * @param courseId    the expected course id
+     * @return {@code true} if the lecture unit belongs to the course
+     */
+    static boolean lectureUnitBelongsToCourse(LectureUnit lectureUnit, long courseId) {
+        Lecture lecture = lectureUnit.getLecture();
+        return lecture != null && lecture.getCourse() != null && Objects.equals(courseId, lecture.getCourse().getId());
+    }
+
+    /**
+     * Resolve the display type of an exercise, falling back to its simple class name.
+     *
+     * @param exercise the exercise
+     * @return the type label
+     */
+    static String exerciseType(Exercise exercise) {
+        return exercise.getType() != null ? exercise.getType() : exercise.getClass().getSimpleName();
+    }
+
+    /**
+     * Match {@code weight} to one of the {@link #ALLOWED_WEIGHTS} bands within
+     * {@link #WEIGHT_TOLERANCE}. Returns the canonical band value (so callers persist exactly
+     * {@code 1.0} / {@code 0.5} / {@code 0.3}, not {@code 0.30000001}) or {@code null} when the
+     * value falls outside every band.
+     *
+     * @param weight the raw weight supplied by the model
+     * @return the canonical band, or {@code null} when outside every band
+     */
+    @Nullable
+    static Double matchAllowedBand(double weight) {
+        for (Double band : ALLOWED_WEIGHTS) {
+            if (Math.abs(weight - band) < WEIGHT_TOLERANCE) {
+                return band;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Parse a Bloom taxonomy level case-insensitively.
+     *
+     * @param taxonomy the taxonomy string
+     * @return the parsed {@link CompetencyTaxonomy}
+     * @throws IllegalArgumentException if the value is not a valid taxonomy level
+     */
+    static CompetencyTaxonomy parseTaxonomyOrThrow(String taxonomy) {
+        try {
+            return CompetencyTaxonomy.valueOf(taxonomy.trim().toUpperCase(Locale.ROOT));
+        }
+        catch (Exception ex) {
+            throw new IllegalArgumentException("taxonomy must be one of REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE.");
+        }
+    }
+
+    /**
+     * Null-safe blank check.
+     *
+     * @param value the string to test (may be {@code null})
+     * @return {@code true} if {@code null} or blank
+     */
+    static boolean isBlank(@Nullable String value) {
+        return value == null || value.isBlank();
+    }
+
+    /**
+     * Format a weight with two decimals for human-readable audit detail strings.
+     *
+     * @param weight the weight
+     * @return the formatted weight
+     */
+    static String formatWeight(double weight) {
+        return String.format(Locale.ROOT, "%.2f", weight);
+    }
+
+    /**
+     * Validate the LLM-supplied audit-log justification. Returns {@code null} on success or a
+     * pre-serialized JSON error to return to the model. Centralized so all five write tools share
+     * the exact same wording and cap.
+     *
+     * @param objectMapper  the mapper used to serialise the error payload
+     * @param justification the justification supplied by the model
+     * @param toolContext   worker context in which mutation failures are recorded
+     * @return a JSON error string, or {@code null} when valid
+     */
+    @Nullable
+    static String validateJustification(JsonMapper objectMapper, @Nullable String justification, @Nullable ToolContext toolContext) {
+        if (isBlank(justification)) {
+            return mutationErrorJson(objectMapper, "justification is required.", toolContext);
+        }
+        if (justification.length() > MAX_JUSTIFICATION_LENGTH) {
+            return mutationErrorJson(objectMapper, "justification must be at most " + MAX_JUSTIFICATION_LENGTH + " characters.", toolContext);
+        }
+        return null;
+    }
+
+    /**
+     * Pre-serialized error returned when the write-quota cap is reached.
+     *
+     * @param objectMapper the mapper used to serialise the payload
+     * @param toolContext  worker context in which the failure is recorded
+     * @return the JSON error string
+     */
+    static String writeQuotaError(JsonMapper objectMapper, @Nullable ToolContext toolContext) {
+        return mutationErrorJson(objectMapper, "Write tool call cap (" + OrchestratorToolContextKeys.MAX_WRITE_CALLS + ") reached for this run; finalize and return.", toolContext);
+    }
+
+    /**
+     * Pre-serialized error returned when no course context is available.
+     *
+     * @param objectMapper the mapper used to serialise the payload
+     * @return the JSON error string
+     */
+    static String missingCourseContextError(JsonMapper objectMapper) {
+        return errorJson(objectMapper, MISSING_COURSE_CONTEXT_MESSAGE);
+    }
+
+    /**
+     * Pre-serialized missing-context error for read tools; records a failed worker read outcome.
+     *
+     * @param objectMapper the mapper used to serialise the payload
+     * @param toolContext  worker context in which the read outcome is recorded
+     * @return the JSON error string
+     */
+    static String missingCourseContextReadError(JsonMapper objectMapper, @Nullable ToolContext toolContext) {
+        return readErrorJson(objectMapper, MISSING_COURSE_CONTEXT_MESSAGE, toolContext);
+    }
+
+    /**
+     * Pre-serialized missing-context error for mutation tools.
+     *
+     * @param objectMapper the mapper used to serialise the payload
+     * @param toolContext  worker context in which the failure is recorded
+     * @return the JSON error string
+     */
+    static String missingCourseContextError(JsonMapper objectMapper, @Nullable ToolContext toolContext) {
+        return mutationErrorJson(objectMapper, MISSING_COURSE_CONTEXT_MESSAGE, toolContext);
+    }
+
+    /**
+     * Serialise a single-field error payload to JSON.
+     *
+     * @param objectMapper the mapper
+     * @param message      the error message
+     * @return the JSON error string
+     */
+    static String errorJson(JsonMapper objectMapper, String message) {
+        return toJson(objectMapper, Map.of("error", message));
+    }
+
+    /**
+     * Record a mutation failure and serialise its error payload.
+     *
+     * @param objectMapper the mapper
+     * @param message      the error message
+     * @param toolContext  worker context in which the failure is recorded
+     * @return the JSON error string
+     */
+    static String mutationErrorJson(JsonMapper objectMapper, String message, @Nullable ToolContext toolContext) {
+        markWorkerMutationOutcome(toolContext);
+        markWorkerMutationError(toolContext);
+        return errorJson(objectMapper, message);
+    }
+
+    /**
+     * Serialise an object to JSON, falling back to a fixed error payload if serialisation fails.
+     *
+     * @param objectMapper the mapper
+     * @param object       the object to serialise
+     * @return the JSON string
+     */
+    static String toJson(JsonMapper objectMapper, Object object) {
+        try {
+            return objectMapper.writeValueAsString(object);
+        }
+        catch (JacksonException ex) {
+            return "{\"error\": \"Failed to serialize response\"}";
+        }
+    }
+}

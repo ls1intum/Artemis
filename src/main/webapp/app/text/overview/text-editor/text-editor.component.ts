@@ -23,7 +23,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { getFirstResultWithComplaint, getLatestSubmissionResult, getNewestResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -201,7 +201,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 const changedParticipation = updatedParticipation as StudentParticipation;
                 const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const oldResults = this.participation().submissions?.flatMap((submission) => submission.results ?? []) || [];
-                const lastResult = results?.last();
+                // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
+                const lastResult = getNewestResult(results);
                 const isNewAthenaResult =
                     !!results &&
                     ((results?.length || 0) > (oldResults.length || 0) || lastResult?.completionDate === undefined) &&

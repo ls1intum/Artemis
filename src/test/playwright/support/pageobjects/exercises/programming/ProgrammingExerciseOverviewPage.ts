@@ -1,5 +1,5 @@
 import { expect, Locator, Page } from '@playwright/test';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
 import { UserCredentials } from '../../../users';
 import { Commands } from '../../../commands';
 import { CourseOverviewPage } from '../../course/CourseOverviewPage';
@@ -18,7 +18,7 @@ export class ProgrammingExerciseOverviewPage {
     }
 
     async checkResultScore(expectedResult: string) {
-        const resultScore = this.page.locator('#exercise-headers-information').locator('#result-score');
+        const resultScore = this.page.locator('[data-testid="exercise-status"]').locator('#result-score');
         // Use > semantics: accept any non-zero score rather than an exact string match,
         // consistent with verifyResultScore. A '0%' expectation is matched literally.
         const textPattern = ProgrammingExerciseOverviewPage.buildResultScorePattern(expectedResult);
@@ -34,7 +34,7 @@ export class ProgrammingExerciseOverviewPage {
      */
     async checkResultScoreAfterBuild(courseId: number, exerciseId: number, expectedResult: string) {
         const url = `/courses/${courseId}/exercises/${exerciseId}`;
-        const resultScore = this.page.locator('#exercise-headers-information').locator('#result-score');
+        const resultScore = this.page.locator('[data-testid="exercise-status"]').locator('#result-score');
         // Use > semantics: accept any non-zero score rather than an exact string match,
         // consistent with verifyResultScore. A '0%' expectation is matched literally.
         const textPattern = ProgrammingExerciseOverviewPage.buildResultScorePattern(expectedResult);
@@ -183,6 +183,10 @@ export class ProgrammingExerciseOverviewPage {
             await this.page.locator('.popover-body').waitFor({ state: 'visible' });
             await expect(button).toBeEnabled({ timeout: 15000 });
         }
+        // The copy button is enabled before the URL next to it has switched, so copying right away can put the previous
+        // plain HTTPS URL on the clipboard and the caller clones without the token it asked for. Wait for the displayed
+        // URL to be the tokenized one first; it is the same source the button copies from.
+        await this.getCloneUrl(GitCloneMethod.httpsWithToken);
         await button.click();
         return await this.page.evaluate(async () => {
             return await navigator.clipboard.readText();
@@ -208,9 +212,10 @@ export class ProgrammingExerciseOverviewPage {
      * verifies score is 0. Exact percentages can vary between CI environments due to
      * sanitizer test behavior (e.g., TestOutputLSan fails on ARM64 Docker).
      */
-    static verifyResultScore(participation: StudentParticipation, expectedResult: string) {
+    static verifyResultScore(participation: StudentParticipationDTO, expectedResult: string) {
         const submissions = participation.submissions ?? [];
-        const latestResult = submissions.flatMap((s) => s.results ?? []).sort((a, b) => (b.id ?? 0) - (a.id ?? 0))[0];
+        const allResults = submissions.flatMap((submission) => submission.results ?? []).sort((a, b) => b.id - a.id);
+        const latestResult = allResults[0];
         if (!latestResult) {
             throw new Error(`No result found in participation ${participation.id}`);
         }

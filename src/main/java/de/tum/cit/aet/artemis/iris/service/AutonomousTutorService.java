@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.iris.service;
 
+import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.COURSE_WIDE_POSTS;
+import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.USER_CONVERSATION_POSTS;
+
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -23,7 +26,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
@@ -64,14 +67,6 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 public class AutonomousTutorService {
 
     private static final Logger log = LoggerFactory.getLogger(AutonomousTutorService.class);
-
-    private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/communication/";
-
-    // Legacy STOMP destination kept in parallel during the migration to /topic/communication/...
-    // TODO: Remove once external clients have migrated. Target sunset: 2026-09-30 — keep in sync with
-    // LegacyApiPathDeprecationInterceptor.SUNSET_DATE.
-    @Deprecated(forRemoval = true, since = "9.3")
-    private static final String LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
     /** Iris replies at or above this confidence are auto-verified and visible to students. */
     public static final double AUTO_VERIFY_CONFIDENCE_THRESHOLD = 0.85;
@@ -264,7 +259,6 @@ public class AutonomousTutorService {
         }).collect(Collectors.toSet());
     }
 
-    @SuppressWarnings("deprecation")
     private void broadcastAnswer(AnswerPost answerPost, Post originalPost, Conversation conversation, Long courseId,
             Set<ConversationNotificationRecipientSummary> recipientSummaries, boolean broadcastToStudents) {
         // Assemble the parent post with the new answer
@@ -280,18 +274,17 @@ public class AutonomousTutorService {
         // Build a cycle-free wire payload — same reason as PostingService.broadcastForPost: sending the raw Post
         // entity over STOMP previously walked the cyclic reactions → user → User chain that fires Jackson's
         // DeserializerCache race on the receive side.
-        PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(broadcastPost, MetisCrudAction.UPDATE);
-        String coursePathSuffix = "courses/" + courseId;
+        PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(broadcastPost, CommunicationCrudAction.UPDATE);
 
-        if (broadcastToStudents && conversation instanceof Channel channel && channel.getIsCourseWide()) {
-            websocketMessagingService.sendMessage(METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
-            // Mirror to the legacy destination so older subscribers still receive updates during the migration window.
-            websocketMessagingService.sendMessage(LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
+        // Students must not see posts of a channel whose exercise or exam is not visible to them yet.
+        boolean reachesStudents = broadcastToStudents && (!(conversation instanceof Channel visibleChannel) || visibleChannel.isVisibleToStudents());
+        if (reachesStudents && conversation instanceof Channel channel && channel.getIsCourseWide()) {
+            websocketMessagingService.sendMessage(COURSE_WIDE_POSTS.at(courseId), broadcastPayload);
             return;
         }
 
-        // For private channels OR unverified Iris replies: send per-user, optionally skipping students
-        recipientSummaries.stream().filter(recipient -> broadcastToStudents || recipient.isAtLeastTutorInCourse())
-                .forEach(recipient -> websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations", broadcastPayload));
+        // For private channels, hidden channels OR unverified Iris replies: send per-user, optionally skipping students
+        recipientSummaries.stream().filter(recipient -> reachesStudents || recipient.isAtLeastTutorInCourse())
+                .forEach(recipient -> websocketMessagingService.sendMessage(USER_CONVERSATION_POSTS.at(recipient.userId()), broadcastPayload));
     }
 }

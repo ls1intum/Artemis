@@ -1,18 +1,41 @@
 package de.tum.cit.aet.artemis.atlas.dto;
 
 import java.util.List;
-import java.util.Objects;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+/**
+ * Outcome of an Atlas orchestrator run.
+ * <p>
+ * {@code processedCount} is server-internal bookkeeping and never serialized: the number of changed learning
+ * objects that actually reached the orchestrator prompt. It is {@code null} when no prompt was built (for
+ * example a preparation failure or a no-op), in which case the automatic scheduler falls back to the size of
+ * the claimed batch. Units dropped before the prompt (blank learning text, failed extraction) are excluded, so
+ * the completion toast never reports them as processed.
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyOrchestrationResultDTO(Status status, String summary, List<AppliedActionDTO> appliedActions, @Nullable FailureReason failureReason) {
+public record CompetencyOrchestrationResultDTO(@NonNull Status status, @NonNull String summary, List<AppliedActionDTO> appliedActions, @Nullable FailureReason failureReason,
+        @JsonIgnore @Nullable Integer processedCount) {
+
+    public CompetencyOrchestrationResultDTO(@NonNull Status status, @NonNull String summary, List<AppliedActionDTO> appliedActions, @Nullable FailureReason failureReason) {
+        this(status, summary, appliedActions, failureReason, null);
+    }
+
+    /**
+     * Returns a copy of this result that records how many changed learning objects reached the orchestrator prompt.
+     *
+     * @param count the number of exercises and lecture units rendered into the prompt
+     * @return a copy carrying the processed count
+     */
+    public CompetencyOrchestrationResultDTO withProcessedCount(int count) {
+        return new CompetencyOrchestrationResultDTO(status, summary, appliedActions, failureReason, count);
+    }
 
     public CompetencyOrchestrationResultDTO {
-        Objects.requireNonNull(status, "status must not be null");
-        Objects.requireNonNull(summary, "summary must not be null");
         appliedActions = appliedActions == null ? List.of() : List.copyOf(appliedActions);
         if (status == Status.SUCCESS && summary.isBlank()) {
             throw new IllegalArgumentException("summary must not be blank when status is SUCCESS");
@@ -38,6 +61,10 @@ public record CompetencyOrchestrationResultDTO(Status status, String summary, Li
         NO_CHAT_CLIENT,
         /** The LLM call itself threw — surfaced as 502. */
         LLM_ERROR,
+        /** The shared tool-call budget was exhausted; terminal, not automatically retried. */
+        TOOL_CALL_LIMIT_EXCEEDED,
+        /** Missing or unverified terminal completion; retained for instructor review without automatic replay. */
+        INCOMPLETE_ORCHESTRATION,
         /**
          * A non-LLM step in the orchestrator failed (content extraction, repository lookup,
          * template rendering, tool-index assembly) — surfaced as 500.
@@ -49,9 +76,19 @@ public record CompetencyOrchestrationResultDTO(Status status, String summary, Li
          * underlying course's competencies, which is never what the instructor wants —
          * surfaced as 422.
          */
-        UNSUPPORTED_EXERCISE
+        UNSUPPORTED_EXERCISE,
+        /**
+         * The requested learning object cannot be orchestrated, for example an exercise-backed,
+         * missing, or non-course lecture unit — surfaced as 422.
+         */
+        UNSUPPORTED_LEARNING_OBJECT
     }
 
+    /**
+     * The run completed and the orchestrator verified its terminal outcome. An empty
+     * {@code appliedActions} list means the run inspected the changed content and found nothing to
+     * change; unlike {@link #noOp(String)}, the claimed exercises were processed.
+     */
     public static CompetencyOrchestrationResultDTO success(String summary, List<AppliedActionDTO> appliedActions) {
         return new CompetencyOrchestrationResultDTO(Status.SUCCESS, summary, appliedActions, null);
     }
@@ -73,9 +110,8 @@ public record CompetencyOrchestrationResultDTO(Status status, String summary, Li
     }
 
     /**
-     * The run completed without anything to do: every claimed exercise resolved to nothing
-     * applicable (deleted, exam, or owned by another course). No competencies were touched, so the
-     * caller must not report the claimed ids as successfully processed.
+     * The run completed without anything to do: every claimed learning object resolved to nothing
+     * applicable or extractable. No competencies were touched.
      */
     public static CompetencyOrchestrationResultDTO noOp(String summary) {
         return new CompetencyOrchestrationResultDTO(Status.NO_OP, summary, List.of(), null);

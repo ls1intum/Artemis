@@ -49,15 +49,37 @@ public interface ParticipationVCSAccessTokenRepository extends ArtemisJpaReposit
             """)
     Optional<ParticipationVCSAccessToken> findByUserIdAndParticipationId(@Param("userId") long userId, @Param("participationId") long participationId);
 
+    /**
+     * Reads only the token of a participation-scoped access token.
+     * <p>
+     * The entity variant above fetches the participation and the user alongside, each of which drags its own eager
+     * associations, in order to compare a single string. Git authentication does exactly that comparison and needs
+     * nothing else, on every request.
+     *
+     * @param userId          the id of the user the token belongs to
+     * @param participationId the id of the participation the token is scoped to
+     * @return the token, if one exists
+     */
+    @Query("""
+            SELECT token.vcsAccessToken
+            FROM ParticipationVCSAccessToken token
+            WHERE token.user.id = :userId
+                AND token.participation.id = :participationId
+            """)
+    Optional<String> findTokenByUserIdAndParticipationId(@Param("userId") long userId, @Param("participationId") long participationId);
+
     default ParticipationVCSAccessToken findByUserIdAndParticipationIdOrElseThrow(long userId, long participationId) {
         return getValueElseThrow(findByUserIdAndParticipationId(userId, participationId));
     }
 
-    default void findByUserIdAndParticipationIdAndThrowIfExists(long userId, long participationId) {
-        findByUserIdAndParticipationId(userId, participationId).ifPresent(token -> {
-            throw new IllegalStateException();
-        });
-    }
+    /**
+     * Checks whether the given user already owns a token for the given participation. Used to reject a second creation request without loading the token itself.
+     *
+     * @param userId          the id of the owning user
+     * @param participationId the id of the participation the token belongs to
+     * @return true if such a token exists
+     */
+    boolean existsByUserIdAndParticipationId(long userId, long participationId);
 
     /**
      * Deletes the participation token with the given id, but only if it belongs to the given user. Used by the user-settings revoke endpoint so a user can never revoke another

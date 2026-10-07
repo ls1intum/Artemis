@@ -22,6 +22,7 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { provideHttpClient } from '@angular/common/http';
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
@@ -125,6 +126,20 @@ describe('ProgrammingExercise Service', () => {
             req.flush(returnedFromService);
         });
 
+        it('should persist Hyperion checklist link provenance after creating an exercise', () => {
+            const course = Object.assign(new Course(), { id: 7 });
+            const exercise = new ProgrammingExercise(course, undefined);
+            const competency = Object.assign(new Competency(), { id: 5 });
+            exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 1, true)];
+            const createdExercise = Object.assign(new ProgrammingExercise(course, undefined), { id: 11 });
+
+            service.automaticSetup(exercise).subscribe((response) => expect(response.body).toEqual(createdExercise));
+
+            const request = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/setup?emptyRepositories=false&hyperionCompetencyId=5` });
+            expect(request.request.body.competencyLinks).toHaveLength(1);
+            request.flush(createdExercise);
+        });
+
         it('should reconnect template submission with result', () => {
             const templateParticipation = new TemplateProgrammingExerciseParticipation();
             const tempSubmission = new ProgrammingSubmission();
@@ -214,18 +229,40 @@ describe('ProgrammingExercise Service', () => {
             req.flush(returnedFromService);
         });
 
-        it('should include assessmentType when updating', () => {
+        it('should include assessmentType and plagiarismDetectionConfig when updating', () => {
             const exercise = new ProgrammingExercise(new Course(), undefined);
             exercise.id = 1;
             exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+            exercise.plagiarismDetectionConfig = {
+                continuousPlagiarismControlEnabled: true,
+                continuousPlagiarismControlPostDueDateChecksEnabled: false,
+                continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 14,
+                similarityThreshold: 42,
+                minimumScore: 7,
+                minimumSize: 13,
+            };
 
             service.update(exercise).subscribe();
 
             const req = httpMock.expectOne({ method: 'PUT' });
             // Check that dto assessmentType field has correct value
             expect(req.request.body.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
+            expect(req.request.body.plagiarismDetectionConfig).toEqual(exercise.plagiarismDetectionConfig);
 
             req.flush(exercise);
+        });
+
+        it('should persist Hyperion checklist link provenance after updating', () => {
+            const exercise = new ProgrammingExercise(Object.assign(new Course(), { id: 7 }), undefined);
+            exercise.id = 11;
+            const competency = Object.assign(new Competency(), { id: 5 });
+            exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 1, true)];
+
+            service.update(exercise).subscribe((response) => expect(response.body).toEqual(exercise));
+
+            const request = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}?hyperionCompetencyId=5` });
+            expect(request.request.body.competencyLinks).toEqual([{ competency: { id: 5 }, weight: 1 }]);
+            request.flush(exercise);
         });
 
         it('should update the Timeline of a ProgrammingExercise', () => {
@@ -298,6 +335,19 @@ describe('ProgrammingExercise Service', () => {
         const url = `api/programming/courses/1/programming-exercises/import-from-file`;
         const req = httpMock.expectOne({ method: 'POST', url: url });
         req.flush(request);
+    });
+
+    it('should persist Hyperion checklist link provenance when importing from file', () => {
+        const course = Object.assign(new Course(), { id: 1 });
+        const exercise = new ProgrammingExercise(course, undefined);
+        exercise.zipFileForImport = new File([''], 'dummyFile');
+        const competency = Object.assign(new Competency(), { id: 5 });
+        exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 1, true)];
+
+        service.importFromFile(exercise, course.id!).subscribe();
+
+        const request = httpMock.expectOne({ method: 'POST', url: `api/programming/courses/1/programming-exercises/import-from-file?hyperionCompetencyId=5` });
+        request.flush(exercise);
     });
 
     it('should generate Structure Oracle', () => {
@@ -431,6 +481,20 @@ describe('ProgrammingExercise Service', () => {
         req.flush(expected);
     });
 
+    it('should persist Hyperion checklist link provenance after reevaluating an exercise', () => {
+        const course = Object.assign(new Course(), { id: 7 });
+        const exercise = new ProgrammingExercise(course, undefined);
+        exercise.id = 123;
+        const competency = Object.assign(new Competency(), { id: 5 });
+        exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 1, true)];
+
+        service.reevaluateAndUpdate(exercise).subscribe((response) => expect(response.body).toEqual(exercise));
+
+        const request = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/${exercise.id}/re-evaluate?hyperionCompetencyId=5` });
+        expect(request.request.body.competencyLinks).toEqual([{ competency: { id: 5 }, weight: 1 }]);
+        request.flush(exercise);
+    });
+
     it('should get theia config', () => {
         const exerciseId = 123;
         const expectedConfig = { dockerImage: 'theia:latest' };
@@ -469,6 +533,62 @@ describe('ProgrammingExercise Service', () => {
         expect(convertedExercise).toBeDefined();
         expect(convertedExercise.templateParticipation).toBeDefined();
         expect(convertedExercise.solutionParticipation).toBeDefined();
+    });
+
+    it('should strip the competency-link back-reference so the payload is not circular', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        const competency = new Competency();
+        competency.id = 1;
+        // The link back-references the exercise itself, forming a real cycle.
+        const link = new CompetencyExerciseLink(competency, exercise, 42);
+        exercise.competencyLinks = [link];
+
+        // A circular structure would make JSON.stringify throw before the request is even sent.
+        expect(() => JSON.stringify(exercise.competencyLinks)).toThrow(/circular/i);
+
+        const convertedExercise = service.convertDataFromClient(exercise);
+
+        expect(convertedExercise.competencyLinks).toHaveLength(1);
+        const convertedLink = convertedExercise.competencyLinks![0];
+        // convertDataFromClient deep-clones the exercise, so the competency is an equal copy, not the same reference.
+        expect(convertedLink.competency).toEqual(competency);
+        expect(convertedLink.weight).toBe(42);
+        expect(convertedLink).not.toHaveProperty('exercise');
+        expect(() => JSON.stringify(convertedExercise)).not.toThrow();
+    });
+
+    it('should send a serializable competency link in the automaticSetup request body', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        const competency = new Competency();
+        competency.id = 1;
+        exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 42)];
+
+        service.automaticSetup(exercise).subscribe();
+
+        const req = httpMock.expectOne({ method: 'POST' });
+        const sentLinks = (req.request.body as ProgrammingExercise).competencyLinks!;
+        expect(sentLinks).toHaveLength(1);
+        expect(sentLinks[0]).not.toHaveProperty('exercise');
+        // The real bug: HttpXhrBackend calls JSON.stringify on the body before sending it.
+        expect(() => JSON.stringify(req.request.body)).not.toThrow();
+        req.flush({});
+    });
+
+    it('should send a serializable competency link in the importExercise request body', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 7;
+        const competency = new Competency();
+        competency.id = 1;
+        exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 42)];
+
+        service.importExercise(exercise, { recreateBuildPlans: false, setTestCaseVisibilityToAfterDueDate: false }).subscribe();
+
+        const req = httpMock.expectOne((request) => request.method === 'POST' && request.url === `${resourceUrl}/import?sourceExerciseId=7`);
+        const sentLinks = (req.request.body as ProgrammingExercise).competencyLinks!;
+        expect(sentLinks).toHaveLength(1);
+        expect(sentLinks[0]).not.toHaveProperty('exercise');
+        expect(() => JSON.stringify(req.request.body)).not.toThrow();
+        req.flush({});
     });
 
     it('should preview automatic after due date with a date response', () => {

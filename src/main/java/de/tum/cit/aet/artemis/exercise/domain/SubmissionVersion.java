@@ -5,6 +5,7 @@ import java.time.Instant;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -16,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "submission_version")
@@ -24,6 +26,8 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 public class SubmissionVersion extends DomainObject {
 
     @ManyToOne
+    @JoinColumn(nullable = false)
+    @Parent
     private Submission submission;
 
     @ManyToOne

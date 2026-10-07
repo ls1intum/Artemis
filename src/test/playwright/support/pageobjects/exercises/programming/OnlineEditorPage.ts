@@ -25,7 +25,7 @@ export class OnlineEditorPage {
     }
 
     findFileBrowser(exerciseID: number) {
-        return getExercise(this.page, exerciseID).locator('#cardFiles');
+        return getExercise(this.page, exerciseID).locator('[data-testid="cardFiles"]');
     }
 
     async typeSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission): Promise<WrittenFile[]> {
@@ -55,15 +55,15 @@ export class OnlineEditorPage {
 
     async deleteFile(exerciseID: number, name: string) {
         const responsePromise = this.page.waitForResponse(`${BASE_API}/programming/participations/*/repository/**`);
-        await this.findFile(exerciseID, name).locator('#file-browser-file-delete').click();
-        await this.page.locator('#delete-file').click();
+        await this.findFile(exerciseID, name).locator('[data-testid="file-browser-file-delete"]').click();
+        await this.page.locator('[data-testid="delete-file"]').click();
         const response = await responsePromise;
         expect(response.status()).toBe(200);
         await expect(this.findFile(exerciseID, name)).not.toBeVisible();
     }
 
     private findFile(exerciseID: number, name: string) {
-        return this.findFileBrowser(exerciseID).locator('#file-browser-file', { hasText: name });
+        return this.findFileBrowser(exerciseID).locator('[data-testid="file-browser-file"]', { hasText: name });
     }
 
     async openFileWithName(exerciseID: number, name: string) {
@@ -80,10 +80,10 @@ export class OnlineEditorPage {
      * in the exam without risking that the commit lands too late and an empty repository gets built.
      */
     async submit(exerciseID: number, waitForResult = true) {
-        const submitButton = this.page.locator('#submit-exercise, #submit-exercise-popover, #submit_button').first();
+        const submitButton = this.page.locator('#submit-exercise, [data-testid="submit-exercise-popover"], #submit_button').first();
         if (waitForResult) {
             await submitButton.click();
-            await expect(this.page.locator('#exercise-header #result-score, jhi-code-editor-container #result-score').first()).toBeVisible({ timeout: 200000 });
+            await expect(this.latestResultScore()).toBeVisible({ timeout: 200000 });
             return;
         }
         // Wait for the commit request triggered by the submit click to complete before returning. Tolerant of
@@ -98,17 +98,25 @@ export class OnlineEditorPage {
     }
 
     async submitPractice(exerciseID: number) {
-        await this.page.locator('#submit-exercise, #submit-exercise-popover, #submit_button').first().click();
-        await expect(this.page.locator('#exercise-header #result-score, jhi-code-editor-container #result-score').first()).toBeVisible({ timeout: 200000 });
+        await this.page.locator('#submit-exercise, [data-testid="submit-exercise-popover"], #submit_button').first().click();
+        await expect(this.latestResultScore()).toBeVisible({ timeout: 200000 });
+    }
+
+    /**
+     * The score of the build result shown next to the editor: in the exercise header of a course, in the toolbar of the editor, or, in an exam,
+     * in the title row of the page, which takes the result over from the toolbar where there is room for it.
+     */
+    private latestResultScore() {
+        return this.page.locator('#exercise-header #result-score, jhi-code-editor-container #result-score, [data-testid="exam-programming-result"] #result-score').first();
     }
 
     async createFileInRootFolder(exerciseID: number, fileName: string): Promise<string> {
         await getExercise(this.page, exerciseID).locator('[id="create_file_root"]').click();
         await this.page.waitForTimeout(500);
         const responsePromise = this.page.waitForResponse(`${BASE_API}/programming/participations/*/repository/file?file=${fileName}`);
-        await getExercise(this.page, exerciseID).locator('#file-browser-create-node').pressSequentially(fileName);
+        await getExercise(this.page, exerciseID).locator('[data-testid="file-browser-create-node"]').pressSequentially(fileName);
         await this.page.waitForTimeout(500);
-        await getExercise(this.page, exerciseID).locator('#file-browser-create-node').press('Enter');
+        await getExercise(this.page, exerciseID).locator('[data-testid="file-browser-create-node"]').press('Enter');
         const response = await responsePromise;
         expect(response.status()).toBe(200);
         this.rememberParticipationId(response.url());
@@ -120,12 +128,12 @@ export class OnlineEditorPage {
     async createFileInRootPackage(exerciseID: number, fileName: string, packageName: string): Promise<string> {
         const packagePath = packageName.replace(/\./g, '/');
         const filePath = `src/${packagePath}/${fileName}`;
-        await getExercise(this.page, exerciseID).locator('#file-browser-folder-create-file').nth(2).click();
+        await getExercise(this.page, exerciseID).locator('[data-testid="file-browser-folder-create-file"]').nth(2).click();
         await this.page.waitForTimeout(500);
         const responsePromise = this.page.waitForResponse(`${BASE_API}/programming/participations/*/repository/file?file=${filePath}`);
-        await getExercise(this.page, exerciseID).locator('#file-browser-create-node').pressSequentially(fileName);
+        await getExercise(this.page, exerciseID).locator('[data-testid="file-browser-create-node"]').pressSequentially(fileName);
         await this.page.waitForTimeout(500);
-        await getExercise(this.page, exerciseID).locator('#file-browser-create-node').press('Enter');
+        await getExercise(this.page, exerciseID).locator('[data-testid="file-browser-create-node"]').press('Enter');
         const response = await responsePromise;
         expect(response.status()).toBe(200);
         this.rememberParticipationId(response.url());
@@ -149,7 +157,7 @@ export class OnlineEditorPage {
     }
 
     async getBuildOutput() {
-        return this.page.locator('#cardBuildOutput');
+        return this.page.locator('[data-testid="cardBuildOutput"]');
     }
 
     async toggleCompressFileTree(exerciseID: number) {
@@ -224,7 +232,7 @@ function normalizeSource(source: string): string {
  *
  * @param files An array of containers, which contain the file path of the changed file as well as its name.
  */
-export class ProgrammingExerciseSubmission {
+export interface ProgrammingExerciseSubmission {
     deleteFiles: string[];
     createFilesInRootFolder: boolean;
     files: ProgrammingExerciseFile[];
@@ -232,7 +240,7 @@ export class ProgrammingExerciseSubmission {
     packageName?: string;
 }
 
-class ProgrammingExerciseFile {
+interface ProgrammingExerciseFile {
     name: string;
     path: string;
 }

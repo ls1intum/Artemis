@@ -6,8 +6,14 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,11 +34,14 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.course.domain.CourseRequest;
 import de.tum.cit.aet.artemis.course.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestCreateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseRequestInstructorCourseDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseRequestInstructorCourseRowDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestRequesterDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRequestRepository;
@@ -45,6 +54,9 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingServ
 public class CourseRequestService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseRequestService.class);
+
+    /** Everything that is not a digit, removed to read the number out of a semester such as {@code WS24/25}. */
+    private static final Pattern NON_DIGIT = Pattern.compile("[^0-9]");
 
     private static final int MAX_TITLE_LENGTH = 255;
 
@@ -85,6 +97,7 @@ public class CourseRequestService {
     public CourseRequestDTO createCourseRequest(CourseRequestCreateDTO createDTO) {
         var requester = userRepository.getUserWithAuthorities();
         validateShortNameUniqueness(createDTO.shortName(), createDTO.title(), createDTO.semester(), null);
+        boolean gradeRelevant = resolveGradeRelevant(createDTO);
 
         if (createDTO.title().length() > MAX_TITLE_LENGTH) {
             throw new BadRequestAlertException("The course title is too long", CourseRequest.ENTITY_NAME, "courseRequestTitleTooLong");
@@ -92,10 +105,10 @@ public class CourseRequestService {
 
         Course validationCourse = new Course();
         validationCourse.setShortName(createDTO.shortName());
-        validationCourse.validateShortName();
+        CourseValidator.validateShortName(validationCourse);
         validationCourse.setStartDate(createDTO.startDate());
         validationCourse.setEndDate(createDTO.endDate());
-        validationCourse.validateStartAndEndDate();
+        CourseValidator.validateStartAndEndDate(validationCourse);
 
         CourseRequest courseRequest = new CourseRequest();
         courseRequest.setTitle(createDTO.title());
@@ -104,6 +117,7 @@ public class CourseRequestService {
         courseRequest.setStartDate(createDTO.startDate());
         courseRequest.setEndDate(createDTO.endDate());
         courseRequest.setTestCourse(createDTO.testCourse());
+        courseRequest.setGradeRelevant(gradeRelevant);
         courseRequest.setReason(createDTO.reason());
         courseRequest.setRequester(requester);
         courseRequest.setCreatedDate(ZonedDateTime.now());
@@ -191,6 +205,7 @@ public class CourseRequestService {
         }
 
         validateShortNameUniqueness(updateDTO.shortName(), updateDTO.title(), updateDTO.semester(), requestId);
+        boolean gradeRelevant = resolveGradeRelevant(updateDTO);
 
         if (updateDTO.title().length() > MAX_TITLE_LENGTH) {
             throw new BadRequestAlertException("The course title is too long", CourseRequest.ENTITY_NAME, "courseRequestTitleTooLong");
@@ -198,13 +213,10 @@ public class CourseRequestService {
 
         Course validationCourse = new Course();
         validationCourse.setShortName(updateDTO.shortName());
-        validationCourse.validateShortName();
-        // Validate date range if both dates are provided
-        if (updateDTO.startDate() != null && updateDTO.endDate() != null) {
-            validationCourse.setStartDate(updateDTO.startDate());
-            validationCourse.setEndDate(updateDTO.endDate());
-            validationCourse.validateStartAndEndDate();
-        }
+        CourseValidator.validateShortName(validationCourse);
+        validationCourse.setStartDate(updateDTO.startDate());
+        validationCourse.setEndDate(updateDTO.endDate());
+        CourseValidator.validateStartAndEndDate(validationCourse);
 
         courseRequest.setTitle(updateDTO.title());
         courseRequest.setShortName(updateDTO.shortName());
@@ -212,12 +224,29 @@ public class CourseRequestService {
         courseRequest.setStartDate(updateDTO.startDate());
         courseRequest.setEndDate(updateDTO.endDate());
         courseRequest.setTestCourse(updateDTO.testCourse());
+        courseRequest.setGradeRelevant(gradeRelevant);
         courseRequest.setReason(updateDTO.reason());
 
         courseRequest = courseRequestRepository.save(courseRequest);
         // Re-fetch with eager loading to avoid LazyInitializationException when converting to DTO
         courseRequest = getRequestWithRequesterElseThrow(courseRequest.getId());
-        return toDto(courseRequest);
+        // The admin replaces the row of the pending table with this response, so it keeps the instructor courses the row showed.
+        return toDto(courseRequest, findInstructorCoursesOf(courseRequest.getRequester()));
+    }
+
+    /**
+     * Determines whether the requested course is grade relevant. An omitted value defaults to grade relevant for a regular course and to not grade relevant for a test course.
+     *
+     * @param requestData the request data to resolve the value for
+     * @return whether the course counts towards official grades
+     * @throws BadRequestAlertException if the request is for a test course that is marked as grade relevant, because a test course can never count towards official grades
+     */
+    private static boolean resolveGradeRelevant(CourseRequestCreateDTO requestData) {
+        boolean gradeRelevant = requestData.gradeRelevant() != null ? requestData.gradeRelevant() : !requestData.testCourse();
+        if (requestData.testCourse() && gradeRelevant) {
+            throw new BadRequestAlertException("A test course cannot be grade relevant", CourseRequest.ENTITY_NAME, "testCourseNotGradeRelevant");
+        }
+        return gradeRelevant;
     }
 
     private CourseRequest getRequestWithRequesterElseThrow(long requestId) {
@@ -262,7 +291,7 @@ public class CourseRequestService {
 
         // Extract semester number (digits only)
         if (semester != null && !semester.isBlank()) {
-            String semesterDigits = semester.replaceAll("[^0-9]", "");
+            String semesterDigits = NON_DIGIT.matcher(semester).replaceAll("");
             if (!semesterDigits.isEmpty()) {
                 baseShortName.append(semesterDigits);
             }
@@ -306,10 +335,15 @@ public class CourseRequestService {
         course.setStartDate(request.getStartDate());
         course.setEndDate(request.getEndDate());
         course.setTestCourse(request.isTestCourse());
+        // A test course is never asked for its grade relevance, so it keeps the safe default of the regular course creation (grade relevant, the longer
+        // retention period). Persisting the request's "not grade relevant" would shorten the retention if the course is later turned into a regular one.
+        CourseConfiguration configuration = new CourseConfiguration();
+        configuration.setGradeRelevant(request.isTestCourse() || request.isGradeRelevant());
+        configuration.setCourse(course);
+        course.setCourseConfiguration(configuration);
         course.setOnlineCourse(Boolean.FALSE);
         course.setEnrollmentEnabled(Boolean.FALSE);
         course.setLearningPathsEnabled(false);
-        course.setRestrictedAthenaModulesAccess(false);
         course.setAccuracyOfScores(1);
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
 
@@ -327,16 +361,17 @@ public class CourseRequestService {
             log.warn("Could not load code of conduct template from path: {}", templatePath, e);
         }
 
-        course.validateShortName();
-        course.validateStartAndEndDate();
-        course.validateEnrollmentStartAndEndDate();
-        course.validateUnenrollmentEndDate();
-        course.validateEnrollmentConfirmationMessage();
-        course.validateComplaintsAndRequestMoreFeedbackConfig();
-        course.validateOnlineCourseAndEnrollmentEnabled();
-        course.validateAccuracyOfScores();
+        CourseValidator.validateShortName(course);
+        CourseValidator.validateStartAndEndDate(course);
+        CourseValidator.validateSemester(course);
+        CourseValidator.validateEnrollmentStartAndEndDate(course);
+        CourseValidator.validateUnenrollmentEndDate(course);
+        CourseValidator.validateEnrollmentConfirmationMessage(course);
+        CourseValidator.validateComplaintsAndRequestMoreFeedbackConfig(course);
+        CourseValidator.validateOnlineCourseAndEnrollmentEnabled(course);
+        CourseValidator.validateAccuracyOfScores(course);
 
-        Course createdCourse = courseRepository.save(course);
+        Course createdCourse = courseRepository.saveWithDefaultConfigurations(course);
         channelService.createDefaultChannels(createdCourse);
 
         if (request.getRequester() != null) {
@@ -359,9 +394,9 @@ public class CourseRequestService {
         String requesterLangKey = requester != null && requester.getLangKey() != null ? requester.getLangKey() : "en";
 
         var emailData = new ContactEmailData(request.getTitle(), request.getShortName(), request.getSemester(), request.getStartDate(), request.getEndDate(),
-                request.isTestCourse(), request.getReason(), requesterName, requesterEmail);
+                request.isTestCourse(), request.isGradeRelevant(), request.getReason(), requesterName, requesterEmail);
 
-        MailRecipientDTO recipient = new MailRecipientDTO(contactEmail, requesterLangKey, "course-request-contact", null, null, null, null);
+        MailRecipientDTO recipient = MailRecipientDTO.forUnnamed(contactEmail, requesterLangKey, "course-request-contact");
         mailSendingService.buildAndSendAsync(recipient, "email.courseRequest.contact.title", List.of(request.getTitle()), "mail/courseRequestContactEmail",
                 Map.of("courseRequest", emailData));
     }
@@ -370,8 +405,8 @@ public class CourseRequestService {
      * DTO for contact email template to avoid lazy loading issues in async context.
      * Contains only scalar values needed by the email template.
      */
-    private record ContactEmailData(String title, String shortName, String semester, ZonedDateTime startDate, ZonedDateTime endDate, boolean testCourse, String reason,
-            String requesterName, String requesterEmail) {
+    private record ContactEmailData(String title, String shortName, String semester, ZonedDateTime startDate, ZonedDateTime endDate, boolean testCourse, boolean gradeRelevant,
+            String reason, String requesterName, String requesterEmail) {
     }
 
     /**
@@ -379,13 +414,13 @@ public class CourseRequestService {
      * The post-save entity returned by merge() may contain uninitialized lazy proxies, so we
      * extract all scalar values needed by the templates before passing to the async email method.
      */
-    private record CourseRequestEmailData(String title, String shortName, String semester, ZonedDateTime startDate, ZonedDateTime endDate, boolean testCourse, String reason,
-            String decisionReason) {
+    private record CourseRequestEmailData(String title, String shortName, String semester, ZonedDateTime startDate, ZonedDateTime endDate, boolean testCourse,
+            boolean gradeRelevant, String reason, String decisionReason) {
     }
 
     private static CourseRequestEmailData toEmailData(CourseRequest request) {
         return new CourseRequestEmailData(request.getTitle(), request.getShortName(), request.getSemester(), request.getStartDate(), request.getEndDate(), request.isTestCourse(),
-                request.getReason(), request.getDecisionReason());
+                request.isGradeRelevant(), request.getReason(), request.getDecisionReason());
     }
 
     private void sendAcceptedEmail(User requester, CourseRequest request, Course course) {
@@ -416,16 +451,17 @@ public class CourseRequestService {
         return toDto(courseRequest, null);
     }
 
-    private CourseRequestDTO toDto(CourseRequest courseRequest, Integer instructorCourseCount) {
+    private CourseRequestDTO toDto(CourseRequest courseRequest, List<CourseRequestInstructorCourseDTO> instructorCourses) {
         CourseRequestRequesterDTO requesterDto = courseRequest.getRequester() != null ? new CourseRequestRequesterDTO(courseRequest.getRequester()) : null;
         Long createdCourseId = courseRequest.getCreatedCourseId();
         return new CourseRequestDTO(courseRequest.getId(), courseRequest.getTitle(), courseRequest.getShortName(), courseRequest.getSemester(), courseRequest.getStartDate(),
-                courseRequest.getEndDate(), courseRequest.isTestCourse(), courseRequest.getReason(), courseRequest.getStatus(), courseRequest.getCreatedDate(),
-                courseRequest.getProcessedDate(), courseRequest.getDecisionReason(), requesterDto, createdCourseId, instructorCourseCount);
+                courseRequest.getEndDate(), courseRequest.isTestCourse(), courseRequest.isGradeRelevant(), courseRequest.getReason(), courseRequest.getStatus(),
+                courseRequest.getCreatedDate(), courseRequest.getProcessedDate(), courseRequest.getDecisionReason(), requesterDto, createdCourseId,
+                instructorCourses != null ? instructorCourses.size() : null, instructorCourses);
     }
 
     /**
-     * Retrieves the admin overview of course requests with pending requests (including instructor course count)
+     * Retrieves the admin overview of course requests with pending requests (including the courses their requester instructs)
      * and decided requests with pagination.
      *
      * @param decidedPage     the page number for decided requests (0-indexed)
@@ -433,14 +469,13 @@ public class CourseRequestService {
      * @return the admin overview DTO containing pending and decided requests
      */
     public CourseRequestsAdminOverviewDTO getAdminOverview(int decidedPage, int decidedPageSize) {
-        // Get pending requests with instructor course count
+        // Get pending requests with the courses their requester instructs, for all requesters in one query
         List<CourseRequest> pendingRequests = courseRequestRepository.findAllByStatusOrderByCreatedDateDesc(CourseRequestStatus.PENDING);
-        List<CourseRequestDTO> pendingDtos = pendingRequests.stream().map(request -> {
-            Integer instructorCount = computeInstructorCourseCount(request.getRequester());
-            return toDto(request, instructorCount);
-        }).toList();
+        Set<Long> requesterIds = pendingRequests.stream().map(CourseRequest::getRequester).filter(Objects::nonNull).map(User::getId).collect(Collectors.toSet());
+        Map<Long, List<CourseRequestInstructorCourseDTO>> instructorCourses = findInstructorCoursesByUserId(requesterIds);
+        List<CourseRequestDTO> pendingDtos = pendingRequests.stream().map(request -> toDto(request, instructorCoursesOf(request.getRequester(), instructorCourses))).toList();
 
-        // Get decided requests with pagination (without instructor course count)
+        // Get decided requests with pagination (without instructor courses)
         var pageable = PageRequest.of(decidedPage, decidedPageSize);
         var decidedPageResult = courseRequestRepository.findAllByStatusNotOrderByProcessedDateDesc(CourseRequestStatus.PENDING, pageable);
         List<CourseRequestDTO> decidedDtos = decidedPageResult.getContent().stream().map(this::toDto).toList();
@@ -448,10 +483,33 @@ public class CourseRequestService {
         return new CourseRequestsAdminOverviewDTO(pendingDtos, decidedDtos, decidedPageResult.getTotalElements());
     }
 
-    private Integer computeInstructorCourseCount(User requester) {
+    /**
+     * Groups the instructor courses of the given users by user id, in the order the query returns them.
+     * A user without instructor courses has no entry.
+     */
+    private Map<Long, List<CourseRequestInstructorCourseDTO>> findInstructorCoursesByUserId(Set<Long> userIds) {
+        Map<Long, List<CourseRequestInstructorCourseDTO>> coursesByUserId = new LinkedHashMap<>();
+        if (userIds.isEmpty()) {
+            return coursesByUserId;
+        }
+        for (CourseRequestInstructorCourseRowDTO row : courseRepository.findInstructorCoursesForUsers(userIds)) {
+            coursesByUserId.computeIfAbsent(row.userId(), userId -> new ArrayList<>()).add(row.toCourse());
+        }
+        return coursesByUserId;
+    }
+
+    private List<CourseRequestInstructorCourseDTO> findInstructorCoursesOf(User requester) {
+        Map<Long, List<CourseRequestInstructorCourseDTO>> coursesByUserId = requester != null ? findInstructorCoursesByUserId(Set.of(requester.getId())) : Map.of();
+        return instructorCoursesOf(requester, coursesByUserId);
+    }
+
+    /**
+     * The count shown next to the list is the size of this list, so the two cannot disagree.
+     */
+    private List<CourseRequestInstructorCourseDTO> instructorCoursesOf(User requester, Map<Long, List<CourseRequestInstructorCourseDTO>> coursesByUserId) {
         if (requester == null) {
             return null;
         }
-        return (int) courseRepository.countCoursesForInstructor(requester.getId());
+        return coursesByUserId.getOrDefault(requester.getId(), List.of());
     }
 }

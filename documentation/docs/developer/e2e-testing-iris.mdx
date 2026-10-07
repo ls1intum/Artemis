@@ -1,11 +1,15 @@
+---
+id: e2e-testing-iris
+title: E2E Testing Iris (Real Pyris)
+sidebar_label: E2E Testing Iris (Real Pyris)
+---
+
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../src/components/Image/Image";
 
 import irisE2eDeployment from './assets/iris_e2e_deployment.png';
 import irisE2eSequence from './assets/iris_e2e_sequence.png';
-
-# E2E Testing Iris (Real Pyris)
 
 ## Background
 
@@ -24,7 +28,7 @@ transitions — without ever calling a real model.
 
 This is exercised in two places:
 
-- **Locally**, via `RUN_IRIS=true ./run-e2e-tests-local-fast.sh --filter "Iris"` (see
+- **Locally**, via `RUN_IRIS=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --filter "Iris"` (see
   [Set up Playwright locally](./e2e-testing-playwright.mdx#fast-local-runner-recommended-for-development)
   for the base runner).
 - **Nightly in CI**, via the [`Nightly Iris E2E`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/nightly-iris-e2e.yml)
@@ -116,7 +120,7 @@ Configuration (all optional, see the top of `mock_llm.py`):
 ## Running locally
 
 ```bash
-RUN_IRIS=true ./run-e2e-tests-local-fast.sh --filter "Iris"
+RUN_IRIS=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --filter "Iris"
 ```
 
 This is the same [fast local runner](./e2e-testing-playwright.mdx#fast-local-runner-recommended-for-development)
@@ -143,7 +147,7 @@ for building from source instead (only needed to test an unreleased edutelligenc
 branch/PR), manual `docker compose` commands, the full networking summary, and a
 troubleshooting note about stale cached images not picking up local `mock_llm.py` edits.
 
-`./run-e2e-tests-local-fast.sh --stop` tears the whole stack down, including Postgres, the
+`./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --stop` tears the whole stack down, including Postgres, the
 server, and the client.
 
 **Debugging a failure:**
