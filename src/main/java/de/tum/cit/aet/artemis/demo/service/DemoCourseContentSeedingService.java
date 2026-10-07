@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.api.AccountDemoApi.DemoUsers;
+import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.atlas.api.AtlasDemoApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.demo.service.DemoExerciseSeedingService.DemoExercises;
@@ -34,9 +35,12 @@ public class DemoCourseContentSeedingService {
 
     private final Optional<AtlasDemoApi> atlasDemoApi;
 
-    public DemoCourseContentSeedingService(Optional<LectureDemoApi> lectureDemoApi, Optional<AtlasDemoApi> atlasDemoApi) {
+    private final AssessmentDemoApi assessmentDemoApi;
+
+    public DemoCourseContentSeedingService(Optional<LectureDemoApi> lectureDemoApi, Optional<AtlasDemoApi> atlasDemoApi, AssessmentDemoApi assessmentDemoApi) {
         this.lectureDemoApi = lectureDemoApi;
         this.atlasDemoApi = atlasDemoApi;
+        this.assessmentDemoApi = assessmentDemoApi;
     }
 
     /**
@@ -52,5 +56,6 @@ public class DemoCourseContentSeedingService {
         // An exercise unit is linked to competencies through its exercise, see CourseCompetency#prePersistOrUpdate, so only the other units are handed on.
         DemoAreas.seed("competencies",
                 () -> atlasDemoApi.ifPresent(api -> api.createDemo(course, lectures.architecture().stream().filter(unit -> !(unit instanceof ExerciseUnit)).toList())));
+        DemoAreas.seed("grading scale", () -> assessmentDemoApi.createDemoGradingScale(course));
     }
 }

@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import tools.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
+import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -86,6 +87,9 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
 
     @Autowired
     private ProgrammingDemoApi programmingDemoApi;
+
+    @Autowired
+    private AssessmentDemoApi assessmentDemoApi;
 
     @Autowired
     private QuizExerciseRepository quizExerciseRepository;
@@ -196,8 +200,8 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
         SecurityUtils.runAs(AccountDemoApi.DEMO_INSTRUCTOR_LOGIN, () -> exerciseDeletionService.delete(seeded.get(ENDED_QUIZ_TITLE).exerciseId(), false));
 
         DemoDataSeedingService withoutModeling = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
-                new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi),
-                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty()));
+                new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi),
+                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi));
         assertThatCode(() -> withoutModeling.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("seeding must work when the modeling module is disabled")
                 .doesNotThrowAnyException();
 

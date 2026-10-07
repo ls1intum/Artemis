@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.ConductAgreementService;
+import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
@@ -76,6 +77,9 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Autowired
     private ProgrammingDemoApi programmingDemoApi;
+
+    @Autowired
+    private AssessmentDemoApi assessmentDemoApi;
 
     @Autowired
     private UserCourseRoleRepository userCourseRoleRepository;
@@ -178,8 +182,8 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         DemoDataSnapshot beforeRun = snapshotDemoData();
 
         DemoDataSeedingService withoutOptionalModules = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
-                new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi),
-                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty()));
+                new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi),
+                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi));
         assertThatCode(() -> withoutOptionalModules.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent()))
                 .as("seeding must work when the optional modules are disabled").doesNotThrowAnyException();
 
@@ -191,11 +195,11 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         seed();
         DemoDataSnapshot beforeRun = snapshotDemoData();
         TextDemoApi failingTextDemoApi = mock(TextDemoApi.class);
-        when(failingTextDemoApi.createDemo(any())).thenThrow(new IllegalStateException("simulated failure of the text exercises"));
+        when(failingTextDemoApi.createDemo(any(), any(), any())).thenThrow(new IllegalStateException("simulated failure of the text exercises"));
 
         DemoDataSeedingService withFailingArea = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
-                new DemoExerciseSeedingService(Optional.of(failingTextDemoApi), Optional.of(modelingDemoApi), Optional.empty(), quizDemoApi, programmingDemoApi),
-                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty()));
+                new DemoExerciseSeedingService(Optional.of(failingTextDemoApi), Optional.of(modelingDemoApi), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi),
+                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi));
         assertThatCode(() -> withFailingArea.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("a failing area must not escape into the startup")
                 .doesNotThrowAnyException();
 

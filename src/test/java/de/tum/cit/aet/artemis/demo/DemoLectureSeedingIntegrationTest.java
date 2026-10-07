@@ -28,6 +28,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
+import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.atlas.api.AtlasDemoApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
@@ -91,6 +92,9 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private LectureDemoApi lectureDemoApi;
+
+    @Autowired
+    private AssessmentDemoApi assessmentDemoApi;
 
     @Autowired
     private LectureRepository lectureRepository;
@@ -258,7 +262,7 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
         Map<Long, List<Long>> lecturesBefore = snapshotLectures();
         AtlasDemoApi atlasDemoApi = mock(AtlasDemoApi.class);
         DemoDataSeedingService withoutLectures = new DemoDataSeedingService(accountDemoApi, courseDemoApi, demoExerciseSeedingService,
-                new DemoCourseContentSeedingService(Optional.empty(), Optional.of(atlasDemoApi)));
+                new DemoCourseContentSeedingService(Optional.empty(), Optional.of(atlasDemoApi), assessmentDemoApi));
 
         assertThatCode(() -> withoutLectures.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("seeding must work when the lecture module is disabled")
                 .doesNotThrowAnyException();
