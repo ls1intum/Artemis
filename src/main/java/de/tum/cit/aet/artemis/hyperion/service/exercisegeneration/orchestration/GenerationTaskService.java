@@ -480,8 +480,12 @@ public class GenerationTaskService {
             cancelScheduled(deadlineFuture);
             cancelScheduled(heartbeatFuture);
             // Seal cancellation and exceptional exits that did not publish a worker terminal event.
-            jobService.sealTokenAccountingOnWorkerExit(exerciseId, jobId);
-            clearJobAndReleaseBudget(exerciseId, jobId, event, tokenAccountingFailed.get());
+            try {
+                jobService.sealTokenAccountingOnWorkerExit(exerciseId, jobId);
+            }
+            finally {
+                clearJobAndReleaseBudget(exerciseId, jobId, event, tokenAccountingFailed.get());
+            }
         }
     }
 

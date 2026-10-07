@@ -202,6 +202,7 @@ final class GenerationJobReplayStore {
 
     /** Marks this run's accounting permanently incomplete after an admitted provider attempt whose usage could not be proved. Sticky: no later seal can undo it. */
     void markUsageIncomplete(String jobId) {
+        usageWriteFailures.add(jobId);
         if (transitionUsage(jobId, JobUsage::markIncomplete)) {
             usageWriteFailures.remove(jobId);
         }
