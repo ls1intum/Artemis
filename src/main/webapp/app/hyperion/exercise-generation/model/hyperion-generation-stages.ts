@@ -245,7 +245,7 @@ export function mostCriticalState(parent: TumAetUiStepState, substeps: readonly 
     }
     const order: TumAetUiStepState[] = ['failed', 'current', 'complete', 'skipped', 'pending'];
     const rank = (state: TumAetUiStepState) => order.indexOf(state);
-    return substeps.reduce((worst, substep) => (rank(substep.state) < rank(worst) ? substep.state : worst), parent);
+    return substeps.reduce<TumAetUiStepState>((worst, substep) => (rank(substep.state) < rank(worst) ? substep.state : worst), parent);
 }
 
 /**
