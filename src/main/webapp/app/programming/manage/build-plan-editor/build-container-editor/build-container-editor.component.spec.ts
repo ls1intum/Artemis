@@ -94,6 +94,15 @@ describe('BuildContainerEditorComponent', () => {
         expect(component.nameValidationMessageKey()).toBe('artemisApp.programmingExercise.buildContainersEditor.containerNameDuplicate');
     });
 
+    it('should offer only the repositories the trigger scopes, not the assignment and template repositories', () => {
+        fixture.detectChanges();
+        const offered = fixture.debugElement
+            .queryAll(By.css('input[id^="field_container_repo_0_"]'))
+            .map((checkbox) => checkbox.nativeElement.id.replace('field_container_repo_0_', ''));
+
+        expect(offered).toEqual(['SOLUTION', 'TESTS', 'AUXILIARY']);
+    });
+
     describe('Docker flags', () => {
         const getEnvVarRows = () => fixture.debugElement.queryAll(By.css('[data-testid="container-env-var-row"]'));
         const getField = (id: string) => fixture.debugElement.query(By.css('#' + id));

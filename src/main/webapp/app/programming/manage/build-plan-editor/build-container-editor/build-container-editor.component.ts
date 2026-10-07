@@ -9,7 +9,6 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { BuildPhasesEditorComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/build-phases-editor.component';
 import {
     BUILD_CONTAINER_NAME_PATTERN,
-    BUILD_CONTAINER_REPOSITORY_TYPE,
     BuildContainer,
     BuildContainerDockerFlags,
     BuildContainerRepositoryType,
@@ -66,8 +65,11 @@ export class BuildContainerEditorComponent {
 
     readonly remove = output<void>();
 
-    /** the repository types an instructor can check out into a container, in the order they are offered */
-    protected readonly repositoryTypes = Object.keys(BUILD_CONTAINER_REPOSITORY_TYPE) as BuildContainerRepositoryType[];
+    /**
+     * the repository types an instructor can check out into a container, in the order they are offered: the trigger always
+     * provides the assignment repository and never checks out the template separately, so neither is a choice
+     */
+    protected readonly repositoryTypes: BuildContainerRepositoryType[] = ['SOLUTION', 'TESTS', 'AUXILIARY'];
 
     readonly isNamePatternValid = computed(() => BUILD_CONTAINER_NAME_PATTERN.test(this.container().name));
 
