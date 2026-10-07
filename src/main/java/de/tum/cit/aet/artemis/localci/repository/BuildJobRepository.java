@@ -119,6 +119,25 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     boolean existsResultInProgressOfBuildGroup(@Param("buildGroupId") String buildGroupId);
 
     /**
+     * Checks whether a build of the aggregated result's submission that was triggered after the given date has already
+     * finalized: one of its jobs links to a completed result of the submission or to the assessment its feedback was
+     * merged into.
+     *
+     * @param aggregatedResultId the id of an aggregated result of the submission
+     * @param submittedAfter     only builds triggered after this date
+     * @return true if such a build has finalized
+     */
+    @Query("""
+            SELECT COUNT(b) > 0
+            FROM BuildJob b, Result aggregate
+            WHERE aggregate.id = :aggregatedResultId
+                AND b.result.submission = aggregate.submission
+                AND b.buildSubmissionDate > :submittedAfter
+                AND (b.result.completionDate IS NOT NULL OR b.result.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC)
+            """)
+    boolean existsFinalizedBuildOfSubmissionTriggeredAfter(@Param("aggregatedResultId") long aggregatedResultId, @Param("submittedAfter") ZonedDateTime submittedAfter);
+
+    /**
      * Links the build jobs that link to one result to another result instead.
      *
      * @param resultId  the id of the result the jobs link to now

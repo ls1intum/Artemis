@@ -925,25 +925,66 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         return resultRepository.save(assessment);
     }
 
-    @Test
+    /**
+     * Builds of one submission are ordered by when they were triggered: an older build that finalizes after a newer one is
+     * discarded, whichever of their results was created first.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testAnOlderBuildFinalizingLastDoesNotOverwriteTheNewerBuildsOutcome() {
+    void testAnOlderBuildFinalizingLastDoesNotOverwriteTheNewerBuildsOutcome(boolean newerResultCreatedFirst) {
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         participation.setProgrammingExercise(programmingExercise);
         String commitHash = "0000000000000000000000000000000000000012";
         long submissionId = submissionOf(participation, commitHash).getId();
+        ZonedDateTime olderTriggered = ZonedDateTime.now().minusMinutes(10);
 
-        var older = programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "older build failed"), false, "container_a", null);
-        buildJobRepository.save(new BuildJob(buildJobFor("order-a-0", "order-a", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, older.result(), true));
-        var newer = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null);
-        buildJobRepository.save(new BuildJob(buildJobFor("order-b-0", "order-b", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, newer.result(), false));
+        Result older;
+        Result newer;
+        if (newerResultCreatedFirst) {
+            newer = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null).result();
+            older = programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "older build failed"), false, "container_a", null).result();
+        }
+        else {
+            older = programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "older build failed"), false, "container_a", null).result();
+            newer = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null).result();
+        }
+        saveGroupJob("order-a-0", "order-a", participation, commitHash, BuildStatus.SUCCESSFUL, older, true, olderTriggered, 0);
+        saveGroupJob("order-b-0", "order-b", participation, commitHash, BuildStatus.SUCCESSFUL, newer, false, olderTriggered.plusMinutes(1), 0);
 
-        programmingExerciseGradingService.finalizeContainerResult(newer.result().getId(), participation, true, anyContainerFailedToBuild("order-b"), ZonedDateTime.now());
-        assertThat(programmingSubmissionRepository.findById(submissionId).orElseThrow().isBuildFailed()).isFalse();
+        programmingExerciseGradingService.finalizeContainerResult(newer.getId(), participation, true, false, ZonedDateTime.now());
+        assertThat(sweep()).as("the older build is not finalized").isZero();
 
-        programmingExerciseGradingService.finalizeContainerResult(older.result().getId(), participation, true, anyContainerFailedToBuild("order-a"), ZonedDateTime.now());
         assertThat(programmingSubmissionRepository.findById(submissionId).orElseThrow().isBuildFailed()).as("the older build does not overwrite the newer build's outcome")
                 .isFalse();
+        assertThat(resultRepository.findById(older.getId())).as("the older build's result is discarded").isEmpty();
+        assertThat(programmingSubmissionRepository.findProgrammingSubmissionWithResultsById(submissionId).orElseThrow().getLatestResult().getId()).isEqualTo(newer.getId());
+    }
+
+    /** An older build that finalizes after a newer one was merged into the assessment neither replaces that feedback nor the build state. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAnOlderBuildFinalizingLastDoesNotReplaceTheNewerBuildsFeedbackInTheAssessment() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        String commitHash = "0000000000000000000000000000000000000013";
+        ProgrammingSubmission submission = submissionOf(participation, commitHash);
+        Result assessment = assessmentOf(submission, ZonedDateTime.now().minusMinutes(20));
+        ZonedDateTime olderTriggered = ZonedDateTime.now().minusMinutes(10);
+
+        Result older = programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "older build failed"), false, "container_a", null).result();
+        saveGroupJob("assessed-a-0", "assessed-a", participation, commitHash, BuildStatus.SUCCESSFUL, older, true, olderTriggered, 0);
+        Result newer = programmingExerciseGradingService.appendContainerResult(participation, passedResult(commitHash), true, "container_a", null).result();
+        saveGroupJob("assessed-b-0", "assessed-b", participation, commitHash, BuildStatus.SUCCESSFUL, newer, false, olderTriggered.plusMinutes(1), 0);
+        Result merged = programmingExerciseGradingService.finalizeContainerResult(newer.getId(), participation, true, false, ZonedDateTime.now());
+        assertThat(merged.getId()).as("the newer build is merged into the assessment").isEqualTo(assessment.getId());
+        Double scoreOfTheNewerBuild = resultRepository.findById(assessment.getId()).orElseThrow().getScore();
+
+        assertThat(sweep()).isZero();
+
+        assertThat(resultRepository.findById(older.getId())).as("the older build's result is discarded").isEmpty();
+        assertThat(resultRepository.findById(assessment.getId()).orElseThrow().getScore()).as("the assessment keeps the newer build's feedback").isEqualTo(scoreOfTheNewerBuild);
+        assertThat(programmingSubmissionRepository.findById(submission.getId()).orElseThrow().isBuildFailed()).isFalse();
     }
 
     /** what the result processing derives for a group when it finalizes it, see LocalCIResultProcessingService#finalizeIfGroupComplete */

@@ -602,8 +602,20 @@ public class LocalCIResultProcessingService {
         Result finalizedResult;
         aggregationLocks.lock(participationLock);
         try {
-            finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResultId, participation, allJobsSucceeded, anyContainerFailedToBuild,
-                    completionDate);
+            // Builds of the same submission are ordered by when they were triggered, not by when they finish or by result id:
+            // once a newer build has finalized, an older one must not overwrite its outcome, its assessment or the
+            // submission's build-failed flag, so its result is discarded instead.
+            ZonedDateTime triggeredAt = jobs.getFirst().getBuildSubmissionDate();
+            if (triggeredAt != null && buildJobRepository.existsFinalizedBuildOfSubmissionTriggeredAfter(aggregatedResultId, triggeredAt)) {
+                log.info("Discarding the aggregated result {} of build group {}, since a newer build of the same submission has already finalized", aggregatedResultId,
+                        jobs.getFirst().getBuildGroupId());
+                programmingExerciseGradingService.discardContainerResult(aggregatedResultId);
+                finalizedResult = null;
+            }
+            else {
+                finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResultId, participation, allJobsSucceeded, anyContainerFailedToBuild,
+                        completionDate);
+            }
         }
         finally {
             aggregationLocks.unlock(participationLock);

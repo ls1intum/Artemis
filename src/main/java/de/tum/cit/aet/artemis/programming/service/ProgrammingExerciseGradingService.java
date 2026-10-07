@@ -497,11 +497,11 @@ public class ProgrammingExerciseGradingService {
         }
         boolean isStudentParticipation = !(participation instanceof SolutionProgrammingExerciseParticipation)
                 && !(participation instanceof TemplateProgrammingExerciseParticipation);
-        // Every build of the commit shares the submission's build-failed flag, so the flag follows the newest aggregate:
-        // an older build that finalizes last must not overwrite what a newer one wrote.
+        // An older build that finalizes after a newer one is discarded before it gets here (see
+        // LocalCIResultProcessingService#finalizeIfGroupComplete), so this build may write the submission's state.
         List<Result> resultsOfSubmission = aggregatedResult.getSubmission() == null ? List.of()
                 : resultRepository.findAllBySubmissionIdOrderByIdDesc(aggregatedResult.getSubmission().getId());
-        if (aggregatedResult.getSubmission() instanceof ProgrammingSubmission submission && isNewestAutomaticResult(resultsOfSubmission, resultId)) {
+        if (aggregatedResult.getSubmission() instanceof ProgrammingSubmission submission) {
             programmingSubmissionRepository.updateBuildFailed(submission.getId(), anyContainerFailedToBuild);
             submission.setBuildFailed(anyContainerFailedToBuild);
         }
@@ -564,9 +564,9 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Deletes the in-progress aggregated result of a multi-container build that lost a container and was replaced by a
-     * later build of the same commit, see {@code LocalCIResultProcessingService#finalizeCompletedBuildGroups}. The
-     * build's jobs lose their link through the foreign key.
+     * Deletes the in-progress aggregated result of a multi-container build that a later build of the same submission
+     * replaced: the build lost a container and was retried, or a newer build finalized first (see
+     * {@code LocalCIResultProcessingService}). The build's jobs lose their link through the foreign key.
      *
      * @param resultId the id of the aggregated result of the replaced build
      */
@@ -609,19 +609,6 @@ public class ProgrammingExerciseGradingService {
                 log.warn("Could not delete the abandoned aggregated result {}", result.getId(), e);
             }
         }
-    }
-
-    /**
-     * Whether the result being finalized is the submission's newest automatic result, ignoring newer ones still in
-     * progress: an overlapping build writes the submission's state when it finalizes, and an abandoned aggregate never does.
-     *
-     * @param resultsOfSubmissionNewestFirst the submission's results, newest first
-     * @param resultId                       the id of the aggregated result being finalized
-     * @return true if no completed automatic result of the submission is newer than the one being finalized
-     */
-    private static boolean isNewestAutomaticResult(List<Result> resultsOfSubmissionNewestFirst, long resultId) {
-        return resultsOfSubmissionNewestFirst.stream().filter(result -> !result.isManual()).filter(result -> result.getCompletionDate() != null || result.getId().equals(resultId))
-                .findFirst().map(result -> result.getId().equals(resultId)).orElse(true);
     }
 
     /**
