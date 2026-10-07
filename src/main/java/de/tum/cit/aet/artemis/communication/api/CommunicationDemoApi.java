@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseFactory;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismPostApi;
 
 /**
  * Creates the course communication and the FAQs of the demo course seeded by the {@code demo} profile.
@@ -201,6 +202,8 @@ public class CommunicationDemoApi implements AbstractApi {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
+    private final Optional<PlagiarismPostApi> plagiarismPostApi;
+
     private final PostRepository postRepository;
 
     private final ChannelRepository channelRepository;
@@ -210,13 +213,14 @@ public class CommunicationDemoApi implements AbstractApi {
     private final FaqRepository faqRepository;
 
     public CommunicationDemoApi(ConversationMessagingService conversationMessagingService, AnswerMessageService answerMessageService, ReactionService reactionService,
-            OneToOneChatService oneToOneChatService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService, PostRepository postRepository,
-            ChannelRepository channelRepository, OneToOneChatRepository oneToOneChatRepository, FaqRepository faqRepository) {
+            OneToOneChatService oneToOneChatService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService, Optional<PlagiarismPostApi> plagiarismPostApi,
+            PostRepository postRepository, ChannelRepository channelRepository, OneToOneChatRepository oneToOneChatRepository, FaqRepository faqRepository) {
         this.conversationMessagingService = conversationMessagingService;
         this.answerMessageService = answerMessageService;
         this.reactionService = reactionService;
         this.oneToOneChatService = oneToOneChatService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
+        this.plagiarismPostApi = plagiarismPostApi;
         this.postRepository = postRepository;
         this.channelRepository = channelRepository;
         this.oneToOneChatRepository = oneToOneChatRepository;
@@ -404,9 +408,13 @@ public class CommunicationDemoApi implements AbstractApi {
     }
 
     /**
-     * Reacts to a message or a reply like {@code ReactionResource#createReaction}, with the id that the emoji picker of the client sends for the emoji.
+     * Reacts to a message or a reply like {@code ReactionResource#createReaction}, with the id that the emoji picker of the client sends for the emoji. Reactions are saved through
+     * the post API of the plagiarism module, so without it the messages get none.
      */
     private void react(Course course, Posting posting, User user, String emojiId) {
+        if (plagiarismPostApi.isEmpty()) {
+            return;
+        }
         PostingType type = posting instanceof AnswerPost ? PostingType.ANSWER : PostingType.POST;
         SecurityUtils.runAs(user, () -> reactionService.createReaction(course.getId(), new ReactionDTO(null, null, null, emojiId, posting.getId(), type)));
     }
