@@ -85,7 +85,6 @@
             @if (showComplaintView()) {
                 @defer (on idle) {
                     <jhi-complaint-student-view
-                        class="mb-2 mt-2 ms-3"
                         [exercise]="exercise()"
                         [participation]="gradedStudentParticipation()!"
                         [result]="resultWithComplaint() ? resultWithComplaint()! : latestRatedResult()!"

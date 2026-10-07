@@ -1,30 +1,73 @@
-@import '../../../../content/scss/artemis-mixins';
+/* A block that takes the height of the card it sits in (a test run's), so the wrapper's `height: 100%` has something to resolve against. */
+:host {
+    display: block;
+    height: 100%;
+}
 
-.update-footer {
-    margin-top: 1rem;
-    padding: 0.5rem 0 0.75rem;
-    width: 100%;
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    z-index: 30; // connection status bar should be above the quiz question sidebar
-    background: var(--update-footer-background);
+/*
+ * The exam is laid out inside the region its shell gives it. Every grey gap between the bar, the sidebar and the content is
+ * the shell's own divider (`--spacing-divider`), and the heights come from flex layout instead of subtracting guessed header
+ * heights from the viewport, so the cards line up with the edges of the region in the exam as well as in a test run.
+ *
+ * In a running exam the region is the viewport below the navbar and the wrapper draws the outer dividers itself. A test run
+ * lives inside the management shell, which already spaces its content, so the wrapper just fills the card it is given.
+ */
+.exam-background-wrapper {
+    /* The bottom rows of the sidebar and of the content card share this height, so they read as one line. */
+    --exam-footer-height: 2.25rem;
+
     display: flex;
-    justify-content: flex-end;
+    flex-direction: column;
+    gap: var(--spacing-divider);
+    box-sizing: border-box;
+    height: calc(100vh - var(--navbar-height));
+    padding: var(--spacing-divider);
+
+    &.exam-background-wrapper--test-run {
+        height: 100%;
+        padding: 0;
+    }
+}
+
+.exam-body {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: var(--spacing-divider);
+}
+
+.exam-content {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* The scroll container of the active exercise (see the comment on its markup for how its column is sized). */
+.content-exam-height {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.exam-status-bar {
+    display: flex;
+    flex: none;
     align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    box-sizing: border-box;
+    height: var(--exam-footer-height);
+    padding-inline: 1rem;
     border-top: 1px solid var(--border-color);
+    background: var(--update-footer-background);
+    font-size: 0.8125rem;
 
     &.disconnected {
         background-color: var(--exam-participation-footer-disconnected-background);
     }
-}
-
-.exam-footer-content {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 14px;
 
     .connection-status-exam-participation {
         @media (max-width: 767.98px) {
@@ -33,11 +76,18 @@
     }
 }
 
+/* The card of the "submission successful" hint. It fills the area its wrapper gives it and centres what it says, instead of
+   hugging the top edge of a content-sized white band. */
 .submissionSuccessfulHint {
     display: flex;
+    flex: 1 1 auto;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    min-height: 0;
     width: 100%;
+    overflow-y: auto;
+    text-align: center;
 
     .check {
         color: var(--success);
@@ -45,27 +95,46 @@
     }
 }
 
+/*
+ * The scroll container of the exam summary. It is as tall as the card it sits in (the host fills that card), so its bottom edge is
+ * the card's bottom edge. The global `.scrollable-content` derives its height from the viewport minus a hard-coded 156px, which
+ * is 75px less than the card, and left a white strip below the last line that cut the content off mid-line.
+ * The inset is the 1rem of the cards inside it.
+ */
+.exam-summary-scroll {
+    box-sizing: border-box;
+    height: 100%;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+/* The column inside the scroll container. Its height is the container's, so it is definite and the percentage heights of a
+   viewport-filling exercise (the modeling canvas, the online code editor) resolve against it; `min-height: min-content` lets
+   it grow with an exercise that is taller, in which case the container scrolls. */
+.exam-content__column {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: min-content;
+}
+
 /* The active exercise fills the height its column offers rather than being
    sized by its own content. An exercise whose content IS a viewport-filling
-   surface — the modeling canvas, the online code editor — cannot derive a
-   height from itself, and a content-sized wrapper collapses it to nothing.
+   surface cannot derive a height from itself, and a content-sized wrapper
+   collapses it to nothing.
    Only the active page is laid out; the others are `hidden`, i.e. display:none. */
 .exam-participation__exercise {
     min-height: 0;
     flex: 1 1 auto;
-}
 
-.content-exam-height {
-    height: calc(100vh - var(--exam-height-offset));
-    overflow-y: auto;
-
-    &.content-exam-height-testRun {
-        --management-header-height: 127px;
-        @include dynamic-content-height(--management-header-height);
+    &:not([hidden]) {
+        display: flex;
+        flex-direction: column;
     }
 }
 
 .end-view {
+    width: 100%;
     max-width: 900px;
     margin: 0 auto;
 
