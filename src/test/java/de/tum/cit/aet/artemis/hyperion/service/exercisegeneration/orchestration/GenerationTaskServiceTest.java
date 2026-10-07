@@ -637,6 +637,8 @@ class GenerationTaskServiceTest {
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
         assertThat(terminal.message()).contains("could not be saved", "All changes were reverted");
+        verify(jobService, never()).retainIncompleteGenerationSlot(anyLong(), anyString());
+        verify(generationBudgetService).releaseReservation(null);
         assertThat(terminal.completionStatus()).isNull();
         assertThat(terminal.verdict()).isNull();
         assertThat(terminal.liveExerciseChanged()).isNull();
@@ -660,6 +662,9 @@ class GenerationTaskServiceTest {
         assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
         assertThat(terminal.liveExerciseChanged()).isTrue();
         assertThat(terminal.savedRepositoryCommits()).containsExactlyInAnyOrderEntriesOf(Map.of("solution", "solution-commit", "tests", "tests-commit"));
+        verify(jobService).retainIncompleteGenerationSlot(EXERCISE_ID, JOB_ID);
+        verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
+        verify(generationBudgetService).releaseReservation(null);
         verify(generationRevertService).invalidateBaseline(EXERCISE_ID);
     }
 
