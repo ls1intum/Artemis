@@ -856,17 +856,11 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             // No StudentExam registration for student1
 
             searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(testExam));
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
-                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-                var bm25 = collection.query.bm25(SEARCH_PREFIX + " TestExamVisible", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
-                assertThat(bm25.objects()).isNotEmpty();
+            await().pollInSameThread().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20TestExamVisible&types=exam&courseIds=" + course.getId(), HttpStatus.OK,
+                        GlobalSearchResultDTO.class);
+                assertThat(getResultTitles(results)).contains(SEARCH_PREFIX + " TestExamVisible");
             });
-
-            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20TestExamVisible&types=exam&courseIds=" + course.getId(), HttpStatus.OK,
-                    GlobalSearchResultDTO.class);
-            var titles = getResultTitles(results);
-
-            assertThat(titles).contains(SEARCH_PREFIX + " TestExamVisible");
         }
 
         /**
