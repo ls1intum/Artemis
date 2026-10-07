@@ -20,6 +20,18 @@ public final class ExerciseFactory {
     }
 
     /**
+     * Serializes an exercise category the way the client stores it: as JSON with the name and the color of the category, see {@code ExerciseService#parseExerciseCategories}.
+     * The client silently drops categories in any other format.
+     *
+     * @param name  the name of the category.
+     * @param color the color of the category as a hex color, such as one of the colors the client offers, e.g. {@code #6ae8ac}.
+     * @return the category as the client stores it.
+     */
+    public static String exerciseCategory(String name, String color) {
+        return "{\"color\":\"%s\",\"category\":\"%s\"}".formatted(color, name);
+    }
+
+    /**
      * Populates the fields that all course exercises share. Type specific fields are the responsibility of the caller.
      *
      * @param exercise         The exercise to populate.

@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseDates;
+import de.tum.cit.aet.artemis.exercise.factories.ExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
@@ -131,7 +132,7 @@ public class FileUploadDemoApi extends AbstractFileModuleApi {
                 0.0, ExerciseDates.ongoing(), DEMO_FILE_PATTERN, DEMO_EXAMPLE_SOLUTION, course);
         // File upload exercises are always assessed manually, see FileUploadExerciseResource#createFileUploadExercise.
         fileUploadExercise.setAssessmentType(AssessmentType.MANUAL);
-        fileUploadExercise.getCategories().add("Algorithms");
+        fileUploadExercise.getCategories().add(ExerciseFactory.exerciseCategory("Algorithms", "#1b97ca"));
         fileUploadExercise.validateGeneralSettings();
 
         FileUploadExercise createdExercise = fileUploadExerciseRepository.save(fileUploadExercise);

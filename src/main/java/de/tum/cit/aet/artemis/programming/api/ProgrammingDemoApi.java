@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.api.AbstractApi;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseDates;
+import de.tum.cit.aet.artemis.exercise.factories.ExerciseFactory;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -118,7 +119,7 @@ public class ProgrammingDemoApi implements AbstractApi {
 
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(DEMO_EXERCISE_TITLE, DEMO_EXERCISE_SHORT_NAME,
                 readTemplateProblemStatement(), 10.0, 0.0, ExerciseDates.ongoing(), DEMO_PROGRAMMING_LANGUAGE, DEMO_PROJECT_TYPE, DEMO_PACKAGE_NAME, course);
-        programmingExercise.getCategories().add("Algorithms");
+        programmingExercise.getCategories().add(ExerciseFactory.exerciseCategory("Algorithms", "#1b97ca"));
 
         // The build configuration is owned by the creation path and only handed in, mirroring ProgrammingExerciseCreationResource#createProgrammingExercise.
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();

@@ -19,6 +19,9 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.ConductAgreementService;
@@ -132,6 +135,21 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(course.getTimeZone()).as("tutorial groups need the time zone of their course").isNotBlank();
         assertThat(course.getPresentationScore()).as("no presentations are seeded, so the course does not ask for any").isZero();
         assertThat(course.getCourseInformationSharingMessagingCodeOfConduct()).as("the demo course has the code of conduct of a course created through the UI").isNotBlank();
+    }
+
+    @Test
+    void seedsExerciseCategoriesThatTheClientCanShow() {
+        seed();
+
+        Set<Exercise> exercises = exerciseRepository.findByCourseIdWithCategories(demoCourse().orElseThrow().getId());
+
+        // The client parses every category as JSON with its name and color, and silently drops categories in any other format.
+        JsonMapper jsonMapper = new JsonMapper();
+        assertThat(exercises).as("every demo exercise has a category").allSatisfy(exercise -> assertThat(exercise.getCategories()).isNotEmpty().allSatisfy(category -> {
+            JsonNode parsedCategory = jsonMapper.readTree(category);
+            assertThat(parsedCategory.path("category").asString()).as("name of the category of %s", exercise.getTitle()).isNotBlank();
+            assertThat(parsedCategory.path("color").asString()).as("color of the category of %s", exercise.getTitle()).matches("#[0-9a-f]{6}");
+        }));
     }
 
     @Test
