@@ -88,11 +88,25 @@ public class ExamDemoApi extends AbstractExamApi {
 
         Exam exam = createTestExam(course);
         double maxPoints = 0;
-        for (var groupTitleAndCreator : exerciseCreators.entrySet()) {
-            ExerciseGroup exerciseGroup = createExerciseGroup(exam.getId(), groupTitleAndCreator.getKey());
-            maxPoints += groupTitleAndCreator.getValue().apply(exerciseGroup).getMaxPoints();
+        int numberOfExercises = 0;
+        try {
+            for (var groupTitleAndCreator : exerciseCreators.entrySet()) {
+                ExerciseGroup exerciseGroup = createExerciseGroup(exam.getId(), groupTitleAndCreator.getKey());
+                try {
+                    maxPoints += groupTitleAndCreator.getValue().apply(exerciseGroup).getMaxPoints();
+                    numberOfExercises++;
+                }
+                catch (RuntimeException exception) {
+                    // A mandatory group without an exercise would keep students from starting the exam.
+                    removeExerciseGroup(exam.getId(), exerciseGroup.getId());
+                    throw exception;
+                }
+            }
         }
-        completeExam(exam.getId(), (int) Math.round(maxPoints), exerciseCreators.size());
+        finally {
+            // Also if an exercise could not be created: seeding never revisits an existing exam, and students can only start an exam that states its number of exercises.
+            completeExam(exam.getId(), (int) Math.round(maxPoints), numberOfExercises);
+        }
 
         log.info("Created demo test exam '{}' with id {}", TEST_EXAM_TITLE, exam.getId());
     }
@@ -144,6 +158,12 @@ public class ExamDemoApi extends AbstractExamApi {
      * Sets the points and the number of exercises of the exam to what its exercise groups hold, which is what the exam checklist asks the instructor to do through
      * {@code ExamResource#updateExam} once the exercises exist. A student exam can only be generated once the number of exercises is set.
      */
+    private void removeExerciseGroup(long examId, long exerciseGroupId) {
+        Exam exam = examRepository.findByIdWithExerciseGroupsElseThrow(examId);
+        exam.getExerciseGroups().stream().filter(exerciseGroup -> exerciseGroup.getId() == exerciseGroupId).findFirst().ifPresent(exam::removeExerciseGroup);
+        examRepository.save(exam);
+    }
+
     private void completeExam(long examId, int maxPoints, int numberOfExercises) {
         Exam exam = examRepository.findByIdElseThrow(examId);
         exam.setExamMaxPoints(maxPoints);
