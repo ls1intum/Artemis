@@ -18,7 +18,7 @@ import org.springframework.messaging.support.MessageHeaderAccessor;
  */
 public class StompServerHeaderInterceptor implements ChannelInterceptor {
 
-    static final String SERVER_HEADER = "server";
+    private static final String SERVER_HEADER = "server";
 
     @Override
     public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {

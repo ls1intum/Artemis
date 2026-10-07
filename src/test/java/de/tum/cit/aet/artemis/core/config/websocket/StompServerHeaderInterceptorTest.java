@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,14 +17,12 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.support.StaticListableBeanFactory;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompDecoder;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
-import org.springframework.messaging.support.ExecutorSubscribableChannel;
+import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -53,9 +51,6 @@ class StompServerHeaderInterceptorTest {
         Principal principal = () -> "student";
         when(session.getId()).thenReturn("session");
         when(session.getPrincipal()).thenReturn(principal);
-        when(session.getAttributes()).thenReturn(new ConcurrentHashMap<>());
-        when(session.isOpen()).thenReturn(true);
-        protocol.afterSessionStarted(session, new ExecutorSubscribableChannel());
     }
 
     @Test
@@ -79,9 +74,26 @@ class StompServerHeaderInterceptorTest {
     }
 
     @Test
+    void keepsTheSessionAndTheOtherHeadersOfTheFrame() {
+        Message<byte[]> frame = decode(BROKER_CONNECTED_FRAME);
+        // the relay assigns the session of the client to every frame of the broker that it forwards, and the frame is routed by it
+        Objects.requireNonNull(StompHeaderAccessor.getAccessor(frame, StompHeaderAccessor.class)).setSessionId("client-session");
+
+        Message<?> filtered = interceptor.preSend(frame, channel);
+
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(filtered);
+        assertThat(accessor.getSessionId()).isEqualTo("client-session");
+        assertThat(accessor.getCommand()).isEqualTo(StompCommand.CONNECTED);
+        assertThat(accessor.getFirstNativeHeader("version")).isEqualTo("1.2");
+        assertThat(accessor.getFirstNativeHeader("heart-beat")).isEqualTo("10000,10000");
+        assertThat(accessor.getFirstNativeHeader("session")).isEqualTo("abc");
+        assertThat(filtered.getPayload()).isEqualTo(frame.getPayload());
+    }
+
+    @Test
     void removesTheHeaderFromAnImmutableFrame() {
         Message<byte[]> frame = decode(BROKER_CONNECTED_FRAME);
-        StompHeaderAccessor.getAccessor(frame, StompHeaderAccessor.class).setImmutable();
+        Objects.requireNonNull(StompHeaderAccessor.getAccessor(frame, StompHeaderAccessor.class)).setImmutable();
 
         Message<?> filtered = interceptor.preSend(frame, channel);
 
@@ -116,13 +128,12 @@ class StompServerHeaderInterceptorTest {
     @Test
     void isRegisteredOnTheClientOutboundChannel() {
         // the relay hands the CONNECTED frame of the broker to this channel, so the interceptor has to be part of its configuration
-        var registration = new ChannelRegistration();
         var config = new WebsocketConfiguration(JsonMapper.builder().build(), mock(TaskScheduler.class), mock(TokenProvider.class),
                 new StaticListableBeanFactory().getBeanProvider(WebsocketTopicRegistry.class), "http://localhost", new ArtemisProperties());
 
-        config.configureClientOutboundChannel(registration);
+        List<Class<?>> interceptorTypes = config.clientOutboundChannel(Runnable::run).getInterceptors().stream().<Class<?>>map(ChannelInterceptor::getClass).toList();
 
-        assertThat((List<?>) ReflectionTestUtils.invokeMethod(registration, "getInterceptors")).anyMatch(StompServerHeaderInterceptor.class::isInstance);
+        assertThat(interceptorTypes).contains(StompServerHeaderInterceptor.class);
     }
 
     private static Message<byte[]> decode(String frame) {
