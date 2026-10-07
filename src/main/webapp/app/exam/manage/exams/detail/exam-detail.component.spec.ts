@@ -153,14 +153,11 @@ describe('ExamDetailComponent', () => {
         expect(location.path()).toBe('/course-management/1/exams/1/bonus');
     });
 
-    it('should correctly route to plagiarism cases', async () => {
-        const location = TestBed.inject(Location);
-        component.plagiarismEnabled.set(true);
+    it('should offer the plagiarism cases only as a step of the exam checklist and not as a button of its own', () => {
         fixture.detectChanges();
-        const plagiarismButton = fixture.debugElement.query(By.css('a[href="/course-management/1/exams/1/plagiarism-cases"]')).nativeElement;
-        plagiarismButton.click();
-        await fixture.whenStable();
-        expect(location.path()).toBe('/course-management/1/exams/1/plagiarism-cases');
+        const links = Array.from(fixture.debugElement.nativeElement.querySelectorAll('a[href="/course-management/1/exams/1/plagiarism-cases"]')) as HTMLElement[];
+        expect(links).toHaveLength(1);
+        expect(links[0].closest('jhi-exam-checklist')).not.toBeNull();
     });
 
     it('should return general routes correctly', () => {

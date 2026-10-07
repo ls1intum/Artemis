@@ -19,7 +19,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { provideRouter } from '@angular/router';
+import { MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -83,6 +84,7 @@ describe('ExamChecklistComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideRouter([]),
             ],
         }).compileComponents();
 
@@ -169,5 +171,31 @@ describe('ExamChecklistComponent', () => {
         expect(getExamStatisticsStub).toHaveBeenCalled();
         expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);
         expect(component.examChecklist()!.existsUnsubmittedExercises).toEqual(examChecklist.existsUnsubmittedExercises);
+    });
+
+    describe('exam correction table', () => {
+        const plagiarismCasesLink = 'a[href="/course-management/1/exams/1/plagiarism-cases"]';
+
+        const render = (testExam: boolean) => {
+            getProfileInfoSub.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT, MODULE_FEATURE_PLAGIARISM] });
+            examChecklistComponentFixture.componentRef.setInput('exam', Object.assign(new Exam(), { id: 1, testExam, course: { id: 1, isAtLeastInstructor: true } }));
+            examChecklistComponentFixture.componentRef.setInput('getExamRoutesByIdentifier', (identifier: string) => ['/course-management', 1, 'exams', 1, identifier]);
+            examChecklistComponentFixture.detectChanges();
+            return examChecklistComponentFixture.nativeElement as HTMLElement;
+        };
+
+        it('should list the plagiarism cases as the step right after assessing all submissions', () => {
+            const link = render(false).querySelector(plagiarismCasesLink)!;
+            expect(link).not.toBeNull();
+
+            const rows = Array.from(link.closest('table')!.querySelectorAll(':scope > tbody > tr'));
+            expect(rows.map((row) => row.querySelector('td')!.textContent!.trim())).toEqual(['1', '2', '3', '4', '5', '6', '7']);
+            expect(rows[1].querySelector('a[href="/course-management/1/exams/1/assessment-dashboard"]')).not.toBeNull();
+            expect(rows[2].contains(link)).toBe(true);
+        });
+
+        it('should not offer the plagiarism cases for a test exam, which has no correction table', () => {
+            expect(render(true).querySelector(plagiarismCasesLink)).toBeNull();
+        });
     });
 });
