@@ -76,7 +76,10 @@ public class CourseApi extends AbstractCourseApi {
         List<Course> existingCourses = courseRepository.findAllByShortName(DEMO_COURSE_SHORT_NAME);
         if (!existingCourses.isEmpty()) {
             log.debug("Demo course '{}' already exists, skipping creation", DEMO_COURSE_SHORT_NAME);
-            return existingCourses.getFirst();
+            Course existingCourse = existingCourses.getFirst();
+            // Repairs the settings rows of a demo course whose creation was interrupted, the same way a later save through the UI would.
+            courseRepository.ensureDefaultConfigurations(existingCourse.getId());
+            return existingCourse;
         }
 
         ZonedDateTime now = ZonedDateTime.now();
@@ -103,7 +106,7 @@ public class CourseApi extends AbstractCourseApi {
         CourseValidator.validateSemester(course);
         CourseValidator.validateTimeZone(course.getTimeZone());
 
-        Course createdCourse = courseRepository.save(course);
+        Course createdCourse = courseRepository.saveWithDefaultConfigurations(course);
         channelService.createDefaultChannels(createdCourse);
 
         log.info("Created demo course '{}' with id {}", DEMO_COURSE_SHORT_NAME, createdCourse.getId());

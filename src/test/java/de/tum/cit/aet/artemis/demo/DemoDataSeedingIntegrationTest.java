@@ -80,6 +80,7 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         seed();
 
         Course course = demoCourse().orElseThrow();
+        assertThat(courseRepository.ensureDefaultConfigurations(course.getId())).as("demo course owns all of its default settings rows").isZero();
         assertThat(course.getSemester()).as("demo course has a semester in the format the client expects").matches("SS\\d{2}|WS\\d{2}/\\d{2}");
         User student = userTestRepository.findOneByLogin(UserApi.DEMO_STUDENT_LOGIN).orElseThrow();
         User instructor = userTestRepository.findOneByLogin(UserApi.DEMO_INSTRUCTOR_LOGIN).orElseThrow();

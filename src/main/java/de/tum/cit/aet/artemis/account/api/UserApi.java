@@ -32,9 +32,9 @@ public class UserApi extends AbstractAccountApi {
 
     /**
      * Password of every demo user. These credentials are intentionally well known: the demo course only exists on demo and manual testing instances, which are activated through
-     * the opt-in {@code demo} profile and must never run in production.
+     * the opt-in {@code demo} profile and must never run in production. The secret scanner is suppressed on this line only, because a published password is not a leaked one.
      */
-    private static final String DEMO_PASSWORD = "demo1234";
+    private static final String DEMO_PASSWORD = "demo1234"; // nosemgrep
 
     private static final Logger log = LoggerFactory.getLogger(UserApi.class);
 
