@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -369,6 +370,9 @@ public class ProgrammingExerciseImportBasicService {
      */
     private Map<Long, Long> importTestCases(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise) {
         Map<Long, Long> newIdByOldId = new HashMap<>();
+        if (newExercise.getTestCases() == null) {
+            newExercise.setTestCases(new LinkedHashSet<>());
+        }
         newExercise.getTestCases().clear();
         sourceExercise.getTestCases().forEach(testCase -> {
             final var copy = new ProgrammingExerciseTestCase();
@@ -399,6 +403,9 @@ public class ProgrammingExerciseImportBasicService {
      * @param testCaseIdMapping a map from each source test case id to the id of its copy (see {@link #importTestCases})
      */
     private void importTasks(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise, Map<Long, Long> testCaseIdMapping) {
+        if (newExercise.getTasks() == null) {
+            newExercise.setTasks(new ArrayList<>());
+        }
         newExercise.getTasks().clear();
         sourceExercise.getTasks().forEach(sourceTask -> newExercise.getTasks().add(createTaskCopy(sourceTask, newExercise, testCaseIdMapping)));
     }

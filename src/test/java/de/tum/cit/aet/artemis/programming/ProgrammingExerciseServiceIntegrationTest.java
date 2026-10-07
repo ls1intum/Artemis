@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseListItemDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -59,6 +60,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    @Autowired
+    private ProgrammingExerciseTaskTestRepository programmingExerciseTaskTestRepository;
 
     @BeforeEach
     void setUp() {
@@ -313,6 +317,20 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), createToBeImported(), null);
         assertThat(programmingExerciseUtilService.buildConfigOf(programmingExercise).getBuildPlanAccessSecret())
                 .isEqualTo(programmingExerciseUtilService.buildConfigOf(importedExercise).getBuildPlanAccessSecret()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importProgrammingExerciseBasis_initializesOmittedTestCasesAndTasks() {
+        var toBeImported = createToBeImported();
+        toBeImported.setTestCases(null);
+        toBeImported.setTasks(null);
+
+        var imported = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), toBeImported, null);
+        var stored = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(imported);
+
+        assertThat(stored.getTestCases()).hasSameSizeAs(programmingExercise.getTestCases());
+        assertThat(programmingExerciseTaskTestRepository.findByExerciseId(imported.getId())).hasSameSizeAs(programmingExercise.getTasks());
     }
 
     @Test
