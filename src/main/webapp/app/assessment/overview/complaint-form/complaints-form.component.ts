@@ -11,12 +11,13 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TextareaCounterComponent } from 'app/shared-ui/textarea/textarea-counter.component';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-complaint-form',
     templateUrl: './complaints-form.component.html',
     styleUrls: ['../complaints.scss'],
-    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe, TextareaCounterComponent],
+    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe, TextareaCounterComponent, TumAetUiButtonDirective],
 })
 export class ComplaintsFormComponent implements OnInit {
     private complaintService = inject(ComplaintService);

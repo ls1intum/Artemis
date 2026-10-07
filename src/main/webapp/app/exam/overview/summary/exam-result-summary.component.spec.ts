@@ -34,11 +34,14 @@ import { ExampleSolutionComponent } from 'app/exercise/example-solution/example-
 import { QuizExamSummaryComponent } from 'app/exam/overview/summary/exercises/quiz-exam-summary/quiz-exam-summary.component';
 import { FileUploadExamSummaryComponent } from 'app/exam/overview/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
-import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
+import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-exercise-header/exam-exercise-header.component';
+import { ExamRequestAiFeedbackButtonComponent } from 'app/exam/overview/summary/exam-request-ai-feedback-button/exam-request-ai-feedback-button.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -210,7 +213,11 @@ function sharedSetup(url: string[]) {
                         RouterLink,
                         TumAetUiButtonDirective,
                         TumAetUiMessageComponent,
+                        TumAetUiTagComponent,
                         MockDirective(TumAetUiTooltipDirective),
+                        ExamExerciseHeaderComponent,
+                        MockComponent(ExamRequestAiFeedbackButtonComponent),
+                        MockComponent(CourseSidebarToggleButtonComponent),
                         MockComponent(ExamGeneralInformationComponent),
                         MockComponent(ExamResultOverviewComponent),
                         MockComponent(CollapsibleCardComponent),
@@ -223,7 +230,6 @@ function sharedSetup(url: string[]) {
                         MockComponent(FileUploadExamSummaryComponent),
                         MockComponent(ComplaintsStudentViewComponent),
                         MockComponent(ProgrammingExamSummaryComponent),
-                        MockComponent(TestRunRibbonComponent),
                     ],
                 },
             })
@@ -596,6 +602,137 @@ describe('ExamResultSummaryComponent', () => {
 
             expect(getElementByIdMock).toHaveBeenCalledWith(EXAM_SUMMARY_RESULT_OVERVIEW_ID);
             expect(scrollIntoViewSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('page frame', () => {
+        const element = (selector: string): HTMLElement | null => fixture.nativeElement.querySelector(selector);
+        const header = (): HTMLElement => element('#exam-results-title [data-testid="exam-exercise-header"]')!;
+        const title = (): HTMLElement => element('#exam-results-title [data-testid="exam-exercise-title"]')!;
+        const actions = (): HTMLElement => header().lastElementChild as HTMLElement;
+        const submittedExam = (overrides: Partial<Exam> = {}): StudentExam => ({ ...studentExam, submitted: true, exam: { ...exam, ...overrides } as Exam }) as StudentExam;
+
+        it('shows the page title in the shared 40px title row that holds the export button', () => {
+            fixture.detectChanges();
+
+            expect(header().classList).toContain('h-10');
+            expect(title().textContent).toContain('artemisApp.exam.examSummary.examResults');
+            // the id the "back to overview" scroll falls back to stays on the title row
+            expect(element('#exam-results-title')!.contains(title())).toBe(true);
+            expect(actions().querySelector('#exportToPDFButton')).not.toBeNull();
+        });
+
+        it('lays out the actions in the title row without floats: the AI feedback button first, the export button last, both small', () => {
+            fixture.detectChanges();
+
+            const children = [...actions().children];
+            expect(children.map((child) => child.id || child.tagName.toLowerCase())).toEqual(['jhi-exam-request-ai-feedback-button', 'exportToPDFButton']);
+            const exportButton = children[1];
+            // the small size is 34px, so the button fits the 40px row
+            expect(exportButton.classList).toContain('tumaet:text-sm');
+            expect(exportButton.classList).not.toContain('tumaet:text-base');
+            expect(exportButton.classList).not.toContain('float-right');
+            // the host of a button that is not shown must not leave an empty flex item (and an extra gap) behind
+            expect(children[0].classList).toContain('contents');
+        });
+
+        it('puts the toggle of a collapsed sidebar in front of the title inside the same row, and forwards its click', () => {
+            fixture.detectChanges();
+            expect(element('jhi-course-sidebar-toggle-button')).toBeNull();
+
+            fixture.componentRef.setInput('isSidebarCollapsed', true);
+            fixture.detectChanges();
+
+            expect(title().previousElementSibling?.tagName.toLowerCase()).toBe('jhi-course-sidebar-toggle-button');
+            expect(actions().querySelector('jhi-course-sidebar-toggle-button')).toBeNull();
+
+            const toggled = vi.fn();
+            component.toggleSidebar.subscribe(toggled);
+            fixture.debugElement.query(By.directive(CourseSidebarToggleButtonComponent)).componentInstance.toggleSidebar.emit();
+            expect(toggled).toHaveBeenCalledOnce();
+        });
+
+        it('marks a test run with a tag next to the title instead of the diagonal ribbon', () => {
+            fixture.detectChanges();
+            expect(element('#testRunRibbon')).toBeNull();
+
+            component.isTestRun.set(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            const tag = element('#testRunRibbon')!;
+            expect(tag.tagName.toLowerCase()).toBe('tumaet-ui-tag');
+            expect(title().nextElementSibling).toBe(tag);
+            expect(element('jhi-test-run-ribbon')).toBeNull();
+        });
+
+        it('shows only the AI feedback button, aligned to the right edge, when an instructor looks at a test run', () => {
+            fixture.componentRef.setInput('instructorView', true);
+            fixture.detectChanges();
+            component.isTestRun.set(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(element('#exam-results-title')).toBeNull();
+            expect(element('#testRunRibbon')).toBeNull();
+            const aiButton = element('jhi-exam-request-ai-feedback-button')!;
+            expect(aiButton.parentElement!.classList).toContain('justify-end');
+            // the old float and the extra right margin left the button 8px short of the edge
+            expect(aiButton.classList).not.toContain('float-right');
+            expect(aiButton.classList).not.toContain('mr-2!');
+        });
+
+        it('makes the back-to-overview button a small one', () => {
+            fixture.detectChanges();
+
+            const button = element('#back-to-overview-button')!;
+            expect(button.classList).toContain('tumaet:text-sm');
+            expect(button.classList).not.toContain('tumaet:text-base');
+        });
+
+        it('styles the exercises heading like a section heading and keeps the note about unpublished results apart from it', () => {
+            fixture.componentRef.setInput('studentExam', submittedExam({ publishResultsDate: dayjs().add(2, 'hours') }));
+            fixture.detectChanges();
+
+            const heading = element('h3[jhiTranslate="artemisApp.exam.exercises"]')!;
+            // the important modifiers are needed because the unlayered Bootstrap heading rules would win otherwise
+            expect(heading.classList).toContain('text-base!');
+            expect(heading.classList).toContain('font-semibold!');
+            expect(heading.classList).toContain('mb-3!');
+            expect(element('fa-icon.info-icon')!.parentElement!.classList).toContain('mb-4');
+        });
+
+        it('adds no margins around the complaint area that would open an empty line above it', () => {
+            fixture.componentRef.setInput('studentExam', submittedExam({ examStudentReviewStart: dayjs().subtract(1, 'hour'), examStudentReviewEnd: dayjs().add(1, 'hour') }));
+            fixture.detectChanges();
+
+            const complaintView = element('jhi-complaint-student-view')!;
+            expect(complaintView).not.toBeNull();
+            expect(complaintView.classList.length).toBe(0);
+        });
+
+        it('caps the problem statement panel of every exercise card at 45% of the card, but not in the printout', () => {
+            fixture.detectChanges();
+
+            const content = element('.collapsible-content')!;
+            expect(content.style.getPropertyValue('--resizeable-container-right-max-width')).toBe('45%');
+
+            component.isPrinting.set(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(content.style.getPropertyValue('--resizeable-container-right-max-width')).toBe('none');
+        });
+
+        it('makes the plagiarism case link and the example solution toggle small buttons', () => {
+            fixture.componentRef.setInput('studentExam', submittedExam({ exampleSolutionPublicationDate: dayjs().subtract(1, 'hour') }));
+            fixture.detectChanges();
+            component.plagiarismCaseInfos.set({ [textExercise.id!]: { id: 5, verdict: PlagiarismVerdict.PLAGIARISM } });
+            fixture.changeDetectorRef.detectChanges();
+
+            const link = fixture.debugElement.query(By.css('a[tumAetUiButton]')).nativeElement as HTMLElement;
+            const toggle = element(`#show-sample-solution-button-${textExercise.id}`)!;
+            for (const button of [link, toggle]) {
+                expect(button.classList).toContain('tumaet:text-sm');
+                expect(button.classList).not.toContain('tumaet:text-base');
+            }
         });
     });
 

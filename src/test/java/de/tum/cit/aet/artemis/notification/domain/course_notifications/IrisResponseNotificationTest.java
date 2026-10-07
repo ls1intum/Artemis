@@ -50,7 +50,7 @@ class IrisResponseNotificationTest {
 
     @Test
     void shouldDeclareUniqueDatabaseTypeIdentifier() {
-        assertThat(IrisResponseNotification.class.getAnnotation(CourseNotificationType.class).value()).isEqualTo(27);
+        assertThat(IrisResponseNotification.class.getAnnotation(CourseNotificationType.class).value()).isEqualTo(28);
     }
 
     @Test

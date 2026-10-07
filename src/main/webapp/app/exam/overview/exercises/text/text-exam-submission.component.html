@@ -1,21 +1,7 @@
 @if (exercise()) {
-    <div class="flex items-center justify-between">
-        <h3 class="mb-0! font-normal">
-            <span>
-                {{ exercise().exerciseGroup?.title }}
-            </span>
-            <span
-                [jhiTranslate]="exercise().bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
-                [translateValues]="{ points: exercise().maxPoints, bonusPoints: exercise().bonusPoints }"
-            >
-            </span>
-            @if (exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                <jhi-included-in-score-badge [includedInOverallScore]="exercise().includedInOverallScore" />
-            }
-        </h3>
+    <jhi-exam-exercise-header [exercise]="exercise()">
         <jhi-exercise-save-button [submission]="studentSubmission()" (save)="notifyTriggerSave()" />
-    </div>
-    <hr />
+    </jhi-exam-exercise-header>
     <!--resizable container-->
     <jhi-resizeable-container [examTimeline]="examTimeline()">
         <!--region Left Panel-->
@@ -32,6 +18,7 @@
                 </div>
                 <ng-container>
                     <textarea
+                        [attr.aria-label]="'artemisApp.exam.yourSolution' | artemisTranslate"
                         #textEditor
                         id="text-editor"
                         class="text-editor-textarea"

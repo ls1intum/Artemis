@@ -67,6 +67,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionPresenceService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisSuggestedContextDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -368,7 +369,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         var result = resultEvent.getEventObject();
         var participation = result.getSubmission().getParticipation();
 
-        if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) || participation.getExercise().isExamExercise()) {
+        if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
+            return;
+        }
+        var exercise = studentParticipation.getProgrammingExercise();
+        if (exercise == null || exercise.isExamExercise()) {
             return;
         }
 
@@ -379,24 +384,25 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         var programmingSubmission = (ProgrammingSubmission) result.getSubmission();
         // Loaded once and handed down, so both branches share this lookup instead of repeating it for their own
         // `enabled()` check. The per-course legacy switch belongs to the same lookup, so it is decided here too.
-        var course = studentParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled() || !settings.legacyBuildTriggersEffective()) {
             return;
         }
         if (programmingSubmission.isBuildFailed()) {
-            onBuildFailure(studentParticipation, programmingSubmission, settings);
+            onBuildFailure(exercise, studentParticipation, programmingSubmission, settings);
         }
         else {
-            onNewResult(studentParticipation, programmingSubmission, settings);
+            onNewResult(exercise, studentParticipation, programmingSubmission, settings);
         }
     }
 
-    private void onBuildFailure(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission submission, IrisCourseSettings settings) {
+    private void onBuildFailure(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission submission,
+            IrisCourseSettings settings) {
         var user = studentParticipation.getStudent().orElseThrow();
-        var session = findExerciseSessionOrCourseFallback(studentParticipation.getProgrammingExercise(), user, PROGRAMMING_EXERCISE_CHAT);
+        var session = findExerciseSessionOrCourseFallback(exercise, user, PROGRAMMING_EXERCISE_CHAT);
         if (session.getMode() == COURSE_CHAT) {
-            applyContextChange(session, PROGRAMMING_EXERCISE_CHAT, studentParticipation.getProgrammingExercise().getId(), user);
+            applyContextChange(session, PROGRAMMING_EXERCISE_CHAT, exercise.getId(), user);
         }
         rateLimitService.checkRateLimitElseThrow(session, user);
         log.info("Build failed for user {}", user.getName());
@@ -407,7 +413,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 });
     }
 
-    private void onNewResult(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission, IrisCourseSettings settings) {
+    private void onNewResult(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission,
+            IrisCourseSettings settings) {
         // TODO: Reduce this call to the last 5 submissions or sth
         var recentSubmissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(studentParticipation.getId());
 
@@ -424,9 +431,9 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             if (needsIntervention) {
                 log.info("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
                 var user = studentParticipation.getStudent().orElseThrow();
-                var session = findExerciseSessionOrCourseFallback(studentParticipation.getProgrammingExercise(), user, PROGRAMMING_EXERCISE_CHAT);
+                var session = findExerciseSessionOrCourseFallback(exercise, user, PROGRAMMING_EXERCISE_CHAT);
                 if (session.getMode() == COURSE_CHAT) {
-                    applyContextChange(session, PROGRAMMING_EXERCISE_CHAT, studentParticipation.getProgrammingExercise().getId(), user);
+                    applyContextChange(session, PROGRAMMING_EXERCISE_CHAT, exercise.getId(), user);
                 }
                 rateLimitService.checkRateLimitElseThrow(session, user);
                 CompletableFuture.runAsync(() -> chatPipelineExecutionService.execute(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase(Locale.ROOT)),
@@ -567,6 +574,32 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         session.setMode(newMode);
         session.setEntityId(newEntityId);
         sendOverWebsocket(session, savedMarker);
+    }
+
+    /**
+     * Applies a context change suggested by the Pyris pipeline (automatic context switching).
+     * Delegates to {@link #applyContextChange} with the session owner as acting user, so the same
+     * validation chain runs as for a manual switch (entity exists, mode matches the entity type,
+     * student role, Iris enabled, same course). A rejected or invalid suggestion is logged and
+     * dropped instead of failing the status update: the answer still reaches the student, only
+     * the session context stays unchanged.
+     *
+     * @param session          the session the status update belongs to
+     * @param suggestedContext the context suggested by the pipeline
+     */
+    @Override
+    protected void handleSuggestedContextChange(IrisChatSession session, PyrisSuggestedContextDTO suggestedContext) {
+        if (suggestedContext.mode() == null || suggestedContext.entityId() == null) {
+            log.warn("Ignoring automatic context switch with incomplete target for session {}: {}", session.getId(), suggestedContext);
+            return;
+        }
+        try {
+            var user = userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(session.getUserId());
+            applyContextChange(session, suggestedContext.mode(), suggestedContext.entityId(), user);
+        }
+        catch (Exception e) {
+            log.warn("Ignoring automatic context switch for session {} to mode {} and entity {}", session.getId(), suggestedContext.mode(), suggestedContext.entityId(), e);
+        }
     }
 
     private void validateExerciseMode(Exercise exercise, IrisChatMode mode) {

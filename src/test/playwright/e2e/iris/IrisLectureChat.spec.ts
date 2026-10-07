@@ -33,7 +33,7 @@ const course = { id: SEED_COURSES.lectureManagement.id, title: SEED_COURSES.lect
  * These tests require Iris to be enabled on the server (the panel is gated behind
  * `profileService.isModuleFeatureActive('iris')` AND the course Iris settings being
  * enabled). Run them with:
- *     RUN_IRIS=true ./run-e2e-tests-local-fast.sh --skip-db --filter "Iris"
+ *     RUN_IRIS=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --skip-db --filter "Iris"
  *
  * When Iris is NOT enabled (the default), the suite skips itself rather than failing, so
  * it is a no-op in normal CI runs.
