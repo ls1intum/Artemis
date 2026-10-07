@@ -43,6 +43,20 @@ function substeps(events: readonly HyperionGenerationEvent[]): Record<HyperionSu
 }
 
 describe('hyperion generation stages', () => {
+    it.each(['ERROR', 'CANCELLED'] as const)('marks the latest repair stage on %s and preserves completed later stages', (type) => {
+        const events = [
+            event({ type: 'STARTED', phase: 'PREPARING' }),
+            event({ type: 'PROGRESS', phase: 'REVIEWING' }),
+            event({ type: 'PROGRESS', phase: 'REPAIRING' }),
+            event({ type }),
+        ];
+
+        expect(ladder(events)).toEqual({ prepare: 'complete', design: type === 'ERROR' ? 'failed' : 'skipped', build: 'complete', review: 'complete', save: 'skipped' });
+        expect(count(events, 'current')).toBe(0);
+        expect(count(events, 'failed')).toBe(type === 'ERROR' ? 1 : 0);
+        expect(stagePosition(stageStates(events, runOutcome(events)))).toBe(4);
+    });
+
     it('completes every stage on a successful run, even though the server stamps SAVING on the DONE event', () => {
         // The regression this guards: reading the ladder from the phase alone left "Save the draft" spinning forever
         // after a run had already succeeded.

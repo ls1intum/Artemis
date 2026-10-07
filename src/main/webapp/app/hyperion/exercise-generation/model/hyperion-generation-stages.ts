@@ -221,7 +221,7 @@ export function stageStates(events: readonly HyperionGenerationEvent[], outcome:
  * the run to an earlier stage. A counter that goes from "step 4 of 5" to "step 3 of 5" is worse than no counter,
  * because it reads as the run losing ground.
  *
- * `pending` and `skipped` both mean "the run was never here": a run that failed in stage 2 leaves stages 3 to 5
+ * `pending` means unvisited; `skipped` also covers an interrupted stage on cancellation. A run that failed in stage 2 leaves stages 3 to 5
  * skipped, and reporting it as "step 5 of 5" would claim it got to the end.
  *
  * `undefined` while nothing has started, because "step 0 of 5" is not a position.
@@ -289,9 +289,9 @@ function stageState(index: number, latest: number, furthest: number, outcome: Hy
             // Everything ran; only the write-out came back uncertain, and that is the one thing the instructor must look at.
             return index === HYPERION_STAGES.length - 1 ? 'failed' : 'complete';
         case 'failed':
-            return index < furthest ? 'complete' : index === furthest ? 'failed' : 'skipped';
+            return index === latest ? 'failed' : index <= furthest ? 'complete' : 'skipped';
         case 'cancelled':
-            return index < furthest ? 'complete' : 'skipped';
+            return index === latest ? 'skipped' : index <= furthest ? 'complete' : 'skipped';
     }
 
     if (index === latest) {
