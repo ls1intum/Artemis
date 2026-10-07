@@ -176,18 +176,19 @@ public class AtlasDemoApi extends AbstractAtlasApi {
         // The essays and the class diagrams put design decisions into words and diagrams, alongside the topic they are about.
         link(communicationCompetency, Stream.concat(architecture.stream(), modeling.stream()).filter(Exercise.class::isInstance), learningObject -> MEDIUM_WEIGHT);
 
-        Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
-        relate(courseWithCompetencies, relations, algorithmsCompetency, RelationType.ASSUMES, java);
-        relate(courseWithCompetencies, relations, modelingCompetency, RelationType.ASSUMES, java);
-        relate(courseWithCompetencies, relations, communicationCompetency, RelationType.EXTENDS, architectureCompetency);
-        relate(courseWithCompetencies, relations, communicationCompetency, RelationType.ASSUMES, modelingCompetency);
-
         enableLearningPaths(course.getId());
 
         // Like CourseCompetencyResource#getCompetencyStudentProgress when a student refreshes their progress. The prerequisite is left out: nothing is linked to it.
         for (Competency competency : List.of(architectureCompetency, algorithmsCompetency, modelingCompetency, communicationCompetency)) {
             students.forEach(student -> competencyProgressService.updateCompetencyProgress(competency.getId(), student));
         }
+
+        // Last, because restoring a relation fails if a relation an instructor added in the meantime would close a cycle with it.
+        Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
+        relate(courseWithCompetencies, relations, algorithmsCompetency, RelationType.ASSUMES, java);
+        relate(courseWithCompetencies, relations, modelingCompetency, RelationType.ASSUMES, java);
+        relate(courseWithCompetencies, relations, communicationCompetency, RelationType.EXTENDS, architectureCompetency);
+        relate(courseWithCompetencies, relations, communicationCompetency, RelationType.ASSUMES, modelingCompetency);
     }
 
     /**

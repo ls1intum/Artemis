@@ -246,7 +246,7 @@ public class CommunicationDemoApi implements AbstractApi {
         seedStudyGroupThread(course, existingPosts, students);
         seedTutorialGroupsInfo(course, existingPosts, students, instructor);
         seedFaqs(course);
-        seedDirectMessages(course, students.getFirst(), tutor);
+        seedDirectMessages(course, existingPosts, students.getFirst(), tutor);
     }
 
     private void seedWelcome(Course course, List<Post> existingPosts, List<User> students, User instructor) {
@@ -335,11 +335,14 @@ public class CommunicationDemoApi implements AbstractApi {
     /**
      * Starts the direct messages between the demo student and the demo tutor like {@code OneToOneChatResource#startOneToOneChat}, unless the two already have a conversation.
      */
-    private void seedDirectMessages(Course course, User student, User tutor) {
-        if (oneToOneChatRepository.findIdOfChatInCourseBetweenUsers(course.getId(), student.getLogin(), tutor.getLogin()) != null) {
+    private void seedDirectMessages(Course course, List<Post> existingPosts, User student, User tutor) {
+        // Identified by the first message rather than by the chat, so that a chat whose messages could not be sent gets them on the next startup.
+        Long chatId = oneToOneChatRepository.findIdOfChatInCourseBetweenUsers(course.getId(), student.getLogin(), tutor.getLogin());
+        if (chatId != null && existingPosts.stream().anyMatch(post -> chatId.equals(post.getConversation().getId()) && FEEDBACK_QUESTION.equals(post.getContent()))) {
             log.debug("Demo direct messages between '{}' and '{}' already exist, skipping creation", student.getLogin(), tutor.getLogin());
             return;
         }
+        // Returns the existing chat between the two, if there is one.
         OneToOneChat chat = SecurityUtils.runAs(student, () -> oneToOneChatService.startOneToOneChat(course, student, tutor));
         send(course, chat, student, null, FEEDBACK_QUESTION);
         send(course, chat, tutor, null, FEEDBACK_ANSWER);
