@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
+import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 
 /**
  * General-purpose API for file upload exercises (but not for general upload functionality).
@@ -102,12 +103,15 @@ public class FileUploadDemoApi extends AbstractFileModuleApi {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final GroupNotificationScheduleService groupNotificationScheduleService;
+
     public FileUploadDemoApi(FileUploadExerciseRepository fileUploadExerciseRepository, ChannelService channelService, ExerciseConfigurationService exerciseConfigurationService,
-            ExerciseVersionService exerciseVersionService) {
+            ExerciseVersionService exerciseVersionService, GroupNotificationScheduleService groupNotificationScheduleService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.channelService = channelService;
         this.exerciseConfigurationService = exerciseConfigurationService;
         this.exerciseVersionService = exerciseVersionService;
+        this.groupNotificationScheduleService = groupNotificationScheduleService;
     }
 
     /**
@@ -140,6 +144,8 @@ public class FileUploadDemoApi extends AbstractFileModuleApi {
         // The configurations hold the key to their exercise, so their permanent rows are created right after it is stored, like the production creation path does.
         exerciseConfigurationService.initialize(createdExercise, fileUploadExercise.getTeamAssignmentConfig(), fileUploadExercise.getPlagiarismDetectionConfig());
         channelService.createExerciseChannel(createdExercise, Optional.empty());
+        // Sends the release notification right away for a released exercise, and schedules the one about assessed submissions.
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(createdExercise);
         exerciseVersionService.createExerciseVersion(createdExercise);
 
         log.info("Created demo file upload exercise '{}' with id {}", DEMO_EXERCISE_TITLE, createdExercise.getId());

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.api.AbstractApi;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.ShortAnswerSubmittedTextF
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.exception.QuizJoinException;
 import de.tum.cit.aet.artemis.quiz.exception.QuizSubmissionException;
+import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
@@ -121,8 +123,11 @@ public class QuizDemoApi implements AbstractApi {
 
     private final QuizResultService quizResultService;
 
+    private final QuizBatchRepository quizBatchRepository;
+
     public QuizDemoApi(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, ExerciseVersionService exerciseVersionService,
-            ParticipationService participationService, QuizBatchService quizBatchService, QuizSubmissionService quizSubmissionService, QuizResultService quizResultService) {
+            ParticipationService participationService, QuizBatchService quizBatchService, QuizSubmissionService quizSubmissionService, QuizResultService quizResultService,
+            QuizBatchRepository quizBatchRepository) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.exerciseVersionService = exerciseVersionService;
@@ -130,6 +135,7 @@ public class QuizDemoApi implements AbstractApi {
         this.quizBatchService = quizBatchService;
         this.quizSubmissionService = quizSubmissionService;
         this.quizResultService = quizResultService;
+        this.quizBatchRepository = quizBatchRepository;
     }
 
     /**
@@ -231,15 +237,31 @@ public class QuizDemoApi implements AbstractApi {
 
         QuizExercise createdQuiz = create(quizExercise);
         QuizExercise quizWithQuestions = quizExerciseRepository.findByIdWithQuestionsElseThrow(createdQuiz.getId());
-        for (int index = 0; index < students.size(); index++) {
-            takeQuiz(quizWithQuestions, students.get(index), ENDED_QUIZ_ANSWER_SHEETS.get(index % ENDED_QUIZ_ANSWER_SHEETS.size()));
+        try {
+            for (int index = 0; index < students.size(); index++) {
+                takeQuiz(quizWithQuestions, students.get(index), ENDED_QUIZ_ANSWER_SHEETS.get(index % ENDED_QUIZ_ANSWER_SHEETS.size()));
+            }
         }
-
-        // Ends the quiz once everyone has handed it in, like the end-now action of QuizExerciseResource, and evaluates it like QuizExerciseEvaluationResource, which gives every
-        // participation its rated result and the quiz its statistics.
-        quizExerciseRepository.updateDueDate(createdQuiz.getId(), ZonedDateTime.now());
-        quizResultService.evaluateQuiz(createdQuiz.getId());
+        finally {
+            // Also if a student could not take it: seeding never revisits an existing quiz, so a quiz that is not ended here would stay open without results.
+            endAndEvaluate(createdQuiz.getId());
+        }
         return quizExerciseRepository.findByIdElseThrow(createdQuiz.getId());
+    }
+
+    /**
+     * Ends the quiz like the end-now action of {@code QuizExerciseResource#performActionForQuizExercise}: its due date becomes now, no batch can start in time to still run,
+     * and the change is recorded as a new version. The quiz is then evaluated like {@code QuizExerciseEvaluationResource} does, which gives every participation its rated result
+     * and the quiz its statistics.
+     */
+    private void endAndEvaluate(long quizId) {
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizId);
+        quizExerciseService.endQuiz(quizExercise);
+        ZonedDateTime lastStart = quizExercise.getDueDate().minusSeconds((long) quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
+        quizExerciseRepository.updateDueDate(quizId, quizExercise.getDueDate());
+        quizBatchRepository.clampBatchStartTimesForEndNow(quizId, lastStart);
+        exerciseVersionService.createExerciseVersion(quizExercise);
+        quizResultService.evaluateQuiz(quizId);
     }
 
     /**

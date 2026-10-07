@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseDates;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseFactory;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -81,16 +82,19 @@ public class ProgrammingDemoApi implements AbstractApi {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     public ProgrammingDemoApi(ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ResourceLoaderService resourceLoaderService, Optional<VersionControlService> versionControlService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService) {
+            ResourceLoaderService resourceLoaderService, Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            ExerciseVersionService exerciseVersionService) {
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.resourceLoaderService = resourceLoaderService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -134,6 +138,8 @@ public class ProgrammingDemoApi implements AbstractApi {
         try {
             programmingExerciseValidationService.validateNewProgrammingExerciseSettings(programmingExercise, buildConfig, course);
             ProgrammingExercise createdExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(programmingExercise, buildConfig, false);
+            // Like ProgrammingExerciseCreationResource#createProgrammingExercise, which records the initial version after the setup, not the creation service.
+            exerciseVersionService.createExerciseVersion(createdExercise);
             log.info("Created demo programming exercise '{}' with id {}", DEMO_EXERCISE_TITLE, createdExercise.getId());
             return Optional.of(createdExercise);
         }

@@ -35,8 +35,10 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseDates;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.text.api.dtos.DemoEssay;
 import de.tum.cit.aet.artemis.text.api.dtos.DemoEssay.GeneralFeedback;
@@ -278,9 +280,14 @@ public class TextDemoApi extends AbstractTextApi {
 
     private final ComplaintService complaintService;
 
+    private final GroupNotificationScheduleService groupNotificationScheduleService;
+
+    private final ExerciseService exerciseService;
+
     public TextDemoApi(TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository, ChannelService channelService,
             ExerciseConfigurationService exerciseConfigurationService, ExerciseVersionService exerciseVersionService, ParticipationService participationService,
-            TextSubmissionService textSubmissionService, TextAssessmentService textAssessmentService, ComplaintService complaintService) {
+            TextSubmissionService textSubmissionService, TextAssessmentService textAssessmentService, ComplaintService complaintService,
+            GroupNotificationScheduleService groupNotificationScheduleService, ExerciseService exerciseService) {
         this.textExerciseRepository = textExerciseRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.channelService = channelService;
@@ -290,6 +297,8 @@ public class TextDemoApi extends AbstractTextApi {
         this.textSubmissionService = textSubmissionService;
         this.textAssessmentService = textAssessmentService;
         this.complaintService = complaintService;
+        this.groupNotificationScheduleService = groupNotificationScheduleService;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -360,6 +369,8 @@ public class TextDemoApi extends AbstractTextApi {
         // The configurations hold the key to their exercise, so their permanent rows are created right after it is stored, like the production creation path does.
         exerciseConfigurationService.initialize(createdExercise, textExercise.getTeamAssignmentConfig(), textExercise.getPlagiarismDetectionConfig());
         channelService.createExerciseChannel(createdExercise, Optional.empty());
+        // Sends the release notification right away for a released exercise, and schedules the one about assessed submissions.
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(createdExercise);
         exerciseVersionService.createExerciseVersion(createdExercise);
 
         log.info("Created demo text exercise '{}' with id {}", createdExercise.getTitle(), createdExercise.getId());
@@ -437,13 +448,19 @@ public class TextDemoApi extends AbstractTextApi {
     }
 
     /**
-     * Changes a stored essay the way {@code TextExerciseCreationUpdateResource#updateTextExercise} stores a change: on the freshly loaded entity, validated before it is saved.
+     * Changes a stored essay the way {@code TextExerciseCreationUpdateResource#updateTextExercise} stores a change: on the freshly loaded entity, validated before it is saved,
+     * after which students are notified about the changed dates and the change is recorded as a new version.
      */
     private TextExercise updateEssay(long essayId, Consumer<TextExercise> change) {
         TextExercise essay = textExerciseRepository.findByIdElseThrow(essayId);
+        ZonedDateTime originalReleaseDate = essay.getReleaseDate();
+        ZonedDateTime originalAssessmentDueDate = essay.getAssessmentDueDate();
         change.accept(essay);
         essay.validateGeneralSettings();
-        return textExerciseRepository.save(essay);
+        TextExercise updatedEssay = textExerciseRepository.save(essay);
+        exerciseService.notifyAboutExerciseChanges(originalReleaseDate, originalAssessmentDueDate, updatedEssay.getProblemStatement(), updatedEssay, null);
+        exerciseVersionService.createExerciseVersion(updatedEssay);
+        return updatedEssay;
     }
 
     /**
