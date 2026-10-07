@@ -206,7 +206,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         try {
             content = readCompleteFile(safe);
         }
-        catch (IOException | WorkspaceArchive.RejectedWorkspaceEntryException failure) {
+        catch (IOException | UncheckedIOException | WorkspaceArchive.RejectedWorkspaceEntryException failure) {
             return "ERROR: could not read '" + safe + "': " + failure.getMessage();
         }
         String screened = screenObservation(safe, content);
@@ -417,7 +417,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         try {
             current = readCompleteFile(safe);
         }
-        catch (IOException | WorkspaceArchive.RejectedWorkspaceEntryException failure) {
+        catch (IOException | UncheckedIOException | WorkspaceArchive.RejectedWorkspaceEntryException failure) {
             return "ERROR: could not read '" + safe + "' for editing: " + failure.getMessage();
         }
         String screened = screenObservation(safe, current);
