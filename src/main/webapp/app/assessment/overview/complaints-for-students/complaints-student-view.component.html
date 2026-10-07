@@ -62,6 +62,7 @@
                 (onSubmit)="loadPotentialComplaint()"
             />
         }
+        <!-- Behind the form on purpose: scrolling it into view with 'nearest' reveals the end of the form, with its submit button, and leaves the page where it is when the form is visible. -->
         <div #complaintScrollpoint data-testid="complaint-scrollpoint"></div>
         @if (complaint(); as complaint) {
             <!-- The cards share their rows (subgrid), so the texts of the request and of the response line up even if one header wraps. -->

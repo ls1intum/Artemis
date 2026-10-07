@@ -203,6 +203,28 @@ describe('ComplaintsStudentViewComponent', () => {
             expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest' });
         });
 
+        it('should place the scroll anchor after the complaint form, so that scrolling it into view reveals the end of the form', async () => {
+            fixture.componentRef.setInput('exercise', examExercise);
+            fixture.componentRef.setInput('result', result);
+            fixture.componentRef.setInput('exam', defaultExam);
+            component.showSection.set(true);
+            component.isCorrectUserToFileAction.set(true);
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
+            fixture.changeDetectorRef.detectChanges();
+            // jsdom does not implement scrollIntoView
+            fixture.nativeElement.querySelector('[data-testid="complaint-scrollpoint"]').scrollIntoView = vi.fn();
+
+            fixture.debugElement.nativeElement.querySelector('#complain').click();
+            await fixture.whenStable();
+            fixture.changeDetectorRef.detectChanges();
+
+            const form: HTMLElement = fixture.nativeElement.querySelector('jhi-complaint-form');
+            const anchor: HTMLElement = fixture.nativeElement.querySelector('[data-testid="complaint-scrollpoint"]');
+            expect(form).not.toBeNull();
+            expect(anchor).not.toBeNull();
+            expect(form.compareDocumentPosition(anchor) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        });
+
         it('should be visible on test run', () => {
             const now = dayjs();
             const examWithFutureReview: Exam = { examStudentReviewStart: dayjs(now).add(1, 'day'), examStudentReviewEnd: dayjs(now).add(2, 'day') } as Exam;
