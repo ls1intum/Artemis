@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.demo;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.InstanceOfAssertFactories.DOUBLE;
 
@@ -41,7 +40,6 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
-import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
@@ -313,14 +311,13 @@ class DemoAtlasSeedingIntegrationTest extends AbstractSpringIntegrationIndepende
 
         DemoDataSeedingService withoutAtlas = new DemoDataSeedingService(accountDemoApi, courseDemoApi, demoExerciseSeedingService,
                 new DemoCourseContentSeedingService(Optional.of(lectureDemoApi), Optional.empty(), assessmentDemoApi, Optional.of(tutorialGroupDemoApi), communicationDemoApi));
-        assertThatCode(() -> withoutAtlas.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("seeding must work when the atlas module is disabled")
-                .doesNotThrowAnyException();
+        DemoSeeding.seed(withoutAtlas);
 
         assertThat(snapshot()).as("a disabled atlas module leaves the existing competencies alone").isEqualTo(beforeRun);
     }
 
     private void seed() {
-        demoDataSeedingService.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent());
+        DemoSeeding.seed(demoDataSeedingService);
     }
 
     private Course demoCourse() {
