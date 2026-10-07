@@ -6,7 +6,10 @@
     </div>
 }
 @if (!isLoading() && complaint()) {
-    <h3 [jhiTranslate]="complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.review' : 'artemisApp.complaint.review'"></h3>
+    <h3
+        class="mb-2! text-base! leading-tight! font-semibold!"
+        [jhiTranslate]="complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.review' : 'artemisApp.complaint.review'"
+    ></h3>
 }
 @if (!isLoading() && complaint()) {
     <div class="col-12 mt-2" [class.px-0]="zeroIndent()">
@@ -37,7 +40,7 @@
         </div>
         <div class="row">
             <div class="col-12 col-md-6">
-                <h4>
+                <h4 class="mb-2! text-base! leading-tight! font-semibold!">
                     <span [jhiTranslate]="complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.title' : 'artemisApp.complaint.title'"></span>
                     @if (handled()) {
                         <small>
@@ -68,9 +71,10 @@
             </div>
             @if (handled() || isAllowedToRespond) {
                 <div class="col-12 col-md-6">
-                    <h3
+                    <h4
+                        class="mb-2! text-base! leading-tight! font-semibold!"
                         [jhiTranslate]="complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedbackResponse.title' : 'artemisApp.complaintResponse.title'"
-                    ></h3>
+                    ></h4>
                     <div class="d-flex flex-column">
                         <textarea
                             [attr.aria-label]="
