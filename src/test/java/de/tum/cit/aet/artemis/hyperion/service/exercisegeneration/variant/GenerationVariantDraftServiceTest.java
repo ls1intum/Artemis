@@ -23,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
@@ -53,6 +54,9 @@ class GenerationVariantDraftServiceTest {
     @Mock
     private TeamAssignmentConfigRepository teamConfigs;
 
+    @Mock
+    private ExamRepositoryApi exams;
+
     private GenerationVariantDraftService service;
 
     private ProgrammingExercise source;
@@ -61,7 +65,7 @@ class GenerationVariantDraftServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GenerationVariantDraftService(exercises, buildConfigs, imports, capabilities, teamConfigs);
+        service = new GenerationVariantDraftService(exercises, buildConfigs, imports, capabilities, teamConfigs, Optional.of(exams));
         source = new ProgrammingExercise();
         source.setId(1L);
         source.setTitle("Source");
@@ -134,6 +138,7 @@ class GenerationVariantDraftServiceTest {
             inTransaction.set(true);
             return invocation.<Supplier<Object>>getArgument(0).get();
         });
+        when(exams.withExerciseSelectionLock(eq(20L), any())).thenAnswer(invocation -> invocation.<Function<Exam, Object>>getArgument(1).apply(exam));
         doThrow(new IllegalStateException("assigned meanwhile")).when(capabilities).requireMutable(source);
 
         assertThatThrownBy(() -> service.prepare(1L, request, Function.identity())).hasMessage("assigned meanwhile");

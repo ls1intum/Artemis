@@ -28,7 +28,7 @@ import { runOutcome } from '../model/hyperion-generation-stages';
                 variant="outlined"
                 size="small"
                 [routerLink]="[]"
-                [queryParams]="{ aiRun: 'authoring:' + exercise().id + ':' + status()?.jobId }"
+                [queryParams]="{ aiRun: inspectorReference() }"
                 queryParamsHandling="merge"
                 data-testid="hyperion-exercise-open-generation"
             >
@@ -63,6 +63,7 @@ export class HyperionRunLinkComponent {
             ),
         ),
     );
+    protected readonly inspectorReference = computed(() => `authoring:${this.exercise().id}:${this.status()?.ownedByCaller ? this.status()?.jobId : 'latest'}`);
     protected readonly runStatus = computed(() => (this.status()?.running ? 'running' : (runOutcome(this.status()?.events ?? []) ?? 'unknown')));
     protected readonly dotState = computed<HyperionStatusState>(() => {
         switch (this.runStatus()) {

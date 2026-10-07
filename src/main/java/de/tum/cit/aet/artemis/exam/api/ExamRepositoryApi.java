@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
@@ -30,6 +31,18 @@ public class ExamRepositoryApi extends AbstractExamApi {
 
     public ExamRepositoryApi(ExamRepository examRepository) {
         this.examRepository = examRepository;
+    }
+
+    /**
+     * Runs preparation under the same exam-row lock as student assignment, until the enclosing transaction commits.
+     *
+     * @param examId    exam to protect
+     * @param operation preparation to run with the locked exam
+     * @param <T>       result type
+     * @return the preparation result
+     */
+    public <T> T withExerciseSelectionLock(long examId, Function<Exam, T> operation) {
+        return examRepository.withExerciseSelectionLock(examId, operation);
     }
 
     public Optional<Long> findCourseIdById(long examId) {

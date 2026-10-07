@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.variant;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -9,6 +10,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
@@ -34,13 +36,16 @@ public class GenerationVariantDraftService {
 
     private final GenerationCapabilityService capabilities;
 
+    private final Optional<ExamRepositoryApi> exams;
+
     public GenerationVariantDraftService(ProgrammingExerciseRepository exercises, ProgrammingExerciseBuildConfigRepository buildConfigs, ProgrammingExerciseImportService imports,
-            GenerationCapabilityService capabilities, TeamAssignmentConfigRepository teamConfigs) {
+            GenerationCapabilityService capabilities, TeamAssignmentConfigRepository teamConfigs, Optional<ExamRepositoryApi> exams) {
         this.exercises = exercises;
         this.buildConfigs = buildConfigs;
         this.imports = imports;
         this.capabilities = capabilities;
         this.teamConfigs = teamConfigs;
+        this.exams = exams;
     }
 
     /**
@@ -57,7 +62,10 @@ public class GenerationVariantDraftService {
         return exercises.prepareAuthoringDraft(() -> {
             ProgrammingExercise source = exercises.findWithAllParticipationsById(sourceId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", sourceId));
             if (source.isExamExercise()) {
-                capabilities.requireMutable(source);
+                return exams.orElseThrow().withExerciseSelectionLock(source.getExerciseGroup().getExam().getId(), exam -> {
+                    capabilities.requireMutable(source);
+                    return prepareAndReserve(sourceId, request, reserve);
+                });
             }
             return prepareAndReserve(sourceId, request, reserve);
         });
