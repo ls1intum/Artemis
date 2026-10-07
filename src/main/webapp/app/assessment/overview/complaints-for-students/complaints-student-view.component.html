@@ -52,23 +52,22 @@
             </div>
         }
         @if (!complaint() && formComplaintType()) {
-            <div class="row">
-                <jhi-complaint-form
-                    class="flex-grow-1"
-                    [exercise]="exercise()"
-                    [resultId]="result()!.id!"
-                    [examId]="exam()?.id!"
-                    [complaintType]="formComplaintType()!"
-                    [isCurrentUserSubmissionAuthor]="isCorrectUserToFileAction()"
-                    (onSubmit)="loadPotentialComplaint()"
-                />
-            </div>
+            <jhi-complaint-form
+                class="complaints-student-view__form min-[1200px]:w-1/2"
+                [exercise]="exercise()"
+                [resultId]="result()!.id!"
+                [examId]="exam()?.id!"
+                [complaintType]="formComplaintType()!"
+                [isCurrentUserSubmissionAuthor]="isCorrectUserToFileAction()"
+                (onSubmit)="loadPotentialComplaint()"
+            />
         }
-        <div id="complaintScrollpoint"></div>
+        <div #complaintScrollpoint data-testid="complaint-scrollpoint"></div>
         @if (complaint(); as complaint) {
-            <div class="row align-items-end">
-                <jhi-complaint-request class="col-12 col-xl-6" [complaint]="complaint" [maxComplaintTextLimit]="course()?.maxComplaintTextLimit!" />
-                <jhi-complaint-response class="col-12 col-xl-6" [complaint]="complaint" [maxComplaintResponseTextLimit]="course()?.maxComplaintResponseTextLimit!" />
+            <!-- The cards share their rows (subgrid), so the texts of the request and of the response line up even if one header wraps. -->
+            <div class="complaints-student-view__cards mt-6! grid grid-cols-1 grid-rows-[auto_1fr] gap-4! min-[1200px]:grid-cols-2" data-testid="complaint-cards">
+                <jhi-complaint-request [complaint]="complaint" [maxComplaintTextLimit]="course()?.maxComplaintTextLimit!" />
+                <jhi-complaint-response [complaint]="complaint" [maxComplaintResponseTextLimit]="course()?.maxComplaintResponseTextLimit!" />
             </div>
         }
     </div>

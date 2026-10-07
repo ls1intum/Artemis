@@ -3,13 +3,19 @@ import { test } from '../../support/fixtures';
 import {
     LAYOUT_VIEWPORTS,
     expectAligned,
+    expectBelow,
     expectComputedStyle,
     expectFillsParent,
     expectHeight,
+    expectInset,
+    expectInside,
+    expectInsideOrBelow,
     expectNoHorizontalOverflow,
     expectNoHorizontalScrollAround,
+    expectNoOverlap,
     expectSameComputedStyle,
     expectSameValue,
+    expectScrollPositionKept,
     expectWithinViewport,
     forEachViewport,
     measure,
@@ -121,6 +127,132 @@ test.describe('Layout helpers', { tag: '@fast' }, () => {
             /the scroller at 800x600: reaches beyond the window: bottom at 1500px but the window's at 600px \(900px beyond\)/,
         );
         await expect(expectWithinViewport(page.locator('#wide'), ['right', 'bottom'], FAILING)).rejects.toThrow(/right at 1200px but the window's at 800px \(400px beyond\)/);
+    });
+
+    test('expectInside fails for a child that sticks out of its container or keeps less air than it needs', async ({ page }) => {
+        await render(
+            page,
+            `<div id="row" style="position: absolute; top: 100px; left: 0; width: 400px; height: 40px"></div>
+             <div id="centered" style="position: absolute; top: 105px; left: 10px; width: 100px; height: 30px"></div>
+             <div id="close" style="position: absolute; top: 102px; left: 10px; width: 100px; height: 36px"></div>
+             <div id="tall" style="position: absolute; top: 100px; left: 10px; width: 100px; height: 44px"></div>
+             <div id="wide" style="position: absolute; top: 105px; left: 350px; width: 100px; height: 30px"></div>`,
+        );
+        const row = page.locator('#row');
+
+        await expectInside(page.locator('#centered'), row);
+        await expectInside(page.locator('#centered'), row, ['top', 'bottom'], { margin: 5 });
+        await expect(expectInside(page.locator('#close'), row, ['top', 'bottom'], { ...FAILING, margin: 4, name: 'save button' })).rejects.toThrow(
+            /save button at 800x600: does not lie inside locator\('#row'\): top edge has 2px of space, at least 4px are needed, bottom edge has 2px of space, at least 4px are needed/,
+        );
+        await expect(expectInside(page.locator('#tall'), row, ['top', 'bottom'], FAILING)).rejects.toThrow(/bottom edge sticks out by 4px/);
+        await expect(expectInside(page.locator('#wide'), row, undefined, FAILING)).rejects.toThrow(/right edge sticks out by 50px/);
+        await expect(expectInside(page.locator('#wide'), row, [], FAILING)).rejects.toThrow(/no edges to compare with locator\('#row'\)/);
+    });
+
+    test('expectInset fails when the child starts at another distance from the edge of its container', async ({ page }) => {
+        await render(
+            page,
+            `<div id="card" style="position: absolute; top: 50px; left: 200px; width: 500px; height: 300px"></div>
+             <div id="title" style="position: absolute; top: 62px; left: 216px; width: 100px; height: 20px"></div>
+             <div id="late" style="position: absolute; top: 62px; left: 224px; width: 100px; height: 20px"></div>`,
+        );
+        const card = page.locator('#card');
+
+        await expectInset(page.locator('#title'), card, 'left', 16);
+        await expectInset(page.locator('#title'), card, 'top', 12);
+        await expect(expectInset(page.locator('#late'), card, 'left', 16, { ...FAILING, name: 'title of the quiz page' })).rejects.toThrow(
+            /title of the quiz page at 800x600: its left edge is 24px inside locator\('#card'\), expected 16px \(tolerance 0.5px\)/,
+        );
+    });
+
+    test('expectBelow and expectNoOverlap tell what lies below an element and what covers another', async ({ page }) => {
+        await render(
+            page,
+            `<div id="row" style="position: absolute; top: 0; left: 0; width: 700px; height: 40px"></div>
+             <div id="title" style="position: absolute; top: 5px; left: 0; width: 300px; height: 30px"></div>
+             <div id="beside" style="position: absolute; top: 5px; left: 300px; width: 300px; height: 30px"></div>
+             <div id="over" style="position: absolute; top: 5px; left: 250px; width: 300px; height: 30px"></div>
+             <div id="below" style="position: absolute; top: 40px; left: 0; width: 700px; height: 30px"></div>
+             <div id="half" style="position: absolute; top: 30px; left: 0; width: 700px; height: 30px"></div>`,
+        );
+
+        await expectBelow([page.locator('#below')], page.locator('#row'));
+        await expect(expectBelow([page.locator('#below'), page.locator('#half')], page.locator('#row'), { ...FAILING, name: 'the toolbar' })).rejects.toThrow(
+            /the toolbar at 800x600: not below locator\('#row'\), which ends at 40px: locator\('#half'\) starts at 30px/,
+        );
+        await expect(expectBelow([], page.locator('#row'))).rejects.toThrow(/expectBelow: got no element/);
+
+        await expectNoOverlap([page.locator('#title'), page.locator('#beside')]);
+        await expect(expectNoOverlap([page.locator('#title'), page.locator('#over')], { ...FAILING, name: 'title and actions' })).rejects.toThrow(
+            /title and actions at 800x600: overlap: locator\('#title'\) and locator\('#over'\) share 50px x 30px/,
+        );
+        await expect(expectNoOverlap([page.locator('#title')])).rejects.toThrow(/expectNoOverlap: got 1 element\(s\), at least 2 are needed/);
+    });
+
+    test('expectInsideOrBelow reports where the elements are and fails for a toolbar that is half in', async ({ page }) => {
+        await render(
+            page,
+            `<div id="row" style="position: absolute; top: 0; left: 0; width: 700px; height: 40px"></div>
+             <div id="a" style="position: absolute; top: 5px; left: 400px; width: 100px; height: 30px"></div>
+             <div id="b" style="position: absolute; top: 5px; left: 520px; width: 100px; height: 30px"></div>
+             <div id="c" style="position: absolute; top: 50px; left: 400px; width: 100px; height: 30px"></div>
+             <div id="d" style="position: absolute; top: 50px; left: 520px; width: 100px; height: 30px"></div>
+             <div id="half" style="position: absolute; top: 5px; left: 650px; width: 100px; height: 30px"></div>`,
+        );
+        const row = page.locator('#row');
+
+        expect(await expectInsideOrBelow([page.locator('#a'), page.locator('#b')], row)).toBe('inside');
+        expect(await expectInsideOrBelow([page.locator('#c'), page.locator('#d')], row)).toBe('below');
+        await expect(expectInsideOrBelow([page.locator('#a'), page.locator('#c')], row, { ...FAILING, name: 'the toolbar' })).rejects.toThrow(
+            /the toolbar at 800x600: not all inside locator\('#row'\) and not all below it: locator\('#a'\) is inside, locator\('#c'\) is below/,
+        );
+        await expect(expectInsideOrBelow([page.locator('#half')], row, FAILING)).rejects.toThrow(/locator\('#half'\) is neither inside nor below/);
+        await expect(expectInsideOrBelow([], row)).rejects.toThrow(/expectInsideOrBelow: got no element/);
+    });
+
+    test('expectScrollPositionKept fails when the action moves the scroller, also when it scrolls smoothly, and refuses a scroller that cannot move', async ({ page }) => {
+        await render(
+            page,
+            `<div id="scroller" data-testid="scroller" style="height: 200px; overflow-y: auto">
+                <div style="height: 1000px">
+                    <button id="stay" type="button" style="margin-top: 400px">Stay</button>
+                    <button id="jump" type="button" onclick="document.getElementById('scroller').scrollTop = 0">Jump</button>
+                    <button id="glide" type="button" onclick="setTimeout(() => document.getElementById('scroller').scrollTo({ top: 600, behavior: 'smooth' }), 100)">Glide</button>
+                </div>
+             </div>
+             <div id="short" data-testid="short" style="height: 200px; overflow-y: auto"><div style="height: 100px"></div></div>`,
+        );
+        const scroller = page.getByTestId('scroller');
+        await scroller.evaluate((element) => (element.scrollTop = 350));
+
+        await expectScrollPositionKept(scroller, () => page.locator('#stay').click());
+        await expect(expectScrollPositionKept(scroller, () => page.locator('#jump').click(), { name: 'the summary' })).rejects.toThrow(
+            /the summary at 800x600: scrolled from 350px to 0px \(350px up\), expected it to stay where it was \(tolerance 1px\)/,
+        );
+        // A scroll that starts a moment after the click and takes a while is waited for, not raced
+        await scroller.evaluate((element) => (element.scrollTop = 350));
+        await expect(expectScrollPositionKept(scroller, () => page.locator('#glide').click())).rejects.toThrow(/scrolled from 350px to 600px \(250px down\)/);
+        await expect(expectScrollPositionKept(page.getByTestId('short'), async () => undefined)).rejects.toThrow(/does not scroll \(200px of content in a 200px box\)/);
+    });
+
+    test('expectScrollPositionKept places the element only once the content above it has loaded', async ({ page }) => {
+        await render(
+            page,
+            `<div id="scroller" data-testid="scroller" style="height: 200px; overflow-y: auto">
+                <div id="above" style="height: 100px"></div>
+                <button id="stay" type="button">Stay</button>
+                <div style="height: 1000px"></div>
+             </div>
+             <script>setTimeout(() => (document.getElementById('above').style.height = '600px'), 300)</script>`,
+        );
+        const [scroller, button] = [page.getByTestId('scroller'), page.locator('#stay')];
+
+        await expectScrollPositionKept(scroller, () => button.click(), { placed: { element: button, at: 0.5 } });
+
+        // The content above the button grew after the check had started, and the button is halfway down the scroller all the same
+        const [scrollerBox, buttonBox] = [await measure(scroller), await measure(button)];
+        expect(Math.abs(buttonBox.top - scrollerBox.top - scrollerBox.height / 2)).toBeLessThan(2);
     });
 
     test('the helpers that retry name an element that never comes instead of reporting a bare timeout', async ({ page }) => {

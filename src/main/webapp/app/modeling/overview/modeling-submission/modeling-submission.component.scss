@@ -237,10 +237,13 @@ jhi-modeling-assessment {
         grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
     }
 
-    ::ng-deep .row > * {
+    // The panel is narrow at every viewport width, so the complaint and the response stay in one column and the form takes the whole width.
+    ::ng-deep .complaints-student-view__cards {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    ::ng-deep .complaints-student-view__form {
         width: 100%;
-        max-width: 100%;
-        flex: 0 0 100%;
     }
 
     ::ng-deep h3 {

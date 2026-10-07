@@ -2066,6 +2066,13 @@ describe('ExamParticipationComponent', () => {
             expect(hint().classList).toContain('module-bg');
         });
 
+        it('insets the hint like the scroller of an exercise', () => {
+            showSubmissionHint({ realExam: true, examLayoutActive: true });
+
+            expect(hint().classList).toContain('px-4!');
+            expect(hint().classList).toContain('py-3!');
+        });
+
         it('lets the hint fill the card of the shell once the exam layout is reset, as for a test exam or a reload after the exam', () => {
             showSubmissionHint({ realExam: true, examLayoutActive: false });
 
@@ -2146,11 +2153,20 @@ describe('ExamParticipationComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             const card: HTMLElement = fixture.debugElement.query(By.css('.end-view')).nativeElement;
-            expect(card.classList).toContain('pt-4!');
-            // `px-6!` on the card would stack 24px on the 24px of the cover and put the text 48px from the edge
-            expect(card.classList).not.toContain('px-6!');
-            expect(card.classList).not.toContain('pt-6!');
+            expect(card.classList).toContain('pt-3!');
+            // `px-4!` on the card would stack 16px on the 16px of the cover and put the text 32px from the edge
+            expect(card.classList).not.toContain('px-4!');
+            expect(card.classList).not.toContain('pt-4!');
         });
+    });
+
+    it('should inset the scroller of an exercise by the 16px of the exam bar, so that the title of every page starts where the title of the bar starts', () => {
+        showRunningExam();
+
+        const scroller: HTMLElement = fixture.debugElement.query(By.css('.content-exam-height')).nativeElement;
+        // 16px at the sides and 12px above and below: the card is not a frame of white space around the exercise
+        expect(scroller.classList).toContain('px-4!');
+        expect(scroller.classList).toContain('py-3!');
     });
 
     it('should mark the content card, which holds the scroller and the status bar, for the layout contract', () => {

@@ -70,6 +70,12 @@ describe('ExamBarComponent', () => {
         expect(bar.classList).toContain('h-10');
     });
 
+    it('should inset its title by 16px, where the title of every page of the exam starts', () => {
+        const bar: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exam-bar"]');
+        expect(bar.classList).toContain('px-4!');
+        expect(bar.classList).not.toContain('px-6!');
+    });
+
     it('should hand in the exam early', () => {
         vi.spyOn(comp.onExamHandInEarly, 'emit');
         vi.spyOn(comp, 'saveExercise');

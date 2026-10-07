@@ -517,11 +517,13 @@ the page - use <code>waitFor()</code> function of a locator instead.
 ### Layout contract tests
 
 Some rules about a page are not about what a control does but about how big it is and where it sits: every page of a
-running exam starts with a title row of the same height at the same position, the sidebar and the content end on the
-same line, the summary scroller ends inside the window instead of growing with its content, and no page scrolls
-sideways. A layout contract test states such a rule as numbers and checks it in the browser, at several window sizes.
-The exam has two: `e2e/exam/ExamLayoutContract.spec.ts` walks a running exam, and the text complaint test of
-`ExamAssessment.spec.ts` ends by checking the summary with a result and a complaint in it.
+running exam starts with a title row of the same height at the same position, a button in that row is 30px high with air
+above and below it, the toolbar of the code editor sits in the row where there is room for it, the sidebar and the
+content end on the same line, the summary scroller ends inside the window instead of growing with its content, and no
+page scrolls sideways. A layout contract test states such a rule as numbers and checks it in the browser, at several
+window sizes. The exam has two: `e2e/exam/ExamLayoutContract.spec.ts` walks a running exam, and the text complaint test
+of `ExamAssessment.spec.ts` checks that the Complain button leaves the page where it is, that the complaint is in a box
+and the rating is quiet, and ends by checking the summary with a result and a complaint in it.
 
 #### Measure instead of comparing screenshots
 
@@ -550,6 +552,12 @@ values, or of no edges, throws instead of passing.
 | `expectHeight(locator, height)`                           | an element to have the given height                                                                                                                   |
 | `expectAligned(locators, property)`                       | the elements to share a `top`, `right`, `bottom`, `left`, `width` or `height`                                                                         |
 | `expectFillsParent(child, parent, edges)`                 | the child to reach the given edges of its parent, for example a scroller that ends at the bottom of its card                                          |
+| `expectInside(child, container, edges, { margin })`       | the child to lie inside the container and keep at least `margin` px of space to the given edges, for example the air above and below a button         |
+| `expectInset(child, container, edge, px)`                 | the child to start exactly `px` inside the container at one edge, for example a title 16px from the edge of its card                                  |
+| `expectBelow(locators, reference)`                        | every element to start at or below the bottom of the reference, for example a toolbar that wrapped below its title row                                |
+| `expectNoOverlap(locators)`                               | no element to cover another, for example a title and the buttons next to it                                                                           |
+| `expectInsideOrBelow(locators, container)`                | the elements to be all inside the container or all below it, never half in; returns which, for a layout that depends on the room                      |
+| `expectScrollPositionKept(scroller, action, options)`     | a scroll container to stay where it is while the action runs, for example a click that must not carry the page away; smooth scrolls are waited for    |
 | `expectWithinViewport(locator, edges)`                    | the element not to reach beyond the given edges of the window, for example a scroller that ends above the bottom of the window                        |
 | `measure(locator)`, `expectSameValue(page, what, values)` | a position to stay the same while the page changes: record it page by page, then compare the recorded values                                          |
 | `expectNoHorizontalOverflow(page, scrollers)`             | neither the document nor the given scroll containers to scroll sideways; the failure names the elements                                               |
@@ -569,9 +577,10 @@ await forEachViewport(page, async () => {
 ```
 
 What belongs to the exam rather than to layout in general lives in `support/examLayoutAssertions.ts`: the sizes the
-exam agrees on (the 40px title row, the 40px exam bar, the 34px small button), the checks of the summary and of the
-complaint area, which two specs share, and `expectPageNotToScrollSideways`, which pairs the two sideways-scroll helpers
-for a page of the exam.
+exam agrees on (the 40px title row and exam bar, the 30px button in a title row and the 34px small button elsewhere,
+the 16px inset of a title in its card), the checks of the summary, of the complaint boxes, of the rating and of the
+programming actions, which two specs share, and `expectPageNotToScrollSideways`, which pairs the two sideways-scroll
+helpers for a page of the exam.
 
 #### The viewport matrix
 
@@ -579,7 +588,9 @@ for a page of the exam.
 so in its test. The welcome page and the summary sit directly in the course shell, which keeps its sidebars on a phone
 and leaves them a 200px column, so their sideways-scroll contract, and the back button of the summary, hold from 800px
 (`COURSE_SHELL_MIN_WIDTH`). The complaint of a student and the response to it are side by side from 1200px and one above
-the other below it.
+the other below it. The Code button, the result, Refresh and Submit of the programming page are in its title row from
+1280px and below it at 480px; in between they are in the row where the title keeps its room next to them and below it
+where it does not, so the contract only asks for one of the two there.
 
 | Viewport  | Stands for                                                                         |
 | --------- | ---------------------------------------------------------------------------------- |

@@ -25,6 +25,12 @@
 
     .editor-statusbar {
         padding: 0.5rem 0;
+
+        /* The toolbar can be moved out of the bar by the page that shows the editor (the exam puts it in its title row). The bar then takes no room.
+           `:empty` would not do: the whitespace of the template, which the application keeps, is a node of the bar as well. */
+        &:not(:has(*)) {
+            display: none;
+        }
     }
 
     .editor-main {

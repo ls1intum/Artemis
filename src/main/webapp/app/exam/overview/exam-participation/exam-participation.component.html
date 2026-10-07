@@ -66,7 +66,7 @@
                             stretched again — and the scrollbar flickered in and out on every change-detection pass (#13916).
                             cdkScrollable registers the container with the CDK ScrollDispatcher so drag-and-drop auto-scrolls it (#13187).
                         -->
-                        <div class="content-exam-height hide-scrollbar-unless-scrolling px-6! py-4!" cdkScrollable>
+                        <div class="content-exam-height hide-scrollbar-unless-scrolling px-4! py-3!" cdkScrollable>
                             <div class="exam-content__column">
                                 <div [hidden]="activePageIndex !== -1">
                                     <jhi-exam-exercise-overview-page [studentExam]="studentExam()" (onPageChanged)="onPageChange($event)" />
@@ -180,8 +180,8 @@
                         (onExamHandInEarly)="toggleHandInEarly()"
                     />
 
-                    <!-- Only the top padding: the cover brings the 24px inset on the sides (and below) itself, so it lines up with the bar above. -->
-                    <div class="module-bg end-view content-exam-height rounded-lg pt-4!">
+                    <!-- Only the top padding: the cover brings the 16px inset on the sides (and below) itself, so it lines up with the bar above. -->
+                    <div class="module-bg end-view content-exam-height rounded-lg pt-3!">
                         <jhi-exam-participation-cover
                             [startView]="false"
                             [exam]="exam()"
@@ -219,7 +219,7 @@
                 whose layout was already reset) the card fills the card of the shell it is shown in.
             -->
             <div class="exam-background-wrapper body-bg" [class.exam-background-wrapper--test-run]="!!testRunId() || !examLayoutActive()">
-                <div class="submissionSuccessfulHint module-bg rounded-lg px-6! py-4!">
+                <div class="submissionSuccessfulHint module-bg rounded-lg px-4! py-3!">
                     <fa-icon [icon]="faCheckCircle" class="check" />
                     <h2 class="mt-3! mb-2! text-lg! font-semibold!" jhiTranslate="artemisApp.examParticipation.submissionSuccessful.title"></h2>
                     <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.noActionRequired"></p>

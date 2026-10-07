@@ -394,6 +394,7 @@
                 "explanation": "Your submission and your results are stored on the server, nothing is lost. Please check your internet connection and try again.",
                 "retry": "Retry"
             },
+            "programmingActions": "Programming exercise actions",
             "saveExercise": "Save exercise",
             "exerciseSaved": "Exercise saved",
             "reloadWarning": "You are about to reload the page. All unsaved changes will be lost. Are you sure you want to continue?"

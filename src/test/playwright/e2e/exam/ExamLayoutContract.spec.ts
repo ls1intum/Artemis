@@ -5,9 +5,13 @@ import {
     COURSE_SHELL_MIN_WIDTH,
     EXAM_BAR_HEIGHT,
     SMALL_BUTTON_HEIGHT,
+    expectExamBarTitleInset,
     expectExamSummaryLayout,
     expectPageNotToScrollSideways,
+    expectProgrammingActions,
+    expectTitleInCard,
     expectTitleRow,
+    expectTitleRowButton,
     visibleTitleRow,
 } from '../../support/examLayoutAssertions';
 import { test } from '../../support/fixtures';
@@ -17,7 +21,7 @@ import { admin, studentTwo } from '../../support/users';
 
 const course = { id: SEED_COURSES.examParticipation.id } as any;
 
-/** One exercise of every type, in the order the sidebar lists them after the overview. Only some of the pages carry the save button in their title row. */
+/** One exercise of every type, in the order the sidebar lists them after the overview. Only some of the pages carry the save button in their title row; the programming page carries its own actions there. */
 const EXERCISES = [
     { type: ExerciseType.TEXT, saveButton: true },
     { type: ExerciseType.MODELING, saveButton: true },
@@ -26,13 +30,19 @@ const EXERCISES = [
     { type: ExerciseType.FILE_UPLOAD, saveButton: false },
 ];
 
+/** The group of the programming exercise has a title that is longer than the room next to its actions, so that the page has to cut the title off instead of pushing the actions out of their row. */
+const LONG_GROUP_TITLE_SUFFIX = ' with a group title that is much longer than the room next to its actions';
+
 /**
  * The layout contract of the student exam: what has to look the same on every page, wherever the student is in the exam and however wide
  * the window is. It measures instead of comparing screenshots, so a broken rule fails with the element, the viewport and the numbers.
  * <p>
- * Every page of a running exam starts with the same 40px title row, which keeps its position when the student switches pages. The exam
- * bar is 40px, the sidebar and the content end on the same line, and none of it scrolls sideways. The hand-in page and the summary
- * keep the same title row, and the summary scroller ends inside the window. See the section on layout contract tests in the E2E documentation.
+ * Every page of a running exam starts with the same 40px title row, which keeps its position and the left edge of its title when the
+ * student switches pages. The title sits 16px inside its card, like the title of the exam bar. A button in the row is 30px high with air
+ * above and below it; on the programming page the Code button, the result, Refresh and Submit are in the row where there is room, and
+ * below it where there is not. The exam bar is 40px, the sidebar and the content end on the same line, and none of it scrolls sideways.
+ * The hand-in page and the summary keep the same title row, and the summary scroller ends inside the window. See the section on layout
+ * contract tests in the E2E documentation.
  */
 test.describe('Exam layout contract', { tag: '@slow' }, () => {
     let exam: Exam;
@@ -48,7 +58,12 @@ test.describe('Exam layout contract', { tag: '@slow' }, () => {
         for (const { type } of EXERCISES) {
             // The exercises are only created: the layout does not depend on a build, so the programming exercise is neither built nor submitted to.
             const additionalData = type === ExerciseType.PROGRAMMING ? { programmingLanguage: ProgrammingLanguage.C } : {};
-            const exercise = await examExerciseGroupCreation.handleAddGroupWithExercise(exam, `Layout ${type}`, type, additionalData);
+            const exercise = await examExerciseGroupCreation.handleAddGroupWithExercise(
+                exam,
+                `Layout ${type}${type === ExerciseType.PROGRAMMING ? LONG_GROUP_TITLE_SUFFIX : ''}`,
+                type,
+                additionalData,
+            );
             groupTitles.push(exercise!.exerciseGroup!.title!);
         }
         await examAPIRequests.registerStudentForExam(exam, studentTwo);
@@ -89,8 +104,9 @@ test.describe('Exam layout contract', { tag: '@slow' }, () => {
 
         const sidebar = page.getByTestId('exam-sidebar');
         await test.step('Pages of the running exam', () =>
-            forEachViewport(page, async () => {
+            forEachViewport(page, async (viewport) => {
                 await expectHeight(page.getByTestId('exam-bar'), EXAM_BAR_HEIGHT, { name: 'exam bar' });
+                await expectExamBarTitleInset(page);
                 await expectHeight(page.getByTestId('hand-in-early'), SMALL_BUTTON_HEIGHT, { name: 'hand-in early button of the exam bar' });
                 await expectAligned([sidebar, page.getByTestId('exam-content')], 'bottom', { name: 'the sidebar card and the content card' });
                 await expectAligned([page.getByTestId('exam-sidebar-footer'), page.getByTestId('exam-status-bar')], 'top', {
@@ -98,6 +114,7 @@ test.describe('Exam layout contract', { tag: '@slow' }, () => {
                 });
 
                 const tops: Record<string, number> = {};
+                const lefts: Record<string, number> = {};
                 for (const [index, examPage] of pages.entries()) {
                     await test.step(`Page ${examPage.name}`, async () => {
                         await sidebar.getByTestId('sidebar-card-title').nth(index).click();
@@ -112,18 +129,24 @@ test.describe('Exam layout contract', { tag: '@slow' }, () => {
                         await expect(row, `the ${examPage.name} page is the only page that is open`).toHaveCount(1);
 
                         await expectTitleRow(row, title, `the ${examPage.name} page`);
+                        await expectTitleInCard(row, title, page.getByTestId('exam-content'), `the ${examPage.name} page`);
                         tops[examPage.name] = (await measure(row)).top;
+                        lefts[examPage.name] = (await measure(title)).left;
 
                         const saveButton = row.getByTestId('exam-save-button');
                         if (examPage.saveButton) {
-                            await expectHeight(saveButton, SMALL_BUTTON_HEIGHT, { name: `save button of the ${examPage.name} page` });
+                            await expectTitleRowButton(saveButton, row, `save button of the ${examPage.name} page`);
                         } else {
                             await expect(saveButton, `the ${examPage.name} page has no save button in its title row`).toHaveCount(0);
+                        }
+                        if (examPage.name === ExerciseType.PROGRAMMING) {
+                            await expectProgrammingActions(page, row, viewport);
                         }
                         await expectPageNotToScrollSideways(page, row);
                     });
                 }
                 expectSameValue(page, 'top of the title row on the pages of the exam', tops);
+                expectSameValue(page, 'left edge of the title on the pages of the exam', lefts);
             }));
 
         await examNavigation.handInEarly();

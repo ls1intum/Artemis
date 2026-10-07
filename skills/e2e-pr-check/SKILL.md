@@ -116,10 +116,12 @@ measure in the browser. Never compare screenshots, and never find an element by 
 1. State the rule as a number or as a relation between elements.
 2. Find the elements by `data-testid`; add one to the template when it is missing.
 3. Assert inside `forEachViewport` from `src/test/playwright/support/layout.ts` with
-   `expectHeight`, `expectAligned`, `expectFillsParent`, `expectWithinViewport`,
-   `expectNoHorizontalOverflow`, `expectNoHorizontalScrollAround` or `expectSameComputedStyle`, and
-   give each element a `name`. A page in a card that scrolls on its own needs both sideways-scroll
-   helpers, because the document keeps the width of the window.
+   `expectHeight`, `expectAligned`, `expectFillsParent`, `expectInside` (with a `margin` for air),
+   `expectInset`, `expectBelow`, `expectNoOverlap`, `expectInsideOrBelow` (a layout that depends on
+   the room), `expectWithinViewport`, `expectNoHorizontalOverflow`, `expectNoHorizontalScrollAround`
+   or `expectSameComputedStyle`, and give each element a `name`. A page in a card that scrolls on its
+   own needs both sideways-scroll helpers, because the document keeps the width of the window. A
+   click that must not move the page runs inside `expectScrollPositionKept`.
 4. For a new or changed helper, add a case that holds and one that must fail to
    `src/test/playwright/e2e/shared/LayoutHelpers.spec.ts`.
 
