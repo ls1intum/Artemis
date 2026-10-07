@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    A course Athena configuration had no key of its own. The course pointed at it through a nullable column, so nothing tied the configuration to
+    the course it configures, and deleting the course could leave the row behind for good.
+
+    Every course owns exactly one permanent row. The configuration holds the key, a deleted course takes it along through the
+    database, and a configuration that belongs to no course can no longer be written. Settings never insert or delete the row,
+    they only update it.
+
+    DDL commits implicitly on MySQL, so every step is its own changeset and can be repeated after an interruption: the
+    structural steps check for themselves, and the statements only touch what is still unfinished.
+    -->
+
+    <changeSet id="20261005140001-01-stop-on-a-configuration-shared-by-several-courses" author="krusche">
+        <!-- Two courses cannot share a configuration. If they do, nothing says which one owns it, so the upgrade stops rather than guessing. -->
+        <preConditions onFail="HALT" onFailMessage="Several courses point at the same row of course_athena_config. Give each course its own row (copy the row and update course.athena_config_id) or remove the duplicate pointer, then start the server again.">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM (SELECT athena_config_id FROM course WHERE athena_config_id IS NOT NULL
+                GROUP BY athena_config_id HAVING COUNT(*) &gt; 1) shared</sqlCheck>
+        </preConditions>
+        <comment>Only checks the precondition; the statement changes nothing.</comment>
+        <sql>DELETE FROM course_athena_config WHERE 1 = 0;</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20261005140001-02-add-course-key-to-course-athena-config" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="course_athena_config" columnName="course_id"/></not>
+        </preConditions>
+        <comment>The key of the course moves onto the configuration, so that it cannot outlive the course it configures.</comment>
+        <addColumn tableName="course_athena_config">
+            <column name="course_id" type="BIGINT"/>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="course_athena_config" columnName="course_id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261005140001-04-set-course-key-of-course-athena-config" author="krusche">
+        <comment>The course that pointed at a configuration becomes its key. Only configurations without a key are filled, so a repeated run changes nothing.</comment>
+        <sql>UPDATE course_athena_config SET course_id =
+            (SELECT MIN(course.id) FROM course WHERE course.athena_config_id = course_athena_config.id)
+            WHERE course_id IS NULL;</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20261005140001-06-remove-course-athena-config-no-course-points-at" author="krusche">
+        <comment>Remove the course Athena configurations that no course points at.</comment>
+        <!--
+        A configuration no course points at configures nothing. It carried no key of its own, and nothing lists one except through
+        the course that named it, so it has been unreachable from the moment the course stopped naming it. Nothing else references
+        the table, so the statement removes nothing but the rows themselves.
+        -->
+        <sql>DELETE FROM course_athena_config WHERE course_id IS NULL;</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20261005140001-07-one-course-athena-config-per-course" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="course_athena_config" indexName="UK_COURSE_ATHENA_CONFIG_COURSE"/></not>
+        </preConditions>
+        <addUniqueConstraint tableName="course_athena_config" columnNames="course_id" constraintName="UK_COURSE_ATHENA_CONFIG_COURSE"/>
+        <rollback>
+            <dropUniqueConstraint tableName="course_athena_config" constraintName="UK_COURSE_ATHENA_CONFIG_COURSE"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261005140001-09-course-athena-config-course-key-not-null" author="krusche">
+        <addNotNullConstraint tableName="course_athena_config" columnName="course_id" columnDataType="BIGINT"/>
+        <rollback>
+            <dropNotNullConstraint tableName="course_athena_config" columnName="course_id" columnDataType="BIGINT"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261005140001-10-course-athena-config-follows-its-course" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><foreignKeyConstraintExists foreignKeyTableName="course_athena_config" foreignKeyName="FK_COURSE_ATHENA_CONFIG_COURSE"/></not>
+        </preConditions>
+        <addForeignKeyConstraint baseTableName="course_athena_config" baseColumnNames="course_id" constraintName="FK_COURSE_ATHENA_CONFIG_COURSE"
+                                 referencedTableName="course" referencedColumnNames="id" onDelete="CASCADE"/>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="course_athena_config" constraintName="FK_COURSE_ATHENA_CONFIG_COURSE"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261005140001-11-courses-stop-pointing-at-their-course-athena-config-constraint" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyTableName="course" foreignKeyName="fk_course_athena_config_id"/>
+        </preConditions>
+        <comment>The configuration holds the key, so the course no longer points at it.</comment>
+        <dropForeignKeyConstraint baseTableName="course" constraintName="fk_course_athena_config_id"/>
+        <rollback>
+            <addForeignKeyConstraint baseTableName="course" baseColumnNames="athena_config_id" constraintName="fk_course_athena_config_id"
+                                     referencedTableName="course_athena_config" referencedColumnNames="id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261005140001-12-courses-stop-pointing-at-their-course-athena-config" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="course" columnName="athena_config_id"/>
+        </preConditions>
+        <comment>Dropping the column also drops the indexes that only cover it.</comment>
+        <dropColumn tableName="course" columnName="athena_config_id"/>
+        <rollback>
+            <addColumn tableName="course">
+                <column name="athena_config_id" type="BIGINT"/>
+            </addColumn>
+            <sql>UPDATE course SET athena_config_id =
+                (SELECT config.id FROM course_athena_config config WHERE config.course_id = course.id);</sql>
+            <addUniqueConstraint tableName="course" columnNames="athena_config_id" constraintName="uc_course_athena_config_id"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
