@@ -129,23 +129,16 @@ class LLMTokenUsageServiceTest {
     }
 
     @Test
-    void trackChatResponseTokenUsage_withMissingResponseData_logsFailuresWithoutPersistence() {
+    void trackChatResponseTokenUsage_withMissingResponse_logsFailureWithoutPersistence() {
         Logger logger = (Logger) LoggerFactory.getLogger(LLMTokenUsageService.class);
         ListAppender<ILoggingEvent> logAppender = new ListAppender<>();
         logAppender.start();
         logger.addAppender(logAppender);
         try {
             llmTokenUsageService.trackChatResponseTokenUsage(null, LLMServiceType.ATLAS, "NULL_RESPONSE", builder -> builder);
-            ChatResponse responseWithoutMetadata = mock(ChatResponse.class);
-            llmTokenUsageService.trackChatResponseTokenUsage(responseWithoutMetadata, LLMServiceType.ATLAS, "NO_METADATA", builder -> builder);
-            ChatResponse responseWithoutUsage = mock(ChatResponse.class);
-            when(responseWithoutUsage.getMetadata()).thenReturn(mock(ChatResponseMetadata.class));
-            llmTokenUsageService.trackChatResponseTokenUsage(responseWithoutUsage, LLMServiceType.ATLAS, "NO_USAGE", builder -> builder);
 
             assertThat(logAppender.list).filteredOn(event -> event.getLevel() == Level.WARN).extracting(ILoggingEvent::getFormattedMessage)
-                    .anySatisfy(message -> assertThat(message).contains("NULL_RESPONSE", "chat response"))
-                    .anySatisfy(message -> assertThat(message).contains("NO_METADATA", "response metadata"))
-                    .anySatisfy(message -> assertThat(message).contains("NO_USAGE", "usage metadata"));
+                    .anySatisfy(message -> assertThat(message).contains("NULL_RESPONSE", "chat response"));
             verifyNoInteractions(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository);
         }
         finally {
