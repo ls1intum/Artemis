@@ -74,20 +74,11 @@ public abstract class PostingService {
      */
     private static final Pattern AT_ALL_MENTION_PATTERN = Pattern.compile("(?<![\\p{L}\\p{N}_@/])@all(?![\\p{L}\\p{N}_])", Pattern.CASE_INSENSITIVE);
 
-    /**
-     * Fenced code blocks (backticks or tildes), including an unterminated block that runs to the end of the content as in markdown.
-     */
-    private static final Pattern FENCED_CODE_BLOCK_PATTERN = Pattern.compile("^ {0,3}(`{3,}|~{3,}).*?(?:^ {0,3}\\1[`~]*[ \\t]*$|\\z)", Pattern.MULTILINE | Pattern.DOTALL);
+    /** Indentation of at most this many spaces still starts a fenced code block or a blockquote line in markdown. */
+    private static final int MAX_MARKDOWN_BLOCK_INDENT = 3;
 
-    /**
-     * Lines of a blockquote, e.g. a quoted earlier message.
-     */
-    private static final Pattern BLOCKQUOTE_LINE_PATTERN = Pattern.compile("^ {0,3}>.*$", Pattern.MULTILINE);
-
-    /**
-     * Inline code spans on one line.
-     */
-    private static final Pattern INLINE_CODE_PATTERN = Pattern.compile("(`+)[^\\n]+?\\1");
+    /** A fenced code block opens with at least this many backticks or tildes. */
+    private static final int MIN_FENCE_LENGTH = 3;
 
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
@@ -402,10 +393,110 @@ public abstract class PostingService {
         if (postingContent == null) {
             return false;
         }
-        String withoutCodeBlocks = FENCED_CODE_BLOCK_PATTERN.matcher(postingContent).replaceAll(" ");
-        String withoutQuotes = BLOCKQUOTE_LINE_PATTERN.matcher(withoutCodeBlocks).replaceAll(" ");
-        String withoutInlineCode = INLINE_CODE_PATTERN.matcher(withoutQuotes).replaceAll(" ");
-        return AT_ALL_MENTION_PATTERN.matcher(withoutInlineCode).find();
+        return AT_ALL_MENTION_PATTERN.matcher(withoutQuotesAndCode(postingContent)).find();
+    }
+
+    /**
+     * Removes blockquote lines, fenced code blocks (including an unterminated one that runs to the end, as in markdown) and inline code spans from the content. The content is
+     * user provided, so this is a single linear pass without backtracking regular expressions.
+     */
+    private static String withoutQuotesAndCode(String content) {
+        StringBuilder result = new StringBuilder(content.length());
+        char openFence = 0;
+        int openFenceLength = 0;
+        int lineStart = 0;
+        while (lineStart <= content.length()) {
+            int lineEnd = content.indexOf('\n', lineStart);
+            if (lineEnd < 0) {
+                lineEnd = content.length();
+            }
+            String line = content.substring(lineStart, lineEnd);
+            lineStart = lineEnd + 1;
+
+            int indent = 0;
+            while (indent < line.length() && line.charAt(indent) == ' ') {
+                indent++;
+            }
+            char first = indent < line.length() ? line.charAt(indent) : 0;
+            boolean mayStartBlock = indent <= MAX_MARKDOWN_BLOCK_INDENT;
+
+            if (openFenceLength > 0) {
+                if (mayStartBlock && first == openFence && isClosingFence(line, indent, openFenceLength)) {
+                    openFenceLength = 0;
+                }
+            }
+            else if (mayStartBlock && (first == '`' || first == '~') && opensFence(line, indent)) {
+                openFence = first;
+                openFenceLength = lengthOfRun(line, indent);
+            }
+            else if (!(mayStartBlock && first == '>')) {
+                result.append(withoutInlineCode(line));
+            }
+            result.append('\n');
+        }
+        return result.toString();
+    }
+
+    private static int lengthOfRun(String line, int start) {
+        int end = start;
+        while (end < line.length() && line.charAt(end) == line.charAt(start)) {
+            end++;
+        }
+        return end - start;
+    }
+
+    /** A run of at least three backticks or tildes opens a block, unless a backtick run is followed by another backtick, which makes the line an inline code span. */
+    private static boolean opensFence(String line, int indent) {
+        int length = lengthOfRun(line, indent);
+        return length >= MIN_FENCE_LENGTH && !(line.charAt(indent) == '`' && line.indexOf('`', indent + length) >= 0);
+    }
+
+    /** A closing fence consists of the fence character at least as often as the opening one and nothing but white space after it. */
+    private static boolean isClosingFence(String line, int indent, int openFenceLength) {
+        int length = lengthOfRun(line, indent);
+        return length >= openFenceLength && line.substring(indent + length).isBlank();
+    }
+
+    /**
+     * Removes inline code spans of one line. A span starts with a run of backticks and ends with the next run of exactly the same length, an unmatched run is plain text.
+     * The next run of the same length is determined once per run, so the effort is linear in the length of the line.
+     */
+    private static String withoutInlineCode(String line) {
+        if (line.indexOf('`') < 0) {
+            return line;
+        }
+        List<int[]> runs = new ArrayList<>();
+        for (int i = 0; i < line.length();) {
+            if (line.charAt(i) == '`') {
+                int length = lengthOfRun(line, i);
+                runs.add(new int[] { i, length });
+                i += length;
+            }
+            else {
+                i++;
+            }
+        }
+        int[] nextRunOfSameLength = new int[runs.size()];
+        Map<Integer, Integer> lastSeenByLength = new HashMap<>();
+        for (int run = runs.size() - 1; run >= 0; run--) {
+            nextRunOfSameLength[run] = lastSeenByLength.getOrDefault(runs.get(run)[1], -1);
+            lastSeenByLength.put(runs.get(run)[1], run);
+        }
+
+        StringBuilder result = new StringBuilder(line.length());
+        int copiedUntil = 0;
+        int run = 0;
+        while (run < runs.size()) {
+            int closingRun = nextRunOfSameLength[run];
+            if (closingRun < 0) {
+                run++;
+                continue;
+            }
+            result.append(line, copiedUntil, runs.get(run)[0]).append(' ');
+            copiedUntil = runs.get(closingRun)[0] + runs.get(closingRun)[1];
+            run = closingRun + 1;
+        }
+        return result.append(line, copiedUntil, line.length()).toString();
     }
 
     /**
