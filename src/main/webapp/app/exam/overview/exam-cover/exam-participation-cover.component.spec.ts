@@ -138,6 +138,14 @@ describe('ExamParticipationCoverComponent', () => {
         expect(component.endEnabled()).toBe(false);
     });
 
+    it('should put the title of the hand-in page in a title row of its own', () => {
+        flushInputs();
+
+        const element: HTMLElement = fixture.nativeElement;
+        expect(element.querySelector('[data-testid="exam-finished-header"] [data-testid="exam-finished-title"]')).not.toBeNull();
+        expect(element.querySelector('[data-testid="exam-start-header"]')).toBeNull();
+    });
+
     it('should not reset the confirmation on a live schedule update while waiting for the exam start (issue #13071)', () => {
         flushInputs();
 

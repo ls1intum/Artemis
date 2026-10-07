@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCompactionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisSuggestedContextDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -192,10 +193,18 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         }
 
         String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
+
+        boolean finalResultUpdate = statusUpdate.result() != null && !Boolean.FALSE.equals(statusUpdate.finalResult());
+        if (statusUpdate.suggestedContext() != null && !finalResultUpdate) {
+            // Pyris attaches a suggested context to the final result callback only. Switching on a status-only
+            // or intermediate update would move the context for an answer that may never arrive, so drop it.
+            log.debug("Ignoring suggested context on a status update without a final result for Iris job {}", job.jobId());
+        }
+
         TrackedSessionBasedPyrisJob updatedJob;
         if (statusUpdate.result() != null) {
-            updatedJob = Boolean.FALSE.equals(statusUpdate.finalResult()) ? handleIntermediateResultStatusUpdate(job, statusUpdate, session, sessionTitle)
-                    : handleResultStatusUpdate(job, statusUpdate, session, sessionTitle);
+            updatedJob = finalResultUpdate ? handleResultStatusUpdate(job, statusUpdate, session, sessionTitle)
+                    : handleIntermediateResultStatusUpdate(job, statusUpdate, session, sessionTitle);
         }
         else {
             applyNonResultSideEffects(session, job, statusUpdate, sessionTitle, false);
@@ -238,6 +247,10 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             if (trackedJob.assistantMessageId() != null) {
                 applyNonResultSideEffects(session, trackedJob, statusUpdate, sessionTitle, true);
                 return trackedJob;
+            }
+
+            if (statusUpdate.suggestedContext() != null) {
+                handleSuggestedContextChange(session, statusUpdate.suggestedContext());
             }
 
             // Pin every citation to the version of the material it was generated from, before the text is persisted. Once stored, the marker keeps that version forever,
@@ -327,6 +340,17 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             return builder;
         });
         return job.withTraceId(llmTokenUsage.getId());
+    }
+
+    /**
+     * Applies a context change suggested by the Pyris pipeline (automatic context switching).
+     * The default implementation is a no-op; only session types that support context switching
+     * override it. Implementations must not throw — a rejected switch must not fail the status update.
+     *
+     * @param session          The session the status update belongs to
+     * @param suggestedContext The context suggested by the pipeline
+     */
+    protected void handleSuggestedContextChange(S session, PyrisSuggestedContextDTO suggestedContext) {
     }
 
     /**
