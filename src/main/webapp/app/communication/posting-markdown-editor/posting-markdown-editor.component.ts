@@ -108,7 +108,10 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      */
     ngOnInit(): void {
         const messagingOnlyActions = isCommunicationEnabled(this.communicationService.getCourse())
-            ? [new UserMentionAction(this.courseManagementService, this.communicationService), new ChannelReferenceAction(this.communicationService, this.channelService)]
+            ? [
+                  new UserMentionAction(this.courseManagementService, this.communicationService, () => this.editType() === PostingEditType.UPDATE),
+                  new ChannelReferenceAction(this.communicationService, this.channelService),
+              ]
             : [];
 
         this.defaultActions.set([

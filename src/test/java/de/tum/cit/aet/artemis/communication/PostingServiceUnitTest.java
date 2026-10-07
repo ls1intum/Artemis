@@ -18,6 +18,8 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -269,6 +271,27 @@ class PostingServiceUnitTest {
             assertThat(logins).isEqualTo(expectedUserLogins);
             return usersInDatabase;
         });
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "@all", "@ALL", "@All", "@all ", "@all, please read", "@all. Please read", "@all!", "Hello @all", "Hello (@all)", "line one\n@all",
+            "[user]A B(ab)[/user] @all", "@all @all", "> quoted text\n@all please read", "`code` @all", "```\ncode\n```\n@all", "~~~\ncode\n~~~\n@all", "> quoted\n\n@all",
+            "see https://host/page and @all" })
+    void testContainsAtAllMentionMatches(String content) {
+        assertThat(PostingService.containsAtAllMention(content)).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", "all", "@alle", "@allow", "@all_hands", "@all1", "email@all.com", "name@all", "@@all", "@ all", "@al", "[user]A B(ab)[/user]", "@all\u00e9",
+            "\u00e9@all", "> @all meeting at 5", "  > @all meeting at 5", ">> @all", "`@all`", "``@all``", "use `@all` to ping", "```\n@all\n```", "```java\nint a;\n@all\n```",
+            "```\n@all", "~~~\n@all\n~~~", "https://host/@all", "[link](https://host/@all)" })
+    void testContainsAtAllMentionDoesNotMatch(String content) {
+        assertThat(PostingService.containsAtAllMention(content)).isFalse();
+    }
+
+    @Test
+    void testContainsAtAllMentionNullContent() {
+        assertThat(PostingService.containsAtAllMention(null)).isFalse();
     }
 
     /**

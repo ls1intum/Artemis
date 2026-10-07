@@ -30,6 +30,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.dto.VerifyAnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
@@ -58,7 +60,9 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
+import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationParameterTestRepository;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
+import de.tum.cit.aet.artemis.notification.test_repository.UserCourseNotificationStatusTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -85,6 +89,15 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
+
+    @Autowired
+    private CourseNotificationParameterTestRepository courseNotificationParameterRepository;
+
+    @Autowired
+    private UserCourseNotificationStatusTestRepository userCourseNotificationStatusRepository;
+
+    @Autowired
+    private ConversationParticipantTestRepository conversationParticipantRepository;
 
     private List<Post> existingConversationPostsWithAnswers;
 
@@ -759,6 +772,74 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
             assertThat(hasMentionNotification).isTrue();
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotifyEveryUnmutedGroupChatMemberExceptTheAuthorForAtAllInThreadReply() throws Exception {
+        User member = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User mutedMember = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        var groupChat = conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, member, mutedMember, tutor);
+        ConversationParticipant mutedParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(groupChat.getId(), mutedMember.getId())
+                .orElseThrow();
+        mutedParticipant.setIsMuted(true);
+        conversationParticipantRepository.save(mutedParticipant);
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+
+        var createdAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO("@all Check this out!", new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        assertThat(createdAnswer.content()).isEqualTo("@all Check this out!");
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(notificationRecipientIds(3, createdAnswer.id())).containsExactlyInAnyOrder(member.getId(), tutor.getId());
+            // the author of the parent message takes part in the thread, but gets the mention instead of the answer notification
+            assertThat(notificationRecipientIds(2, createdAnswer.id())).isEmpty();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotTreatAtAllAsAMentionInThreadReplyInChannel() throws Exception {
+        var channel = createChannelWithTwoStudents();
+        var post = existingConversationPostsWithAnswers.getFirst();
+        post.setConversation(channel);
+        Post savedMessage = conversationMessageRepository.save(post);
+
+        var createdAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO("@all Check this out!", new ParentPostDTO(savedMessage.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        // the reply is accepted, but in a channel the token is plain text, so nobody is mentioned
+        await().atMost(5, TimeUnit.SECONDS).during(500, TimeUnit.MILLISECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(3, createdAnswer.id())).isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldSendOnlyOneMentionNotificationWhenAtAllAndAUserMentionOverlapInThreadReply() throws Exception {
+        User member = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User otherMember = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        var groupChat = conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, member, otherMember);
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+
+        var createdAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO("@all [user]" + member.getName() + "(" + member.getLogin() + ")[/user]", new ParentPostDTO(parentPost.getId())),
+                AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        await().atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(notificationRecipientIds(3, createdAnswer.id())).containsExactlyInAnyOrder(member.getId(), otherMember.getId()));
+    }
+
+    /**
+     * Collects the ids of the users that received a course notification of the given type for the given reply.
+     * An id appears once per received notification, so a duplicate notification for one user shows up as a repeated id.
+     */
+    private List<Long> notificationRecipientIds(int type, Long replyId) {
+        Set<Long> notificationIds = courseNotificationParameterRepository.findAll().stream()
+                .filter(parameter -> "replyId".equals(parameter.getKey()) && String.valueOf(replyId).equals(parameter.getValue()))
+                .map(parameter -> parameter.getCourseNotification().getId()).collect(Collectors.toSet());
+        return courseNotificationRepository.findAllById(notificationIds).stream().filter(notification -> notification.getType() == type)
+                .flatMap(notification -> userCourseNotificationStatusRepository.findAllByCourseNotificationId(notification.getId()).stream())
+                .map(status -> status.getUser().getId()).toList();
     }
 
     @Test

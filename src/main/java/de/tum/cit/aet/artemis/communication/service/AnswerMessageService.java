@@ -150,8 +150,11 @@ public class AnswerMessageService extends PostingService {
 
         var notificationRecipientsList = getNotificationRecipients(conversation).toList();
 
-        var mentionedUserRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(mentionedUsers, conversation)
+        var explicitMentionRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(mentionedUsers, conversation)
                 .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), newAnswerMessage.getAuthor().getId())).toList();
+        // "@all" in a group chat adds all members who did not mute or hide it. They get the mention notification instead of the new answer notification.
+        var mentionedUserRecipients = resolveMentionRecipients(explicitMentionRecipients, mentionsAllMembers(conversation, newAnswerMessage.getContent()),
+                notificationRecipientsList, newAnswerMessage.getAuthor().getId());
 
         // We only send notifications to users that are part of the conversation, did not mute or hide it and if they were not mentioned (since they get a separate notification
         // for that)

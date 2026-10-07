@@ -165,7 +165,7 @@ public class ConversationMessagingService extends PostingService {
 
         syncPostWithWeaviate(createdMessage, conversation);
 
-        return new CreatedConversationMessage(createdMessage, conversation, mentionedUsers);
+        return new CreatedConversationMessage(createdMessage, conversation, mentionedUsers, mentionsAllMembers(conversation, createdMessage.getContent()));
     }
 
     /**
@@ -220,8 +220,10 @@ public class ConversationMessagingService extends PostingService {
             default -> "channel";
         };
 
-        var mentionedUserRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(createdConversationMessage.mentionedUsers(), conversation)
+        var explicitMentionRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(createdConversationMessage.mentionedUsers(), conversation)
                 .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), author.getId())).toList();
+        // "@all" in a group chat adds all members who did not mute or hide it. They get the mention notification instead of the new post notification.
+        var mentionedUserRecipients = resolveMentionRecipients(explicitMentionRecipients, createdConversationMessage.mentionsAllMembers(), recipientSummaries, author.getId());
 
         if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
             var newAnnouncementNotification = new NewAnnouncementNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getTitle(),

@@ -4,9 +4,12 @@ import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTop
 import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.PLAGIARISM_CASE_POSTS;
 import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.USER_CONVERSATION_POSTS;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -31,6 +34,7 @@ import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
@@ -63,6 +67,27 @@ public abstract class PostingService {
     private final WebsocketMessagingService websocketMessagingService;
 
     protected static final String POST_ENTITY_NAME = "messages.post";
+
+    /**
+     * Matches the literal token "@all" if it is neither preceded by a letter, digit, underscore, "@" or "/" (so not in an email address or a URL) nor followed by a letter, digit
+     * or underscore (so not "@alle"). The character classes are Unicode aware, the case-insensitive match only folds ASCII letters, i.e. it does not depend on the default locale.
+     */
+    private static final Pattern AT_ALL_MENTION_PATTERN = Pattern.compile("(?<![\\p{L}\\p{N}_@/])@all(?![\\p{L}\\p{N}_])", Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Fenced code blocks (backticks or tildes), including an unterminated block that runs to the end of the content as in markdown.
+     */
+    private static final Pattern FENCED_CODE_BLOCK_PATTERN = Pattern.compile("^ {0,3}(`{3,}|~{3,}).*?(?:^ {0,3}\\1[`~]*[ \\t]*$|\\z)", Pattern.MULTILINE | Pattern.DOTALL);
+
+    /**
+     * Lines of a blockquote, e.g. a quoted earlier message.
+     */
+    private static final Pattern BLOCKQUOTE_LINE_PATTERN = Pattern.compile("^ {0,3}>.*$", Pattern.MULTILINE);
+
+    /**
+     * Inline code spans on one line.
+     */
+    private static final Pattern INLINE_CODE_PATTERN = Pattern.compile("(`+)[^\\n]+?\\1");
 
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
@@ -365,6 +390,58 @@ public abstract class PostingService {
     }
 
     protected abstract String getEntityName();
+
+    /**
+     * Checks whether a posting contains the "@all" token, which pings every member of a group chat. Tokens in a blockquote, a fenced code block or an inline code span do not
+     * count, so quoting a message that contains "@all" or explaining the feature in code does not ping the group again. Neither does the token in a URL.
+     *
+     * @param postingContent content of the posting, may be null
+     * @return true if the content contains the "@all" token outside of quotes and code
+     */
+    public static boolean containsAtAllMention(String postingContent) {
+        if (postingContent == null) {
+            return false;
+        }
+        String withoutCodeBlocks = FENCED_CODE_BLOCK_PATTERN.matcher(postingContent).replaceAll(" ");
+        String withoutQuotes = BLOCKQUOTE_LINE_PATTERN.matcher(withoutCodeBlocks).replaceAll(" ");
+        String withoutInlineCode = INLINE_CODE_PATTERN.matcher(withoutQuotes).replaceAll(" ");
+        return AT_ALL_MENTION_PATTERN.matcher(withoutInlineCode).find();
+    }
+
+    /**
+     * Checks whether a posting pings all members of its conversation. The "@all" token only counts in group chats, in every other conversation it is plain text.
+     *
+     * @param conversation   the conversation the posting belongs to
+     * @param postingContent content of the posting, may be null
+     * @return true if the posting contains the "@all" token and the conversation is a group chat
+     */
+    protected static boolean mentionsAllMembers(Conversation conversation, String postingContent) {
+        return conversation instanceof GroupChat && containsAtAllMention(postingContent);
+    }
+
+    /**
+     * Determines the users that receive the mention notification: the explicitly mentioned users and, if the posting pings all members, every member who did not mute or hide
+     * the conversation. A user is contained once even if the posting mentions them by name and through "@all". The author never receives a mention notification.
+     * Explicitly mentioned users are kept as they are, i.e. they are notified even if they muted the conversation.
+     *
+     * @param mentionedUserRecipients the explicitly mentioned users who are allowed to receive the notification
+     * @param mentionsAllMembers      whether the posting pings all members of the conversation
+     * @param conversationRecipients  the members of the conversation including their mute and hide flags
+     * @param authorId                the id of the author of the posting
+     * @return the users that receive the mention notification
+     */
+    protected static List<User> resolveMentionRecipients(List<User> mentionedUserRecipients, boolean mentionsAllMembers,
+            Collection<ConversationNotificationRecipientSummary> conversationRecipients, Long authorId) {
+        if (!mentionsAllMembers) {
+            return mentionedUserRecipients;
+        }
+        Map<Long, User> recipientsById = new LinkedHashMap<>();
+        mentionedUserRecipients.forEach(user -> recipientsById.put(user.getId(), user));
+        conversationRecipients.stream().filter(summary -> summary.shouldNotifyRecipient() && !Objects.equals(summary.userId(), authorId))
+                .forEach(summary -> recipientsById.computeIfAbsent(summary.userId(),
+                        userId -> new User(userId, summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail())));
+        return new ArrayList<>(recipientsById.values());
+    }
 
     /**
      * Gets the list of logins for users mentioned in a posting.

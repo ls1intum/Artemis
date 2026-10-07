@@ -46,6 +46,8 @@ import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/foundation/service/file.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { PostingEditType } from 'app/communication/communication.util';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -176,6 +178,23 @@ describe('PostingsMarkdownEditor', () => {
         containDefaultActions(component.defaultActions());
         expect(component.defaultActions()).toEqual(expect.arrayContaining([expect.any(UserMentionAction), expect.any(ChannelReferenceAction)]));
         expect(component.lectureAttachmentReferenceAction()).toEqual(new LectureAttachmentReferenceAction(communicationService, lectureService, fileService));
+    });
+
+    describe.each([
+        { editType: PostingEditType.CREATE, suggestsAll: true },
+        { editType: PostingEditType.UPDATE, suggestsAll: false },
+    ])('@all suggestion for edit type $editType', ({ editType, suggestsAll }) => {
+        it(`should ${suggestsAll ? '' : 'not '}offer @all in a group chat`, async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+            vi.spyOn(TestBed.inject(CourseManagementService), 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: [], status: 200 })));
+            fixture.componentRef.setInput('editType', editType);
+            component.ngOnInit();
+            const userMentionAction = component.defaultActions().find((action) => action instanceof UserMentionAction) as UserMentionAction;
+
+            const suggestions = await userMentionAction.loadSuggestionsForSearchTerm('');
+
+            expect(suggestions).toEqual(suggestsAll ? ['all'] : []);
+        });
     });
 
     it('should have set the correct default commands on init if communication is disabled', () => {
