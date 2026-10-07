@@ -60,6 +60,7 @@ import de.tum.cit.aet.artemis.text.api.TextDemoApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.dto.TextParticipationDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupDemoApi;
 
 /**
  * Tests the text exercises the {@code demo} profile seeds, what the demo users did in them, and the grading scale of the demo course.
@@ -102,6 +103,9 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
 
     @Autowired
     private AtlasDemoApi atlasDemoApi;
+
+    @Autowired
+    private TutorialGroupDemoApi tutorialGroupDemoApi;
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
@@ -260,7 +264,7 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
 
         DemoDataSeedingService withoutTextModule = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
                 new DemoExerciseSeedingService(Optional.empty(), Optional.of(modelingDemoApi), Optional.of(fileUploadDemoApi), quizDemoApi, programmingDemoApi, assessmentDemoApi),
-                new DemoCourseContentSeedingService(Optional.of(lectureDemoApi), Optional.of(atlasDemoApi), assessmentDemoApi));
+                new DemoCourseContentSeedingService(Optional.of(lectureDemoApi), Optional.of(atlasDemoApi), assessmentDemoApi, Optional.of(tutorialGroupDemoApi)));
         assertThatCode(() -> withoutTextModule.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("seeding must work when the text module is disabled")
                 .doesNotThrowAnyException();
 
