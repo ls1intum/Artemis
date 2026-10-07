@@ -1,9 +1,12 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +16,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -42,6 +50,12 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
 
     @Autowired
     private CourseUtilService courseUtilService;
+
+    @Autowired
+    private LLMTokenUsageService llmTokenUsageService;
+
+    @Autowired
+    private LLMTokenUsageTraceTestRepository llmTokenUsageTraceRepository;
 
     @BeforeEach
     void initTestCase() {
@@ -82,6 +96,40 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
     @WithMockUser(username = "admin", roles = "ADMIN")
     void getBreakdown_asAdmin_succeeds() throws Exception {
         request.get(BASE_URL + "breakdown?from=2026-05-26T00:00:00Z&to=2026-05-27T00:00:00Z&dimension=MODEL", HttpStatus.OK, Object.class);
+    }
+
+    /**
+     * Cached and cache-write input tokens are part of the input token count but are billed at their own rates. All dashboard cost queries must use the same formula
+     * as the course cost.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void costQueries_billCachedAndCacheWriteTokensAtTheirOwnRates() {
+        String model = "gpt-6-luna-dashboard-cost-test";
+        // 2M input tokens: 1M read from the cache, 0.4M written to it, 0.6M uncached
+        var request = new LLMRequest(model, 2_000_000, 1.0f, 100_000, 4.0f, "IRIS_CHAT_COURSE_MESSAGE", 1_000_000, 0.1f, 400_000, 1.25f);
+        LLMTokenUsageTrace trace = llmTokenUsageService.saveLLMTokenUsage(List.of(request), LLMServiceType.IRIS, builder -> builder);
+        // a window no other test writes to
+        ZonedDateTime traceTime = ZonedDateTime.of(2031, 3, 14, 10, 0, 0, 0, ZoneOffset.UTC);
+        trace.setTime(traceTime);
+        llmTokenUsageTraceRepository.save(trace);
+        Instant from = traceTime.minusHours(1).toInstant();
+        Instant to = traceTime.plusHours(1).toInstant();
+        // 0.6M x 1.0 + 1M x 0.1 + 0.4M x 1.25 + 0.1M x 4.0 = 0.6 + 0.1 + 0.5 + 0.4
+        double expectedCost = 1.6;
+
+        List<Object[]> totals = dashboardRepository.computeTokenCost(from, to);
+        assertThat(totals).hasSize(1);
+        assertThat(((Number) totals.getFirst()[1]).doubleValue()).isCloseTo(expectedCost, within(0.001));
+
+        List<Object[]> timeline = dashboardRepository.findTokenCostWithTimestamps(from, to);
+        assertThat(timeline).hasSize(1);
+        assertThat(((Number) timeline.getFirst()[2]).doubleValue()).isCloseTo(expectedCost, within(0.001));
+
+        List<Object[]> byModel = dashboardRepository.computeTokenCostByModel(from, to);
+        assertThat(byModel).hasSize(1);
+        assertThat(byModel.getFirst()[0]).isEqualTo(model);
+        assertThat(((Number) byModel.getFirst()[2]).doubleValue()).isCloseTo(expectedCost, within(0.001));
     }
 
     /**

@@ -63,6 +63,49 @@ class AgentLoopCompactionTest {
     }
 
     @Test
+    void continuationCompactsACompletedSessionBeforeBuildingItsFirstPrompt() {
+        ChatModel model = mock(ChatModel.class);
+        String closingResponse = "detail ".repeat(16_300);
+        when(model.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(assistantToolCall("write", "write", "{}")))), textResponse(closingResponse),
+                textResponse("The exercise files are ready."), textResponse("continued"));
+        List<Message> prior = conversationWithTurns(6, 6_000);
+        int window = Math.toIntExact(
+                AgentConversationContext.estimateTokens(prior, 0, prior.size()) + AgentConversationContext.estimateMessageTokens(new UserMessage("first stage")) + 20_608);
+        AgentLoopRunner runner = newTestRunner(List.of(model), window);
+        var tools = new AgentLoopRunnerTest.RecordingTools();
+        var completed = runner.runSession("system prompt", prior.subList(1, prior.size()), "first stage", tools, 4, () -> false, null, null);
+        assertThat(completed.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(completed.conversation().getLast().getText()).isEqualTo(closingResponse);
+
+        List<Message> nextPrompt = new ArrayList<>();
+        nextPrompt.add(new SystemMessage("system prompt"));
+        nextPrompt.addAll(completed.conversation());
+        nextPrompt.add(new UserMessage("continue"));
+        assertThat(window - AgentConversationContext.estimateTokens(nextPrompt, 0, nextPrompt.size()) - 4_096).isLessThan(1_024);
+        var resumed = runner.runSession("system prompt", completed.conversation(), "continue", tools, 4, () -> false, null, null);
+
+        assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(model, times(4)).call(prompts.capture());
+        assertThat(prompts.getAllValues().getLast().getInstructions()).anySatisfy(message -> assertThat(message.getText()).contains("SESSION SUMMARY"));
+        assertThat(prompts.getAllValues().getLast().getInstructions().getLast().getText()).isEqualTo("continue");
+        assertThatNoException().isThrownBy(() -> AgentConversationContext.assertValidPairing(resumed.conversation()));
+    }
+
+    @Test
+    void cancelledContinuationDoesNotCompactOrCalculatePromptOptions() {
+        ChatModel model = mock(ChatModel.class);
+        AgentLoopRunner runner = newTestRunner(List.of(model), 21_000);
+        List<Message> prior = conversationWithTurns(12, 24_000);
+
+        var result = runner.runTextSession("system", prior.subList(1, prior.size()), "continue", 4, () -> true, null, null);
+
+        assertThat(result.result().status()).isEqualTo(AgentLoopResult.Status.CANCELLED);
+        assertThat(result.result().turns()).isZero();
+        verify(model, never()).call(any(Prompt.class));
+    }
+
+    @Test
     void estimateMessageTokens_addsStructuralOverheadOnTopOfJtokkit() {
         // 30 repeated 'x' chars tokenize to 5 tokens under jtokkit's o200k_base encoding, plus the flat per-message overhead (4).
         assertThat(AgentConversationContext.estimateMessageTokens(new UserMessage("x".repeat(30)))).isEqualTo(5 + 4);
@@ -227,7 +270,8 @@ class AgentLoopCompactionTest {
             prior.add(new AssistantMessage("previous turn"));
             prior.add(new UserMessage("x".repeat(24_000)));
         }
-        int contextWindow = Math.toIntExact(AgentConversationContext.estimateTokens(prior, 0, prior.size()) + 8_192);
+        int contextWindow = Math
+                .toIntExact(AgentConversationContext.estimateTokens(prior, 0, prior.size()) + AgentConversationContext.estimateMessageTokens(new UserMessage("continue")) + 20_481);
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), contextWindow);
 
         assertThatThrownBy(() -> runner.runSession("system", prior.subList(1, prior.size()), "continue", new AgentLoopRunnerTest.RecordingTools(), 4, () -> false, usageSink, null))

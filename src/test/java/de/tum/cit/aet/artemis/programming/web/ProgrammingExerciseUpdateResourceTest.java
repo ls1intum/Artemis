@@ -104,7 +104,7 @@ class ProgrammingExerciseUpdateResourceTest {
         }).when(fresh).setTitle("updated");
         ProgrammingExerciseUpdateResource resource = resource(repository);
 
-        assertThatExceptionOfType(MutationReached.class).isThrownBy(() -> resource.updateProgrammingExercise(dto, null));
+        assertThatExceptionOfType(MutationReached.class).isThrownBy(() -> resource.updateProgrammingExercise(dto, null, Set.of()));
 
         verify(stale, never()).setTitle(anyString());
         assertGenerationCanClaim(exerciseId);
@@ -124,7 +124,7 @@ class ProgrammingExerciseUpdateResourceTest {
         }).when(fresh).setTitle("updated");
         ProgrammingExerciseUpdateResource resource = resource(repository);
 
-        assertThatExceptionOfType(MutationReached.class).isThrownBy(() -> resource.reEvaluateAndUpdateProgrammingExercise(exerciseId, dto, false));
+        assertThatExceptionOfType(MutationReached.class).isThrownBy(() -> resource.reEvaluateAndUpdateProgrammingExercise(exerciseId, dto, false, Set.of()));
 
         verify(stale, never()).setTitle(anyString());
         assertGenerationCanClaim(exerciseId);
@@ -161,7 +161,7 @@ class ProgrammingExerciseUpdateResourceTest {
         ProgrammingExerciseUpdateResource resource = resource(repository, exerciseService, versionService, updateService);
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
-            Future<?> update = executor.submit(() -> resource.reEvaluateAndUpdateProgrammingExercise(exerciseId, dto, false));
+            Future<?> update = executor.submit(() -> resource.reEvaluateAndUpdateProgrammingExercise(exerciseId, dto, false, Set.of()));
             assertThat(scoreTailEntered.await(5, TimeUnit.SECONDS)).isTrue();
             assertGenerationCannotClaim(exerciseId);
 

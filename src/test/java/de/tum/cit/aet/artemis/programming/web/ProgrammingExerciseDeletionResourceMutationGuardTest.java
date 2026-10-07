@@ -50,7 +50,7 @@ class ProgrammingExerciseDeletionResourceMutationGuardTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
         exercise.setCourse(new Course());
-        when(repository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(EXERCISE_ID)).thenReturn(exercise);
+        when(repository.findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesElseThrow(EXERCISE_ID)).thenReturn(exercise);
         when(repository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(EXERCISE_ID)).thenReturn(exercise);
         when(repository.findByIdElseThrow(EXERCISE_ID)).thenReturn(exercise);
         UserTestRepository userRepository = mock(UserTestRepository.class);
@@ -93,7 +93,7 @@ class ProgrammingExerciseDeletionResourceMutationGuardTest {
         exercise.setId(EXERCISE_ID);
         exercise.setCourse(new Course());
         ProgrammingExerciseTestRepository deletionRepository = mock(ProgrammingExerciseTestRepository.class);
-        when(deletionRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(EXERCISE_ID)).thenReturn(exercise);
+        when(deletionRepository.findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesElseThrow(EXERCISE_ID)).thenReturn(exercise);
         UserTestRepository deletionUserTestRepository = mock(UserTestRepository.class);
         when(deletionUserTestRepository.getUserWithAuthorities()).thenReturn(new User());
         ExerciseDeletionService deletionService = mock(ExerciseDeletionService.class);

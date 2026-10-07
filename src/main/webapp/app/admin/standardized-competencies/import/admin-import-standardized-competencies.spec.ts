@@ -2,6 +2,7 @@
  * Vitest tests for AdminImportStandardizedCompetenciesComponent.
  * Tests the import functionality for standardized competencies from JSON files.
  */
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -44,6 +45,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
         }).overrideComponent(AdminImportStandardizedCompetenciesComponent, {
             set: {
                 imports: [
+                    ArtemisTranslatePipe,
                     MockModule(FontAwesomeModule),
                     MockComponent(StandardizedCompetencyDetailComponent),
                     MockComponent(KnowledgeAreaTreeComponent),

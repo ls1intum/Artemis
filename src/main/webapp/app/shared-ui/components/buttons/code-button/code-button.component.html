@@ -157,7 +157,13 @@
         <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.ideButton.helpIcon" />
         <a class="btn btn-primary btn-sm" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl" jhiTranslate="artemisApp.exerciseActions.cloneSourceTree.button"> </a>
         <!-- This hidden iframe is used to avoid "Do you want to leave the site" messages in the exam mode -->
-        <iframe name="hidden-iframe" style="visibility: hidden; position: absolute"></iframe>
+        <iframe
+            name="hidden-iframe"
+            [title]="'accessibility.externalApplicationLauncher' | artemisTranslate"
+            aria-hidden="true"
+            tabindex="-1"
+            style="visibility: hidden; position: absolute"
+        ></iframe>
         <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.cloneSourceTree.helpIcon" />
     </ng-template>
 </ng-container>

@@ -1,25 +1,29 @@
 <div class="frame">
     <!-- The month and the calendar controls live in the shell title bar, so this page has no header of its own. -->
-    <h5 *titleBarTitle class="mb-0">{{ monthDescription() }}</h5>
-    <div *titleBarActions class="calendar-bar-controls d-flex align-items-center gap-2">
-        <p-multiselect
+    <h5 *titleBarTitle class="mb-0!">{{ monthDescription() }}</h5>
+    <div *titleBarActions class="calendar-bar-controls flex items-center gap-2">
+        <tumaet-ui-multi-select
+            class="calendar-filter"
             [options]="filterOptions()"
-            [ngModel]="selectedFilterOptions()"
+            [ngModel]="selectedFilterValues()"
             (ngModelChange)="onSelectedFilterOptionsChange($event)"
             optionLabel="name"
+            optionValue="option"
+            size="small"
+            variant="outlined"
+            [ariaLabel]="filterComponentPlaceholder()"
             [placeholder]="filterComponentPlaceholder()"
-            [showHeader]="false"
         >
             <!-- The colour is what identifies a category in the grid, so the options carry it too — on a narrow bar the
                  chips are gone and the dropdown is all the user has. -->
-            <ng-template #item let-option>
+            <ng-template #option let-option>
                 <span class="filter-option">
                     <span class="legend-circle" [class]="option.colorClassName"></span>
                     <span>{{ option.name }}</span>
                 </span>
             </ng-template>
 
-            <ng-template #selecteditems>
+            <ng-template #selectedItems>
                 @if (selectedFilterOptions().length) {
                     <!--
                         The funnel names the control at any width. Once the bar is too narrow for the chips, the count
@@ -42,12 +46,12 @@
                     </div>
                 }
             </ng-template>
-        </p-multiselect>
-        <p-selectbutton
+        </tumaet-ui-multi-select>
+        <tumaet-ui-select-button
             [options]="presentationOptions()"
             [ngModel]="presentation()"
             (ngModelChange)="presentation.set($event)"
-            [unselectable]="true"
+            [allowEmpty]="false"
             optionLabel="label"
             optionValue="value"
             size="small"
@@ -57,23 +61,39 @@
         @let subscriptionToken = calendarSubscriptionToken();
         @if (currentCourseId && subscriptionToken) {
             <div>
-                <button type="button" data-testid="subscribe-button" pButton size="small" outlined (click)="subscriptionPopover.open($event)">
+                <button type="button" data-testid="subscribe-button" tumAetUiButton size="small" variant="outlined" (click)="subscriptionPopover.open($event)">
                     <fa-icon [icon]="faArrowUpFromBracket" />
                     <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.calendar.subscribeButtonLabel"></span>
                 </button>
                 <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="currentCourseId" #subscriptionPopover />
             </div>
         }
-        <button type="button" id="today-button" pButton size="small" outlined (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
-        <p-buttongroup>
-            <button type="button" id="previous-button" pButton size="small" outlined (click)="goToPrevious()">
+        <button type="button" id="today-button" tumAetUiButton size="small" variant="outlined" (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
+        <tumaet-ui-button-group>
+            <button
+                type="button"
+                id="previous-button"
+                tumAetUiButton
+                size="small"
+                variant="outlined"
+                (click)="goToPrevious()"
+                [attr.aria-label]="'artemisApp.calendar.previousButtonLabel' | artemisTranslate"
+            >
                 <fa-icon [icon]="faChevronLeft" />
             </button>
 
-            <button type="button" id="next-button" pButton size="small" outlined (click)="goToNext()">
+            <button
+                type="button"
+                id="next-button"
+                tumAetUiButton
+                size="small"
+                variant="outlined"
+                (click)="goToNext()"
+                [attr.aria-label]="'artemisApp.calendar.nextButtonLabel' | artemisTranslate"
+            >
                 <fa-icon [icon]="faChevronRight" />
             </button>
-        </p-buttongroup>
+        </tumaet-ui-button-group>
     </div>
 
     <div class="calendar-presentation-container">
@@ -84,9 +104,7 @@
         }
         @if (isLoading()) {
             <div class="loading-overlay">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden" jhiTranslate="loading"></span>
-                </div>
+                <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
             </div>
         }
     </div>

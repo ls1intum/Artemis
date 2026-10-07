@@ -89,7 +89,7 @@ jobs:
           git fetch origin "$BASE_BRANCH:base_branch"
       - name: Determine relevant tests
         id: determine
-        run: .ci/E2E-tests/determine-relevant-tests.sh base_branch
+        run: supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh base_branch
 
   run-e2e-relevant:
     name: 'Phase 1: Relevant E2E Tests'
@@ -141,7 +141,7 @@ jobs:
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
           RELEVANT_TESTS: ${{ needs.determine-tests.outputs.relevant_tests }}
-        run: .ci/E2E-tests/execute.sh postgres-localci playwright "$RELEVANT_TESTS"
+        run: supporting_scripts/ci/E2E-tests/execute.sh postgres-localci playwright "$RELEVANT_TESTS"
 
       - name: Calculate wall-clock duration
         id: wall-clock
@@ -331,7 +331,7 @@ jobs:
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
           REMAINING_TESTS: ${{ needs.determine-tests.outputs.remaining_tests }}
-        run: .ci/E2E-tests/execute.sh postgres-localci playwright "$REMAINING_TESTS"
+        run: supporting_scripts/ci/E2E-tests/execute.sh postgres-localci playwright "$REMAINING_TESTS"
 
       - name: Calculate wall-clock duration
         id: wall-clock
@@ -522,7 +522,7 @@ jobs:
         continue-on-error: true
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
-        run: .ci/E2E-tests/execute.sh postgres-localci playwright
+        run: supporting_scripts/ci/E2E-tests/execute.sh postgres-localci playwright
 
       - name: Calculate wall-clock duration
         id: wall-clock
@@ -691,7 +691,7 @@ jobs:
         continue-on-error: true
         env:
           FAST_TEST_TIMEOUT_SECONDS: 75
-        run: .ci/E2E-tests/execute.sh multi-node playwright
+        run: supporting_scripts/ci/E2E-tests/execute.sh multi-node playwright
 
       - name: E2E Teardown
         id: teardown
