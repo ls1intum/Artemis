@@ -102,7 +102,7 @@ public class QuizDemoApi implements AbstractApi {
             new AnswerSheet(List.of(Set.of(0, 1, 2), Set.of(1), Set.of(0)), List.of("pivot", "O(n log n)")),
             // everything right: 10 points
             new AnswerSheet(List.of(Set.of(0, 1), Set.of(1), Set.of(0)), List.of("pivot", "O(n log n)")),
-            // mixes up binary and linear search, and stable and unstable sorting: 5 points
+            // mixes up binary and linear search, stable and unstable sorting, and the best case of quicksort: 5 points
             new AnswerSheet(List.of(Set.of(0, 1), Set.of(2), Set.of(1)), List.of("pivot", "O(n^2)")),
             // mostly guessed: 2 points
             new AnswerSheet(List.of(Set.of(2, 3), Set.of(0), Set.of(0)), List.of("median", "O(n)")));
@@ -172,7 +172,7 @@ public class QuizDemoApi implements AbstractApi {
 
         quizExercise.addQuestion(multipleChoiceQuestion("Collection guarantees", "Which of the following statements about Java collections are correct?",
                 "ArrayList is backed by an array and therefore indexes in constant time, while LinkedList has to walk the chain. HashSet makes no ordering promise at all, "
-                        + "LinkedHashSet is the one that preserves insertion order. TreeMap is a sorted map and keeps its keys in the order of their natural comparison.",
+                        + "LinkedHashSet is the one that preserves insertion order. TreeMap is a sorted map and keeps its keys in their natural order or in the order of its comparator.",
                 4.0, false,
                 List.of(answerOption("`ArrayList` gives you access by index in constant time.", true, "Backed by an array."),
                         answerOption("`LinkedList` gives you access by index in constant time.", false, "It has to traverse the list."),
@@ -183,7 +183,7 @@ public class QuizDemoApi implements AbstractApi {
                 "A `HashMap` uses a hash function that distributes the keys well. What is the average time complexity of `get`?",
                 "With a good hash function the entries spread evenly across the buckets, so a lookup inspects only a handful of entries regardless of the map size.", 2.0, true,
                 List.of(answerOption("O(1)", true, "Constant on average."), answerOption("O(log n)", false, "That is the cost of a balanced tree, for example `TreeMap`."),
-                        answerOption("O(n)", false, "That is the worst case, when all keys collide in the same bucket."),
+                        answerOption("O(n)", false, "That is the worst case of a plain hash table, in which all keys collide in the same bucket."),
                         answerOption("O(n log n)", false, "That is the cost of sorting, not of a lookup."))));
 
         quizExercise.addQuestion(shortAnswerQuestion("Complexity of map lookups",
@@ -296,7 +296,7 @@ public class QuizDemoApi implements AbstractApi {
                         answerOption("O(n²)", true, "Every pair of elements is compared once."), answerOption("O(2ⁿ)", false, "That is the number of subsets, not of pairs."))));
 
         quizExercise.addQuestion(shortAnswerQuestion("Doubling the input",
-                "If the input doubles, the running time of an algorithm in O(n²) grows by a factor of [-spot 1], and the one of an algorithm in O(n) by a factor of [-spot 2].",
+                "If the input doubles, the running time of an algorithm in O(n²) grows by a factor of about [-spot 1], and the one of an algorithm in O(n) by a factor of about [-spot 2].",
                 "(2n)² = 4n², while 2n is just twice n.", 1.0, List.of("4", "2")));
 
         return create(quizExercise);

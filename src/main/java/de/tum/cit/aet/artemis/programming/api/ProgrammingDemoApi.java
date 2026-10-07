@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.programming.api;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO_AND_SCHEDULING;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Locale;
@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -56,17 +55,6 @@ public class ProgrammingDemoApi implements AbstractApi {
     private static final ProjectType DEMO_PROJECT_TYPE = ProjectType.PLAIN_MAVEN;
 
     private static final String DEMO_PACKAGE_NAME = "de.tum.cit.aet.artemis.demo";
-
-    /**
-     * Fallback problem statement, used when the template readme of the demo programming language cannot be read. The template repositories themselves still contain the actual
-     * assignment, so the exercise stays usable.
-     */
-    private static final String DEMO_FALLBACK_PROBLEM_STATEMENT = """
-            # Sorting Algorithms
-
-            Implement the sorting strategies in the template repository and make the provided tests pass. Start by opening the exercise in the online editor or by cloning the
-            repository, then work through the classes that are marked as to do.
-            """;
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingDemoApi.class);
 
@@ -150,29 +138,18 @@ public class ProgrammingDemoApi implements AbstractApi {
     }
 
     /**
-     * Reads the problem statement the client also offers when an editor creates a programming exercise, so that the demo exercise ships the same assignment as its template
-     * repositories. Mirrors {@code FileResource#getTemplateFileContentWithResponse}.
+     * Reads the problem statement the client also offers when an editor creates a programming exercise with the language and project type of the demo exercise, so that the
+     * demo exercise ships the same assignment as its template repositories. Mirrors {@code FileResource#getTemplateFileContentWithResponse}.
      *
-     * @return the template problem statement, or a fallback when the template cannot be read.
+     * @return the problem statement of the template.
      */
     private String readTemplateProblemStatement() {
-        String languagePrefix = DEMO_PROGRAMMING_LANGUAGE.name().toLowerCase(Locale.ROOT);
-        String projectTypePrefix = DEMO_PROJECT_TYPE.name().toLowerCase(Locale.ROOT);
+        Path readme = Path.of("templates", DEMO_PROGRAMMING_LANGUAGE.name().toLowerCase(Locale.ROOT), DEMO_PROJECT_TYPE.name().toLowerCase(Locale.ROOT), "readme");
         try {
-            Resource readme = resourceLoaderService.getResource(Path.of("templates", languagePrefix, projectTypePrefix, "readme"));
-            if (!readme.exists()) {
-                readme = resourceLoaderService.getResource(Path.of("templates", languagePrefix, "readme"));
-            }
-            if (!readme.exists()) {
-                return DEMO_FALLBACK_PROBLEM_STATEMENT;
-            }
-            try (InputStream inputStream = readme.getInputStream()) {
-                return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            }
+            return resourceLoaderService.getResource(readme).getContentAsString(StandardCharsets.UTF_8);
         }
         catch (IOException exception) {
-            log.warn("Could not read the template problem statement for the demo programming exercise, falling back to a generic one", exception);
-            return DEMO_FALLBACK_PROBLEM_STATEMENT;
+            throw new UncheckedIOException("Could not read the problem statement template " + readme, exception);
         }
     }
 }

@@ -79,7 +79,7 @@ public class TextDemoApi extends AbstractTextApi {
 
             ## Your task
 
-            Write an essay of **600 to 800 words** that gives a clear recommendation. Do not sit on the fence: decide, and defend your decision.
+            Write an essay of **600 to 800 words** that gives a clear recommendation. Do not leave the decision open: decide, and defend it.
 
             Your essay must address all of the following:
 
@@ -101,8 +101,9 @@ public class TextDemoApi extends AbstractTextApi {
             |---------------------------------------------|--------|
             | Problem analysis (process vs. architecture) | 2      |
             | Proposed service boundaries                 | 2      |
-            | Discussion of migration costs               | 3      |
+            | Discussion of migration costs               | 2      |
             | Alternative to a migration                  | 2      |
+            | Recommendation for the next six months      | 1      |
             | Clarity and structure                       | 1      |
             """;
 
@@ -137,7 +138,7 @@ public class TextDemoApi extends AbstractTextApi {
 
             ## Your task
 
-            Write an essay of **300 to 400 words** on whether mandatory code reviews are worth their cost for BookBarn. Take a clear position.
+            Write an essay of **100 to 150 words** on whether mandatory code reviews are worth their cost for BookBarn. Take a clear position.
 
             Your essay must address all of the following:
 
@@ -314,8 +315,8 @@ public class TextDemoApi extends AbstractTextApi {
      */
     public List<TextExercise> createDemo(Course course, List<User> students, User tutor) {
         List<TextExercise> existingExercises = textExerciseRepository.findByCourseIdWithCategories(course.getId());
-        TextExercise ongoingEssay = findExisting(existingExercises, ONGOING_ESSAY_TITLE).orElseGet(
-                () -> createEssay(course, ONGOING_ESSAY_TITLE, ONGOING_ESSAY_SHORT_NAME, ONGOING_ESSAY_PROBLEM_STATEMENT, ONGOING_ESSAY_EXAMPLE_SOLUTION, ExerciseDates.ongoing()));
+        TextExercise ongoingEssay = findExisting(existingExercises, ONGOING_ESSAY_TITLE).orElseGet(() -> createEssay(course, ONGOING_ESSAY_TITLE, ONGOING_ESSAY_SHORT_NAME,
+                ONGOING_ESSAY_PROBLEM_STATEMENT, ONGOING_ESSAY_EXAMPLE_SOLUTION, ExerciseDates.ongoing(), ExerciseFactory.exerciseCategory("Architecture", "#691b0b")));
         TextExercise gradedEssay = findExisting(existingExercises, GRADED_ESSAY_TITLE).orElseGet(() -> createGradedEssay(course, students, tutor));
         return List.of(ongoingEssay, gradedEssay);
     }
@@ -341,9 +342,9 @@ public class TextDemoApi extends AbstractTextApi {
         return create(essay);
     }
 
-    private TextExercise createEssay(Course course, String title, String shortName, String problemStatement, String exampleSolution, ExerciseDates dates) {
+    private TextExercise createEssay(Course course, String title, String shortName, String problemStatement, String exampleSolution, ExerciseDates dates, String category) {
         TextExercise textExercise = buildEssay(title, shortName, problemStatement, exampleSolution, dates, course);
-        textExercise.getCategories().add(ExerciseFactory.exerciseCategory("Architecture", "#691b0b"));
+        textExercise.getCategories().add(category);
         return create(textExercise);
     }
 
@@ -396,7 +397,7 @@ public class TextDemoApi extends AbstractTextApi {
         ZonedDateTime now = ZonedDateTime.now();
         // Released two weeks before seeding, the due date and the assessment due date only keep the essay open until the activity below has happened.
         TextExercise essay = createEssay(course, GRADED_ESSAY_TITLE, GRADED_ESSAY_SHORT_NAME, GRADED_ESSAY_PROBLEM_STATEMENT, GRADED_ESSAY_EXAMPLE_SOLUTION,
-                new ExerciseDates(now.minusWeeks(2), null, now.plusDays(1), now.plusDays(2)));
+                new ExerciseDates(now.minusWeeks(2), null, now.plusDays(1), now.plusDays(2)), ExerciseFactory.exerciseCategory("Collaboration", "#0d3cc2"));
 
         List<TextSubmission> submissions = new ArrayList<>();
         for (int index = 0; index < students.size(); index++) {

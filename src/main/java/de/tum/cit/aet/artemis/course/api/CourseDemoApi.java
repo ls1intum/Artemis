@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.course.api;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO_AND_SCHEDULING;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -53,7 +52,7 @@ public class CourseDemoApi implements AbstractApi {
 
     private static final String DEMO_COURSE_DESCRIPTION = """
             Learn how to design, build and evaluate software systems: from architectural styles and object-oriented modeling to algorithms and their complexity.
-            This demo course was seeded on startup by the 'demo' profile. Feel free to modify it, it is only recreated once it no longer exists.""";
+            This demo course was seeded on startup by the 'demo' profile. Feel free to modify it: seeding only recreates demo content that no longer exists.""";
 
     /**
      * Tutorial groups schedule their sessions in the time zone of their course, so the demo course needs one, see {@code TutorialGroupsConfigurationResource}.
@@ -166,8 +165,8 @@ public class CourseDemoApi implements AbstractApi {
      * @return the template, or {@code null} when it cannot be read, in which case the course simply has no code of conduct.
      */
     private @Nullable String readCodeOfConductTemplate() {
-        try (InputStream inputStream = resourceLoaderService.getResource(CODE_OF_CONDUCT_TEMPLATE).getInputStream()) {
-            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        try {
+            return resourceLoaderService.getResource(CODE_OF_CONDUCT_TEMPLATE).getContentAsString(StandardCharsets.UTF_8);
         }
         catch (IOException exception) {
             log.warn("Could not read the code of conduct template for the demo course, creating it without a code of conduct", exception);

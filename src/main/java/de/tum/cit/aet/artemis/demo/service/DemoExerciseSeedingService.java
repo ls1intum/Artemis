@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.modeling.api.ModelingDemoApi;
 import de.tum.cit.aet.artemis.programming.api.ProgrammingDemoApi;
 import de.tum.cit.aet.artemis.quiz.api.QuizDemoApi;
 import de.tum.cit.aet.artemis.text.api.TextDemoApi;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Seeds the exercises of the demo course, see {@link DemoDataSeedingService}.
@@ -70,17 +71,23 @@ public class DemoExerciseSeedingService {
         List<Exercise> architecture = new ArrayList<>();
         List<Exercise> algorithms = new ArrayList<>();
         List<Exercise> modeling = new ArrayList<>();
+        List<Exercise> communication = new ArrayList<>();
 
         // Before any exercise creates results, so that the results count towards the scores of the students.
         DemoAreas.seed("participant scores", assessmentDemoApi::activateParticipantScores);
-        DemoAreas.seed("text exercises", () -> textDemoApi.ifPresent(api -> architecture.addAll(api.createDemo(course, users.students(), users.tutor()))));
+        DemoAreas.seed("text exercises", () -> textDemoApi.ifPresent(api -> {
+            // The ongoing essay is about software architecture, the graded one about code reviews, in which a team communicates its design decisions.
+            List<TextExercise> essays = api.createDemo(course, users.students(), users.tutor());
+            architecture.add(essays.getFirst());
+            communication.add(essays.getLast());
+        }));
         DemoAreas.seed("modeling exercises", () -> modelingDemoApi.ifPresent(api -> modeling.addAll(api.createDemo(course, users.students()))));
         DemoAreas.seed("file upload exercises", () -> fileUploadDemoApi.ifPresent(api -> algorithms.add(api.createDemo(course))));
         DemoAreas.seed("quiz exercises", () -> algorithms.addAll(quizDemoApi.createDemo(course, users.students())));
         DemoAreas.seed("programming exercises", () -> programmingDemoApi.createDemo(course).ifPresent(algorithms::add));
         DemoAreas.seed("exam", () -> examDemoApi.ifPresent(api -> api.createDemo(course, examExerciseCreators())));
 
-        return new DemoExercises(architecture, algorithms, modeling);
+        return new DemoExercises(architecture, algorithms, modeling, communication);
     }
 
     /**
@@ -97,10 +104,11 @@ public class DemoExerciseSeedingService {
     /**
      * The exercises of the demo course, grouped by the topic of the course they belong to.
      *
-     * @param architecture the exercises about software architecture.
-     * @param algorithms   the exercises about algorithms and their complexity.
-     * @param modeling     the exercises about object-oriented modeling.
+     * @param architecture  the exercises about software architecture.
+     * @param algorithms    the exercises about algorithms and their complexity.
+     * @param modeling      the exercises about object-oriented modeling.
+     * @param communication the exercises about communicating design decisions, which no lecture of the course covers on its own.
      */
-    record DemoExercises(List<Exercise> architecture, List<Exercise> algorithms, List<Exercise> modeling) {
+    record DemoExercises(List<Exercise> architecture, List<Exercise> algorithms, List<Exercise> modeling, List<Exercise> communication) {
     }
 }

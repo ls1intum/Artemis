@@ -162,7 +162,8 @@ public class LectureDemoApi extends AbstractLectureApi {
             - **Composition:** a `Library` is made up of `Shelf` objects, which cannot exist without their library.
             - **Inheritance:** a `Novel` is a special kind of `Book` and inherits its attributes and operations.
 
-            > Model the problem domain first, not its implementation. You practise this in the exercise *Class Diagram: Library Management System*.
+            > Model the problem domain first, not its implementation. You practise this in the exercise *Class Diagram: Library Management System*, which refines this example:
+            > there, a member borrows a particular copy of a book.
             """;
 
     private static final Logger log = LoggerFactory.getLogger(LectureDemoApi.class);
@@ -209,9 +210,9 @@ public class LectureDemoApi extends AbstractLectureApi {
      *         links them to anything.
      */
     public DemoLectures createDemo(Course course, List<Exercise> architectureExercises, List<Exercise> algorithmsExercises, List<Exercise> modelingExercises) {
-        ZonedDateTime thisWeek = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
-        return new DemoLectures(seedArchitectureLecture(course, thisWeek.minusWeeks(3), architectureExercises),
-                seedAlgorithmsLecture(course, thisWeek.minusWeeks(2), algorithmsExercises), seedModelingLecture(course, thisWeek.minusWeeks(1), modelingExercises));
+        ZonedDateTime fullHour = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
+        return new DemoLectures(seedArchitectureLecture(course, fullHour.minusWeeks(3), architectureExercises),
+                seedAlgorithmsLecture(course, fullHour.minusWeeks(2), algorithmsExercises), seedModelingLecture(course, fullHour.minusWeeks(1), modelingExercises));
     }
 
     /**
@@ -248,7 +249,7 @@ public class LectureDemoApi extends AbstractLectureApi {
         Lecture lecture = findOrCreateLecture(course, ALGORITHMS_LECTURE_TITLE,
                 "How to reason about the efficiency of algorithms with Big O notation, illustrated by the classic sorting algorithms.", startDate);
         List<LectureUnit> units = new ArrayList<>();
-        units.add(seedTextUnit(lecture, "Big O Notation in a Nutshell", ALGORITHMS_TEXT));
+        units.add(seedTextUnit(lecture, "An Introduction to Big O Notation", ALGORITHMS_TEXT));
         units.add(seedOnlineUnit(lecture, "Further Reading: Sorting Algorithms",
                 "A comparison of the common sorting algorithms by their best, average and worst case complexity, their memory use and their stability.",
                 "https://en.wikipedia.org/wiki/Sorting_algorithm"));

@@ -112,8 +112,8 @@ public class ExamDemoApi extends AbstractExamApi {
     }
 
     /**
-     * Creates the test exam like {@code ExamResource#createExam} for the request the exam editor of the client sends: the exam is saved and gets its channel. It is not indexed
-     * for the global search, like the rest of the demo content.
+     * Creates the test exam like {@code ExamResource#createExam} for the request the exam editor of the client sends: the exam is saved and gets its channel. Unlike the
+     * resource, it does not add the exam to the global search right away, which the global search reconciliation catches up on while it is enabled.
      */
     private Exam createTestExam(Course course) {
         ZonedDateTime now = ZonedDateTime.now();

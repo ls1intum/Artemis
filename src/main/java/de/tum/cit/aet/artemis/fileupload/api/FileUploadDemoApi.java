@@ -24,9 +24,6 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 
 /**
- * General-purpose API for file upload exercises (but not for general upload functionality).
- */
-/**
  * Creates the file upload exercise of the demo course seeded by the {@code demo} profile.
  * <p>
  * Only exists on the node that seeds the demo data, so none of this is instantiated on a regular instance.
@@ -58,11 +55,11 @@ public class FileUploadDemoApi extends AbstractFileModuleApi {
             - Insertion sort
             - Merge sort
             - Quicksort
-            - Heapsort
+            - Heap sort
 
             Your poster has to answer three questions for each algorithm:
 
-            1. **How does it work?** One diagram or a short worked example on the array `[5, 2, 9, 1, 5, 6]`. A picture beats a paragraph here.
+            1. **How does it work?** One diagram or a short worked example on the array `[5, 2, 9, 1, 5, 6]`. Prefer a picture over a paragraph here.
             2. **What does it cost?** Best, average and worst case time complexity, plus the space complexity. State whether the algorithm is stable and whether it sorts in place.
             3. **When would you pick it?** One concrete situation in which this algorithm is the right choice, and one in which it clearly is not.
 
@@ -79,15 +76,16 @@ public class FileUploadDemoApi extends AbstractFileModuleApi {
 
             | Criterion                                  | Points |
             |--------------------------------------------|--------|
-            | Correct complexities and properties         | 4      |
-            | Quality of the diagrams or worked examples  | 3      |
-            | Justified use cases                         | 2      |
-            | Layout and readability                      | 1      |
+            | Correct complexities and properties        | 3      |
+            | Quality of the diagrams or worked examples | 3      |
+            | Justified use cases                        | 2      |
+            | Why libraries do not only use quicksort    | 1      |
+            | Layout and readability                     | 1      |
             """;
 
     private static final String DEMO_EXAMPLE_SOLUTION = """
-            A strong poster shows one worked pass per algorithm on the given array rather than restating pseudo code, gets the worst case of quicksort right (O(n^2), not O(n log n)),
-            and notes that only insertion sort and merge sort are stable while insertion sort, quicksort and heapsort sort in place.
+            A strong poster shows one worked pass per algorithm on the given array rather than restating pseudo code, gets the worst case of quicksort right (O(n²), not O(n log n)),
+            and notes that only insertion sort and merge sort are stable while insertion sort, quicksort and heap sort sort in place.
 
             The closing section should mention that library sorts are hybrids: they switch to insertion sort for small partitions and fall back to a guaranteed O(n log n) algorithm
             when quicksort degenerates, and that stability is a documented guarantee some languages have to keep.

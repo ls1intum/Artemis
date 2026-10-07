@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.modeling.api;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO_AND_SCHEDULING;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -111,7 +110,7 @@ public class ModelingDemoApi extends AbstractModelingApi {
     private static final String IN_ASSESSMENT_PROBLEM_STATEMENT = """
             # Class Diagram: Online Shop
 
-            The campus bookshop wants to sell online. Before the team builds the shop, it needs a class diagram of the domain that everyone agrees on.
+            The online bookshop BookBarn is rebuilding its shop. Before the team starts, it needs a class diagram of the domain that everyone agrees on.
 
             From the requirements workshop we know the following:
 
@@ -333,8 +332,8 @@ public class ModelingDemoApi extends AbstractModelingApi {
     }
 
     private String readModel(Path path) {
-        try (InputStream inputStream = resourceLoaderService.getResource(path).getInputStream()) {
-            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        try {
+            return resourceLoaderService.getResource(path).getContentAsString(StandardCharsets.UTF_8);
         }
         catch (IOException exception) {
             throw new UncheckedIOException("Could not read the demo class diagram " + path, exception);

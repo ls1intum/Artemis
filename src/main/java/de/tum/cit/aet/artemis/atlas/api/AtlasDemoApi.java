@@ -148,14 +148,15 @@ public class AtlasDemoApi extends AbstractAtlasApi {
      * {@link CompetencyProgressService#updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds}. Seeding updates the progress of the demo students as well, but
      * synchronously, so that it is complete once seeding is done, and on every startup, so that it also counts the links and completions that seeding restored.
      *
-     * @param course       the demo course.
-     * @param architecture the exercises and lecture units about software architecture.
-     * @param algorithms   the exercises and lecture units about algorithms and their complexity.
-     * @param modeling     the exercises and lecture units about object-oriented modeling.
-     * @param students     the demo students, whose progress is updated.
+     * @param course        the demo course.
+     * @param architecture  the exercises and lecture units about software architecture.
+     * @param algorithms    the exercises and lecture units about algorithms and their complexity.
+     * @param modeling      the exercises and lecture units about object-oriented modeling.
+     * @param communication the exercises about communicating design decisions.
+     * @param students      the demo students, whose progress is updated.
      */
     public void createDemo(Course course, Collection<? extends LearningObject> architecture, Collection<? extends LearningObject> algorithms,
-            Collection<? extends LearningObject> modeling, List<User> students) {
+            Collection<? extends LearningObject> modeling, Collection<? extends LearningObject> communication, List<User> students) {
         // Loaded with its competencies and prerequisites like the creation requests load it, which also tells which of them exist already.
         Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
         Set<Competency> competencies = courseWithCompetencies.getCompetencies();
@@ -173,7 +174,8 @@ public class AtlasDemoApi extends AbstractAtlasApi {
         link(architectureCompetency, architecture.stream(), AtlasDemoApi::topicWeight);
         link(algorithmsCompetency, algorithms.stream(), AtlasDemoApi::topicWeight);
         link(modelingCompetency, modeling.stream(), AtlasDemoApi::topicWeight);
-        // The essays and the class diagrams put design decisions into words and diagrams, alongside the topic they are about.
+        // Besides the exercises that are about communicating design decisions, the essays and the class diagrams of the topics put design decisions into words and diagrams.
+        link(communicationCompetency, communication.stream(), AtlasDemoApi::topicWeight);
         link(communicationCompetency, Stream.concat(architecture.stream(), modeling.stream()).filter(Exercise.class::isInstance), learningObject -> MEDIUM_WEIGHT);
 
         enableLearningPaths(course.getId());
