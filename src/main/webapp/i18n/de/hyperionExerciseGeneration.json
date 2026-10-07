@@ -101,7 +101,8 @@
                     "cancelled": "Abgebrochen",
                     "notStarted": "Noch kein Durchlauf",
                     "unknown": "Status nicht verfügbar",
-                    "reverted": "Wiederhergestellt"
+                    "reverted": "Wiederhergestellt",
+                    "historyExpired": "Verlauf des Durchlaufs abgelaufen"
                 },
                 "run": {
                     "newRunHint": "Gib die Aufgabenbeschreibung oder das Feedback für diesen neuen Lauf ein. Frühere Anweisungen und ausgewählte Review-Kommentare werden nicht übernommen.",
@@ -143,7 +144,9 @@
                         "SOLUTION_REPO": "Musterlösung",
                         "TEST_REPO": "Tests",
                         "AUXILIARY_REPO": "Zusatz-Repository"
-                    }
+                    },
+                    "historyExpiredTitle": "Der Verlauf des Durchlaufs ist nicht mehr verfügbar",
+                    "historyExpiredHint": "Die Details des vorherigen Durchlaufs sind abgelaufen. Du kannst eine neue Generierung starten. Rückgängig machen bleibt innerhalb der dafür vorgesehenen Frist verfügbar."
                 },
                 "live": {
                     "repairRound": "Prüfrunde {{round}} — {{blocking}} zu beheben, {{advisory}} zu sichten ({{carriedOver}} übernommen, {{drained}} erledigt, {{fresh}} neu)",

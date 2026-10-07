@@ -71,12 +71,12 @@
         </tumaet-ui-message>
     }
 
-    @if (notStarted()) {
+    @if (notStarted() || historyExpired()) {
         <tumaet-ui-card data-testid="hyperion-run-not-started">
             <div class="flex items-center justify-between gap-3">
-                <h2 class="text-xl font-medium">{{ 'artemisApp.hyperion.generation.run.notStartedTitle' | artemisTranslate }}</h2>
+                <h2 class="text-xl font-medium">{{ idleTitleKey() | artemisTranslate }}</h2>
             </div>
-            <p class="m-0 text-sm" jhiTranslate="artemisApp.hyperion.generation.run.notStartedHint"></p>
+            <p class="m-0 text-sm" [jhiTranslate]="idleHintKey()"></p>
             @if (!startAvailable()) {
                 <p class="mt-2 mb-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.run.notStartedWhoCanAct"></p>
             }

@@ -101,7 +101,8 @@
                     "cancelled": "Cancelled",
                     "notStarted": "No run yet",
                     "unknown": "Status unavailable",
-                    "reverted": "Restored"
+                    "reverted": "Restored",
+                    "historyExpired": "Run history expired"
                 },
                 "run": {
                     "newRunHint": "Enter the brief or feedback for this new run. Previous instructions and selected review comments are not carried over.",
@@ -143,7 +144,9 @@
                         "SOLUTION_REPO": "Solution",
                         "TEST_REPO": "Tests",
                         "AUXILIARY_REPO": "Auxiliary repository"
-                    }
+                    },
+                    "historyExpiredTitle": "Run history is no longer available",
+                    "historyExpiredHint": "Details of the previous run have expired. You can start a new generation. Undo remains available if its time limit has not expired."
                 },
                 "live": {
                     "repairRound": "Review round {{round}} — {{blocking}} to fix, {{advisory}} to look at ({{carriedOver}} carried over, {{drained}} resolved, {{fresh}} new)",
