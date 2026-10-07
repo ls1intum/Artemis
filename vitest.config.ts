@@ -43,7 +43,7 @@ export default defineConfig({
     },
     // JIT mode required for ng-mocks compatibility; fastCompile is required under Angular 22 so the
     // plugin inlines external templateUrl/styleUrl (the two-pass JIT path's compiler markers are gone).
-    plugins: [angular({ jit: true, fastCompile: true })],
+    plugins: [angular({ jit: true, fastCompile: true, tsconfig: path.resolve(__dirname, 'config/client/tsconfig.spec.json') })],
     test: {
         globals: true,
         pool: 'forks',
