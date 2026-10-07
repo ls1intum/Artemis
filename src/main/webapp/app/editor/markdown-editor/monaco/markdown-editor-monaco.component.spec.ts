@@ -644,4 +644,25 @@ describe('MarkdownEditorMonacoComponent', () => {
             expect(textarea.getAttribute('aria-invalid')).toBe('false');
         });
     });
+
+    it('forwards aria-describedby and aria-invalid to the active Monaco textarea when the inputs change', () => {
+        fixture.detectChanges();
+
+        // Supply a textarea through the mocked active editor so the forwarding effect has a real DOM target. This
+        // covers the effect -> helper wiring end to end; the applyAriaAttributesToTextarea tests only exercise the
+        // helper in isolation and would still pass if the effect were disconnected from it.
+        const textarea = document.createElement('textarea');
+        const domNode = document.createElement('div');
+        domNode.appendChild(textarea);
+        (comp.monacoEditor()! as any).getActiveEditor = vi.fn().mockReturnValue({
+            getDomNode: () => domNode,
+        });
+
+        fixture.componentRef.setInput('ariaDescribedBy', 'field_codeOfConduct_error');
+        fixture.componentRef.setInput('ariaInvalid', true);
+        fixture.detectChanges();
+
+        expect(textarea.getAttribute('aria-describedby')).toBe('field_codeOfConduct_error');
+        expect(textarea.getAttribute('aria-invalid')).toBe('true');
+    });
 });
