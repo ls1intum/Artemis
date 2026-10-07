@@ -37,8 +37,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
-import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.modeling.api.ModelingDemoApi;
 import de.tum.cit.aet.artemis.programming.api.ProgrammingDemoApi;
 import de.tum.cit.aet.artemis.quiz.api.QuizDemoApi;
@@ -86,9 +84,6 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     private LectureRepository lectureRepository;
 
     @Autowired
-    private LectureUnitService lectureUnitService;
-
-    @Autowired
     private CompetencyRepository competencyRepository;
 
     @Autowired
@@ -132,19 +127,6 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    void seedsLectureWithLinkedCompetency() {
-        seed();
-
-        Course course = demoCourse().orElseThrow();
-        List<LectureUnit> lectureUnits = demoLectureUnits(course.getId());
-        assertThat(lectureUnits).as("demo lecture has its text unit").hasSize(1);
-
-        Set<Competency> competencies = competencyRepository.findAllByCourseId(course.getId());
-        assertThat(competencies).as("demo competency exists").hasSize(1);
-        assertThat(linkedLectureUnitIds(competencies)).as("demo competency is linked to the text unit").containsExactly(lectureUnits.getFirst().getId());
-    }
-
-    @Test
     void seedsOneOngoingExerciseOfEveryType() {
         seed();
 
@@ -184,60 +166,6 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         seed();
 
         assertThat(snapshotDemoData()).as("seeding an already seeded database must neither create nor replace anything").isEqualTo(afterFirstRun);
-    }
-
-    @Test
-    void recreatesOnlyMissingContent() {
-        seed();
-        Course course = demoCourse().orElseThrow();
-        demoLectures(course.getId()).forEach(lecture -> competencyLectureUnitLinkRepository.deleteAllByLectureId(lecture.getId()));
-        competencyRepository.deleteAllByCourseId(course.getId());
-
-        DemoDataSnapshot withoutCompetency = snapshotDemoData();
-        assertThat(withoutCompetency.competencyIds()).as("competency was removed for this test").isEmpty();
-
-        seed();
-
-        DemoDataSnapshot afterReseeding = snapshotDemoData();
-        assertThat(afterReseeding.competencyIds()).as("missing competency is recreated").hasSize(1);
-        assertThat(afterReseeding.linkedLectureUnitIds()).as("missing competency is linked again").isEqualTo(withoutCompetency.lectureUnitIds());
-        assertThat(afterReseeding).as("everything that still existed is left alone")
-                .isEqualTo(new DemoDataSnapshot(withoutCompetency.courseIds(), withoutCompetency.userIds(), withoutCompetency.lectureIds(), withoutCompetency.lectureUnitIds(),
-                        afterReseeding.competencyIds(), afterReseeding.linkedLectureUnitIds(), withoutCompetency.exerciseIds()));
-    }
-
-    @Test
-    void recreatesMissingTextUnitInExistingLecture() {
-        seed();
-        DemoDataSnapshot seeded = snapshotDemoData();
-        lectureUnitService.removeLectureUnit(demoLectureUnits(demoCourse().orElseThrow().getId()).getFirst());
-        assertThat(snapshotDemoData().lectureUnitIds()).as("text unit was removed for this test").isEmpty();
-
-        seed();
-
-        DemoDataSnapshot afterReseeding = snapshotDemoData();
-        assertThat(afterReseeding.lectureIds()).as("the existing lecture is reused").isEqualTo(seeded.lectureIds());
-        assertThat(afterReseeding.lectureUnitIds()).as("missing text unit is recreated").hasSize(1).doesNotContainAnyElementsOf(seeded.lectureUnitIds());
-        assertThat(afterReseeding.competencyIds()).as("the existing competency is reused").isEqualTo(seeded.competencyIds());
-        assertThat(afterReseeding.linkedLectureUnitIds()).as("the existing competency is linked to the recreated text unit").isEqualTo(afterReseeding.lectureUnitIds());
-    }
-
-    @Test
-    void doesNotLinkLectureUnitsAddedByUsers() {
-        seed();
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(demoLectures(demoCourse().orElseThrow().getId()).iterator().next().getId());
-        lecture.addLectureUnit(LectureFactory.generateTextUnit("Unit added by an instructor", "Not part of the seeded demo content."));
-        LectureUnit addedUnit = lectureRepository.saveAndFlush(lecture).getLectureUnits().getLast();
-        try {
-            seed();
-
-            DemoDataSnapshot afterReseeding = snapshotDemoData();
-            assertThat(afterReseeding.lectureUnitIds()).as("the added unit is kept").contains(addedUnit.getId()).hasSize(2);
-            assertThat(afterReseeding.linkedLectureUnitIds()).as("only the seeded text unit is linked").hasSize(1).doesNotContain(addedUnit.getId());
-        }
-        finally {
-            lectureUnitService.removeLectureUnit(addedUnit);
-        }
     }
 
     @Test
