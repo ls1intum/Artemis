@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -54,6 +55,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisSuggestedContextDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -120,6 +122,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      */
     private final boolean globalLegacyBuildTriggersEnabled;
 
+    private final UserRepository userRepository;
+
     public IrisChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
             IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
             IrisSessionRepository irisSessionRepository, IrisChatSessionRepository irisChatSessionRepository,
@@ -127,7 +131,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             IrisRateLimitService rateLimitService, JsonMapper objectMapper, ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository,
             CourseRepository courseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, IrisCitationService irisCitationService, MessageSource messageSource,
             IrisChatPipelineExecutionService chatPipelineExecutionService, PyrisJobService pyrisJobService, UserAiPreferenceService userAiPreferenceService,
-            IrisProactiveProperties proactiveProperties) {
+            IrisProactiveProperties proactiveProperties, UserRepository userRepository) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
                 irisChatWebsocketService, llmTokenUsageService, Optional.of(irisCitationService), pyrisJobService);
         this.irisSettingsService = irisSettingsService;
@@ -145,6 +149,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         // Snapshot at construction, as before: the guard at the trigger path reads a field, not a live bean, so a
         // rebind cannot flip the switch under a run that already passed it.
         this.globalLegacyBuildTriggersEnabled = proactiveProperties.isLegacyBuildTriggers();
+        this.userRepository = userRepository;
     }
     // -------------------------------------------------------------------------
     // IrisChatBasedFeatureInterface implementation
@@ -471,6 +476,32 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         session.setMode(newMode);
         session.setEntityId(newEntityId);
         sendOverWebsocket(session, savedMarker);
+    }
+
+    /**
+     * Applies a context change suggested by the Pyris pipeline (automatic context switching).
+     * Delegates to {@link #applyContextChange} with the session owner as acting user, so the same
+     * validation chain runs as for a manual switch (entity exists, mode matches the entity type,
+     * student role, Iris enabled, same course). A rejected or invalid suggestion is logged and
+     * dropped instead of failing the status update: the answer still reaches the student, only
+     * the session context stays unchanged.
+     *
+     * @param session          the session the status update belongs to
+     * @param suggestedContext the context suggested by the pipeline
+     */
+    @Override
+    protected void handleSuggestedContextChange(IrisChatSession session, PyrisSuggestedContextDTO suggestedContext) {
+        if (suggestedContext.mode() == null || suggestedContext.entityId() == null) {
+            log.warn("Ignoring automatic context switch with incomplete target for session {}: {}", session.getId(), suggestedContext);
+            return;
+        }
+        try {
+            var user = userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(session.getUserId());
+            applyContextChange(session, suggestedContext.mode(), suggestedContext.entityId(), user);
+        }
+        catch (Exception e) {
+            log.warn("Ignoring automatic context switch for session {} to mode {} and entity {}", session.getId(), suggestedContext.mode(), suggestedContext.entityId(), e);
+        }
     }
 
     private void validateExerciseMode(Exercise exercise, IrisChatMode mode) {
