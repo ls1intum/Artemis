@@ -22,7 +22,8 @@ import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizExerciseDetailsDTO(@JsonUnwrapped QuizExerciseWithoutQuestionsDTO quizExercise, List<QuizQuestionWithSolutionDTO> quizQuestions, Set<String> categories,
-        Set<CompetencyExerciseLinkDTO> competencyLinks, Set<GradingCriterionDTO> gradingCriteria, String channelName, Boolean testRunParticipationsExist, Boolean isEditable) {
+        Set<CompetencyExerciseLinkDTO> competencyLinks, Set<GradingCriterionDTO> gradingCriteria, String channelName, Boolean testRunParticipationsExist, Boolean isEditable,
+        Boolean canBeEvaluated) {
 
     /**
      * Converts a quiz exercise entity to the instructor-facing details DTO.
@@ -43,19 +44,28 @@ public record QuizExerciseDetailsDTO(@JsonUnwrapped QuizExerciseWithoutQuestions
         }
 
         return new QuizExerciseDetailsDTO(QuizExerciseWithoutQuestionsDTO.of(quizExercise), questionDTOs, categories, competencyExerciseLinkDTOs, gradingCriterionDTOs,
-                quizExercise.getChannelName(), quizExercise.getTestRunParticipationsExist(), null);
+                quizExercise.getChannelName(), quizExercise.getTestRunParticipationsExist(), null, null);
     }
 
     public static QuizExerciseDetailsDTO of(QuizExercise quizExercise, Boolean isEditable) {
         QuizExerciseDetailsDTO dto = of(quizExercise);
         return new QuizExerciseDetailsDTO(dto.quizExercise, dto.quizQuestions, dto.categories, dto.competencyLinks, dto.gradingCriteria, dto.channelName,
-                dto.testRunParticipationsExist, isEditable);
+                dto.testRunParticipationsExist, isEditable, null);
     }
 
-    public static QuizExerciseDetailsDTO of(QuizExercise quizExercise, Boolean isEditable, boolean effectiveQuizEnded) {
+    /**
+     * Converts a quiz exercise entity to the instructor-facing details DTO, including what the instructor may do with the quiz right now.
+     *
+     * @param quizExercise       the quiz exercise entity
+     * @param isEditable         whether the quiz can still be edited
+     * @param effectiveQuizEnded whether the quiz is over; for an exam quiz this is the end of the exam of all students rather than a due date
+     * @param canBeEvaluated     whether the quiz can be evaluated now, so the client only offers the action when the server accepts it
+     * @return the corresponding quiz exercise details
+     */
+    public static QuizExerciseDetailsDTO of(QuizExercise quizExercise, Boolean isEditable, boolean effectiveQuizEnded, boolean canBeEvaluated) {
         QuizExerciseDetailsDTO dto = of(quizExercise);
         return new QuizExerciseDetailsDTO(QuizExerciseWithoutQuestionsDTO.of(quizExercise, effectiveQuizEnded), dto.quizQuestions, dto.categories, dto.competencyLinks,
-                dto.gradingCriteria, dto.channelName, dto.testRunParticipationsExist, isEditable);
+                dto.gradingCriteria, dto.channelName, dto.testRunParticipationsExist, isEditable, canBeEvaluated);
     }
 }
 
