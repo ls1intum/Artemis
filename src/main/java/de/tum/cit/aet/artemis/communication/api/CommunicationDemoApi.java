@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.core.api.AbstractApi;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.factories.ExerciseFactory;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 
@@ -77,7 +78,7 @@ public class CommunicationDemoApi implements AbstractApi {
 
             Here is where you find everything:
 
-            - **Lectures:** the slides, summaries and further reading of every lecture are in the *Lectures* tab.
+            - **Lectures:** every lecture comes with a summary, further reading and its exercises in the *Lectures* tab, the first one also with its slides.
             - **Exercises:** all exercises and their due dates are in the *Exercises* tab. You can submit as often as you like until the due date, so start early.
             - **Tutorials:** your weekly tutorial group with its time and room is in the *Tutorials* tab.
             - **Questions:** check the *FAQ* tab first. Ask about technical problems in *tech-support*, about an exercise in its channel, and about everything else \
@@ -138,16 +139,16 @@ public class CommunicationDemoApi implements AbstractApi {
             + "of the task instead of stating them in general: which part of BookBarn's platform profits, and what exactly should the team change? For *Monolith or "
             + "Microservices?*, that means referring to BookBarn's symptoms in every argument. If anything is unclear, just ask in the channel of the exercise!";
 
-    // The client stores an FAQ category as JSON together with the color of its badge.
-    private static final String EXERCISES = faqCategory("Exercises", "#1b97ca");
+    // The client stores an FAQ category in the same format as an exercise category: as JSON together with the color of its badge.
+    private static final String EXERCISES = ExerciseFactory.exerciseCategory("Exercises", "#1b97ca");
 
-    private static final String GRADING = faqCategory("Grading", "#ad5658");
+    private static final String GRADING = ExerciseFactory.exerciseCategory("Grading", "#ad5658");
 
-    private static final String LECTURES = faqCategory("Lectures", "#9dca53");
+    private static final String LECTURES = ExerciseFactory.exerciseCategory("Lectures", "#9dca53");
 
-    private static final String EXAMS = faqCategory("Exams", "#691b0b");
+    private static final String EXAMS = ExerciseFactory.exerciseCategory("Exams", "#691b0b");
 
-    private static final String TUTORIAL_GROUPS = faqCategory("Tutorial groups", "#0ab84f");
+    private static final String TUTORIAL_GROUPS = ExerciseFactory.exerciseCategory("Tutorial groups", "#0ab84f");
 
     private static final String SUBMISSION_FAQ = """
             You can work on a programming exercise in two ways:
@@ -162,8 +163,8 @@ public class CommunicationDemoApi implements AbstractApi {
             That depends on how an exercise is assessed:
 
             - **Automatically:** quizzes and the tests of programming exercises give you feedback right after you submit, or when the quiz ends.
-            - **Manually:** the tutors assess essays, class diagrams and file uploads after the due date. You see your result and the feedback as soon as the assessment \
-            is complete.""";
+            - **Manually:** the tutors assess essays, class diagrams and file uploads after the due date. You see your result and the feedback once the assessment due \
+            date has passed.""";
 
     private static final String COMPLAINTS_FAQ = """
             If you think the assessment of a manually assessed exercise is wrong, open its result and click *Complain* within one week after the result was published. \
@@ -172,14 +173,14 @@ public class CommunicationDemoApi implements AbstractApi {
             Another tutor reviews your complaint and either accepts it and corrects your score, or rejects it with an explanation. You can submit up to three complaints in \
             this course, so save them for the cases that matter. If you only want to understand your result better, click *Request more feedback* instead.""";
 
-    private static final String LECTURE_SLIDES_FAQ = "Open the *Lectures* tab and select a lecture. Its units contain the slides as a PDF, which you can view in the browser "
-            + "or download, together with a summary of the lecture, further reading and the exercises that belong to it.";
+    private static final String LECTURE_SLIDES_FAQ = "Open the *Lectures* tab and select a lecture. Its units contain a summary of the lecture, further reading and the "
+            + "exercises that belong to it, and, where the lecture has slides, the slides as a PDF, which you can view in the browser or download.";
 
     private static final String PRACTICE_EXAM_FAQ = """
-            The practice exam is a test exam in the *Exams* tab. It has the format of the final exam, but it does not count towards your grade.
+            The practice exam is a test exam in the *Exams* tab. It works like a real exam in Artemis, but it does not count towards your grade.
 
-            You can start it whenever it is open and take it several times, and every attempt has its own working time. Use it to get to know the exam mode before the \
-            final exam.""";
+            You can start it whenever it is open and take it several times, and every attempt has its own working time. Use it to get to know the exam mode and to check \
+            what you have learned so far.""";
 
     private static final String TUTORIAL_GROUPS_FAQ = """
             Tutorial groups meet every week in small groups, each led by a tutor. You discuss the exercise of the week, practise the topics of the lecture on new examples, \
@@ -410,7 +411,4 @@ public class CommunicationDemoApi implements AbstractApi {
         SecurityUtils.runAs(user, () -> reactionService.createReaction(course.getId(), new ReactionDTO(null, null, null, emojiId, posting.getId(), type)));
     }
 
-    private static String faqCategory(String name, String color) {
-        return "{\"color\":\"%s\",\"category\":\"%s\"}".formatted(color, name);
-    }
 }

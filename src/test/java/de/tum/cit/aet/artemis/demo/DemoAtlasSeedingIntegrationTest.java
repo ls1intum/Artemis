@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.InstanceOfAssertFactories.DOUBLE;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -168,7 +169,9 @@ class DemoAtlasSeedingIntegrationTest extends AbstractSpringIntegrationIndepende
         });
 
         assertThat(competencies.get(ARCHITECTURE).userProgress()).singleElement().extracting(CompetencyProgressDTO::progress, DOUBLE)
-                .as("the demo student worked through the architecture lecture and wrote the graded essay").isPositive();
+                .as("the demo student worked through the architecture lecture").isPositive();
+        assertThat(competencies.get(COMMUNICATION).userProgress()).singleElement().extracting(CompetencyProgressDTO::progress, DOUBLE)
+                .as("the demo student wrote the graded essay about code reviews").isPositive();
         assertThat(competencies.get(MODELING).userProgress()).singleElement().extracting(CompetencyProgressDTO::progress, DOUBLE)
                 .as("the demo student has not started on the modeling lecture of last week yet").isZero();
     }
@@ -200,14 +203,17 @@ class DemoAtlasSeedingIntegrationTest extends AbstractSpringIntegrationIndepende
         seed();
 
         long courseId = demoCourse().getId();
-        assertThat(links(ARCHITECTURE)).as("the architecture competency is linked to the essays and the units of its lecture")
-                .isEqualTo(new Links(exercises(courseId, 1, TextExercise.class), units(ARCHITECTURE_LECTURE)));
+        assertThat(links(ARCHITECTURE)).as("the architecture competency is linked to the essay about architecture and the units of its lecture")
+                .isEqualTo(new Links(essays(courseId, 1, true), units(ARCHITECTURE_LECTURE)));
         assertThat(links(ALGORITHMS)).as("the algorithms competency is linked to the exercises about algorithms and the units of its lecture")
                 .isEqualTo(new Links(exercises(courseId, 1, FileUploadExercise.class, QuizExercise.class, ProgrammingExercise.class), units(ALGORITHMS_LECTURE)));
         assertThat(links(MODELING)).as("the modeling competency is linked to the modeling exercises and the units of its lecture")
                 .isEqualTo(new Links(exercises(courseId, 1, ModelingExercise.class), units(MODELING_LECTURE)));
-        assertThat(links(COMMUNICATION)).as("the essays and the class diagrams put design decisions into words and diagrams")
-                .isEqualTo(new Links(exercises(courseId, 0.5, TextExercise.class, ModelingExercise.class), Map.of()));
+        Map<Long, Double> communicationExercises = new HashMap<>(exercises(courseId, 0.5, ModelingExercise.class));
+        communicationExercises.putAll(essays(courseId, 0.5, true));
+        communicationExercises.putAll(essays(courseId, 1, false));
+        assertThat(links(COMMUNICATION)).as("the essay about code reviews is about communicating design decisions, which the other essay and the class diagrams practise as well")
+                .isEqualTo(new Links(communicationExercises, Map.of()));
         assertThat(links(JAVA)).as("students bring Java to the course").isEqualTo(new Links(Map.of(), Map.of()));
     }
 
@@ -285,7 +291,7 @@ class DemoAtlasSeedingIntegrationTest extends AbstractSpringIntegrationIndepende
         seed();
         long courseId = demoCourse().getId();
         CourseCompetency architecture = competency(ARCHITECTURE);
-        long essayId = exercises(courseId, 1, TextExercise.class).keySet().iterator().next();
+        long essayId = essays(courseId, 1, true).keySet().iterator().next();
         competencyExerciseLinkRepository.delete(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(essayId, architecture.getId()).orElseThrow());
         TextUnit textUnit = demoLecture(ARCHITECTURE_LECTURE).getLectureUnits().stream().filter(TextUnit.class::isInstance).map(TextUnit.class::cast).findFirst().orElseThrow();
         lectureUnitService.removeLectureUnit(textUnit);
@@ -294,7 +300,7 @@ class DemoAtlasSeedingIntegrationTest extends AbstractSpringIntegrationIndepende
 
         Links links = links(ARCHITECTURE);
         assertThat(links.exercises()).as("the lost link to the essay is restored").containsKey(essayId);
-        assertThat(links).as("the recreated text unit is linked as well").isEqualTo(new Links(exercises(courseId, 1, TextExercise.class), units(ARCHITECTURE_LECTURE)));
+        assertThat(links).as("the recreated text unit is linked as well").isEqualTo(new Links(essays(courseId, 1, true), units(ARCHITECTURE_LECTURE)));
         assertThat(links.lectureUnits()).doesNotContainKey(textUnit.getId());
         LectureUnit recreatedUnit = demoLecture(ARCHITECTURE_LECTURE).getLectureUnits().stream().filter(TextUnit.class::isInstance).findFirst().orElseThrow();
         assertThat(completionsOfDemoStudent()).as("the demo student completed the recreated text unit as well").containsKey(recreatedUnit.getId());
@@ -358,6 +364,15 @@ class DemoAtlasSeedingIntegrationTest extends AbstractSpringIntegrationIndepende
     /**
      * The exercises of the demo course of the given types, which is how the demo exercises are grouped into the topics of the course, with the weight of their link.
      */
+    /**
+     * The essays of the demo course with the given weight: the open one is about software architecture, the graded one about code reviews.
+     */
+    private Map<Long, Double> essays(long courseId, double weight, boolean open) {
+        return exerciseRepository.findAllExercisesByCourseId(courseId).stream()
+                .filter(exercise -> exercise instanceof TextExercise && exercise.getDueDate().isAfter(ZonedDateTime.now()) == open)
+                .collect(Collectors.toMap(Exercise::getId, exercise -> weight));
+    }
+
     private Map<Long, Double> exercises(long courseId, double weight, Class<?>... types) {
         return exerciseRepository.findAllExercisesByCourseId(courseId).stream().filter(exercise -> Stream.of(types).anyMatch(type -> type.isInstance(exercise)))
                 .collect(Collectors.toMap(Exercise::getId, exercise -> weight));
