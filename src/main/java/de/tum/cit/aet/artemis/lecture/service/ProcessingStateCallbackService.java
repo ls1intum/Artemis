@@ -21,24 +21,18 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import tools.jackson.core.JacksonException;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.json.JsonMapper;
-
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
-import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
@@ -58,7 +52,6 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepos
  * This service handles:
  * <ul>
  * <li>Capacity-aware dispatch: claiming IDLE jobs and sending them to Iris when slots are available</li>
- * <li>Checkpoint callbacks: saving transcription data from Iris and transitioning TRANSCRIBING → INGESTING</li>
  * <li>Ingestion completion callbacks from Iris webhooks</li>
  * <li>Failure handling with retry logic (reset to IDLE for re-dispatch)</li>
  * </ul>
@@ -91,8 +84,6 @@ public class ProcessingStateCallbackService {
      * all nodes and two nodes cannot both fill the same free capacity.
      */
     private static final String DISPATCH_LOCK_NAME = "lecture-ingestion-dispatch";
-
-    private static final JsonMapper objectMapper = JsonObjectMapper.get();
 
     private final LectureUnitProcessingStateRepository processingStateRepository;
 
@@ -767,51 +758,6 @@ public class ProcessingStateCallbackService {
     }
 
     /**
-     * Handle checkpoint data from Iris callbacks (e.g., transcription results). Iris sends transcription data in the {@code result} field of status callbacks; this parses the
-     * transcript JSON, saves it, and transitions TRANSCRIBING → INGESTING once the enriched transcript arrives. Checkpoint types, distinguished by segment content: raw (all
-     * slideNumber=0) saved as PENDING, staying in TRANSCRIBING; enriched (some slideNumber≠0) saved as COMPLETED, transitioning to INGESTING.
-     *
-     * @param lectureUnitId the ID of the lecture unit
-     * @param jobToken      the job token for validation
-     * @param resultJson    the JSON string containing transcription data
-     */
-    public void handleCheckpointData(long lectureUnitId, String jobToken, String resultJson) {
-        if (resultJson == null || resultJson.isBlank()) {
-            return;
-        }
-
-        Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
-        if (stateOpt.isEmpty()) {
-            log.warn("Received checkpoint for unit {} but no processing state exists", lectureUnitId);
-            return;
-        }
-
-        LectureUnitProcessingState state = stateOpt.get();
-
-        if (!Objects.equals(jobToken, state.getIngestionJobToken())) {
-            log.info("Ignoring stale checkpoint for unit {} (token mismatch)", lectureUnitId);
-            return;
-        }
-
-        if (state.getPhase() != ProcessingPhase.TRANSCRIBING) {
-            log.debug("Ignoring checkpoint for unit {} in phase {} (expected TRANSCRIBING)", lectureUnitId, state.getPhase());
-            return;
-        }
-
-        try {
-            TranscriptionCheckpoint checkpoint = parseTranscriptionCheckpoint(resultJson);
-            if (checkpoint == null) {
-                return;
-            }
-
-            saveTranscription(lectureUnitId, state, checkpoint);
-        }
-        catch (JacksonException e) {
-            log.warn("Failed to parse checkpoint data for unit {}: {}", lectureUnitId, e.getMessage());
-        }
-    }
-
-    /**
      * Handle a heartbeat from a running Iris pipeline: updates {@code lastUpdated} (so stuck detection can use "time since last callback" rather than "time since phase started")
      * and records optional stage/progress (so stalled runs become detectable). Called on every non-terminal callback that does NOT carry checkpoint data.
      *
@@ -832,86 +778,6 @@ public class ProcessingStateCallbackService {
             TranscriptionStatus transcriptionStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
             notificationService.notifyProcessingStateChange(advanced, transcriptionStatus);
         });
-    }
-
-    // -------------------- Checkpoint Processing --------------------
-
-    /** Parse transcription checkpoint data from JSON, expected format {@code {"language": "en", "segments": [...]}}. */
-    private TranscriptionCheckpoint parseTranscriptionCheckpoint(String resultJson) {
-        var tree = objectMapper.readTree(resultJson);
-
-        var segmentsNode = tree.get("segments");
-        if (segmentsNode == null || !segmentsNode.isArray() || segmentsNode.isEmpty()) {
-            log.debug("Checkpoint has no segments, ignoring");
-            return null;
-        }
-
-        String language = tree.has("language") ? tree.get("language").asString("en") : "en";
-        List<LectureTranscriptionSegment> segments = objectMapper.convertValue(segmentsNode, new TypeReference<>() {
-        });
-
-        boolean isEnriched = segments.stream().anyMatch(seg -> seg.slideNumber() != 0);
-        return new TranscriptionCheckpoint(language, segments, isEnriched);
-    }
-
-    /**
-     * Save transcription data and optionally transition from TRANSCRIBING to INGESTING.
-     */
-    private void saveTranscription(long lectureUnitId, LectureUnitProcessingState state, TranscriptionCheckpoint checkpoint) {
-        LectureUnit unit = state.getLectureUnit();
-
-        if (checkpoint.isEnriched()) {
-            // Version, then transcript, then TRANSCRIBING → INGESTING, each guarded on its own: if any step fails, the row is
-            // still TRANSCRIBING and Iris's redelivery replays the rest, the hash keeping the version from moving twice. The
-            // version goes first so an interruption can only over-count it, never leave a new transcript under the old version.
-            String jobToken = state.getIngestionJobToken();
-            LectureTranscriptionVersioning.bumpTranscriptionVersionIfContentChanged(state, checkpoint.segments());
-            if (processingStateRepository.recordTranscriptionVersionIfTranscribing(state.getId(), jobToken, state.getTranscriptionVersion(),
-                    state.getTranscriptionContentHash()) == 0) {
-                log.debug("Ignoring enriched checkpoint for unit {}: the run is no longer TRANSCRIBING under this token", lectureUnitId);
-                return;
-            }
-            if (!persistTranscription(unit, jobToken, checkpoint, TranscriptionStatus.COMPLETED)) {
-                return;
-            }
-            if (processingStateRepository.transitionToIngestingIfTranscribing(state.getId(), jobToken, ZonedDateTime.now(), state.getTranscriptionVersion(),
-                    state.getTranscriptionContentHash()) == 0) {
-                log.debug("Ignoring enriched checkpoint for unit {}: the run is no longer TRANSCRIBING under this token", lectureUnitId);
-                return;
-            }
-            log.info("Enriched transcription saved for unit {}, transitioning to INGESTING", lectureUnitId);
-
-            // Notify UI via WebSocket, mirroring the just-persisted transition without a second read.
-            state.resetRetryCount();
-            state.transitionTo(ProcessingPhase.INGESTING);
-            notificationService.notifyProcessingStateChange(state, TranscriptionStatus.COMPLETED);
-        }
-        else {
-            // The row stays TRANSCRIBING either way, so a write that fails after this check is replayed by the redelivery.
-            String jobToken = state.getIngestionJobToken();
-            if (processingStateRepository.touchLastUpdated(state.getId(), jobToken, ZonedDateTime.now()) == 0) {
-                log.debug("Ignoring raw checkpoint for unit {}: the run is no longer in flight under this token", lectureUnitId);
-                return;
-            }
-
-            log.info("Raw transcription checkpoint saved for unit {}, staying in TRANSCRIBING", lectureUnitId);
-            persistTranscription(unit, jobToken, checkpoint, TranscriptionStatus.PENDING);
-        }
-    }
-
-    /**
-     * Write the checkpoint's transcription only while its run still owns the unit; see
-     * {@link LectureTranscriptionRepository#saveCheckpointIfTokenMatches} for how the ownership check and the write commit together, so a
-     * superseded run can neither recreate a deleted transcript nor overwrite the transcript of the newer run that kept it.
-     *
-     * @return whether the transcription was written; false when the run no longer owns the unit or a completed transcript is kept
-     */
-    private boolean persistTranscription(LectureUnit unit, String expectedToken, TranscriptionCheckpoint checkpoint, TranscriptionStatus status) {
-        if (!transcriptionRepository.saveCheckpointIfTokenMatches(unit, expectedToken, checkpoint.language(), checkpoint.segments(), status)) {
-            log.debug("Skipping transcription write for unit {}: the run no longer owns the unit or a completed transcript is kept", unit.getId());
-            return false;
-        }
-        return true;
     }
 
     // -------------------- Failure Handling --------------------

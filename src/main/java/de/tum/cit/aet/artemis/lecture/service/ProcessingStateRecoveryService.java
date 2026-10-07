@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRecoveryRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
 /**
@@ -38,13 +39,16 @@ public class ProcessingStateRecoveryService {
 
     private final LectureUnitProcessingStateRepository processingStateRepository;
 
+    private final LectureUnitProcessingStateRecoveryRepository recoveryRepository;
+
     private final LectureTranscriptionRepository transcriptionRepository;
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    public ProcessingStateRecoveryService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            WebsocketMessagingService websocketMessagingService) {
+    public ProcessingStateRecoveryService(LectureUnitProcessingStateRepository processingStateRepository, LectureUnitProcessingStateRecoveryRepository recoveryRepository,
+            LectureTranscriptionRepository transcriptionRepository, WebsocketMessagingService websocketMessagingService) {
         this.processingStateRepository = processingStateRepository;
+        this.recoveryRepository = recoveryRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.websocketMessagingService = websocketMessagingService;
     }
@@ -134,8 +138,8 @@ public class ProcessingStateRecoveryService {
         // Bound to the run that was read: a terminal callback landing between the batch read and this write would
         // otherwise be reverted here and the completed work re-ingested.
         if ((departedBootId != null
-                ? processingStateRepository.resetToIdleIfStillLiveAndOwnedBy(state.getId(), state.getPhase(), state.getIngestionJobToken(), departedBootId, ZonedDateTime.now())
-                : processingStateRepository.resetToIdleIfStillLiveAndUnowned(state.getId(), state.getPhase(), state.getIngestionJobToken(), ZonedDateTime.now())) == 0) {
+                ? recoveryRepository.resetToIdleIfStillLiveAndOwnedBy(state.getId(), state.getPhase(), state.getIngestionJobToken(), departedBootId, ZonedDateTime.now())
+                : recoveryRepository.resetToIdleIfStillLiveAndUnowned(state.getId(), state.getPhase(), state.getIngestionJobToken(), ZonedDateTime.now())) == 0) {
             log.info("Not recovering unit {}: its run completed, moved on since the batch read, or belongs to a worker of another Iris process", lectureUnit.getId());
             return false;
         }

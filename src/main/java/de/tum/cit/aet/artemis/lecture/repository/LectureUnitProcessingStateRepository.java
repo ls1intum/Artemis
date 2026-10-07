@@ -302,9 +302,10 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * transaction spanned both — a boundary that had to be declared in a service, and which was silently absent
      * whenever the dispatch was reached by a self-invoking call.
      *
-     * @param id         the id of the state to claim
-     * @param claimToken identity for this claim, matched by whichever guard later commits its outcome
-     * @param now        the timestamp to record as the dispatch start
+     * @param id                   the id of the state to claim
+     * @param claimToken           identity for this claim, matched by whichever guard later commits its outcome
+     * @param now                  the timestamp to record as the dispatch start
+     * @param maxUnsettledAttempts claims without an outcome after which the unit is no longer claimed here
      * @return 1 if this caller claimed the job, 0 if another caller already had it
      */
     @Modifying
@@ -339,10 +340,11 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * A successful dispatch clears the lease on its own, because the phase transition out of FAILED sets
      * {@code retryEligibleAt} to null.
      *
-     * @param id          the id of the state to claim
-     * @param claimToken  identity for this claim, matched by whichever guard later commits its outcome
-     * @param now         the current time, which the backoff must already have passed
-     * @param leaseExpiry when the claim lapses and the row becomes eligible again
+     * @param id                   the id of the state to claim
+     * @param claimToken           identity for this claim, matched by whichever guard later commits its outcome
+     * @param now                  the current time, which the backoff must already have passed
+     * @param leaseExpiry          when the claim lapses and the row becomes eligible again
+     * @param maxUnsettledAttempts claims without an outcome after which the unit is no longer claimed here
      * @return 1 if this caller claimed the retry, 0 if another caller already had it
      */
     @Modifying
@@ -980,60 +982,4 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             """)
     int updateContentMarkers(@Param("id") long id, @Param("videoSourceHash") String videoSourceHash, @Param("attachmentVersion") Integer attachmentVersion,
             @Param("dispatchPriority") Integer dispatchPriority, @Param("now") ZonedDateTime now);
-
-    /**
-     * Reset an in-flight run to IDLE after a Pyris restart, without charging its retry budget, but only while it is still the run read
-     * at batch time (same phase and token, so a terminal callback in between is not reverted) and it belongs to the Pyris process that
-     * restarted: a push run, which records no owner, or a pull run whose worker lease is held by the departed boot. Runs a worker of the
-     * new process already claimed stay untouched.
-     *
-     * @param id             the processing state to reset
-     * @param phaseAtRead    the in-flight phase observed at batch-read time
-     * @param tokenAtRead    the job token observed at batch-read time
-     * @param departedBootId the boot id of the Pyris process that restarted
-     * @param now            recorded as the new {@code lastUpdated}
-     * @return 1 when the run was reset, 0 when it moved on or belongs to another process
-     */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE LectureUnitProcessingState ps
-            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.ingestionJobToken = NULL, ps.claimToken = NULL,
-                ps.startedAt = NULL, ps.retryEligibleAt = NULL, ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL,
-                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL,
-                ps.lastProgressAt = NULL, ps.lastUpdated = :now
-            WHERE ps.id = :id
-            AND ps.phase = :phaseAtRead
-            AND ps.ingestionJobToken = :tokenAtRead
-            AND (ps.lockedBy IS NULL OR ps.lockedBy = :departedBootId)
-            """)
-    int resetToIdleIfStillLiveAndOwnedBy(@Param("id") long id, @Param("phaseAtRead") ProcessingPhase phaseAtRead, @Param("tokenAtRead") String tokenAtRead,
-            @Param("departedBootId") String departedBootId, @Param("now") ZonedDateTime now);
-
-    /**
-     * Reset an in-flight push run to IDLE after a Pyris restart detected without a boot id (DOWN to UP), with the same run guard as
-     * {@link #resetToIdleIfStillLiveAndOwnedBy}. Runs held by a worker lease are left to lease expiry, since the restart cannot be
-     * attributed to their worker.
-     *
-     * @param id          the processing state to reset
-     * @param phaseAtRead the in-flight phase observed at batch-read time
-     * @param tokenAtRead the job token observed at batch-read time
-     * @param now         recorded as the new {@code lastUpdated}
-     * @return 1 when the run was reset, 0 when it moved on or is held by a worker
-     */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE LectureUnitProcessingState ps
-            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.ingestionJobToken = NULL, ps.claimToken = NULL,
-                ps.startedAt = NULL, ps.retryEligibleAt = NULL, ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL,
-                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL,
-                ps.lastProgressAt = NULL, ps.lastUpdated = :now
-            WHERE ps.id = :id
-            AND ps.phase = :phaseAtRead
-            AND ps.ingestionJobToken = :tokenAtRead
-            AND ps.lockedBy IS NULL
-            """)
-    int resetToIdleIfStillLiveAndUnowned(@Param("id") long id, @Param("phaseAtRead") ProcessingPhase phaseAtRead, @Param("tokenAtRead") String tokenAtRead,
-            @Param("now") ZonedDateTime now);
 }

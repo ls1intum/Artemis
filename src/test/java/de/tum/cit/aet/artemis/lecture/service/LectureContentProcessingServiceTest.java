@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
@@ -78,6 +79,8 @@ class LectureContentProcessingServiceTest {
     private LectureContentProcessingService service;
 
     private ProcessingStateCallbackService callbackService;
+
+    private TranscriptionCheckpointService checkpointService;
 
     private ProcessingStateRecoveryService recoveryService;
 
@@ -144,7 +147,9 @@ class LectureContentProcessingServiceTest {
         callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, Optional.of(irisLectureApi),
                 new ProcessingStateNotificationService(websocketMessagingService, transcriptionRepository), contentFingerprintService, distributedDataProviderMock(),
                 featureToggleService, 2, 20, Duration.ofSeconds(90), 8, 3, irisLectureUnitSyncStateRepository);
-        recoveryService = new ProcessingStateRecoveryService(processingStateRepository, transcriptionRepository, websocketMessagingService);
+        checkpointService = new TranscriptionCheckpointService(processingStateRepository, transcriptionRepository,
+                new ProcessingStateNotificationService(websocketMessagingService, transcriptionRepository), JsonObjectMapper.get());
+        recoveryService = new ProcessingStateRecoveryService(processingStateRepository, strandedRunRepository, transcriptionRepository, websocketMessagingService);
 
         service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService, attachmentRepository,
                 strandedRunRepository, transcriptionRepository);
@@ -532,7 +537,7 @@ class LectureContentProcessingServiceTest {
             String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
 
             // When
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
 
             // Then: Should insert transcription as PENDING, atomically conditional on the token, and stay in TRANSCRIBING
             verify(transcriptionRepository).saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), eq("en"), any(), eq(TranscriptionStatus.PENDING));
@@ -557,7 +562,7 @@ class LectureContentProcessingServiceTest {
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
 
             // When
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
 
             // Then: Should insert as COMPLETED, atomically conditional on the token, and transition to INGESTING
             verify(transcriptionRepository).saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), eq("en"), any(), eq(TranscriptionStatus.COMPLETED));
@@ -588,16 +593,16 @@ class LectureContentProcessingServiceTest {
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
 
             // A first, complete run: raw segments followed by the enriched ones
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
 
             assertThat(testState.getTranscriptionVersion()).isEqualTo(1);
 
             // The unit is transcribed again and Pyris produces exactly the same transcript
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
 
             assertThat(testState.getTranscriptionVersion()).isEqualTo(1);
             // The version reaches the database only through the guarded transition, once per enriched checkpoint, both times as 1
@@ -620,7 +625,7 @@ class LectureContentProcessingServiceTest {
 
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
 
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
 
             verify(processingStateRepository, never()).transitionToIngestingIfTranscribing(anyLong(), any(), any(), any(), any());
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
@@ -645,12 +650,12 @@ class LectureContentProcessingServiceTest {
 
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
 
-            assertThatThrownBy(() -> callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson)).isInstanceOf(CannotAcquireLockException.class);
+            assertThatThrownBy(() -> checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson)).isInstanceOf(CannotAcquireLockException.class);
             verify(processingStateRepository, never()).transitionToIngestingIfTranscribing(anyLong(), any(), any(), any(), any());
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
 
             // Iris redelivers the same checkpoint: it is not dropped as stale, and both steps now complete once
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
 
             verify(transcriptionRepository, times(2)).saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), eq("en"), any(), eq(TranscriptionStatus.COMPLETED));
             verify(processingStateRepository, times(1)).transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any());
@@ -669,7 +674,7 @@ class LectureContentProcessingServiceTest {
 
             String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
 
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
 
             verify(transcriptionRepository, never()).saveCheckpointIfTokenMatches(any(), any(), any(), any(), any());
         }
@@ -687,7 +692,7 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(1);
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
 
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
 
             var order = org.mockito.Mockito.inOrder(processingStateRepository, transcriptionRepository);
             order.verify(processingStateRepository).recordTranscriptionVersionIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), eq(1), any());
@@ -697,7 +702,7 @@ class LectureContentProcessingServiceTest {
             // Ownership lost before the version could be recorded: nothing else is written
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             when(processingStateRepository.recordTranscriptionVersionIfTranscribing(anyLong(), any(), any(), any())).thenReturn(0);
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
             verify(transcriptionRepository, times(1)).saveCheckpointIfTokenMatches(any(), any(), any(), any(), any());
             verify(processingStateRepository, times(1)).transitionToIngestingIfTranscribing(anyLong(), any(), any(), any(), any());
         }
@@ -717,7 +722,7 @@ class LectureContentProcessingServiceTest {
 
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
 
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
 
             verify(transcriptionRepository).saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), eq("en"), any(), eq(TranscriptionStatus.COMPLETED));
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
@@ -737,7 +742,7 @@ class LectureContentProcessingServiceTest {
 
             String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
 
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
 
             verify(transcriptionRepository).saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), eq("en"), any(), eq(TranscriptionStatus.PENDING));
         }
@@ -760,7 +765,7 @@ class LectureContentProcessingServiceTest {
 
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
 
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
 
             verify(transcriptionRepository).saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), eq("en"), any(), eq(TranscriptionStatus.COMPLETED));
             verify(transcriptionRepository, never()).save(any());
@@ -784,7 +789,7 @@ class LectureContentProcessingServiceTest {
 
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
 
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
 
             verify(transcriptionRepository, never()).save(any());
             verify(processingStateRepository, never()).transitionToIngestingIfTranscribing(anyLong(), any(), any(), any(), any());
@@ -806,7 +811,7 @@ class LectureContentProcessingServiceTest {
 
             String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
 
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
 
             verify(transcriptionRepository).saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), eq("en"), any(), eq(TranscriptionStatus.PENDING));
             verify(transcriptionRepository, never()).save(any());
@@ -827,7 +832,7 @@ class LectureContentProcessingServiceTest {
 
             String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
 
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
 
             verify(transcriptionRepository, never()).save(any());
         }
@@ -839,7 +844,7 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
 
-            callbackService.handleCheckpointData(testUnit.getId(), "stale-token", "{\"segments\":[]}");
+            checkpointService.handleCheckpointData(testUnit.getId(), "stale-token", "{\"segments\":[]}");
 
             verify(transcriptionRepository, never()).save(any());
         }
@@ -851,16 +856,16 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
 
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, "{\"segments\":[{\"startTime\":0,\"endTime\":5,\"text\":\"x\",\"slideNumber\":0}]}");
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, "{\"segments\":[{\"startTime\":0,\"endTime\":5,\"text\":\"x\",\"slideNumber\":0}]}");
 
             verify(transcriptionRepository, never()).save(any());
         }
 
         @Test
         void shouldIgnoreNullOrBlankResult() {
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, null);
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, "");
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, "  ");
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, null);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, "");
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, "  ");
 
             verify(processingStateRepository, never()).findByLectureUnit_Id(anyLong());
         }
@@ -1847,7 +1852,7 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.findByPhaseIn(any())).thenReturn(List.of(transcribingState, ingestingState));
             // Recovery is bound to the run it read, so a completion landing since the batch read is not reverted; 1 = still in flight.
-            when(processingStateRepository.resetToIdleIfStillLiveAndOwnedBy(anyLong(), any(), any(), any(), any())).thenReturn(1);
+            when(strandedRunRepository.resetToIdleIfStillLiveAndOwnedBy(anyLong(), any(), any(), any(), any())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(anyLong())).thenReturn(Optional.empty());
 
             // When
@@ -1866,7 +1871,7 @@ class LectureContentProcessingServiceTest {
             assertThat(ingestingState.getIngestionJobToken()).isNull();
             assertThat(ingestingState.getStartedAt()).isNull();
 
-            verify(processingStateRepository, times(2)).resetToIdleIfStillLiveAndOwnedBy(anyLong(), any(), any(), any(), any());
+            verify(strandedRunRepository, times(2)).resetToIdleIfStillLiveAndOwnedBy(anyLong(), any(), any(), any(), any());
             verify(processingStateRepository, never()).save(any());
             verify(websocketMessagingService, times(2)).sendMessage(any(WebsocketDestination.class), any(LectureUnitCombinedStatusDTO.class));
         }
@@ -1903,7 +1908,7 @@ class LectureContentProcessingServiceTest {
             recoverableState.setIngestionJobToken("token-302");
 
             when(processingStateRepository.findByPhaseIn(any())).thenReturn(List.of(failingState, recoverableState));
-            when(processingStateRepository.resetToIdleIfStillLiveAndOwnedBy(anyLong(), any(), any(), any(), any())).thenReturn(1);
+            when(strandedRunRepository.resetToIdleIfStillLiveAndOwnedBy(anyLong(), any(), any(), any(), any())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenThrow(new IllegalStateException("database unavailable"));
             when(transcriptionRepository.findByLectureUnit_Id(secondUnit.getId())).thenReturn(Optional.empty());
 
@@ -1911,7 +1916,7 @@ class LectureContentProcessingServiceTest {
 
             assertThat(failingState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
             assertThat(recoverableState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
-            verify(processingStateRepository).resetToIdleIfStillLiveAndOwnedBy(eq(302L), any(), any(), any(), any());
+            verify(strandedRunRepository).resetToIdleIfStillLiveAndOwnedBy(eq(302L), any(), any(), any(), any());
             verify(websocketMessagingService).sendMessage(any(WebsocketDestination.class), any(LectureUnitCombinedStatusDTO.class));
         }
     }

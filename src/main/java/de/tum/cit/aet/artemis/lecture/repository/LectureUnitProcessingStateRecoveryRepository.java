@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
+import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 
 /**
  * The statements that recover an interrupted content change, kept apart from {@link LectureUnitProcessingStateRepository}
@@ -25,6 +26,8 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
  * in flight with no token, which no token-matching recovery can select. The recovery owns such a row through a claim:
  * {@link #claimStrandedRun} records it, and every later write pins it, so a concurrent requeue of the unit (which clears
  * the claim) turns the rest of the recovery into no-ops instead of being overwritten by it.
+ * <p>
+ * It also holds the reset of runs lost to an Iris restart, which likewise decides on a batch read.
  */
 @Conditional(LectureEnabled.class)
 @Lazy
@@ -196,5 +199,61 @@ public interface LectureUnitProcessingStateRecoveryRepository extends ArtemisJpa
                     AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED)))
             """)
     int requeueRunExposedToRecoveryCleanup(@Param("lectureUnitId") long lectureUnitId, @Param("claimToken") String claimToken, @Param("dispatchPriority") Integer dispatchPriority,
+            @Param("now") ZonedDateTime now);
+
+    /**
+     * Reset an in-flight run to IDLE after a Pyris restart, without charging its retry budget, but only while it is still the run read
+     * at batch time (same phase and token, so a terminal callback in between is not reverted) and it belongs to the Pyris process that
+     * restarted: a push run, which records no owner, or a pull run whose worker lease is held by the departed boot. Runs a worker of the
+     * new process already claimed stay untouched.
+     *
+     * @param id             the processing state to reset
+     * @param phaseAtRead    the in-flight phase observed at batch-read time
+     * @param tokenAtRead    the job token observed at batch-read time
+     * @param departedBootId the boot id of the Pyris process that restarted
+     * @param now            recorded as the new {@code lastUpdated}
+     * @return 1 when the run was reset, 0 when it moved on or belongs to another process
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.ingestionJobToken = NULL, ps.claimToken = NULL,
+                ps.startedAt = NULL, ps.retryEligibleAt = NULL, ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL,
+                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL,
+                ps.lastProgressAt = NULL, ps.lastUpdated = :now
+            WHERE ps.id = :id
+            AND ps.phase = :phaseAtRead
+            AND ps.ingestionJobToken = :tokenAtRead
+            AND (ps.lockedBy IS NULL OR ps.lockedBy = :departedBootId)
+            """)
+    int resetToIdleIfStillLiveAndOwnedBy(@Param("id") long id, @Param("phaseAtRead") ProcessingPhase phaseAtRead, @Param("tokenAtRead") String tokenAtRead,
+            @Param("departedBootId") String departedBootId, @Param("now") ZonedDateTime now);
+
+    /**
+     * Reset an in-flight push run to IDLE after a Pyris restart detected without a boot id (DOWN to UP), with the same run guard as
+     * {@link #resetToIdleIfStillLiveAndOwnedBy}. Runs held by a worker lease are left to lease expiry, since the restart cannot be
+     * attributed to their worker.
+     *
+     * @param id          the processing state to reset
+     * @param phaseAtRead the in-flight phase observed at batch-read time
+     * @param tokenAtRead the job token observed at batch-read time
+     * @param now         recorded as the new {@code lastUpdated}
+     * @return 1 when the run was reset, 0 when it moved on or is held by a worker
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.ingestionJobToken = NULL, ps.claimToken = NULL,
+                ps.startedAt = NULL, ps.retryEligibleAt = NULL, ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL,
+                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL,
+                ps.lastProgressAt = NULL, ps.lastUpdated = :now
+            WHERE ps.id = :id
+            AND ps.phase = :phaseAtRead
+            AND ps.ingestionJobToken = :tokenAtRead
+            AND ps.lockedBy IS NULL
+            """)
+    int resetToIdleIfStillLiveAndUnowned(@Param("id") long id, @Param("phaseAtRead") ProcessingPhase phaseAtRead, @Param("tokenAtRead") String tokenAtRead,
             @Param("now") ZonedDateTime now);
 }

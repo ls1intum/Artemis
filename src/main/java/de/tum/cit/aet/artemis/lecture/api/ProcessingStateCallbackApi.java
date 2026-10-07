@@ -11,6 +11,7 @@ import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO;
 import de.tum.cit.aet.artemis.lecture.service.ProcessingStateCallbackService;
+import de.tum.cit.aet.artemis.lecture.service.TranscriptionCheckpointService;
 
 /**
  * API for processing state callbacks from Iris.
@@ -24,8 +25,11 @@ public class ProcessingStateCallbackApi extends AbstractLectureApi {
 
     private final ProcessingStateCallbackService processingStateCallbackService;
 
-    public ProcessingStateCallbackApi(ProcessingStateCallbackService processingStateCallbackService) {
+    private final TranscriptionCheckpointService transcriptionCheckpointService;
+
+    public ProcessingStateCallbackApi(ProcessingStateCallbackService processingStateCallbackService, TranscriptionCheckpointService transcriptionCheckpointService) {
         this.processingStateCallbackService = processingStateCallbackService;
+        this.transcriptionCheckpointService = transcriptionCheckpointService;
     }
 
     /**
@@ -37,7 +41,7 @@ public class ProcessingStateCallbackApi extends AbstractLectureApi {
      * @param resultJson    the JSON result payload
      */
     public void handleCheckpointData(long lectureUnitId, String jobToken, String resultJson) {
-        processingStateCallbackService.handleCheckpointData(lectureUnitId, jobToken, resultJson);
+        transcriptionCheckpointService.handleCheckpointData(lectureUnitId, jobToken, resultJson);
     }
 
     /**

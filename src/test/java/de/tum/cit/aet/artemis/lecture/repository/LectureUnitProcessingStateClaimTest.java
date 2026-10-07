@@ -329,7 +329,7 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         // The run completes between the batch read (which saw INGESTING/run-token) and the recovery write.
         assertThat(processingStateRepository.completeIngestionIfLive(running.getId(), "run-token", ZonedDateTime.now())).isEqualTo(1);
 
-        assertThat(processingStateRepository.resetToIdleIfStillLiveAndOwnedBy(running.getId(), ProcessingPhase.INGESTING, "run-token", "departed-boot", ZonedDateTime.now()))
+        assertThat(recoveryRepository.resetToIdleIfStillLiveAndOwnedBy(running.getId(), ProcessingPhase.INGESTING, "run-token", "departed-boot", ZonedDateTime.now()))
                 .as("recovery must not revert a run that finished since the read").isZero();
         assertThat(processingStateRepository.findById(running.getId()).orElseThrow().getPhase()).isEqualTo(ProcessingPhase.DONE);
     }
@@ -342,8 +342,7 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         running.setIngestionJobToken("run-token");
         processingStateRepository.save(running);
 
-        assertThat(processingStateRepository.resetToIdleIfStillLiveAndOwnedBy(running.getId(), ProcessingPhase.INGESTING, "run-token", "departed-boot", ZonedDateTime.now()))
-                .isEqualTo(1);
+        assertThat(recoveryRepository.resetToIdleIfStillLiveAndOwnedBy(running.getId(), ProcessingPhase.INGESTING, "run-token", "departed-boot", ZonedDateTime.now())).isEqualTo(1);
 
         LectureUnitProcessingState after = processingStateRepository.findById(running.getId()).orElseThrow();
         assertThat(after.getPhase()).isEqualTo(ProcessingPhase.IDLE);
@@ -362,13 +361,13 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         LectureUnitProcessingState departed = inFlightRun(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), "departed-token", "boot-A");
         LectureUnitProcessingState current = inFlightRun(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), "current-token", "boot-B");
 
-        assertThat(processingStateRepository.resetToIdleIfStillLiveAndOwnedBy(current.getId(), ProcessingPhase.INGESTING, "current-token", "boot-A", ZonedDateTime.now()))
+        assertThat(recoveryRepository.resetToIdleIfStillLiveAndOwnedBy(current.getId(), ProcessingPhase.INGESTING, "current-token", "boot-A", ZonedDateTime.now()))
                 .as("a run the new process's worker claimed survives the restart").isZero();
-        assertThat(processingStateRepository.resetToIdleIfStillLiveAndUnowned(departed.getId(), ProcessingPhase.INGESTING, "departed-token", ZonedDateTime.now()))
+        assertThat(recoveryRepository.resetToIdleIfStillLiveAndUnowned(departed.getId(), ProcessingPhase.INGESTING, "departed-token", ZonedDateTime.now()))
                 .as("without a boot id a leased run is left to lease expiry").isZero();
-        assertThat(processingStateRepository.resetToIdleIfStillLiveAndOwnedBy(departed.getId(), ProcessingPhase.INGESTING, "departed-token", "boot-A", ZonedDateTime.now()))
+        assertThat(recoveryRepository.resetToIdleIfStillLiveAndOwnedBy(departed.getId(), ProcessingPhase.INGESTING, "departed-token", "boot-A", ZonedDateTime.now()))
                 .as("a run leased by the departed boot is reset").isEqualTo(1);
-        assertThat(processingStateRepository.resetToIdleIfStillLiveAndUnowned(push.getId(), ProcessingPhase.INGESTING, "push-token", ZonedDateTime.now()))
+        assertThat(recoveryRepository.resetToIdleIfStillLiveAndUnowned(push.getId(), ProcessingPhase.INGESTING, "push-token", ZonedDateTime.now()))
                 .as("a push run is reset even without a boot id").isEqualTo(1);
         assertThat(processingStateRepository.findById(current.getId()).orElseThrow().getPhase()).isEqualTo(ProcessingPhase.INGESTING);
     }
