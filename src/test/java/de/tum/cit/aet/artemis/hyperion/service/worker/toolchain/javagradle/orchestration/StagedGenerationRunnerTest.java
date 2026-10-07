@@ -113,6 +113,16 @@ class StagedGenerationRunnerTest {
         private final String layout = "solution/build.gradle\ntemplate/build.gradle\ntests/build.gradle";
 
         @Override
+        protected String rootFileContent(String path) {
+            return switch (path) {
+                case "/workspace/SPEC.md" -> specMarkdown;
+                case "/workspace/test-plan.json" -> testPlanJson;
+                case "/workspace/problem-statement.md" -> problemStatement;
+                default -> super.rootFileContent(path);
+            };
+        }
+
+        @Override
         protected SandboxExecResultDTO respond(String[] command) {
             if (command.length >= 2 && "cat".equals(command[0])) {
                 String path = command[1];
@@ -285,10 +295,13 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
-    void statementReceivesOnlyTheVisibleTypedPlanHandoff() {
-        sandbox.specMarkdown = VALID_SPEC_DOCUMENT.replace("| S1 | Calculator | typical and zero | 3 | no |", "| S1 | Calculator | typical and zero | 3 | yes |");
+    void statementReceivesOnlyTheVisibleTypedPlanHandoffFromTheCompleteLargeArtifacts() {
+        sandbox.specMarkdown = VALID_SPEC_DOCUMENT.replace("| S1 | Calculator | typical and zero | 3 | no |", "| S1 | Calculator | typical and zero | 3 | yes |")
+                + "\nContract explanation.\n".repeat(3_000);
         sandbox.testPlanJson = "{\"tests\":[{\"name\":\"visibleCase\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
-                + "{\"name\":\"hiddenCase\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+                + "{\"name\":\"hiddenCase\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}" + " ".repeat(60_000);
+        assertThat(sandbox.specMarkdown.length()).isGreaterThan(50_000);
+        assertThat(sandbox.testPlanJson.length()).isGreaterThan(50_000);
         sandbox.problemStatement = "# Title\n\n[task][Do the thing](visibleCase)\nImplement it.";
         when(exercise.hasDueDate()).thenReturn(true);
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(4, "build"),

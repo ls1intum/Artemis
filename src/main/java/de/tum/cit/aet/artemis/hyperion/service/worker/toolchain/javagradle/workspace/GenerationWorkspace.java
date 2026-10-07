@@ -479,6 +479,29 @@ public class GenerationWorkspace {
     }
 
     /**
+     * Reads a complete root artifact through the bounded, link-rejecting workspace archive reader, never through diagnostic stdout.
+     *
+     * @param sandbox   sandbox session
+     * @param sessionId session handle
+     * @param fileName  specification, grading plan, or problem statement filename
+     * @return complete text, or null when the artifact is missing, unsafe, or exceeds the workspace limit
+     */
+    @Nullable
+    public static String readRootArtifact(@Nullable InteractiveSandbox sandbox, @Nullable String sessionId, String fileName) {
+        if (sandbox == null || sessionId == null || !Set.of(SPEC_DOCUMENT_FILE, TEST_PLAN_FILE, PROBLEM_STATEMENT_FILE).contains(fileName)) {
+            return null;
+        }
+        try (TarArchiveInputStream tar = sandbox.copyOut(sessionId, WORKSPACE + "/" + fileName)) {
+            Map<String, String> files = WorkspaceArchive.readTar(tar, "");
+            return files.size() == 1 ? files.get(fileName) : null;
+        }
+        catch (RuntimeException | IOException failure) {
+            log.debug("Could not read complete root artifact {}: {}", fileName, failure.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * @param sandbox   the sandbox session
      * @param sessionId the session handle
      * @return the produced problem statement

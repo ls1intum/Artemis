@@ -99,6 +99,16 @@ class StageChecksTest {
         }
 
         @Override
+        protected String rootFileContent(String path) {
+            return switch (path) {
+                case "/workspace/SPEC.md" -> spec;
+                case "/workspace/test-plan.json" -> testPlanJson;
+                case "/workspace/problem-statement.md" -> problemStatement;
+                default -> super.rootFileContent(path);
+            };
+        }
+
+        @Override
         protected SandboxExecResultDTO respond(String[] command) {
             if (command.length >= 2 && "cat".equals(command[0])) {
                 String path = command[1];
@@ -130,6 +140,9 @@ class StageChecksTest {
 
         @Override
         public TarArchiveInputStream copyOut(String sessionId, String path) {
+            if (!path.equals("/workspace/template")) {
+                return super.copyOut(sessionId, path);
+            }
             return templateRepositoryFiles.isEmpty() ? null
                     : ReportTarFixtures.tar("template", templateRepositoryFiles.entrySet().stream()
                             .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBytes(StandardCharsets.UTF_8))));
@@ -219,6 +232,14 @@ class StageChecksTest {
         SeededStructuralTests structuralTests = seededStructuralTestNames.isEmpty() ? SeededStructuralTests.EMPTY
                 : new SeededStructuralTests(seededStructuralTestNames, Map.of("test/de/tum/cit/aet/artemis/TrustedStructuralTest.java", "// server-owned test fixture"));
         return service.check(stage, sandbox, "s", exercise, Map.of(), lastTestsReport, structuralTests);
+    }
+
+    @Test
+    void largeSpecificationUsesTheCompleteArchiveAtItsGate() {
+        sandbox.spec += "\n" + "Additional contract explanation.\n".repeat(2_000);
+        assertThat(sandbox.spec.length()).isGreaterThan(50_000);
+
+        assertThat(check(GenerationStage.SPEC).passed()).isTrue();
     }
 
     @Test

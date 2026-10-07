@@ -2,7 +2,7 @@
 
 The generic execution supervisor is the **AI Worker**, not a Hyperion-specific
 transport. Its profile-gated code uses the Artemis WAR. The
-[AI Worker operations](../../documentation/docs/admin/aiworker.mdx) describe the
+[AI Worker operations](../../../documentation/docs/admin/aiworker.mdx) describe the
 shared distributed-data provider transport. Hyperion feature settings are separate.
 
 This directory owns Hyperion's language/toolchain sandbox recipes, not provider
@@ -29,7 +29,7 @@ for other workloads. Keep the worker process in an isolated VM.
 Build the sandbox image from the repository root:
 
 ```sh
-docker build -f docker/hyperion/gradle-sandbox.Dockerfile -t hyperion-gradle-sandbox:local .
+docker build -f deployment/docker/hyperion/gradle-sandbox.Dockerfile -t hyperion-gradle-sandbox:local .
 docker image inspect hyperion-gradle-sandbox:local --format '{{.Id}}'
 ```
 
