@@ -162,6 +162,45 @@ describe('ComplaintsFormComponent', () => {
         expect(complaintButton.disabled).toBe(true);
     });
 
+    describe('length of the entered text', () => {
+        beforeEach(() => {
+            fixture.componentRef.setInput('exercise', courseExercise);
+            fixture.componentRef.setInput('isCurrentUserSubmissionAuthor', true);
+            component.ngOnInit();
+            fixture.changeDetectorRef.detectChanges();
+        });
+
+        it('should be the length of the text of this form', () => {
+            component.complaintText = 'abc';
+
+            expect(component.complaintTextLength()).toBe(3);
+        });
+
+        it('should be 0 before anything was entered', () => {
+            expect(component.complaintTextLength()).toBe(0);
+        });
+
+        it('should not read the text area of another complaint area on the same page', () => {
+            // The exam summary shows several complaint areas, so the id of the text area is not unique. A read-only one of an exercise above is first in the document.
+            const other = document.createElement('textarea');
+            other.id = 'complainTextArea';
+            other.value = 'a complaint of another exercise that is longer than the limit of this form';
+            document.body.prepend(other);
+            try {
+                const textArea = fixture.debugElement.query(By.css('#complainTextArea')).nativeElement as HTMLTextAreaElement;
+                const submit = fixture.debugElement.query(By.css('#submit-complaint')).nativeElement as HTMLButtonElement;
+                textArea.value = 'short';
+                textArea.dispatchEvent(new Event('input'));
+                fixture.changeDetectorRef.detectChanges();
+
+                expect(component.complaintTextLength()).toBe(5);
+                expect(submit.disabled).toBe(false);
+            } finally {
+                other.remove();
+            }
+        });
+    });
+
     describe('layout', () => {
         beforeEach(() => {
             fixture.componentRef.setInput('exercise', courseExercise);
@@ -187,11 +226,22 @@ describe('ComplaintsFormComponent', () => {
             expect(heading.classList.contains('font-semibold!')).toBe(true);
         });
 
-        it('should use the xl breakpoint instead of the md viewport breakpoint for its half-width columns', () => {
-            const halfWidthColumns = fixture.nativeElement.querySelectorAll('.col-xl-6');
+        it('should present the form in a card of the same language as the complaint and the feedback cards', () => {
+            const card = fixture.nativeElement.querySelector('[data-testid="complaint-form-card"]') as HTMLElement;
 
-            expect(halfWidthColumns).toHaveLength(2);
-            expect(fixture.nativeElement.querySelector('.col-md-6')).toBeNull();
+            expect(card).toBeTruthy();
+            for (const utility of ['mt-6!', 'rounded-lg', 'border', 'border-(--border-color)', 'bg-(--module-bg)', 'p-4!']) {
+                expect(card.classList.contains(utility), utility).toBe(true);
+            }
+            // The card holds everything of the form, and the width is left to the host.
+            expect(card.contains(fixture.nativeElement.querySelector('h3'))).toBe(true);
+            expect(card.contains(fixture.nativeElement.querySelector('#complainTextArea'))).toBe(true);
+            expect(card.contains(fixture.nativeElement.querySelector('#submit-complaint'))).toBe(true);
+            expect(fixture.nativeElement.classList.contains('block')).toBe(true);
+        });
+
+        it('should not use the Bootstrap grid any more', () => {
+            expect(fixture.nativeElement.querySelector('.row, [class*="col-"]')).toBeNull();
         });
 
         it('should render the submit button as a small TUM AET UI button', () => {

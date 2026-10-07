@@ -1,4 +1,9 @@
-<div id="cardInstructions" class="instructions-wrapper card collapsable-card" [style.height]="collapsed() ? (isAssessmentMode() ? '200px' : '250px') : '100%'">
+<div
+    id="cardInstructions"
+    data-testid="cardInstructions"
+    class="instructions-wrapper card collapsable-card"
+    [style.height]="collapsed() ? (isAssessmentMode() ? '200px' : '250px') : '100%'"
+>
     <div
         class="card-header code-editor-panel-header d-flex justify-content-left"
         (click)="!disableCollapse() && toggleEditorCollapse($event)"

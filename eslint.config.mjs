@@ -762,6 +762,7 @@ export default tseslint.config(
             'src/main/webapp/app/exam/shared/**/*.html',
             'src/main/webapp/app/assessment/overview/**/*.html',
             'src/main/webapp/app/assessment/manage/complaints-for-tutor/**/*.html',
+            'src/main/webapp/app/assessment/manage/complaint-response/**/*.html',
             'src/main/webapp/app/exercise/feedback/**/*.html',
             'src/main/webapp/app/text/overview/text-editor/**/*.html',
             'src/main/webapp/app/fileupload/overview/file-upload-submission/**/*.html',

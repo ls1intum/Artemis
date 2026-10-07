@@ -394,6 +394,7 @@
                 "explanation": "Deine Abgabe und deine Ergebnisse sind auf dem Server gespeichert, es ist nichts verloren. Bitte überprüfe deine Internetverbindung und versuche es erneut.",
                 "retry": "Erneut versuchen"
             },
+            "programmingActions": "Aktionen der Programmieraufgabe",
             "saveExercise": "Aufgabe speichern",
             "exerciseSaved": "Aufgabe gespeichert",
             "reloadWarning": "Durch das Neuladen der Seite gehen alle ungespeicherten Änderungen verloren. Bist du sicher, dass du die Seite neu laden möchtest?"

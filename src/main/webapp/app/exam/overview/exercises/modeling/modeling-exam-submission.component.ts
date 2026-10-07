@@ -61,10 +61,22 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     readonly explanationText = signal<string>(undefined!); // current explanation text
 
-    protected readonly savedStatus = computed(() => ({
-        isChanged: !this.studentSubmission().isSynced,
-        isSaving: this.examParticipationService.isSubmissionSaving(this.studentSubmission()),
-    }));
+    // nodes and edges of the diagram as last loaded from the submission or handed to a save; Apollon also notifies on
+    // selection and focus changes, and only a difference to this content is an edit that leaves the answer unsaved
+    private syncedDiagram = ModelingExamSubmissionComponent.diagramContent();
+
+    // `isSynced` is mutated in place, so the overlay only follows it when this reads the service-wide sync-state version
+    // (see ExerciseSaveButtonComponent and the exam navigation sidebar, which show the same state).
+    protected readonly savedStatus = computed(
+        () => {
+            this.examParticipationService.submissionSyncVersion();
+            return {
+                isChanged: !this.studentSubmission().isSynced,
+                isSaving: this.examParticipationService.isSubmissionSaving(this.studentSubmission()),
+            };
+        },
+        { equal: (a, b) => a.isChanged === b.isChanged && a.isSaving === b.isSaving },
+    );
 
     // Icons
     protected readonly faListAlt = faListAlt;
@@ -100,6 +112,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
             if (this.studentSubmission().model) {
                 // Updates the Apollon editor model state (view) with the latest modeling submission
                 this.umlModel.set(importDiagram(parseJson(this.studentSubmission().model!)));
+                this.syncedDiagram = ModelingExamSubmissionComponent.diagramContent(this.umlModel());
             }
             // Updates explanation text with the latest submission
             this.explanationText.set(this.studentSubmission().explanationText ?? '');
@@ -111,15 +124,17 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
      * Updates the explanation text of the submission with the current explanation
      */
     public updateSubmissionFromView(): void {
-        if (!this.modelingEditor() || !this.modelingEditor().getCurrentModel()) {
+        const currentModel = this.modelingEditor()?.getCurrentModel();
+        if (!currentModel) {
             return;
         }
 
-        const diagramJson = JSON.stringify(this.modelingEditor().getCurrentModel());
+        const diagramJson = JSON.stringify(currentModel);
 
         if (this.studentSubmission()) {
             if (diagramJson) {
                 this.studentSubmission().model = diagramJson;
+                this.syncedDiagram = ModelingExamSubmissionComponent.diagramContent(currentModel);
             }
             this.studentSubmission().explanationText = this.explanationText();
         }
@@ -139,7 +154,10 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         return this.exercise() && (!this.exercise().dueDate || dayjs(this.exercise().dueDate).isSameOrAfter(dayjs()));
     }
 
-    modelChanged(_model: UMLModel) {
+    modelChanged(model: UMLModel) {
+        if (ModelingExamSubmissionComponent.diagramContent(model) === this.syncedDiagram) {
+            return;
+        }
         this.studentSubmission().isSynced = false;
         // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate reactively.
         this.examParticipationService.notifySubmissionSyncStateChanged();
@@ -181,5 +199,9 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
      */
     notifyTriggerSave() {
         this.saveCurrentExercise.emit();
+    }
+
+    private static diagramContent(model?: Pick<UMLModel, 'nodes' | 'edges'>): string {
+        return JSON.stringify([model?.nodes ?? [], model?.edges ?? []]);
     }
 }
