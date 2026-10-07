@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO_AND_SCHE
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,12 +67,14 @@ public class QuizDemoApi implements AbstractApi {
      * for as long as the demo instance exists, which a synchronized quiz would not: it would end once its duration has elapsed and seeding never revisits an existing exercise.
      *
      * @param course the demo course the exercise belongs to.
+     * @return the demo exercise, whether it already existed or was created by this call.
      */
-    public void createDemo(Course course) {
-        boolean exerciseExists = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().anyMatch(exercise -> DEMO_EXERCISE_TITLE.equals(exercise.getTitle()));
-        if (exerciseExists) {
+    public QuizExercise createDemo(Course course) {
+        Optional<QuizExercise> existingExercise = quizExerciseRepository.findByCourseIdWithCategories(course.getId()).stream()
+                .filter(exercise -> DEMO_EXERCISE_TITLE.equals(exercise.getTitle())).findFirst();
+        if (existingExercise.isPresent()) {
             log.debug("Demo quiz exercise already exists, skipping creation");
-            return;
+            return existingExercise.get();
         }
 
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(DEMO_EXERCISE_TITLE, DEMO_EXERCISE_SHORT_NAME, DEMO_PROBLEM_STATEMENT, ExerciseDates.ongoing(),
@@ -107,6 +110,7 @@ public class QuizDemoApi implements AbstractApi {
         try {
             QuizExercise createdExercise = quizExerciseService.createQuizExercise(quizExercise, List.of(), false, null);
             log.info("Created demo quiz exercise '{}' with id {}", DEMO_EXERCISE_TITLE, createdExercise.getId());
+            return createdExercise;
         }
         catch (IOException exception) {
             // Only thrown while storing the images of drag and drop questions, which the demo quiz deliberately does not use.

@@ -2,12 +2,16 @@ package de.tum.cit.aet.artemis.demo;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -17,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
@@ -25,19 +30,23 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.demo.service.DemoCourseContentSeedingService;
 import de.tum.cit.aet.artemis.demo.service.DemoDataSeedingService;
+import de.tum.cit.aet.artemis.demo.service.DemoExerciseSeedingService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
+import de.tum.cit.aet.artemis.modeling.api.ModelingDemoApi;
 import de.tum.cit.aet.artemis.programming.api.ProgrammingDemoApi;
 import de.tum.cit.aet.artemis.quiz.api.QuizDemoApi;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.text.api.TextDemoApi;
 
 /**
  * Tests the demo course seeding routine of the {@code demo} profile.
@@ -45,7 +54,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
  * The test context activates the {@code demo} profile, so the seeding service and the demo APIs of the modules exist as beans. The startup event that triggers seeding is never
  * published in tests, so the tests invoke the listener directly. That exercises the real APIs against the real database.
  * <p>
- * Seeding deliberately uses fixed identifiers, so these tests write a course named {@code demo} and the two demo users into the shared test database instead of prefixed test data.
+ * Seeding deliberately uses fixed identifiers, so these tests write a course named {@code demo} and the demo users into the shared test database instead of prefixed test data.
  * That is safe precisely because seeding is idempotent, which is also why every test can seed first and still be correct regardless of what ran before it. The methods must not run
  * in parallel though, hence {@link ExecutionMode#SAME_THREAD}.
  */
@@ -63,6 +72,9 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Autowired
     private QuizDemoApi quizDemoApi;
+
+    @Autowired
+    private ModelingDemoApi modelingDemoApi;
 
     @Autowired
     private ProgrammingDemoApi programmingDemoApi;
@@ -85,22 +97,45 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     @Autowired
     private QuizExerciseRepository quizExerciseRepository;
 
+    @Autowired
+    private ConductAgreementService conductAgreementService;
+
     @Test
-    void seedsDemoContent() {
+    void seedsUsersWithTheirCourseRoles() {
+        seed();
+
+        Course course = demoCourse().orElseThrow();
+        List<User> users = demoLogins().map(login -> userTestRepository.findOneByLogin(login).orElseThrow()).toList();
+        assertThat(users).as("every demo user can log in and has agreed to the code of conduct").allSatisfy(user -> {
+            assertThat(user.getActivated()).as("%s is activated", user.getLogin()).isTrue();
+            assertThat(conductAgreementService.fetchUserAgreesToCodeOfConductInCourse(user, course)).as("%s agreed to the code of conduct", user.getLogin()).isTrue();
+        });
+
+        assertThat(users.stream().filter(user -> hasRole(user, course, CourseRole.STUDENT)).map(User::getLogin)).as("the demo student and their classmates are students")
+                .containsExactlyInAnyOrderElementsOf(Stream.concat(Stream.of(AccountDemoApi.DEMO_STUDENT_LOGIN), peerLogins()).toList());
+        assertThat(hasRole(user(AccountDemoApi.DEMO_TUTOR_LOGIN), course, CourseRole.TEACHING_ASSISTANT)).as("demo tutor is a tutor").isTrue();
+        assertThat(hasRole(user(AccountDemoApi.DEMO_EDITOR_LOGIN), course, CourseRole.EDITOR)).as("demo editor is an editor").isTrue();
+        assertThat(hasRole(user(AccountDemoApi.DEMO_INSTRUCTOR_LOGIN), course, CourseRole.INSTRUCTOR)).as("demo instructor is an instructor").isTrue();
+    }
+
+    @Test
+    void seedsCourseReadyToBeExplored() {
         seed();
 
         Course course = demoCourse().orElseThrow();
         assertThat(courseRepository.ensureDefaultConfigurations(course.getId())).as("demo course owns all of its default settings rows").isZero();
         assertThat(course.getSemester()).as("demo course has a semester in the format the client expects").matches("SS\\d{2}|WS\\d{2}/\\d{2}");
-        User student = userTestRepository.findOneByLogin(AccountDemoApi.DEMO_STUDENT_LOGIN).orElseThrow();
-        User instructor = userTestRepository.findOneByLogin(AccountDemoApi.DEMO_INSTRUCTOR_LOGIN).orElseThrow();
+        assertThat(course.isOnboardingDone()).as("the demo instructor lands on the course instead of the setup wizard").isTrue();
+        assertThat(course.getTimeZone()).as("tutorial groups need the time zone of their course").isNotBlank();
+        assertThat(course.getPresentationScore()).as("no presentations are seeded, so the course does not ask for any").isZero();
+        assertThat(course.getCourseInformationSharingMessagingCodeOfConduct()).as("the demo course has the code of conduct of a course created through the UI").isNotBlank();
+    }
 
-        assertThat(student.getActivated()).as("demo student can log in").isTrue();
-        assertThat(instructor.getActivated()).as("demo instructor can log in").isTrue();
-        assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(student.getId(), course.getId(), CourseRole.STUDENT)).as("demo student is enrolled").isTrue();
-        assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(instructor.getId(), course.getId(), CourseRole.INSTRUCTOR)).as("demo instructor is enrolled")
-                .isTrue();
+    @Test
+    void seedsLectureWithLinkedCompetency() {
+        seed();
 
+        Course course = demoCourse().orElseThrow();
         List<LectureUnit> lectureUnits = demoLectureUnits(course.getId());
         assertThat(lectureUnits).as("demo lecture has its text unit").hasSize(1);
 
@@ -210,12 +245,29 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         seed();
         DemoDataSnapshot beforeRun = snapshotDemoData();
 
-        DemoDataSeedingService withoutOptionalModules = new DemoDataSeedingService(accountDemoApi, courseDemoApi, Optional.empty(), Optional.empty(), Optional.empty(),
-                Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi);
+        DemoDataSeedingService withoutOptionalModules = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
+                new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi),
+                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty()));
         assertThatCode(() -> withoutOptionalModules.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent()))
                 .as("seeding must work when the optional modules are disabled").doesNotThrowAnyException();
 
         assertThat(snapshotDemoData()).as("disabled modules must not change existing demo data").isEqualTo(beforeRun);
+    }
+
+    @Test
+    void continuesWithRemainingAreasWhenOneFails() {
+        seed();
+        DemoDataSnapshot beforeRun = snapshotDemoData();
+        TextDemoApi failingTextDemoApi = mock(TextDemoApi.class);
+        when(failingTextDemoApi.createDemo(any())).thenThrow(new IllegalStateException("simulated failure of the text exercises"));
+
+        DemoDataSeedingService withFailingArea = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
+                new DemoExerciseSeedingService(Optional.of(failingTextDemoApi), Optional.of(modelingDemoApi), Optional.empty(), quizDemoApi, programmingDemoApi),
+                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty()));
+        assertThatCode(() -> withFailingArea.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("a failing area must not escape into the startup")
+                .doesNotThrowAnyException();
+
+        assertThat(snapshotDemoData()).as("the areas after the failing one are still seeded and leave the existing demo data alone").isEqualTo(beforeRun);
     }
 
     private void seed() {
@@ -226,12 +278,27 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
      * The exercises of the demo course that this test context can seed.
      * <p>
      * The demo programming exercise is not among them: creating its repositories and build plans needs a version control and a continuous integration system, and this
-     * context activates neither {@code localvc} nor {@code localci}, so {@link ProgrammingDemoApi#createDemo} skips itself. Programming exercise seeding is therefore only
-     * covered by starting an instance with the
-     * {@code demo} profile, not by this test.
+     * context activates neither {@code localvc} nor {@code localci}, so {@link ProgrammingDemoApi#createDemo} skips itself.
      */
     private Set<Exercise> demoExercises(long courseId) {
         return exerciseRepository.findAllExercisesByCourseId(courseId);
+    }
+
+    private static Stream<String> demoLogins() {
+        return Stream.concat(Stream.of(AccountDemoApi.DEMO_STUDENT_LOGIN, AccountDemoApi.DEMO_TUTOR_LOGIN, AccountDemoApi.DEMO_EDITOR_LOGIN, AccountDemoApi.DEMO_INSTRUCTOR_LOGIN),
+                peerLogins());
+    }
+
+    private static Stream<String> peerLogins() {
+        return IntStream.rangeClosed(1, 10).mapToObj(number -> AccountDemoApi.DEMO_PEER_LOGIN_PREFIX + number);
+    }
+
+    private User user(String login) {
+        return userTestRepository.findOneByLogin(login).orElseThrow();
+    }
+
+    private boolean hasRole(User user, Course course, CourseRole role) {
+        return userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
     }
 
     private Optional<Course> demoCourse() {
@@ -257,8 +324,7 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
      * Captures the identities of the demo data instead of naming it, so that the idempotency assertions detect replaced records and keep working as the seeded content grows.
      */
     private DemoDataSnapshot snapshotDemoData() {
-        Set<Long> userIds = Stream.of(AccountDemoApi.DEMO_STUDENT_LOGIN, AccountDemoApi.DEMO_INSTRUCTOR_LOGIN).flatMap(login -> userTestRepository.findOneByLogin(login).stream())
-                .map(User::getId).collect(Collectors.toSet());
+        Set<Long> userIds = demoLogins().flatMap(login -> userTestRepository.findOneByLogin(login).stream()).map(User::getId).collect(Collectors.toSet());
         Set<Long> courseIds = courseRepository.findAllByShortName(CourseDemoApi.DEMO_COURSE_SHORT_NAME).stream().map(Course::getId).collect(Collectors.toSet());
         Optional<Course> course = demoCourse();
         if (course.isEmpty()) {

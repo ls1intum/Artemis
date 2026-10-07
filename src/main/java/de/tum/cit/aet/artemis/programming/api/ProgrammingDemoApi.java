@@ -102,16 +102,18 @@ public class ProgrammingDemoApi implements AbstractApi {
      * {@code localci} profile is not active, seeding is skipped instead of failing the startup.
      *
      * @param course the demo course the exercise belongs to.
+     * @return the demo exercise, whether it already existed or was created by this call, or empty if seeding it is skipped.
      */
-    public void createDemo(Course course) {
+    public Optional<ProgrammingExercise> createDemo(Course course) {
         if (versionControlService.isEmpty() || continuousIntegrationService.isEmpty()) {
             log.info("Skipping the demo programming exercise because no version control or continuous integration system is configured, activate the 'localvc' and 'localci' "
                     + "profiles to seed it");
-            return;
+            return Optional.empty();
         }
-        if (programmingExerciseRepository.countByShortNameAndCourse(DEMO_EXERCISE_SHORT_NAME, course) > 0) {
+        Optional<ProgrammingExercise> existingExercise = programmingExerciseRepository.findByShortNameAndCourseIdWithCompetencies(DEMO_EXERCISE_SHORT_NAME, course.getId());
+        if (existingExercise.isPresent()) {
             log.debug("Demo programming exercise already exists, skipping creation");
-            return;
+            return existingExercise;
         }
 
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(DEMO_EXERCISE_TITLE, DEMO_EXERCISE_SHORT_NAME,
@@ -124,10 +126,11 @@ public class ProgrammingDemoApi implements AbstractApi {
             programmingExerciseValidationService.validateNewProgrammingExerciseSettings(programmingExercise, buildConfig, course);
             ProgrammingExercise createdExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(programmingExercise, buildConfig, false);
             log.info("Created demo programming exercise '{}' with id {}", DEMO_EXERCISE_TITLE, createdExercise.getId());
+            return Optional.of(createdExercise);
         }
-        catch (GitAPIException | IOException | RuntimeException exception) {
-            // Do not fail the startup of the whole instance because one demo exercise could not be set up, the rest of the demo course is still useful.
-            log.error("Could not create the demo programming exercise", exception);
+        catch (GitAPIException | IOException exception) {
+            // The orchestrator logs and skips a failing area, so this only has to turn the checked exceptions of the repository setup into a failure of this area.
+            throw new IllegalStateException("Could not set up the repositories of the demo programming exercise", exception);
         }
     }
 
