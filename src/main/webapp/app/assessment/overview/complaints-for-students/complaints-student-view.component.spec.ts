@@ -459,6 +459,76 @@ describe('ComplaintsStudentViewComponent', () => {
         }
     });
 
+    describe('layout', () => {
+        async function renderCourseView(complaintResponse: Observable<EntityResponseType>) {
+            const exerciseWithComplaints: Exercise = { ...courseExercise, course: { ...course, maxComplaints: 3 } };
+            fixture.componentRef.setInput('exercise', exerciseWithComplaints);
+            fixture.componentRef.setInput('result', result);
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(complaintResponse);
+            vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        }
+
+        it('should render the host as a block so that margins and the first line of the area are not split off', async () => {
+            await renderCourseView(of());
+
+            expect(fixture.nativeElement.classList.contains('block')).toBe(true);
+        });
+
+        it('should render the actions as small TUM AET UI buttons in one wrapping row', async () => {
+            await renderCourseView(of());
+
+            const actions = fixture.nativeElement.querySelector('.complaints-student-view__actions') as HTMLElement;
+            expect(actions).not.toBeNull();
+            expect(['flex', 'flex-wrap', 'gap-2'].every((utility) => actions.classList.contains(utility))).toBe(true);
+
+            for (const id of ['complain', 'more-feedback']) {
+                const button = actions.querySelector(`#${id}`) as HTMLButtonElement;
+                expect(button).not.toBeNull();
+                expect(button.classList.contains('btn')).toBe(false);
+                expect(button.classList.contains('tumaet-ui-btn')).toBe(true);
+                // The small size (text-sm, py-1.5) makes the button 34px high, like the page-level buttons.
+                expect(button.classList.contains('tumaet:text-sm')).toBe(true);
+                expect(button.classList.contains('tumaet:py-1.5')).toBe(true);
+                expect(button.classList.contains('tumaet:py-2')).toBe(false);
+            }
+        });
+
+        it('should keep the disabled state and the not-allowed class on the complain button', async () => {
+            await renderCourseView(of());
+            // The complaint period is over, so complaining is not allowed any more.
+            component.timeOfComplaintValid.set(false);
+            fixture.detectChanges();
+
+            const button = fixture.nativeElement.querySelector('#complain') as HTMLButtonElement;
+            expect(button.disabled).toBe(true);
+            expect(button.classList.contains('not-allowed')).toBe(true);
+        });
+
+        it('should place the request and the response side by side only from the xl breakpoint and align their bottoms', async () => {
+            await renderCourseView(of({ body: complaint } as EntityResponseType));
+
+            const request = fixture.nativeElement.querySelector('jhi-complaint-request') as HTMLElement;
+            const response = fixture.nativeElement.querySelector('jhi-complaint-response') as HTMLElement;
+            expect(request).not.toBeNull();
+            expect(response).not.toBeNull();
+
+            // The viewport breakpoint (md) would squeeze both columns next to the exam sidebar, so the xl breakpoint is used.
+            for (const column of [request, response]) {
+                expect(column.classList.contains('col-12')).toBe(true);
+                expect(column.classList.contains('col-xl-6')).toBe(true);
+                expect(column.classList.contains('col-md-6')).toBe(false);
+            }
+            // The textareas share their top and bottom edges even if the status badge makes the request label wrap.
+            expect(request.parentElement).toBe(response.parentElement);
+            expect(request.parentElement!.classList.contains('row')).toBe(true);
+            expect(request.parentElement!.classList.contains('align-items-end')).toBe(true);
+        });
+    });
+
     function expectDefault() {
         expect(component.submission).toStrictEqual(submission);
         expect(component.course()).toStrictEqual(course);

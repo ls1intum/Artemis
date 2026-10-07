@@ -8,7 +8,7 @@
             [showRightPanel]="examMode()"
         >
             <!--region Left Panel-->
-            <div left-body class="text-editor-grid ps-2 pb-2 w-100">
+            <div left-body class="text-editor-grid pb-2 w-100" [class.ps-2]="!isExamSummary()">
                 @if (textExercise()?.teamMode && isActive) {
                     <div class="grid-area-team-info pb-4 ps-md-2">
                         <jhi-team-participate-info-box
@@ -65,7 +65,7 @@
                         @if (!result()?.feedbacks?.length) {
                             <div class="row">
                                 <div class="col-md-12 col-lg-10 col-xl-8">
-                                    <b [jhiTranslate]="'artemisApp.textExercise.submission'">Submission:</b>
+                                    <b class="text-base font-semibold!" [jhiTranslate]="'artemisApp.textExercise.submission'">Submission:</b>
                                     <hr />
                                     <jhi-text-result [result]="result()" [course]="course()" />
                                     <hr />
@@ -75,7 +75,7 @@
                         } @else {
                             <div class="row">
                                 <div class="col-md-12 col-lg-10 col-xl-8">
-                                    <b>
+                                    <b class="text-base font-semibold!">
                                         {{
                                             isOwnerOfParticipation()
                                                 ? ('artemisApp.textExercise.assessedSubmission' | artemisTranslate)
@@ -102,7 +102,9 @@
                                     </div>
                                 }
                                 @if (isOwnerOfParticipation()) {
-                                    <jhi-rating class="col-md-12 col-lg-10 col-xl-8 mt-2 alert alert-info" [result]="result()" [participation]="participation()" />
+                                    <div class="col-md-12 col-lg-10 col-xl-8 mt-2">
+                                        <jhi-rating class="alert alert-info block" [result]="result()" [participation]="participation()" />
+                                    </div>
                                 }
                             </div>
                         }

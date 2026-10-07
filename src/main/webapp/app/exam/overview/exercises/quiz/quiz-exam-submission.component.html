@@ -1,16 +1,6 @@
-<div class="flex items-center justify-between">
-    <h3 class="mb-0! font-normal">
-        <span>
-            {{ quizConfiguration().exerciseGroup?.title }}
-        </span>
-        <span jhiTranslate="artemisApp.examParticipation.points" [translateValues]="{ points: quizConfiguration().maxPoints }"></span>
-        @if (quizConfiguration().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-            <jhi-included-in-score-badge [includedInOverallScore]="quizConfiguration().includedInOverallScore" />
-        }
-    </h3>
+<jhi-exam-exercise-header [exercise]="quizConfiguration()">
     <jhi-exercise-save-button [submission]="studentSubmission()" (save)="notifyTriggerSave()" />
-</div>
-<hr />
+</jhi-exam-exercise-header>
 
 <!-- TODO this is duplicated with quiz-participation.component.html, we should add a shared component merging bought approaches instead of copy pasting things -->
 <div class="flex flex-col md:flex-row">

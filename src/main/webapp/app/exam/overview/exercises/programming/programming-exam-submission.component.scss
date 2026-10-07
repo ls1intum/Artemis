@@ -1,0 +1,7 @@
+/* The toolbar above the editor belongs to the shared code editor, whose buttons are Bootstrap's default size. In an exam they take the
+   size of the other controls on the page, which is the UI kit's small button. */
+:host ::ng-deep .editor-statusbar .btn {
+    padding: 0.375rem 0.625rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}

@@ -1,23 +1,28 @@
-@if (isTestRun()) {
-    <jhi-test-run-ribbon id="testRunRibbon" />
-}
 @if (!instructorView()) {
     <div id="exam-results-title">
-        <h2>
-            <span class="inline-flex items-center gap-2">
+        <jhi-exam-exercise-header class="block" titleKey="artemisApp.exam.examSummary.examResults">
+            <!-- An ng-container carries the slot attribute: with preserved whitespace the @if inside it would have more than one node at its root and nothing would be projected into the slot. -->
+            <ng-container headerLeading>
                 @if (isSidebarCollapsed()) {
-                    <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
+                    <jhi-course-sidebar-toggle-button class="shrink-0" [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
                 }
-                {{ 'artemisApp.exam.examSummary.examResults' | artemisTranslate }}
-            </span>
-            <button type="button" id="exportToPDFButton" tumAetUiButton class="float-right" (click)="printPDF()">
+            </ng-container>
+            <ng-container headerTitleSuffix>
+                @if (isTestRun()) {
+                    <tumaet-ui-tag id="testRunRibbon" severity="danger" class="shrink-0">
+                        <span jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
+                    </tumaet-ui-tag>
+                }
+            </ng-container>
+            @if (studentExam()) {
+                <!-- display: contents, so a button that is not shown leaves no empty flex item (and no extra gap) next to the export button -->
+                <jhi-exam-request-ai-feedback-button class="contents" [courseId]="courseId()" [studentExam]="studentExam()" [testExamConduction]="testExamConduction()" />
+            }
+            <button type="button" id="exportToPDFButton" tumAetUiButton size="small" (click)="printPDF()">
                 <fa-icon [icon]="faPrint" />
                 <span jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
             </button>
-            @if (studentExam()) {
-                <jhi-exam-request-ai-feedback-button [courseId]="courseId()" [studentExam]="studentExam()" [testExamConduction]="testExamConduction()" />
-            }
-        </h2>
+        </jhi-exam-exercise-header>
     </div>
 } @else if (isTestRun() && studentExam()) {
     <!-- The instructor test run summary has its own title bar, so only the AI feedback button is repeated here. -->
@@ -51,12 +56,12 @@
     </div>
 }
 @if (!resultsArePublished) {
-    <div class="mb-0">
+    <div class="mb-4">
         <fa-icon [icon]="faInfoCircle" class="info-icon" />
         {{ 'artemisApp.exam.resultInformation' | artemisTranslate }}
     </div>
 }
-<h3 jhiTranslate="artemisApp.exam.exercises"></h3>
+<h3 class="mb-3! text-base! font-semibold!" jhiTranslate="artemisApp.exam.exercises"></h3>
 @for (exercise of studentExam()?.exercises; track exercise; let i = $index) {
     <div [id]="'exercise-' + exercise.id">
         <jhi-collapsible-card [isCardContentCollapsed]="exerciseInfos()[exercise.id!].isCollapsed" [toggleCollapse]="toggleCollapseExercise(exerciseInfos()[exercise.id!])">
@@ -68,12 +73,13 @@
                     [resultsPublished]="resultsArePublished"
                 />
             </div>
-            <div class="collapsible-content">
+            <div class="collapsible-content" [style.--resizeable-container-right-max-width]="isPrinting() ? 'none' : '45%'">
                 <div class="flow-root">
                     <span class="exercise-buttons">
                         @if (plagiarismCaseInfos()[exercise.id!]) {
                             <a
                                 tumAetUiButton
+                                size="small"
                                 class="float-right ml-2"
                                 [severity]="plagiarismCaseInfos()[exercise.id!]!.verdict === PlagiarismVerdict.NO_PLAGIARISM ? 'info' : 'danger'"
                                 [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCaseInfos()[exercise.id!]!.id]"
@@ -99,6 +105,7 @@
                                     type="button"
                                     [id]="'show-sample-solution-button-' + exercise.id"
                                     tumAetUiButton
+                                    size="small"
                                     class="float-right"
                                     [variant]="exerciseInfos()[exercise.id!].displayExampleSolution ? 'solid' : 'outlined'"
                                     (click)="toggleShowSampleSolution(exercise.id)"
@@ -188,7 +195,6 @@
                                     exerciseInfos()[exercise.id!]?.submission?.submitted
                                 ) {
                                     <jhi-complaint-student-view
-                                        class="mt-2 mb-2 ml-4"
                                         [exercise]="exercise"
                                         [participation]="exerciseInfos()[exercise.id!]!.participation!"
                                         [result]="exerciseInfos()[exercise.id!]!.participation!.submissions![0].results?.[0]"
@@ -225,7 +231,7 @@
     </div>
 }
 <div class="flex justify-center">
-    <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="scrollToOverviewOrTop()" id="back-to-overview-button">
+    <button type="button" tumAetUiButton size="small" severity="secondary" variant="outlined" (click)="scrollToOverviewOrTop()" id="back-to-overview-button">
         <fa-icon [icon]="faArrowUp" />
         <span>&nbsp; {{ 'artemisApp.exam.examSummary.backToOverview' | artemisTranslate }}&nbsp; </span>
     </button>

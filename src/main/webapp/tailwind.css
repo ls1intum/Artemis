@@ -113,6 +113,10 @@
 @source './app/account';
 @source './app/course/manage/update';
 @source './app/assessment/shared/assessment-dashboard';
+@source './app/assessment/overview';
+@source './app/assessment/manage/complaints-for-tutor';
+@source './app/text/overview/text-editor';
+@source './app/fileupload/overview/file-upload-submission';
 @source './app/exercise/dashboards/tutor-leaderboard';
 @source './app/exercise/exercise-action-bar';
 @source './app/exercise/exam-exercise-row-buttons';
