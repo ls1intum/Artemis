@@ -201,7 +201,8 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
     void recreatesDeletedQuizWithoutModelingModule() {
         seed();
         Map<String, ExerciseActivity> seeded = snapshotActivity();
-        SecurityUtils.runAs(AccountDemoApi.DEMO_INSTRUCTOR_LOGIN, () -> exerciseDeletionService.delete(seeded.get(ENDED_QUIZ_TITLE).exerciseId(), false));
+        SecurityUtils.runAs(userTestRepository.findOneWithAuthoritiesByLogin(AccountDemoApi.DEMO_INSTRUCTOR_LOGIN).orElseThrow(),
+                () -> exerciseDeletionService.delete(seeded.get(ENDED_QUIZ_TITLE).exerciseId(), false));
 
         DemoDataSeedingService withoutModeling = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
                 new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi, Optional.empty()),
