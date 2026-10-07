@@ -8,7 +8,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 
 /**
- * Factory for the fields every course exercise shares, used by integration test fixtures and by the demo course seeded by the {@code demo} profile.
+ * Factory for the fields every course exercise shares, used by integration test fixtures and by the demo course seeded by the {@code demo} profile. Unlike the factories of
+ * other modules, it is shared by the modules of the individual exercise types, which build on the exercise module anyway.
  * <p>
  * This factory only <b>populates</b> the entity, it never persists it and it never derives values on its own: every identifying value is passed in by the caller. Tests pass
  * randomized values to keep fixtures independent of each other, while the demo seeding uses fixed values so that re-running it stays idempotent.

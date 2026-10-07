@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -27,12 +28,16 @@ import de.tum.cit.aet.artemis.exercise.factories.ExerciseDates;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.EntityIdRefDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromLiveClientDTO;
@@ -41,7 +46,6 @@ import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.ShortAnswerSubmittedTextF
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.exception.QuizJoinException;
 import de.tum.cit.aet.artemis.quiz.exception.QuizSubmissionException;
-import de.tum.cit.aet.artemis.quiz.factories.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
@@ -156,32 +160,29 @@ public class QuizDemoApi implements AbstractApi {
     }
 
     private QuizExercise createOngoingQuiz(Course course) {
-        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ONGOING_QUIZ_TITLE, ONGOING_QUIZ_SHORT_NAME, ONGOING_PROBLEM_STATEMENT, ExerciseDates.ongoing(),
-                QuizMode.INDIVIDUAL, DEMO_DURATION_SECONDS, course);
+        QuizExercise quizExercise = quizExercise(ONGOING_QUIZ_TITLE, ONGOING_QUIZ_SHORT_NAME, ONGOING_PROBLEM_STATEMENT, ExerciseDates.ongoing(), QuizMode.INDIVIDUAL,
+                DEMO_DURATION_SECONDS, course);
         quizExercise.getCategories().add(ExerciseFactory.exerciseCategory("Java", "#6ae8ac"));
 
-        quizExercise
-                .addQuestion(QuizExerciseFactory.generateMultipleChoiceQuestion("Collection guarantees", "Which of the following statements about Java collections are correct?",
-                        "ArrayList is backed by an array and therefore indexes in constant time, while LinkedList has to walk the chain. HashSet makes no ordering promise at all, "
-                                + "LinkedHashSet is the one that preserves insertion order. TreeMap is a sorted map and keeps its keys in the order of their natural comparison.",
-                        4.0, ScoringType.PROPORTIONAL_WITHOUT_PENALTY, false,
-                        List.of(QuizExerciseFactory.generateAnswerOption("`ArrayList` gives you access by index in constant time.", true, "Backed by an array."),
-                                QuizExerciseFactory.generateAnswerOption("`LinkedList` gives you access by index in constant time.", false, "It has to traverse the list."),
-                                QuizExerciseFactory.generateAnswerOption("`HashSet` preserves the order in which elements were inserted.", false, "Use `LinkedHashSet` for that."),
-                                QuizExerciseFactory.generateAnswerOption("`TreeMap` keeps its keys sorted.", true, "It is a `SortedMap`."))));
+        quizExercise.addQuestion(multipleChoiceQuestion("Collection guarantees", "Which of the following statements about Java collections are correct?",
+                "ArrayList is backed by an array and therefore indexes in constant time, while LinkedList has to walk the chain. HashSet makes no ordering promise at all, "
+                        + "LinkedHashSet is the one that preserves insertion order. TreeMap is a sorted map and keeps its keys in the order of their natural comparison.",
+                4.0, false,
+                List.of(answerOption("`ArrayList` gives you access by index in constant time.", true, "Backed by an array."),
+                        answerOption("`LinkedList` gives you access by index in constant time.", false, "It has to traverse the list."),
+                        answerOption("`HashSet` preserves the order in which elements were inserted.", false, "Use `LinkedHashSet` for that."),
+                        answerOption("`TreeMap` keeps its keys sorted.", true, "It is a `SortedMap`."))));
 
-        quizExercise.addQuestion(QuizExerciseFactory.generateMultipleChoiceQuestion("Average lookup cost",
+        quizExercise.addQuestion(multipleChoiceQuestion("Average lookup cost",
                 "A `HashMap` uses a hash function that distributes the keys well. What is the average time complexity of `get`?",
-                "With a good hash function the entries spread evenly across the buckets, so a lookup inspects only a handful of entries regardless of the map size.", 2.0,
-                ScoringType.ALL_OR_NOTHING, true,
-                List.of(QuizExerciseFactory.generateAnswerOption("O(1)", true, "Constant on average."),
-                        QuizExerciseFactory.generateAnswerOption("O(log n)", false, "That is the cost of a balanced tree, for example `TreeMap`."),
-                        QuizExerciseFactory.generateAnswerOption("O(n)", false, "That is the worst case, when all keys collide in the same bucket."),
-                        QuizExerciseFactory.generateAnswerOption("O(n log n)", false, "That is the cost of sorting, not of a lookup."))));
+                "With a good hash function the entries spread evenly across the buckets, so a lookup inspects only a handful of entries regardless of the map size.", 2.0, true,
+                List.of(answerOption("O(1)", true, "Constant on average."), answerOption("O(log n)", false, "That is the cost of a balanced tree, for example `TreeMap`."),
+                        answerOption("O(n)", false, "That is the worst case, when all keys collide in the same bucket."),
+                        answerOption("O(n log n)", false, "That is the cost of sorting, not of a lookup."))));
 
-        quizExercise.addQuestion(QuizExerciseFactory.generateShortAnswerQuestion("Complexity of map lookups",
+        quizExercise.addQuestion(shortAnswerQuestion("Complexity of map lookups",
                 "Looking up a key in a `HashMap` costs [-spot 1] on average, while looking up a key in a `TreeMap` costs [-spot 2].",
-                "A hash map reaches its bucket directly, a tree map descends a balanced search tree.", 2.0, 85, false, List.of("O(1)", "O(log n)")));
+                "A hash map reaches its bucket directly, a tree map descends a balanced search tree.", 2.0, List.of("O(1)", "O(log n)")));
 
         return create(quizExercise);
     }
@@ -194,41 +195,39 @@ public class QuizDemoApi implements AbstractApi {
     private QuizExercise createEndedQuiz(Course course, List<User> students) {
         // No due date while the demo students take it: a due date would schedule the evaluation of the quiz for when it passes, which would evaluate it a second time after it is
         // ended and evaluated below.
-        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ENDED_QUIZ_TITLE, ENDED_QUIZ_SHORT_NAME, ENDED_PROBLEM_STATEMENT,
+        QuizExercise quizExercise = quizExercise(ENDED_QUIZ_TITLE, ENDED_QUIZ_SHORT_NAME, ENDED_PROBLEM_STATEMENT,
                 new ExerciseDates(ZonedDateTime.now().minusWeeks(1), null, null, null), QuizMode.INDIVIDUAL, DEMO_DURATION_SECONDS, course);
         quizExercise.getCategories().add(ExerciseFactory.exerciseCategory("Algorithms", "#1b97ca"));
 
-        quizExercise.addQuestion(QuizExerciseFactory.generateMultipleChoiceQuestion("Worst-case sorting",
+        quizExercise.addQuestion(multipleChoiceQuestion("Worst-case sorting",
                 "Which of the following algorithms sort an array of n elements in O(n log n) time **in the worst case**?",
                 "Merge sort always splits its input into halves, and heap sort always removes n elements from a heap of height log n. Quicksort degrades to O(n²) when its pivots "
                         + "split the input badly, and insertion sort needs O(n²) comparisons for an input in reverse order.",
-                4.0, ScoringType.PROPORTIONAL_WITHOUT_PENALTY, false,
-                List.of(QuizExerciseFactory.generateAnswerOption("Merge sort", true, "It always splits its input into two halves."),
-                        QuizExerciseFactory.generateAnswerOption("Heap sort", true, "Each of the n removals from the heap costs O(log n)."),
-                        QuizExerciseFactory.generateAnswerOption("Quicksort", false, "Bad pivots make it quadratic, only its average case is O(n log n)."),
-                        QuizExerciseFactory.generateAnswerOption("Insertion sort", false, "It is quadratic unless the input is almost sorted."))));
+                4.0, false,
+                List.of(answerOption("Merge sort", true, "It always splits its input into two halves."),
+                        answerOption("Heap sort", true, "Each of the n removals from the heap costs O(log n)."),
+                        answerOption("Quicksort", false, "Bad pivots make it quadratic, only its average case is O(n log n)."),
+                        answerOption("Insertion sort", false, "It is quadratic unless the input is almost sorted."))));
 
-        quizExercise.addQuestion(QuizExerciseFactory.generateMultipleChoiceQuestion("Binary search",
-                "What is the worst-case time complexity of binary search in a sorted array of n elements?",
-                "Every comparison halves the range that can still contain the element, so after log n steps only one candidate is left.", 2.0, ScoringType.ALL_OR_NOTHING, true,
-                List.of(QuizExerciseFactory.generateAnswerOption("O(1)", false, "Only if the element happens to be in the middle."),
-                        QuizExerciseFactory.generateAnswerOption("O(log n)", true, "Each step halves the search range."),
-                        QuizExerciseFactory.generateAnswerOption("O(n)", false, "That is linear search, which does not need a sorted array."),
-                        QuizExerciseFactory.generateAnswerOption("O(n log n)", false, "That is the cost of sorting the array first."))));
+        quizExercise.addQuestion(multipleChoiceQuestion("Binary search", "What is the worst-case time complexity of binary search in a sorted array of n elements?",
+                "Every comparison halves the range that can still contain the element, so after log n steps only one candidate is left.", 2.0, true,
+                List.of(answerOption("O(1)", false, "Only if the element happens to be in the middle."), answerOption("O(log n)", true, "Each step halves the search range."),
+                        answerOption("O(n)", false, "That is linear search, which does not need a sorted array."),
+                        answerOption("O(n log n)", false, "That is the cost of sorting the array first."))));
 
-        quizExercise.addQuestion(QuizExerciseFactory.generateMultipleChoiceQuestion("Stable sorting",
+        quizExercise.addQuestion(multipleChoiceQuestion("Stable sorting",
                 "A sorting algorithm is *stable* if elements with equal keys keep their relative order. Which of these algorithms is stable in its usual implementation?",
                 "Merge sort takes from the left half first when two keys are equal, which keeps their order. The usual in-place implementations of the others swap elements over "
                         + "long distances and can reorder equal keys.",
-                2.0, ScoringType.ALL_OR_NOTHING, true,
-                List.of(QuizExerciseFactory.generateAnswerOption("Merge sort", true, "Equal keys are taken from the left half first."),
-                        QuizExerciseFactory.generateAnswerOption("Quicksort", false, "Partitioning swaps elements past equal keys."),
-                        QuizExerciseFactory.generateAnswerOption("Heap sort", false, "Building the heap reorders equal keys."),
-                        QuizExerciseFactory.generateAnswerOption("Selection sort", false, "Swapping the minimum to the front can jump over equal keys."))));
+                2.0, true,
+                List.of(answerOption("Merge sort", true, "Equal keys are taken from the left half first."),
+                        answerOption("Quicksort", false, "Partitioning swaps elements past equal keys."),
+                        answerOption("Heap sort", false, "Building the heap reorders equal keys."),
+                        answerOption("Selection sort", false, "Swapping the minimum to the front can jump over equal keys."))));
 
-        quizExercise.addQuestion(QuizExerciseFactory.generateShortAnswerQuestion("Quicksort",
+        quizExercise.addQuestion(shortAnswerQuestion("Quicksort",
                 "Quicksort partitions the array around a [-spot 1] element. If that element splits the array evenly every time, quicksort runs in [-spot 2] time.",
-                "Partitioning costs O(n) on every level of the recursion, and even splits lead to log n levels.", 2.0, 85, false, List.of("pivot", "O(n log n)")));
+                "Partitioning costs O(n) on every level of the recursion, and even splits lead to log n levels.", 2.0, List.of("pivot", "O(n log n)")));
 
         QuizExercise createdQuiz = create(quizExercise);
         QuizExercise quizWithQuestions = quizExerciseRepository.findByIdWithQuestionsElseThrow(createdQuiz.getId());
@@ -252,34 +251,31 @@ public class QuizDemoApi implements AbstractApi {
      */
     public QuizExercise createDemoExamExercise(ExerciseGroup exerciseGroup) {
         // Neither the mode nor the duration apply to a quiz in an exam, so it keeps the ones the quiz editor of the client proposes for every new quiz.
-        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(EXAM_QUIZ_TITLE, null, null, new ExerciseDates(null, null, null, null), QuizMode.SYNCHRONIZED,
-                DEMO_DURATION_SECONDS, exerciseGroup.getExam().getCourse());
+        QuizExercise quizExercise = quizExercise(EXAM_QUIZ_TITLE, null, null, new ExerciseDates(null, null, null, null), QuizMode.SYNCHRONIZED, DEMO_DURATION_SECONDS,
+                exerciseGroup.getExam().getCourse());
         quizExercise.setCourse(null);
         quizExercise.setExerciseGroup(exerciseGroup);
 
-        quizExercise.addQuestion(QuizExerciseFactory.generateMultipleChoiceQuestion("Big O notation", "Which of the following statements about Big O notation are correct?",
+        quizExercise.addQuestion(multipleChoiceQuestion("Big O notation", "Which of the following statements about Big O notation are correct?",
                 "Big O keeps only the dominant term and drops constant factors. It describes how the running time grows, which says little about small inputs, where an "
                         + "algorithm of a worse complexity class can well be faster.",
-                2.0, ScoringType.PROPORTIONAL_WITHOUT_PENALTY, false,
-                List.of(QuizExerciseFactory.generateAnswerOption("`O(2n)` and `O(n)` are the same complexity class.", true, "Constant factors are dropped."),
-                        QuizExerciseFactory.generateAnswerOption("`O(n² + n)` simplifies to `O(n²)`.", true, "Only the dominant term is kept."),
-                        QuizExerciseFactory.generateAnswerOption("An algorithm in `O(n log n)` is faster than one in `O(n²)` for every input.", false,
+                2.0, false,
+                List.of(answerOption("`O(2n)` and `O(n)` are the same complexity class.", true, "Constant factors are dropped."),
+                        answerOption("`O(n² + n)` simplifies to `O(n²)`.", true, "Only the dominant term is kept."),
+                        answerOption("An algorithm in `O(n log n)` is faster than one in `O(n²)` for every input.", false,
                                 "Only for large enough inputs: for small ones, constant factors can dominate."),
-                        QuizExerciseFactory.generateAnswerOption("Big O states the exact number of steps an algorithm takes.", false,
-                                "It describes how the number of steps grows."))));
+                        answerOption("Big O states the exact number of steps an algorithm takes.", false, "It describes how the number of steps grows."))));
 
-        quizExercise.addQuestion(QuizExerciseFactory.generateMultipleChoiceQuestion("Comparing all pairs",
+        quizExercise.addQuestion(multipleChoiceQuestion("Comparing all pairs",
                 "A method counts the pairs of equal elements in an array of n elements by comparing every element with every element after it. What is its time complexity?",
-                "The first element is compared with n - 1 others, the second with n - 2 and so on, which adds up to n(n - 1) / 2 comparisons.", 2.0, ScoringType.ALL_OR_NOTHING,
-                true,
-                List.of(QuizExerciseFactory.generateAnswerOption("O(n)", false, "That would be a single pass over the array."),
-                        QuizExerciseFactory.generateAnswerOption("O(n log n)", false, "That is the cost of sorting the array first, which would find equal elements faster."),
-                        QuizExerciseFactory.generateAnswerOption("O(n²)", true, "Every pair of elements is compared once."),
-                        QuizExerciseFactory.generateAnswerOption("O(2ⁿ)", false, "That is the number of subsets, not of pairs."))));
+                "The first element is compared with n - 1 others, the second with n - 2 and so on, which adds up to n(n - 1) / 2 comparisons.", 2.0, true,
+                List.of(answerOption("O(n)", false, "That would be a single pass over the array."),
+                        answerOption("O(n log n)", false, "That is the cost of sorting the array first, which would find equal elements faster."),
+                        answerOption("O(n²)", true, "Every pair of elements is compared once."), answerOption("O(2ⁿ)", false, "That is the number of subsets, not of pairs."))));
 
-        quizExercise.addQuestion(QuizExerciseFactory.generateShortAnswerQuestion("Doubling the input",
+        quizExercise.addQuestion(shortAnswerQuestion("Doubling the input",
                 "If the input doubles, the running time of an algorithm in O(n²) grows by a factor of [-spot 1], and the one of an algorithm in O(n) by a factor of [-spot 2].",
-                "(2n)² = 4n², while 2n is just twice n.", 1.0, 85, false, List.of("4", "2")));
+                "(2n)² = 4n², while 2n is just twice n.", 1.0, List.of("4", "2")));
 
         return create(quizExercise);
     }
@@ -319,6 +315,57 @@ public class QuizDemoApi implements AbstractApi {
                 throw new IllegalStateException("Demo student " + student.getLogin() + " could not take the demo quiz", exception);
             }
         });
+    }
+
+    /**
+     * Builds a quiz like the quiz editor of the client does. Its max points are only known once all of its questions have been added.
+     */
+    private static QuizExercise quizExercise(String title, @Nullable String shortName, @Nullable String problemStatement, ExerciseDates dates, QuizMode quizMode, int duration,
+            Course course) {
+        QuizExercise quizExercise = ExerciseFactory.populateExercise(new QuizExercise(), title, shortName, problemStatement, 1.0, 0.0, dates, course);
+        quizExercise.setQuizMode(quizMode);
+        quizExercise.setDuration(duration);
+        return quizExercise;
+    }
+
+    /**
+     * Builds a multiple choice question whose answer options appear in random order. A single choice question is scored all or nothing, any other one proportionally without
+     * penalty.
+     */
+    private static MultipleChoiceQuestion multipleChoiceQuestion(String title, String text, String explanation, double points, boolean singleChoice,
+            List<AnswerOption> answerOptions) {
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title(title).text(text).score(points);
+        question.setScoringType(singleChoice ? ScoringType.ALL_OR_NOTHING : ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
+        question.setSingleChoice(singleChoice);
+        question.setExplanation(explanation);
+        question.setRandomizeOrder(true);
+        answerOptions.forEach(question::addAnswerOption);
+        return question;
+    }
+
+    private static AnswerOption answerOption(String text, boolean isCorrect, String explanation) {
+        return new AnswerOption().text(text).isCorrect(isCorrect).explanation(explanation);
+    }
+
+    /**
+     * Builds a short answer question with one spot per solution, numbered from 1 in the order of the solutions as the question text references them. Answers are accepted
+     * regardless of their letter case and with the similarity the quiz editor proposes.
+     */
+    private static ShortAnswerQuestion shortAnswerQuestion(String title, String text, String explanation, double points, List<String> solutionsInSpotOrder) {
+        ShortAnswerQuestion question = (ShortAnswerQuestion) new ShortAnswerQuestion().title(title).text(text).score(points);
+        question.setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
+        question.setSimilarityValue(85);
+        question.setMatchLetterCase(false);
+        question.setExplanation(explanation);
+        question.setRandomizeOrder(false);
+        for (int index = 0; index < solutionsInSpotOrder.size(); index++) {
+            ShortAnswerSpot spot = new ShortAnswerSpot().spotNr(index + 1).width(15);
+            ShortAnswerSolution solution = new ShortAnswerSolution().text(solutionsInSpotOrder.get(index));
+            question.addSpot(spot);
+            question.addSolution(solution);
+            question.addCorrectMapping(new ShortAnswerMapping().spot(spot).solution(solution));
+        }
+        return question;
     }
 
     /**

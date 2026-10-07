@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -37,7 +38,6 @@ import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.factories.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 
@@ -236,8 +236,8 @@ public class ModelingDemoApi extends AbstractModelingApi {
      * @return the created exercise.
      */
     public ModelingExercise createDemoExamExercise(ExerciseGroup exerciseGroup) {
-        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(EXAM_EXERCISE_TITLE, null, EXAM_PROBLEM_STATEMENT, 10.0, 0.0,
-                new ExerciseDates(null, null, null, null), DiagramType.ClassDiagram, null, null, exerciseGroup.getExam().getCourse());
+        ModelingExercise modelingExercise = buildClassDiagramExercise(EXAM_EXERCISE_TITLE, null, EXAM_PROBLEM_STATEMENT, new ExerciseDates(null, null, null, null),
+                exerciseGroup.getExam().getCourse());
         modelingExercise.setCourse(null);
         modelingExercise.setExerciseGroup(exerciseGroup);
         return create(modelingExercise);
@@ -245,10 +245,18 @@ public class ModelingDemoApi extends AbstractModelingApi {
 
     private ModelingExercise createExercise(Course course, String title, String shortName, String problemStatement, ExerciseDates dates) {
         // No example solution model: a full Apollon diagram is not needed to participate, and an empty one would show up as a broken example solution.
-        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(title, shortName, problemStatement, 10.0, 0.0, dates, DiagramType.ClassDiagram, null,
-                null, course);
+        ModelingExercise modelingExercise = buildClassDiagramExercise(title, shortName, problemStatement, dates, course);
         modelingExercise.getCategories().add(ExerciseFactory.exerciseCategory("Modeling", "#9dca53"));
         return create(modelingExercise);
+    }
+
+    /**
+     * Builds a class diagram exercise worth 10 points, like the modeling exercise editor of the client does.
+     */
+    private static ModelingExercise buildClassDiagramExercise(String title, @Nullable String shortName, String problemStatement, ExerciseDates dates, Course course) {
+        ModelingExercise modelingExercise = ExerciseFactory.populateExercise(new ModelingExercise(), title, shortName, problemStatement, 10.0, 0.0, dates, course);
+        modelingExercise.setDiagramType(DiagramType.ClassDiagram);
+        return modelingExercise;
     }
 
     /**

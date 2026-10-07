@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.api.AbstractApi;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -28,7 +29,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
-import de.tum.cit.aet.artemis.programming.factories.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
@@ -117,8 +117,16 @@ public class ProgrammingDemoApi implements AbstractApi {
             return existingExercise;
         }
 
-        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(DEMO_EXERCISE_TITLE, DEMO_EXERCISE_SHORT_NAME,
-                readTemplateProblemStatement(), 10.0, 0.0, ExerciseDates.ongoing(), DEMO_PROGRAMMING_LANGUAGE, DEMO_PROJECT_TYPE, DEMO_PACKAGE_NAME, course);
+        ProgrammingExercise programmingExercise = ExerciseFactory.populateExercise(new ProgrammingExercise(), DEMO_EXERCISE_TITLE, DEMO_EXERCISE_SHORT_NAME,
+                readTemplateProblemStatement(), 10.0, 0.0, ExerciseDates.ongoing(), course);
+        programmingExercise.setProgrammingLanguage(DEMO_PROGRAMMING_LANGUAGE);
+        programmingExercise.setProjectType(DEMO_PROJECT_TYPE);
+        programmingExercise.setPackageName(DEMO_PACKAGE_NAME);
+        programmingExercise.setStaticCodeAnalysisEnabled(false);
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        // At least one way of working on the exercise has to be allowed, otherwise validateProgrammingSettings rejects the exercise.
+        programmingExercise.setAllowOnlineEditor(true);
+        programmingExercise.setAllowOfflineIde(true);
         programmingExercise.getCategories().add(ExerciseFactory.exerciseCategory("Algorithms", "#1b97ca"));
 
         // The build configuration is owned by the creation path and only handed in, mirroring ProgrammingExerciseCreationResource#createProgrammingExercise.
