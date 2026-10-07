@@ -8,7 +8,7 @@
     <name>${exerciseName} Tests</name>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <ares.version>2.2.0</ares.version>
+        <ares.version>2.2.1</ares.version>
         <aspectj.version>1.9.25.1</aspectj.version>
         <!-- Keeps @{argLine} resolvable when no other plugin contributes JVM arguments -->
         <argLine></argLine>

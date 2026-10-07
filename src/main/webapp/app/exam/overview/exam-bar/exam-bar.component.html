@@ -1,39 +1,41 @@
 <div
-    class="exam-bar sticky top-0 z-[1020] mt-0 mb-3! rounded-lg bg-(--module-bg) px-4 py-2 text-xl font-medium"
-    [class]="isEndView() ? 'mx-auto max-w-[900px] max-[900px]:max-w-[600px] max-[600px]:max-w-[500px]' : !isTestRun() ? 'mx-4' : ''"
+    class="exam-bar flex h-10 shrink-0 items-center justify-between gap-4! rounded-lg bg-(--module-bg) px-6!"
+    data-testid="exam-bar"
+    [class]="isEndView() ? 'mx-auto w-full max-w-[900px] max-[900px]:max-w-[600px] max-[600px]:max-w-[500px]' : ''"
 >
-    <div class="flex justify-between">
-        <h3 class="mr-4 mb-0! self-center" data-testid="exam-bar-title">
-            {{ examTitle() }}
-        </h3>
-        @if (!examTimeLineView()) {
-            <div class="flex items-center justify-between">
-                <jhi-exam-timer
-                    class="mr-4!"
-                    [criticalTime]="isEndView() ? criticalTimeEndView : criticalTime"
-                    [endDate]="endDate()"
-                    [isEndView]="isEndView()"
-                    (timerAboutToEnd)="triggerExamAboutToEnd()"
-                />
-                <jhi-exam-live-events-button [examStartDate]="examStartDate()" />
-                @if (!isEndView()) {
-                    <button
-                        type="button"
-                        tumAetUiButton
-                        severity="danger"
-                        size="small"
-                        data-testid="hand-in-early"
-                        class="ml-2!"
-                        [attr.aria-label]="'artemisApp.examParticipation.handInEarly' | artemisTranslate"
-                        (click)="handInEarly()"
-                    >
-                        <span>
-                            <fa-icon [fixedWidth]="true" [icon]="faDoorClosed" />
-                            <span class="hidden sm:inline" jhiTranslate="artemisApp.examParticipation.handInEarly"></span>
-                        </span>
-                    </button>
-                }
-            </div>
+    <div class="flex min-w-0 items-center gap-2">
+        <h3 class="m-0! truncate text-base! leading-tight! font-semibold!" data-testid="exam-bar-title">{{ examTitle() }}</h3>
+        @if (isTestRun()) {
+            <tumaet-ui-tag id="testRunRibbon" severity="danger" class="shrink-0">
+                <span jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
+            </tumaet-ui-tag>
         }
     </div>
+    @if (!examTimeLineView()) {
+        <div class="flex shrink-0 items-center gap-4!">
+            <jhi-exam-timer
+                [criticalTime]="isEndView() ? criticalTimeEndView : criticalTime"
+                [endDate]="endDate()"
+                [isEndView]="isEndView()"
+                (timerAboutToEnd)="triggerExamAboutToEnd()"
+            />
+            <jhi-exam-live-events-button [examStartDate]="examStartDate()" />
+            @if (!isEndView()) {
+                <button
+                    type="button"
+                    tumAetUiButton
+                    severity="danger"
+                    size="small"
+                    data-testid="hand-in-early"
+                    [attr.aria-label]="'artemisApp.examParticipation.handInEarly' | artemisTranslate"
+                    (click)="handInEarly()"
+                >
+                    <span>
+                        <fa-icon [fixedWidth]="true" [icon]="faDoorClosed" />
+                        <span class="hidden sm:inline" jhiTranslate="artemisApp.examParticipation.handInEarly"></span>
+                    </span>
+                </button>
+            }
+        </div>
+    }
 </div>

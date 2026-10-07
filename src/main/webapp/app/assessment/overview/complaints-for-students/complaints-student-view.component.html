@@ -18,12 +18,13 @@
         }
 
         @if (isCorrectUserToFileAction() && !complaint()) {
-            <div class="complaints-student-view__actions mt-4">
+            <div class="complaints-student-view__actions mt-6! flex flex-wrap gap-2">
                 @if (isExamMode() || (course()?.maxComplaints && course()!.maxComplaints! > 0)) {
                     <button
                         type="button"
                         id="complain"
-                        class="btn btn-primary"
+                        tumAetUiButton
+                        size="small"
                         [class.not-allowed]="(!isExamMode() && remainingNumberOfComplaints() === 0) || !timeOfComplaintValid()"
                         (click)="openComplaintForm(ComplaintType.COMPLAINT)"
                         [disabled]="(!isExamMode() && remainingNumberOfComplaints() === 0) || !timeOfComplaintValid()"
@@ -39,7 +40,8 @@
                     <button
                         type="button"
                         id="more-feedback"
-                        class="btn btn-primary ms-1"
+                        tumAetUiButton
+                        size="small"
                         [class.not-allowed]="!timeOfFeedbackRequestValid()"
                         (click)="openComplaintForm(ComplaintType.MORE_FEEDBACK)"
                         [disabled]="!timeOfFeedbackRequestValid()"
@@ -64,9 +66,9 @@
         }
         <div id="complaintScrollpoint"></div>
         @if (complaint(); as complaint) {
-            <div class="row">
-                <jhi-complaint-request class="col-12 col-md-6" [complaint]="complaint" [maxComplaintTextLimit]="course()?.maxComplaintTextLimit!" />
-                <jhi-complaint-response class="col-12 col-md-6" [complaint]="complaint" [maxComplaintResponseTextLimit]="course()?.maxComplaintResponseTextLimit!" />
+            <div class="row align-items-end">
+                <jhi-complaint-request class="col-12 col-xl-6" [complaint]="complaint" [maxComplaintTextLimit]="course()?.maxComplaintTextLimit!" />
+                <jhi-complaint-response class="col-12 col-xl-6" [complaint]="complaint" [maxComplaintResponseTextLimit]="course()?.maxComplaintResponseTextLimit!" />
             </div>
         }
     </div>

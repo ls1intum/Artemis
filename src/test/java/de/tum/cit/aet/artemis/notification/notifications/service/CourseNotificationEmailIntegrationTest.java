@@ -462,8 +462,8 @@ class CourseNotificationEmailIntegrationTest extends AbstractSpringIntegrationIn
         sendCourseNotificationEmail("atlasCompetencyUpdateNotification", params, "en");
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("Atlas automatically updated the competencies of the course &quot;Algorithms&quot; after changes to 2 exercise(s).");
-        assertThat(body).contains("Competencies created: 1, edited: 0, deleted: 0. Exercise links added or updated: 2, removed: 0.");
+        assertThat(body).contains("Atlas automatically updated the competencies of the course &quot;Algorithms&quot; after changes to 2 learning object(s).");
+        assertThat(body).contains("Competencies created: 1, edited: 0, deleted: 0. Learning object links added or updated: 2, removed: 0.");
         assertThat(body).contains("Created competency Sorting (APPLY).").contains("<em>The new exercise practices sorting.</em>");
         assertThat(body).contains("4 further change(s) are not listed here.");
     }
@@ -477,7 +477,7 @@ class CourseNotificationEmailIntegrationTest extends AbstractSpringIntegrationIn
         sendCourseNotificationEmail("atlasCompetencyUpdateNotification", params, "de");
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("ist nach Änderungen an 1 Aufgabe(n) fehlgeschlagen. Es wurden keine Kompetenzen oder Verknüpfungen geändert.");
+        assertThat(body).contains("ist nach Änderungen an 1 Lernobjekt(en) fehlgeschlagen. Es wurden keine Kompetenzen oder Verknüpfungen geändert.");
         assertThat(body).doesNotContain("Übernommene Änderungen");
     }
 

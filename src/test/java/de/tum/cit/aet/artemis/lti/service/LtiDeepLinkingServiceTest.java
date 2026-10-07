@@ -45,7 +45,6 @@ import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
-import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 
@@ -362,7 +361,6 @@ class LtiDeepLinkingServiceTest {
 
         Course course = new Course();
         course.setId(courseId);
-        course.setOnlineCourseConfiguration(new OnlineCourseConfiguration());
         exercise.setCourse(course);
         return exercise;
     }

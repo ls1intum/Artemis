@@ -1,7 +1,7 @@
 @if (fileUploadExercise()) {
     <jhi-resizeable-container [isExerciseParticipation]="true" [expandProblemStatement]="expandProblemStatement()" [showRightPanel]="showProblemStatement() && examMode()">
         <!--region Left Panel-->
-        <div left-body class="px-2 pb-2 w-100">
+        <div left-body class="pe-2 pb-2 w-100" [class.ps-2]="!displayedInExamSummary()">
             <div class="row">
                 @if ((isActive() || isLate()) && !result() && fileUploadExercise() && submission() && isOwnerOfParticipation()) {
                     <div class="col-12 col-md-6">
@@ -36,7 +36,7 @@
                             }
                         </h6>
                     } @else {
-                        <h5 jhiTranslate="artemisApp.exam.examSummary.yourSubmission"></h5>
+                        <h5 class="text-base! font-semibold!" jhiTranslate="artemisApp.exam.examSummary.yourSubmission"></h5>
                         <span jhiTranslate="artemisApp.fileUploadSubmission.submittedFile" [translateValues]="{ filename: submittedFileName() }"></span>
                     }
                     <br />
@@ -62,7 +62,7 @@
             @if (result()?.feedbacks?.length) {
                 <div>
                     <br />
-                    <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission"></span>:</h5>
+                    <h5 class="text-base! font-semibold!"><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission"></span>:</h5>
                     <div class="row">
                         @if (unreferencedFeedback(); as feedback) {
                             @if (feedback.length) {
@@ -81,7 +81,14 @@
                     </div>
                     <div class="row">
                         @if (isOwnerOfParticipation() && result() && participation()) {
-                            <jhi-rating class="mt-2 alert alert-info" [result]="result()!" [participation]="participation()!" [isOwnerOfParticipation]="isOwnerOfParticipation()" />
+                            <div class="col-xl-8 mt-2">
+                                <jhi-rating
+                                    class="alert alert-info block"
+                                    [result]="result()!"
+                                    [participation]="participation()!"
+                                    [isOwnerOfParticipation]="isOwnerOfParticipation()"
+                                />
+                            </div>
                         }
                     </div>
                 </div>
@@ -99,7 +106,7 @@
         <!--region Right Panel-->
         <fa-icon right-header [icon]="farListAlt" />&nbsp;
         <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
-        <p right-body class="mb-3 markdown-preview">
+        <p right-body class="mb-4! markdown-preview">
             @if (fileUploadExercise()?.problemStatement; as problemStatement) {
                 <span [jhiMarkdown]="problemStatement"></span>
             }

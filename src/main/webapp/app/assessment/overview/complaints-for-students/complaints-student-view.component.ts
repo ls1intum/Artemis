@@ -22,12 +22,15 @@ import { ComplaintRequestComponent } from 'app/assessment/overview/complaint-req
 import { ComplaintResponseComponent } from 'app/assessment/manage/complaint-response/complaint-response.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-complaint-student-view',
     templateUrl: './complaints-student-view.component.html',
     styleUrls: ['../complaints.scss'],
-    imports: [TranslateDirective, FaIconComponent, ComplaintsFormComponent, ComplaintRequestComponent, ComplaintResponseComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FaIconComponent, ComplaintsFormComponent, ComplaintRequestComponent, ComplaintResponseComponent, ArtemisTranslatePipe, TumAetUiButtonDirective],
+    // A custom element is inline by default; its block child then splits it, so margins on the host are ignored and an empty line box appears above the area.
+    host: { class: 'block', 'data-testid': 'complaint-student-view' },
 })
 export class ComplaintsStudentViewComponent implements OnInit {
     private injector = inject(Injector);

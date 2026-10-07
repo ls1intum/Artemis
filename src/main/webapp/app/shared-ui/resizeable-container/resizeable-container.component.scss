@@ -58,6 +58,9 @@
 .expanded {
     width: 30vw;
 
+    // A page opts in to a cap relative to its container, for example `[--resizeable-container-right-max-width:45%]`.
+    max-width: var(--resizeable-container-right-max-width, none);
+
     .card {
         width: inherit;
         min-width: 200px;
@@ -66,6 +69,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            min-height: 45px; // as tall as the header of the left card
             cursor: pointer;
 
             fa-icon {
@@ -134,6 +138,7 @@
 
     .expanded {
         width: 100% !important;
+        max-width: none;
 
         .draggable-left {
             display: none;
