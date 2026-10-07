@@ -2115,9 +2115,10 @@ describe('ExamParticipationComponent', () => {
 
             const scroller = fixture.debugElement.query(By.css('jhi-exam-participation-summary')).nativeElement.parentElement as HTMLElement;
             expect(scroller.classList).toContain('exam-summary-scroll');
+            expect(scroller.getAttribute('data-testid')).toBe('exam-summary-scroll');
             // `scrollable-content` is 100vh minus a hard-coded 156px and ended 75px above the bottom of the card
             expect(scroller.classList).not.toContain('scrollable-content');
-            expect(scroller.classList).not.toContain('p-4');
+            expect(scroller.classList).not.toContain('p-6!');
         });
 
         it('leaves the summary of a test run, which sits in the card of the management shell, without a scroll container class', () => {
@@ -2145,11 +2146,20 @@ describe('ExamParticipationComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             const card: HTMLElement = fixture.debugElement.query(By.css('.end-view')).nativeElement;
-            expect(card.classList).toContain('pt-3');
-            // `px-4` on the card would stack 24px on the 24px of the cover and put the text 48px from the edge
-            expect(card.classList).not.toContain('px-4');
-            expect(card.classList).not.toContain('pt-4');
+            expect(card.classList).toContain('pt-4!');
+            // `px-6!` on the card would stack 24px on the 24px of the cover and put the text 48px from the edge
+            expect(card.classList).not.toContain('px-6!');
+            expect(card.classList).not.toContain('pt-6!');
         });
+    });
+
+    it('should mark the content card, which holds the scroller and the status bar, for the layout contract', () => {
+        showRunningExam();
+
+        const card: HTMLElement = fixture.debugElement.query(By.css('[data-testid="exam-content"]')).nativeElement;
+        expect(card.classList).toContain('exam-content');
+        expect(card.querySelector('.content-exam-height')).not.toBeNull();
+        expect(card.querySelector('[data-testid="exam-status-bar"]')).not.toBeNull();
     });
 
     it('should show the connection status bar and flag a lost connection', () => {

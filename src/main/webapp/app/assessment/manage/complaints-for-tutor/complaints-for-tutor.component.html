@@ -21,7 +21,7 @@
                 "
             ></div>
         }
-        <div class="mt-3 mb-3">
+        <div class="mt-4! mb-4!">
             @if (showLockDuration()) {
                 <div id="lockDuration" class="alert alert-info">
                     @if (lockedByCurrentUser()) {
@@ -120,7 +120,7 @@
                         </div>
                     }
                     @if (!complaint().accepted && complaint().complaintType === ComplaintType.MORE_FEEDBACK) {
-                        <div class="row justify-content-end mt-3">
+                        <div class="row justify-content-end mt-4!">
                             <div class="col-12">
                                 <button
                                     id="respondToMoreFeedbackButton"
