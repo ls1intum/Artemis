@@ -296,7 +296,7 @@ public class CommunicationDemoApi implements AbstractApi {
      */
     private void seedTutorialGroupsInfo(Course course, List<Post> existingPosts, List<User> students, User instructor) {
         startThread(course, existingPosts, defaultChannel(course, DefaultChannelType.ORGANIZATION), instructor, null, TUTORIAL_GROUPS_INFO).ifPresent(info -> {
-            SecurityUtils.runAs(instructor.getLogin(), () -> conversationMessagingService.changeDisplayPriority(course.getId(), info.getId(), DisplayPriority.PINNED));
+            SecurityUtils.runAs(instructor, () -> conversationMessagingService.changeDisplayPriority(course.getId(), info.getId(), DisplayPriority.PINNED));
             react(course, info, students.get(1), "eyes");
             react(course, info, students.get(10), "+1");
         });
@@ -340,7 +340,7 @@ public class CommunicationDemoApi implements AbstractApi {
             log.debug("Demo direct messages between '{}' and '{}' already exist, skipping creation", student.getLogin(), tutor.getLogin());
             return;
         }
-        OneToOneChat chat = SecurityUtils.runAs(student.getLogin(), () -> oneToOneChatService.startOneToOneChat(course, student, tutor));
+        OneToOneChat chat = SecurityUtils.runAs(student, () -> oneToOneChatService.startOneToOneChat(course, student, tutor));
         send(course, chat, student, null, FEEDBACK_QUESTION);
         send(course, chat, tutor, null, FEEDBACK_ANSWER);
         log.info("Created demo direct messages between '{}' and '{}' with id {}", student.getLogin(), tutor.getLogin(), chat.getId());
@@ -376,7 +376,7 @@ public class CommunicationDemoApi implements AbstractApi {
      * Sends a message as its author like {@code ConversationMessageResource#createMessage}, which also notifies the members of the conversation.
      */
     private Post send(Course course, Conversation conversation, User author, @Nullable String title, String content) {
-        return SecurityUtils.runAs(author.getLogin(), () -> {
+        return SecurityUtils.runAs(author, () -> {
             CreatedConversationMessage message = conversationMessagingService.createMessage(course.getId(),
                     new CreatePostDTO(content, title, false, new CreatePostConversationDTO(conversation.getId())));
             conversationMessagingService.notifyAboutMessageCreation(message);
@@ -388,15 +388,14 @@ public class CommunicationDemoApi implements AbstractApi {
      * Replies to a message as its author like {@code AnswerMessageResource#createAnswerMessage}.
      */
     private AnswerPost answer(Course course, Post post, User author, String content) {
-        return SecurityUtils.runAs(author.getLogin(),
-                () -> answerMessageService.createAnswerMessage(course.getId(), new CreateAnswerPostDTO(content, new ParentPostDTO(post.getId()))));
+        return SecurityUtils.runAs(author, () -> answerMessageService.createAnswerMessage(course.getId(), new CreateAnswerPostDTO(content, new ParentPostDTO(post.getId()))));
     }
 
     /**
      * Marks the reply as the one that resolves its thread like {@code AnswerMessageResource#updateAnswerMessage}, which the author of the thread may do.
      */
     private void markAsResolving(Course course, AnswerPost answer, User threadAuthor) {
-        SecurityUtils.runAs(threadAuthor.getLogin(),
+        SecurityUtils.runAs(threadAuthor,
                 () -> answerMessageService.updateAnswerMessage(course.getId(), answer.getId(), new UpdatePostingDTO(answer.getId(), answer.getContent(), null, true)));
     }
 
@@ -405,7 +404,7 @@ public class CommunicationDemoApi implements AbstractApi {
      */
     private void react(Course course, Posting posting, User user, String emojiId) {
         PostingType type = posting instanceof AnswerPost ? PostingType.ANSWER : PostingType.POST;
-        SecurityUtils.runAs(user.getLogin(), () -> reactionService.createReaction(course.getId(), new ReactionDTO(null, null, null, emojiId, posting.getId(), type)));
+        SecurityUtils.runAs(user, () -> reactionService.createReaction(course.getId(), new ReactionDTO(null, null, null, emojiId, posting.getId(), type)));
     }
 
     private static String faqCategory(String name, String color) {

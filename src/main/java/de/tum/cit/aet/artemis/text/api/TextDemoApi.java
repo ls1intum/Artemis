@@ -4,9 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO_AND_SCHE
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -18,7 +16,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
@@ -205,7 +202,7 @@ public class TextDemoApi extends AbstractTextApi {
 
     /**
      * The essays the demo students submit for the graded essay, in turn, so that tutors see a variety of answers and scores. The weakest one comes fourth, so that it is the one
-     * of {@link #COMPLAINING_STUDENT_LOGIN}.
+     * of the student at {@link #COMPLAINING_STUDENT_INDEX}.
      */
     private static final List<DemoEssay> DEMO_ESSAYS = List.of(new DemoEssay("""
             Code reviews help BookBarn to find bugs before they reach customers, and they let junior developers learn from senior ones. When several people know every part of the \
@@ -251,9 +248,10 @@ public class TextDemoApi extends AbstractTextApi {
                                     "Your recommendation follows from your argument, but hiring testers does not reduce the waiting time the developers complain about."))));
 
     /**
-     * The demo student who complains about the assessment of their essay. Not the demo student visitors log in as, so that they can try complaining themselves.
+     * The position of the student who complains about the assessment of their essay among the students the essay is seeded for. A classmate rather than the demo student
+     * visitors log in as, so that they can try complaining themselves.
      */
-    private static final String COMPLAINING_STUDENT_LOGIN = AccountDemoApi.DEMO_PEER_LOGIN_PREFIX + 3;
+    private static final int COMPLAINING_STUDENT_INDEX = 3;
 
     private static final String COMPLAINT_TEXT = """
             I think my essay was assessed too strictly. The task asks whether mandatory code reviews are worth their cost, and my essay weighs exactly that: reviews make the \
@@ -384,13 +382,13 @@ public class TextDemoApi extends AbstractTextApi {
         }
 
         TextExercise closedEssay = updateEssay(essay.getId(), exercise -> exercise.setDueDate(ZonedDateTime.now()));
-        Map<String, Result> resultsByLogin = new HashMap<>();
+        List<Result> results = new ArrayList<>();
         for (int index = 0; index < students.size(); index++) {
-            resultsByLogin.put(students.get(index).getLogin(), assessEssay(closedEssay, submissions.get(index), tutor, demoEssayOf(index).feedback()));
+            results.add(assessEssay(closedEssay, submissions.get(index), tutor, demoEssayOf(index).feedback()));
         }
 
         TextExercise gradedEssay = updateEssay(essay.getId(), exercise -> exercise.setAssessmentDueDate(ZonedDateTime.now()));
-        complain(resultsByLogin.get(COMPLAINING_STUDENT_LOGIN), COMPLAINING_STUDENT_LOGIN);
+        complain(results.get(COMPLAINING_STUDENT_INDEX), students.get(COMPLAINING_STUDENT_INDEX));
         return gradedEssay;
     }
 
@@ -403,7 +401,7 @@ public class TextDemoApi extends AbstractTextApi {
      * submits through {@code TextSubmissionResource#updateTextSubmission}.
      */
     private TextSubmission submitEssay(TextExercise essay, User student, String text) {
-        return SecurityUtils.runAs(student.getLogin(), () -> {
+        return SecurityUtils.runAs(student, () -> {
             StudentParticipation participation = participationService.startExercise(essay, student, true);
             TextSubmission submission = new TextSubmission();
             submission.setId(participation.findLatestSubmission().map(Submission::getId).orElse(null));
@@ -420,7 +418,7 @@ public class TextDemoApi extends AbstractTextApi {
      * {@code TextAssessmentResource#submitTextAssessment}. The feedback is general feedback, which does not refer to text blocks, so no text blocks are stored.
      */
     private Result assessEssay(TextExercise essay, TextSubmission submission, User tutor, List<GeneralFeedback> feedback) {
-        return SecurityUtils.runAs(tutor.getLogin(), () -> {
+        return SecurityUtils.runAs(tutor, () -> {
             long resultId = textSubmissionService.lockTextSubmissionToBeAssessed(submission.getId(), 0).getResultForCorrectionRound(0).getId();
             TextSubmission lockedSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
             return textAssessmentService.saveAndSubmitManualAssessment(essay, lockedSubmission, feedback.stream().map(TextDemoApi::toFeedback).toList(), resultId, null, true);
@@ -440,8 +438,8 @@ public class TextDemoApi extends AbstractTextApi {
     /**
      * Complains about the given result as the student it belongs to, like {@code ComplaintResource#createComplaint}, which passes the principal of the request on.
      */
-    private void complain(Result result, String studentLogin) {
-        SecurityUtils.runAs(studentLogin, () -> {
+    private void complain(Result result, User student) {
+        SecurityUtils.runAs(student, () -> {
             complaintService.createComplaint(new ComplaintRequestDTO(result.getId(), COMPLAINT_TEXT, ComplaintType.COMPLAINT, Optional.empty()),
                     SecurityContextHolder.getContext().getAuthentication());
         });

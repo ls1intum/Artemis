@@ -70,16 +70,19 @@ public class DemoDataSeedingService {
     public void seedDemoData(DeferredEagerBeanInitializationCompletedEvent event) {
         log.info("Demo profile is active, seeding demo data");
 
-        DemoUsers users = DemoAreas.seed("users", accountDemoApi::createDemoUsers, null);
-        Course course = users == null ? null : DemoAreas.seed("course", () -> courseDemoApi.createDemo(users.students(), users.tutor(), users.editor(), users.instructor()), null);
-        if (course == null) {
-            log.error("Skipping the remaining demo data, because it belongs to the demo course");
+        DemoUsers createdUsers = DemoAreas.seed("users", accountDemoApi::createDemoUsers, null);
+        Course course = createdUsers == null ? null
+                : DemoAreas.seed("course", () -> courseDemoApi.createDemo(createdUsers.students(), createdUsers.tutor(), createdUsers.editor(), createdUsers.instructor()), null);
+        // Loaded again, because enrolling the users into the course gave the staff the authorities of their course roles.
+        DemoUsers users = course == null ? null : DemoAreas.seed("users", accountDemoApi::createDemoUsers, null);
+        if (users == null) {
+            log.error("Skipping the remaining demo data, because it belongs to the demo course and its users");
             return;
         }
 
         // The production creation paths resolve the acting user from the security context (the lecture channel takes its creator from there, for example), but seeding runs at
-        // startup outside of any request. Act as the demo instructor, which the step above guarantees to exist, so that the demo content is owned by a plausible user.
-        SecurityUtils.runAs(AccountDemoApi.DEMO_INSTRUCTOR_LOGIN, () -> {
+        // startup outside of any request. Act as the demo instructor, which the steps above guarantee to exist, so that the demo content is owned by a plausible user.
+        SecurityUtils.runAs(users.instructor(), () -> {
             DemoExercises exercises = demoExerciseSeedingService.seed(course, users);
             demoCourseContentSeedingService.seed(course, users, exercises);
         });

@@ -108,6 +108,6 @@ class DemoProgrammingExerciseSeedingIntegrationTest extends AbstractSpringIntegr
     private ProgrammingExercise seedProgrammingExercise() {
         DemoUsers users = accountDemoApi.createDemoUsers();
         Course course = courseDemoApi.createDemo(users.students(), users.tutor(), users.editor(), users.instructor());
-        return SecurityUtils.runAs(AccountDemoApi.DEMO_INSTRUCTOR_LOGIN, () -> programmingDemoApi.createDemo(course)).orElseThrow();
+        return SecurityUtils.runAs(users.instructor(), () -> programmingDemoApi.createDemo(course)).orElseThrow();
     }
 }

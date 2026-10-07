@@ -79,7 +79,7 @@ public class AccountDemoApi implements AbstractApi {
     /**
      * Creates the demo users that do not exist yet, identified by their logins.
      *
-     * @return all demo users, whether they already existed or were created by this call.
+     * @return all demo users with their authorities, whether they already existed or were created by this call.
      */
     public DemoUsers createDemoUsers() {
         User student = createDemoUserIfMissing(DEMO_STUDENT_LOGIN, "Demo", "Student");
@@ -93,7 +93,8 @@ public class AccountDemoApi implements AbstractApi {
     }
 
     private User createDemoUserIfMissing(String login, String firstName, String lastName) {
-        return userRepository.findOneByLogin(login).orElseGet(() -> {
+        // With their authorities, so that seeding can act as the user, see SecurityUtils#runAs.
+        return userRepository.findOneWithAuthoritiesByLogin(login).orElseGet(() -> {
             User user = userCreationService.createUser(login, DEMO_PASSWORD, firstName, lastName, login + "@artemis.local", null, null, "en", true);
             // createUser leaves an internal user deactivated with an activation key, because the regular registration flow activates it via that key, which no one is going to
             // redeem for a demo user. Activate it the way an administrator would, which also discards the key.

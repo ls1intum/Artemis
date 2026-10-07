@@ -309,7 +309,7 @@ public class QuizDemoApi implements AbstractApi {
      * answers ({@code QuizSubmissionResource}).
      */
     private void takeQuiz(QuizExercise quizExercise, User student, AnswerSheet answers) {
-        SecurityUtils.runAs(student.getLogin(), () -> {
+        SecurityUtils.runAs(student, () -> {
             participationService.startExercise(quizExercise, student, true);
             try {
                 quizBatchService.joinBatch(quizExercise, student, null);
