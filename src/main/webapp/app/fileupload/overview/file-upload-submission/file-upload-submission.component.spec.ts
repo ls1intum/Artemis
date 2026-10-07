@@ -836,4 +836,72 @@ describe('FileUploadSubmissionComponent', () => {
             expect(downloadSection).toBeTruthy();
         });
     });
+
+    describe('card layout', () => {
+        const renderAssessedSubmission = async (displayedInExamSummary: boolean) => {
+            const exercise = createExercise();
+            const submission = createSubmittedSubmission(exercise);
+            submission.filePathUrl = '/api/core/files/test.pdf';
+
+            fixture.componentRef.setInput('inputExercise', exercise);
+            fixture.componentRef.setInput('inputSubmission', submission);
+            fixture.componentRef.setInput('inputParticipation', getParticipation(submission));
+            fixture.componentRef.setInput('displayedInExamSummary', displayedInExamSummary);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const result = createResult(submission);
+            const feedback = new Feedback();
+            feedback.id = 1;
+            feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+            feedback.detailText = 'feedback';
+            result.feedbacks = [feedback];
+            component.result.set(result);
+            component.isOwnerOfParticipation.set(true);
+            fixture.detectChanges();
+        };
+
+        const getLeftBody = (): HTMLElement => fixture.nativeElement.querySelector('[left-body]');
+
+        it('should keep the left padding of the left body outside the exam summary', async () => {
+            await renderAssessedSubmission(false);
+
+            expect(getLeftBody().classList).toContain('ps-2');
+            expect(getLeftBody().classList).toContain('pe-2');
+        });
+
+        it('should drop only the left padding of the left body in the exam summary', async () => {
+            await renderAssessedSubmission(true);
+
+            expect(getLeftBody().classList).not.toContain('ps-2');
+            expect(getLeftBody().classList).toContain('pe-2');
+            expect(getLeftBody().classList).not.toContain('px-2');
+        });
+
+        it('should render the rating alert inside a column of the same width as the feedback above it', async () => {
+            await renderAssessedSubmission(true);
+
+            const rating: HTMLElement = fixture.nativeElement.querySelector('jhi-rating');
+            expect(rating).toBeTruthy();
+            expect(rating.classList).toContain('alert');
+            expect(rating.classList).toContain('alert-info');
+            expect(rating.classList).toContain('block');
+            const column = rating.parentElement!;
+            expect(column.classList).toContain('col-xl-8');
+            expect(column.classList).not.toContain('alert');
+            expect(column.parentElement!.classList).toContain('row');
+        });
+
+        it('should render the section headings with the 16px semibold heading style', async () => {
+            await renderAssessedSubmission(true);
+
+            const headings: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('h5'));
+            // 'Your Submission' and 'Assessed submission'
+            expect(headings).toHaveLength(2);
+            headings.forEach((heading) => {
+                expect(heading.classList).toContain('text-base!');
+                expect(heading.classList).toContain('font-semibold!');
+            });
+        });
+    });
 });
