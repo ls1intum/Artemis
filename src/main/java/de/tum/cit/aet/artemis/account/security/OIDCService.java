@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -120,6 +121,9 @@ public class OIDCService extends OidcUserService {
             if (email != null && userCreationService.updateEmailIfChanged(actualUser, email)) {
                 isUpdated = true;
             }
+            if (updateMatriculationNumberIfChanged(actualUser, oidcUser.getAttribute(matriculationClaimKey))) {
+                isUpdated = true;
+            }
             if (isUpdated) {
                 userRepository.save(actualUser);
             }
@@ -130,6 +134,28 @@ public class OIDCService extends OidcUserService {
             throw new OAuth2AuthenticationException(new OAuth2Error("user_deactivated"), "User account is deactivated.");
         }
         return oidcUser;
+    }
+
+    /**
+     * Stores the matriculation number from the token when it differs from the stored one. An absent or blank claim keeps the stored value, for the same reason as the email:
+     * a token carries only the claims that were configured and granted, so an absent one says nothing about the account. A number that already belongs to another account is
+     * skipped instead of rejected, because the unique constraint on it would otherwise turn a profile sync into a failed login.
+     *
+     * @param user                the account to update
+     * @param matriculationNumber the claim value, which may be {@code null} or blank
+     * @return whether the stored matriculation number changed
+     */
+    private boolean updateMatriculationNumberIfChanged(User user, @Nullable String matriculationNumber) {
+        if (matriculationNumber == null || matriculationNumber.isBlank() || matriculationNumber.equals(user.getRegistrationNumber())) {
+            return false;
+        }
+        Optional<User> owner = userRepository.findUserWithAuthoritiesByRegistrationNumber(matriculationNumber);
+        if (owner.isPresent() && !Objects.equals(owner.get().getId(), user.getId())) {
+            log.warn("OIDC matriculation number of user '{}' was not synchronized because it already belongs to user '{}'.", user.getLogin(), owner.get().getLogin());
+            return false;
+        }
+        user.setRegistrationNumber(matriculationNumber);
+        return true;
     }
 
     /**

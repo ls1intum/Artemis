@@ -249,6 +249,49 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     }
 
     @Test
+    void testOidcUpdateSyncsMatriculationNumber() {
+        createUser(STUDENT_NAME + "@other.domain.invalid");
+        assertRegistrationNumber(null);
+
+        oidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName")));
+        assertRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+
+        oidcService.loadUser(createMockUserRequest(createClaimsMap("87654321", "FirstName", "LastName")));
+        assertRegistrationNumber("87654321");
+    }
+
+    @Test
+    void testOidcUpdateKeepsMatriculationNumberWhenClaimIsMissingOrBlank() {
+        createUser(STUDENT_NAME + "@other.domain.invalid");
+        oidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName")));
+        assertRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+
+        Map<String, Object> claimsWithoutMatriculation = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
+        claimsWithoutMatriculation.remove("matriculation_number");
+        oidcService.loadUser(createMockUserRequest(claimsWithoutMatriculation));
+        assertRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+
+        oidcService.loadUser(createMockUserRequest(createClaimsMap("  ", "FirstName", "LastName")));
+        assertRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+    }
+
+    @Test
+    void testOidcUpdateSkipsMatriculationNumberUsedByAnotherAccount() {
+        createUser(STUDENT_NAME + "@other.domain.invalid");
+        createOtherUser(OTHER_STUDENT_NAME + "@other.domain.invalid");
+        User otherUser = userTestRepository.findOneByLogin(OTHER_STUDENT_NAME).orElseThrow();
+        otherUser.setRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+        userTestRepository.save(otherUser);
+
+        // the login must still succeed: the unique constraint on the registration number may not turn a name sync into a failed login
+        assertThatCode(() -> oidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName")))).doesNotThrowAnyException();
+
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getFirstName()).isEqualTo("FirstName");
+        assertRegistrationNumber(null);
+        assertThat(userUtilService.getUserByLogin(OTHER_STUDENT_NAME).getRegistrationNumber()).isEqualTo(STUDENT_REGISTRATION_NUMBER);
+    }
+
+    @Test
     void testPasswordLoginAfterOidcRegistration() throws Exception {
         assertStudentNotExists();
 
