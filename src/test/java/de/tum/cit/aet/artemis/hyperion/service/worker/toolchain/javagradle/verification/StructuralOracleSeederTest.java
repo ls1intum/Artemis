@@ -154,7 +154,7 @@ class StructuralOracleSeederTest {
         FileUtils.writeStringToFile(directory.resolve("test.json").toFile(), oracle, StandardCharsets.UTF_8);
         var compiler = ToolProvider.getSystemJavaCompiler();
         try (var files = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
-            List<Path> dependencies = List.of(DynamicTest.class, org.json.JSONArray.class).stream()
+            List<Path> dependencies = List.of(DynamicTest.class, org.json.JSONString.class).stream()
                     .map(type -> Path.of(type.getProtectionDomain().getCodeSource().getLocation().getPath())).toList();
             files.setLocationFromPaths(javax.tools.StandardLocation.CLASS_PATH, dependencies);
             assertThat(compiler.getTask(null, files, null, List.of("-proc:none", "-d", directory.toString()), null,
