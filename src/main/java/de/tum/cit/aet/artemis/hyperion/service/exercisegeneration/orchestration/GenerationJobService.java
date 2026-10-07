@@ -686,20 +686,25 @@ public class GenerationJobService {
      * @return an opaque slot token that must be passed to {@link #clearRevertSlot(long, String)}
      */
     public String claimRevertSlot(User user, long exerciseId) {
-        return GenerationRevertSlots.claim(jobMap, user, exerciseId, localNodeId, topology::verifyAllMembers,
+        return GenerationRecoverySlots.claim(jobMap, user, exerciseId, localNodeId, topology::verifyAllMembers,
                 job -> claimSlot(key(exerciseId), job, "Exercise authoring or another mutation is running; wait before reverting.", "exerciseGenerationRunning"));
     }
 
+    /** Keeps a completed, uncertain save fenced until an administrator reconciles its repositories. */
+    public void retainIncompleteGenerationSlot(long exerciseId, String jobId) {
+        GenerationRecoverySlots.retainGeneration(jobMap, exerciseId, jobId, localNodeId);
+    }
+
     public void retainRevertRecoverySlot(long exerciseId, String token) {
-        GenerationRevertSlots.retain(jobMap, exerciseId, token);
+        GenerationRecoverySlots.retain(jobMap, exerciseId, token);
     }
 
     public boolean isRevertRecoveryPending(long exerciseId) {
-        return GenerationRevertSlots.isPending(jobMap.get(key(exerciseId)));
+        return GenerationRecoverySlots.isPending(jobMap.get(key(exerciseId)));
     }
 
     public boolean isRevertRecoveryRetry(String token) {
-        return token.startsWith(GenerationRevertSlots.RETRY_PREFIX);
+        return token.startsWith(GenerationRecoverySlots.RETRY_PREFIX);
     }
 
     /**
@@ -865,7 +870,7 @@ public class GenerationJobService {
     }
 
     static boolean isGenerationJob(JobInfo job) {
-        return !job.jobId().startsWith(REVERT_JOB_PREFIX) && !job.jobId().startsWith(EXTERNAL_MUTATION_JOB_PREFIX);
+        return !GenerationRecoverySlots.isGenerationRecovery(job) && !job.jobId().startsWith(REVERT_JOB_PREFIX) && !job.jobId().startsWith(EXTERNAL_MUTATION_JOB_PREFIX);
     }
 
     void publishExerciseState(long exerciseId, String jobId, boolean running) {
@@ -903,7 +908,7 @@ public class GenerationJobService {
 
     /**
      * A slot the automatic stale-job scan will never release. The {@code token} is what {@link #recoverWedgedSlot(long, String)} requires, and {@code ownerLeftCluster} is a
-     * precondition of that recovery for every kind except {@link WedgedSlotKind#REVERT_RECOVERY}.
+     * precondition for in-flight writers; quiescent partial-save and partial-undo guards permit audited recovery with the owner still present.
      */
     public record WedgedSlotInfo(long exerciseId, String token, WedgedSlotKind kind, @Nullable String ownerNodeId, Instant startedAt, boolean ownerLeftCluster) {
     }

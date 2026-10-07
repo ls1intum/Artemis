@@ -749,6 +749,45 @@ class GenerationJobServiceTest {
 
     /** The in-flight undo that precedes the retained state is still a writer, so it keeps the owner-absence fence. */
     @Test
+    void incompleteSaveGuardBlocksNewGenerationAndParticipationUntilAuditedRecovery() {
+        long exerciseId = 470L;
+        User owner = user("owner");
+        String jobId = jobService.startJob(owner, exercise(exerciseId), "generate", GenerationMode.GENERATE);
+        assertThat(jobService.enterNonCancellablePhase(exerciseId, jobId)).isTrue();
+        jobService.retainIncompleteGenerationSlot(exerciseId, jobId);
+        jobService.clearJob(exerciseId, jobId);
+        jobService.clearStaleJobs();
+
+        assertThat(jobService.hasActiveJob(exerciseId)).isTrue();
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(owner, exercise(exerciseId), "again", GenerationMode.GENERATE));
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.claimExternalMutationSlot(exerciseId));
+        var copies = new GenerationExternalMutationService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), 1);
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> copies.claimParticipationSlot(exerciseId));
+        var info = jobService.getWedgedSlotInfo(exerciseId).orElseThrow();
+        assertThat(info.kind()).isEqualTo(GenerationJobService.WedgedSlotKind.GENERATION);
+        assertThat(info.ownerLeftCluster()).isFalse();
+        assertThat(jobService.recoverWedgedSlot(exerciseId, jobId)).isFalse();
+        assertThat(jobService.recoverWedgedSlot(exerciseId, info.token())).isTrue();
+        assertThat(jobService.startJob(owner, exercise(exerciseId), "again", GenerationMode.GENERATE)).isNotBlank();
+    }
+
+    @Test
+    void delayedIncompleteSaveCannotReplaceANewerReservation() {
+        long exerciseId = 471L;
+        User owner = user("owner");
+        String oldJob = jobService.startJob(owner, exercise(exerciseId), "first", GenerationMode.GENERATE);
+        jobService.enterNonCancellablePhase(exerciseId, oldJob);
+        jobService.clearJob(exerciseId, oldJob);
+        String newJob = jobService.startJob(owner, exercise(exerciseId), "second", GenerationMode.GENERATE);
+        jobService.enterNonCancellablePhase(exerciseId, newJob);
+
+        jobService.retainIncompleteGenerationSlot(exerciseId, oldJob);
+
+        assertThat(jobMap().get(String.valueOf(exerciseId)).jobId()).isEqualTo(newJob);
+        assertThat(jobService.recoverWedgedSlot(exerciseId, newJob)).isFalse();
+    }
+
+    @Test
     void recoverWedgedSlot_refusesAnInFlightRevertWhoseOwnerIsStillAClusterMember() {
         long exerciseId = 469L;
         String token = jobService.claimRevertSlot(user("owner"), exerciseId);

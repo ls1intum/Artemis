@@ -613,3 +613,13 @@ writer. An authorized retry can complete that undo. After reconciling the
 repositories and metadata, an administrator can release this exact recovery token
 even while its owner node remains a member. This exception does not permit
 reclaiming an actively persisting generation or an active revert.
+
+An incomplete generation save also keeps the exercise guarded if live changes remain or
+the saved state is uncertain. Ordinary edits, another generation, and participation copies
+are blocked. The completed run still releases its admission budget; the recovery guard
+does not expire. An administrator must reconcile repositories, metadata and grading, then
+use the audited exact-token recovery endpoint. This quiescent guard has kind `GENERATION`
+and a `generation-recovery-` token; unlike an in-flight generation reservation, it can be
+released while its owner is still present. A fully compensated failure leaves no recovery
+guard. A first undo refused before any write also releases its temporary reservation, but
+such a refusal during a recovery retry preserves the existing guard.

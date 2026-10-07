@@ -29,8 +29,8 @@ final class GenerationJobRecovery {
         if (job == null || !job.jobId().equals(token) || job.cancellable()) {
             return false;
         }
-        // Only a retained partial undo is known to be quiescent while its owner remains a member.
-        if (reaper.ownerMemberIsPresent(job) && !GenerationRevertSlots.isPending(job)) {
+        // Retained partial saves and undos are quiescent; active writers still require owner absence.
+        if (reaper.ownerMemberIsPresent(job) && !GenerationRecoverySlots.isPending(job) && !GenerationRecoverySlots.isGenerationRecovery(job)) {
             return false;
         }
         if (GenerationJobService.isGenerationJob(job)) {
@@ -43,7 +43,7 @@ final class GenerationJobRecovery {
         if (job.jobId().startsWith(GenerationJobService.EXTERNAL_MUTATION_JOB_PREFIX)) {
             return WedgedSlotKind.EXTERNAL_MUTATION;
         }
-        if (GenerationRevertSlots.isPending(job)) {
+        if (GenerationRecoverySlots.isPending(job)) {
             return WedgedSlotKind.REVERT_RECOVERY;
         }
         return job.jobId().startsWith(GenerationJobService.REVERT_JOB_PREFIX) ? WedgedSlotKind.REVERT : WedgedSlotKind.GENERATION;

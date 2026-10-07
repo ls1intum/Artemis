@@ -222,7 +222,11 @@ public class GenerationTaskService {
         // Use the budget reserved for this request, which may be lower than the deployment default.
         long runTokenBudget = event.settings() == null ? maxTokensPerJob : event.settings().maxTokensPerJob();
         GenerationLiveUsage liveUsage = new GenerationLiveUsage(runTokenBudget, cachedInputTokenWeight);
+        AtomicBoolean recoveryRequired = new AtomicBoolean();
         GenerationProgressEmitter emitter = new GenerationProgressEmitter((progressEvent, terminal) -> {
+            if (progressEvent.completionStatus() == ExerciseGenerationEventDTO.CompletionStatus.PARTIAL) {
+                recoveryRequired.set(true);
+            }
             boolean accepted = jobService.recordEvent(exerciseId, jobId, progressEvent, terminal);
             if (terminal && accepted) {
                 journal.completed(jobId, progressEvent);
@@ -556,7 +560,7 @@ public class GenerationTaskService {
                     }
                 }
                 finally {
-                    clearJobAndReleaseBudget(exerciseId, jobId, event, tokenAccountingFailed.get());
+                    clearJobAndReleaseBudget(exerciseId, jobId, event, tokenAccountingFailed.get(), recoveryRequired.get());
                 }
             }
         }
@@ -572,8 +576,11 @@ public class GenerationTaskService {
         jobService.retainUnsavedArtifacts(exerciseId, jobId, user.getLogin(), candidate);
     }
 
-    private void clearJobAndReleaseBudget(long exerciseId, String jobId, GenerationStartedEvent event, boolean tokenAccountingFailed) {
+    private void clearJobAndReleaseBudget(long exerciseId, String jobId, GenerationStartedEvent event, boolean tokenAccountingFailed, boolean recoveryRequired) {
         try {
+            if (recoveryRequired) {
+                jobService.retainIncompleteGenerationSlot(exerciseId, jobId);
+            }
             jobService.clearJob(exerciseId, jobId);
         }
         finally {
