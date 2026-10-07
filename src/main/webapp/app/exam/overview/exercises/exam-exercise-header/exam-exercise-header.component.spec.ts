@@ -9,11 +9,25 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 @Component({
     imports: [ExamExerciseHeaderComponent],
-    template: `<jhi-exam-exercise-header [exercise]="exercise()" [titleKey]="titleKey()"><button id="action">Action</button></jhi-exam-exercise-header>`,
+    template: `<jhi-exam-exercise-header [exercise]="exercise()" [titleKey]="titleKey()">
+        <ng-container headerLeading>
+            @if (showLeading()) {
+                <button id="leading">Leading</button>
+            }
+        </ng-container>
+        <ng-container headerTitleSuffix>
+            @if (showSuffix()) {
+                <span id="suffix">Suffix</span>
+            }
+        </ng-container>
+        <button id="action">Action</button>
+    </jhi-exam-exercise-header>`,
 })
 class TestHostComponent {
     readonly exercise = signal<ExamExerciseHeaderExercise | undefined>(undefined);
     readonly titleKey = signal<string | undefined>(undefined);
+    readonly showLeading = signal(false);
+    readonly showSuffix = signal(false);
 }
 
 describe('ExamExerciseHeaderComponent', () => {
@@ -93,5 +107,43 @@ describe('ExamExerciseHeaderComponent', () => {
 
         const header = fixture.nativeElement.querySelector('[data-testid="exam-exercise-header"]');
         expect(header.querySelector('#action')).not.toBeNull();
+    });
+
+    it('shows the leading and the suffix element on the title row, around the title and apart from the action', () => {
+        host.titleKey.set('artemisApp.exam.examSummary.examResults');
+        host.showLeading.set(true);
+        host.showSuffix.set(true);
+        fixture.detectChanges();
+
+        const header: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exam-exercise-header"]');
+        const titleGroup = title().parentElement!;
+        expect([...titleGroup.children].map((element) => element.id || element.getAttribute('data-testid'))).toEqual(['leading', 'exam-exercise-title', 'suffix']);
+        // the action slot is the right-hand part of the row and holds neither of them
+        const actions = header.lastElementChild!;
+        expect(actions.querySelector('#action')).not.toBeNull();
+        expect(actions.querySelector('#leading')).toBeNull();
+        expect(actions.querySelector('#suffix')).toBeNull();
+        // both sit in the fixed-height header itself, so the rule below it runs under them as well
+        expect(titleGroup.parentElement).toBe(header);
+    });
+
+    it('renders no leading or suffix element when none is projected', () => {
+        host.titleKey.set('artemisApp.exam.examSummary.examResults');
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('#leading')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#suffix')).toBeNull();
+        expect(title().parentElement!.children).toHaveLength(1);
+    });
+
+    it('follows a leading element that appears later, so a collapsed sidebar can bring its toggle in', () => {
+        host.titleKey.set('artemisApp.exam.examSummary.examResults');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#leading')).toBeNull();
+
+        host.showLeading.set(true);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(title().previousElementSibling?.id).toBe('leading');
     });
 });

@@ -1,20 +1,24 @@
 <!-- Exactly 40px (border included) on every page, with or without an action and however long the title is, so the pages do not jump when switching between them. -->
 <div class="mb-3 flex h-10 shrink-0 items-center justify-between gap-3 border-b border-(--border-color)" data-testid="exam-exercise-header">
-    <h3 class="m-0! min-w-0 flex-1 truncate text-lg! leading-tight! font-semibold!" data-testid="exam-exercise-title">
-        @if (exercise(); as exercise) {
-            <span>{{ exercise.exerciseGroup?.title }}</span>
-            <span
-                class="font-normal"
-                [jhiTranslate]="exercise.bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
-                [translateValues]="{ points: exercise.maxPoints, bonusPoints: exercise.bonusPoints }"
-            ></span>
-            @if (exercise.includedInOverallScore && exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
+    <div class="flex min-w-0 flex-1 items-center gap-2">
+        <ng-content select="[headerLeading]" />
+        <h3 class="m-0! min-w-0 truncate text-lg! leading-tight! font-semibold!" data-testid="exam-exercise-title">
+            @if (exercise(); as exercise) {
+                <span>{{ exercise.exerciseGroup?.title }}</span>
+                <span
+                    class="font-normal"
+                    [jhiTranslate]="exercise.bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
+                    [translateValues]="{ points: exercise.maxPoints, bonusPoints: exercise.bonusPoints }"
+                ></span>
+                @if (exercise.includedInOverallScore && exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                    <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
+                }
+            } @else if (titleKey(); as key) {
+                <span [jhiTranslate]="key"></span>
             }
-        } @else if (titleKey(); as key) {
-            <span [jhiTranslate]="key"></span>
-        }
-    </h3>
+        </h3>
+        <ng-content select="[headerTitleSuffix]" />
+    </div>
     <div class="flex shrink-0 items-center gap-2">
         <ng-content />
     </div>

@@ -51,7 +51,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { NEVER, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, NEVER, Subject, of, throwError } from 'rxjs';
 import { skip } from 'rxjs/operators';
 import { MockExamParticipationLiveEventsService } from 'test/helpers/mocks/service/mock-exam-participation-live-events.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
@@ -67,6 +67,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 describe('ExamParticipationComponent', () => {
     // Backing signal for the mocked submission-sync contract; see the MockProvider below.
     const submissionSyncVersion = signal(0);
+    // Backing subject of the mocked layout flag: true while the shell around a real exam is in its exam layout.
+    const examIsStarted = new BehaviorSubject<boolean>(false);
     let fixture: ComponentFixture<ExamParticipationComponent>;
     let comp: ExamParticipationComponent;
     let examParticipationService: ExamParticipationService;
@@ -108,6 +110,7 @@ describe('ExamParticipationComponent', () => {
     }
 
     beforeEach(async () => {
+        examIsStarted.next(false);
         await TestBed.configureTestingModule({
             imports: [
                 MockComponent(ExamExerciseOverviewPageComponent),
@@ -147,6 +150,8 @@ describe('ExamParticipationComponent', () => {
                 // the same signal instance too: a no-op notifier would leave those bindings permanently stale,
                 // which is the staleness bug this contract exists to prevent.
                 MockProvider(ExamParticipationService, {
+                    // a field-initialised observable as well, so the mock has to bring it, see above
+                    examIsStarted$: examIsStarted.asObservable(),
                     submissionSyncVersion: submissionSyncVersion.asReadonly(),
                     notifySubmissionSyncStateChanged: () => submissionSyncVersion.update((version) => version + 1),
                     setSubmissionSaving: vi.fn(),
@@ -163,7 +168,14 @@ describe('ExamParticipationComponent', () => {
                 MockProvider(ExamManagementService),
                 { provide: ProfileService, useClass: MockProfileService },
             ],
-        }).compileComponents();
+        })
+            // The mock in `imports` above does not replace what the component itself imports. The real summary needs a route snapshot,
+            // and these tests are about the frame around it, so it is swapped here.
+            .overrideComponent(ExamParticipationComponent, {
+                remove: { imports: [ExamResultSummaryComponent] },
+                add: { imports: [MockComponent(ExamResultSummaryComponent)] },
+            })
+            .compileComponents();
         fixture = TestBed.createComponent(ExamParticipationComponent);
         comp = fixture.componentInstance;
         examParticipationService = TestBed.inject(ExamParticipationService);
@@ -2015,6 +2027,129 @@ describe('ExamParticipationComponent', () => {
         showRunningExam();
 
         expect(fixture.debugElement.query(By.css('.exam-background-wrapper')).nativeElement.classList).not.toContain('exam-background-wrapper--test-run');
+    });
+
+    describe('frame of the screens after the exam', () => {
+        const submittedStudentExam = (): StudentExam => {
+            const studentExam = new StudentExam();
+            studentExam.id = 3;
+            studentExam.submitted = true;
+            studentExam.exam = new Exam();
+            return studentExam;
+        };
+
+        /** Shows the "submission successful" hint. The default route is a test run, `realExam` makes it a real exam instead. */
+        const showSubmissionHint = (options: { realExam?: boolean; examLayoutActive?: boolean } = {}) => {
+            if (options.realExam) {
+                TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+            }
+            examIsStarted.next(!!options.examLayoutActive);
+            // the first change detection runs ngOnInit, whose route emission resets the state of a previously displayed exam
+            fixture.changeDetectorRef.detectChanges();
+            const studentExam = submittedStudentExam();
+            comp.exam.set(studentExam.exam!);
+            comp.studentExam.set(studentExam);
+            comp.loadingExam.set(false);
+            fixture.changeDetectorRef.detectChanges();
+        };
+
+        const wrapper = (): HTMLElement => fixture.debugElement.query(By.css('.exam-background-wrapper')).nativeElement;
+        const hint = (): HTMLElement => fixture.debugElement.query(By.css('.submissionSuccessfulHint')).nativeElement;
+
+        it('shows the hint as a card between the dividers of the exam layout while a real exam is still in its shell', () => {
+            showSubmissionHint({ realExam: true, examLayoutActive: true });
+
+            // the wrapper is the full-height frame of the running exam (6px dividers on all sides), without the fill-the-card modifier
+            expect(wrapper().classList).toContain('body-bg');
+            expect(wrapper().classList).not.toContain('exam-background-wrapper--test-run');
+            expect(hint().parentElement).toBe(wrapper());
+            expect(hint().classList).toContain('module-bg');
+        });
+
+        it('lets the hint fill the card of the shell once the exam layout is reset, as for a test exam or a reload after the exam', () => {
+            showSubmissionHint({ realExam: true, examLayoutActive: false });
+
+            expect(wrapper().classList).toContain('exam-background-wrapper--test-run');
+            expect(hint().parentElement).toBe(wrapper());
+        });
+
+        it('lets the hint of a test run fill the card of the management shell even if the layout flag is set', () => {
+            showSubmissionHint({ examLayoutActive: true });
+
+            expect(wrapper().classList).toContain('exam-background-wrapper--test-run');
+        });
+
+        it('follows the layout flag when the layout is reset while the hint is shown', () => {
+            showSubmissionHint({ realExam: true, examLayoutActive: true });
+            expect(wrapper().classList).not.toContain('exam-background-wrapper--test-run');
+
+            examIsStarted.next(false);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(wrapper().classList).toContain('exam-background-wrapper--test-run');
+        });
+
+        it('gives the hint a section-sized heading and a small summary button', () => {
+            showSubmissionHint();
+
+            const heading: HTMLElement = hint().querySelector('h2')!;
+            // the important modifiers are needed because the unlayered Bootstrap heading rules would win otherwise
+            expect(heading.classList).toContain('text-lg!');
+            expect(heading.classList).toContain('font-semibold!');
+
+            const button: HTMLElement = hint().querySelector('#showExamSummaryButton')!;
+            expect(button).not.toBeNull();
+            // the small size is 34px, below the 40px a page-level button may have
+            expect(button.classList).toContain('tumaet:text-sm');
+            expect(button.classList).not.toContain('tumaet:text-base');
+        });
+
+        it('lets the summary of a real exam scroll in a container as tall as its card, without the viewport-based legacy class', () => {
+            TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+            fixture.changeDetectorRef.detectChanges();
+            const studentExam = submittedStudentExam();
+            comp.exam.set(studentExam.exam!);
+            comp.studentExam.set(studentExam);
+            comp.showExamSummary.set(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            const scroller = fixture.debugElement.query(By.css('jhi-exam-participation-summary')).nativeElement.parentElement as HTMLElement;
+            expect(scroller.classList).toContain('exam-summary-scroll');
+            // `scrollable-content` is 100vh minus a hard-coded 156px and ended 75px above the bottom of the card
+            expect(scroller.classList).not.toContain('scrollable-content');
+            expect(scroller.classList).not.toContain('p-4');
+        });
+
+        it('leaves the summary of a test run, which sits in the card of the management shell, without a scroll container class', () => {
+            fixture.changeDetectorRef.detectChanges();
+            const studentExam = submittedStudentExam();
+            comp.exam.set(studentExam.exam!);
+            comp.studentExam.set(studentExam);
+            comp.showExamSummary.set(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            const scroller = fixture.debugElement.query(By.css('jhi-exam-participation-summary')).nativeElement.parentElement as HTMLElement;
+            expect(scroller.className).toBe('');
+        });
+
+        it('gives the end view card only a top padding, so the inset of the cover is the single one and lines up with the bar', () => {
+            fixture.changeDetectorRef.detectChanges();
+            comp.exam.set(new Exam());
+            comp.exam().startDate = dayjs().subtract(1, 'hours');
+            comp.studentExam.set(new StudentExam());
+            comp.studentExam().submitted = false;
+            comp.examStartConfirmed.set(true);
+            comp.individualStudentEndDateWithGracePeriod.set(dayjs().add(1, 'minutes'));
+            vi.spyOn(comp, 'isOver').mockReturnValue(true);
+            vi.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(false);
+            fixture.changeDetectorRef.detectChanges();
+
+            const card: HTMLElement = fixture.debugElement.query(By.css('.end-view')).nativeElement;
+            expect(card.classList).toContain('pt-3');
+            // `px-4` on the card would stack 24px on the 24px of the cover and put the text 48px from the edge
+            expect(card.classList).not.toContain('px-4');
+            expect(card.classList).not.toContain('pt-4');
+        });
     });
 
     it('should show the connection status bar and flag a lost connection', () => {

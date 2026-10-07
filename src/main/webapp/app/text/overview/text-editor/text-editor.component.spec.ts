@@ -531,6 +531,60 @@ describe('TextEditorComponent', () => {
         expect(textarea).toBeTruthy();
     });
 
+    describe('card layout', () => {
+        const getLeftBody = (): HTMLElement => fixture.nativeElement.querySelector('[left-body]');
+
+        const renderAssessedSubmission = () => {
+            comp.textExercise.set(textExercise);
+            comp.result.set({ id: 1, feedbacks: [{ id: 1, type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'feedback' } as Feedback] } as Result);
+            comp.isOwnerOfParticipation.set(true);
+            fixture.changeDetectorRef.detectChanges();
+        };
+
+        it('should keep the left padding of the left body on the participation page', () => {
+            comp.textExercise.set(textExercise);
+            fixture.componentRef.setInput('isExamSummary', false);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(getLeftBody().classList).toContain('ps-2');
+        });
+
+        it('should drop the left padding of the left body in the exam summary so the body shares the card inset', () => {
+            comp.textExercise.set(textExercise);
+            fixture.componentRef.setInput('isExamSummary', true);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(getLeftBody().classList).not.toContain('ps-2');
+            expect(getLeftBody().classList).toContain('pb-2');
+        });
+
+        it('should render the rating alert inside its own column so it lines up with the feedback above', () => {
+            renderAssessedSubmission();
+
+            const rating: HTMLElement = fixture.nativeElement.querySelector('jhi-rating');
+            expect(rating).toBeTruthy();
+            expect(rating.classList).toContain('alert');
+            expect(rating.classList).toContain('alert-info');
+            expect(rating.classList).toContain('block');
+            // the alert is no longer a direct child of the row, so the column padding applies and the border is not clipped
+            expect(rating.classList).not.toContain('col-xl-8');
+            const column = rating.parentElement!;
+            expect(column.classList).toContain('col-xl-8');
+            expect(column.classList).toContain('col-lg-10');
+            expect(column.classList).not.toContain('alert');
+            expect(column.parentElement!.classList).toContain('row');
+        });
+
+        it('should render the assessed submission label with the section heading style', () => {
+            renderAssessedSubmission();
+
+            const label: HTMLElement = fixture.nativeElement.querySelector('.col-xl-8 > b');
+            expect(label).toBeTruthy();
+            expect(label.classList).toContain('text-base');
+            expect(label.classList).toContain('font-semibold!');
+        });
+    });
+
     it('should destroy', () => {
         comp.submission.set({ text: 'abc' } as TextSubmission);
         comp.answer.set('def');

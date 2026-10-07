@@ -1,5 +1,6 @@
 import { Component, HostListener, OnDestroy, OnInit, inject, signal, viewChildren } from '@angular/core';
 import { CdkScrollable } from '@angular/cdk/scrolling';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -112,6 +113,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private courseStorageService = inject(CourseStorageService);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
     private examManagementService = inject(ExamManagementService);
+
+    /**
+     * Whether the shell around the exam is in its exam layout: true from the start of a real exam until its summary is loaded,
+     * which resets the layout. Only then does a screen have to draw the dividers around its card itself, afterwards it fills the
+     * card of the shell it is shown in.
+     */
+    protected readonly examLayoutActive = toSignal(this.examParticipationService.examIsStarted$, { initialValue: false });
 
     /** Set once the component is destroyed, so that a late response does not restart work for the exam that was left. */
     private isDestroyed = false;
