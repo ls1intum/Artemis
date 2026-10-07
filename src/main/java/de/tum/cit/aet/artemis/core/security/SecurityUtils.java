@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -169,6 +170,45 @@ public final class SecurityUtils {
         finally {
             SecurityContextHolder.setContext(previousContext);
         }
+    }
+
+    /**
+     * Runs work as the user with the given login and restores the previous security context afterwards.
+     *
+     * <p>
+     * For work a specific user would trigger but that runs outside of their request, like the demo data seeded on startup:
+     * the production paths it reuses resolve the acting user from the security context. Like {@link #runAsSystem(Runnable)},
+     * this installs a fresh context instead of modifying the current one, so the caller's context is left untouched.
+     *
+     * @param login the login of the user to act as
+     * @param work  the work to run
+     * @param <T>   the type of the result of the work
+     * @return the result of the work
+     */
+    public static <T> T runAs(String login, Supplier<T> work) {
+        SecurityContext previousContext = SecurityContextHolder.getContext();
+        SecurityContext userContext = SecurityContextHolder.createEmptyContext();
+        userContext.setAuthentication(makeAuthorizationObject(login));
+        SecurityContextHolder.setContext(userContext);
+        try {
+            return work.get();
+        }
+        finally {
+            SecurityContextHolder.setContext(previousContext);
+        }
+    }
+
+    /**
+     * Runs work without a result as the user with the given login, see {@link #runAs(String, Supplier)}.
+     *
+     * @param login the login of the user to act as
+     * @param work  the work to run
+     */
+    public static void runAs(String login, Runnable work) {
+        runAs(login, () -> {
+            work.run();
+            return null;
+        });
     }
 
     /**

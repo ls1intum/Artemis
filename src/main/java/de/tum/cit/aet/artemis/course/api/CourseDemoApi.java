@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.course.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO_AND_SCHEDULING;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.api.AbstractApi;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
@@ -24,12 +25,14 @@ import de.tum.cit.aet.artemis.course.service.CourseAccessService;
 import de.tum.cit.aet.artemis.course.service.CourseValidator;
 
 /**
- * API for course functionality that other modules need to access.
+ * Creates the demo course seeded by the {@code demo} profile.
+ * <p>
+ * Only exists on the node that seeds the demo data, so none of this is instantiated on a regular instance.
  */
 @Controller
 @Lazy
-@Profile(PROFILE_CORE)
-public class CourseApi extends AbstractCourseApi {
+@Profile(PROFILE_DEMO_AND_SCHEDULING)
+public class CourseDemoApi implements AbstractApi {
 
     /**
      * Short name of the demo course. Used as the idempotency key of {@link #createDemo(User, User)}: the demo course is identified by this short name alone, so it must stay
@@ -39,7 +42,7 @@ public class CourseApi extends AbstractCourseApi {
 
     private static final String DEMO_COURSE_TITLE = "Artemis Demo Course";
 
-    private static final Logger log = LoggerFactory.getLogger(CourseApi.class);
+    private static final Logger log = LoggerFactory.getLogger(CourseDemoApi.class);
 
     private final CourseRepository courseRepository;
 
@@ -47,7 +50,7 @@ public class CourseApi extends AbstractCourseApi {
 
     private final CourseAccessService courseAccessService;
 
-    public CourseApi(CourseRepository courseRepository, ChannelService channelService, CourseAccessService courseAccessService) {
+    public CourseDemoApi(CourseRepository courseRepository, ChannelService channelService, CourseAccessService courseAccessService) {
         this.courseRepository = courseRepository;
         this.channelService = channelService;
         this.courseAccessService = courseAccessService;

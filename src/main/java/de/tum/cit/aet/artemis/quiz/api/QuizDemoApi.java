@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.quiz.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO_AND_SCHEDULING;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -23,12 +23,14 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 
 /**
- * API for quiz exercise functionality that other modules need to access.
+ * Creates the quiz exercises of the demo course seeded by the {@code demo} profile.
+ * <p>
+ * Only exists on the node that seeds the demo data, so none of this is instantiated on a regular instance.
  */
-@Profile(PROFILE_CORE)
 @Controller
 @Lazy
-public class QuizExerciseApi implements AbstractApi {
+@Profile(PROFILE_DEMO_AND_SCHEDULING)
+public class QuizDemoApi implements AbstractApi {
 
     /**
      * Title of the demo quiz exercise. Used as the idempotency key of {@link #createDemo(Course)} together with the course, so it must stay stable.
@@ -46,13 +48,13 @@ public class QuizExerciseApi implements AbstractApi {
             A short self check on the collections you use every day. You have ten minutes once you start, and you can start whenever you like before the due date.
             """;
 
-    private static final Logger log = LoggerFactory.getLogger(QuizExerciseApi.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizDemoApi.class);
 
     private final QuizExerciseService quizExerciseService;
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    public QuizExerciseApi(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository) {
+    public QuizDemoApi(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
     }

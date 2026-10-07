@@ -1,11 +1,14 @@
 package de.tum.cit.aet.artemis.modeling.api;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO_AND_SCHEDULING;
+
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -20,12 +23,15 @@ import de.tum.cit.aet.artemis.modeling.factories.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 
 /**
- * API for modeling exercise functionality that other modules need to access.
+ * Creates the modeling exercises of the demo course seeded by the {@code demo} profile.
+ * <p>
+ * Only exists on the node that seeds the demo data, so none of this is instantiated on a regular instance.
  */
 @Conditional(ModelingEnabled.class)
 @Controller
 @Lazy
-public class ModelingApi extends AbstractModelingApi {
+@Profile(PROFILE_DEMO_AND_SCHEDULING)
+public class ModelingDemoApi extends AbstractModelingApi {
 
     /**
      * Title of the demo modeling exercise. Used as the idempotency key of {@link #createDemo(Course)} together with the course, so it must stay stable.
@@ -74,7 +80,7 @@ public class ModelingApi extends AbstractModelingApi {
             | Enumeration and operations                    | 2      |
             """;
 
-    private static final Logger log = LoggerFactory.getLogger(ModelingApi.class);
+    private static final Logger log = LoggerFactory.getLogger(ModelingDemoApi.class);
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
@@ -82,7 +88,7 @@ public class ModelingApi extends AbstractModelingApi {
 
     private final ExerciseConfigurationService exerciseConfigurationService;
 
-    public ModelingApi(ModelingExerciseRepository modelingExerciseRepository, ChannelService channelService, ExerciseConfigurationService exerciseConfigurationService) {
+    public ModelingDemoApi(ModelingExerciseRepository modelingExerciseRepository, ChannelService channelService, ExerciseConfigurationService exerciseConfigurationService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.channelService = channelService;
         this.exerciseConfigurationService = exerciseConfigurationService;

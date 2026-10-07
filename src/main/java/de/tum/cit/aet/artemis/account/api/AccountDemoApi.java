@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.account.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO_AND_SCHEDULING;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,14 +11,17 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
+import de.tum.cit.aet.artemis.core.api.AbstractApi;
 
 /**
- * API for user functionality that other modules need to access.
+ * Creates the users of the demo course seeded by the {@code demo} profile.
+ * <p>
+ * Only exists on the node that seeds the demo data, so none of this is instantiated on a regular instance.
  */
 @Controller
 @Lazy
-@Profile(PROFILE_CORE)
-public class UserApi extends AbstractAccountApi {
+@Profile(PROFILE_DEMO_AND_SCHEDULING)
+public class AccountDemoApi implements AbstractApi {
 
     /**
      * Login of the demo student. Used as the idempotency key of {@link #createDemoStudent()}, so it must stay stable.
@@ -36,13 +39,13 @@ public class UserApi extends AbstractAccountApi {
      */
     private static final String DEMO_PASSWORD = "demo1234"; // nosemgrep
 
-    private static final Logger log = LoggerFactory.getLogger(UserApi.class);
+    private static final Logger log = LoggerFactory.getLogger(AccountDemoApi.class);
 
     private final UserRepository userRepository;
 
     private final UserCreationService userCreationService;
 
-    public UserApi(UserRepository userRepository, UserCreationService userCreationService) {
+    public AccountDemoApi(UserRepository userRepository, UserCreationService userCreationService) {
         this.userRepository = userRepository;
         this.userCreationService = userCreationService;
     }
