@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
-import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -12,9 +11,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.service.LectureDemoService;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 
@@ -32,17 +29,10 @@ public class LectureApi extends AbstractLectureApi {
 
     private final LectureRepository lectureRepository;
 
-    private final LectureDemoService lectureDemoService;
-
-    public LectureApi(LectureService lectureService, LectureImportService lectureImportService, LectureRepository lectureRepository, LectureDemoService lectureDemoService) {
+    public LectureApi(LectureService lectureService, LectureImportService lectureImportService, LectureRepository lectureRepository) {
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
         this.lectureRepository = lectureRepository;
-        this.lectureDemoService = lectureDemoService;
-    }
-
-    public List<LectureUnit> createDemo(Course course) {
-        return lectureDemoService.createDemo(course);
     }
 
     public Lecture importLecture(final Lecture importedLecture, final Course course, boolean importLectureUnits) {

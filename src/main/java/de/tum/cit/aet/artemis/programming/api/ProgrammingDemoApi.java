@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO_AND_SCHEDULING;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.core.api.AbstractApi;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseDates;
@@ -32,12 +33,14 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpd
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 
 /**
- * API for programming exercise functionality that other modules need to access.
+ * Creates the programming exercise of the demo course seeded by the {@code demo} profile.
+ * <p>
+ * Only exists on the node that seeds the demo data, so none of this is instantiated on a regular instance.
  */
-@Profile(PROFILE_CORE)
 @Controller
 @Lazy
-public class ProgrammingExerciseApi extends AbstractProgrammingApi {
+@Profile(PROFILE_DEMO_AND_SCHEDULING)
+public class ProgrammingDemoApi implements AbstractApi {
 
     /**
      * Short name of the demo programming exercise. Used as the idempotency key of {@link #createDemo(Course)} together with the course, so it must stay stable.
@@ -63,7 +66,7 @@ public class ProgrammingExerciseApi extends AbstractProgrammingApi {
             repository, then work through the classes that are marked as to do.
             """;
 
-    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseApi.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingDemoApi.class);
 
     private final ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService;
 
@@ -77,7 +80,7 @@ public class ProgrammingExerciseApi extends AbstractProgrammingApi {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    public ProgrammingExerciseApi(ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
+    public ProgrammingDemoApi(ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ResourceLoaderService resourceLoaderService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService) {
