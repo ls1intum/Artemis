@@ -14,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
@@ -311,8 +312,8 @@ class DockerSandboxTest {
         DockerSandboxService service = new DockerSandboxService(dockerClient, sandboxPolicy("worker-1", IMAGE_ID, "runc", 1024 * 1024 * 1024, 100_000, 128));
         service.markActive("container-1");
 
-        assertThatExceptionOfType(SandboxUnavailableException.class).isThrownBy(() -> service.copyOut("container-1", "/missing-report"))
-                .withMessageContaining("report: Cannot stat");
+        assertThatExceptionOfType(exitCode == null ? SandboxUnavailableException.class : UncheckedIOException.class)
+                .isThrownBy(() -> service.copyOut("container-1", "/missing-report")).withMessageContaining("report: Cannot stat");
 
         assertThat(service.lastActivity("container-1").isPresent()).isEqualTo(exitCode != null);
         verify(remove, org.mockito.Mockito.times(exitCode == null ? 1 : 0)).exec();

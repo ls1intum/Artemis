@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.time.Duration;
 import java.util.UUID;
 
@@ -21,7 +22,6 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Capability;
 
-import de.tum.cit.aet.artemis.aiworker.api.SandboxUnavailableException;
 import de.tum.cit.aet.artemis.aiworker.config.DockerConfiguration;
 
 /** Uses an operator/CI-selected immutable test image; no image pull or shared-server mutation inside tests. */
@@ -88,7 +88,7 @@ class DockerSandboxIsolationTest {
         String session = sandbox.createSession();
         assertThat(sandbox.exec(session, Duration.ofSeconds(5), "sh", "-c", "printf retained > /workspace/probe").isSuccess()).isTrue();
 
-        assertThatExceptionOfType(SandboxUnavailableException.class).isThrownBy(() -> sandbox.copyOut(session, "/workspace/missing-report"))
+        assertThatExceptionOfType(UncheckedIOException.class).isThrownBy(() -> sandbox.copyOut(session, "/workspace/missing-report"))
                 .withMessageContaining("Could not archive files");
 
         assertThat(sandbox.exec(session, Duration.ofSeconds(5), "cat", "/workspace/probe").stdout()).isEqualTo("retained");

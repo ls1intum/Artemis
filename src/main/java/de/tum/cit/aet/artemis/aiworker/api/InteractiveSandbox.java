@@ -20,6 +20,15 @@ public interface InteractiveSandbox {
 
     void copyIn(String sessionId, String destinationPath, InputStream tarArchive);
 
+    /**
+     * Reads a file or directory without changing the workspace.
+     *
+     * @param sessionId the session handle
+     * @param path      the sandbox path to archive
+     * @return the bounded archive
+     * @throws java.io.UncheckedIOException if the archive command fails but the sandbox remains available
+     * @throws SandboxUnavailableException  if the session is lost or the operation cannot complete safely
+     */
     TarArchiveInputStream copyOut(String sessionId, String path);
 
     /**
