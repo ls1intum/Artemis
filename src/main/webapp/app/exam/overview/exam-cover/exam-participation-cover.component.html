@@ -1,10 +1,13 @@
 <!-- Since the design of welcome page is changed, we use different alignments for startView and endView
      However, it includes some duplicated code and ids and should be refactored with e.g. ngTemplates
       -->
-<div class="overflow-auto px-6! pb-6!" [class.scrollable-content-exam-cover]="!testRunStartTime() && startView()">
+<div class="overflow-auto px-3! pb-3!" data-testid="exam-cover" [class.scrollable-content-exam-cover]="!testRunStartTime() && startView()">
     @if (startView()) {
         <!-- The same 40px title row with the rule below it as the header of every exercise page (see jhi-exam-exercise-header). -->
-        <div class="mt-4! mb-4! flex h-10 shrink-0 items-center justify-between gap-4! border-b border-(--border-color)" data-testid="exam-start-header">
+        <div
+            class="mt-3! mb-3! flex h-10 shrink-0 items-center justify-between gap-4! border-b border-(--border-color) [&_.tumaet-ui-btn]:py-1! [&_.tumaet-ui-btn]:leading-5!"
+            data-testid="exam-start-header"
+        >
             <div class="flex min-w-0 items-center gap-2">
                 @if (isSidebarCollapsed()) {
                     <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
@@ -106,7 +109,7 @@
         }
     } @else {
         <!-- The same 40px title row with the rule below it as the header of every exercise page (see jhi-exam-exercise-header). -->
-        <div class="mb-4! flex h-10 shrink-0 items-center border-b border-(--border-color)" data-testid="exam-finished-header">
+        <div class="mb-3! flex h-10 shrink-0 items-center border-b border-(--border-color)" data-testid="exam-finished-header">
             <h3 class="m-0! min-w-0 flex-1 truncate text-lg! leading-tight! font-semibold!" data-testid="exam-finished-title">
                 <span
                     jhiTranslate="artemisApp.examParticipation.finish"

@@ -1,4 +1,4 @@
-<jhi-exam-exercise-header [exercise]="exercise()" />
+<jhi-exam-exercise-header [exercise]="exercise()" [actionsLabel]="'artemisApp.examParticipation.programmingActions' | artemisTranslate" />
 <!-- ngIf online-code-editor -->
 @if (exercise().allowOnlineEditor) {
     <div>
@@ -12,13 +12,19 @@
             (onCommitStateChange)="onCommitStateChange($event)"
             (onFileChanged)="onFileChanged()"
         >
-            <div submissionPolicy class="ps-2">
+            <div submissionPolicy class="ps-4!">
                 <jhi-programming-submission-policy-status [exercise]="exercise()" [submissionCount]="submissionCount()" />
             </div>
             <div editorTitleActions>
                 @if (exercise().allowOfflineIde) {
                     <div [style.align-self]="'flex-start'">
-                        <jhi-exercise-details-student-actions [examMode]="true" [smallButtons]="true" [exercise]="exercise()" [courseId]="courseId()" />
+                        <jhi-exercise-details-student-actions
+                            data-testid="exam-programming-code"
+                            [examMode]="true"
+                            [smallButtons]="true"
+                            [exercise]="exercise()"
+                            [courseId]="courseId()"
+                        />
                     </div>
                 }
             </div>
@@ -28,6 +34,7 @@
                 }
                 @if (studentParticipation()) {
                     <jhi-updating-result
+                        data-testid="exam-programming-result"
                         [exercise]="exercise()"
                         [showUngradedResults]="true"
                         [showBadge]="true"
@@ -54,27 +61,37 @@
 <!-- ngIf Offline IDE code button start -->
 @if (!exercise().allowOnlineEditor && exercise().allowOfflineIde) {
     <div>
-        <div class="my-6! ms-1 flex items-center justify-between">
-            <div class="flex items-center gap-6!">
-                <jhi-exercise-details-student-actions [exercise]="exercise()" [courseId]="courseId()" [examMode]="true" [smallButtons]="true" />
-                <jhi-programming-submission-policy-status [exercise]="exercise()" [submissionCount]="submissionCount()" class="grow" />
-            </div>
-            <div class="flex items-center gap-6!">
-                @if (repositoryIsLocked) {
-                    <jhi-code-editor-repository-is-locked class="me-1" />
-                }
-                @if (studentParticipation()) {
-                    <jhi-updating-result
+        <!-- The title row can take the toolbar over (see jhi-exam-exercise-header): the wrapper, which holds the margins, then takes no room. -->
+        <div class="my-6! ms-1 [&:not(:has(*))]:hidden">
+            <div #offlineToolbar class="flex items-center justify-between gap-6!" data-testid="programming-toolbar">
+                <div class="flex items-center gap-6!">
+                    <jhi-exercise-details-student-actions
+                        data-testid="exam-programming-code"
                         [exercise]="exercise()"
-                        [showUngradedResults]="true"
-                        [showBadge]="true"
-                        [participation]="studentParticipation()"
-                        [personalParticipation]="true"
-                        [showProgressBar]="true"
-                        [showProgressBarBorder]="true"
-                        class="me-1"
+                        [courseId]="courseId()"
+                        [examMode]="true"
+                        [smallButtons]="true"
                     />
-                }
+                    <jhi-programming-submission-policy-status [exercise]="exercise()" [submissionCount]="submissionCount()" class="grow" />
+                </div>
+                <div class="flex items-center gap-6!">
+                    @if (repositoryIsLocked) {
+                        <jhi-code-editor-repository-is-locked class="me-1" />
+                    }
+                    @if (studentParticipation()) {
+                        <jhi-updating-result
+                            data-testid="exam-programming-result"
+                            [exercise]="exercise()"
+                            [showUngradedResults]="true"
+                            [showBadge]="true"
+                            [participation]="studentParticipation()"
+                            [personalParticipation]="true"
+                            [showProgressBar]="true"
+                            [showProgressBarBorder]="true"
+                            class="me-1"
+                        />
+                    }
+                </div>
             </div>
         </div>
         @if (exercise()) {

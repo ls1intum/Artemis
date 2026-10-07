@@ -6,7 +6,7 @@
     <jhi-resizeable-container [examTimeline]="examTimeline()">
         <!--region Left Panel-->
         <span class="exercise-title" left-header>{{ examTimeline() ? exercise().title : ('artemisApp.exam.yourSolution' | artemisTranslate) }}</span>
-        <div left-body class="mt-6 w-full ps-2 pb-2">
+        <div left-body class="w-full ps-2 pb-2">
             <div>
                 <div class="mb-2 flex flex-wrap gap-1">
                     <tumaet-ui-tag severity="info" data-testid="word-count">

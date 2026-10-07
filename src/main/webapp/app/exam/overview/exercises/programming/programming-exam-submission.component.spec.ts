@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -130,5 +131,71 @@ describe('ProgrammingExamSubmissionComponent', () => {
         component.onCommitStateChange(CommitState.CLEAN);
         expect(component.studentParticipation().submissions![0].isSynced).toBe(true);
         expect(notify).toHaveBeenCalledTimes(2);
+    });
+});
+
+describe('ProgrammingExamSubmissionComponent offering its toolbar to the title row', () => {
+    let fixture: ComponentFixture<ProgrammingExamSubmissionComponent>;
+    let offerActions: ReturnType<typeof vi.fn>;
+    // the three queries of the component, as signals the tests can change like the view does when an editor comes or goes
+    const onlineEditor = signal<{ navbar: () => { nativeElement: HTMLElement } | undefined } | undefined>(undefined);
+    const offlineToolbar = signal<{ nativeElement: HTMLElement } | undefined>(undefined);
+
+    beforeEach(() => {
+        offerActions = vi.fn();
+        onlineEditor.set(undefined);
+        offlineToolbar.set(undefined);
+        // the template is not rendered: the code editor with its Monaco instance is not needed to see what the component hands to the header
+        TestBed.configureTestingModule({
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        }).overrideComponent(ProgrammingExamSubmissionComponent, { set: { template: '' } });
+        fixture = TestBed.createComponent(ProgrammingExamSubmissionComponent);
+        const stubs = fixture.componentInstance as unknown as Record<string, unknown>;
+        stubs['header'] = () => ({ offerActions });
+        stubs['onlineEditor'] = onlineEditor;
+        stubs['offlineToolbar'] = offlineToolbar;
+
+        const exercise = new ProgrammingExercise(new Course(), new ExerciseGroup());
+        const participation = new ProgrammingExerciseStudentParticipation();
+        participation.submissions = [new ProgrammingSubmission()];
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('studentParticipation', participation);
+        fixture.componentRef.setInput('courseId', 1);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('offers the toolbar of the online editor, which the editor exposes as its navbar', () => {
+        const navbar = document.createElement('div');
+        onlineEditor.set({ navbar: () => ({ nativeElement: navbar }) });
+
+        fixture.detectChanges();
+
+        expect(offerActions).toHaveBeenCalledExactlyOnceWith(navbar);
+    });
+
+    it('offers the row of the Code button and the result when the exercise has no online editor', () => {
+        const row = document.createElement('div');
+        offlineToolbar.set({ nativeElement: row });
+
+        fixture.detectChanges();
+
+        expect(offerActions).toHaveBeenCalledExactlyOnceWith(row);
+    });
+
+    it('offers nothing while neither of them is shown, and follows the editor when it comes and goes', () => {
+        fixture.detectChanges();
+        expect(offerActions).toHaveBeenLastCalledWith(undefined);
+
+        const navbar = document.createElement('div');
+        onlineEditor.set({ navbar: () => ({ nativeElement: navbar }) });
+        fixture.detectChanges();
+        expect(offerActions).toHaveBeenLastCalledWith(navbar);
+
+        onlineEditor.set(undefined);
+        fixture.detectChanges();
+        expect(offerActions).toHaveBeenLastCalledWith(undefined);
     });
 });
