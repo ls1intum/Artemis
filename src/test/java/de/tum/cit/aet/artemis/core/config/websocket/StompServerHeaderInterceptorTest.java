@@ -9,7 +9,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.List;
-import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -77,7 +76,7 @@ class StompServerHeaderInterceptorTest {
     void keepsTheSessionAndTheOtherHeadersOfTheFrame() {
         Message<byte[]> frame = decode(BROKER_CONNECTED_FRAME);
         // the relay assigns the session of the client to every frame of the broker that it forwards, and the frame is routed by it
-        Objects.requireNonNull(StompHeaderAccessor.getAccessor(frame, StompHeaderAccessor.class)).setSessionId("client-session");
+        accessorOf(frame).setSessionId("client-session");
 
         Message<?> filtered = interceptor.preSend(frame, channel);
 
@@ -93,7 +92,7 @@ class StompServerHeaderInterceptorTest {
     @Test
     void removesTheHeaderFromAnImmutableFrame() {
         Message<byte[]> frame = decode(BROKER_CONNECTED_FRAME);
-        Objects.requireNonNull(StompHeaderAccessor.getAccessor(frame, StompHeaderAccessor.class)).setImmutable();
+        accessorOf(frame).setImmutable();
 
         Message<?> filtered = interceptor.preSend(frame, channel);
 
@@ -138,6 +137,12 @@ class StompServerHeaderInterceptorTest {
 
     private static Message<byte[]> decode(String frame) {
         return new StompDecoder().decode(ByteBuffer.wrap(frame.getBytes(StandardCharsets.UTF_8))).getFirst();
+    }
+
+    private static StompHeaderAccessor accessorOf(Message<?> frame) {
+        StompHeaderAccessor accessor = StompHeaderAccessor.getAccessor(frame, StompHeaderAccessor.class);
+        assertThat(accessor).isNotNull();
+        return accessor;
     }
 
     @SuppressWarnings("unchecked")
