@@ -101,13 +101,14 @@ public class ModelingDemoApi extends AbstractModelingApi {
      * {@code ModelingExerciseResource} rather than saving the entity directly.
      *
      * @param course the demo course the exercise belongs to.
+     * @return the demo exercise, whether it already existed or was created by this call.
      */
-    public void createDemo(Course course) {
-        boolean exerciseExists = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).stream()
-                .anyMatch(exercise -> DEMO_EXERCISE_TITLE.equals(exercise.getTitle()));
-        if (exerciseExists) {
+    public ModelingExercise createDemo(Course course) {
+        Optional<ModelingExercise> existingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).stream()
+                .filter(exercise -> DEMO_EXERCISE_TITLE.equals(exercise.getTitle())).findFirst();
+        if (existingExercise.isPresent()) {
             log.debug("Demo modeling exercise already exists, skipping creation");
-            return;
+            return existingExercise.get();
         }
 
         // No example solution model: a full Apollon diagram is not needed to participate, and an empty one would show up as a broken example solution.
@@ -123,5 +124,6 @@ public class ModelingDemoApi extends AbstractModelingApi {
         channelService.createExerciseChannel(createdExercise, Optional.empty());
 
         log.info("Created demo modeling exercise '{}' with id {}", DEMO_EXERCISE_TITLE, createdExercise.getId());
+        return createdExercise;
     }
 }
