@@ -136,7 +136,7 @@ class StructuralOracleSeederTest {
         String typed = "public class Box { " + typedMember + " }";
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         var seeded = seederWith(sandbox, Map.of(), Map.of(), Map.of(), approvedSpec("Box", typed)).seedIfStructuralDiff(sandbox, "s", javaExercise());
-        assertThat(seeded.testNames()).contains("testGenericApi[Box]");
+        assertThat(seeded.testNames()).contains("testClass[GenericApi:Box]");
         String testSource = seeded.repositoryFiles().get("test/GenericTypeTest.java");
         String oracle = seeded.repositoryFiles().get("test/test.json");
         executeSeededGenericTest(tempDir.resolve("typed"), typed, testSource, oracle);
@@ -154,7 +154,7 @@ class StructuralOracleSeederTest {
         FileUtils.writeStringToFile(directory.resolve("test.json").toFile(), oracle, StandardCharsets.UTF_8);
         var compiler = ToolProvider.getSystemJavaCompiler();
         try (var files = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
-            List<Path> dependencies = List.of(DynamicTest.class, org.json.JSONArray.class).stream()
+            List<Path> dependencies = List.of(DynamicTest.class, org.json.JSONString.class).stream()
                     .map(type -> Path.of(type.getProtectionDomain().getCodeSource().getLocation().getPath())).toList();
             files.setLocationFromPaths(javax.tools.StandardLocation.CLASS_PATH, dependencies);
             assertThat(compiler.getTask(null, files, null, List.of("-proc:none", "-d", directory.toString()), null,
@@ -168,7 +168,7 @@ class StructuralOracleSeederTest {
             factory.setAccessible(true);
             @SuppressWarnings("unchecked")
             List<DynamicTest> tests = (List<DynamicTest>) factory.invoke(constructor.newInstance());
-            assertThat(tests).singleElement().extracting(DynamicTest::getDisplayName).isEqualTo("testGenericApi[Box]");
+            assertThat(tests).singleElement().extracting(DynamicTest::getDisplayName).isEqualTo("testClass[GenericApi:Box]");
             assertThat(loader.loadClass("Box").getTypeParameters()).isEmpty();
             tests.getFirst().getExecutable().execute();
         }
@@ -292,7 +292,7 @@ class StructuralOracleSeederTest {
         assertThat(firstOracle).isEqualTo(laterOracle).contains("\"List\"", "\"DispatchStrategy\"", "\"int\"").doesNotContain("ArrayList", "Collection", "\"long\"",
                 "\"parameters\" : [ \"String\" ]");
         assertThat(firstTests.testNames()).isEqualTo(laterTests.testNames()).containsExactlyInAnyOrder("testClass[ElevatorDispatcher]", "testMethods[ElevatorDispatcher]",
-                "testConstructors[ElevatorDispatcher]", "testGenericApi[ElevatorDispatcher]");
+                "testConstructors[ElevatorDispatcher]", "testClass[GenericApi:ElevatorDispatcher]");
     }
 
     @Test

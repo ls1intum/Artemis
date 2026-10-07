@@ -246,7 +246,7 @@ export function mostCriticalState(parent: HyperionStepState, substeps: readonly 
     }
     const order: HyperionStepState[] = ['failed', 'current', 'complete', 'skipped', 'pending'];
     const rank = (state: HyperionStepState) => order.indexOf(state);
-    return substeps.reduce((worst, substep) => (rank(substep.state) < rank(worst) ? substep.state : worst), parent);
+    return substeps.reduce<HyperionStepState>((worst, substep) => (rank(substep.state) < rank(worst) ? substep.state : worst), parent);
 }
 
 /**
