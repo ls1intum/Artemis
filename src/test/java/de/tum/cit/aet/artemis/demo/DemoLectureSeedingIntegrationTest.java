@@ -4,13 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -30,9 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.atlas.api.AtlasDemoApi;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
 import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
@@ -115,12 +115,6 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
     @Autowired
     private SlideRepository slideRepository;
 
-    @Autowired
-    private CompetencyRepository competencyRepository;
-
-    @Autowired
-    private CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
-
     @Test
     void seedsWeeklyLecturesWithTheirUnitsInOrder() {
         seed();
@@ -185,14 +179,6 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    void linksTheCompetencyToTheSeededUnitsOfTheArchitectureLecture() {
-        seed();
-
-        assertThat(linkedLectureUnitIds()).as("the competency is linked to the units of the architecture lecture except its exercise units, which link through their exercise")
-                .isNotEmpty().isEqualTo(nonExerciseUnitIds(demoLecture(ARCHITECTURE)));
-    }
-
-    @Test
     void seedingTwiceCreatesNoLectureContent() {
         seed();
         Map<Long, List<Long>> afterFirstRun = snapshotLectures();
@@ -219,7 +205,6 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(recreatedUnit.getContent()).as("the text unit is recreated as it was seeded").isEqualTo(textUnit.getContent());
         assertThat(unitIds(afterReseeding)).as("the other units are left alone").containsAll(unitIds(lecture).stream().filter(id -> !id.equals(textUnit.getId())).toList())
                 .hasSameSizeAs(unitIds(lecture));
-        assertThat(linkedLectureUnitIds()).as("the recreated unit is handed on, so the competency is linked to it").contains(recreatedUnit.getId());
     }
 
     @Test
@@ -233,7 +218,6 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
 
             Lecture afterReseeding = demoLecture(ARCHITECTURE);
             assertThat(unitIds(afterReseeding)).as("the added unit is kept").contains(addedUnit.getId());
-            assertThat(linkedLectureUnitIds()).as("seeding links no unit that a user added").doesNotContain(addedUnit.getId());
             // Without exercises, seeding only looks up the other units of the existing lectures.
             DemoLectures seededUnits = lectureDemoApi.createDemo(demoCourse(), List.of(), List.of(), List.of());
             assertThat(seededUnits.architecture()).extracting(LectureUnit::getId).as("only the seeded units of the lecture are returned")
@@ -242,22 +226,6 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
         finally {
             lectureUnitService.removeLectureUnit(addedUnit);
         }
-    }
-
-    @Test
-    void relinksRecreatedCompetencyWithoutTouchingTheLectures() {
-        seed();
-        long courseId = demoCourse().getId();
-        Map<Long, List<Long>> lecturesBefore = snapshotLectures();
-        lectureRepository.findAllByCourseId(courseId).forEach(lecture -> competencyLectureUnitLinkRepository.deleteAllByLectureId(lecture.getId()));
-        competencyRepository.deleteAllByCourseId(courseId);
-
-        seed();
-
-        assertThat(competencyRepository.findAllByCourseId(courseId)).as("the missing competency is recreated").isNotEmpty();
-        assertThat(linkedLectureUnitIds()).as("the recreated competency is linked to the seeded units of the architecture lecture")
-                .isEqualTo(nonExerciseUnitIds(demoLecture(ARCHITECTURE)));
-        assertThat(snapshotLectures()).as("the lectures are left alone").isEqualTo(lecturesBefore);
     }
 
     @Test
@@ -271,7 +239,9 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThatCode(() -> withoutLectures.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("seeding must work when the lecture module is disabled")
                 .doesNotThrowAnyException();
 
-        verify(atlasDemoApi).createDemo(any(Course.class), eq(List.of()));
+        // The competencies are still seeded, with the exercises of their topics alone.
+        verify(atlasDemoApi).createDemo(any(Course.class), argThat(DemoLectureSeedingIntegrationTest::withoutLectureUnits),
+                argThat(DemoLectureSeedingIntegrationTest::withoutLectureUnits), argThat(DemoLectureSeedingIntegrationTest::withoutLectureUnits), anyList());
         assertThat(snapshotLectures()).as("a disabled lecture module leaves the existing lectures alone").isEqualTo(lecturesBefore);
     }
 
@@ -321,9 +291,8 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
                 .map(Exercise::getId).collect(Collectors.toSet());
     }
 
-    private Set<Long> linkedLectureUnitIds() {
-        Set<Long> competencyIds = competencyRepository.findAllByCourseId(demoCourse().getId()).stream().map(Competency::getId).collect(Collectors.toSet());
-        return competencyIds.isEmpty() ? Set.of() : competencyLectureUnitLinkRepository.findLectureUnitIdsByCompetencyIds(competencyIds);
+    private static boolean withoutLectureUnits(Collection<? extends LearningObject> learningObjects) {
+        return learningObjects.stream().noneMatch(LectureUnit.class::isInstance);
     }
 
     /**
