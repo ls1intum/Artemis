@@ -95,9 +95,13 @@ public class BuildLogEntryService {
      * @return the entries as they were stored, which is what a subsequent read returns
      */
     public List<BuildLogEntry> saveBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission, Result result) {
+        ZonedDateTime retentionTime = result.getCompletionDate() != null ? result.getCompletionDate() : programmingSubmission.getSubmissionDate();
+        return saveBuildLogs(buildLogs, programmingSubmission, result, retentionTime);
+    }
+
+    private List<BuildLogEntry> saveBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission, Result result, ZonedDateTime retentionTime) {
         List<BuildLogEntry> stored;
         try {
-            ZonedDateTime retentionTime = result.getCompletionDate() != null ? result.getCompletionDate() : programmingSubmission.getSubmissionDate();
             stored = failedBuildLogService.saveBuildLogs(exerciseIdOf(programmingSubmission), programmingSubmission.getId(), result.getId(), retentionTime, buildLogs);
         }
         catch (UncheckedIOException e) {
@@ -125,12 +129,15 @@ public class BuildLogEntryService {
      * @param programmingSubmission submission shared by all containers of the build
      * @param aggregatedResult      the aggregated result of the build, which names the file
      * @param containerName         the container the logs came from
+     * @param buildRunDate          when the container's build ran, from which the logs' retention period counts
      * @return the entries as they were stored for this container
      */
-    public List<BuildLogEntry> appendContainerBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission, Result aggregatedResult, String containerName) {
+    public List<BuildLogEntry> appendContainerBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission, Result aggregatedResult, String containerName,
+            ZonedDateTime buildRunDate) {
         List<BuildLogEntry> stored;
         try {
-            ZonedDateTime retentionTime = programmingSubmission.getSubmissionDate() != null ? programmingSubmission.getSubmissionDate() : ZonedDateTime.now();
+            // the build's own date, as for a single-container result: a rebuild of an old submission keeps its logs for the full period
+            ZonedDateTime retentionTime = buildRunDate != null ? buildRunDate : ZonedDateTime.now();
             stored = failedBuildLogService.appendBuildLogs(aggregatedResult.getExerciseId(), programmingSubmission.getId(), aggregatedResult.getId(), retentionTime, containerName,
                     buildLogs);
         }
@@ -155,8 +162,10 @@ public class BuildLogEntryService {
     public void moveContainerBuildLogs(ProgrammingSubmission programmingSubmission, Result aggregatedResult, Result manualResult, boolean buildFailed) {
         long exerciseId = aggregatedResult.getExerciseId();
         if (buildFailed) {
+            // retained from this build's completion, which the assessment's own dates do not reflect
+            ZonedDateTime retentionTime = aggregatedResult.getCompletionDate() != null ? aggregatedResult.getCompletionDate() : ZonedDateTime.now();
             failedBuildLogService.getBuildLogs(exerciseId, programmingSubmission.getId(), aggregatedResult.getId())
-                    .ifPresent(buildLogs -> saveBuildLogs(buildLogs, programmingSubmission, manualResult));
+                    .ifPresent(buildLogs -> saveBuildLogs(buildLogs, programmingSubmission, manualResult, retentionTime));
         }
         else {
             deleteBuildLogsOfSucceededResult(programmingSubmission, manualResult);

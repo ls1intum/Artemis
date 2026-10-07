@@ -1002,6 +1002,24 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
                 .as("no test case is deactivated, the unreported one of the failed container included").containsExactlyInAnyOrderElementsOf(activeBefore).contains("studentTest");
     }
 
+    /** The logs of a rebuild of an old submission are retained from the build's run, not from the submission date. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testTheLogsOfARebuiltOldSubmissionSurviveTheRetentionCleanup() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        String commitHash = "000000000000000000000000000000000000000e";
+        ProgrammingSubmission submission = submissionOf(participation, commitHash);
+        submission.setSubmissionDate(ZonedDateTime.now().minusYears(3));
+        programmingSubmissionRepository.save(submission);
+
+        var appended = programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "rebuilt container failed"), false, "container_a", null);
+        failedBuildLogService.deleteOldFailedBuildLogs();
+
+        assertThat(failedBuildLogService.getBuildLogs(programmingExercise.getId(), submission.getId(), appended.result().getId())).as("kept for the full retention period")
+                .isPresent();
+    }
+
     /**
      * The solution and template participations store no exercise, so the logs of a container must be filed under the
      * exercise of the aggregated result, where the feedback dialog reads them. With an earlier build of the commit, the

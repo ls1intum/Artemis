@@ -338,7 +338,7 @@ public class ProgrammingExerciseGradingService {
             // as on the single-container path, only the logs of a failed build are kept
             if (containerFailed && buildResult.hasLogs()) {
                 var buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildResult.extractBuildLogs(), exercise.getProgrammingLanguage());
-                buildLogService.appendContainerBuildLogs(buildLogs, submission, aggregatedResult, containerName);
+                buildLogService.appendContainerBuildLogs(buildLogs, submission, aggregatedResult, containerName, buildResult.buildRunDate());
             }
             // Scored only in finalizeContainerResult: scoring a partial result would mark the tests of unfinished
             // containers as not executed. The rows are inserted directly; saving the aggregate would re-read every
