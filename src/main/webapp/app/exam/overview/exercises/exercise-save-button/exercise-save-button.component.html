@@ -1,4 +1,4 @@
-<button id="save-exam" tumAetUiButton size="small" type="submit" [disabled]="isSynced()" (click)="onSave()">
+<button id="save-exam" tumAetUiButton size="small" class="sm:min-w-40" type="submit" [disabled]="isSynced()" (click)="onSave()">
     <fa-icon class="saved" [fixedWidth]="true" [icon]="submission()?.submitted && isSynced() ? facSaveSuccess : faFloppyDisk" />
     <span
         class="hidden sm:inline"

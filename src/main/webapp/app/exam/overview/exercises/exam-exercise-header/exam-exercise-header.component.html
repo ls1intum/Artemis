@@ -1,5 +1,6 @@
-<div class="mb-3 flex min-h-9 items-center justify-between gap-3 border-b border-(--border-color) pb-2" data-testid="exam-exercise-header">
-    <h3 class="m-0! min-w-0 text-lg! leading-tight! font-semibold!" data-testid="exam-exercise-title">
+<!-- Exactly 40px (border included) on every page, with or without an action and however long the title is, so the pages do not jump when switching between them. -->
+<div class="mb-3 flex h-10 shrink-0 items-center justify-between gap-3 border-b border-(--border-color)" data-testid="exam-exercise-header">
+    <h3 class="m-0! min-w-0 flex-1 truncate text-lg! leading-tight! font-semibold!" data-testid="exam-exercise-title">
         @if (exercise(); as exercise) {
             <span>{{ exercise.exerciseGroup?.title }}</span>
             <span

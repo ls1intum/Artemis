@@ -77,6 +77,16 @@ describe('ExamExerciseHeaderComponent', () => {
         expect(title().textContent).toContain('artemisApp.studentExamDetail.overview');
     });
 
+    it('has the same fixed height with and without an action, and keeps a long title on one line', () => {
+        host.exercise.set({ exerciseGroup: { title: 'A very long exercise group title '.repeat(10) } as ExerciseGroup, maxPoints: 10 });
+        fixture.detectChanges();
+
+        const header: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exam-exercise-header"]');
+        // 40px is `h-10`: the height must not depend on the action slot (a button is taller than the title) or on the title wrapping
+        expect(header.classList).toContain('h-10');
+        expect(title().classList).toContain('truncate');
+    });
+
     it('projects the primary action into the header', () => {
         host.exercise.set({ exerciseGroup: { title: 'Group' } as ExerciseGroup, maxPoints: 10 });
         fixture.detectChanges();
