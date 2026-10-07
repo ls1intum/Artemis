@@ -150,6 +150,7 @@ export class FeedbackComponent implements OnInit {
         xAxis: { max: this.chartData().xScaleMax, tickFormatter: (value) => this.xAxisFormatting(String(value)) },
         yAxis: { display: false },
         legend: { position: 'bottom' },
+        dataLabels: { formatter: (value) => this.xAxisFormatting(String(value)) },
         tooltip: false,
     }));
 
