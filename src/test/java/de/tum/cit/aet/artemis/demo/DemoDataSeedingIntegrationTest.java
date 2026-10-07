@@ -148,7 +148,10 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     void seedsQuizThatStudentsCanStartThemselves() {
         seed();
 
-        QuizExercise quizExercise = (QuizExercise) demoExercises(demoCourse().orElseThrow().getId()).stream().filter(QuizExercise.class::isInstance).findFirst().orElseThrow();
+        // The demo course also has a quiz that has ended, so this picks the one that is still open.
+        QuizExercise quizExercise = (QuizExercise) demoExercises(demoCourse().orElseThrow().getId()).stream()
+                .filter(exercise -> exercise instanceof QuizExercise && exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())).findFirst()
+                .orElseThrow();
         QuizExercise withQuestions = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
 
         // Individual mode lets every student start their own batch, so the quiz stays participatable for the lifetime of the demo instance.
