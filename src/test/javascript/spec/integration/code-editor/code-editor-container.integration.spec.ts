@@ -231,6 +231,16 @@ describe('CodeEditorContainerIntegration', () => {
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
     });
 
+    it('should expose the toolbar above the editor, so that a page can move it out of the bar that holds it', () => {
+        cleanInitialize();
+
+        const navbar = container.navbar()!.nativeElement;
+
+        expect(navbar.hasAttribute('editorNavbar')).toBe(true);
+        expect(navbar.parentElement!.classList).toContain('editor-statusbar');
+        expect(navbar.querySelector('jhi-code-editor-actions')).not.toBeNull();
+    });
+
     it('should not load files and render other components correctly if the repository status cannot be retrieved', async () => {
         const exercise = { id: 1, problemStatement, course: { id: 2 } };
         const participation = { id: 2, exercise, submissions: [{ results: [result] }] } as StudentParticipation;

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -82,6 +82,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     readonly buildOutput = viewChild(CodeEditorBuildOutputComponent);
     readonly monacoEditor = viewChild(CodeEditorMonacoComponent);
     readonly instructions = viewChild(CodeEditorInstructionsComponent);
+    /**
+     * The toolbar above the editor: the title actions, the submission policy, the toolbar and the editor actions. A page that has room for it elsewhere
+     * (the exam shows it in its title row) can move this element out of the bar that holds it; the bar then collapses (see the grid).
+     */
+    readonly navbar = viewChild<ElementRef<HTMLElement>>('navbar');
 
     editable = input<boolean>(true);
     forRepositoryView = input<boolean>(false);

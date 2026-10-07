@@ -558,15 +558,14 @@ describe('TextEditorComponent', () => {
             expect(getLeftBody().classList).toContain('pb-2');
         });
 
-        it('should render the rating alert inside its own column so it lines up with the feedback above', () => {
+        it('should render the rating inside its own column so it lines up with the feedback above, without an alert box', () => {
             renderAssessedSubmission();
 
             const rating: HTMLElement = fixture.nativeElement.querySelector('jhi-rating');
             expect(rating).toBeTruthy();
-            expect(rating.classList).toContain('alert');
-            expect(rating.classList).toContain('alert-info');
-            expect(rating.classList).toContain('block');
-            // the alert is no longer a direct child of the row, so the column padding applies and the border is not clipped
+            // The rating is a quiet reaction to the feedback, so the page no longer wraps it in a coloured alert.
+            expect(rating.classList).not.toContain('alert');
+            expect(rating.classList).not.toContain('alert-info');
             expect(rating.classList).not.toContain('col-xl-8');
             const column = rating.parentElement!;
             expect(column.classList).toContain('col-xl-8');
