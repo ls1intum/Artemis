@@ -513,7 +513,7 @@ describe('HyperionRunPageComponent', () => {
     it('allows a new generation after replay expires while preserving the undo baseline', () => {
         TestBed.inject(TranslateService).setTranslation('en', hyperionGenerationEn, true);
         TestBed.inject(TranslateService).use('en');
-        render(status({ revertAvailable: true, revertMode: 'GENERATE', events: [] }));
+        render(status({ revertAvailable: true, revertJobId: 'job-1', revertMode: 'GENERATE', events: [] }));
         expect(fixture.componentInstance['status']()).toBe('historyExpired');
         expect(fixture.componentInstance['canRevert']()).toBe(true);
         expect(fixture.componentInstance['jobId']()).toBe('job-1');

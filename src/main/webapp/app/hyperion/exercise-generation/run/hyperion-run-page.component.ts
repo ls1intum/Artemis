@@ -243,7 +243,7 @@ export class HyperionRunPageComponent {
 
     /** An authoritative idle response can retain undo metadata after its replay events expire. */
     protected readonly historyExpired = computed(
-        () => this.jobId() !== undefined && !this.running() && this.events().length === 0 && !this.statusLoading() && !this.statusLoadFailed(),
+        () => this.jobId() !== undefined && !this.facade.run() && !this.running() && this.events().length === 0 && !this.statusLoading() && !this.statusLoadFailed(),
     );
     protected readonly idleTitleKey = computed(() => `artemisApp.hyperion.generation.run.${this.historyExpired() ? 'historyExpiredTitle' : 'notStartedTitle'}`);
     protected readonly idleHintKey = computed(() => `artemisApp.hyperion.generation.run.${this.historyExpired() ? 'historyExpiredHint' : 'notStartedHint'}`);
