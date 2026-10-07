@@ -10,6 +10,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
+
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaAnnotatedElement;
 import com.thoughtworks.qdox.model.JavaClass;
@@ -250,8 +252,9 @@ final class ApprovedStructuralContract {
             classNode.set("interfaces", mapper.valueToTree(type.getInterfaces().stream().map(JavaClass::getSimpleName).sorted().toList()));
         }
         entry.set("class", classNode);
-        if (!type.getTypeParameters().isEmpty()) {
-            entry.set("genericApi", genericApi(type, exerciseTypes, mapper));
+        ObjectNode genericContract = genericApi(type, exerciseTypes, mapper);
+        if (genericContract != null) {
+            entry.set("genericApi", genericContract);
         }
 
         ArrayNode methods = mapper.createArrayNode();
@@ -275,6 +278,7 @@ final class ApprovedStructuralContract {
         return entry;
     }
 
+    @Nullable
     private static ObjectNode genericApi(JavaClass type, Set<String> exerciseTypes, JsonMapper mapper) {
         ObjectNode contract = mapper.createObjectNode();
         contract.put("parameterCount", type.getTypeParameters().size());
@@ -286,6 +290,9 @@ final class ApprovedStructuralContract {
                 .map(constructor -> "constructor:" + genericParameters(constructor.getParameters(), type, exerciseTypes)).forEach(signatures::add);
         type.getFields().stream().filter(ApprovedStructuralContract::isContractVisible)
                 .map(field -> "field:" + field.getName() + ":" + genericShape(field.getType(), type, exerciseTypes)).forEach(signatures::add);
+        if (type.getTypeParameters().isEmpty() && signatures.stream().noneMatch(signature -> signature.contains("<"))) {
+            return null;
+        }
         contract.set("signatures", mapper.valueToTree(signatures));
         return contract;
     }
