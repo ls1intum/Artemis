@@ -6,7 +6,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
@@ -14,7 +14,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { parseJson } from 'app/foundation/util/json.util';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
+import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-exercise-header/exam-exercise-header.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -30,7 +30,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
-        IncludedInScoreBadgeComponent,
+        ExamExerciseHeaderComponent,
         ExerciseSaveButtonComponent,
         ResizeableContainerComponent,
         ModelingEditorComponent,
@@ -61,7 +61,6 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     readonly explanationText = signal<string>(undefined!); // current explanation text
 
-    readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly savedStatus = computed(() => ({
         isChanged: !this.studentSubmission().isSynced,
         isSaving: this.examParticipationService.isSubmissionSaving(this.studentSubmission()),

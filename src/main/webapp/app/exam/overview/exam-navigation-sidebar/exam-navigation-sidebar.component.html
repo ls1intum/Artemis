@@ -1,105 +1,93 @@
-<div class="sidebar flex flex-col justify-between rounded-lg" [class.collapsed]="isCollapsed()" [class.sidebar-height-testRun]="isTestRun()">
-    <div class="py-4">
-        <div class="w-full bg-(--module-bg)">
-            <!-- Since the exam navigation includes lots of functionalities and in-line adjustments,
-             we use duplicated code here in order to keep the functionality of exam navigation apart from
-             sidebar-card implementations.
-              -->
-            <div class="sidebar-content" [class.collapsed]="isCollapsed()">
-                <div class="scrollable-item-content scrollable-column" [class.sidebar-height-testRun]="isTestRun()">
-                    <div
-                        data-testid="exam-overview-card"
-                        class="mb-2 w-full cursor-pointer rounded-lg px-2 pt-2 pb-1 hover:bg-(--sidebar-card-selected-bg)"
-                        [class]="exerciseIndex() === -1 ? 'bg-(--sidebar-card-selected-bg)' : 'bg-(--module-bg)'"
-                        (click)="changePage(true, -1)"
-                        [attr.aria-current]="exerciseIndex() === -1 ? true : null"
-                        #keyboardAction10
-                        role="button"
-                        tabindex="0"
-                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
-                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
-                    >
-                        <div class="mb-1 flex items-baseline justify-between">
-                            <span data-testid="sidebar-card-title" class="mr-2 truncate text-sm font-semibold">
-                                <fa-icon [tumAetUiTooltip]="'artemisApp.examParticipation.exerciseOverview' | artemisTranslate" [fixedWidth]="true" [icon]="faFileLines" />
-                                @if (!isCollapsed()) {
-                                    <span class="auto-collapse" jhiTranslate="artemisApp.studentExamDetail.overview"></span>
-                                }
-                            </span>
-                            <span [tumAetUiTooltip]="'artemisApp.examParticipation.numberOfSavedExercises' | artemisTranslate">
-                                <div class="text-sm font-semibold">{{ savedExercisesCount() }}/{{ exercises().length }}</div>
-                            </span>
-                        </div>
-                    </div>
-                    @for (sidebarItem of sidebarData()?.ungroupedData; track sidebarItem.id; let last = $last; let i = $index) {
-                        <div [class.mb-2]="!last">
-                            <div
-                                class="w-full cursor-pointer rounded-lg px-2 pt-2 pb-1 hover:bg-(--sidebar-card-selected-bg)"
-                                [class]="i === exerciseIndex() ? 'bg-(--sidebar-card-selected-bg)' : 'bg-(--module-bg)'"
-                                (click)="changePage(false, i, false)"
-                                [attr.aria-current]="i === exerciseIndex() ? true : null"
-                                #keyboardAction29
-                                role="button"
-                                tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction29.click() : undefined"
-                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction29.click() : undefined"
-                            >
-                                <div class="mb-1 flex items-baseline justify-between">
-                                    <span data-testid="sidebar-card-title" class="mr-2 truncate text-sm font-semibold" [title]="sidebarItem.title">
-                                        @if (sidebarItem.icon) {
-                                            <fa-icon
-                                                [tumAetUiTooltip]="!examTimeLineView() ? (getExerciseIconTooltip(exercises()[i]) | artemisTranslate) : ''"
-                                                [fixedWidth]="true"
-                                                [icon]="sidebarItem.icon"
-                                            />
-                                        }
-                                        @if (!isCollapsed()) {
-                                            <span class="auto-collapse">
-                                                {{ sidebarItem.title }}
-                                            </span>
-                                        }
-                                    </span>
-                                    <span
-                                        data-testid="sidebar-exercise-status"
-                                        [attr.data-status]="getExerciseButtonStatus(i)"
-                                        [class]="getExerciseButtonStatus(i)"
-                                        [tumAetUiTooltip]="
-                                            !examTimeLineView() ? ('artemisApp.examParticipation.' + getExerciseButtonTooltip(exercises()[i]) | artemisTranslate) : ''
-                                        "
-                                    >
-                                        @if (sidebarItem.rightIcon) {
-                                            <fa-icon [fixedWidth]="true" [icon]="getExerciseIcon(i)" />
-                                        }
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+<div class="sidebar flex flex-col rounded-lg bg-(--module-bg)" [class.collapsed]="isCollapsed()">
+    <!-- Since the exam navigation includes lots of functionalities and in-line adjustments,
+         we use duplicated code here in order to keep the functionality of exam navigation apart from
+         sidebar-card implementations.
+    -->
+    <div class="sidebar-content scrollable-column flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto" [class.collapsed]="isCollapsed()">
+        <div
+            data-testid="exam-overview-card"
+            class="sidebar-card w-full cursor-pointer rounded-lg px-2 py-1.5 hover:bg-(--sidebar-card-selected-bg)"
+            [class]="exerciseIndex() === -1 ? 'bg-(--sidebar-card-selected-bg)' : 'bg-(--module-bg)'"
+            (click)="changePage(true, -1)"
+            [attr.aria-current]="exerciseIndex() === -1 ? true : null"
+            #keyboardAction10
+            role="button"
+            tabindex="0"
+            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
+            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
+        >
+            <div class="flex items-center justify-between">
+                <span data-testid="sidebar-card-title" class="mr-2 truncate text-sm font-semibold">
+                    <fa-icon [tumAetUiTooltip]="'artemisApp.examParticipation.exerciseOverview' | artemisTranslate" [fixedWidth]="true" [icon]="faFileLines" />
+                    @if (!isCollapsed()) {
+                        <span class="auto-collapse" jhiTranslate="artemisApp.studentExamDetail.overview"></span>
                     }
-                </div>
+                </span>
+                <span [tumAetUiTooltip]="'artemisApp.examParticipation.numberOfSavedExercises' | artemisTranslate">
+                    <div class="text-sm font-semibold">{{ savedExercisesCount() }}/{{ exercises().length }}</div>
+                </span>
             </div>
         </div>
+        @for (sidebarItem of sidebarData()?.ungroupedData; track sidebarItem.id; let i = $index) {
+            <div
+                class="sidebar-card w-full cursor-pointer rounded-lg px-2 py-1.5 hover:bg-(--sidebar-card-selected-bg)"
+                [class]="i === exerciseIndex() ? 'bg-(--sidebar-card-selected-bg)' : 'bg-(--module-bg)'"
+                (click)="changePage(false, i, false)"
+                [attr.aria-current]="i === exerciseIndex() ? true : null"
+                #keyboardAction29
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction29.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction29.click() : undefined"
+            >
+                <div class="flex items-center justify-between">
+                    <span data-testid="sidebar-card-title" class="mr-2 truncate text-sm font-semibold" [title]="sidebarItem.title">
+                        @if (sidebarItem.icon) {
+                            <fa-icon
+                                [tumAetUiTooltip]="!examTimeLineView() ? (getExerciseIconTooltip(exercises()[i]) | artemisTranslate) : ''"
+                                [fixedWidth]="true"
+                                [icon]="sidebarItem.icon"
+                            />
+                        }
+                        @if (!isCollapsed()) {
+                            <span class="auto-collapse">
+                                {{ sidebarItem.title }}
+                            </span>
+                        }
+                    </span>
+                    <span
+                        data-testid="sidebar-exercise-status"
+                        [attr.data-status]="getExerciseButtonStatus(i)"
+                        [class]="getExerciseButtonStatus(i)"
+                        [tumAetUiTooltip]="!examTimeLineView() ? ('artemisApp.examParticipation.' + getExerciseButtonTooltip(exercises()[i]) | artemisTranslate) : ''"
+                    >
+                        @if (sidebarItem.rightIcon) {
+                            <fa-icon [fixedWidth]="true" [icon]="getExerciseIcon(i)" />
+                        }
+                    </span>
+                </div>
+            </div>
+        }
     </div>
 
-    <div
-        id="test-collapse"
-        class="auto-collapse double-arrow mb-2"
-        [class.menu-collapsed]="isCollapsed()"
-        [tumAetUiTooltip]="(isCollapsed() ? 'global.generic.expandMenu' : 'global.generic.collapseMenu') | artemisTranslate"
-        (click)="toggleCollapseState()"
-        #keyboardAction66
-        role="button"
-        tabindex="0"
-        [attr.aria-label]="(isCollapsed() ? 'global.generic.expandMenu' : 'global.generic.collapseMenu') | artemisTranslate"
-        [attr.aria-expanded]="!isCollapsed()"
-        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction66.click() : undefined"
-        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction66.click() : undefined"
-    >
-        <div class="double-arrow-icon">
-            <fa-icon class="-mr-[5px] fa-xs" [icon]="faChevronRight" />
-            <fa-icon class="fa-xs" [icon]="faChevronRight" />
-        </div>
+    <!-- Same height as the connection status bar beside it, so the two bottom rows read as one line. -->
+    <div class="sidebar-footer flex items-center border-t border-(--border-color) px-2" [class.justify-end]="!isCollapsed()" [class.justify-center]="isCollapsed()">
+        <button
+            id="test-collapse"
+            type="button"
+            tumAetUiButton
+            variant="text"
+            severity="secondary"
+            size="small"
+            class="auto-collapse"
+            [tumAetUiTooltip]="(isCollapsed() ? 'global.generic.expandMenu' : 'global.generic.collapseMenu') | artemisTranslate"
+            [attr.aria-label]="(isCollapsed() ? 'global.generic.expandMenu' : 'global.generic.collapseMenu') | artemisTranslate"
+            [attr.aria-expanded]="!isCollapsed()"
+            (click)="toggleCollapseState()"
+        >
+            <fa-icon [icon]="isCollapsed() ? faAnglesRight : faAnglesLeft" />
+        </button>
     </div>
 </div>
