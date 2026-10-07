@@ -2,7 +2,15 @@ package de.tum.cit.aet.artemis.modeling.api;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO_AND_SCHEDULING;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,16 +19,25 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseDates;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.factories.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 
 /**
  * Creates the modeling exercises of the demo course seeded by the {@code demo} profile.
@@ -34,13 +51,13 @@ import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 public class ModelingDemoApi extends AbstractModelingApi {
 
     /**
-     * Title of the demo modeling exercise. Used as the idempotency key of {@link #createDemo(Course)} together with the course, so it must stay stable.
+     * Title of the ongoing demo modeling exercise. Used as its idempotency key together with the course, so it must stay stable.
      */
-    private static final String DEMO_EXERCISE_TITLE = "Class Diagram: Library Management System";
+    private static final String ONGOING_EXERCISE_TITLE = "Class Diagram: Library Management System";
 
-    private static final String DEMO_EXERCISE_SHORT_NAME = "demomodel";
+    private static final String ONGOING_EXERCISE_SHORT_NAME = "demomodel";
 
-    private static final String DEMO_PROBLEM_STATEMENT = """
+    private static final String ONGOING_PROBLEM_STATEMENT = """
             # Class Diagram: Library Management System
 
             The city library wants to replace its card index with software. Before anyone writes code, the library needs a class diagram that everyone agrees on.
@@ -80,50 +97,175 @@ public class ModelingDemoApi extends AbstractModelingApi {
             | Enumeration and operations                    | 2      |
             """;
 
+    /**
+     * Title of the demo modeling exercise whose submissions wait for their assessment. Used as its idempotency key together with the course, so it must stay stable.
+     */
+    private static final String IN_ASSESSMENT_EXERCISE_TITLE = "Class Diagram: Online Shop";
+
+    private static final String IN_ASSESSMENT_EXERCISE_SHORT_NAME = "demoshop";
+
+    private static final String IN_ASSESSMENT_PROBLEM_STATEMENT = """
+            # Class Diagram: Online Shop
+
+            The campus bookshop wants to sell online. Before the team builds the shop, it needs a class diagram of the domain that everyone agrees on.
+
+            From the requirements workshop we know the following:
+
+            - **Customers** register with a name, an email address and a shipping address.
+            - Every customer has exactly one **shopping cart** and can place any number of **orders**.
+            - An order has an order number, the date it was placed and a status: `PLACED`, `PAID`, `SHIPPED` or `CANCELLED`.
+            - An order consists of one or more **order items**. Each item refers to one **product** and records the quantity and the price paid, since prices change over time.
+            - Every product has a name and a price. The shop sells printed **books**, which have a weight for shipping, and **e-books**, which have a download link.
+
+            ## Your task
+
+            Model this domain as a **UML class diagram**. Your diagram must contain:
+
+            1. All classes named above, with the attributes from the workshop and sensible types.
+            2. The associations between them, each with **multiplicities on both ends**.
+            3. A generalization for the kinds of products, with an **abstract** superclass.
+            4. An **enumeration** for the status of an order.
+            5. A **composition** wherever a part cannot exist without its whole.
+
+            ## Assessment
+
+            | Criterion                               | Points |
+            |-----------------------------------------|--------|
+            | Classes with sensible attributes        | 3      |
+            | Associations and multiplicities         | 3      |
+            | Abstract product with books and e-books | 2      |
+            | Enumeration and composition             | 2      |
+            """;
+
+    /**
+     * The class diagrams the demo students submit to the exercise in assessment, handed out in turn: a complete solution and two with the gaps a tutor has to find. They are in the
+     * format the modeling editor of the client saves.
+     */
+    private static final List<Path> IN_ASSESSMENT_SUBMISSION_MODELS = Stream
+            .of("online-shop-complete.json", "online-shop-without-order-items.json", "online-shop-without-cart.json").map(fileName -> Path.of("demo", "modeling", fileName))
+            .toList();
+
     private static final Logger log = LoggerFactory.getLogger(ModelingDemoApi.class);
 
     private final ModelingExerciseRepository modelingExerciseRepository;
+
+    private final SubmissionRepository submissionRepository;
 
     private final ChannelService channelService;
 
     private final ExerciseConfigurationService exerciseConfigurationService;
 
-    public ModelingDemoApi(ModelingExerciseRepository modelingExerciseRepository, ChannelService channelService, ExerciseConfigurationService exerciseConfigurationService) {
+    private final ExerciseVersionService exerciseVersionService;
+
+    private final ParticipationService participationService;
+
+    private final ModelingSubmissionService modelingSubmissionService;
+
+    private final ResourceLoaderService resourceLoaderService;
+
+    public ModelingDemoApi(ModelingExerciseRepository modelingExerciseRepository, SubmissionRepository submissionRepository, ChannelService channelService,
+            ExerciseConfigurationService exerciseConfigurationService, ExerciseVersionService exerciseVersionService, ParticipationService participationService,
+            ModelingSubmissionService modelingSubmissionService, ResourceLoaderService resourceLoaderService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
+        this.submissionRepository = submissionRepository;
         this.channelService = channelService;
         this.exerciseConfigurationService = exerciseConfigurationService;
+        this.exerciseVersionService = exerciseVersionService;
+        this.participationService = participationService;
+        this.modelingSubmissionService = modelingSubmissionService;
+        this.resourceLoaderService = resourceLoaderService;
     }
 
     /**
-     * Creates the demo modeling exercise in the given course if it does not exist yet.
+     * Creates the demo modeling exercises in the given course that do not exist yet.
      * <p>
-     * The exercise is currently ongoing, see {@link ExerciseDates#ongoing()}, so that demo students can participate right away. This mirrors the production creation path of
-     * {@code ModelingExerciseResource} rather than saving the entity directly.
+     * One exercise is ongoing, see {@link ExerciseDates#ongoing()}, so that demo students can participate right away. In the other one every demo student has submitted a class
+     * diagram, and the submissions wait for their assessment: it was released two weeks before seeding, closed once the demo students had submitted, and can be assessed until a
+     * year after seeding, so that the submissions stay in the assessment queue of the demo tutor on a long-lived demo instance.
      *
-     * @param course the demo course the exercise belongs to.
-     * @return the demo exercise, whether it already existed or was created by this call.
+     * @param course   the demo course the exercises belong to.
+     * @param students the demo students, who submit to the exercise in assessment.
+     * @return the ongoing exercise and the exercise in assessment, whether they already existed or were created by this call.
      */
-    public ModelingExercise createDemo(Course course) {
-        Optional<ModelingExercise> existingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).stream()
-                .filter(exercise -> DEMO_EXERCISE_TITLE.equals(exercise.getTitle())).findFirst();
-        if (existingExercise.isPresent()) {
-            log.debug("Demo modeling exercise already exists, skipping creation");
-            return existingExercise.get();
-        }
+    public List<ModelingExercise> createDemo(Course course, List<User> students) {
+        List<ModelingExercise> existingExercises = modelingExerciseRepository.findByCourseIdWithCategories(course.getId());
+        ModelingExercise ongoingExercise = findExisting(existingExercises, ONGOING_EXERCISE_TITLE)
+                .orElseGet(() -> createExercise(course, ONGOING_EXERCISE_TITLE, ONGOING_EXERCISE_SHORT_NAME, ONGOING_PROBLEM_STATEMENT, ExerciseDates.ongoing()));
+        ModelingExercise exerciseInAssessment = findExisting(existingExercises, IN_ASSESSMENT_EXERCISE_TITLE).orElseGet(() -> createExerciseInAssessment(course, students));
+        return List.of(ongoingExercise, exerciseInAssessment);
+    }
 
+    private static Optional<ModelingExercise> findExisting(List<ModelingExercise> exercises, String title) {
+        Optional<ModelingExercise> existingExercise = exercises.stream().filter(exercise -> title.equals(exercise.getTitle())).findFirst();
+        if (existingExercise.isPresent()) {
+            log.debug("Demo modeling exercise '{}' already exists, skipping creation", title);
+        }
+        return existingExercise;
+    }
+
+    /**
+     * Creates a class diagram exercise the way {@code ModelingExerciseResource#createModelingExercise} does, rather than saving the entity directly.
+     */
+    private ModelingExercise createExercise(Course course, String title, String shortName, String problemStatement, ExerciseDates dates) {
         // No example solution model: a full Apollon diagram is not needed to participate, and an empty one would show up as a broken example solution.
-        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(DEMO_EXERCISE_TITLE, DEMO_EXERCISE_SHORT_NAME, DEMO_PROBLEM_STATEMENT, 10.0, 0.0,
-                ExerciseDates.ongoing(), DiagramType.ClassDiagram, null, null, course);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(title, shortName, problemStatement, 10.0, 0.0, dates, DiagramType.ClassDiagram, null,
+                null, course);
         modelingExercise.setAssessmentType(AssessmentType.MANUAL);
         modelingExercise.getCategories().add("Modeling");
         modelingExercise.validateGeneralSettings();
 
         ModelingExercise createdExercise = modelingExerciseRepository.save(modelingExercise);
-        // The configurations hold the key to their exercise, so their permanent rows are created right after it is stored, like the production creation path does.
+        // The configurations hold the key to their exercise, so their permanent rows are created right after it is stored, like the production creation path does. Without
+        // requested settings they get the defaults, which are also the ones the exercise editor of the client sends.
         exerciseConfigurationService.initialize(createdExercise, modelingExercise.getTeamAssignmentConfig(), modelingExercise.getPlagiarismDetectionConfig());
         channelService.createExerciseChannel(createdExercise, Optional.empty());
+        exerciseVersionService.createExerciseVersion(createdExercise);
 
-        log.info("Created demo modeling exercise '{}' with id {}", DEMO_EXERCISE_TITLE, createdExercise.getId());
+        log.info("Created demo modeling exercise '{}' with id {}", title, createdExercise.getId());
         return createdExercise;
+    }
+
+    /**
+     * Creates the exercise in assessment: while it is open, every demo student submits one of {@link #IN_ASSESSMENT_SUBMISSION_MODELS}, then it is closed.
+     */
+    private ModelingExercise createExerciseInAssessment(Course course, List<User> students) {
+        // Read before anything is created, so that a missing diagram does not leave an exercise without submissions behind.
+        List<String> models = IN_ASSESSMENT_SUBMISSION_MODELS.stream().map(this::readModel).toList();
+        ZonedDateTime now = ZonedDateTime.now();
+        ModelingExercise exercise = createExercise(course, IN_ASSESSMENT_EXERCISE_TITLE, IN_ASSESSMENT_EXERCISE_SHORT_NAME, IN_ASSESSMENT_PROBLEM_STATEMENT,
+                new ExerciseDates(now.minusWeeks(2), null, now.plusWeeks(1), now.plusYears(1)));
+        for (int index = 0; index < students.size(); index++) {
+            submitAsStudent(exercise, students.get(index), models.get(index % models.size()));
+        }
+
+        // Closes the exercise like its due date passing would, only after the last submission, so that every submission counts as handed in on time.
+        ModelingExercise closedExercise = modelingExerciseRepository.findByIdElseThrow(exercise.getId());
+        closedExercise.setDueDate(ZonedDateTime.now());
+        return modelingExerciseRepository.save(closedExercise);
+    }
+
+    /**
+     * Submits the given class diagram as the given student, the way the modeling editor of the client does: it starts the exercise, which creates an empty submission, and saves
+     * the diagram into that submission through {@code ModelingSubmissionResource}.
+     */
+    private void submitAsStudent(ModelingExercise exercise, User student, String model) {
+        SecurityUtils.runAs(student.getLogin(), () -> {
+            StudentParticipation participation = participationService.startExercise(exercise, student, true);
+            ModelingSubmission submission = new ModelingSubmission();
+            submission.setId(submissionRepository.findLatestSubmissionByParticipationId(participation.getId()).orElseThrow().getId());
+            submission.setModel(model);
+            submission.setSubmitted(true);
+            // Every request of the editor loads the exercise anew, and the submission path strips the exercise of what students must not see.
+            modelingSubmissionService.handleModelingSubmission(submission, modelingExerciseRepository.findByIdElseThrow(exercise.getId()), student, null);
+        });
+    }
+
+    private String readModel(Path path) {
+        try (InputStream inputStream = resourceLoaderService.getResource(path).getInputStream()) {
+            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        }
+        catch (IOException exception) {
+            throw new UncheckedIOException("Could not read the demo class diagram " + path, exception);
+        }
     }
 }

@@ -131,14 +131,15 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         seed();
 
         Set<Exercise> exercises = demoExercises(demoCourse().orElseThrow().getId());
+        // The whole point of the ongoing demo exercises: a student opening the demo course has to be able to participate in them right away. The other demo exercises show past
+        // activity, like submissions waiting for their assessment, so they are closed on purpose.
+        Set<Exercise> ongoingExercises = exercises.stream().filter(exercise -> exercise.getDueDate() == null || exercise.getDueDate().isAfter(ZonedDateTime.now()))
+                .collect(Collectors.toSet());
 
-        assertThat(exercises).as("one exercise of every type that this context can seed").hasSize(4).extracting(Exercise::getClass).map(Class::getSimpleName)
+        assertThat(ongoingExercises).as("one ongoing exercise of every type that this context can seed").hasSize(4).extracting(Exercise::getClass).map(Class::getSimpleName)
                 .containsExactlyInAnyOrder("TextExercise", "ModelingExercise", "FileUploadExercise", "QuizExercise");
-
-        // The whole point of the demo exercises: a student opening the demo course has to be able to participate in them right away.
         assertThat(exercises).allSatisfy(exercise -> {
             assertThat(exercise.isVisibleToStudents()).as("%s is released", exercise.getTitle()).isTrue();
-            assertThat(exercise.getDueDate()).as("%s is still open for submissions", exercise.getTitle()).isAfter(ZonedDateTime.now());
             assertThat(exercise.getProblemStatement()).as("%s explains what students have to do", exercise.getTitle()).isNotBlank();
         });
     }

@@ -59,9 +59,9 @@ public class DemoExerciseSeedingService {
         List<Exercise> modeling = new ArrayList<>();
 
         DemoAreas.seed("text exercises", () -> textDemoApi.ifPresent(api -> architecture.add(api.createDemo(course))));
-        DemoAreas.seed("modeling exercises", () -> modelingDemoApi.ifPresent(api -> modeling.add(api.createDemo(course))));
+        DemoAreas.seed("modeling exercises", () -> modelingDemoApi.ifPresent(api -> modeling.addAll(api.createDemo(course, users.students()))));
         DemoAreas.seed("file upload exercises", () -> fileUploadDemoApi.ifPresent(api -> algorithms.add(api.createDemo(course))));
-        DemoAreas.seed("quiz exercises", () -> algorithms.add(quizDemoApi.createDemo(course)));
+        DemoAreas.seed("quiz exercises", () -> algorithms.addAll(quizDemoApi.createDemo(course, users.students())));
         DemoAreas.seed("programming exercises", () -> programmingDemoApi.createDemo(course).ifPresent(algorithms::add));
 
         return new DemoExercises(architecture, algorithms, modeling);

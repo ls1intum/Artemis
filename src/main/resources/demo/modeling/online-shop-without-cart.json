@@ -1,0 +1,288 @@
+{
+    "version": "4.0.0",
+    "id": "1ebb2c2c-f700-5d08-a242-fc4caa8f12df",
+    "title": "Online Shop",
+    "type": "ClassDiagram",
+    "nodes": [
+        {
+            "id": "e1a6f7a4-17cb-53e8-bb5f-af1ce96beeb1",
+            "width": 240,
+            "height": 130,
+            "type": "class",
+            "position": {
+                "x": 40,
+                "y": 40
+            },
+            "data": {
+                "name": "Customer",
+                "attributes": [
+                    {
+                        "id": "7c7ab203-e41a-5588-8a56-5c99e9fddeae",
+                        "name": "- name: String"
+                    },
+                    {
+                        "id": "4caff59a-1019-5906-ac63-4e0ed966f516",
+                        "name": "- email: String"
+                    },
+                    {
+                        "id": "45902abc-6746-5f94-b03d-10f5c3850271",
+                        "name": "- address: String"
+                    }
+                ],
+                "methods": []
+            },
+            "measured": {
+                "width": 240,
+                "height": 130
+            }
+        },
+        {
+            "id": "2b0619b8-725a-53d9-9f31-35141de0b7dd",
+            "width": 240,
+            "height": 130,
+            "type": "class",
+            "position": {
+                "x": 440,
+                "y": 40
+            },
+            "data": {
+                "name": "Order",
+                "attributes": [
+                    {
+                        "id": "4cf20fd5-fc7d-5691-8771-f5b6fc3c2f37",
+                        "name": "- id: int"
+                    },
+                    {
+                        "id": "7d5bfacf-619e-5d07-b534-1b10e5ebee80",
+                        "name": "- placedOn: Date"
+                    },
+                    {
+                        "id": "b9897f01-8ef0-5f1d-b757-e135d3ad2007",
+                        "name": "- status: OrderStatus"
+                    }
+                ],
+                "methods": []
+            },
+            "measured": {
+                "width": 240,
+                "height": 130
+            }
+        },
+        {
+            "id": "cb7f6429-b1d3-55a0-9d10-1722b7615392",
+            "width": 200,
+            "height": 170,
+            "type": "class",
+            "position": {
+                "x": 840,
+                "y": 40
+            },
+            "data": {
+                "name": "OrderStatus",
+                "attributes": [
+                    {
+                        "id": "542a8e4d-8ee3-55f9-a0b8-36fa714d7f42",
+                        "name": "PLACED"
+                    },
+                    {
+                        "id": "1fec5dcd-a45e-5c7a-9ef0-4802b4a0704d",
+                        "name": "PAID"
+                    },
+                    {
+                        "id": "5669c220-e666-5bdc-9deb-fb7e3ea03d13",
+                        "name": "SHIPPED"
+                    },
+                    {
+                        "id": "9d901b2c-36aa-517e-b674-43d57e4db9a8",
+                        "name": "CANCELLED"
+                    }
+                ],
+                "methods": [],
+                "stereotype": "Enumeration"
+            },
+            "measured": {
+                "width": 200,
+                "height": 170
+            }
+        },
+        {
+            "id": "c54a61d6-8d08-5e38-97aa-24c8e8e5540f",
+            "width": 240,
+            "height": 70,
+            "type": "class",
+            "position": {
+                "x": 440,
+                "y": 270
+            },
+            "data": {
+                "name": "OrderItem",
+                "attributes": [
+                    {
+                        "id": "077e5a6d-52ac-5521-8e43-a5aef89f6156",
+                        "name": "- quantity: int"
+                    }
+                ],
+                "methods": []
+            },
+            "measured": {
+                "width": 240,
+                "height": 70
+            }
+        },
+        {
+            "id": "7b79aa19-8fb3-54c4-a49d-5729e9f337bf",
+            "width": 240,
+            "height": 110,
+            "type": "class",
+            "position": {
+                "x": 440,
+                "y": 440
+            },
+            "data": {
+                "name": "Product",
+                "attributes": [
+                    {
+                        "id": "f4c3d799-e48d-5aab-8c82-c49e18ff55f5",
+                        "name": "- name: String"
+                    },
+                    {
+                        "id": "801728a0-ae4f-5d61-b1f2-0322d7b84f78",
+                        "name": "- price: double"
+                    }
+                ],
+                "methods": [],
+                "stereotype": "Abstract"
+            },
+            "measured": {
+                "width": 240,
+                "height": 110
+            }
+        },
+        {
+            "id": "d052f413-f463-53a5-a3b9-25ce3a33ba75",
+            "width": 200,
+            "height": 70,
+            "type": "class",
+            "position": {
+                "x": 300,
+                "y": 640
+            },
+            "data": {
+                "name": "Book",
+                "attributes": [
+                    {
+                        "id": "1c295aea-7213-5559-bdf4-ba07976c7925",
+                        "name": "- weight: int"
+                    }
+                ],
+                "methods": []
+            },
+            "measured": {
+                "width": 200,
+                "height": 70
+            }
+        },
+        {
+            "id": "45026d12-13d4-542a-b315-15a345547999",
+            "width": 200,
+            "height": 70,
+            "type": "class",
+            "position": {
+                "x": 620,
+                "y": 640
+            },
+            "data": {
+                "name": "EBook",
+                "attributes": [
+                    {
+                        "id": "d64916bb-504f-559e-b73e-2124f6a5e5a7",
+                        "name": "- url: String"
+                    }
+                ],
+                "methods": []
+            },
+            "measured": {
+                "width": 200,
+                "height": 70
+            }
+        }
+    ],
+    "edges": [
+        {
+            "id": "8605a216-baab-53de-926b-1c1a73cf3b35",
+            "source": "e1a6f7a4-17cb-53e8-bb5f-af1ce96beeb1",
+            "target": "2b0619b8-725a-53d9-9f31-35141de0b7dd",
+            "type": "ClassUnidirectional",
+            "sourceHandle": "right",
+            "targetHandle": "left",
+            "data": {
+                "sourceRole": "",
+                "sourceMultiplicity": "",
+                "targetRole": "",
+                "targetMultiplicity": "",
+                "points": []
+            }
+        },
+        {
+            "id": "58579f1d-01f0-5e63-b4b6-0ad43e738197",
+            "source": "c54a61d6-8d08-5e38-97aa-24c8e8e5540f",
+            "target": "2b0619b8-725a-53d9-9f31-35141de0b7dd",
+            "type": "ClassComposition",
+            "sourceHandle": "top",
+            "targetHandle": "bottom",
+            "data": {
+                "sourceRole": "",
+                "sourceMultiplicity": "*",
+                "targetRole": "",
+                "targetMultiplicity": "1",
+                "points": []
+            }
+        },
+        {
+            "id": "72a1740a-0f95-56e0-831b-7f71f558715a",
+            "source": "c54a61d6-8d08-5e38-97aa-24c8e8e5540f",
+            "target": "7b79aa19-8fb3-54c4-a49d-5729e9f337bf",
+            "type": "ClassUnidirectional",
+            "sourceHandle": "bottom",
+            "targetHandle": "top",
+            "data": {
+                "sourceRole": "",
+                "sourceMultiplicity": "",
+                "targetRole": "",
+                "targetMultiplicity": "1",
+                "points": []
+            }
+        },
+        {
+            "id": "8d0708f6-39f5-5aa3-81bf-a7c74f1df9e2",
+            "source": "d052f413-f463-53a5-a3b9-25ce3a33ba75",
+            "target": "7b79aa19-8fb3-54c4-a49d-5729e9f337bf",
+            "type": "ClassInheritance",
+            "sourceHandle": "top",
+            "targetHandle": "bottom",
+            "data": {
+                "sourceRole": "",
+                "sourceMultiplicity": "",
+                "targetRole": "",
+                "targetMultiplicity": "",
+                "points": []
+            }
+        },
+        {
+            "id": "033b7805-4ea4-545c-a0d8-808d11ced6ce",
+            "source": "45026d12-13d4-542a-b315-15a345547999",
+            "target": "7b79aa19-8fb3-54c4-a49d-5729e9f337bf",
+            "type": "ClassInheritance",
+            "sourceHandle": "top",
+            "targetHandle": "bottom",
+            "data": {
+                "sourceRole": "",
+                "sourceMultiplicity": "",
+                "targetRole": "",
+                "targetMultiplicity": "",
+                "points": []
+            }
+        }
+    ],
+    "assessments": {}
+}
