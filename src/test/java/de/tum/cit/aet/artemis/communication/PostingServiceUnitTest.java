@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
@@ -12,7 +11,6 @@ import static org.mockito.Mockito.when;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,6 +18,7 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
@@ -304,17 +303,16 @@ class PostingServiceUnitTest {
     }
 
     @Test
+    @Timeout(value = 5, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
     void testContainsAtAllMentionStaysFastForLargeInputWithManyBackticksAndLines() {
         // a single run of backticks that does not start the line has no partner, so it is plain text
         String manyBackticks = "text " + "`".repeat(200_000) + " @all";
         String alternatingRuns = "`a``b```c````d".repeat(20_000);
         // an odd number of fence lines leaves the last block open, so the token at the end is still code
         String manyFenceLikeLines = "```\n".repeat(50_001) + "@all";
-        assertTimeoutPreemptively(Duration.ofSeconds(5), () -> {
-            assertThat(PostingService.containsAtAllMention(manyBackticks)).isTrue();
-            assertThat(PostingService.containsAtAllMention(alternatingRuns)).isFalse();
-            assertThat(PostingService.containsAtAllMention(manyFenceLikeLines)).isFalse();
-        });
+        assertThat(PostingService.containsAtAllMention(manyBackticks)).isTrue();
+        assertThat(PostingService.containsAtAllMention(alternatingRuns)).isFalse();
+        assertThat(PostingService.containsAtAllMention(manyFenceLikeLines)).isFalse();
     }
 
     /**
