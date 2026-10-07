@@ -162,7 +162,7 @@ public class CourseFactory {
     public static OnlineCourseConfiguration generateOnlineCourseConfiguration(Course course, String userPrefix, String originalUrl) {
         OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
         updateOnlineCourseConfiguration(onlineCourseConfiguration, userPrefix, originalUrl, UUID.randomUUID().toString());
-        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        onlineCourseConfiguration.setCourse(course);
         return onlineCourseConfiguration;
     }
 
