@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -36,12 +37,12 @@ import de.tum.cit.aet.artemis.exercise.factories.ExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.text.api.dtos.DemoEssay;
 import de.tum.cit.aet.artemis.text.api.dtos.DemoEssay.GeneralFeedback;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.text.factories.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 import de.tum.cit.aet.artemis.text.service.TextAssessmentService;
@@ -324,17 +325,27 @@ public class TextDemoApi extends AbstractTextApi {
      * @return the created essay.
      */
     public TextExercise createDemoExamExercise(ExerciseGroup exerciseGroup) {
-        TextExercise essay = TextExerciseFactory.generateTextExercise(EXAM_ESSAY_TITLE, null, EXAM_ESSAY_PROBLEM_STATEMENT, 10.0, 0.0, new ExerciseDates(null, null, null, null),
-                EXAM_ESSAY_EXAMPLE_SOLUTION, exerciseGroup.getExam().getCourse());
+        TextExercise essay = buildEssay(EXAM_ESSAY_TITLE, null, EXAM_ESSAY_PROBLEM_STATEMENT, EXAM_ESSAY_EXAMPLE_SOLUTION, new ExerciseDates(null, null, null, null),
+                exerciseGroup.getExam().getCourse());
         essay.setCourse(null);
         essay.setExerciseGroup(exerciseGroup);
         return create(essay);
     }
 
     private TextExercise createEssay(Course course, String title, String shortName, String problemStatement, String exampleSolution, ExerciseDates dates) {
-        TextExercise textExercise = TextExerciseFactory.generateTextExercise(title, shortName, problemStatement, 10.0, 0.0, dates, exampleSolution, course);
+        TextExercise textExercise = buildEssay(title, shortName, problemStatement, exampleSolution, dates, course);
         textExercise.getCategories().add(ExerciseFactory.exerciseCategory("Architecture", "#691b0b"));
         return create(textExercise);
+    }
+
+    /**
+     * Builds an essay worth 10 points, like the text exercise editor of the client does, which also proposes the default plagiarism detection settings.
+     */
+    private static TextExercise buildEssay(String title, @Nullable String shortName, String problemStatement, String exampleSolution, ExerciseDates dates, Course course) {
+        TextExercise essay = ExerciseFactory.populateExercise(new TextExercise(), title, shortName, problemStatement, 10.0, 0.0, dates, course);
+        essay.setExampleSolution(exampleSolution);
+        essay.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig());
+        return essay;
     }
 
     /**
