@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.api.AccountDemoApi.DemoUsers;
+import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadDemoApi;
@@ -37,13 +38,16 @@ public class DemoExerciseSeedingService {
 
     private final ProgrammingDemoApi programmingDemoApi;
 
+    private final AssessmentDemoApi assessmentDemoApi;
+
     public DemoExerciseSeedingService(Optional<TextDemoApi> textDemoApi, Optional<ModelingDemoApi> modelingDemoApi, Optional<FileUploadDemoApi> fileUploadDemoApi,
-            QuizDemoApi quizDemoApi, ProgrammingDemoApi programmingDemoApi) {
+            QuizDemoApi quizDemoApi, ProgrammingDemoApi programmingDemoApi, AssessmentDemoApi assessmentDemoApi) {
         this.textDemoApi = textDemoApi;
         this.modelingDemoApi = modelingDemoApi;
         this.fileUploadDemoApi = fileUploadDemoApi;
         this.quizDemoApi = quizDemoApi;
         this.programmingDemoApi = programmingDemoApi;
+        this.assessmentDemoApi = assessmentDemoApi;
     }
 
     /**
@@ -58,7 +62,9 @@ public class DemoExerciseSeedingService {
         List<Exercise> algorithms = new ArrayList<>();
         List<Exercise> modeling = new ArrayList<>();
 
-        DemoAreas.seed("text exercises", () -> textDemoApi.ifPresent(api -> architecture.add(api.createDemo(course))));
+        // Before any exercise creates results, so that the results count towards the scores of the students.
+        DemoAreas.seed("participant scores", assessmentDemoApi::activateParticipantScores);
+        DemoAreas.seed("text exercises", () -> textDemoApi.ifPresent(api -> architecture.addAll(api.createDemo(course, users.students(), users.tutor()))));
         DemoAreas.seed("modeling exercises", () -> modelingDemoApi.ifPresent(api -> modeling.addAll(api.createDemo(course, users.students()))));
         DemoAreas.seed("file upload exercises", () -> fileUploadDemoApi.ifPresent(api -> algorithms.add(api.createDemo(course))));
         DemoAreas.seed("quiz exercises", () -> algorithms.addAll(quizDemoApi.createDemo(course, users.students())));
