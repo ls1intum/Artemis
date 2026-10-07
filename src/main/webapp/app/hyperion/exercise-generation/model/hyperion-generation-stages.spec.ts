@@ -155,6 +155,14 @@ describe('hyperion design substeps', () => {
     const designing = (step: HyperionSubstepKey, overrides: Partial<HyperionGenerationActivity> = {}) =>
         event({ type: 'PROGRESS', phase: 'DESIGNING', activity: activity({ step, ...overrides }) });
 
+    it('keeps a cancelled design stage skipped after a completed concept substep', () => {
+        const events = [event({ type: 'STARTED', phase: 'PREPARING' }), designing('concept'), designing('spec'), event({ type: 'CANCELLED' })];
+
+        expect(ladder(events).design).toBe('skipped');
+        expect(substeps(events)).toEqual({ concept: 'complete', spec: 'skipped', artifacts: 'skipped', statement: 'skipped' });
+        expect(count(events, 'current')).toBe(0);
+    });
+
     it('reports no substeps before the agent has said which one it is on', () => {
         const events = [event({ type: 'STARTED', phase: 'PREPARING' }), event({ type: 'PROGRESS', phase: 'DESIGNING' })];
 
