@@ -285,6 +285,14 @@ public class AgentLoopRunner {
         }
         conversation.add(new UserMessage(userPrompt));
 
+        if (cancelled.getAsBoolean()) {
+            emit(stepListener, "Cancelling generation…");
+            return session(AgentLoopResult.Status.CANCELLED, 0, "", conversation);
+        }
+        conversation = compactIfNeeded(conversation, 0, 0, usageSink, cancelled, stepListener);
+        if (cancelled.getAsBoolean()) {
+            return session(AgentLoopResult.Status.CANCELLED, 0, "", conversation);
+        }
         Prompt prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
         String lastAssistantText = "";
         int consecutiveToolFailures = 0;
