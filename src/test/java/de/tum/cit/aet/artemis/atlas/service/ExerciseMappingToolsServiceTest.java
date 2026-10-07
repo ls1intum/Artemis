@@ -201,7 +201,10 @@ class ExerciseMappingToolsServiceTest {
         JsonNode json = objectMapper.readTree(service.saveExerciseCompetencyMappings(10L, 42L, mappings));
 
         assertThat(json.get("success").asBoolean()).isTrue();
-        verify(competencyExerciseLinkRepository).saveAll(any());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<CompetencyExerciseLink>> linkCaptor = ArgumentCaptor.forClass(List.class);
+        verify(competencyExerciseLinkRepository).saveAll(linkCaptor.capture());
+        assertThat(linkCaptor.getValue()).singleElement().satisfies(link -> assertThat(link.isGeneratedByAi()).isTrue());
     }
 
     @Test
@@ -228,6 +231,7 @@ class ExerciseMappingToolsServiceTest {
         existingLink.setCompetency(competency1);
         existingLink.setExercise(exercise);
         existingLink.setWeight(0.5);
+        existingLink.setGeneratedByAi(true);
 
         when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
         when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
@@ -238,6 +242,7 @@ class ExerciseMappingToolsServiceTest {
         service.saveExerciseCompetencyMappings(10L, 42L, mappings);
 
         assertThat(existingLink.getWeight()).isEqualTo(1.0);
+        assertThat(existingLink.isGeneratedByAi()).isTrue();
     }
 
     @Test

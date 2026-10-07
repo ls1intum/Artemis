@@ -66,7 +66,10 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
@@ -105,6 +108,12 @@ public class FileUploadExerciseResource {
     private String applicationName;
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
+
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
+    private final ExerciseConfigurationService exerciseConfigurationService;
 
     private final ExerciseService exerciseService;
 
@@ -152,7 +161,12 @@ public class FileUploadExerciseResource {
             ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
-            Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService, ExerciseVariantGroupService exerciseVariantGroupService) {
+            Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService, ExerciseVariantGroupService exerciseVariantGroupService,
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository,
+            ExerciseConfigurationService exerciseConfigurationService) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
+        this.exerciseConfigurationService = exerciseConfigurationService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -210,9 +224,14 @@ public class FileUploadExerciseResource {
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(fileUploadExercise);
         FileUploadExercise savedExercise = fileUploadExerciseRepository.save(fileUploadExercise);
+        // The configurations hold the key to their exercise, so their permanent rows are created right after the exercise
+        // exists: nothing that can fail in between may leave an exercise without them.
+        exerciseConfigurationService.initialize(savedExercise, fileUploadExercise.getTeamAssignmentConfig(), fileUploadExercise.getPlagiarismDetectionConfig());
         if (!competencyLinks.isEmpty()) {
+            FileUploadExercise firstSave = savedExercise;
             competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
             savedExercise = fileUploadExerciseRepository.save(savedExercise);
+            exerciseConfigurationService.carryOver(firstSave, savedExercise);
         }
         final FileUploadExercise result = savedExercise;
 
@@ -424,6 +443,9 @@ public class FileUploadExerciseResource {
 
         // ========== 3. Persist changes ==========
         var persistedExercise = fileUploadExerciseRepository.save(updatedExercise);
+        // Adds the default settings rows an incomplete creation left out, so the exercise repairs itself on its next save.
+        teamAssignmentConfigRepository.ensureExistsFor(persistedExercise.getId());
+        plagiarismDetectionConfigRepository.ensureExistsFor(persistedExercise.getId());
         exerciseService.logUpdate(persistedExercise, persistedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
         // ========== 4. Handle side effects based on what changed ==========
@@ -549,8 +571,7 @@ public class FileUploadExerciseResource {
      * @return the loaded exercise
      */
     private FileUploadExercise loadFileUploadExercise(Long exerciseId) {
-        return fileUploadExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("FileUploadExercise", exerciseId));
+        return fileUploadExerciseRepository.findWithEagerCategoriesAndCompetenciesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("FileUploadExercise", exerciseId));
     }
 
     /**
@@ -560,6 +581,10 @@ public class FileUploadExerciseResource {
      * @return the response-ready exercise
      */
     private FileUploadExercise enrichFileUploadExerciseForResponse(FileUploadExercise exercise) {
+        // The response reports the team assignment and the plagiarism detection configuration, which an exercise does not
+        // carry by itself.
+        teamAssignmentConfigRepository.attachTo(exercise);
+        plagiarismDetectionConfigRepository.attachTo(exercise);
         if (exercise.isCourseExercise()) {
             Channel channel = channelRepository.findChannelByExerciseId(exercise.getId());
             if (channel != null) {
@@ -678,6 +703,9 @@ public class FileUploadExerciseResource {
 
         // Save directly instead of delegating to updateFileUploadExercise() to avoid double side effects.
         FileUploadExercise savedExercise = fileUploadExerciseRepository.save(exerciseForReevaluation);
+        // Adds the default settings rows an incomplete creation left out, so the exercise repairs itself on its next save.
+        teamAssignmentConfigRepository.ensureExistsFor(savedExercise.getId());
+        plagiarismDetectionConfigRepository.ensureExistsFor(savedExercise.getId());
 
         // Apply all post-save side effects once with the captured originals.
         exerciseService.logUpdate(savedExercise, savedExercise.getCourseViaExerciseGroupOrCourseMember(), user);

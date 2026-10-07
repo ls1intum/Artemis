@@ -271,6 +271,73 @@ tasks.register('verifyDependencyFamilies') {
     }
 }
 
+/**
+ * Patched minimum versions for libraries that reach the build-script (plugin) classpath transitively and have been
+ * flagged by Dependabot there. Keyed by `group:artifact`.
+ *
+ * WHY: GitHub's automatic Gradle dependency submission reports the build-script classpath, not only the shipped WAR.
+ * A vulnerable copy dragged in by a plugin therefore raises an alert even though the WAR is clean, and the fix lives
+ * in the root `buildscript { configurations.classpath { resolutionStrategy { force ... } } }` block of build.gradle,
+ * where nothing else notices if the force is dropped or lowered. Keep each entry equal to the matching `force`.
+ *
+ *   * org.jsoup:jsoup - org.owasp.dependencycheck (dependency-check-core 13.0.0) resolves 1.23.1, which is affected
+ *     by CVE-2026-75140. The shipped WAR declares 1.23.2 directly.
+ */
+def buildscriptClasspathMinimums = [
+    'org.jsoup:jsoup': '1.23.2',
+]
+
+tasks.register('verifyBuildscriptClasspathPins') {
+    group = 'verification'
+    description = 'Fails if a library with a known vulnerability resolves below its patched version on the build-script classpath.'
+
+    // rootProject.buildscript, not buildscript: this file is applied with `apply from:`, where plain `buildscript` is the
+    // script's own (empty) handler and the guard would pass vacuously.
+    def classpathRoot = rootProject.buildscript.configurations.named('classpath').map { it.incoming.resolutionResult.rootComponent.get() }
+    def minimums = buildscriptClasspathMinimums
+
+    doLast {
+        verifyVersionComparator()
+        def problems = []
+        def components = [] as Set
+        def collect
+        collect = { component ->
+            if (!components.add(component)) {
+                return
+            }
+            component.dependencies.each { dependency ->
+                if (dependency instanceof org.gradle.api.artifacts.result.ResolvedDependencyResult) {
+                    collect(dependency.selected)
+                }
+            }
+        }
+        collect(classpathRoot.get())
+
+        // The root project's classpath always carries the plugins; an (almost) empty graph means this task is looking at
+        // the wrong handler and every check below would pass for the wrong reason.
+        if (components.size() < 10) {
+            throw new GradleException("Build-script classpath verification looked at only ${components.size()} components; expected the root project's plugin classpath.")
+        }
+
+        components.each { component ->
+            def id = component.moduleVersion
+            if (id == null) {
+                return
+            }
+            def minimum = minimums["${id.group}:${id.name}".toString()]
+            if (minimum != null && compareVersions(id.version, minimum) < 0) {
+                problems << "'${id.group}:${id.name}' resolves to ${id.version} on the build-script classpath, below the patched ${minimum}. " +
+                        "Add or restore 'force \"${id.group}:${id.name}:${minimum}\"' in the buildscript configurations.classpath block of build.gradle."
+            }
+        }
+
+        if (problems) {
+            throw new GradleException("Build-script classpath verification failed:\n\n" + problems.collect { "  - ${it}" }.join('\n\n') + '\n')
+        }
+        logger.lifecycle("Build-script classpath verified: ${minimums.size()} pinned libraries at or above their patched versions.")
+    }
+}
+
 tasks.named('check') {
-    dependsOn 'verifyDependencyFamilies'
+    dependsOn 'verifyDependencyFamilies', 'verifyBuildscriptClasspathPins'
 }

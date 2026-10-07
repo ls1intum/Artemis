@@ -230,6 +230,32 @@ describe('CompetencySelection', () => {
             expect(onChangeSpy).toHaveBeenCalledWith(component.selectedCompetencyLinks);
         });
 
+        it('should keep the AI provenance of refreshed links when the selection is edited afterwards', () => {
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2] });
+            fixture.detectChanges();
+            const emitSpy = vi.spyOn(component.valueChange, 'emit');
+
+            component.refreshWithLinks([new CompetencyLearningObjectLink(competency1, 0.5, true)]);
+            const competency2Link = component.competencyLinks()!.find((link) => link.competency?.id === competency2.id)!;
+            component.toggleCompetency(competency2Link);
+
+            const emittedLinks = emitSpy.mock.lastCall![0]!;
+            expect(emittedLinks.find((link) => link.competency?.id === competency1.id)?.generatedByAi).toBe(true);
+            expect(emittedLinks.find((link) => link.competency?.id === competency2.id)?.generatedByAi).toBe(false);
+        });
+
+        it('should mark a link as manual when an AI-selected competency is ticked again by hand', () => {
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2] });
+            fixture.detectChanges();
+
+            component.refreshWithLinks([new CompetencyLearningObjectLink(competency1, 0.5, true)]);
+            const competency1Link = component.competencyLinks()!.find((link) => link.competency?.id === competency1.id)!;
+            component.toggleCompetency(competency1Link);
+            component.toggleCompetency(competency1Link);
+
+            expect(component.selectedCompetencyLinks?.first()?.generatedByAi).toBe(false);
+        });
+
         it('should apply links that arrived while loading without emitting valueChange (regression: infinite valueChange loop)', () => {
             const competenciesLoaded = new Subject<HttpResponse<CourseCompetency[]>>();
             vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
