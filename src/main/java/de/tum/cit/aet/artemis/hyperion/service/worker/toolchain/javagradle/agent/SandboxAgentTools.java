@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
@@ -369,13 +371,11 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (packageRejection != null) {
             return packageRejection + " No file was written; the workspace is unchanged.";
         }
-        // Base64 preserves arbitrary source; workspaceRelativePath restricts paths to [a-zA-Z0-9_./-]+, excluding the single quote used by this shell script.
-        String encoded = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
-        String target = WORKSPACE + "/" + safe;
-        String script = "mkdir -p \"$(dirname '" + target + "')\" && echo '" + encoded + "' | base64 -d > '" + target + "'";
-        SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspace.SANDBOX_READ_TIMEOUT, "sh", "-c", script);
-        if (!result.isSuccess()) {
-            return "ERROR: could not write '" + safe + "': " + result.combinedOutput();
+        try (InputStream archive = WorkspaceArchive.buildWorkspaceTarStream(Map.of(safe, content), Map.of())) {
+            sandbox.copyIn(sessionId, WORKSPACE, archive);
+        }
+        catch (IOException | UncheckedIOException | WorkspaceArchive.RejectedWorkspaceEntryException failure) {
+            return "ERROR: could not write '" + safe + "': " + failure.getMessage();
         }
         latestMutationContent = content;
         markDirty();

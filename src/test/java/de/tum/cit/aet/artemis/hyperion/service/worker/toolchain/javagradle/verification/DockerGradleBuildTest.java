@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationResources;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.CollectedReports;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.SandboxBuildCommands;
@@ -66,6 +67,19 @@ class DockerGradleBuildTest {
     void cleanup() throws IOException {
         sandbox.destroyActiveSessions();
         docker.close();
+    }
+
+    @Test
+    void largeFileWritesAndEditsUseArchiveTransfer() throws IOException {
+        String session = sandbox.createSession();
+        var tools = new SandboxAgentTools(sandbox, session, null, null);
+        String prefix = "preserve this prefix\n".repeat(8_000);
+        String path = "solution/nested/large.md";
+        assertThat(tools.writeFile(path, prefix + "replace this suffix")).startsWith("Wrote ");
+        assertThat(tools.editFile(path, "replace this suffix", "updated suffix")).startsWith("Replaced 1");
+        try (var archive = sandbox.copyOut(session, "/workspace/" + path)) {
+            assertThat(WorkspaceArchive.readTar(archive, "")).containsExactlyEntriesOf(Map.of("large.md", prefix + "updated suffix"));
+        }
     }
 
     @Test

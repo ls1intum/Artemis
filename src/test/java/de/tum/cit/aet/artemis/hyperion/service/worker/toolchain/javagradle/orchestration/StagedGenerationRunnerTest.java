@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
@@ -41,6 +42,7 @@ import de.tum.cit.aet.artemis.hyperion.protocol.GenerationActivity;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.GenerationActivityTracker;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
@@ -232,6 +234,63 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
+    void conceptDiscoveryAndAllStagesShareTheResolvedTurnCap() {
+        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer,
+                new ExerciseConceptSelector(agentLoopRunner, reviewer), "FRESH");
+        var settings = new HyperionGenerationSettings("small", null, 30, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
+        runner = runner.forSettings(settings, agentLoopRunner, reviewer);
+        String candidates = "## Candidate 1\nFirst concept\n## Candidate 2\nSecond concept\n## Candidate 3\nThird concept";
+        when(agentLoopRunner.runTextSession(anyString(), any(), anyString(), eq(1), any(), any(), any()))
+                .thenReturn(new AgentLoopRunner.AgentLoopSession(completed(1, candidates), List.of()));
+        when(reviewer.reviewConceptCandidates(anyString(), anyMap(), any(), any())).thenReturn(new SpecFidelityCritic.ConceptSelectionReview(true, 1, List.of()));
+        when(reviewer.reviewSpecification(anyString(), anyString(), anyString(), any(), any())).thenReturn(new SpecFidelityCritic.SpecificationReview(true, List.of()));
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> completed(invocation.getArgument(3), "stage"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
+
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.turns()).isEqualTo(30);
+        ArgumentCaptor<Integer> allocations = ArgumentCaptor.forClass(Integer.class);
+        verify(agentLoopRunner, times(3)).run(anyString(), anyString(), any(), allocations.capture(), any(), any(), any());
+        assertThat(allocations.getAllValues()).containsExactly(7, 15, 7);
+        verify(agentLoopRunner, times(1)).runTextSession(anyString(), any(), anyString(), eq(1), any(), any(), any());
+    }
+
+    @Test
+    void specificationRefinementsCannotExceedTheResolvedTurnCap() {
+        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        var rejected = new SpecFidelityCritic.SpecificationReview(true, List.of("A rule is missing."));
+        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(rejected);
+        when(reviewer.reviewSpecification(anyString(), isNull(), anyString(), any(), any(), any())).thenReturn(rejected);
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
+        var settings = new HyperionGenerationSettings("small", null, 20, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
+        runner = runner.forSettings(settings, agentLoopRunner, reviewer);
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> completed(invocation.getArgument(3), "spec"));
+
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.turns()).isEqualTo(12);
+        ArgumentCaptor<Integer> allocations = ArgumentCaptor.forClass(Integer.class);
+        verify(agentLoopRunner, times(2)).run(anyString(), anyString(), any(), allocations.capture(), any(), any(), any());
+        assertThat(allocations.getAllValues()).containsExactly(7, 5);
+    }
+
+    @Test
+    void resolvedSmallTurnCapBoundsStagedAuthoring() {
+        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        var settings = new HyperionGenerationSettings("small", null, 10, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
+        runner = runner.forSettings(settings, agentLoopRunner, reviewer);
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> completed(invocation.getArgument(3), "spec"));
+
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.turns()).isEqualTo(3);
+        verify(agentLoopRunner, times(1)).run(anyString(), anyString(), any(), eq(3), any(), any(), any());
+        verify(baseTools, never()).enterStage(GenerationStage.TESTS);
+    }
+
+    @Test
     void runsSpecificationExecutableBuildAndStatementInOrder() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(2, "spec"), completed(10, "build"),
                 completed(3, "statement"));
@@ -401,8 +460,8 @@ class StagedGenerationRunnerTest {
         ExerciseConceptSelector conceptSelector = mock(ExerciseConceptSelector.class);
         ExerciseConceptSelector.ConceptSelection initialConcept = new ExerciseConceptSelector.ConceptSelection(true, 1, "initial concept", 1, List.of(), "", "");
         ExerciseConceptSelector.ConceptSelection replacementConcept = new ExerciseConceptSelector.ConceptSelection(true, 2, "replacement concept", 1, List.of(), "", "");
-        when(conceptSelector.select(eq("brief"), any(), any(), any())).thenReturn(initialConcept);
-        when(conceptSelector.select(eq("brief"), anyString(), any(), any(), any())).thenReturn(replacementConcept);
+        when(conceptSelector.select(eq("brief"), eq(""), anyInt(), any(), any(), any())).thenReturn(initialConcept);
+        when(conceptSelector.select(eq("brief"), argThat(text -> !text.isEmpty()), anyInt(), any(), any(), any())).thenReturn(replacementConcept);
         SpecFidelityCritic.SpecificationReview firstReview = new SpecFidelityCritic.SpecificationReview(true, false, true, List.of("too shallow once"), "", "TOO_SHALLOW");
         SpecFidelityCritic.SpecificationReview secondReview = new SpecFidelityCritic.SpecificationReview(true, false, true, List.of("too shallow again"), "", "TOO_SHALLOW");
         when(reviewer.reviewSpecification(eq("brief"), anyString(), anyString(), any(), any())).thenReturn(firstReview,
@@ -417,7 +476,7 @@ class StagedGenerationRunnerTest {
         AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
-        verify(conceptSelector).select(eq("brief"), anyString(), any(), any(), any());
+        verify(conceptSelector).select(eq("brief"), argThat(text -> !text.isEmpty()), anyInt(), any(), any(), any());
         verify(reviewer, times(2)).reviewSpecification(eq("brief"), anyString(), anyString(), any(), any());
         verify(reviewer).reviewSpecification(eq("brief"), anyString(), anyString(), any(), any(), any());
         assertThat(approvedSpecs.approved("s")).hasValueSatisfying(specification -> assertThat(specification).contains(VALID_SPEC_DOCUMENT.strip()));
@@ -432,8 +491,9 @@ class StagedGenerationRunnerTest {
     void aReplacementConceptThatNeverArrivesKeepsTheSpecificationTheRunAlreadyReviewed() {
         SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
         ExerciseConceptSelector conceptSelector = mock(ExerciseConceptSelector.class);
-        when(conceptSelector.select(eq("brief"), any(), any(), any())).thenReturn(new ExerciseConceptSelector.ConceptSelection(true, 1, "initial concept", 1, List.of(), "", ""));
-        when(conceptSelector.select(eq("brief"), anyString(), any(), any(), any()))
+        when(conceptSelector.select(eq("brief"), eq(""), anyInt(), any(), any(), any()))
+                .thenReturn(new ExerciseConceptSelector.ConceptSelection(true, 1, "initial concept", 1, List.of(), "", ""));
+        when(conceptSelector.select(eq("brief"), argThat(text -> !text.isEmpty()), anyInt(), any(), any(), any()))
                 .thenReturn(new ExerciseConceptSelector.ConceptSelection(false, null, null, 1, List.of(), "Concept review was unavailable.", ""));
         when(reviewer.reviewSpecification(eq("brief"), anyString(), anyString(), any(), any()))
                 .thenReturn(new SpecFidelityCritic.SpecificationReview(true, true, true, List.of("the central interaction cannot carry the objective"), "", "MISALIGNED"));
@@ -453,7 +513,7 @@ class StagedGenerationRunnerTest {
         assertThat(outcome.unresolvedConceptFindings()).isNotEmpty().first().asString().contains("asked for a different exercise concept", "produced no candidate to switch to");
         assertThat(outcome.unresolvedConceptFindings()).contains("the central interaction cannot carry the objective");
         // One replacement attempt only: the reviewer asks for reselection again on the next round, and retrying spends discovery turns to reach the same unavailable reviewer.
-        verify(conceptSelector, times(1)).select(eq("brief"), anyString(), any(), any(), any());
+        verify(conceptSelector, times(1)).select(eq("brief"), argThat(text -> !text.isEmpty()), anyInt(), any(), any(), any());
     }
 
     @Test
@@ -485,7 +545,7 @@ class StagedGenerationRunnerTest {
     void unavailableOptionalConceptReviewFallsBackToTheBriefAndMandatorySpecificationReview() {
         SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
         ExerciseConceptSelector conceptSelector = mock(ExerciseConceptSelector.class);
-        when(conceptSelector.select(eq("brief"), any(), any(), any()))
+        when(conceptSelector.select(eq("brief"), eq(""), anyInt(), any(), any(), any()))
                 .thenReturn(new ExerciseConceptSelector.ConceptSelection(false, null, null, 1, List.of(), "Concept review was unavailable.", ""));
         when(reviewer.reviewSpecification(eq("brief"), anyString(), any(), any()))
                 .thenReturn(new SpecFidelityCritic.SpecificationReview(true, false, false, List.of(), "", "SUFFICIENT"));
@@ -505,7 +565,7 @@ class StagedGenerationRunnerTest {
     @Test
     void completedConceptRejectionHasItsOwnTerminationReason() {
         ExerciseConceptSelector conceptSelector = mock(ExerciseConceptSelector.class);
-        when(conceptSelector.select(eq("brief"), any(), any(), any()))
+        when(conceptSelector.select(eq("brief"), eq(""), anyInt(), any(), any(), any()))
                 .thenReturn(new ExerciseConceptSelector.ConceptSelection(true, null, null, 2, List.of(), "Every candidate invented a constraint.", ""));
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, mock(SpecFidelityCritic.class),
                 conceptSelector, "FRESH");
@@ -606,7 +666,7 @@ class StagedGenerationRunnerTest {
         ExerciseConceptSelector.ConceptFallback fallback = new ExerciseConceptSelector.ConceptFallback(
                 "## Candidate 2\nCentral interaction: a bounded stack over a fixed-size array.", 2, 1, List.of("Candidate 2: difficulty — only one numeric method",
                         "Selected concept failed focused admission: introduces a fixed capacity limit the brief does not require"));
-        when(conceptSelector.select(eq("brief"), any(), any(), any()))
+        when(conceptSelector.select(eq("brief"), eq(""), anyInt(), any(), any(), any()))
                 .thenReturn(new ExerciseConceptSelector.ConceptSelection(true, null, null, 2, List.of(), "No candidate was admitted.", "", fallback));
         return conceptSelector;
     }

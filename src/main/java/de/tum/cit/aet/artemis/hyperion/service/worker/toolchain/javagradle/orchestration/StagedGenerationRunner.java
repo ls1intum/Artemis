@@ -71,7 +71,7 @@ public class StagedGenerationRunner {
 
     /**
      * Hard ceiling on authoring-agent turns spent across all generation phases. A stage (or re-entry) is only started while at least {@link #MIN_STAGE_BUDGET} turns remain, so
-     * the cap holds. The context-isolated concept selector is bounded separately (two one-turn candidate batches per selection, at most four selections).
+     * the cap holds. Concept discovery shares this pool; resolved settings may narrow it further.
      */
     private static final int POOL_HARD_CAP = 83;
 
@@ -125,6 +125,8 @@ public class StagedGenerationRunner {
     /** Derived from the configured job deadline; see {@link #authoringBudget(Duration)}. Never a private ceiling that could outrank an operator who changed that deadline. */
     private final Duration authoringBudget;
 
+    private final int maxTurns;
+
     /** Test hook so a wall-clock test can advance time deterministically instead of sleeping; production always uses the real clock. */
     private Supplier<Instant> clock;
 
@@ -153,12 +155,12 @@ public class StagedGenerationRunner {
             ApprovedSpecRegistry approvedSpecs, @Nullable SpecFidelityCritic specificationReviewer, @Nullable ExerciseConceptSelector conceptSelector, String stagedContext,
             Duration maxJobDuration) {
         this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, specificationReviewer, conceptSelector, StagedContext.parse(stagedContext),
-                maxJobDuration, Instant::now);
+                maxJobDuration, POOL_HARD_CAP, Instant::now);
     }
 
     private StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPrompt systemPromptService, StageChecks stageCheckService, AgentTranscriptWriter transcriptWriter,
             ApprovedSpecRegistry approvedSpecs, @Nullable SpecFidelityCritic specificationReviewer, @Nullable ExerciseConceptSelector conceptSelector, StagedContext stagedContext,
-            Duration maxJobDuration, Supplier<Instant> clock) {
+            Duration maxJobDuration, int maxTurns, Supplier<Instant> clock) {
         this.agentLoopRunner = agentLoopRunner;
         this.systemPromptService = systemPromptService;
         this.stageCheckService = stageCheckService;
@@ -168,6 +170,7 @@ public class StagedGenerationRunner {
         this.conceptSelector = conceptSelector;
         this.stagedContext = stagedContext;
         this.authoringBudget = authoringBudget(maxJobDuration);
+        this.maxTurns = Math.min(POOL_HARD_CAP, maxTurns);
         this.clock = clock;
     }
 
@@ -178,7 +181,7 @@ public class StagedGenerationRunner {
         ExerciseConceptSelector profileConceptSelector = conceptSelector == null ? null : new ExerciseConceptSelector(profileRunner, profileReviewer);
         SpecFidelityCritic profileSpecificationReviewer = specificationReviewer == null ? null : profileReviewer;
         return new StagedGenerationRunner(profileRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, profileSpecificationReviewer,
-                profileConceptSelector, StagedContext.parse(settings.stagedContext()), settings.maxJobDuration(), clock);
+                profileConceptSelector, StagedContext.parse(settings.stagedContext()), settings.maxJobDuration(), settings.maxTurns(), clock);
     }
 
     /** Leaves time for differential verification without consuming more than half of a short job deadline. */
@@ -318,7 +321,7 @@ public class StagedGenerationRunner {
             @Nullable Consumer<String> specSink, @Nullable Consumer<GenerationStage> stageBoundarySink, List<String> conceptFindings) {
         Instant startedAt = clock.get();
         boolean continuous = stagedContext == StagedContext.CONTINUOUS;
-        int remainingPool = POOL_HARD_CAP;
+        int remainingPool = maxTurns;
         int rollover = 0;
         int totalTurns = 0;
         String lastFinalMessage = "";
@@ -347,7 +350,7 @@ public class StagedGenerationRunner {
         baseTools.configureStructuralOracleRefresh(structuralSeedHook);
 
         if (conceptSelectionApplies && conceptSelector != null) {
-            ExerciseConceptSelector.ConceptSelection selection = conceptSelector.select(sourceBrief, cancelled, usageSink, progress);
+            ExerciseConceptSelector.ConceptSelection selection = conceptSelector.select(sourceBrief, "", remainingPool, cancelled, usageSink, progress);
             totalTurns += selection.turns();
             remainingPool = Math.max(0, remainingPool - selection.turns());
             archivedConversation.addAll(selection.transcript());
@@ -556,7 +559,8 @@ public class StagedGenerationRunner {
                                 log.warn("Specification review was inconclusive for exercise {}; freezing the mechanically-valid specification and continuing", exercise.id());
                                 emit(progress, reviewAdvisory);
                             }
-                            else if (!review.accepted() && semanticSpecRefinementsUsed < MAX_SEMANTIC_SPEC_REFINEMENTS && remainingPool >= MIN_STAGE_BUDGET) {
+                            else if (!review.accepted() && semanticSpecRefinementsUsed < MAX_SEMANTIC_SPEC_REFINEMENTS
+                                    && allocatablePool(stage, remainingPool) >= MIN_STAGE_BUDGET) {
                                 String reviewFeedback = review.feedback();
                                 log.info("Specification review rejected the candidate for exercise {}: {}", exercise.id(), reviewFeedback);
                                 semanticSpecRefinementsUsed++;
@@ -582,7 +586,8 @@ public class StagedGenerationRunner {
                                             return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, failure), archivedConversation,
                                                     conversation, unresolvedSpecificationFindings);
                                         }
-                                        replacement = conceptSelector.select(sourceBrief, CONCEPT_REPLACEMENT_FEEDBACK, cancelled, usageSink, progress);
+                                        replacement = conceptSelector.select(sourceBrief, CONCEPT_REPLACEMENT_FEEDBACK,
+                                                Math.max(0, allocatablePool(stage, remainingPool) - MIN_STAGE_BUDGET), cancelled, usageSink, progress);
                                         totalTurns += replacement.turns();
                                         remainingPool = Math.max(0, remainingPool - replacement.turns());
                                         archivedConversation.addAll(replacement.transcript());
