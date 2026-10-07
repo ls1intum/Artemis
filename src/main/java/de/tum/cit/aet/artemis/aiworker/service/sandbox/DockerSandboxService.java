@@ -7,6 +7,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -669,7 +670,7 @@ public class DockerSandboxService implements InteractiveSandbox, SandboxApi {
                 }
                 // A completed read-only archive command can fail for a missing report without invalidating the workspace.
                 if (exitCode != 0) {
-                    throw new SandboxUnavailableException("Could not archive files from sandbox session " + sessionId + ": " + stderr.snapshot());
+                    throw new UncheckedIOException("Could not archive files from sandbox session " + sessionId + ": " + stderr.snapshot(), new IOException(stderr.snapshot()));
                 }
                 return new TarArchiveInputStream(new ByteArrayInputStream(archive.toByteArray()));
             }
