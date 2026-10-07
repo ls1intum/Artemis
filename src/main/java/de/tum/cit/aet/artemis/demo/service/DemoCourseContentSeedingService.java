@@ -14,7 +14,8 @@ import de.tum.cit.aet.artemis.atlas.api.AtlasDemoApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.demo.service.DemoExerciseSeedingService.DemoExercises;
 import de.tum.cit.aet.artemis.lecture.api.LectureDemoApi;
-import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.api.dtos.DemoLectures;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 
 /**
  * Seeds the content of the demo course around its exercises, see {@link DemoDataSeedingService}.
@@ -23,6 +24,11 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 @Lazy
 @Profile(PROFILE_DEMO_AND_SCHEDULING)
 public class DemoCourseContentSeedingService {
+
+    /**
+     * What the later areas continue with when the lectures are not seeded.
+     */
+    private static final DemoLectures NO_LECTURES = new DemoLectures(List.of(), List.of(), List.of());
 
     private final Optional<LectureDemoApi> lectureDemoApi;
 
@@ -41,7 +47,10 @@ public class DemoCourseContentSeedingService {
      * @param exercises the demo exercises by topic.
      */
     void seed(Course course, DemoUsers users, DemoExercises exercises) {
-        List<LectureUnit> lectureUnits = DemoAreas.seed("lectures", () -> lectureDemoApi.map(api -> api.createDemo(course)).orElse(List.of()), List.of());
-        DemoAreas.seed("competencies", () -> atlasDemoApi.ifPresent(api -> api.createDemo(course, lectureUnits)));
+        DemoLectures lectures = DemoAreas.seed("lectures",
+                () -> lectureDemoApi.map(api -> api.createDemo(course, exercises.architecture(), exercises.algorithms(), exercises.modeling())).orElse(NO_LECTURES), NO_LECTURES);
+        // An exercise unit is linked to competencies through its exercise, see CourseCompetency#prePersistOrUpdate, so only the other units are handed on.
+        DemoAreas.seed("competencies",
+                () -> atlasDemoApi.ifPresent(api -> api.createDemo(course, lectures.architecture().stream().filter(unit -> !(unit instanceof ExerciseUnit)).toList())));
     }
 }
