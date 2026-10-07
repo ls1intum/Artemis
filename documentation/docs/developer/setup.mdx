@@ -511,13 +511,13 @@ The demo course contains:
 - **Communication:** a welcome announcement, threads with replies and reactions in the course channels, direct messages between `demo_student` and `demo_tutor`, and FAQs.
 - **Grading:** a grading scale from 5.0 to 1.0, with 4.0 as the first passing grade.
 
-The programming exercise is only created when the `localvc` and `localci` profiles are active, and its builds need a build agent. All other content only needs the modules it belongs to, so a disabled module simply leaves its part out.
+The programming exercise is only created with a version control and a continuous integration system, for example the `localvc` and `localci` profiles, and its builds need a build agent. All other content only needs the modules it belongs to, so a disabled module simply leaves its part out.
 
 Seeding goes through the same services as the user interface, acting as the demo user who would perform each action. It therefore also sends the notifications those actions cause, including emails to the demo users' addresses `<login>@artemis.local`.
 
 The dates of the demo content are relative to the start that creates it and are never moved. A graded essay's complaint period, for example, ends a week after it was created, while the open exercises and the test exam stay open for a year.
 
-Restarting never duplicates the demo data. Deleted demo content is recreated on the next start as a whole, a deleted exercise for example with all its submissions and results.
+Restarting never duplicates the demo data. Deleted demo content is recreated on the next start as a whole, a deleted exercise for example with all its submissions and results. Lecture units and the links and relations of competencies are also recreated one by one, but other parts of content that still exists are not, such as a single deleted submission.
 
 <Callout variant={CalloutVariant.warning}>
     The demo credentials are publicly known. Only use the `demo` profile on demo and manual testing instances, never on a production instance.
