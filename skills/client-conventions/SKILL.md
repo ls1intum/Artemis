@@ -178,6 +178,21 @@ in `eslint.config.mjs`.
 The convention applies throughout the client even where lint does not enforce it. Add newly
 migrated directories to that list.
 
+Bootstrap and Tailwind share the spacing class names (`m`, `p` and `gap` with their side and axis
+forms) but differ for 3 to 5: Bootstrap renders 16, 24 and 48px, Tailwind 12, 16 and 20px, and
+Bootstrap's `!important` rule wins while it is loaded. `localRules/no-ambiguous-spacing-utility`
+therefore rejects a bare `*-3`, `*-4` or `*-5` and suggests the important spelling that keeps the
+value Bootstrap renders (`mb-3` to `mb-4!`, `mb-4` to `mb-6!`, `mb-5` to `mb-12!`) or the Tailwind
+value (`mb-3!`, `mb-4!`, `mb-5!`). Never write a bare `mb-6`: it loses to Bootstrap's Reboot margins
+and to component SCSS.
+
+The rule is enabled for the Tailwind-laid-out templates of the student exam mode and the pages it
+shows, in the block of `eslint.config.mjs` that lists the folders. To adopt it elsewhere, add
+`<folder>/**/*.html` to that block, make sure `tailwind.css` scans the folder with `@source`
+(`migration-source-coverage` checks it), apply the suggestion that keeps the value, and update the
+specs that assert the old class names. See _Ambiguous Spacing Utilities_ in
+`documentation/docs/developer/guidelines/client-development.mdx`.
+
 Never hand-write PrimeNG root classes such as `class="p-button"` or `class="p-inputtext"`. Render
 the real PrimeNG component so its styles load deterministically. Enforced by
 `localRules/no-primeng-component-classes`.
