@@ -45,7 +45,7 @@ public class ProgrammingDemoApi implements AbstractApi {
     /**
      * Short name of the demo programming exercise. Used as the idempotency key of {@link #createDemo(Course)} together with the course, so it must stay stable.
      */
-    private static final String DEMO_EXERCISE_SHORT_NAME = "demoprog";
+    public static final String DEMO_EXERCISE_SHORT_NAME = "demoprog";
 
     private static final String DEMO_EXERCISE_TITLE = "Sorting Algorithms in Java";
 
