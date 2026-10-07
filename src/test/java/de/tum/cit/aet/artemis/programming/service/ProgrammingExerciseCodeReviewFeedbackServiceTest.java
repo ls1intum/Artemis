@@ -293,6 +293,24 @@ class ProgrammingExerciseCodeReviewFeedbackServiceTest {
     }
 
     @Test
+    void generatingFeedback_whenStorageFails_clearsTheCalculatedScore() throws Exception {
+        var automaticResult = withAnEmptyResultForTheLatestSubmission();
+        when(athenaFeedbackApi.getProgrammingFeedbackSuggestions(eq(exercise), eq(submission), anyBoolean(), eq(requestingUser)))
+                .thenReturn(List.of(suggestion("src/Main.java", "feedback", 1, null, 6.0)));
+        org.mockito.Mockito.doAnswer(invocation -> {
+            assertThat(automaticResult.getScore()).isEqualTo(60.0);
+            throw new IllegalStateException("Feedback storage failed");
+        }).when(resultService).storeFeedbackInResult(eq(automaticResult), any(), eq(true));
+
+        serviceWithAthena(Optional.of(athenaFeedbackApi)).generateAutomaticNonGradedFeedback(participation, exercise, requestingUser);
+
+        assertThat(automaticResult.getScore()).isNull();
+        assertThat(automaticResult.isSuccessful()).isFalse();
+        verify(resultRepository, org.mockito.Mockito.times(2)).save(automaticResult);
+        verify(programmingMessagingService, org.mockito.Mockito.times(2)).notifyUserAboutNewResult(automaticResult, participation);
+    }
+
+    @Test
     void generatingFeedback_usesAllAthenaCreditsAndLeavesTheOfficialResultUnchanged() throws Exception {
         var service = serviceWithAthena(Optional.of(athenaFeedbackApi));
         var previousResult = new Result();

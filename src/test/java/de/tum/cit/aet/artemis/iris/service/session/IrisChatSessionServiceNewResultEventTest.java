@@ -8,20 +8,27 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.context.MessageSource;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
@@ -123,4 +130,43 @@ class IrisChatSessionServiceNewResultEventTest {
         verify(irisSettingsService).getSettingsForCourse(course);
         verify(submissionRepository, never()).findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(any(Long.class));
     }
+
+    @ParameterizedTest
+    @CsvSource({ ",", ",true", "90,true", "90,false" })
+    void shouldEvaluateOfficialProgressDespiteNewerAthenaResults(Double aiScore, Boolean successful) {
+        var course = new Course();
+        course.setId(3L);
+        var exercise = new ProgrammingExercise();
+        exercise.setId(11L);
+        exercise.setCourse(course);
+        var settings = mock(IrisCourseSettings.class);
+        when(settings.enabled()).thenReturn(true);
+        when(settings.legacyBuildTriggersEffective()).thenReturn(true);
+        when(irisSettingsService.getSettingsForCourse(course)).thenReturn(settings);
+        var event = eventFor(exercise);
+        var participation = event.getEventObject().getSubmission().getParticipation();
+        participation.setId(42L);
+        List<Submission> history = IntStream.rangeClosed(1, 3).mapToObj(index -> {
+            var submission = new ProgrammingSubmission();
+            submission.setId((long) index);
+            submission.setParticipation(participation);
+            var official = new Result();
+            official.setId(index * 2L);
+            official.setAssessmentType(AssessmentType.AUTOMATIC);
+            official.setScore(index * 20.0);
+            var ai = new Result();
+            ai.setId(index * 2L + 1);
+            ai.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+            ai.setScore(aiScore);
+            ai.setSuccessful(successful);
+            submission.setResults(Set.of(official, ai));
+            return (Submission) submission;
+        }).toList();
+        when(submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(42L)).thenReturn(history);
+
+        // Official scores improve; flat AI scores must neither trigger intervention nor hide the official history.
+        assertThatCode(() -> irisChatSessionService.handleNewResultEvent(event)).doesNotThrowAnyException();
+        verify(submissionRepository).findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(42L);
+    }
+
 }

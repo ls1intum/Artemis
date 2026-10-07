@@ -13,11 +13,14 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.score.ScoreDTO;
@@ -183,6 +186,47 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @AfterEach
     void tearDown() {
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false,,", "true,,", "false,,true", "true,,true", "false,60,true", "true,60,true", "false,60,false", "true,60,false" })
+    void preliminaryResultsDoNotReplaceOfficialScores(boolean team, Double score, Boolean successful) {
+        var participation = team ? teamTextParticipation : studentTextParticipation;
+        var official = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElseThrow();
+        var preliminary = new Result();
+        preliminary.setSubmission(official.getSubmission());
+        preliminary.setExerciseId(participation.getExercise().getId());
+        preliminary.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        preliminary.setRated(true);
+        preliminary.setScore(score);
+        preliminary.setSuccessful(successful);
+        preliminary.setCompletionDate(ZonedDateTime.now().plusMinutes(5));
+        preliminary = resultRepository.save(preliminary);
+
+        assertThat(resultRepository.findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId())).get().extracting(Result::getId).isEqualTo(official.getId());
+        var exerciseId = participation.getExercise().getId();
+        if (team) {
+            assertThat(resultRepository.getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(exerciseId, participation.getTeam().orElseThrow().getId()))
+                    .extracting(Result::getId).contains(official.getId()).doesNotContain(preliminary.getId());
+            assertThat(resultRepository.getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(exerciseId, participation.getTeam().orElseThrow().getId()))
+                    .extracting(Result::getId).contains(official.getId()).doesNotContain(preliminary.getId());
+        }
+        else {
+            assertThat(resultRepository.getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(exerciseId, student1.getId())).extracting(Result::getId)
+                    .contains(official.getId()).doesNotContain(preliminary.getId());
+            assertThat(resultRepository.getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(exerciseId, student1.getId())).extracting(Result::getId)
+                    .contains(official.getId()).doesNotContain(preliminary.getId());
+        }
+
+        participantScoreScheduleService.executeScheduledTasks();
+        await().until(participantScoreScheduleService::isIdle);
+        var participantScore = participantScoreRepository.findAllByExercise(participation.getExercise()).getFirst();
+        assertThat(participantScore.getLastScore()).isEqualTo(official.getScore());
+        assertThat(participantScore.getLastRatedScore()).isEqualTo(official.getScore());
+
+        official.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        resultRepository.save(official);
+        assertThat(resultRepository.findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId())).isEmpty();
     }
 
     private void testAllPreAuthorize() throws Exception {

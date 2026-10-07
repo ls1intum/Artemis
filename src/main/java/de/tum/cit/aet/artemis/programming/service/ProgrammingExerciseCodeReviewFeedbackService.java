@@ -173,6 +173,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         }
         catch (Exception e) {
             log.error("Could not generate feedback", e);
+            automaticResult.score(null);
             automaticResult.setSuccessful(false);
             automaticResult.setCompletionDate(ZonedDateTime.now());
             this.resultRepository.save(automaticResult);
