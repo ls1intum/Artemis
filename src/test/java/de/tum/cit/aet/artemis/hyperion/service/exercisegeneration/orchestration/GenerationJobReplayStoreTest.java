@@ -404,6 +404,26 @@ class GenerationJobReplayStoreTest {
     }
 
     @Test
+    void failedIncompleteMarkerWrite_cannotBecomeCompleteAfterRecoveryAndWorkerExit() {
+        long exerciseId = 617L;
+        String jobId = "incomplete-marker-write-failed";
+        jobMap().set(String.valueOf(exerciseId), jobInfo(jobId, exerciseId));
+        replayStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
+        IMap<String, Object> actualUsageMap = usageMap();
+        IMap<String, Object> failingUsageMap = spy(actualUsageMap);
+        doThrow(new IllegalStateException("usage write failed")).when(failingUsageMap).put(eq(jobId), any(), anyLong(), eq(TimeUnit.MILLISECONDS));
+        ReflectionTestUtils.setField(replayStore, "usageMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(failingUsageMap));
+
+        assertThatCode(() -> replayStore.markUsageIncomplete(jobId)).doesNotThrowAnyException();
+        ReflectionTestUtils.setField(replayStore, "usageMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(actualUsageMap));
+        assertThat(replayStore.usageSnapshot(jobId).accountingState()).isEqualTo(ExerciseGenerationAccountingState.INCOMPLETE);
+        replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.DONE, "saved"), true);
+        replayStore.sealUsageOnWorkerExit(exerciseId, jobId);
+
+        assertThat(replayStore.usageSnapshot(jobId).accountingState()).isEqualTo(ExerciseGenerationAccountingState.INCOMPLETE);
+    }
+
+    @Test
     void failedAggregateWrite_cannotBecomeCompleteAfterTheStoreRecovers() {
         long exerciseId = 617L;
         String jobId = "aggregate-write-failed";
