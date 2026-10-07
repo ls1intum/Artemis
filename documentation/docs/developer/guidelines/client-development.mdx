@@ -942,9 +942,9 @@ body of an ICU expression and the inline `template:` of a component are not look
 
 It is enabled as an error for the Tailwind-laid-out templates of the student exam mode and the pages it shows: the
 templates under `app/exam/overview`, `app/exam/shared`, `app/assessment/overview`,
-`app/assessment/manage/complaints-for-tutor`, `app/exercise/feedback`, `app/text/overview/text-editor` and
-`app/fileupload/overview/file-upload-submission`. Student-reachable folders that are still laid out with Bootstrap, such
-as the code editor, the modeling submission and the complaint response, join the list with their migration. To adopt it
+`app/assessment/manage/complaints-for-tutor`, `app/assessment/manage/complaint-response`, `app/exercise/feedback`,
+`app/text/overview/text-editor` and `app/fileupload/overview/file-upload-submission`. Student-reachable folders that are
+still laid out with Bootstrap, such as the code editor and the modeling submission, join the list with their migration. To adopt it
 for another folder,
 add `<folder>/**/*.html` to the block that enables it in `eslint.config.mjs`, and fix the findings with the first
 suggestion, which changes nothing on screen. The folder must be listed in the `@source` allowlist of `tailwind.css`,
