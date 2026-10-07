@@ -236,6 +236,20 @@ describe('ProgrammingExerciseGradingComponent', () => {
             await type(maxPenaltyInput()!, '50');
             expect(comp.formValid).toBe(formValidBeforeEditing);
         });
+
+        // The submission policy component builds its form in an effect of its own, so the form does not exist yet while the viewChild
+        // of this component already does. This uses the real child, a stubbed one would already come with its form.
+        it('should recalculate the form status when the form of the real submission policy component changes', async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+            const submissionPolicyForm = comp.submissionPolicyUpdateComponent()!.form;
+            expect(submissionPolicyForm).toBeDefined();
+            const calculateFormStatusSpy = vi.spyOn(comp, 'calculateFormStatus');
+
+            submissionPolicyForm.get('submissionLimit')!.setValue(3);
+
+            expect(calculateFormStatusSpy).toHaveBeenCalled();
+        });
     });
 
     it('should not require points when exercise is not included in the course score', () => {
