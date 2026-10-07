@@ -576,7 +576,7 @@ public class ProgrammingExerciseGradingService {
             return;
         }
         if (aggregatedResult.getSubmission() instanceof ProgrammingSubmission submission) {
-            buildLogService.deleteBuildLogsOfSucceededResult(submission, aggregatedResult);
+            buildLogService.deleteContainerBuildLogs(submission, aggregatedResult);
         }
         resultService.deleteResult(aggregatedResult, true);
     }
@@ -601,7 +601,7 @@ public class ProgrammingExerciseGradingService {
                     continue;
                 }
                 if (result.getSubmission() instanceof ProgrammingSubmission submission) {
-                    buildLogService.deleteBuildLogsOfSucceededResult(submission, result);
+                    buildLogService.deleteContainerBuildLogs(submission, result);
                 }
                 resultService.deleteResult(result, true);
             }

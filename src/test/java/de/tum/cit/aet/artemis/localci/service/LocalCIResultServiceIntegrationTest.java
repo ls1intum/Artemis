@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.FailedBuildLogService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -86,6 +87,9 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
     @Autowired
     private BuildLogEntryService buildLogEntryService;
+
+    @Autowired
+    private FailedBuildLogService failedBuildLogService;
 
     @Autowired
     private LocalCIResultProcessingService localCIResultProcessingService;
@@ -996,6 +1000,49 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(finalizedResult.isSuccessful()).isFalse();
         assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(ProgrammingExerciseTestCase::getTestName)
                 .as("no test case is deactivated, the unreported one of the failed container included").containsExactlyInAnyOrderElementsOf(activeBefore).contains("studentTest");
+    }
+
+    /**
+     * The solution and template participations store no exercise, so the logs of a container must be filed under the
+     * exercise of the aggregated result, where the feedback dialog reads them. With an earlier build of the commit, the
+     * submission a build result is matched to carries that build's result as a skeleton whose exercise id is 0; on the
+     * commit's first build it carries no result at all.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testTheLogsOfASolutionBuildAreStoredUnderItsExercise(boolean withEarlierBuild) {
+        solutionParticipation.setProgrammingExercise(programmingExercise);
+        String commitHash = "000000000000000000000000000000000000000d";
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setCommitHash(commitHash);
+        submission.setSubmissionDate(ZonedDateTime.now());
+        submission.setType(SubmissionType.MANUAL);
+        submission.setSubmitted(true);
+        submission.setParticipation(solutionParticipation);
+        submission = programmingSubmissionRepository.save(submission);
+        if (withEarlierBuild) {
+            Result earlierResult = new Result();
+            earlierResult.setAssessmentType(AssessmentType.AUTOMATIC);
+            earlierResult.setCompletionDate(ZonedDateTime.now().minusMinutes(10));
+            earlierResult.setSubmission(submission);
+            earlierResult.setExerciseId(programmingExercise.getId());
+            resultRepository.save(earlierResult);
+        }
+
+        var appended = programmingExerciseGradingService.appendContainerResult(solutionParticipation, failedResult(commitHash, "solution container failed"), false, "container_a",
+                null);
+
+        assertThat(failedBuildLogService.getBuildLogs(programmingExercise.getId(), submission.getId(), appended.result().getId())).as("filed under the exercise")
+                .hasValueSatisfying(buildLogs -> assertThat(buildLogs).extracting(BuildLogEntry::getLog, BuildLogEntry::getContainerName)
+                        .containsExactly(tuple("solution container failed", "container_a")));
+        ProgrammingSubmission reloaded = programmingSubmissionRepository.findProgrammingSubmissionWithResultsById(submission.getId()).orElseThrow();
+        assertThat(buildLogEntryService.getBuildLogs(reloaded, appended.result().getId())).as("found where the feedback dialog reads them").extracting(BuildLogEntry::getLog)
+                .containsExactly("solution container failed");
+
+        programmingExerciseGradingService.discardContainerResult(appended.result().getId());
+        assertThat(failedBuildLogService.getBuildLogs(programmingExercise.getId(), submission.getId(), appended.result().getId())).as("deleted from there with the result")
+                .isEmpty();
     }
 
     /** Two overlapping builds of one commit neither hide nor inherit each other's build failure. */
