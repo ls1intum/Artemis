@@ -163,7 +163,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         if (exercise) {
             // undefined means all competencies were unlinked — treat as empty array.
             const updatedLinks = (competencyLinks ?? []).map((link) =>
-                link instanceof CompetencyExerciseLink ? link : new CompetencyExerciseLink(link.competency, exercise, link.weight),
+                link instanceof CompetencyExerciseLink ? link : new CompetencyExerciseLink(link.competency, exercise, link.weight, link.generatedByAi),
             );
             exercise.competencyLinks = updatedLinks;
             // Update the reactive signal so the checklist panel badges update immediately.

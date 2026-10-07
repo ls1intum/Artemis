@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
@@ -19,7 +20,6 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatResponse;
 
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
-import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentActivitySink;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopRunner;
@@ -490,7 +490,7 @@ public class StagedGenerationRunner {
 
                 if (gate.passed()) {
                     if (stage == GenerationStage.SPEC) {
-                        String specSnapshot = execRead(sandbox, sessionId, "cat", GenerationWorkspace.WORKSPACE + "/SPEC.md");
+                        String specSnapshot = Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, "SPEC.md"), "");
                         if (specSnapshot.isBlank()) {
                             String failure = "SPEC.md passed its consistency gate but could not be read back for semantic review and approval. Generation stopped before downstream "
                                     + "artifacts were produced from an unfrozen contract.";
@@ -877,7 +877,7 @@ public class StagedGenerationRunner {
                             + "conversation; re-read a file only if you need to confirm its exact current contents.");
         }
         else {
-            String specDocument = execRead(sandbox, sessionId, "cat", GenerationWorkspace.WORKSPACE + "/SPEC.md");
+            String specDocument = Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, "SPEC.md"), "");
             if (!specDocument.isBlank()) {
                 String label = stage == GenerationStage.STATEMENT ? "APPROVED EXERCISE CONTRACT — INTERNAL SOURCE; REWRITE IT SELF-CONTAINED AND NEVER NAME THIS SOURCE"
                         : "CURRENT SPEC.md";
@@ -891,7 +891,8 @@ public class StagedGenerationRunner {
             }
         }
         if (stage == GenerationStage.STATEMENT) {
-            String handoff = StatementHandoffProjection.project(execRead(sandbox, sessionId, "cat", GenerationWorkspace.WORKSPACE + "/test-plan.json"), seededStructuralTestNames);
+            String handoff = StatementHandoffProjection.project(Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, "test-plan.json"), ""),
+                    seededStructuralTestNames);
             if (!handoff.isBlank()) {
                 prompt.append("\n\n").append(handoff);
             }
@@ -904,7 +905,7 @@ public class StagedGenerationRunner {
 
     private String execRead(InteractiveSandbox sandbox, String sessionId, String... command) {
         try {
-            SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspace.SANDBOX_READ_TIMEOUT, command);
+            var result = sandbox.exec(sessionId, GenerationWorkspace.SANDBOX_READ_TIMEOUT, command);
             return result.isSuccess() && result.stdout() != null ? result.stdout() : "";
         }
         catch (RuntimeException e) {
@@ -922,7 +923,7 @@ public class StagedGenerationRunner {
      * still subject it to the normal mechanical and semantic gates rather than spending a full retry merely moving the same bytes into the workspace.
      */
     private void materializeReturnedSpecification(SandboxAgentTools baseTools, InteractiveSandbox sandbox, String sessionId, @Nullable String finalMessage) {
-        if (!execRead(sandbox, sessionId, "cat", GenerationWorkspace.WORKSPACE + "/SPEC.md").isBlank() || finalMessage == null) {
+        if (!Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, "SPEC.md"), "").isBlank() || finalMessage == null) {
             return;
         }
         int heading = finalMessage.indexOf("# SPEC.md");

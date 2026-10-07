@@ -50,6 +50,7 @@ export { TumAetUiMenuItemDirective } from './lib/menu/tumaet-ui-menu-item.direct
 export { TumAetUiMenuTriggerDirective } from './lib/menu/tumaet-ui-menu-trigger.directive';
 export { TumAetUiMenuComponent } from './lib/menu/tumaet-ui-menu.component';
 export { TumAetUiMessageComponent, type TumAetUiMessageSeverity } from './lib/message/tumaet-ui-message.component';
+export { TumAetUiMultiSelectComponent, type TumAetUiMultiSelectSize, type TumAetUiMultiSelectVariant } from './lib/multi-select/tumaet-ui-multi-select.component';
 export { TumAetUiPaginatorComponent } from './lib/paginator/tumaet-ui-paginator.component';
 export { TumAetUiPanelComponent } from './lib/panel/tumaet-ui-panel.component';
 export { TumAetUiPopoverTriggerDirective } from './lib/popover/tumaet-ui-popover-trigger.directive';

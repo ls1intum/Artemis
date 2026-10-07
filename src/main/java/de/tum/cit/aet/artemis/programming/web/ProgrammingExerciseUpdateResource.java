@@ -143,8 +143,9 @@ public class ProgrammingExerciseUpdateResource {
     /**
      * PUT /programming-exercises : Updates an existing programming exercise.
      *
-     * @param updateDTO        the DTO containing the updated programming exercise data
-     * @param notificationText to notify the student group about the update on the programming exercise
+     * @param updateDTO             the DTO containing the updated programming exercise data
+     * @param notificationText      to notify the student group about the update on the programming exercise
+     * @param hyperionCompetencyIds IDs of links inferred through Hyperion's checklist
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the updated ProgrammingExercise
      *         is not valid, or with status 500 (Internal Server Error) if the updated ProgrammingExercise couldn't be saved to the database
      */
@@ -152,7 +153,8 @@ public class ProgrammingExerciseUpdateResource {
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExerciseResponseDTO> updateProgrammingExercise(@RequestBody UpdateProgrammingExerciseDTO updateDTO,
-            @RequestParam(value = "notificationText", required = false) String notificationText) {
+            @RequestParam(value = "notificationText", required = false) String notificationText,
+            @RequestParam(name = "hyperionCompetencyId", required = false) Set<Long> hyperionCompetencyIds) {
         log.debug("REST request to update ProgrammingExercise with id: {}", updateDTO.id());
 
         if (updateDTO.id() == null || updateDTO.id() == 0) {
@@ -209,7 +211,8 @@ public class ProgrammingExerciseUpdateResource {
                     .orElse(null);
 
             // Update the existing exercise with DTO values and pin variant members to the group's shared dates.
-            ProgrammingExercise updatedProgrammingExercise = update(updateDTO, programmingExerciseBeforeUpdate, buildConfig);
+            ProgrammingExercise updatedProgrammingExercise = update(updateDTO, programmingExerciseBeforeUpdate, buildConfig,
+                    hyperionCompetencyIds == null ? Set.of() : hyperionCompetencyIds);
 
             // Validate the updated exercise
             programmingExerciseValidationService.validateBuildConfigSize(buildConfig);
@@ -326,12 +329,14 @@ public class ProgrammingExerciseUpdateResource {
      * This includes updating competency links using the proper mechanism and restoring the timeline of an owning
      * variant group, so every caller persists a member with the group's dates.
      *
-     * @param dto         the DTO containing updated values
-     * @param exercise    the existing exercise entity to update
-     * @param buildConfig the stored build configuration of that exercise
+     * @param dto                   the DTO containing updated values
+     * @param exercise              the existing exercise entity to update
+     * @param buildConfig           the stored build configuration of that exercise
+     * @param hyperionCompetencyIds competency IDs whose new links were suggested by Hyperion
      * @return the updated exercise entity
      */
-    private ProgrammingExercise update(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise, ProgrammingExerciseBuildConfig buildConfig) {
+    private ProgrammingExercise update(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise, ProgrammingExerciseBuildConfig buildConfig,
+            Set<Long> hyperionCompetencyIds) {
         if (dto == null) {
             throw new BadRequestAlertException("No programming exercise was provided.", ENTITY_NAME, "isNull");
         }
@@ -423,7 +428,7 @@ public class ProgrammingExerciseUpdateResource {
         updateGradingCriteria(dto, exercise);
 
         // Update competency links using the proper mechanism
-        competencyExerciseLinkService.updateCompetencyLinks(dto, exercise);
+        competencyExerciseLinkService.updateCompetencyLinks(dto, exercise, hyperionCompetencyIds);
 
         // A variant group owns its members' shared dates, so pin those back to the group. The build-and-test date stays
         // per exercise and is only re-derived from the shared due date. The dedicated timeline endpoint rejects group
@@ -504,6 +509,7 @@ public class ProgrammingExerciseUpdateResource {
      * @param exerciseId                                  of the exercise
      * @param updateDTO                                   the DTO containing the ProgrammingExercise data to re-evaluate and update
      * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
+     * @param hyperionCompetencyIds                       IDs of links inferred through Hyperion's checklist
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the ProgrammingExercise is not valid,
      *         or with status 409 (Conflict) if given exerciseId is not same as in the object of the request body, or with status 500 (Internal Server Error) if the
      *         ProgrammingExercise
@@ -514,7 +520,8 @@ public class ProgrammingExerciseUpdateResource {
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExerciseResponseDTO> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody UpdateProgrammingExerciseDTO updateDTO,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate,
+            @RequestParam(name = "hyperionCompetencyId", required = false) Set<Long> hyperionCompetencyIds) {
         log.debug("REST request to re-evaluate ProgrammingExercise with id: {}", updateDTO.id());
 
         var authorizationExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(exerciseId);
@@ -545,7 +552,7 @@ public class ProgrammingExerciseUpdateResource {
             final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExercise)).orElse(null);
 
             // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
-            update(updateDTO, programmingExercise, buildConfig);
+            update(updateDTO, programmingExercise, buildConfig, hyperionCompetencyIds == null ? Set.of() : hyperionCompetencyIds);
             PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
             programmingExerciseValidationService.validateBuildConfigSize(buildConfig);
 

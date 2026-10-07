@@ -5,14 +5,16 @@ import jakarta.validation.constraints.NotNull;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseCompetencyDTO(long id, @NotNull String title, @Nullable String description, @Nullable CompetencyTaxonomy taxonomy) {
+public record CourseCompetencyDTO(long id, @NotNull String title, @Nullable String description, @Nullable CompetencyTaxonomy taxonomy,
+        @JsonProperty(access = JsonProperty.Access.READ_ONLY) boolean generatedByAi) {
 
     public static CourseCompetencyDTO of(CourseCompetency competency) {
-        return new CourseCompetencyDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getTaxonomy());
+        return new CourseCompetencyDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), competency.isGeneratedByAi());
     }
 }

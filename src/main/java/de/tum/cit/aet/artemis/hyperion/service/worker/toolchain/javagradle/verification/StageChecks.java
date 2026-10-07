@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -195,7 +196,7 @@ public class StageChecks {
 
     /** The SPEC stage's mechanical floor. Everything semantic (learning fit and example quality) stays with the critic; a deterministic gate must never hold an opinion. */
     private StageCheckResult checkSpec(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise) {
-        String spec = execRead(sandbox, sessionId, "cat", GenerationWorkspace.WORKSPACE + "/SPEC.md");
+        String spec = Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, "SPEC.md"), "");
         if (spec.isBlank()) {
             return StageCheckResult.failed("SPEC.md is missing or empty. Write /workspace/SPEC.md with '## Rules' (numbered R1..Rn), a '## Worked Examples' "
                     + "table, a '## Design' table, a compact '## Public API' contract, a '## Testing Strategy', a '## Contract Risk Inventory', and a '## Diagram' decision "
@@ -652,7 +653,7 @@ public class StageChecks {
     }
 
     private String readSpec(InteractiveSandbox sandbox, String sessionId) {
-        return execRead(sandbox, sessionId, "cat", GenerationWorkspace.WORKSPACE + "/SPEC.md");
+        return Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, "SPEC.md"), "");
     }
 
     private String authoritativeSpec(InteractiveSandbox sandbox, String sessionId) {
@@ -695,7 +696,7 @@ public class StageChecks {
             return new StageCheckResult(false, "The executable test artifacts do not yet satisfy the TESTS-stage checks:\n" + observation + ownershipRepair, report);
         }
         // Checked only once the differential is green, so a missing plan never drowns out failing tests in the feedback.
-        String planJson = execRead(sandbox, sessionId, "cat", GenerationWorkspace.WORKSPACE + "/test-plan.json");
+        String planJson = Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, "test-plan.json"), "");
         if (planJson.isBlank()) {
             List<String> behavioralTestNames = report.exactTestNames().stream().filter(name -> !seededStructuralTestNames.contains(name)).toList();
             return new StageCheckResult(false, "The differential passed, but /workspace/test-plan.json is missing. Write it now, implementing the specification's Testing "
@@ -722,7 +723,7 @@ public class StageChecks {
     }
 
     private StageCheckResult checkStatement(InteractiveSandbox sandbox, String sessionId, @Nullable AgentVerifyReport lastTestsReport, Set<String> seededStructuralTestNames) {
-        String statement = execRead(sandbox, sessionId, "cat", GenerationWorkspace.WORKSPACE + "/problem-statement.md");
+        String statement = Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, "problem-statement.md"), "");
         if (statement.isBlank()) {
             return StageCheckResult.failed("problem-statement.md is missing or empty. Write the student-facing problem statement before submitting.");
         }
@@ -738,7 +739,7 @@ public class StageChecks {
         GeneratedTestPlan plan = null;
         Set<String> hiddenNames = Set.of();
         if (lastTestsReport != null) {
-            String planJson = execRead(sandbox, sessionId, "cat", GenerationWorkspace.WORKSPACE + "/test-plan.json");
+            String planJson = Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, "test-plan.json"), "");
             if (planJson.isBlank()) {
                 return StageCheckResult.failed("The accepted test-plan.json handoff from the TESTS stage is missing or unreadable. Stop statement authoring rather than guessing "
                         + "task bindings; restore the accepted grading plan and retry this stage.");

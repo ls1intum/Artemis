@@ -164,20 +164,14 @@ public class LLMTokenUsageService {
         llmTokenUsageRequest.setModel(llmRequest.model());
         llmTokenUsageRequest.setNumInputTokens(llmRequest.numInputTokens());
         llmTokenUsageRequest.setNumOutputTokens(llmRequest.numOutputTokens());
-        llmTokenUsageRequest.setCostPerMillionInputTokens(effectiveInputCost(llmRequest));
+        llmTokenUsageRequest.setCostPerMillionInputTokens(llmRequest.costPerMillionInputToken());
         llmTokenUsageRequest.setCostPerMillionOutputTokens(llmRequest.costPerMillionOutputToken());
+        llmTokenUsageRequest.setNumCachedInputTokens(Math.toIntExact(llmRequest.numCachedInputTokens() == null ? 0 : llmRequest.numCachedInputTokens()));
+        llmTokenUsageRequest.setCostPerMillionCachedInputTokens(llmRequest.costPerMillionCachedInputToken());
+        llmTokenUsageRequest.setNumCacheWriteInputTokens(llmRequest.numCacheWriteInputTokens());
+        llmTokenUsageRequest.setCostPerMillionCacheWriteInputTokens(llmRequest.costPerMillionCacheWriteInputToken());
         llmTokenUsageRequest.setServicePipelineId(llmRequest.pipelineId());
         return llmTokenUsageRequest;
-    }
-
-    /** Stores the exact blended input cost in the existing schema without adding cache-specific database columns. */
-    private static float effectiveInputCost(LLMRequest request) {
-        if (request.numCachedInputTokens() == null || request.numInputTokens() == 0) {
-            return request.costPerMillionInputToken();
-        }
-        long cachedTokens = Math.min(request.numInputTokens(), request.numCachedInputTokens());
-        long uncachedTokens = request.numInputTokens() - cachedTokens;
-        return (uncachedTokens * request.costPerMillionInputToken() + cachedTokens * request.costPerMillionCachedInputToken()) / request.numInputTokens();
     }
 
     // TODO: this should ideally be done Async
@@ -231,11 +225,20 @@ public class LLMTokenUsageService {
     public boolean trackChatResponseTokenUsage(@Nullable ChatResponse chatResponse, LLMServiceType serviceType, String pipelineId,
             Function<LLMTokenUsageBuilder, LLMTokenUsageBuilder> builderFunction, Consumer<LLMRequest> recordedUsageSink) {
         try {
-            if (chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {
+            if (chatResponse == null) {
+                log.warn("Failed to store token usage for pipeline [{}]: chat response is missing.", pipelineId);
                 return false;
             }
             ChatResponseMetadata metadata = chatResponse.getMetadata();
+            if (metadata == null) {
+                log.warn("Failed to store token usage for pipeline [{}]: response metadata is missing.", pipelineId);
+                return false;
+            }
             Usage usage = metadata.getUsage();
+            if (usage == null) {
+                log.warn("Failed to store token usage for pipeline [{}]: usage metadata is missing.", pipelineId);
+                return false;
+            }
             if (usage instanceof org.springframework.ai.chat.metadata.EmptyUsage) {
                 return false;
             }
@@ -244,6 +247,8 @@ public class LLMTokenUsageService {
             Long cachedInputTokens = usage.getCacheReadInputTokens();
             if (promptTokens == null || completionTokens == null || promptTokens < 0 || completionTokens < 0
                     || cachedInputTokens != null && (cachedInputTokens < 0 || cachedInputTokens > promptTokens)) {
+                log.warn("Failed to store token usage for pipeline [{}]: usage metadata is incomplete (prompt tokens: {}, completion tokens: {}).", pipelineId, promptTokens,
+                        completionTokens);
                 return false;
             }
             String model = Objects.requireNonNullElse(metadata.getModel(), "");
@@ -270,9 +275,10 @@ public class LLMTokenUsageService {
      */
     public static double estimatedCostEur(LLMRequest request) {
         long cachedTokens = request.numCachedInputTokens() == null ? 0 : request.numCachedInputTokens();
-        long uncachedTokens = request.numInputTokens() - cachedTokens;
+        long uncachedTokens = request.numInputTokens() - cachedTokens - request.numCacheWriteInputTokens();
         return (uncachedTokens * request.costPerMillionInputToken() + cachedTokens * request.costPerMillionCachedInputToken()
-                + request.numOutputTokens() * request.costPerMillionOutputToken()) / 1_000_000.0;
+                + request.numCacheWriteInputTokens() * request.costPerMillionCacheWriteInputToken() + request.numOutputTokens() * request.costPerMillionOutputToken())
+                / 1_000_000.0;
     }
 
     /**

@@ -48,7 +48,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
-import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationProgress.RepairRound;
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
@@ -57,6 +56,7 @@ import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
@@ -841,16 +841,18 @@ class GenerationOrchestratorTest {
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("# Mechanically verified candidate", "# Broken repair", "# Still broken repair");
         AtomicInteger specReads = new AtomicInteger();
         AtomicInteger planReads = new AtomicInteger();
-        when(sandbox.exec(eq(SESSION_ID), any(), eq("cat"), anyString())).thenAnswer(invocation -> {
-            String path = invocation.getArgument(3);
+        when(sandbox.copyOut(eq(SESSION_ID), anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(1);
             if (path.endsWith("/SPEC.md")) {
-                return new SandboxExecResultDTO(0, specReads.getAndIncrement() == 0 ? "# Verified spec" : "# Broken repair spec", "", false);
+                return new FakeInteractiveSandbox().withFile(path, specReads.getAndIncrement() == 0 ? "# Verified spec" : "# Broken repair spec").copyOut(SESSION_ID, path);
             }
             if (path.endsWith("/test-plan.json")) {
-                return new SandboxExecResultDTO(0, planReads.getAndIncrement() == 0 ? "{\"tests\":[{\"name\":\"testGood\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}"
-                        : "{\"tests\":[{\"name\":\"testBroken\",\"seamWeightTier\":1,\"visibility\":\"ALWAYS\"}]}", "", false);
+                return new FakeInteractiveSandbox()
+                        .withFile(path, planReads.getAndIncrement() == 0 ? "{\"tests\":[{\"name\":\"testGood\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}"
+                                : "{\"tests\":[{\"name\":\"testBroken\",\"seamWeightTier\":1,\"visibility\":\"ALWAYS\"}]}")
+                        .copyOut(SESSION_ID, path);
             }
-            return new SandboxExecResultDTO(1, "", "not found", false);
+            return new FakeInteractiveSandbox().copyOut(SESSION_ID, path);
         });
 
         GenerationOutcome outcome = generate(() -> false);
@@ -964,13 +966,35 @@ class GenerationOrchestratorTest {
     }
 
     @Test
+    void largeRootArtifactsSurviveCandidateCaptureAndPristineRestoration() {
+        acceptedCandidateWithSpecAndTests();
+        String spec = "## Rules\n| R1 | preserve the opening contract |\n" + "specification detail\n".repeat(4_000);
+        String plan = "{\"tests\":[{\"name\":\"testFoo\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}" + " ".repeat(60_000);
+        var files = new FakeInteractiveSandbox().withFile("/workspace/SPEC.md", spec).withFile("/workspace/test-plan.json", plan);
+        when(sandbox.copyOut(eq(SESSION_ID), anyString())).thenAnswer(invocation -> files.copyOut(SESSION_ID, invocation.getArgument(1)));
+        when(sandbox.exec(eq(SESSION_ID), any(), eq("cat"), anyString()))
+                .thenAnswer(invocation -> files.exec(SESSION_ID, java.time.Duration.ofSeconds(1), "cat", invocation.getArgument(3)));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenAnswer(invocation -> {
+            invocation.getArgument(4, Runnable.class).run();
+            return accepted();
+        });
+
+        GenerationOutcome outcome = generate(() -> false);
+
+        assertThat(outcome.isMechanicallyVerified()).isTrue();
+        assertThat(outcome.specDocument()).isEqualTo(spec);
+        verify(sandbox).resetSession(SESSION_ID);
+        verify(workspace).materializeRepositoryFiles(eq(sandbox), eq(SESSION_ID), eq(exercise), eq(Mode.GENERATE), any(), any(), any(), anyString(), eq(spec), eq(plan));
+    }
+
+    @Test
     void critic_isFedTaskBoundTestNamesAndTheExactVerifiedArtifacts() {
         String testPlan = "{\"tests\":[{\"name\":\"test_sort\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
-        when(sandbox.exec(eq(SESSION_ID), any(), eq("cat"), anyString())).thenAnswer(invocation -> {
-            String path = invocation.getArgument(3);
-            return path.endsWith("/test-plan.json") ? new SandboxExecResultDTO(0, testPlan, "", false) : new SandboxExecResultDTO(1, "", "not found", false);
+        when(sandbox.copyOut(eq(SESSION_ID), anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(1);
+            return new FakeInteractiveSandbox().withFile(path, path.endsWith("/test-plan.json") ? testPlan : "").copyOut(SESSION_ID, path);
         });
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("Intro.\n[task][Sort](test_sort,test_empty)\n[task][Edge](test_negative)");
         when(workspace.extractRepository(any(), anyString(), eq(RepositoryRole.SOLUTION), any()))
@@ -1315,9 +1339,9 @@ class GenerationOrchestratorTest {
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(workspace.extractRepository(any(), anyString(), eq(RepositoryRole.TESTS), any()))
                 .thenReturn(new GenerationWorkspace.RepositoryExtraction(Map.of("test/RosterParserTest.java", "package p;\nclass RosterParserTest { }"), false));
-        when(sandbox.exec(eq(SESSION_ID), any(), eq("cat"), anyString())).thenAnswer(invocation -> {
-            String path = invocation.getArgument(3);
-            return path.endsWith("/SPEC.md") ? new SandboxExecResultDTO(0, "## Rules\n" + rulesBody, "", false) : new SandboxExecResultDTO(1, "", "not found", false);
+        when(sandbox.copyOut(eq(SESSION_ID), anyString())).thenAnswer(invocation -> {
+            String path = invocation.getArgument(1);
+            return new FakeInteractiveSandbox().withFile(path, path.endsWith("/SPEC.md") ? "## Rules\n" + rulesBody : "").copyOut(SESSION_ID, path);
         });
     }
 

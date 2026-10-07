@@ -32,10 +32,10 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupRegistrationTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupScheduleTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupsConfigurationTestRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to tutorial groups for use in integration tests.
@@ -58,7 +58,7 @@ public class TutorialGroupUtilService {
     protected TutorialGroupScheduleTestRepository tutorialGroupScheduleTestRepository;
 
     @Autowired
-    private TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
+    private TutorialGroupsConfigurationTestRepository tutorialGroupsConfigurationRepository;
 
     @Autowired
     private TutorialGroupFreePeriodRepository tutorialGroupFreePeriodRepository;
@@ -231,12 +231,10 @@ public class TutorialGroupUtilService {
     public TutorialGroupsConfiguration createTutorialGroupConfiguration(Long courseId, LocalDate start, LocalDate end) {
         var course = courseRepo.findByIdElseThrow(courseId);
         var tutorialGroupConfiguration = TutorialGroupFactory.generateTutorialGroupsConfiguration(start, end);
+        var stored = tutorialGroupsConfigurationRepository.findStoredByCourseId(courseId).orElseThrow();
+        tutorialGroupConfiguration.setId(stored.getId());
         tutorialGroupConfiguration.setCourse(course);
-        var persistedConfiguration = tutorialGroupsConfigurationRepository.save(tutorialGroupConfiguration);
-        course.setTutorialGroupsConfiguration(persistedConfiguration);
-        course = courseRepo.save(course);
-        persistedConfiguration.setCourse(course);
-        return persistedConfiguration;
+        return tutorialGroupsConfigurationRepository.save(tutorialGroupConfiguration);
     }
 
     public TutorialGroup createAndSaveTutorialGroup(Course course, String title, User teachingAssistant, int capacity, String campus) {

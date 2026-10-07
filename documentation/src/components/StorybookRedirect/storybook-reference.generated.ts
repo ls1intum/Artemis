@@ -76,6 +76,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'forms-input-group--docs';
         case 'forms-input-number':
             return 'forms-input-number--docs';
+        case 'forms-multi-select':
+            return 'forms-multi-select--docs';
         case 'forms-radio-button':
             return 'forms-radio-button--docs';
         case 'forms-search-field':

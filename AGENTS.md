@@ -113,7 +113,7 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 
 ## Commits and pull requests
 
-- Target `develop`; rebase to reduce noise. Follow `CONTRIBUTING.md` and the guidelines in
+- Target `develop`; rebase to reduce noise. Follow `.github/CONTRIBUTING.md` and the guidelines in
   `documentation/docs/developer/guidelines/`. Use `.github/PULL_REQUEST_TEMPLATE.md`, including
   the problem and solution, linked issue when applicable, checks run, screenshots for UI changes
   and documentation updates when relevant.
