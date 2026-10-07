@@ -15,9 +15,9 @@ import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import dayjs from 'dayjs/esm';
 
-import { faCode, faExternalLink, faLaptopCode } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faCode, faExternalLink, faLaptopCode } from '@fortawesome/free-solid-svg-icons';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Router, RouterLink } from '@angular/router';
@@ -36,7 +36,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { captureException } from '@sentry/angular';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
-import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
 import { map } from 'rxjs/operators';
 
 const BREAKPOINTS = {
@@ -55,8 +55,9 @@ export enum RepositoryAuthenticationMethod {
     templateUrl: './code-button.component.html',
     styleUrls: ['./code-button.component.scss'],
     imports: [
-        TumAetUiButtonComponent,
-        NgbPopover,
+        TumAetUiButtonDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
         TranslateDirective,
         NgbDropdown,
         NgbDropdownToggle,
@@ -154,6 +155,7 @@ export class CodeButtonComponent implements OnInit {
     readonly programmingExercisesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
 
     // Computed/Derived States
+    readonly userInitialized = computed(() => !!this.userLogin());
     readonly displayLabel = computed(() => this.computeDisplayLabel());
     clonedHeadline = computed(() => {
         const participations = this.participations();
@@ -207,6 +209,7 @@ export class CodeButtonComponent implements OnInit {
     theiaPortalURL!: string; // set in initTheia() from ngOnInit()
 
     // Icons
+    readonly faCircleNotch = faCircleNotch;
     readonly faCode = faCode;
     readonly faExternalLink = faExternalLink;
     readonly faLaptopCode = faLaptopCode;
