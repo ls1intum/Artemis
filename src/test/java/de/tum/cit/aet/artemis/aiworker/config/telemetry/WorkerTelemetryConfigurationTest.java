@@ -3,9 +3,13 @@ package de.tum.cit.aet.artemis.aiworker.config.telemetry;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.observation.ChatModelObservationContext;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -16,6 +20,7 @@ import org.springframework.boot.micrometer.tracing.opentelemetry.autoconfigure.O
 import org.springframework.boot.opentelemetry.autoconfigure.OpenTelemetrySdkAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
+import de.tum.cit.aet.artemis.core.config.ChatModelCompletionContentObservationFilter;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.opentelemetry.api.common.AttributeKey;
@@ -52,11 +57,14 @@ class WorkerTelemetryConfigurationTest {
         new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles("aiworker"))
                 .withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class, ObservationAutoConfiguration.class, MicrometerTracingAutoConfiguration.class,
                         OpenTelemetryTracingAutoConfiguration.class, OpenTelemetrySdkAutoConfiguration.class))
-                .withUserConfiguration(WorkerTelemetryConfiguration.class).withBean(SpanProcessor.class, () -> SimpleSpanProcessor.create(exporter))
-                .withPropertyValues("management.tracing.sampling.probability=1.0", "artemis.telemetry.gen-ai.capture-content=" + captureContent).run(context -> {
+                .withUserConfiguration(WorkerTelemetryConfiguration.class, ChatModelCompletionContentObservationFilter.class)
+                .withBean(SpanProcessor.class, () -> SimpleSpanProcessor.create(exporter))
+                .withPropertyValues("management.tracing.sampling.probability=1.0", "management.langfuse.enabled=true", "artemis.telemetry.gen-ai.capture-content=" + captureContent)
+                .run(context -> {
                     assertThat(context).hasNotFailed();
                     var registry = context.getBean(ObservationRegistry.class);
                     var chat = ChatModelObservationContext.builder().prompt(new Prompt("private teaching brief")).provider("openai").build();
+                    chat.setResponse(new ChatResponse(List.of(new Generation(new AssistantMessage("private generated solution")))));
                     Observation.createNotStarted("hyperion.generation", registry).highCardinalityKeyValue("artemis.hyperion.job.id", "job")
                             .observe(() -> Observation.createNotStarted("gen_ai.client.operation", () -> chat, registry).observe(() -> {
                             }));
@@ -71,11 +79,17 @@ class WorkerTelemetryConfigurationTest {
                     String content = child.getAttributes().get(AttributeKey.stringKey("gen_ai.input.messages"));
                     if (captureContent) {
                         assertThat(content).contains("private teaching brief");
+                        assertThat(child.getAttributes().get(AttributeKey.stringKey("gen_ai.output.messages"))).contains("private generated solution");
                         assertThat(child.getAttributes().get(AttributeKey.stringKey("artemis.gen_ai.content.complete"))).isEqualTo("true");
                     }
                     else {
                         assertThat(content).isNull();
-                        assertThat(child.getAttributes().asMap().values()).noneMatch(value -> value.toString().contains("private teaching brief"));
+                        assertThat(spans).allSatisfy(span -> {
+                            assertThat(span.getAttributes().get(AttributeKey.stringKey("gen_ai.prompt"))).isNull();
+                            assertThat(span.getAttributes().get(AttributeKey.stringKey("gen_ai.completion"))).isNull();
+                            assertThat(span.getAttributes().asMap().values())
+                                    .noneMatch(value -> value.toString().contains("private teaching brief") || value.toString().contains("private generated solution"));
+                        });
                     }
                 });
     }
