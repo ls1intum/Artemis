@@ -106,7 +106,7 @@
         <!--region Right Panel-->
         <fa-icon right-header [icon]="farListAlt" />&nbsp;
         <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
-        <p right-body class="mb-3 markdown-preview">
+        <p right-body class="mb-4! markdown-preview">
             @if (fileUploadExercise()?.problemStatement; as problemStatement) {
                 <span [jhiMarkdown]="problemStatement"></span>
             }

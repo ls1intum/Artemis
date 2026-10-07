@@ -1,6 +1,6 @@
 ---
 name: e2e-pr-check
-description: Select, run, or debug Artemis Playwright tests for a branch or pull request.
+description: Select, run, or debug Artemis Playwright tests for a branch or pull request, or write a layout contract that measures element sizes and alignment.
 ---
 
 # Run the E2E tests this change affects
@@ -107,6 +107,25 @@ actually waiting for.
 makes Playwright print `Error: No tests found.` and exit non-zero, which the runner reports as a
 failed run. So a red run with no test output at all is a path problem, not a test problem. Check
 the executed count against what step 1 selected before reading anything else.
+
+## Writing a layout contract
+
+To pin how big an element is, how elements line up or that a page does not scroll sideways,
+measure in the browser. Never compare screenshots, and never find an element by a styling class.
+
+1. State the rule as a number or as a relation between elements.
+2. Find the elements by `data-testid`; add one to the template when it is missing.
+3. Assert inside `forEachViewport` from `src/test/playwright/support/layout.ts` with
+   `expectHeight`, `expectAligned`, `expectFillsParent`, `expectWithinViewport`,
+   `expectNoHorizontalOverflow`, `expectNoHorizontalScrollAround` or `expectSameComputedStyle`, and
+   give each element a `name`. A page in a card that scrolls on its own needs both sideways-scroll
+   helpers, because the document keeps the width of the window.
+4. For a new or changed helper, add a case that holds and one that must fail to
+   `src/test/playwright/e2e/shared/LayoutHelpers.spec.ts`.
+
+A change under `src/test/playwright/support/` makes the resolver in step 1 report
+`RUN_ALL_TESTS=true`. The helpers, the viewport matrix and the exam example are in the section
+"Layout contract tests" of `documentation/docs/developer/e2e-testing-playwright.mdx`.
 
 ## Reporting back
 

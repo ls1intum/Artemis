@@ -18,7 +18,7 @@
                 <!-- display: contents, so a button that is not shown leaves no empty flex item (and no extra gap) next to the export button -->
                 <jhi-exam-request-ai-feedback-button class="contents" [courseId]="courseId()" [studentExam]="studentExam()" [testExamConduction]="testExamConduction()" />
             }
-            <button type="button" id="exportToPDFButton" tumAetUiButton size="small" (click)="printPDF()">
+            <button type="button" id="exportToPDFButton" data-testid="exam-summary-export-button" tumAetUiButton size="small" (click)="printPDF()">
                 <fa-icon [icon]="faPrint" />
                 <span jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
             </button>
@@ -31,7 +31,7 @@
     </div>
 }
 @if (studentExam() && !studentExam().submitted) {
-    <tumaet-ui-message severity="error" class="mb-4 text-center [&_.tumaet-ui-message-content]:justify-center">
+    <tumaet-ui-message severity="error" class="mb-6! text-center [&_.tumaet-ui-message-content]:justify-center">
         <strong jhiTranslate="artemisApp.exam.examSummary.youAreViewingAnUnsubmittedExam"></strong>
     </tumaet-ui-message>
 }
@@ -45,7 +45,7 @@
     </div>
 }
 @if (studentExam() && studentExam().exercises && studentExam().exam?.course && studentExamGradeInfoDTO()) {
-    <div class="mb-4" data-testid="exam-summary-result-overview">
+    <div class="mb-6!" data-testid="exam-summary-result-overview">
         <jhi-exam-result-overview
             [studentExamWithGrade]="studentExamGradeInfoDTO()!"
             [isGradingKeyCollapsed]="isGradingKeyCollapsed()"
@@ -56,12 +56,12 @@
     </div>
 }
 @if (!resultsArePublished) {
-    <div class="mb-4">
+    <div class="mb-6!">
         <fa-icon [icon]="faInfoCircle" class="info-icon" />
         {{ 'artemisApp.exam.resultInformation' | artemisTranslate }}
     </div>
 }
-<h3 class="mb-3! text-base! font-semibold!" jhiTranslate="artemisApp.exam.exercises"></h3>
+<h3 class="mb-3! text-base! font-semibold!" data-testid="exam-summary-heading" jhiTranslate="artemisApp.exam.exercises"></h3>
 @for (exercise of studentExam()?.exercises; track exercise; let i = $index) {
     <div [id]="'exercise-' + exercise.id">
         <jhi-collapsible-card [isCardContentCollapsed]="exerciseInfos()[exercise.id!].isCollapsed" [toggleCollapse]="toggleCollapseExercise(exerciseInfos()[exercise.id!])">
@@ -150,7 +150,7 @@
                         } @else {
                             @if (exerciseInfos()[exercise.id!]?.participation) {
                                 @if (!exerciseInfos()[exercise.id!]?.submission?.submitted) {
-                                    <div class="mb-4" jhiTranslate="artemisApp.exam.examSummary.noSubmissionFound"></div>
+                                    <div class="mb-6!" jhiTranslate="artemisApp.exam.examSummary.noSubmissionFound"></div>
                                 }
                                 @switch (exercise.type) {
                                     @case (TEXT) {
@@ -210,7 +210,7 @@
                 @if (exercise.type === PROGRAMMING) {
                     <!--  relax condition for programming exercises for the case that we get a submissions from websockets, but last changes in exam were not submitted -->
                     @if (!exerciseInfos()[exercise.id!]?.submission) {
-                        <div class="mb-4" jhiTranslate="artemisApp.exam.examSummary.noSubmissionFound"></div>
+                        <div class="mb-6!" jhiTranslate="artemisApp.exam.examSummary.noSubmissionFound"></div>
                     }
                     @if (exerciseInfos()[exercise.id!]?.participation) {
                         <jhi-programming-exam-summary
@@ -231,7 +231,16 @@
     </div>
 }
 <div class="flex justify-center">
-    <button type="button" tumAetUiButton size="small" severity="secondary" variant="outlined" (click)="scrollToOverviewOrTop()" id="back-to-overview-button">
+    <button
+        type="button"
+        tumAetUiButton
+        size="small"
+        severity="secondary"
+        variant="outlined"
+        (click)="scrollToOverviewOrTop()"
+        id="back-to-overview-button"
+        data-testid="exam-summary-back-button"
+    >
         <fa-icon [icon]="faArrowUp" />
         <span>&nbsp; {{ 'artemisApp.exam.examSummary.backToOverview' | artemisTranslate }}&nbsp; </span>
     </button>

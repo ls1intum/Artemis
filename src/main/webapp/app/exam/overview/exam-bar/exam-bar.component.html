@@ -1,5 +1,6 @@
 <div
-    class="exam-bar flex h-10 shrink-0 items-center justify-between gap-3 rounded-lg bg-(--module-bg) px-4"
+    class="exam-bar flex h-10 shrink-0 items-center justify-between gap-4! rounded-lg bg-(--module-bg) px-6!"
+    data-testid="exam-bar"
     [class]="isEndView() ? 'mx-auto w-full max-w-[900px] max-[900px]:max-w-[600px] max-[600px]:max-w-[500px]' : ''"
 >
     <div class="flex min-w-0 items-center gap-2">
@@ -11,7 +12,7 @@
         }
     </div>
     @if (!examTimeLineView()) {
-        <div class="flex shrink-0 items-center gap-3">
+        <div class="flex shrink-0 items-center gap-4!">
             <jhi-exam-timer
                 [criticalTime]="isEndView() ? criticalTimeEndView : criticalTime"
                 [endDate]="endDate()"

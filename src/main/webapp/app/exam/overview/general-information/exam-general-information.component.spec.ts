@@ -66,6 +66,7 @@ describe('ExamGeneralInformationComponent', () => {
         const title = (fixture.nativeElement as HTMLElement).querySelector('#general-information-title')!;
         expect(title.classList).toContain('text-base!');
         expect(title.classList).toContain('font-semibold!');
+        expect(title.getAttribute('data-testid')).toBe('exam-summary-heading');
     });
 
     it('should return the start date plus the working time as the student exam end date', () => {
