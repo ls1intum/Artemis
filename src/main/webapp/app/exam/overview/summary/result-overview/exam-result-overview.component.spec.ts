@@ -421,6 +421,15 @@ describe('ExamResultOverviewComponent', () => {
             fixture.detectChanges();
         }
 
+        it('should style its heading like the other section headings of the summary', () => {
+            render();
+
+            const heading: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exam-summary-heading"]');
+            // the important modifiers are needed because the unlayered Bootstrap heading rules would win otherwise
+            expect(heading.classList).toContain('text-base!');
+            expect(heading.classList).toContain('font-semibold!');
+        });
+
         describe('points and grade summary', () => {
             it('should show only the bonus sentence when the exam has bonus points', () => {
                 render();
@@ -480,7 +489,7 @@ describe('ExamResultOverviewComponent', () => {
 
                 const block = fixture.nativeElement.querySelector('[data-testid="exam-result-points-summary"]') as HTMLElement;
                 expect(block.classList).toContain('px-2');
-                expect(block.classList).not.toContain('mx-4');
+                expect(block.classList).not.toContain('mx-6!');
                 expect(sentences()[0].classList).toContain('text-sm');
                 expect(sentences()[0].classList).not.toContain('text-xl');
             });

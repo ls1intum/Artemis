@@ -10,7 +10,7 @@
             <!--region Left Panel-->
             <div left-body class="text-editor-grid pb-2 w-100" [class.ps-2]="!isExamSummary()">
                 @if (textExercise()?.teamMode && isActive) {
-                    <div class="grid-area-team-info pb-4 ps-md-2">
+                    <div class="grid-area-team-info pb-6! ps-md-2">
                         <jhi-team-participate-info-box
                             [exercise]="textExercise()"
                             [participation]="participation()"
@@ -124,7 +124,7 @@
             <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
             <ng-container right-body>
                 @if (textExercise()!.problemStatement) {
-                    <p class="markdown-preview mb-3">
+                    <p class="markdown-preview mb-4!">
                         <span [jhiMarkdown]="textExercise()!.problemStatement!"></span>
                     </p>
                 }
