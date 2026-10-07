@@ -523,3 +523,13 @@ retry **Undo** against the retained baseline; another undo, generation, or ordin
 run concurrently. A missing or expired baseline during this recovery does not unlock an
 inconsistent exercise. If a retry cannot finish, reconcile the repositories and release the
 `REVERT_RECOVERY` slot through the audited operator recovery path described above.
+
+An incomplete generation save also keeps the exercise guarded if live changes remain or
+the saved state is uncertain. Ordinary edits, another generation, and participation copies
+are blocked. The completed run still releases its admission budget; the recovery guard
+does not expire. An administrator must reconcile repositories, metadata and grading, then
+use the audited exact-token recovery endpoint. This quiescent guard has kind `GENERATION`
+and a `generation-recovery-` token; unlike an in-flight generation reservation, it can be
+released while its owner is still present. A fully compensated failure leaves no recovery
+guard. A first undo refused before any write also releases its temporary reservation, but
+such a refusal during a recovery retry preserves the existing guard.

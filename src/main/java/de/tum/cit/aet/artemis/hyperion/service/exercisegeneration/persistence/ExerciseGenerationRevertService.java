@@ -173,14 +173,14 @@ public class ExerciseGenerationRevertService {
     private RevertResult revertToBaseline(ProgrammingExercise exercise, User user, ExerciseGenerationBaseline baseline, BooleanSupplier stillOwnsMutationSlot) {
         if (!persistenceService.canRestoreGrading(exercise.getId(), baseline.previousGrading(), baseline.savedGrading())) {
             log.warn("Refusing to revert exercise {} because its grading no longer matches the generated or original state", exercise.getId());
-            return new RevertResult(false, List.of());
+            return new RevertResult(false, List.of(), false);
         }
         if (!metadataCanBeReverted(exercise.getProblemStatement(), baseline.expectedProblemStatement(), baseline.problemStatement())
                 || !metadataCanBeReverted(exercise.getTitle(), baseline.expectedTitle(), baseline.title()) || !persistenceService.canRestoreProblemStatementAndTitle(exercise,
                         baseline.problemStatement(), baseline.title(), baseline.expectedProblemStatement(), baseline.expectedTitle())) {
             log.error("Refusing to revert generation metadata for exercise {} because the current problem statement/title no longer matches the captured generated state",
                     exercise.getId());
-            return new RevertResult(false, List.of());
+            return new RevertResult(false, List.of(), false);
         }
 
         List<RepositoryType> reverted = new ArrayList<>();
@@ -244,7 +244,7 @@ public class ExerciseGenerationRevertService {
             if (!stillOwnsMutationSlot.getAsBoolean()) {
                 log.error("Stopped reverting generated changes for exercise {} because this node lost the exercise mutation slot before metadata/test-case resync",
                         exercise.getId());
-                return new RevertResult(false, List.copyOf(reverted));
+                return new RevertResult(false, List.copyOf(reverted), true);
             }
             // Only after every required reset completed, so the tests build sees the fully reverted tree.
             try {
@@ -258,7 +258,7 @@ public class ExerciseGenerationRevertService {
                 fullyReverted = false;
             }
         }
-        return new RevertResult(fullyReverted, List.copyOf(reverted));
+        return new RevertResult(fullyReverted, List.copyOf(reverted), true);
     }
 
     private Map<RepositoryType, String> captureRepositoryHeads(ProgrammingExercise exercise, String repositoryBranch, ExerciseGenerationBaseline baseline) {
@@ -304,7 +304,7 @@ public class ExerciseGenerationRevertService {
     }
 
     /** A false {@code fullyReverted} means undo was refused or failed; some repositories may already have been reset. */
-    public record RevertResult(boolean fullyReverted, List<RepositoryType> revertedRepositories) {
+    public record RevertResult(boolean fullyReverted, List<RepositoryType> revertedRepositories, boolean mutationAttempted) {
     }
 
     public record RevertibleRun(String jobId, GenerationMode mode) {

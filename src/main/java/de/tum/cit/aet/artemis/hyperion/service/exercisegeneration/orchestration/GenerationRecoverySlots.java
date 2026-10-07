@@ -11,14 +11,16 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService.JobInfo;
 
-/** Exact-token transitions between an executing undo and its quiescent, fail-closed recovery state. */
-final class GenerationRevertSlots {
+/** Exact-token undo admission and transitions to quiescent, fail-closed recovery guards. */
+final class GenerationRecoverySlots {
+
+    private static final String GENERATION_RECOVERY_PREFIX = "generation-recovery-";
 
     private static final String RECOVERY_PREFIX = "revert-recovery-";
 
     static final String RETRY_PREFIX = "revert-retry-";
 
-    private GenerationRevertSlots() {
+    private GenerationRecoverySlots() {
     }
 
     static String claim(DistributedMap<String, JobInfo> jobMap, User user, long exerciseId, @Nullable String localNodeId, Runnable validateTopology,
@@ -61,6 +63,25 @@ final class GenerationRevertSlots {
         finally {
             jobMap.unlock(key);
         }
+    }
+
+    static void retainGeneration(DistributedMap<String, JobInfo> jobMap, long exerciseId, String token, String localNodeId) {
+        String key = String.valueOf(exerciseId);
+        jobMap.lock(key);
+        try {
+            JobInfo current = jobMap.get(key);
+            if (current != null && current.jobId().equals(token) && !current.cancellable() && localNodeId.equals(current.ownerNodeId())) {
+                jobMap.replace(key, current, new JobInfo(GENERATION_RECOVERY_PREFIX + token, current.userLogin(), exerciseId, current.startedAt(), null, current.ownerNodeId(),
+                        Instant.now(), false, null));
+            }
+        }
+        finally {
+            jobMap.unlock(key);
+        }
+    }
+
+    static boolean isGenerationRecovery(JobInfo job) {
+        return job.jobId().startsWith(GENERATION_RECOVERY_PREFIX);
     }
 
     static boolean isPending(@Nullable JobInfo current) {

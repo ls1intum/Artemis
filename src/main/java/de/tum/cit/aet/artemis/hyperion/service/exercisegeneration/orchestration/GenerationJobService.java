@@ -627,20 +627,25 @@ public class GenerationJobService {
      * @return an opaque slot token that must be passed to {@link #clearRevertSlot(long, String)}
      */
     public String claimRevertSlot(User user, long exerciseId) {
-        return GenerationRevertSlots.claim(jobMap, user, exerciseId, localNodeId, topology::verifyAllMembers,
+        return GenerationRecoverySlots.claim(jobMap, user, exerciseId, localNodeId, topology::verifyAllMembers,
                 job -> claimSlot(key(exerciseId), job, "Exercise authoring or another mutation is running; wait before reverting.", "exerciseGenerationRunning"));
     }
 
+    /** Keeps a completed, uncertain save fenced until an administrator reconciles its repositories. */
+    public void retainIncompleteGenerationSlot(long exerciseId, String jobId) {
+        GenerationRecoverySlots.retainGeneration(jobMap, exerciseId, jobId, localNodeId);
+    }
+
     public void retainRevertRecoverySlot(long exerciseId, String token) {
-        GenerationRevertSlots.retain(jobMap, exerciseId, token);
+        GenerationRecoverySlots.retain(jobMap, exerciseId, token);
     }
 
     public boolean isRevertRecoveryPending(long exerciseId) {
-        return GenerationRevertSlots.isPending(jobMap.get(key(exerciseId)));
+        return GenerationRecoverySlots.isPending(jobMap.get(key(exerciseId)));
     }
 
     public boolean isRevertRecoveryRetry(String token) {
-        return token.startsWith(GenerationRevertSlots.RETRY_PREFIX);
+        return token.startsWith(GenerationRecoverySlots.RETRY_PREFIX);
     }
 
     /**
@@ -695,9 +700,8 @@ public class GenerationJobService {
      * still be writing, so this is an audited operator action rather than something the stale-job scan does.
      * <p>
      * Accepts a generation, revert, or external-mutation token. A recovered generation slot is terminalized like a stale one, so the instructor is told the run stopped and is
-     * warned to review the repositories rather than left with a job that reports as running forever. The one slot recoverable while its owner is still a member is the
-     * recovery state a partial undo leaves behind ({@link WedgedSlotKind#REVERT_RECOVERY}): nothing is writing any more, so the operator's job is to reconcile the
-     * repositories, not to confirm a JVM has stopped.
+     * warned to review the repositories rather than left with a job that reports as running forever. Quiescent guards left by partial saves and partial undos also allow recovery
+     * while the owner is still present, after the operator reconciles the repositories.
      *
      * @param exerciseId the exercise id
      * @param token      the exact slot token to recover, as reported by {@link #getWedgedSlotInfo(long)}
@@ -715,8 +719,8 @@ public class GenerationJobService {
             if (job == null || !job.jobId().equals(token) || job.cancellable()) {
                 return false;
             }
-            // A retained partial undo is quiescent by construction, so the owner-absence fence that protects in-flight writers does not apply to it.
-            if (reaper.ownerMemberIsPresent(job) && !GenerationRevertSlots.isPending(job)) {
+            // Retained partial saves and undos are quiescent; active writers still require owner absence.
+            if (reaper.ownerMemberIsPresent(job) && !GenerationRecoverySlots.isPending(job) && !GenerationRecoverySlots.isGenerationRecovery(job)) {
                 return false;
             }
             if (isGenerationJob(job)) {
@@ -733,7 +737,7 @@ public class GenerationJobService {
         if (job.jobId().startsWith(EXTERNAL_MUTATION_JOB_PREFIX)) {
             return WedgedSlotKind.EXTERNAL_MUTATION;
         }
-        if (GenerationRevertSlots.isPending(job)) {
+        if (GenerationRecoverySlots.isPending(job)) {
             return WedgedSlotKind.REVERT_RECOVERY;
         }
         return job.jobId().startsWith(REVERT_JOB_PREFIX) ? WedgedSlotKind.REVERT : WedgedSlotKind.GENERATION;
@@ -813,7 +817,7 @@ public class GenerationJobService {
     }
 
     static boolean isGenerationJob(JobInfo job) {
-        return !job.jobId().startsWith(REVERT_JOB_PREFIX) && !job.jobId().startsWith(EXTERNAL_MUTATION_JOB_PREFIX);
+        return !GenerationRecoverySlots.isGenerationRecovery(job) && !job.jobId().startsWith(REVERT_JOB_PREFIX) && !job.jobId().startsWith(EXTERNAL_MUTATION_JOB_PREFIX);
     }
 
     void publishExerciseState(long exerciseId, String jobId, boolean running) {
@@ -851,7 +855,7 @@ public class GenerationJobService {
 
     /**
      * A slot the automatic stale-job scan will never release. The {@code token} is what {@link #recoverWedgedSlot(long, String)} requires, and {@code ownerLeftCluster} is a
-     * precondition of that recovery for every kind except {@link WedgedSlotKind#REVERT_RECOVERY}.
+     * precondition for in-flight writers; quiescent partial-save and partial-undo guards permit audited recovery with the owner still present.
      */
     public record WedgedSlotInfo(long exerciseId, String token, WedgedSlotKind kind, @Nullable String ownerNodeId, Instant startedAt, boolean ownerLeftCluster) {
     }
