@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseDates;
+import de.tum.cit.aet.artemis.exercise.factories.ExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
@@ -288,7 +289,7 @@ public class TextDemoApi extends AbstractTextApi {
     private TextExercise createEssay(Course course, String title, String shortName, String problemStatement, String exampleSolution, ExerciseDates dates) {
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(title, shortName, problemStatement, 10.0, 0.0, dates, exampleSolution, course);
         textExercise.setAssessmentType(AssessmentType.MANUAL);
-        textExercise.getCategories().add("Architecture");
+        textExercise.getCategories().add(ExerciseFactory.exerciseCategory("Architecture", "#691b0b"));
         textExercise.validateGeneralSettings();
 
         TextExercise createdExercise = textExerciseRepository.save(textExercise);

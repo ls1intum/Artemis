@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.api.AbstractApi;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseDates;
+import de.tum.cit.aet.artemis.exercise.factories.ExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
@@ -154,7 +155,7 @@ public class QuizDemoApi implements AbstractApi {
     private QuizExercise createOngoingQuiz(Course course) {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ONGOING_QUIZ_TITLE, ONGOING_QUIZ_SHORT_NAME, ONGOING_PROBLEM_STATEMENT, ExerciseDates.ongoing(),
                 QuizMode.INDIVIDUAL, DEMO_DURATION_SECONDS, course);
-        quizExercise.getCategories().add("Java");
+        quizExercise.getCategories().add(ExerciseFactory.exerciseCategory("Java", "#6ae8ac"));
 
         quizExercise
                 .addQuestion(QuizExerciseFactory.generateMultipleChoiceQuestion("Collection guarantees", "Which of the following statements about Java collections are correct?",
@@ -192,7 +193,7 @@ public class QuizDemoApi implements AbstractApi {
         // ended and evaluated below.
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ENDED_QUIZ_TITLE, ENDED_QUIZ_SHORT_NAME, ENDED_PROBLEM_STATEMENT,
                 new ExerciseDates(ZonedDateTime.now().minusWeeks(1), null, null, null), QuizMode.INDIVIDUAL, DEMO_DURATION_SECONDS, course);
-        quizExercise.getCategories().add("Algorithms");
+        quizExercise.getCategories().add(ExerciseFactory.exerciseCategory("Algorithms", "#1b97ca"));
 
         quizExercise.addQuestion(QuizExerciseFactory.generateMultipleChoiceQuestion("Worst-case sorting",
                 "Which of the following algorithms sort an array of n elements in O(n log n) time **in the worst case**?",

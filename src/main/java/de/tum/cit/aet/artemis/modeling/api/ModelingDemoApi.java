@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseDates;
+import de.tum.cit.aet.artemis.exercise.factories.ExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -211,7 +212,7 @@ public class ModelingDemoApi extends AbstractModelingApi {
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(title, shortName, problemStatement, 10.0, 0.0, dates, DiagramType.ClassDiagram, null,
                 null, course);
         modelingExercise.setAssessmentType(AssessmentType.MANUAL);
-        modelingExercise.getCategories().add("Modeling");
+        modelingExercise.getCategories().add(ExerciseFactory.exerciseCategory("Modeling", "#9dca53"));
         modelingExercise.validateGeneralSettings();
 
         ModelingExercise createdExercise = modelingExerciseRepository.save(modelingExercise);
