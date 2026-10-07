@@ -15,6 +15,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -45,9 +46,10 @@ class ModelingExerciseWithSubmissionsExportServiceTest extends AbstractSpringInt
     void exportModelingExerciseWithSubmissions_writesTheExerciseDetailsWithoutTheEntityGraph() throws Exception {
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise(TEST_PREFIX);
         ModelingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
-        exercise.setTeamAssignmentConfig(teamAssignmentConfig());
-        exercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        exercise.setMode(ExerciseMode.TEAM);
         exercise = exerciseRepository.save(exercise);
+        exerciseUtilService.savePlagiarismDetectionConfig(exercise, PlagiarismDetectionConfig.createDefault());
+        exerciseUtilService.saveTeamAssignmentConfig(exercise, teamAssignmentConfig());
         assertThat(exercise.getTeamAssignmentConfig().getId()).as("the fixture stores both configurations").isNotNull();
         assertThat(exercise.getPlagiarismDetectionConfig().getId()).isNotNull();
         List<String> exportErrors = new ArrayList<>();

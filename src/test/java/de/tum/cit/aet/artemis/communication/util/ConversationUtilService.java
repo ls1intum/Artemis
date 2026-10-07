@@ -133,7 +133,7 @@ public class ConversationUtilService {
     public Course createCourseWithPostsDisabled(String userPrefix) {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
@@ -166,7 +166,7 @@ public class ConversationUtilService {
             testLectureChannels.add(lectureChannel);
         }
 
-        courseRepo.save(course);
+        courseRepo.saveWithDefaultConfigurations(course);
 
         PlagiarismCase plagiarismCase = new PlagiarismCase();
         plagiarismCase.setExercise(testExerciseChannels.getFirst().getExercise());

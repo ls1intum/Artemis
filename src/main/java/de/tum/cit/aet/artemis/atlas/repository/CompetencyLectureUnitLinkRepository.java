@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -25,6 +26,8 @@ public interface CompetencyLectureUnitLinkRepository extends ArtemisJpaRepositor
             WHERE clul.competency.id IN :competencyIds
             """)
     Set<Long> findLectureUnitIdsByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
+
+    Optional<CompetencyLectureUnitLink> findByLectureUnitIdAndCompetencyId(long lectureUnitId, long competencyId);
 
     @Modifying
     @Transactional // ok because of delete
