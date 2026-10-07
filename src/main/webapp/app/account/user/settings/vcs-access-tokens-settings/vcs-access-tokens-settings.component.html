@@ -2,9 +2,9 @@
 @if (currentUser(); as currentUser) {
     <tumaet-ui-list [ariaLabel]="'artemisApp.userSettings.vcsAccessTokenSettings' | artemisTranslate">
         <li tumAetUiListItem>
-            <dt>
+            <p class="mb-0 font-medium">
                 <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.infoText"></span>
-            </dt>
+            </p>
         </li>
         @if (!edit()) {
             <li tumAetUiListItem>

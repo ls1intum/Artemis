@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DirectiveFixture, TestBed } from '@angular/core/testing';
-import { Type, WritableSignal, inputBinding, signal } from '@angular/core';
+import { ComponentRef, Signal, Type, WritableSignal, inputBinding, signal } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { SidebarCardDirective } from 'app/course/sidebar/directive/sidebar-card.directive';
 import { SidebarCardElement } from 'app/foundation/types/sidebar';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 
 /**
@@ -161,5 +162,38 @@ describe('SidebarCardDirective', () => {
         const result = fixture.directiveInstance.removeChannelPrefix(nullName);
 
         expect(result).toBe(nullName);
+    });
+
+    describe('item handed to the card', () => {
+        const renderCard = (item: SidebarCardElement) => {
+            const createComponentSpy = vi.spyOn(fixture.directiveInstance.viewContainerRef, 'createComponent');
+            size.set('S');
+            sidebarItem.set(item);
+            groupKey.set('exerciseChannels');
+            fixture.detectChanges();
+            fixture.directiveInstance.ngOnInit();
+            const componentRef = createComponentSpy.mock.results[0].value as ComponentRef<{ sidebarItem: Signal<SidebarCardElement> }>;
+            return componentRef.instance.sidebarItem();
+        };
+
+        it('should keep the live conversation so that changes to its unread count reach the card', () => {
+            const conversation = { id: 3, type: 'channel', unreadMessagesCount: 2 } as ConversationDTO;
+            const item: SidebarCardElement = { title: 'exercise-Homework', id: '3', size: 'S', conversation };
+
+            const cardItem = renderCard(item);
+
+            expect(cardItem.title).toBe('Homework');
+            expect(cardItem.conversation).toBe(conversation);
+            expect(cardItem).not.toBe(item);
+            expect(item.title).toBe('exercise-Homework');
+        });
+
+        it('should not add a conversation to an item that has none', () => {
+            const cardItem = renderCard({ title: 'exercise-Homework', id: '3', size: 'S' });
+
+            expect(cardItem.title).toBe('Homework');
+            expect(cardItem.conversation).toBeUndefined();
+            expect(Object.keys(cardItem)).not.toContain('conversation');
+        });
     });
 });

@@ -22,6 +22,12 @@ buildscript {
             force "org.apache.httpcomponents.client5:httpclient5-cache:5.6.4"
             force "org.apache.httpcomponents.core5:httpcore5:5.4.4"
             force "org.apache.httpcomponents.core5:httpcore5-h2:5.4.4"
+            // Force the patched jsoup onto the build-script / plugin classpath as well. org.owasp.dependencycheck
+            // (dependency-check-core 13.0.0) resolves jsoup 1.23.1 there, which is affected by CVE-2026-75140 and is
+            // reported by the GitHub dependency graph even though the shipped WAR declares 1.23.2 directly. Build-time
+            // only, not shipped. Keep equal to the project-level jsoup version below and to the minimum in
+            // gradle/dependency-families.gradle (verifyBuildscriptClasspathPins).
+            force "org.jsoup:jsoup:1.23.2"
         }
     }
     // The custom OpenAPI generator (generatorName "angular22", https://github.com/ls1intum/openapi-generator-angular22)
@@ -821,15 +827,15 @@ tasks.register("pnpmSetCacheDockerfile", PnpmTask) {
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
     toolVersion = "${checkstyle_version}"
-    configFile = file("checkstyle.xml")
+    configFile = file("config/checkstyle/checkstyle.xml")
     maxErrors = 0
 }
 
-// Test sources get their own configuration rather than checkstyle.xml, which requires Javadoc on public methods and
-// would therefore demand a comment on every test method. checkstyle-test.xml carries only the rules that apply to
+// Test sources get their own configuration rather than config/checkstyle/checkstyle.xml, which requires Javadoc on public methods and
+// would therefore demand a comment on every test method. config/checkstyle/checkstyle-test.xml carries only the rules that apply to
 // test code; see the note at the top of that file.
 checkstyleTest {
-    configFile = file("checkstyle-test.xml")
+    configFile = file("config/checkstyle/checkstyle-test.xml")
 }
 
 gradleLint {

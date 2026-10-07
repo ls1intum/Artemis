@@ -1,6 +1,6 @@
 /**
  * Extra jsdom polyfills required by the REAL `monaco-editor` package used in the Monaco integration specs
- * (see vitest.monaco.config.ts). The standard Vitest setup runs first; this only adds browser APIs that
+ * (see config/testing/vitest.monaco.config.ts). The standard Vitest setup runs first; this only adds browser APIs that
  * jsdom omits but Monaco's standalone services rely on.
  */
 
