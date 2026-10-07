@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.atlas.api.AtlasDemoApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
 import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -95,6 +96,9 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private AssessmentDemoApi assessmentDemoApi;
+
+    @Autowired
+    private CommunicationDemoApi communicationDemoApi;
 
     @Autowired
     private LectureRepository lectureRepository;
@@ -262,7 +266,7 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
         Map<Long, List<Long>> lecturesBefore = snapshotLectures();
         AtlasDemoApi atlasDemoApi = mock(AtlasDemoApi.class);
         DemoDataSeedingService withoutLectures = new DemoDataSeedingService(accountDemoApi, courseDemoApi, demoExerciseSeedingService,
-                new DemoCourseContentSeedingService(Optional.empty(), Optional.of(atlasDemoApi), assessmentDemoApi, Optional.empty()));
+                new DemoCourseContentSeedingService(Optional.empty(), Optional.of(atlasDemoApi), assessmentDemoApi, Optional.empty(), communicationDemoApi));
 
         assertThatCode(() -> withoutLectures.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("seeding must work when the lecture module is disabled")
                 .doesNotThrowAnyException();

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.api.AccountDemoApi.DemoUsers;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.atlas.api.AtlasDemoApi;
+import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.demo.service.DemoExerciseSeedingService.DemoExercises;
 import de.tum.cit.aet.artemis.lecture.api.LectureDemoApi;
@@ -40,12 +41,15 @@ public class DemoCourseContentSeedingService {
 
     private final Optional<TutorialGroupDemoApi> tutorialGroupDemoApi;
 
+    private final CommunicationDemoApi communicationDemoApi;
+
     public DemoCourseContentSeedingService(Optional<LectureDemoApi> lectureDemoApi, Optional<AtlasDemoApi> atlasDemoApi, AssessmentDemoApi assessmentDemoApi,
-            Optional<TutorialGroupDemoApi> tutorialGroupDemoApi) {
+            Optional<TutorialGroupDemoApi> tutorialGroupDemoApi, CommunicationDemoApi communicationDemoApi) {
         this.lectureDemoApi = lectureDemoApi;
         this.atlasDemoApi = atlasDemoApi;
         this.assessmentDemoApi = assessmentDemoApi;
         this.tutorialGroupDemoApi = tutorialGroupDemoApi;
+        this.communicationDemoApi = communicationDemoApi;
     }
 
     /**
@@ -63,5 +67,8 @@ public class DemoCourseContentSeedingService {
                 () -> atlasDemoApi.ifPresent(api -> api.createDemo(course, lectures.architecture().stream().filter(unit -> !(unit instanceof ExerciseUnit)).toList())));
         DemoAreas.seed("grading scale", () -> assessmentDemoApi.createDemoGradingScale(course));
         DemoAreas.seed("tutorial groups", () -> tutorialGroupDemoApi.ifPresent(api -> api.createDemo(course, users.tutor(), users.students())));
+        // The students discuss the ongoing essay, the first exercise about software architecture, in its channel.
+        DemoAreas.seed("communication",
+                () -> communicationDemoApi.createDemo(course, users.students(), users.tutor(), users.instructor(), exercises.architecture().stream().findFirst().orElse(null)));
     }
 }

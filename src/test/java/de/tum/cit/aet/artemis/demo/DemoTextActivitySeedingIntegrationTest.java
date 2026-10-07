@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasDemoApi;
+import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
 import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
@@ -85,6 +86,9 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
 
     @Autowired
     private AssessmentDemoApi assessmentDemoApi;
+
+    @Autowired
+    private CommunicationDemoApi communicationDemoApi;
 
     @Autowired
     private ModelingDemoApi modelingDemoApi;
@@ -264,7 +268,8 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
 
         DemoDataSeedingService withoutTextModule = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
                 new DemoExerciseSeedingService(Optional.empty(), Optional.of(modelingDemoApi), Optional.of(fileUploadDemoApi), quizDemoApi, programmingDemoApi, assessmentDemoApi),
-                new DemoCourseContentSeedingService(Optional.of(lectureDemoApi), Optional.of(atlasDemoApi), assessmentDemoApi, Optional.of(tutorialGroupDemoApi)));
+                new DemoCourseContentSeedingService(Optional.of(lectureDemoApi), Optional.of(atlasDemoApi), assessmentDemoApi, Optional.of(tutorialGroupDemoApi),
+                        communicationDemoApi));
         assertThatCode(() -> withoutTextModule.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("seeding must work when the text module is disabled")
                 .doesNotThrowAnyException();
 

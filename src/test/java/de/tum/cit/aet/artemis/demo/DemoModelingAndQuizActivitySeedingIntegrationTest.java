@@ -26,6 +26,7 @@ import tools.jackson.databind.JsonNode;
 import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
 import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -90,6 +91,9 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
 
     @Autowired
     private AssessmentDemoApi assessmentDemoApi;
+
+    @Autowired
+    private CommunicationDemoApi communicationDemoApi;
 
     @Autowired
     private QuizExerciseRepository quizExerciseRepository;
@@ -201,7 +205,7 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
 
         DemoDataSeedingService withoutModeling = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
                 new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi),
-                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty()));
+                new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty(), communicationDemoApi));
         assertThatCode(() -> withoutModeling.seedDemoData(new DeferredEagerBeanInitializationCompletedEvent())).as("seeding must work when the modeling module is disabled")
                 .doesNotThrowAnyException();
 
