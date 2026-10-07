@@ -10,6 +10,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -110,6 +112,31 @@ class SandboxAgentToolsTest {
         String result = tools.readFile("../secret");
         assertThat(result).startsWith("ERROR: invalid path");
         assertThat(sandbox.execCount()).isZero();
+    }
+
+    @Test
+    void missingFileReadAndEditReturnDiagnosticsAndAllowCorrectedRead() {
+        FakeInteractiveSandbox files = new FakeInteractiveSandbox();
+        files.files().put("/workspace/solution/src/Answer.java", "public class Answer {}");
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        when(sandbox.copyOut("s", "/workspace/solution/src/main/java/Answer.java")).thenThrow(new UncheckedIOException(new IOException("missing file")));
+        when(sandbox.copyOut("s", "/workspace/solution/src/Answer.java")).thenAnswer(invocation -> files.copyOut("s", "/workspace/solution/src/Answer.java"));
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        assertThat(tools.readFile("solution/src/main/java/Answer.java")).startsWith("ERROR: could not read").contains("missing file");
+        assertThat(tools.editFile("solution/src/main/java/Answer.java", "Answer", "Updated")).startsWith("ERROR: could not read").contains("for editing", "missing file");
+        assertThat(tools.readFile("solution/src/Answer.java")).contains("public class Answer {}");
+        org.mockito.Mockito.verify(sandbox, org.mockito.Mockito.never()).copyIn(anyString(), anyString(), any());
+    }
+
+    @Test
+    void lostSandboxStillStopsFileReadAndEdit() {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        when(sandbox.copyOut(anyString(), anyString())).thenThrow(new SandboxUnavailableException("session lost"));
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        assertThatThrownBy(() -> tools.readFile("solution/src/Answer.java")).isInstanceOf(SandboxUnavailableException.class);
+        assertThatThrownBy(() -> tools.editFile("solution/src/Answer.java", "Answer", "Updated")).isInstanceOf(SandboxUnavailableException.class);
     }
 
     @Test
