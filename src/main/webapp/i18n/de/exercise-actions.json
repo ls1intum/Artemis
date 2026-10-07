@@ -45,9 +45,7 @@
             "practiceModeTooltip": "Der Übungsmodus ermöglicht es dir nach der Einreichungsfrist zu Übungszwecken weiter an der Aufgabe zu arbeiten. Dies beeinflusst deine Bewertung nicht! Artemis setzt dafür ein separates Repository auf, das du erneut clonen musst.",
             "code": "Code",
             "codePopoverAriaLabel": "Repository-Aktionen",
-            "cloneRatedRepository": "Klone dein Repository für diese Aufgabe:",
-            "clonePracticeRepository": "Klone dein Repository zum Üben für diese Aufgabe:",
-            "cloneExerciseRepository": "Klone ein Repository für diese Aufgabe",
+            "accessRepository": "Greif auf dein Repository zu",
             "cloneSourceTree": {
                 "button": "Im Git Client klonen",
                 "helpIcon": "Dies öffnet das Repository in Sourcetree oder Tower. Falls du diese nicht installiert hast, kannst du das Repository in deiner IDE oder dem Terminal klonen."

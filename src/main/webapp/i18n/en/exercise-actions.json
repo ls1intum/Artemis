@@ -45,9 +45,7 @@
             "practiceModeTooltip": "The practice mode allows you to keep working on the exercise after the submission due date for self-practice. This will not affect your grading! Artemis will set up a separate repository for you to clone.",
             "code": "Code",
             "codePopoverAriaLabel": "Repository actions",
-            "cloneRatedRepository": "Clone your repository for this exercise:",
-            "clonePracticeRepository": "Clone your practice repository for this exercise:",
-            "cloneExerciseRepository": "Clone a repository for this exercise",
+            "accessRepository": "Access your Repository",
             "cloneSourceTree": {
                 "button": "Clone in Git client",
                 "helpIcon": "This opens the repository in Sourcetree or Tower. If you do not have them, you can still clone the repository using your IDE or terminal."

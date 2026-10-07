@@ -157,15 +157,6 @@ export class CodeButtonComponent implements OnInit {
     // Computed/Derived States
     readonly userInitialized = computed(() => !!this.userLogin());
     readonly displayLabel = computed(() => this.computeDisplayLabel());
-    clonedHeadline = computed(() => {
-        const participations = this.participations();
-        if (!participations.length) return 'artemisApp.exerciseActions.cloneExerciseRepository';
-
-        const exercise = this.exercise();
-        const practice = this.isPractice();
-
-        return practice && !exercise?.exerciseGroup ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
-    });
     activeParticipation = computed<ProgrammingExerciseStudentParticipation | undefined>(() => {
         // Filter out undefined entries: callers that render a base repository without a student participation (e.g. the
         // staff tests/auxiliary repository view) pass `[undefined]`, which would otherwise crash getSpecificStudentParticipation.

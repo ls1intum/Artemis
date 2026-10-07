@@ -31,3 +31,8 @@
     max-width: 50vw;
     padding: 4.5px;
 }
+
+.code-popover-content {
+    width: 30rem;
+    max-width: calc(100vw - 2rem);
+}

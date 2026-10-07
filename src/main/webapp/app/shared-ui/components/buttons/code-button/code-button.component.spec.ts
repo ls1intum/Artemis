@@ -891,14 +891,12 @@ describe('CodeButtonComponent', () => {
 
         expect(component.activeParticipation()).toEqual(participation1);
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
-        expect(component.clonedHeadline()).toBe('artemisApp.exerciseActions.cloneRatedRepository');
 
         fixture.componentRef.setInput('isPractice', true);
         fixture.detectChanges();
 
         expect(component.activeParticipation()).toEqual(participation2);
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-practice.git');
-        expect(component.clonedHeadline()).toBe('artemisApp.exerciseActions.clonePracticeRepository');
     });
 
     it('should handle no participation', () => {
