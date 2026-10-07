@@ -123,7 +123,8 @@ public class CourseDemoApi implements AbstractApi {
         }
 
         ZonedDateTime now = ZonedDateTime.now();
-        Course course = CourseFactory.generateCourse(DEMO_COURSE_TITLE, DEMO_COURSE_SHORT_NAME, now.minusMonths(1), now.plusMonths(11), new HashSet<>(), 3, 3, 7, 2000, 2000, true,
+        // Ends after its open exercises and the test exam, which stay open for a year, so that it stays on the dashboards of its users as long as they do.
+        Course course = CourseFactory.generateCourse(DEMO_COURSE_TITLE, DEMO_COURSE_SHORT_NAME, now.minusMonths(1), now.plusMonths(13), new HashSet<>(), 3, 3, 7, 2000, 2000, true,
                 true, 7);
         course.setSemester(semesterOf(now));
         course.setDescription(DEMO_COURSE_DESCRIPTION);

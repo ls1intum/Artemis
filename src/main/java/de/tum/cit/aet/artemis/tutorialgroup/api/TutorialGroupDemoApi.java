@@ -137,6 +137,11 @@ public class TutorialGroupDemoApi extends AbstractTutorialGroupApi {
      * @param students the demo student followed by their ten classmates, who are registered for the tutorial groups.
      */
     public void createDemo(Course course, User tutor, List<User> students) {
+        if (course.getTimeZone() == null) {
+            // Like TutorialGroupsConfigurationResource, which refuses to configure the tutorial groups of a course without the time zone their sessions take place in.
+            log.warn("Skipping the demo tutorial groups, because the demo course has no time zone. Set one in the course settings to seed them on the next start.");
+            return;
+        }
         TutorialGroupsConfiguration configuration = findOrCreateConfiguration(course);
         // The acting user creates the groups and registers the students, as the user of the request does in the production paths.
         User creator = userRepository.getUser();
