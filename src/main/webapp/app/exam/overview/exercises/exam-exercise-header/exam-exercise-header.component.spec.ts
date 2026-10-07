@@ -63,6 +63,13 @@ describe('ExamExerciseHeaderComponent', () => {
         expect(fixture.nativeElement.querySelector('jhi-included-in-score-badge')).not.toBeNull();
     });
 
+    it('does not render an empty badge when the exercise does not say whether it counts', () => {
+        host.exercise.set({ exerciseGroup: { title: 'Group' } as ExerciseGroup, maxPoints: 10 });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('jhi-included-in-score-badge')).toBeNull();
+    });
+
     it('shows a translated title for a page without an exercise', () => {
         host.titleKey.set('artemisApp.studentExamDetail.overview');
         fixture.detectChanges();

@@ -7,7 +7,7 @@
                 [jhiTranslate]="exercise.bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
                 [translateValues]="{ points: exercise.maxPoints, bonusPoints: exercise.bonusPoints }"
             ></span>
-            @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            @if (exercise.includedInOverallScore && exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
                 <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
             }
         } @else if (titleKey(); as key) {
