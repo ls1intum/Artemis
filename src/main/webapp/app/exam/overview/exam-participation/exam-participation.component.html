@@ -3,7 +3,7 @@
 }
 @if (summaryLoadFailed()) {
     <!-- Persistent error state instead of the summary. Substituting the exam cached on this device would show a result-less exam as the current summary (#13317). -->
-    <div class="flex flex-col gap-2 p-4">
+    <div class="flex flex-col gap-2 p-6!">
         @if (isSidebarCollapsed()) {
             <div>
                 <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
@@ -56,7 +56,7 @@
                         (onPageChanged)="onPageChange($event)"
                     />
                     <!-- exercises -->
-                    <div class="exam-content module-bg rounded-lg">
+                    <div class="exam-content module-bg rounded-lg" data-testid="exam-content">
                         <!--
                             The scroll container is a flex item of the card, so its height comes from the card, not from the viewport.
                             Its column is exactly as tall as the container, or taller when the exercise is (see `.exam-content__column`), so
@@ -66,7 +66,7 @@
                             stretched again — and the scrollbar flickered in and out on every change-detection pass (#13916).
                             cdkScrollable registers the container with the CDK ScrollDispatcher so drag-and-drop auto-scrolls it (#13187).
                         -->
-                        <div class="content-exam-height hide-scrollbar-unless-scrolling px-4 py-3" cdkScrollable>
+                        <div class="content-exam-height hide-scrollbar-unless-scrolling px-6! py-4!" cdkScrollable>
                             <div class="exam-content__column">
                                 <div [hidden]="activePageIndex !== -1">
                                     <jhi-exam-exercise-overview-page [studentExam]="studentExam()" (onPageChanged)="onPageChange($event)" />
@@ -181,7 +181,7 @@
                     />
 
                     <!-- Only the top padding: the cover brings the 24px inset on the sides (and below) itself, so it lines up with the bar above. -->
-                    <div class="module-bg end-view content-exam-height rounded-lg pt-3">
+                    <div class="module-bg end-view content-exam-height rounded-lg pt-4!">
                         <jhi-exam-participation-cover
                             [startView]="false"
                             [exam]="exam()"
@@ -197,7 +197,7 @@
                 </div>
             } @else {
                 <!-- Display submission not in time view -->
-                <div class="flex flex-col p-4">
+                <div class="flex flex-col p-6!">
                     @if (isSidebarCollapsed()) {
                         <div>
                             <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
@@ -219,7 +219,7 @@
                 whose layout was already reset) the card fills the card of the shell it is shown in.
             -->
             <div class="exam-background-wrapper body-bg" [class.exam-background-wrapper--test-run]="!!testRunId() || !examLayoutActive()">
-                <div class="submissionSuccessfulHint module-bg rounded-lg px-4 py-3">
+                <div class="submissionSuccessfulHint module-bg rounded-lg px-6! py-4!">
                     <fa-icon [icon]="faCheckCircle" class="check" />
                     <h2 class="mt-3! mb-2! text-lg! font-semibold!" jhiTranslate="artemisApp.examParticipation.submissionSuccessful.title"></h2>
                     <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.noActionRequired"></p>
@@ -247,14 +247,14 @@
             </div>
         }
         @if (showExamSummary()) {
-            <div [class]="!testRunId() ? 'exam-summary-scroll rounded-lg' : ''">
+            <div data-testid="exam-summary-scroll" [class]="!testRunId() ? 'exam-summary-scroll rounded-lg' : ''">
                 <jhi-exam-participation-summary [studentExam]="studentExam()" [isSidebarCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
             </div>
         }
     }
 }
 @if (!loadingExam() && !exam() && !summaryLoadFailed()) {
-    <div class="flex flex-col gap-2 p-4">
+    <div class="flex flex-col gap-2 p-6!">
         @if (isSidebarCollapsed()) {
             <div>
                 <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />

@@ -478,6 +478,12 @@ describe('ComplaintsStudentViewComponent', () => {
             expect(fixture.nativeElement.classList.contains('block')).toBe(true);
         });
 
+        it('should mark the host as the complaint area for the layout contract of the exam', async () => {
+            await renderCourseView(of());
+
+            expect(fixture.nativeElement.getAttribute('data-testid')).toBe('complaint-student-view');
+        });
+
         it('should render the actions as small TUM AET UI buttons in one wrapping row', async () => {
             await renderCourseView(of());
 

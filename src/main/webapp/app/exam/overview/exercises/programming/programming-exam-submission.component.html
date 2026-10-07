@@ -24,7 +24,7 @@
             </div>
             <div editorToolbar class="inline-flex items-center">
                 @if (repositoryIsLocked) {
-                    <jhi-code-editor-repository-is-locked class="me-4" />
+                    <jhi-code-editor-repository-is-locked class="me-6!" />
                 }
                 @if (studentParticipation()) {
                     <jhi-updating-result
@@ -54,12 +54,12 @@
 <!-- ngIf Offline IDE code button start -->
 @if (!exercise().allowOnlineEditor && exercise().allowOfflineIde) {
     <div>
-        <div class="my-4 ms-1 flex items-center justify-between">
-            <div class="flex items-center gap-4">
+        <div class="my-6! ms-1 flex items-center justify-between">
+            <div class="flex items-center gap-6!">
                 <jhi-exercise-details-student-actions [exercise]="exercise()" [courseId]="courseId()" [examMode]="true" [smallButtons]="true" />
                 <jhi-programming-submission-policy-status [exercise]="exercise()" [submissionCount]="submissionCount()" class="grow" />
             </div>
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-6!">
                 @if (repositoryIsLocked) {
                     <jhi-code-editor-repository-is-locked class="me-1" />
                 }
