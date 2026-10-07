@@ -1962,7 +1962,8 @@ describe('ExamParticipationComponent', () => {
         expect(examLayoutStub).toHaveBeenCalledOnce();
     });
 
-    it('should display exam bar and timer during working time', () => {
+    /** Puts the component into a running exam (two exercises, the second one open) and renders it. */
+    const showRunningExam = () => {
         const exercise0 = new QuizExercise(undefined, undefined);
         exercise0.id = 5;
         const exercise1 = new ProgrammingExercise(undefined, undefined);
@@ -1986,19 +1987,46 @@ describe('ExamParticipationComponent', () => {
         vi.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(false);
 
         fixture.changeDetectorRef.detectChanges();
+    };
+
+    it('should display exam bar and timer during working time', () => {
+        showRunningExam();
         expect(fixture).toBeTruthy();
         const examBarDebugElement = fixture.debugElement.query(By.css('jhi-exam-bar'));
         expect(examBarDebugElement).toBeTruthy();
 
         // #13916: the exercise column is sized by CSS alone. It used to get `h-100` from a `scrollHeight >
         // clientHeight` measurement of the very element it sizes, so each state produced the other and the scroll
-        // bar flickered in and out on every change-detection pass. `min-h-100` fills the column when the exercise is
-        // short and lets it grow when the exercise is tall, with no measurement in the loop.
+        // bar flickered in and out on every change-detection pass. `.exam-content__column` is as tall as the scroll
+        // container when the exercise is short and grows when the exercise is tall, with no measurement in the loop.
         const column = fixture.debugElement.query(By.css('.content-exam-height > div'));
         expect(column).toBeTruthy();
-        const columnClasses: string[] = [...column.nativeElement.classList];
-        expect(columnClasses).toEqual(expect.arrayContaining(['min-h-100', 'flex', 'flex-col']));
-        expect(columnClasses).not.toContain('h-100');
+        expect([...column.nativeElement.classList]).toEqual(['exam-content__column']);
+    });
+
+    it('should lay out the exam inside the card of a test run instead of below the navbar', () => {
+        showRunningExam();
+
+        expect(fixture.debugElement.query(By.css('.exam-background-wrapper')).nativeElement.classList).toContain('exam-background-wrapper--test-run');
+    });
+
+    it('should lay out a real exam below the navbar', () => {
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        showRunningExam();
+
+        expect(fixture.debugElement.query(By.css('.exam-background-wrapper')).nativeElement.classList).not.toContain('exam-background-wrapper--test-run');
+    });
+
+    it('should show the connection status bar and flag a lost connection', () => {
+        showRunningExam();
+        const statusBar = fixture.debugElement.query(By.css('.exam-status-bar'));
+        expect(statusBar).toBeTruthy();
+        expect(statusBar.nativeElement.classList).not.toContain('disconnected');
+
+        comp.connected.set(false);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('.exam-status-bar')).nativeElement.classList).toContain('disconnected');
     });
 
     it('should not display exam bar and timer when exam was not submitted', () => {

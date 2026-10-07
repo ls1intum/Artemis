@@ -66,6 +66,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            min-height: 45px; // as tall as the header of the left card
             cursor: pointer;
 
             fa-icon {

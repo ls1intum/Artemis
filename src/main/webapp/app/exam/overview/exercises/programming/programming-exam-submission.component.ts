@@ -5,15 +5,14 @@ import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submis
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
+import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-exercise-header/exam-exercise-header.component';
 import { ProgrammingSubmissionPolicyStatusComponent } from 'app/programming/shared/entities/programming-submission-policy-status';
 import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
@@ -33,6 +32,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-programming-submission-exam',
     templateUrl: './programming-exam-submission.component.html',
+    styleUrl: './programming-exam-submission.component.scss',
     providers: [
         { provide: ExamSubmissionComponent, useExisting: ProgrammingExamSubmissionComponent },
         CodeEditorConflictStateService,
@@ -42,8 +42,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         CodeEditorRepositoryService,
     ],
     imports: [
-        TranslateDirective,
-        IncludedInScoreBadgeComponent,
+        ExamExerciseHeaderComponent,
         CodeEditorContainerComponent,
         ProgrammingSubmissionPolicyStatusComponent,
         ExerciseDetailsStudentActionsComponent,
@@ -73,7 +72,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     repositoryIsLocked = false;
 
     readonly SubmissionPolicyType = SubmissionPolicyType;
-    readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly getCourseFromExercise = getCourseFromExercise;
 
     getSubmission(): Submission | undefined {

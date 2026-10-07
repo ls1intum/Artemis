@@ -127,9 +127,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly FILEUPLOAD = ExerciseType.FILE_UPLOAD;
 
-    // needed for recalculation of exam content height
-    readonly EXAM_HEIGHT_OFFSET = 88;
-
     readonly courseId = signal<number>(undefined!);
     readonly examId = signal<number>(undefined!);
     readonly testRunId = signal<number>(undefined!);
@@ -1326,13 +1323,5 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             const exercise = this.studentExam().exercises![index];
             exercise.problemStatement = event.problemStatement;
         }
-    }
-
-    /**
-     * Updates the current exam height offset property to recalculate the height of exam sidebar and sidebar content
-     * @param newHeight New exam bar height calculated based on the window resizements
-     */
-    updateHeight(newHeight: number) {
-        document.documentElement.style.setProperty('--exam-height-offset', `${newHeight + this.EXAM_HEIGHT_OFFSET}px`);
     }
 }
