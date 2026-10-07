@@ -20,7 +20,6 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.fileupload.factories.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 
 /**
@@ -128,8 +127,10 @@ public class FileUploadDemoApi extends AbstractFileModuleApi {
             return existingExercise.get();
         }
 
-        FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(DEMO_EXERCISE_TITLE, DEMO_EXERCISE_SHORT_NAME, DEMO_PROBLEM_STATEMENT, 10.0,
-                0.0, ExerciseDates.ongoing(), DEMO_FILE_PATTERN, DEMO_EXAMPLE_SOLUTION, course);
+        FileUploadExercise fileUploadExercise = ExerciseFactory.populateExercise(new FileUploadExercise(), DEMO_EXERCISE_TITLE, DEMO_EXERCISE_SHORT_NAME, DEMO_PROBLEM_STATEMENT,
+                10.0, 0.0, ExerciseDates.ongoing(), course);
+        fileUploadExercise.setFilePattern(DEMO_FILE_PATTERN);
+        fileUploadExercise.setExampleSolution(DEMO_EXAMPLE_SOLUTION);
         // File upload exercises are always assessed manually, see FileUploadExerciseResource#createFileUploadExercise.
         fileUploadExercise.setAssessmentType(AssessmentType.MANUAL);
         fileUploadExercise.getCategories().add(ExerciseFactory.exerciseCategory("Algorithms", "#1b97ca"));
