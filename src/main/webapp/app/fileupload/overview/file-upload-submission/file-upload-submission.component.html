@@ -82,12 +82,7 @@
                     <div class="row">
                         @if (isOwnerOfParticipation() && result() && participation()) {
                             <div class="col-xl-8 mt-2">
-                                <jhi-rating
-                                    class="alert alert-info block"
-                                    [result]="result()!"
-                                    [participation]="participation()!"
-                                    [isOwnerOfParticipation]="isOwnerOfParticipation()"
-                                />
+                                <jhi-rating [result]="result()!" [participation]="participation()!" [isOwnerOfParticipation]="isOwnerOfParticipation()" />
                             </div>
                         }
                     </div>

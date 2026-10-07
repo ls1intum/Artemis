@@ -94,7 +94,7 @@
             @if (showRating()) {
                 @defer (on idle) {
                     <div class="row">
-                        <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult()!" [participation]="gradedStudentParticipation()!" />
+                        <jhi-rating class="mt-2" [result]="latestRatedResult()!" [participation]="gradedStudentParticipation()!" />
                     </div>
                 }
             }

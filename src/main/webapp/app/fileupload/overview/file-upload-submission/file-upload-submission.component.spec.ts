@@ -878,14 +878,14 @@ describe('FileUploadSubmissionComponent', () => {
             expect(getLeftBody().classList).not.toContain('px-2');
         });
 
-        it('should render the rating alert inside a column of the same width as the feedback above it', async () => {
+        it('should render the rating inside a column of the same width as the feedback above it, without an alert box', async () => {
             await renderAssessedSubmission(true);
 
             const rating: HTMLElement = fixture.nativeElement.querySelector('jhi-rating');
             expect(rating).toBeTruthy();
-            expect(rating.classList).toContain('alert');
-            expect(rating.classList).toContain('alert-info');
-            expect(rating.classList).toContain('block');
+            // The rating is a quiet reaction to the feedback, so the page no longer wraps it in a coloured alert.
+            expect(rating.classList).not.toContain('alert');
+            expect(rating.classList).not.toContain('alert-info');
             const column = rating.parentElement!;
             expect(column.classList).toContain('col-xl-8');
             expect(column.classList).not.toContain('alert');
