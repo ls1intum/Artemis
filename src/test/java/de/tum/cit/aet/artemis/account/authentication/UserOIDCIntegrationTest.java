@@ -21,6 +21,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -42,6 +43,9 @@ import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thymeleaf.TemplateEngine;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.config.OIDCConstants;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -289,6 +293,26 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getFirstName()).isEqualTo("FirstName");
         assertRegistrationNumber(null);
         assertThat(userUtilService.getUserByLogin(OTHER_STUDENT_NAME).getRegistrationNumber()).isEqualTo(STUDENT_REGISTRATION_NUMBER);
+    }
+
+    @Test
+    void testOidcLoginLogsClaimNamesButNoClaimValues() {
+        String message = captureClaimLogMessage(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"));
+
+        assertThat(message).contains("[email, family_name, given_name, matriculation_number, preferred_username, sub] in the ID token", "and [] in the userinfo response",
+                "'matriculation_number' is present");
+        // the values are personal data and must never reach the log
+        assertThat(message).doesNotContain(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName", STUDENT_NAME + "@artemis.local");
+    }
+
+    @Test
+    void testOidcLoginLogsMissingMatriculationClaim() {
+        Map<String, Object> claimsWithoutMatriculation = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
+        claimsWithoutMatriculation.remove("matriculation_number");
+
+        String message = captureClaimLogMessage(claimsWithoutMatriculation);
+
+        assertThat(message).contains("[email, family_name, given_name, preferred_username, sub] in the ID token", "'matriculation_number' is missing or blank");
     }
 
     @Test
@@ -545,6 +569,25 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         claims.put("email", STUDENT_NAME + "@artemis.local");
         claims.put("matriculation_number", registrationNumber);
         return claims;
+    }
+
+    /**
+     * Signs in with the given claims and returns the single log message that reports which claims were received.
+     */
+    private String captureClaimLogMessage(Map<String, Object> claims) {
+        Logger oidcLogger = (Logger) LoggerFactory.getLogger(OIDCService.class);
+        ListAppender<ILoggingEvent> logAppender = new ListAppender<>();
+        logAppender.start();
+        oidcLogger.addAppender(logAppender);
+        try {
+            oidcService.loadUser(createMockUserRequest(claims));
+        }
+        finally {
+            oidcLogger.detachAppender(logAppender);
+        }
+        return logAppender.list.stream().map(ILoggingEvent::getFormattedMessage).filter(message -> message.contains("received the claims")).reduce((first, second) -> {
+            throw new IllegalStateException("Expected exactly one claim log message but found several");
+        }).orElseThrow(() -> new IllegalStateException("No claim log message was written"));
     }
 
     private LoginVM createLoginVM() {

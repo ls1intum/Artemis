@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -82,6 +83,7 @@ public class OIDCService extends OidcUserService {
         // The claim may carry an uppercase letter, and the lookup below is an exact match. Canonicalize once here so that
         // the lookup and the account createNewUserFromOidc stores use the same value User#setLogin would persist anyway.
         username = User.canonicalLogin(username);
+        logReceivedClaimNames(username, userRequest, oidcUser);
 
         // Check if user with given username already exists
         Optional<User> localUser = userRepository.findOneWithAuthoritiesByLogin(username);
@@ -134,6 +136,23 @@ public class OIDCService extends OidcUserService {
             throw new OAuth2AuthenticationException(new OAuth2Error("user_deactivated"), "User account is deactivated.");
         }
         return oidcUser;
+    }
+
+    /**
+     * Logs which claims the identity provider delivered, to diagnose a mapping that does not resolve, for example a matriculation number that never arrives.
+     * Only the claim names are logged and never their values, because the values are personal data.
+     *
+     * @param username    the canonical login of the account that signs in
+     * @param userRequest the request that carries the ID token
+     * @param oidcUser    the user whose userinfo claims were merged in by the provider
+     */
+    private void logReceivedClaimNames(String username, OidcUserRequest userRequest, OidcUser oidcUser) {
+        Set<String> idTokenClaims = new TreeSet<>(userRequest.getIdToken().getClaims().keySet());
+        Set<String> userInfoClaims = oidcUser.getUserInfo() == null ? Set.of() : new TreeSet<>(oidcUser.getUserInfo().getClaims().keySet());
+        String matriculationNumber = oidcUser.getAttribute(matriculationClaimKey);
+        boolean matriculationPresent = matriculationNumber != null && !matriculationNumber.isBlank();
+        log.info("OIDC login of user '{}' received the claims {} in the ID token and {} in the userinfo response. The configured matriculation claim '{}' is {}.", username,
+                idTokenClaims, userInfoClaims, matriculationClaimKey, matriculationPresent ? "present" : "missing or blank");
     }
 
     /**
