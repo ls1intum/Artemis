@@ -154,16 +154,16 @@ public class ExamDemoApi extends AbstractExamApi {
         return examRepository.save(exam).getExerciseGroups().getLast();
     }
 
-    /**
-     * Sets the points and the number of exercises of the exam to what its exercise groups hold, which is what the exam checklist asks the instructor to do through
-     * {@code ExamResource#updateExam} once the exercises exist. A student exam can only be generated once the number of exercises is set.
-     */
     private void removeExerciseGroup(long examId, long exerciseGroupId) {
         Exam exam = examRepository.findByIdWithExerciseGroupsElseThrow(examId);
         exam.getExerciseGroups().stream().filter(exerciseGroup -> exerciseGroup.getId() == exerciseGroupId).findFirst().ifPresent(exam::removeExerciseGroup);
         examRepository.save(exam);
     }
 
+    /**
+     * Sets the points and the number of exercises of the exam to what its exercise groups hold, which is what the exam checklist asks the instructor to do through
+     * {@code ExamResource#updateExam} once the exercises exist. A student exam can only be generated once the number of exercises is set.
+     */
     private void completeExam(long examId, int maxPoints, int numberOfExercises) {
         Exam exam = examRepository.findByIdElseThrow(examId);
         exam.setExamMaxPoints(maxPoints);
