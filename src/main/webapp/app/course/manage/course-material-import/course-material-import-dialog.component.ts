@@ -267,9 +267,14 @@ export class CourseMaterialImportDialogComponent {
 
         try {
             this.isImporting.set(true);
-            await lastValueFrom(this.importService.importMaterial(this.targetCourseId(), options));
+            const result = await lastValueFrom(this.importService.importMaterial(this.targetCourseId(), options));
             this.importStarted.emit(options);
-            this.alertService.success('artemisApp.course.import.success');
+            if (result.errors?.length) {
+                // The server imports what it can and reports each failed item, so a partial import must not read as a success.
+                this.alertService.warning('artemisApp.course.import.partialSuccess', { errors: result.errors.join('; ') });
+            } else {
+                this.alertService.success('artemisApp.course.import.success');
+            }
             this.close();
         } catch (error) {
             onError(this.alertService, error);

@@ -22,6 +22,12 @@ buildscript {
             force "org.apache.httpcomponents.client5:httpclient5-cache:5.6.4"
             force "org.apache.httpcomponents.core5:httpcore5:5.4.4"
             force "org.apache.httpcomponents.core5:httpcore5-h2:5.4.4"
+            // Force the patched jsoup onto the build-script / plugin classpath as well. org.owasp.dependencycheck
+            // (dependency-check-core 13.0.0) resolves jsoup 1.23.1 there, which is affected by CVE-2026-75140 and is
+            // reported by the GitHub dependency graph even though the shipped WAR declares 1.23.2 directly. Build-time
+            // only, not shipped. Keep equal to the project-level jsoup version below and to the minimum in
+            // gradle/dependency-families.gradle (verifyBuildscriptClasspathPins).
+            force "org.jsoup:jsoup:1.23.2"
         }
     }
     // The custom OpenAPI generator (generatorName "angular22", https://github.com/ls1intum/openapi-generator-angular22)

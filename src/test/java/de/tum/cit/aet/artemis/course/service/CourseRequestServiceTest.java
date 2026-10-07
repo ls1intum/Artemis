@@ -99,7 +99,7 @@ class CourseRequestServiceTest {
         when(courseRequestRepository.findOneWithEagerRelationshipsById(1L)).thenReturn(Optional.of(pendingRequest));
         when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
         when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
-        when(courseRepository.save(any(Course.class))).thenAnswer(invocation -> {
+        when(courseRepository.saveWithDefaultConfigurations(any(Course.class))).thenAnswer(invocation -> {
             Course course = invocation.getArgument(0);
             course.setId(22L);
             return course;
@@ -137,7 +137,7 @@ class CourseRequestServiceTest {
         when(courseRequestRepository.findOneWithEagerRelationshipsById(1L)).thenReturn(Optional.of(pendingRequest));
         when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
         when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
-        when(courseRepository.save(any(Course.class))).thenAnswer(invocation -> {
+        when(courseRepository.saveWithDefaultConfigurations(any(Course.class))).thenAnswer(invocation -> {
             Course course = invocation.getArgument(0);
             course.setId(22L);
             return course;

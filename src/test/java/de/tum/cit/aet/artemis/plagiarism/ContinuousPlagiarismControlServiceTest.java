@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
@@ -75,10 +76,13 @@ class ContinuousPlagiarismControlServiceTest {
 
     private final UserTestRepository userRepository = mock();
 
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository = mock();
+
     private final FeatureUsageCollector featureUsageCollector = mock();
 
-    private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismChecksService, plagiarismComparisonRepository,
-            plagiarismCaseService, plagiarismCaseRepository, plagiarismPostService, plagiarismResultRepository, userRepository, Optional.of(featureUsageCollector));
+    private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismDetectionConfigRepository,
+            plagiarismChecksService, plagiarismComparisonRepository, plagiarismCaseService, plagiarismCaseRepository, plagiarismPostService, plagiarismResultRepository,
+            userRepository, Optional.of(featureUsageCollector));
 
     /**
      * The control only runs for a course that has an instructor to act on the findings, so every test that expects a

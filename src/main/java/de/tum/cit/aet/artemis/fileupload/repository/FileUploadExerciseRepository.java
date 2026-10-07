@@ -40,8 +40,8 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency" })
     Optional<FileUploadExercise> findWithEagerCompetenciesById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency", "plagiarismDetectionConfig", "exerciseVariantGroup" })
-    Optional<FileUploadExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(Long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "competencyLinks.competency", "exerciseVariantGroup" })
+    Optional<FileUploadExercise> findWithEagerCategoriesAndCompetenciesById(Long exerciseId);
 
     @Query("""
             SELECT DISTINCT fileUploadExercise
@@ -51,8 +51,6 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
                 LEFT JOIN FETCH submission.results results
                 LEFT JOIN FETCH results.feedbacks
                 LEFT JOIN FETCH results.assessor
-                LEFT JOIN FETCH fileUploadExercise.teamAssignmentConfig
-                LEFT JOIN FETCH fileUploadExercise.plagiarismDetectionConfig
                 LEFT JOIN FETCH fileUploadExercise.exerciseVariantGroup
                 LEFT JOIN FETCH fileUploadExercise.gradingCriteria
                 LEFT JOIN FETCH fileUploadExercise.competencyLinks cl
@@ -78,7 +76,7 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
      * @param exerciseId the id of the exercise to find
      * @return the exercise with minimal data necessary for exercise versioning
      */
-    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "gradingCriteria" })
     Optional<FileUploadExercise> findForVersioningById(long exerciseId);
 
     /**

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.tutorialgroup.api;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -10,8 +11,10 @@ import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 
 @Conditional(TutorialGroupEnabled.class)
@@ -25,11 +28,24 @@ public class TutorialGroupApi extends AbstractTutorialGroupApi {
 
     private final TutorialGroupService tutorialGroupService;
 
+    private final TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
+
     public TutorialGroupApi(TutorialGroupRepository tutorialGroupRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            TutorialGroupService tutorialGroupService) {
+            TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository) {
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupService = tutorialGroupService;
+        this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
+    }
+
+    /**
+     * Reads the tutorial groups configuration of a course. A course does not carry it, so this is the one way to get it.
+     *
+     * @param courseId the id of the course
+     * @return the configuration, or empty until the course's tutorial period is configured
+     */
+    public Optional<TutorialGroupsConfiguration> findConfigurationByCourseId(long courseId) {
+        return tutorialGroupsConfigurationRepository.findByCourseId(courseId);
     }
 
     public Long countByCourseId(long courseId) {
