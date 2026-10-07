@@ -459,7 +459,7 @@ entered reason so the operator can refresh and assess the current state.
 
 Administrator-only APIs expose the same metadata and controls:
 
-- `GET /api/hyperion/admin/workers` (404 when generation is disabled).
+- `GET /api/aiworker/admin/workers` (404 when AI Worker coordination is disabled).
 - `GET /api/hyperion/admin/generations` (active runs only).
 - `DELETE /api/hyperion/admin/exercises/{exerciseId}/generations/{generationId}?reason=...`
   (202 when accepted, 409 if no longer cancellable).
