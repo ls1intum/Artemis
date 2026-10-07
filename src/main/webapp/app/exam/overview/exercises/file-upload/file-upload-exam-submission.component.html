@@ -1,18 +1,5 @@
 @if (exercise()) {
-    <h3 class="font-normal">
-        <span>
-            {{ exercise().exerciseGroup?.title }}
-        </span>
-        <span
-            [jhiTranslate]="exercise().bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
-            [translateValues]="{ points: exercise().maxPoints, bonusPoints: exercise().bonusPoints }"
-        >
-        </span>
-        @if (exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-            <jhi-included-in-score-badge [includedInOverallScore]="exercise().includedInOverallScore" />
-        }
-    </h3>
-    <hr />
+    <jhi-exam-exercise-header [exercise]="exercise()" />
     <jhi-resizeable-container [examTimeline]="examTimeline()">
         <!--region Left Panel-->
         <span class="exercise-title" left-header>{{ examTimeline() ? exercise().title : ('artemisApp.exam.yourSolution' | artemisTranslate) }}</span>
@@ -27,13 +14,14 @@
                                     #fileInput
                                     id="fileUploadInput"
                                     type="file"
-                                    class="cursor-pointer file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-(--border-color) file:bg-(--hover-slightly-darker-body-bg) file:px-3 file:py-2 file:text-base file:text-(--tumaet-ui-text-color) hover:file:bg-(--border-color)"
+                                    class="cursor-pointer file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-(--border-color) file:bg-(--hover-slightly-darker-body-bg) file:px-2.5 file:py-1.5 file:text-sm file:text-(--tumaet-ui-text-color) hover:file:bg-(--border-color)"
                                     (change)="setFileSubmissionForExercise($event)"
                                 />
                             </div>
                             <button
                                 type="button"
                                 tumAetUiButton
+                                size="small"
                                 data-testid="file-upload-submit"
                                 (click)="saveUploadedFile()"
                                 jhiTranslate="artemisApp.examParticipation.uploadFile"

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
+import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -159,5 +160,50 @@ describe('ComplaintsFormComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(complaintButton.disabled).toBe(true);
+    });
+
+    describe('layout', () => {
+        beforeEach(() => {
+            fixture.componentRef.setInput('exercise', courseExercise);
+            fixture.componentRef.setInput('isCurrentUserSubmissionAuthor', true);
+            fixture.componentRef.setInput('complaintType', ComplaintType.COMPLAINT);
+            fixture.changeDetectorRef.detectChanges();
+        });
+
+        it('should render the heading as a 16px semibold section heading', () => {
+            const heading = fixture.debugElement.query(By.css('h3')).nativeElement as HTMLElement;
+
+            // Bootstrap's unlayered heading rules win over layered utilities, so the important modifier is required.
+            expect(heading.classList.contains('text-base!')).toBe(true);
+            expect(heading.classList.contains('font-semibold!')).toBe(true);
+        });
+
+        it('should render the heading for a request for more feedback in the same style', () => {
+            fixture.componentRef.setInput('complaintType', ComplaintType.MORE_FEEDBACK);
+            fixture.changeDetectorRef.detectChanges();
+
+            const heading = fixture.debugElement.query(By.css('h3')).nativeElement as HTMLElement;
+            expect(heading.classList.contains('text-base!')).toBe(true);
+            expect(heading.classList.contains('font-semibold!')).toBe(true);
+        });
+
+        it('should use the xl breakpoint instead of the md viewport breakpoint for its half-width columns', () => {
+            const halfWidthColumns = fixture.nativeElement.querySelectorAll('.col-xl-6');
+
+            expect(halfWidthColumns).toHaveLength(2);
+            expect(fixture.nativeElement.querySelector('.col-md-6')).toBeNull();
+        });
+
+        it('should render the submit button as a small TUM AET UI button', () => {
+            const button = fixture.debugElement.query(By.css('#submit-complaint')).nativeElement as HTMLButtonElement;
+
+            expect(button.classList.contains('btn')).toBe(false);
+            expect(button.classList.contains('tumaet-ui-btn')).toBe(true);
+            // The small size (text-sm, py-1.5) makes the button 34px high, like the page-level buttons.
+            expect(button.classList.contains('tumaet:text-sm')).toBe(true);
+            expect(button.classList.contains('tumaet:py-1.5')).toBe(true);
+            expect(button.classList.contains('tumaet:py-2')).toBe(false);
+            expect(button.disabled).toBe(true);
+        });
     });
 });
