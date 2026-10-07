@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.exercise.factories.ExerciseDates;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
+import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 
 /**
  * Creates the modeling exercises of the demo course seeded by the {@code demo} profile.
@@ -188,9 +190,14 @@ public class ModelingDemoApi extends AbstractModelingApi {
 
     private final ResourceLoaderService resourceLoaderService;
 
+    private final GroupNotificationScheduleService groupNotificationScheduleService;
+
+    private final ExerciseService exerciseService;
+
     public ModelingDemoApi(ModelingExerciseRepository modelingExerciseRepository, SubmissionRepository submissionRepository, ChannelService channelService,
             ExerciseConfigurationService exerciseConfigurationService, ExerciseVersionService exerciseVersionService, ParticipationService participationService,
-            ModelingSubmissionService modelingSubmissionService, ResourceLoaderService resourceLoaderService) {
+            ModelingSubmissionService modelingSubmissionService, ResourceLoaderService resourceLoaderService, GroupNotificationScheduleService groupNotificationScheduleService,
+            ExerciseService exerciseService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.submissionRepository = submissionRepository;
         this.channelService = channelService;
@@ -199,6 +206,8 @@ public class ModelingDemoApi extends AbstractModelingApi {
         this.participationService = participationService;
         this.modelingSubmissionService = modelingSubmissionService;
         this.resourceLoaderService = resourceLoaderService;
+        this.groupNotificationScheduleService = groupNotificationScheduleService;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -272,6 +281,8 @@ public class ModelingDemoApi extends AbstractModelingApi {
         // requested settings they get the defaults, which are also the ones the exercise editor of the client sends.
         exerciseConfigurationService.initialize(createdExercise, modelingExercise.getTeamAssignmentConfig(), modelingExercise.getPlagiarismDetectionConfig());
         channelService.createExerciseChannel(createdExercise, Optional.empty());
+        // Sends the release notification right away for a released exercise, and schedules the one about assessed submissions.
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(createdExercise);
         exerciseVersionService.createExerciseVersion(createdExercise);
 
         log.info("Created demo modeling exercise '{}' with id {}", createdExercise.getTitle(), createdExercise.getId());
@@ -292,9 +303,17 @@ public class ModelingDemoApi extends AbstractModelingApi {
         }
 
         // Closes the exercise like its due date passing would, only after the last submission, so that every submission counts as handed in on time.
+        // Stored like ModelingExerciseResource#updateModelingExercise stores a change: validated, then students are notified about changed dates and the change is recorded
+        // as a new version.
         ModelingExercise closedExercise = modelingExerciseRepository.findByIdElseThrow(exercise.getId());
+        ZonedDateTime originalReleaseDate = closedExercise.getReleaseDate();
+        ZonedDateTime originalAssessmentDueDate = closedExercise.getAssessmentDueDate();
         closedExercise.setDueDate(ZonedDateTime.now());
-        return modelingExerciseRepository.save(closedExercise);
+        closedExercise.validateGeneralSettings();
+        ModelingExercise savedExercise = modelingExerciseRepository.save(closedExercise);
+        exerciseService.notifyAboutExerciseChanges(originalReleaseDate, originalAssessmentDueDate, savedExercise.getProblemStatement(), savedExercise, null);
+        exerciseVersionService.createExerciseVersion(savedExercise);
+        return savedExercise;
     }
 
     /**
