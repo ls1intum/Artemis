@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, afterRenderEffect, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
@@ -28,6 +28,7 @@ import { CodeEditorRepositoryIsLockedComponent } from 'app/programming/shared/co
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { CommitState, DomainType, EditorState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
@@ -50,6 +51,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         UpdatingResultComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseInstructionComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
@@ -60,6 +62,11 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     codeEditorContainer = viewChild.required(CodeEditorContainerComponent);
     instructions = viewChild.required(ProgrammingExerciseInstructionComponent);
+    // The title row takes the toolbar of the page over where there is room. The online editor holds its toolbar itself; without the online editor it is the row of the Code button and the result.
+    // The query for the editor is the optional twin of codeEditorContainer, which cannot be read on a page without the online editor.
+    private readonly header = viewChild.required(ExamExerciseHeaderComponent);
+    private readonly onlineEditor = viewChild(CodeEditorContainerComponent);
+    private readonly offlineToolbar = viewChild<ElementRef<HTMLElement>>('offlineToolbar');
 
     // IMPORTANT: this reference must be activeExercise.studentParticipation[0] otherwise the parent component will not be able to react to change
     studentParticipation = input.required<ProgrammingExerciseStudentParticipation>();
@@ -101,6 +108,11 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
             // react when the studentParticipation input changes (replaces ngOnChanges)
             this.studentParticipation();
             this.setSubmissionCountAndLockIfNeeded();
+        });
+        // After the render, because the toolbar is moved in the DOM and has to exist there
+        afterRenderEffect(() => {
+            const toolbar = this.onlineEditor()?.navbar()?.nativeElement ?? this.offlineToolbar()?.nativeElement;
+            untracked(() => this.header().offerActions(toolbar));
         });
     }
 

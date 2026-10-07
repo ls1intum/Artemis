@@ -190,7 +190,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
             // Mock complaint scrollpoint
             const scrollIntoViewMock = vi.fn();
-            fixture.nativeElement.querySelector('#complaintScrollpoint').scrollIntoView = scrollIntoViewMock;
+            fixture.nativeElement.querySelector('[data-testid="complaint-scrollpoint"]').scrollIntoView = scrollIntoViewMock;
 
             const button = fixture.debugElement.nativeElement.querySelector('#complain');
             button.click();
@@ -200,7 +200,29 @@ describe('ComplaintsStudentViewComponent', () => {
             expect(component.formComplaintType()).toBe(ComplaintType.COMPLAINT);
             // Wait for setTimeout to execute
 
-            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
+            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest' });
+        });
+
+        it('should place the scroll anchor after the complaint form, so that scrolling it into view reveals the end of the form', async () => {
+            fixture.componentRef.setInput('exercise', examExercise);
+            fixture.componentRef.setInput('result', result);
+            fixture.componentRef.setInput('exam', defaultExam);
+            component.showSection.set(true);
+            component.isCorrectUserToFileAction.set(true);
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
+            fixture.changeDetectorRef.detectChanges();
+            // jsdom does not implement scrollIntoView
+            fixture.nativeElement.querySelector('[data-testid="complaint-scrollpoint"]').scrollIntoView = vi.fn();
+
+            fixture.debugElement.nativeElement.querySelector('#complain').click();
+            await fixture.whenStable();
+            fixture.changeDetectorRef.detectChanges();
+
+            const form: HTMLElement = fixture.nativeElement.querySelector('jhi-complaint-form');
+            const anchor: HTMLElement = fixture.nativeElement.querySelector('[data-testid="complaint-scrollpoint"]');
+            expect(form).not.toBeNull();
+            expect(anchor).not.toBeNull();
+            expect(form.compareDocumentPosition(anchor) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         });
 
         it('should be visible on test run', () => {
@@ -280,7 +302,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
             // Mock complaint scrollpoint
             const scrollIntoViewMock = vi.fn();
-            fixture.nativeElement.querySelector('#complaintScrollpoint').scrollIntoView = scrollIntoViewMock;
+            fixture.nativeElement.querySelector('[data-testid="complaint-scrollpoint"]').scrollIntoView = scrollIntoViewMock;
 
             const button = fixture.debugElement.nativeElement.querySelector('#complain');
             button.click();
@@ -289,7 +311,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
             expect(component.formComplaintType()).toBe(ComplaintType.COMPLAINT);
             // setTimeout executes synchronously with mocked timers removed
-            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
+            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest' });
         });
 
         it('should set complaint type MORE_FEEDBACK and scroll to complaint form when pressing complaint', async () => {
@@ -304,7 +326,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
             // Mock complaint scrollpoint
             const scrollIntoViewMock = vi.fn();
-            fixture.nativeElement.querySelector('#complaintScrollpoint').scrollIntoView = scrollIntoViewMock;
+            fixture.nativeElement.querySelector('[data-testid="complaint-scrollpoint"]').scrollIntoView = scrollIntoViewMock;
 
             const button = fixture.debugElement.nativeElement.querySelector('#more-feedback');
             button.click();
@@ -313,7 +335,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
             expect(component.formComplaintType()).toBe(ComplaintType.MORE_FEEDBACK);
             // setTimeout executes synchronously with mocked timers removed
-            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
+            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest' });
         });
 
         it('should not be available if before or at assessment due date', () => {
@@ -514,24 +536,126 @@ describe('ComplaintsStudentViewComponent', () => {
             expect(button.classList.contains('not-allowed')).toBe(true);
         });
 
-        it('should place the request and the response side by side only from the xl breakpoint and align their bottoms', async () => {
+        it('should place the request and the response side by side only from 1200px and stack them below', async () => {
             await renderCourseView(of({ body: complaint } as EntityResponseType));
 
             const request = fixture.nativeElement.querySelector('jhi-complaint-request') as HTMLElement;
             const response = fixture.nativeElement.querySelector('jhi-complaint-response') as HTMLElement;
+            const cards = fixture.nativeElement.querySelector('[data-testid="complaint-cards"]') as HTMLElement;
             expect(request).not.toBeNull();
             expect(response).not.toBeNull();
 
-            // The viewport breakpoint (md) would squeeze both columns next to the exam sidebar, so the xl breakpoint is used.
-            for (const column of [request, response]) {
-                expect(column.classList.contains('col-12')).toBe(true);
-                expect(column.classList.contains('col-xl-6')).toBe(true);
-                expect(column.classList.contains('col-md-6')).toBe(false);
+            // The viewport breakpoint of md would squeeze both columns next to the exam sidebar, so the columns start at 1200px, the xl breakpoint of Bootstrap.
+            expect(['grid', 'grid-cols-1', 'min-[1200px]:grid-cols-2'].every((utility) => cards.classList.contains(utility))).toBe(true);
+            expect(cards.classList.contains('min-[768px]:grid-cols-2')).toBe(false);
+            // Both cards are cells of the same grid. Their two rows (header, text) are shared, so the texts line up even if a header wraps.
+            expect(request.parentElement).toBe(cards);
+            expect(response.parentElement).toBe(cards);
+            expect(cards.classList.contains('grid-rows-[auto_1fr]')).toBe(true);
+            expect(cards.classList.contains('row')).toBe(false);
+        });
+
+        it('should give the form half of the width from 1200px on and the full width below', async () => {
+            await renderCourseView(of());
+            component.formComplaintType.set(ComplaintType.COMPLAINT);
+            fixture.detectChanges();
+
+            const form = fixture.nativeElement.querySelector('jhi-complaint-form') as HTMLElement;
+            expect(form).not.toBeNull();
+            expect(form.classList.contains('min-[1200px]:w-1/2')).toBe(true);
+            expect(form.classList.contains('min-[768px]:w-1/2')).toBe(false);
+            expect(form.closest('.row')).toBeNull();
+        });
+    });
+
+    describe('scroll target', () => {
+        let scrolledElements: Element[];
+
+        beforeEach(() => {
+            scrolledElements = [];
+            // jsdom does not implement scrollIntoView
+            Object.defineProperty(Element.prototype, 'scrollIntoView', {
+                configurable: true,
+                writable: true,
+                value: vi.fn(function (this: Element) {
+                    scrolledElements.push(this);
+                }),
+            });
+        });
+
+        afterEach(() => {
+            Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+        });
+
+        async function renderViews(count: number): Promise<ComponentFixture<ComplaintsStudentViewComponent>[]> {
+            const exerciseWithComplaints: Exercise = { ...courseExercise, course: { ...course, maxComplaints: 3 } };
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
+            const views = [fixture];
+            for (let index = 1; index < count; index++) {
+                views.push(TestBed.createComponent(ComplaintsStudentViewComponent));
             }
-            // The textareas share their top and bottom edges even if the status badge makes the request label wrap.
-            expect(request.parentElement).toBe(response.parentElement);
-            expect(request.parentElement!.classList.contains('row')).toBe(true);
-            expect(request.parentElement!.classList.contains('align-items-end')).toBe(true);
+            // A zoneless fixture detects changes on its own, so the inputs are set before anything is awaited.
+            for (const view of views) {
+                view.componentRef.setInput('exercise', exerciseWithComplaints);
+                view.componentRef.setInput('participation', participation);
+                view.componentRef.setInput('result', result);
+                view.componentRef.setInput('isCurrentUserSubmissionAuthor', true);
+            }
+            // Creating a fixture removes the root element of the previous ones from the document, but the exam summary shows all views at once.
+            for (const view of [...views].reverse()) {
+                document.body.prepend(view.nativeElement);
+            }
+            for (const view of views) {
+                view.detectChanges();
+                await view.whenStable();
+                view.detectChanges();
+            }
+            return views;
+        }
+
+        it('should scroll to the form of the view whose button was clicked, not to the first view on the page', async () => {
+            const [first, second] = await renderViews(2);
+            expect(document.querySelectorAll('#complain')).toHaveLength(2);
+
+            (second.nativeElement.querySelector('#complain') as HTMLButtonElement).click();
+            await second.whenStable();
+
+            expect(scrolledElements).toHaveLength(1);
+            expect(second.nativeElement.contains(scrolledElements[0])).toBe(true);
+            expect(first.nativeElement.contains(scrolledElements[0])).toBe(false);
+            expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest' });
+        });
+
+        it('should scroll to the form of the first view when its own button was clicked', async () => {
+            const [first, second] = await renderViews(2);
+
+            (first.nativeElement.querySelector('#complain') as HTMLButtonElement).click();
+            await first.whenStable();
+
+            expect(scrolledElements).toHaveLength(1);
+            expect(first.nativeElement.contains(scrolledElements[0])).toBe(true);
+            expect(second.nativeElement.contains(scrolledElements[0])).toBe(false);
+        });
+
+        it('should scroll to the form of the view whose more feedback button was clicked', async () => {
+            const [first, second] = await renderViews(2);
+
+            (second.nativeElement.querySelector('#more-feedback') as HTMLButtonElement).click();
+            await second.whenStable();
+
+            expect(scrolledElements).toHaveLength(1);
+            expect(second.nativeElement.contains(scrolledElements[0])).toBe(true);
+            expect(first.nativeElement.contains(scrolledElements[0])).toBe(false);
+        });
+
+        it('should only reveal the form instead of aligning it to the bottom edge, so a form that fits does not move the page', async () => {
+            const [view] = await renderViews(1);
+
+            (view.nativeElement.querySelector('#complain') as HTMLButtonElement).click();
+            await view.whenStable();
+
+            expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ block: 'nearest' }));
+            expect(Element.prototype.scrollIntoView).not.toHaveBeenCalledWith(expect.objectContaining({ block: 'end' }));
         });
     });
 

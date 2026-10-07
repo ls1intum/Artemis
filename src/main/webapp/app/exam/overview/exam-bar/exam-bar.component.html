@@ -1,5 +1,5 @@
 <div
-    class="exam-bar flex h-10 shrink-0 items-center justify-between gap-4! rounded-lg bg-(--module-bg) px-6!"
+    class="exam-bar flex h-10 shrink-0 items-center justify-between gap-4! rounded-lg bg-(--module-bg) px-3!"
     data-testid="exam-bar"
     [class]="isEndView() ? 'mx-auto w-full max-w-[900px] max-[900px]:max-w-[600px] max-[600px]:max-w-[500px]' : ''"
 >
@@ -12,7 +12,8 @@
         }
     </div>
     @if (!examTimeLineView()) {
-        <div class="flex shrink-0 items-center gap-4!">
+        <!-- Every button of the bar is 30px high like the buttons of a title row (see jhi-exam-exercise-header): 4px padding, a 20px line and the border. The important spelling beats the padding of the kit. -->
+        <div class="flex shrink-0 items-center gap-4! [&_.tumaet-ui-btn]:py-1! [&_.tumaet-ui-btn]:leading-5!">
             <jhi-exam-timer
                 [criticalTime]="isEndView() ? criticalTimeEndView : criticalTime"
                 [endDate]="endDate()"

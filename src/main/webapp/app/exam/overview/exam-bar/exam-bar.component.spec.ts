@@ -70,6 +70,20 @@ describe('ExamBarComponent', () => {
         expect(bar.classList).toContain('h-10');
     });
 
+    it('should inset its title and its buttons by 12px, where the title of every page of the exam starts', () => {
+        const bar: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exam-bar"]');
+        expect(bar.classList).toContain('px-3!');
+        expect(bar.classList).not.toContain('px-4!');
+        expect(bar.classList).not.toContain('px-6!');
+    });
+
+    it('should make the hand-in early button 30px high like the buttons of a title row, so that it has 5px of air above and below it in the 40px bar', () => {
+        const button: HTMLElement = fixture.nativeElement.querySelector('[data-testid="hand-in-early"]');
+        expect(button.classList).toContain('tumaet-ui-btn');
+        // 4px padding, a 20px line and the 1px border on both sides are 30px, where the small size of the kit alone is 34px. The important spelling beats the padding of the kit.
+        expect([...button.parentElement!.classList]).toEqual(expect.arrayContaining(['[&_.tumaet-ui-btn]:py-1!', '[&_.tumaet-ui-btn]:leading-5!']));
+    });
+
     it('should hand in the exam early', () => {
         vi.spyOn(comp.onExamHandInEarly, 'emit');
         vi.spyOn(comp, 'saveExercise');
