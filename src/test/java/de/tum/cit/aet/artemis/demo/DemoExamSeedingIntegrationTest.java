@@ -1,14 +1,18 @@
 package de.tum.cit.aet.artemis.demo;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.within;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.SequencedMap;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -26,6 +30,7 @@ import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
 import de.tum.cit.aet.artemis.demo.service.DemoCourseContentSeedingService;
 import de.tum.cit.aet.artemis.demo.service.DemoDataSeedingService;
 import de.tum.cit.aet.artemis.demo.service.DemoExerciseSeedingService;
+import de.tum.cit.aet.artemis.exam.api.ExamDemoApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -87,6 +92,9 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Autowired
     private AssessmentDemoApi assessmentDemoApi;
+
+    @Autowired
+    private ExamDemoApi examDemoApi;
 
     @Autowired
     private ExamTestRepository examRepository;
@@ -198,6 +206,39 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         Exam recreatedExam = demoExamWithExercises();
         assertThat(recreatedExam.getId()).as("the deleted exam is recreated").isNotEqualTo(exam.getId());
         assertThat(exercisesOf(recreatedExam)).as("with its exercises").hasSameSizeAs(exercisesOf(exam));
+    }
+
+    @Test
+    void keepsTheExamStartableWhenOneOfItsExercisesCannotBeCreated() throws Exception {
+        seed();
+        Exam exam = demoExamWithExercises();
+        userUtilService.changeUser(AccountDemoApi.DEMO_INSTRUCTOR_LOGIN);
+        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        SequencedMap<String, Function<ExerciseGroup, ? extends Exercise>> exerciseCreators = new LinkedHashMap<>();
+        exerciseCreators.put("Software Architecture", textDemoApi::createDemoExamExercise);
+        exerciseCreators.put("Object-Oriented Modeling", exerciseGroup -> {
+            throw new IllegalStateException("simulated failure of the modeling exercise");
+        });
+
+        try {
+            assertThatThrownBy(() -> examDemoApi.createDemo(demoCourse(), exerciseCreators)).as("the failure is left to the seeding of the area to log")
+                    .hasMessage("simulated failure of the modeling exercise");
+
+            Exam partialExam = demoExamWithExercises();
+            assertThat(partialExam.getExerciseGroups()).extracting(ExerciseGroup::getTitle).as("the group of the failed exercise is removed, so that no mandatory group is empty")
+                    .containsExactly("Software Architecture");
+            assertThat(partialExam.getNumberOfExercisesInExam()).as("the exam states the exercises it has, so that students can still start it").isOne();
+            assertThat(partialExam.getExamMaxPoints()).as("the points of the exam are those of its exercises")
+                    .isEqualTo((int) Math.round(exercisesOf(partialExam).getFirst().getMaxPoints()));
+        }
+        finally {
+            // The other tests share the demo course, so the complete exam is seeded again.
+            Optional<Exam> partialExam = demoExam();
+            if (partialExam.isPresent()) {
+                request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + partialExam.get().getId(), HttpStatus.OK);
+            }
+            seed();
+        }
     }
 
     private void seed() {
