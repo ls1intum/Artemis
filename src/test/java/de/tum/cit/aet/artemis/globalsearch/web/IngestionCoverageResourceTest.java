@@ -11,6 +11,8 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.health.contributor.Health;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -27,8 +29,37 @@ class IngestionCoverageResourceTest {
 
     private final CoverageRecomputeService coverageRecomputeService = mock(CoverageRecomputeService.class);
 
-    private final IngestionCoverageResource resource = new IngestionCoverageResource(mock(WeaviateHealthIndicator.class), mock(IngestionCoverageWeaviateReadService.class),
-            coverageRecomputeService, mock(Environment.class), Optional.<IrisHealthApi>empty());
+    private final IngestionCoverageResource resource = new IngestionCoverageResource(Optional.of(mock(WeaviateHealthIndicator.class)),
+            mock(IngestionCoverageWeaviateReadService.class), coverageRecomputeService, mock(Environment.class), Optional.<IrisHealthApi>empty());
+
+    @Test
+    void startsForOpenApiDocsWithoutAWeaviateHealthIndicator() {
+        new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles("core"))
+                .withPropertyValues("artemis.weaviate.enabled=true", "artemis.openapi-docs-generation=true")
+                .withBean(IngestionCoverageWeaviateReadService.class, () -> mock(IngestionCoverageWeaviateReadService.class))
+                .withBean(CoverageRecomputeService.class, () -> coverageRecomputeService).withUserConfiguration(IngestionCoverageResource.class).run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context).hasSingleBean(IngestionCoverageResource.class);
+                    assertThat(context.getBean(IngestionCoverageResource.class)).isNotNull();
+                    assertThat(context).doesNotHaveBean(WeaviateHealthIndicator.class);
+                });
+    }
+
+    @Test
+    void readsTheLiveWeaviateHealthWhenAvailable() {
+        var healthIndicator = mock(WeaviateHealthIndicator.class);
+        when(healthIndicator.health()).thenReturn(Health.up().withDetail("Address", "http://weaviate:8080").build());
+        new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles("core"))
+                .withPropertyValues("artemis.weaviate.enabled=true", "artemis.iris.enabled=false").withBean(WeaviateHealthIndicator.class, () -> healthIndicator)
+                .withBean(IngestionCoverageWeaviateReadService.class, () -> mock(IngestionCoverageWeaviateReadService.class))
+                .withBean(CoverageRecomputeService.class, () -> coverageRecomputeService).withUserConfiguration(IngestionCoverageResource.class).run(context -> {
+                    var overview = context.getBean(IngestionCoverageResource.class).getIndexOverview().getBody();
+                    assertThat(overview).isNotNull();
+                    assertThat(overview.weaviateReachable()).isTrue();
+                    assertThat(overview.weaviateAddress()).isEqualTo("http://weaviate:8080");
+                    verify(healthIndicator).health();
+                });
+    }
 
     @AfterEach
     void clearRequestContext() {
