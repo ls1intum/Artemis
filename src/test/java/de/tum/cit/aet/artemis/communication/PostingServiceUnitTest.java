@@ -286,7 +286,8 @@ class PostingServiceUnitTest {
             "<p title=\">\">@all</p>", "<textarea>@all</textarea>", "<p></code>@all</p>", "<style>p {}</style>\n\n@all", "<script>x</script>\n<p>@all</p>",
             "see www.example.org @all", "www.example.org @all", "WWW.example.org\n@all", "www @all", "www.@all", "see https://host/page @all", "mailto:someone@example.org @all",
             "@all www.example.org", "@all <!-- never closed", "@all <p never closed", "< @all", "<3 @all", "a <b>@all</b>", "https://host/ @all", "http://host/a(b) @all",
-            "x // @all" })
+            "x // @all", "<pre><code>x</pre>\n\n@all", "<pre><code>x</code></pre>\n\n@all", "<blockquote><code>x</blockquote>\n\n@all", "<code>x</code></pre>\n\n@all",
+            "<svg/> @all", "<svg />@all", "<math/>\n\n@all", "<svg>x</svg> @all", "<svg><svg/>x</svg> @all", "<div>\n<code\u000B>@all</code>", "<div>\n<code\u2003>@all</code>" })
     void testContainsAtAllMentionMatches(String content) {
         assertThat(AtAllMentionDetector.containsAtAllMention(content)).isTrue();
     }
@@ -309,7 +310,9 @@ class PostingServiceUnitTest {
             "see www.example.org/?q=(@all) now", "(www.example.org/?q=(@all))", "see (www.example.org/?q=(@all)", "text,www.example.org/#(@all)", "www.example.org/a,(@all)",
             "mailto:someone@example.org?subject=(@all)", "MAILTO:someone@example.org?subject=(@all)", "(mailto:someone@example.org?body=(@all))", "//example.org/?q=(@all)",
             "(//example.org/?q=(@all))", "see //example.org/#(@all)", "foo://example.org/?q=(@all)", "(https://example.org/?q=(@all))", "x(https://host/a&(@all))",
-            "ftp://host/(@all)", "tel://host/(@all)", "file:///a/(@all)" })
+            "ftp://host/(@all)", "tel://host/(@all)", "file:///a/(@all)", "<code>a</pre> @all", "<code><pre>a</pre> @all", "<pre>\n</blockquote>\n\n@all\n</pre>",
+            "<code></code\u000B>@all", "<pre>\n</pre\u000B>\n\n@all", "<blockquote>\n</blockquote\u2003>\n\n@all", "<blockquote>\n</blockquote\u2003 >\n@all",
+            "<code>x</code/>@all", "<svg a=b/>@all", "<svg a=/>@all", "<div>\n<svg/ >@all", "<div>\n<svg a=\"b\"/ >@all" })
     void testContainsAtAllMentionDoesNotMatch(String content) {
         assertThat(AtAllMentionDetector.containsAtAllMention(content)).isFalse();
     }
@@ -345,7 +348,8 @@ class PostingServiceUnitTest {
                 "<div>\n" + "<a b=\"c\" ".repeat(450) + "@all", "<div>\n" + "<?".repeat(2400) + "@all", "<p ".repeat(1600) + "@all", "<code ".repeat(800) + "@all",
                 "</code ".repeat(700) + "@all", "<p>\n".repeat(1200) + "@all", "<pre>\n\n".repeat(650) + "@all", "www.".repeat(1200) + "@all", "(www.a/".repeat(700) + "@all",
                 "://".repeat(1600) + "@all", "a".repeat(4900) + "://@all", "mailto:".repeat(700) + "@all", "//a".repeat(1600) + "@all", "<www.".repeat(900) + "@all",
-                "<a>".repeat(1600) + "@all", "<blockquote>".repeat(400) + "@all");
+                "<a>".repeat(1600) + "@all", "<blockquote>".repeat(400) + "@all", "<code>".repeat(400) + "</pre>".repeat(400) + "@all",
+                "<div>\n" + "<code>".repeat(300) + "</blockquote>".repeat(200) + "@all", "<svg/>".repeat(800) + "@all");
         for (String input : adversarialInputs) {
             assertThat(input.length()).isLessThanOrEqualTo(5000);
             // the result is not asserted, it must only be computed without an error in time

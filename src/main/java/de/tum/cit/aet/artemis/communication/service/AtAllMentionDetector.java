@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.communication.service;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -56,6 +60,9 @@ public final class AtAllMentionDetector {
 
     /** The hidden content elements whose contents are raw text for the HTML parser: tags inside of them are not tags, the element only ends at its own closing tag. */
     private static final Set<String> HTML_RAW_TEXT_ELEMENTS = Set.of("script", "style", "title", "iframe", "noscript", "noembed", "noframes", "xmp");
+
+    /** The hidden content elements that are foreign elements for the HTML parser, which honours a self-closing tag such as "&lt;svg/&gt;" for them (and for no other element). */
+    private static final Set<String> HTML_FOREIGN_ELEMENTS = Set.of("svg", "math");
 
     /** The elements of the allow list of the client that start a new line, so the text before and after them is not displayed as one word. */
     private static final Set<String> HTML_LINE_BREAKING_ELEMENTS = Set.of("br", "hr", "p", "li", "ul", "ol", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "pre");
@@ -167,8 +174,11 @@ public final class AtAllMentionDetector {
 
         private final StringBuilder text = new StringBuilder();
 
-        /** The number of HTML elements with hidden contents (see {@link #HTML_HIDDEN_CONTENT_ELEMENTS}) that are open at the current position. */
-        private int openHiddenHtmlElements = 0;
+        /** The names of the open HTML elements with hidden contents (see {@link #HTML_HIDDEN_CONTENT_ELEMENTS}) at the current position, the innermost element first. */
+        private final Deque<String> openHiddenHtmlElements = new ArrayDeque<>();
+
+        /** The number of open elements per name in {@link #openHiddenHtmlElements}, so a closing tag without an open element of its name is ignored in constant time. */
+        private final Map<String, Integer> openHiddenHtmlElementCounts = new HashMap<>();
 
         /** The name of the open HTML raw text element, e.g. "script", whose contents are not parsed as HTML, or null. */
         private String openRawTextElement = null;
@@ -249,7 +259,7 @@ public final class AtAllMentionDetector {
         }
 
         private void appendDisplayedText(CharSequence displayedText) {
-            if (openHiddenHtmlElements == 0) {
+            if (openHiddenHtmlElements.isEmpty()) {
                 text.append(displayedText);
             }
         }
@@ -319,24 +329,27 @@ public final class AtAllMentionDetector {
         }
 
         /**
-         * Handles the opening or closing tag that starts at the given index. A "/" before the closing ">" is ignored for the HTML elements that have contents, like the HTML
-         * parser of the browser does, so a "code" element that is written as "&lt;code/&gt;" is open.
+         * Handles the opening or closing tag that starts at the given index. A "/" before the closing ">" is ignored for the HTML elements, like the HTML parser of the browser
+         * does, so a "code" element that is written as "&lt;code/&gt;" is open. Only the foreign elements "svg" and "math" are closed by it. The tag name and the attributes are
+         * separated by the whitespace of the HTML parser (space, tab, line feed, form feed and carriage return) and not by other Unicode whitespace.
          *
          * @return the index behind the tag, which is the length of the HTML if the tag is not closed
          */
         private int scanTag(String html, int start, boolean closing) {
             int nameStart = closing ? start + 2 : start + 1;
             int index = nameStart;
-            while (index < html.length() && !Character.isWhitespace(html.charAt(index)) && html.charAt(index) != '/' && html.charAt(index) != '>') {
+            while (index < html.length() && !isHtmlWhitespace(html.charAt(index)) && html.charAt(index) != '/' && html.charAt(index) != '>') {
                 index++;
             }
             String name = html.substring(nameStart, index).toLowerCase(Locale.ROOT);
             // the attributes, whose quoted values may contain a ">"
             boolean afterEquals = false;
+            boolean inUnquotedValue = false;
+            boolean selfClosing = false;
             while (index < html.length()) {
                 char current = html.charAt(index);
                 if (current == '>') {
-                    handleTag(name, closing);
+                    handleTag(name, closing, selfClosing);
                     appendLineBreakAfter(name);
                     return index + 1;
                 }
@@ -347,32 +360,65 @@ public final class AtAllMentionDetector {
                     }
                     index = closingQuote + 1;
                     afterEquals = false;
+                    selfClosing = false;
                     continue;
                 }
-                if (current == '=') {
-                    afterEquals = true;
+                if (isHtmlWhitespace(current)) {
+                    inUnquotedValue = false;
+                    selfClosing = false;
                 }
-                else if (!Character.isWhitespace(current)) {
+                else if (inUnquotedValue) {
+                    // the "/" and "=" belong to the value
+                    selfClosing = false;
+                }
+                else if (current == '/' && !afterEquals) {
+                    selfClosing = true;
+                }
+                else if (current == '=' && !afterEquals) {
+                    afterEquals = true;
+                    selfClosing = false;
+                }
+                else {
+                    // the start of an attribute name, or of an unquoted value after an "="
+                    inUnquotedValue = afterEquals;
                     afterEquals = false;
+                    selfClosing = false;
                 }
                 index++;
             }
             return html.length();
         }
 
-        private void handleTag(String name, boolean closing) {
+        /**
+         * Tracks the elements with hidden contents. A closing tag closes the open element of its name and all elements that are open inside of it, like the HTML parser, and it is
+         * ignored if no element of its name is open.
+         */
+        private void handleTag(String name, boolean closing, boolean selfClosing) {
             if (!HTML_HIDDEN_CONTENT_ELEMENTS.contains(name)) {
                 return;
             }
             if (closing) {
-                openHiddenHtmlElements = Math.max(0, openHiddenHtmlElements - 1);
+                if (openHiddenHtmlElementCounts.getOrDefault(name, 0) == 0) {
+                    return;
+                }
+                String closed;
+                do {
+                    closed = openHiddenHtmlElements.pop();
+                    openHiddenHtmlElementCounts.merge(closed, -1, Integer::sum);
+                }
+                while (!closed.equals(name));
             }
-            else {
-                openHiddenHtmlElements++;
+            else if (!selfClosing || !HTML_FOREIGN_ELEMENTS.contains(name)) {
+                openHiddenHtmlElements.push(name);
+                openHiddenHtmlElementCounts.merge(name, 1, Integer::sum);
                 if (HTML_RAW_TEXT_ELEMENTS.contains(name)) {
                     openRawTextElement = name;
                 }
             }
+        }
+
+        private static boolean isHtmlWhitespace(char character) {
+            return character == ' ' || character == '\t' || character == '\n' || character == '\f' || character == '\r';
         }
 
         private void appendLineBreakAfter(String name) {
@@ -391,7 +437,7 @@ public final class AtAllMentionDetector {
             while (candidate >= 0) {
                 int nameEnd = candidate + 2 + elementName.length();
                 if (html.regionMatches(true, candidate + 2, elementName, 0, elementName.length())
-                        && (nameEnd == html.length() || Character.isWhitespace(html.charAt(nameEnd)) || html.charAt(nameEnd) == '/' || html.charAt(nameEnd) == '>')) {
+                        && (nameEnd == html.length() || isHtmlWhitespace(html.charAt(nameEnd)) || html.charAt(nameEnd) == '/' || html.charAt(nameEnd) == '>')) {
                     return candidate;
                 }
                 candidate = html.indexOf("</", candidate + 2);
