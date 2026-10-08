@@ -140,6 +140,9 @@ if [ -f ./test-reports/results-parallel.xml ] && [ -f ./test-reports/results-mul
     # merged report and counted twice.
     if pnpm exec junit-merge ./test-reports/results-parallel.xml ./test-reports/results-multinode.xml -o ./test-reports/results.xml; then
         rm -f ./test-reports/results-parallel.xml ./test-reports/results-multinode.xml
+    else
+        echo "ERROR: Merging the parallel and multi-node JUnit reports failed"
+        FAILED=1
     fi
 elif [ -f ./test-reports/results-parallel.xml ]; then
     mv ./test-reports/results-parallel.xml ./test-reports/results.xml

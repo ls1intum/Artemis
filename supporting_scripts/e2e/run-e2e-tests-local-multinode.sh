@@ -152,9 +152,15 @@ export ARTEMIS_ADMIN_PASSWORD="${ARTEMIS_ADMIN_PASSWORD:-local-e2e-admin-not-a-d
 JWT_SECRET_FILE="$LOCAL_DIR/jwt-secret"
 if [ -z "${ARTEMIS_E2E_JWT_SECRET:-}" ]; then
     if [ ! -s "$JWT_SECRET_FILE" ]; then
-        (umask 077 && openssl rand -base64 64 | tr -d '\n' > "$JWT_SECRET_FILE")
+        mkdir -p "$LOCAL_DIR"
+        (umask 077 && openssl rand -base64 64 | tr -d '\n' > "$JWT_SECRET_FILE") || true
     fi
-    ARTEMIS_E2E_JWT_SECRET="$(cat "$JWT_SECRET_FILE")"
+    ARTEMIS_E2E_JWT_SECRET="$(cat "$JWT_SECRET_FILE" 2>/dev/null || true)"
+    if [ -z "$ARTEMIS_E2E_JWT_SECRET" ]; then
+        echo -e "${RED}ERROR: Failed to generate ARTEMIS_E2E_JWT_SECRET (is openssl installed?)${NC}"
+        rm -f "$JWT_SECRET_FILE"
+        exit 1
+    fi
 fi
 export ARTEMIS_E2E_JWT_SECRET
 export TEST_TIMEOUT_SECONDS="${TEST_TIMEOUT_SECONDS:-360}"
