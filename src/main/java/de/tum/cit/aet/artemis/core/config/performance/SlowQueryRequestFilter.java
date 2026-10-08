@@ -58,7 +58,7 @@ public class SlowQueryRequestFilter implements Filter {
                 // which sets this attribute -- has already completed.
                 Object routeTemplate = httpRequest.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
                 String httpEndpoint = routeTemplate != null ? routeTemplate.toString() : httpRequest.getRequestURI();
-                collector.recordEndpointTiming(httpRequest.getMethod(), httpEndpoint, httpRequest.getHeader(SlowQueryListener.PLAYWRIGHT_TEST_HEADER),
+                collector.recordEndpointTiming(httpRequest.getMethod(), httpEndpoint, SlowQueryListener.testName(httpRequest),
                         httpRequest.getHeader(SlowQueryListener.PLAYWRIGHT_PHASE_HEADER), totalDurationMs);
             }
             collector.resetRequestState();

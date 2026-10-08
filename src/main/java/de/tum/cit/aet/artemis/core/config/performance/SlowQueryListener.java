@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.core.config.performance;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_E2E_PERFORMANCE;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -121,7 +123,7 @@ public class SlowQueryListener implements QueryExecutionListener {
                 // requests that never resolved to a handler (e.g. a 404).
                 Object routeTemplate = req.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
                 httpEndpoint = routeTemplate != null ? routeTemplate.toString() : req.getRequestURI();
-                testName = req.getHeader(PLAYWRIGHT_TEST_HEADER);
+                testName = testName(req);
                 phase = req.getHeader(PLAYWRIGHT_PHASE_HEADER);
             }
         }
@@ -160,6 +162,23 @@ public class SlowQueryListener implements QueryExecutionListener {
             }
         }
         return hash;
+    }
+
+    /**
+     * The Playwright test title of the request, which the fixture percent-encodes because HTTP
+     * header values must be ASCII and test titles may contain characters such as {@code ✕}.
+     */
+    static String testName(HttpServletRequest request) {
+        String header = request.getHeader(PLAYWRIGHT_TEST_HEADER);
+        if (header == null) {
+            return null;
+        }
+        try {
+            return URLDecoder.decode(header, StandardCharsets.UTF_8);
+        }
+        catch (IllegalArgumentException malformed) {
+            return header;
+        }
     }
 
     /** Counts SQL {@code join} keywords in the raw (un-normalised) query text. */

@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockHttpServletRequest;
 
 import de.tum.cit.aet.artemis.core.config.performance.RepeatedQueryFinding.Type;
 import net.ttddyy.dsproxy.proxy.ParameterSetOperation;
@@ -143,5 +144,18 @@ class SlowQueryCollectorTest {
         // literals inlined by Hibernate are part of the raw SQL, so they distinguish statements too
         assertThat(SlowQueryListener.parameterSignature("select * from course where id=1", List.of()))
                 .isNotEqualTo(SlowQueryListener.parameterSignature("select * from course where id=2", List.of()));
+    }
+
+    @Test
+    void testNameHeaderIsPercentDecoded() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        assertThat(SlowQueryListener.testName(request)).isNull();
+
+        request.addHeader(SlowQueryListener.PLAYWRIGHT_TEST_HEADER, "Dismiss%20reasoning%20%E2%9C%95%20closes%20card%20%2B%20more");
+        assertThat(SlowQueryListener.testName(request)).isEqualTo("Dismiss reasoning ✕ closes card + more");
+
+        MockHttpServletRequest malformed = new MockHttpServletRequest();
+        malformed.addHeader(SlowQueryListener.PLAYWRIGHT_TEST_HEADER, "100%");
+        assertThat(SlowQueryListener.testName(malformed)).isEqualTo("100%");
     }
 }
