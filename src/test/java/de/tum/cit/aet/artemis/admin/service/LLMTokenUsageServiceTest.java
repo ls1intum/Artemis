@@ -8,7 +8,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,9 +57,12 @@ class LLMTokenUsageServiceTest {
 
     @Test
     void absentProviderUsageDoesNotCreateZeroCostRecord() {
-        llmTokenUsageService.trackChatResponseTokenUsage(new org.springframework.ai.chat.model.ChatResponse(java.util.List.of()),
-                de.tum.cit.aet.artemis.admin.domain.LLMServiceType.ATLAS, "ATLAS_ORCHESTRATION", builder -> builder.withCourse(1L));
-        org.mockito.Mockito.verifyNoInteractions(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository);
+        // a response without provider usage carries the empty usage, which is neither stored nor reported as a failure
+        List<ILoggingEvent> warnings = warningsLoggedBy(() -> llmTokenUsageService.trackChatResponseTokenUsage(new ChatResponse(List.of()), LLMServiceType.ATLAS,
+                "ATLAS_ORCHESTRATION", builder -> builder.withCourse(1L)));
+
+        assertThat(warnings).isEmpty();
+        verifyNoInteractions(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository);
     }
 
     @Test
@@ -130,26 +135,80 @@ class LLMTokenUsageServiceTest {
 
     @Test
     void trackChatResponseTokenUsage_withMissingResponse_logsFailureWithoutPersistence() {
-        Logger logger = (Logger) LoggerFactory.getLogger(LLMTokenUsageService.class);
-        ListAppender<ILoggingEvent> logAppender = new ListAppender<>();
-        logAppender.start();
-        logger.addAppender(logAppender);
-        try {
-            llmTokenUsageService.trackChatResponseTokenUsage(null, LLMServiceType.ATLAS, "NULL_RESPONSE", builder -> builder);
+        List<ILoggingEvent> warnings = warningsLoggedBy(() -> llmTokenUsageService.trackChatResponseTokenUsage(null, LLMServiceType.ATLAS, "NULL_RESPONSE", builder -> builder));
 
-            assertThat(logAppender.list).filteredOn(event -> event.getLevel() == Level.WARN).extracting(ILoggingEvent::getFormattedMessage)
-                    .anySatisfy(message -> assertThat(message).contains("NULL_RESPONSE", "chat response"));
-            verifyNoInteractions(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository);
-        }
-        finally {
-            logger.detachAppender(logAppender);
-            logAppender.stop();
-        }
+        assertThat(warnings).singleElement().satisfies(event -> {
+            assertThat(event.getFormattedMessage()).contains("NULL_RESPONSE", "chat response is missing");
+            assertThat(event.getThrowableProxy()).as("a missing response is reported without a stack trace").isNull();
+        });
+        verifyNoInteractions(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository);
+    }
+
+    @Test
+    void trackChatResponseTokenUsage_withoutResponseMetadata_neverPropagatesAndDoesNotPersist() {
+        // Spring AI never returns null metadata; an unstubbed mock does, and the failure must stay inside the tracking call
+        ChatResponse response = mock(ChatResponse.class);
+        AtomicReference<Throwable> thrown = new AtomicReference<>();
+
+        List<ILoggingEvent> warnings = warningsLoggedBy(() -> {
+            try {
+                llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.ATLAS, "NO_METADATA", builder -> builder.withCourse(42L));
+            }
+            catch (RuntimeException e) {
+                thrown.set(e);
+            }
+        });
+
+        assertThat(thrown.get()).isNull();
+        assertThat(warnings).singleElement().satisfies(event -> {
+            assertThat(event.getFormattedMessage()).contains("Failed to store token usage", "NO_METADATA");
+            assertThat(event.getThrowableProxy().getClassName()).isEqualTo(NullPointerException.class.getName());
+        });
+        verifyNoInteractions(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository);
+    }
+
+    @Test
+    void trackChatResponseTokenUsage_withoutUsageInTheMetadata_neverPropagatesAndDoesNotPersist() {
+        ChatResponse response = mock(ChatResponse.class);
+        ChatResponseMetadata metadata = mock(ChatResponseMetadata.class);
+        when(response.getMetadata()).thenReturn(metadata);
+
+        List<ILoggingEvent> warnings = warningsLoggedBy(
+                () -> llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.ATLAS, "NO_USAGE", builder -> builder.withCourse(42L)));
+
+        assertThat(warnings).singleElement().satisfies(event -> {
+            assertThat(event.getFormattedMessage()).contains("Failed to store token usage", "NO_USAGE");
+            assertThat(event.getThrowableProxy().getClassName()).isEqualTo(NullPointerException.class.getName());
+        });
+        verifyNoInteractions(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository);
+    }
+
+    @Test
+    void trackChatResponseTokenUsage_withoutModelName_persistsWithEmptyModelAndZeroCost() {
+        ChatResponse response = responseWithTokens(11, 7);
+        when(response.getMetadata().getModel()).thenReturn(null);
+
+        List<ILoggingEvent> warnings = warningsLoggedBy(
+                () -> llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.ATLAS, "NO_MODEL", builder -> builder.withCourse(42L)));
+
+        assertThat(warnings).singleElement().satisfies(event -> assertThat(event.getFormattedMessage()).contains("No LLM cost configured for model ''", "NO_MODEL"));
+        var saved = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
+        verify(llmTokenUsageTraceRepository).save(saved.capture());
+        assertThat(saved.getValue().getLLMRequests()).singleElement().satisfies(request -> {
+            assertThat(request.getModel()).isEmpty();
+            assertThat(request.getNumInputTokens()).isEqualTo(11);
+            assertThat(request.getNumOutputTokens()).isEqualTo(7);
+            assertThat(request.getCostPerMillionInputTokens()).isZero();
+            assertThat(request.getCostPerMillionOutputTokens()).isZero();
+            assertThat(request.getServicePipelineId()).isEqualTo("NO_MODEL");
+        });
     }
 
     @Test
     void trackChatResponseTokenUsage_withValidUsage_persistsAccounting() {
-        llmTokenUsageService.trackChatResponseTokenUsage(validResponse(), LLMServiceType.ATLAS, "ATLAS_ORCHESTRATION", builder -> builder.withCourse(42L));
+        List<ILoggingEvent> warnings = warningsLoggedBy(
+                () -> llmTokenUsageService.trackChatResponseTokenUsage(validResponse(), LLMServiceType.ATLAS, "ATLAS_ORCHESTRATION", builder -> builder.withCourse(42L)));
+        assertThat(warnings).isEmpty();
         var saved = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
         verify(llmTokenUsageTraceRepository).save(saved.capture());
         assertThat(saved.getValue().getCourseId()).isEqualTo(42L);
@@ -167,27 +226,19 @@ class LLMTokenUsageServiceTest {
     @ParameterizedTest
     @CsvSource(value = { "null, 7", "11, null", "null, null" }, nullValues = "null")
     void trackChatResponseTokenUsage_withMissingTokenCount_logsFailureWithoutPersistence(Integer promptTokens, Integer completionTokens) {
-        Logger logger = (Logger) LoggerFactory.getLogger(LLMTokenUsageService.class);
-        ListAppender<ILoggingEvent> logAppender = new ListAppender<>();
-        logAppender.start();
-        logger.addAppender(logAppender);
-        try {
-            llmTokenUsageService.trackChatResponseTokenUsage(responseWithTokens(promptTokens, completionTokens), LLMServiceType.ATLAS, "INCOMPLETE_USAGE",
-                    builder -> builder.withCourse(42L));
+        List<ILoggingEvent> warnings = warningsLoggedBy(() -> llmTokenUsageService.trackChatResponseTokenUsage(responseWithTokens(promptTokens, completionTokens),
+                LLMServiceType.ATLAS, "INCOMPLETE_USAGE", builder -> builder.withCourse(42L)));
 
-            assertThat(logAppender.list).filteredOn(event -> event.getLevel() == Level.WARN).extracting(ILoggingEvent::getFormattedMessage)
-                    .anySatisfy(message -> assertThat(message).contains("INCOMPLETE_USAGE", "usage metadata is incomplete"));
-            verifyNoInteractions(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository);
-        }
-        finally {
-            logger.detachAppender(logAppender);
-            logAppender.stop();
-        }
+        assertThat(warnings).singleElement().satisfies(event -> assertThat(event.getFormattedMessage()).contains("INCOMPLETE_USAGE", "usage metadata is incomplete",
+                "prompt tokens: " + promptTokens, "completion tokens: " + completionTokens));
+        verifyNoInteractions(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository);
     }
 
     @Test
     void trackChatResponseTokenUsage_withReportedZeroTokenCounts_persistsAccounting() {
-        llmTokenUsageService.trackChatResponseTokenUsage(responseWithTokens(0, 0), LLMServiceType.ATLAS, "ZERO_USAGE", builder -> builder.withCourse(42L));
+        List<ILoggingEvent> warnings = warningsLoggedBy(
+                () -> llmTokenUsageService.trackChatResponseTokenUsage(responseWithTokens(0, 0), LLMServiceType.ATLAS, "ZERO_USAGE", builder -> builder.withCourse(42L)));
+        assertThat(warnings).as("reported zeros are a valid usage, not a failure").isEmpty();
         var saved = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
         verify(llmTokenUsageTraceRepository).save(saved.capture());
         assertThat(saved.getValue().getLLMRequests()).singleElement().satisfies(request -> {
@@ -200,14 +251,28 @@ class LLMTokenUsageServiceTest {
     @Test
     void trackChatResponseTokenUsage_whenPersistenceFails_logsAndReturns() {
         when(llmTokenUsageTraceRepository.save(any())).thenThrow(new IllegalStateException("database unavailable"));
+
+        List<ILoggingEvent> warnings = warningsLoggedBy(
+                () -> llmTokenUsageService.trackChatResponseTokenUsage(validResponse(), LLMServiceType.ATLAS, "ATLAS_ORCHESTRATION", builder -> builder.withCourse(42L)));
+
+        assertThat(warnings).singleElement().satisfies(event -> {
+            assertThat(event.getFormattedMessage()).contains("ATLAS_ORCHESTRATION", "database unavailable");
+            assertThat(event.getThrowableProxy().getClassName()).isEqualTo(IllegalStateException.class.getName());
+        });
+        verify(llmTokenUsageTraceRepository).save(any());
+    }
+
+    /**
+     * Runs the action while collecting what the service logs at WARN level.
+     */
+    private static List<ILoggingEvent> warningsLoggedBy(Runnable action) {
         Logger logger = (Logger) LoggerFactory.getLogger(LLMTokenUsageService.class);
         ListAppender<ILoggingEvent> logAppender = new ListAppender<>();
         logAppender.start();
         logger.addAppender(logAppender);
         try {
-            llmTokenUsageService.trackChatResponseTokenUsage(validResponse(), LLMServiceType.ATLAS, "ATLAS_ORCHESTRATION", builder -> builder.withCourse(42L));
-            assertThat(logAppender.list).filteredOn(event -> event.getLevel() == Level.WARN).extracting(ILoggingEvent::getFormattedMessage)
-                    .anySatisfy(message -> assertThat(message).contains("ATLAS_ORCHESTRATION", "database unavailable"));
+            action.run();
+            return logAppender.list.stream().filter(event -> event.getLevel() == Level.WARN).toList();
         }
         finally {
             logger.detachAppender(logAppender);
