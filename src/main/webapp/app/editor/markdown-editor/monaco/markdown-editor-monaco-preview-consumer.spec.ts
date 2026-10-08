@@ -89,6 +89,16 @@ describe('MarkdownEditorMonacoComponent with the programming exercise instructio
 
     const previewWrapper = () => hostFixture.nativeElement.querySelector('.instructions-preview-wrapper') as HTMLElement;
 
+    /** Compares by identity: the very same elements must still be attached, not structurally equal re-rendered copies. */
+    const expectSameTaskStatusElements = (expected: Element[]) => {
+        const current = Array.from(previewWrapper().querySelectorAll('.task-name'));
+        expect(current).toHaveLength(expected.length);
+        expected.forEach((element, index) => {
+            expect(current[index]).toBe(element);
+            expect(element.isConnected).toBe(true);
+        });
+    };
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [MockModule(NgbTooltipModule), InstructionPreviewHostComponent],
@@ -119,7 +129,6 @@ describe('MarkdownEditorMonacoComponent with the programming exercise instructio
             .compileComponents();
         globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
         httpMock = TestBed.inject(HttpTestingController);
-        // The first test passes, the second one has not been executed yet.
         const latestResult: Result = { id: 1, feedbacks: [{ testCase: { id: 1, testName: 'testBubbleSort' }, positive: true }] };
         vi.spyOn(TestBed.inject(ProgrammingExerciseParticipationService), 'getLatestResultWithFeedback').mockReturnValue(of(latestResult));
     });
@@ -177,12 +186,12 @@ describe('MarkdownEditorMonacoComponent with the programming exercise instructio
         editor.onTabChange(MarkdownEditorMonacoComponent.TAB_PREVIEW);
         hostFixture.detectChanges();
         expect(previewWrapper().closest('.hidden')).toBeNull();
-        expect(Array.from(previewWrapper().querySelectorAll('.task-name'))).toEqual(taskStatuses);
+        expectSameTaskStatusElements(taskStatuses);
 
         editor.onTabChange(MarkdownEditorMonacoComponent.TAB_EDIT);
         hostFixture.detectChanges();
         expect(previewWrapper().closest('.hidden')).not.toBeNull();
-        expect(Array.from(previewWrapper().querySelectorAll('.task-name'))).toEqual(taskStatuses);
+        expectSameTaskStatusElements(taskStatuses);
     });
 
     it('should inject the PlantUML diagram at startup into the hidden preview before the preview tab is opened', async () => {
