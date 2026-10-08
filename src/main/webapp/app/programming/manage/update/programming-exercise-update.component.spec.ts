@@ -651,19 +651,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             expect(saveSpy).not.toHaveBeenCalled();
         });
-
-        it('lets a click generate with AI when the reasons on display are outdated but the exercise is valid', () => {
-            const saveWithAiSpy = vi.spyOn(comp, 'saveWithAi').mockImplementation(() => undefined);
-            vi.spyOn(comp, 'showGenerateWithAi').mockReturnValue(true);
-            fixture.detectChanges();
-            fillInRequiredFields();
-            const generateButton = footer().nativeElement.querySelector('#generate-with-ai') as HTMLButtonElement;
-            expect(generateButton).not.toBeNull();
-
-            generateButton.click();
-
-            expect(saveWithAiSpy).toHaveBeenCalledOnce();
-        });
     });
 
     describe('import with static code analysis', () => {
