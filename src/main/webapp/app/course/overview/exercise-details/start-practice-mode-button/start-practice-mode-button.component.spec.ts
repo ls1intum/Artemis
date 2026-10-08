@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TemplateRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -11,7 +13,7 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
-import { Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
@@ -160,6 +162,63 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         await fixture.whenStable();
 
         expect(comp.gradedStudentParticipation()).toEqual(gradedTeamPart);
+    });
+
+    describe('popover of a programming exercise', () => {
+        const gradedPart = { id: 1, initializationState: InitializationState.FINISHED, testRun: false } as StudentParticipation;
+
+        /** Renders the content of the popover, which the button opens on click, into a detached view. */
+        const renderPopover = async (teamMode: boolean): Promise<HTMLElement> => {
+            const exercise = {
+                id: 45,
+                type: ExerciseType.PROGRAMMING,
+                teamMode,
+                dueDate: dayjs().subtract(5, 'minutes'),
+                studentParticipations: [gradedPart],
+            } as ProgrammingExercise;
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('smallButtons', false);
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+            fixture.changeDetectorRef.detectChanges();
+
+            const popover = fixture.debugElement.query(By.css('button[jhi-exercise-action-button]')).injector.get(NgbPopover);
+            const view = (popover.ngbPopover as TemplateRef<unknown>).createEmbeddedView({});
+            view.detectChanges();
+            return view.rootNodes.find((node: Node) => node.nodeType === Node.ELEMENT_NODE) as HTMLElement;
+        };
+
+        const translationKeys = (popover: HTMLElement) => Array.from(popover.querySelectorAll('[jhiTranslate]')).map((element) => element.getAttribute('jhiTranslate'));
+
+        it('should offer the repository of the graded participation as baseline for an individual exercise', async () => {
+            const popover = await renderPopover(false);
+
+            expect(translationKeys(popover)).toContain('artemisApp.exerciseActions.practiceMode.repositoryChoice');
+            // one button to start from the template and one to start from the graded repository
+            expect(popover.querySelectorAll('button[jhi-exercise-action-button]')).toHaveLength(2);
+        });
+
+        it('should only offer the template as baseline for a team exercise, whose graded participation belongs to the team', async () => {
+            const popover = await renderPopover(true);
+
+            expect(translationKeys(popover)).not.toContain('artemisApp.exerciseActions.practiceMode.repositoryChoice');
+            expect(translationKeys(popover)).toEqual(['artemisApp.exerciseActions.practiceMode.title', 'artemisApp.exerciseActions.practiceMode.explanation']);
+            expect(popover.querySelectorAll('button[jhi-exercise-action-button]')).toHaveLength(1);
+        });
+
+        it('should start the practice mode of a team exercise without the graded participation and report the practice participation', async () => {
+            const practicePart = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation;
+            const started: StudentParticipation[] = [];
+            comp.practiceModeStarted.subscribe((participation) => started.push(participation));
+            await renderPopover(true);
+            startPracticeStub.mockReturnValue(of(practicePart));
+
+            comp.startPractice(false);
+
+            expect(startPracticeStub).toHaveBeenCalledExactlyOnceWith(45, false, comp.exercise());
+            expect(started).toEqual([practicePart]);
+            expect(alertServiceSuccessStub).toHaveBeenCalledWith('artemisApp.exercise.personalRepositoryOnline');
+        });
     });
 
     it('should ignore a second start while starting the practice mode is in flight', () => {

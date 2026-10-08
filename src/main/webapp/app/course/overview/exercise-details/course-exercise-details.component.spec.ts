@@ -37,7 +37,7 @@ import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, NEVER, of, throwError } from 'rxjs';
+import { BehaviorSubject, NEVER, Subject, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -249,6 +249,75 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.exercise).toStrictEqual(exercise);
         expect(comp.showMoreResults()).toBe(false);
         comp.ngOnDestroy();
+    });
+
+    describe('team assignment updates', () => {
+        const oldTeamParticipation = { id: 1, type: ParticipationType.STUDENT, testRun: false, submissions: [] } as unknown as StudentParticipation;
+        const practiceParticipation = { id: 2, type: ParticipationType.STUDENT, testRun: true, submissions: [] } as unknown as StudentParticipation;
+        const newTeamParticipation = { id: 3, type: ParticipationType.STUDENT, testRun: false, submissions: [] } as unknown as StudentParticipation;
+
+        const subscribeToAssignments = async (teamExercise: Exercise) => {
+            const assignments = new Subject<TeamAssignmentPayload>();
+            vi.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(assignments));
+            // the merge is not under test here, so every participation is kept as it is
+            mergeStudentParticipationMock.mockImplementation((participations: StudentParticipation[]) => participations);
+            comp.exercise = teamExercise;
+            await comp.subscribeToTeamAssignmentUpdates();
+            return assignments;
+        };
+
+        it('should keep the practice participation of the student when the team assignment replaces the team participations', async () => {
+            const assignments = await subscribeToAssignments({
+                id: 42,
+                type: ExerciseType.TEXT,
+                teamMode: true,
+                studentParticipations: [oldTeamParticipation, practiceParticipation],
+            } as Exercise);
+
+            assignments.next({ exerciseId: 42, teamId: 7, studentParticipations: [newTeamParticipation] } as TeamAssignmentPayload);
+
+            expect(comp.exercise?.studentAssignedTeamId).toBe(7);
+            // the participations of the team are replaced, the individual practice participation survives
+            expect(comp.exercise?.studentParticipations?.map((participation) => participation.id)).toEqual([3, 2]);
+            // and both are handed on to the view: one graded and one practice participation
+            expect(comp.studentParticipations.map((participation) => participation.id)).toEqual([3, 2]);
+            expect(comp.studentParticipations.map((participation) => !!participation.testRun)).toEqual([false, true]);
+        });
+
+        it('should not duplicate a practice participation the assignment delivers as well', async () => {
+            const assignments = await subscribeToAssignments({
+                id: 42,
+                type: ExerciseType.TEXT,
+                teamMode: true,
+                studentParticipations: [oldTeamParticipation, practiceParticipation],
+            } as Exercise);
+
+            assignments.next({ exerciseId: 42, teamId: 7, studentParticipations: [newTeamParticipation, practiceParticipation] } as TeamAssignmentPayload);
+
+            expect(comp.exercise?.studentParticipations?.map((participation) => participation.id)).toEqual([3, 2]);
+        });
+
+        it('should replace the participations of a student who has not started the practice mode', async () => {
+            const assignments = await subscribeToAssignments({ id: 42, type: ExerciseType.TEXT, teamMode: true, studentParticipations: [oldTeamParticipation] } as Exercise);
+
+            assignments.next({ exerciseId: 42, teamId: 7, studentParticipations: [newTeamParticipation] } as TeamAssignmentPayload);
+
+            expect(comp.exercise?.studentParticipations?.map((participation) => participation.id)).toEqual([3]);
+        });
+
+        it('should ignore the team assignment of another exercise', async () => {
+            const assignments = await subscribeToAssignments({
+                id: 42,
+                type: ExerciseType.TEXT,
+                teamMode: true,
+                studentParticipations: [oldTeamParticipation, practiceParticipation],
+            } as Exercise);
+
+            assignments.next({ exerciseId: 43, teamId: 7, studentParticipations: [newTeamParticipation] } as TeamAssignmentPayload);
+
+            expect(comp.exercise?.studentAssignedTeamId).toBeUndefined();
+            expect(comp.exercise?.studentParticipations?.map((participation) => participation.id)).toEqual([1, 2]);
+        });
     });
 
     it('should have student participations', async () => {

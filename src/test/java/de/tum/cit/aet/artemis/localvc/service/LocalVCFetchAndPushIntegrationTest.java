@@ -1604,6 +1604,91 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             }
         }
 
+        /**
+         * The practice repository of a team exercise belongs to the student alone. The token of the team's graded participation, even of the same student, is scoped to the
+         * team's repository and must not authenticate for the practice repository. Without the positive control in the same state, the rejection could also come from a
+         * broken setup.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testFetchPush_teamExercisePracticeRepository_tokenOfTheTeamParticipationIsRejected() throws Exception {
+            ProgrammingExercise exercise = createTeamProgrammingExerciseOpenForPractice("test-team-prac-team-token", "practiceteamtoken");
+            String projectKey = exercise.getProjectKey();
+            Team team = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), student1.getId()).orElseThrow();
+            var teamParticipation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team);
+            localVCLocalCITestService.createParticipationVcsAccessToken(student1, teamParticipation.getId());
+            String teamToken = localVCLocalCITestService.getParticipationVcsAccessToken(student1, teamParticipation.getId()).getVcsAccessToken();
+
+            userUtilService.changeUser(TEST_PREFIX + "student1");
+            mockDockerClientForStudentBuild();
+            var practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/practice", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
+            String practiceRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-practice-" + student1.getLogin();
+            String practiceToken = localVCLocalCITestService.getParticipationVcsAccessToken(student1, practiceParticipation.id()).getVcsAccessToken();
+            assertThat(teamToken).isNotEqualTo(practiceToken);
+
+            // Disable LDAP fallback so success can only come from participation token auth
+            doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
+
+            // positive control: the token of the practice participation opens the practice repository
+            String practiceUri = buildRepositoryUriWithToken(student1.getLogin(), practiceToken, projectKey, practiceRepoSlug);
+            Path practiceClonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-team-practice-own-token-clone-");
+            clonedRepoPaths.add(practiceClonePath);
+            mockDockerClientForStudentBuild();
+            try (Git git = Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(practiceUri).setDirectory(practiceClonePath.toFile()).call()) {
+                assertThat(git).isNotNull();
+            }
+
+            // the token of the team's participation does not
+            String teamTokenUri = buildRepositoryUriWithToken(student1.getLogin(), teamToken, projectKey, practiceRepoSlug);
+            Path rejectedClonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-team-practice-team-token-clone-");
+            clonedRepoPaths.add(rejectedClonePath);
+            assertThatThrownBy(
+                    () -> Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(teamTokenUri).setDirectory(rejectedClonePath.toFile()).call())
+                    .isInstanceOf(TransportException.class).hasMessageContaining(NOT_AUTHORIZED);
+        }
+
+        /**
+         * The reverse direction: the token of the practice participation is scoped to the practice repository and must not authenticate for the repository of the team.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testFetchPush_teamExerciseTeamRepository_tokenOfThePracticeParticipationIsRejected() throws Exception {
+            ProgrammingExercise exercise = createTeamProgrammingExerciseOpenForPractice("test-team-token-vs-team", "practiceteamrepo");
+            String projectKey = exercise.getProjectKey();
+            Team team = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), student1.getId()).orElseThrow();
+            var teamParticipation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team);
+            localVCLocalCITestService.createParticipationVcsAccessToken(student1, teamParticipation.getId());
+            String teamToken = localVCLocalCITestService.getParticipationVcsAccessToken(student1, teamParticipation.getId()).getVcsAccessToken();
+            String teamRepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + team.getShortName();
+
+            userUtilService.changeUser(TEST_PREFIX + "student1");
+            mockDockerClientForStudentBuild();
+            var practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/practice", null,
+                    StudentParticipationDTO.class, HttpStatus.CREATED);
+            String practiceToken = localVCLocalCITestService.getParticipationVcsAccessToken(student1, practiceParticipation.id()).getVcsAccessToken();
+
+            // Disable LDAP fallback so success can only come from participation token auth
+            doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
+
+            // positive control: the token of the team's participation opens the team repository
+            String teamUri = buildRepositoryUriWithToken(student1.getLogin(), teamToken, projectKey, teamRepoSlug);
+            Path teamClonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-team-repo-own-token-clone-");
+            clonedRepoPaths.add(teamClonePath);
+            mockDockerClientForStudentBuild();
+            try (Git git = Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(teamUri).setDirectory(teamClonePath.toFile()).call()) {
+                assertThat(git).isNotNull();
+            }
+
+            // the token of the practice participation does not
+            String practiceTokenUri = buildRepositoryUriWithToken(student1.getLogin(), practiceToken, projectKey, teamRepoSlug);
+            Path rejectedClonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-team-repo-practice-token-clone-");
+            clonedRepoPaths.add(rejectedClonePath);
+            assertThatThrownBy(
+                    () -> Git.cloneRepository().setCredentialsProvider(ONLY_THE_CREDENTIALS_IN_THE_URI).setURI(practiceTokenUri).setDirectory(rejectedClonePath.toFile()).call())
+                    .isInstanceOf(TransportException.class).hasMessageContaining(NOT_AUTHORIZED);
+        }
+
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testFetchPush_individualExercise_withParticipationVcsAccessToken() throws Exception {

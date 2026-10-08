@@ -5,6 +5,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params, RouterModule } from '@angular/router';
 import { type CollaborationUser, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
@@ -240,6 +241,106 @@ describe('ModelingSubmissionComponent', () => {
         comp.participation.set(participation);
 
         expect(comp.teamCollaborationEnabled()).toBe(expected);
+    });
+
+    describe('team exercise', () => {
+        type TeamModeInternals = { setAutoSaveTimer: () => void; setupSubmissionStreamForTeam: () => void };
+
+        /** Opens the editor for a participation of a team exercise, as the route does, with the timers of both modes stubbed out. */
+        const openTeamExercise = async (testRun: boolean, dueDate: dayjs.Dayjs) => {
+            createModelingSubmissionComponent();
+            const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            modelingExercise.id = 22;
+            modelingExercise.teamMode = true;
+            modelingExercise.dueDate = dueDate;
+            const teamParticipation = new StudentParticipation();
+            teamParticipation.id = 1;
+            teamParticipation.testRun = testRun;
+            teamParticipation.exercise = modelingExercise;
+            teamParticipation.initializationDate = dayjs().subtract(2, 'days');
+            const teamSubmission = new ModelingSubmission();
+            teamSubmission.id = 20;
+            teamSubmission.submitted = false;
+            teamSubmission.model = validMockModel;
+            teamSubmission.participation = teamParticipation;
+            vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(teamSubmission));
+            const internals = comp as unknown as TeamModeInternals;
+            const autoSave = vi.spyOn(internals, 'setAutoSaveTimer').mockImplementation(() => {});
+            const teamStream = vi.spyOn(internals, 'setupSubmissionStreamForTeam').mockImplementation(() => {});
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            return { autoSave, teamStream };
+        };
+
+        const editorOf = () => fixture.debugElement.query(By.directive(StubModelingEditorComponent)).componentInstance as StubModelingEditorComponent;
+
+        it('should synchronize the graded participation with the team', async () => {
+            const { autoSave, teamStream } = await openTeamExercise(false, dayjs().add(1, 'day'));
+
+            expect(comp.teamCollaborationEnabled()).toBe(true);
+            expect(teamStream).toHaveBeenCalledOnce();
+            expect(autoSave).not.toHaveBeenCalled();
+            expect(fixture.debugElement.query(By.directive(TeamSubmissionSyncComponent))).not.toBeNull();
+            // the team edits one shared diagram, which has no saved status of its own
+            expect(editorOf().collaborationEnabled()).toBe(true);
+            expect(editorOf().savedStatus()).toBeUndefined();
+        });
+
+        it('should edit the practice participation alone and save it by itself', async () => {
+            const { autoSave, teamStream } = await openTeamExercise(true, dayjs().subtract(1, 'day'));
+
+            expect(comp.teamCollaborationEnabled()).toBe(false);
+            expect(autoSave).toHaveBeenCalledOnce();
+            expect(teamStream).not.toHaveBeenCalled();
+            expect(fixture.debugElement.query(By.directive(TeamSubmissionSyncComponent))).toBeNull();
+            expect(editorOf().collaborationEnabled()).toBe(false);
+            expect(editorOf().savedStatus()).toEqual({ isChanged: false, isSaving: false });
+        });
+
+        it.each([
+            { testRun: false, dueDate: () => dayjs().add(1, 'day'), emits: true },
+            { testRun: true, dueDate: () => dayjs().subtract(1, 'day'), emits: false },
+        ])('should forward a model patch to the team only for the graded participation (practice: $testRun)', async ({ testRun, dueDate, emits }) => {
+            await openTeamExercise(testRun, dueDate());
+            const patches: unknown[] = [];
+            const patchSubscription = comp['submissionPatchObservable'].subscribe((patch) => patches.push(patch));
+
+            comp.onModelPatch('[{"op":"add"}]');
+            patchSubscription.unsubscribe();
+
+            expect(patches).toHaveLength(emits ? 1 : 0);
+        });
+
+        it('should refresh the editor from the saved submission only when the diagram is not shared with the team', async () => {
+            await openTeamExercise(true, dayjs().subtract(1, 'day'));
+            const staleModel = { version: '3.0.0', elements: {}, relationships: {} } as unknown as UMLModel;
+            comp.umlModel.set(staleModel);
+
+            comp['refreshNonCollaborativeEditorFromSavedSubmission']();
+
+            // the saved diagram of the practice participation is imported again, replacing what the editor showed
+            expect(comp.umlModel()).toBeDefined();
+            expect(comp.umlModel()).not.toBe(staleModel);
+        });
+
+        it('should keep the live diagram of the team when the saved submission is shown again', async () => {
+            await openTeamExercise(false, dayjs().add(1, 'day'));
+            const liveModel = { version: '3.0.0', elements: {}, relationships: {} } as unknown as UMLModel;
+            comp.umlModel.set(liveModel);
+
+            comp['refreshNonCollaborativeEditorFromSavedSubmission']();
+
+            // importing the saved snapshot of the team could discard newer edits in the shared document
+            expect(comp.umlModel()).toBe(liveModel);
+        });
+
+        it('should not collaborate before the participation is loaded', () => {
+            createModelingSubmissionComponent();
+
+            expect(comp.teamCollaborationEnabled()).toBe(false);
+        });
     });
 
     it('should initialize with submissionId (Feedback View Mode)', () => {

@@ -116,10 +116,10 @@ describe('TextEditorComponent', () => {
         })
             .overrideComponent(TextEditorComponent, {
                 remove: {
-                    imports: [RequestFeedbackButtonComponent],
+                    imports: [RequestFeedbackButtonComponent, TeamParticipateInfoBoxComponent, TeamSubmissionSyncComponent],
                 },
                 add: {
-                    imports: [MockRequestFeedbackButtonComponent, FormsModule],
+                    imports: [MockRequestFeedbackButtonComponent, FormsModule, MockComponent(TeamParticipateInfoBoxComponent), MockComponent(TeamSubmissionSyncComponent)],
                 },
             })
             .compileComponents();
@@ -546,13 +546,33 @@ describe('TextEditorComponent', () => {
             expect(comp.teamCollaborationEnabled()).toBe(true);
         });
 
+        // positive control of the practice test below: the same exercise, state and rendering show both team components for the graded participation
+        it('should show the team info box and synchronize with the team for the graded participation of a team exercise', () => {
+            setUp(false);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(fixture.debugElement.query(By.css('jhi-team-participate-info-box'))).toBeTruthy();
+            expect(fixture.debugElement.query(By.css('jhi-team-submission-sync'))).toBeTruthy();
+            expect(fixture.debugElement.query(By.css('#text-editor'))).toBeTruthy();
+        });
+
+        it('should not show the team components in an individual exercise', () => {
+            comp.textExercise.set({ id: 1, teamMode: false, dueDate: dayjs().add(1, 'day') } as TextExercise);
+            comp.participation.set({ id: 42, testRun: false, submissions: [new TextSubmission()] } as StudentParticipation);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(fixture.debugElement.query(By.css('jhi-team-participate-info-box'))).toBeFalsy();
+            expect(fixture.debugElement.query(By.css('jhi-team-submission-sync'))).toBeFalsy();
+            expect(fixture.debugElement.query(By.css('#text-editor'))).toBeTruthy();
+        });
+
         it('should neither show the team info box nor synchronize with the team for the individual practice participation of a team exercise', () => {
             setUp(true);
             fixture.changeDetectorRef.detectChanges();
 
             expect(comp.teamCollaborationEnabled()).toBe(false);
-            expect(fixture.debugElement.query(By.directive(TeamParticipateInfoBoxComponent))).toBeFalsy();
-            expect(fixture.debugElement.query(By.directive(TeamSubmissionSyncComponent))).toBeFalsy();
+            expect(fixture.debugElement.query(By.css('jhi-team-participate-info-box'))).toBeFalsy();
+            expect(fixture.debugElement.query(By.css('jhi-team-submission-sync'))).toBeFalsy();
             // the editor itself is rendered, the practice participation is edited alone
             expect(fixture.debugElement.query(By.css('#text-editor'))).toBeTruthy();
         });

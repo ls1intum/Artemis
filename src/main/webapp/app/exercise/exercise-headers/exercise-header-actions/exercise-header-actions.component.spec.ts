@@ -38,6 +38,18 @@ import { InitializationState } from 'app/exercise/shared/entities/participation/
 describe('ExerciseHeaderActionsComponent', () => {
     let fixture: ComponentFixture<ExerciseHeaderActionsComponent>;
 
+    /** An exercise of exactly the given type, so that the type specific rules are not tested on an exercise of another class. */
+    function createExerciseOfType(type: ExerciseType): Exercise {
+        switch (type) {
+            case ExerciseType.TEXT:
+                return new TextExercise(undefined, undefined);
+            case ExerciseType.MODELING:
+                return new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            default:
+                return new ProgrammingExercise(undefined, undefined);
+        }
+    }
+
     function withCourse(exercise: Exercise, athenaFormativeFeedbackEnabled: boolean): Exercise {
         const course = new Course();
         course.athenaFormativeFeedbackEnabled = athenaFormativeFeedbackEnabled;
@@ -129,8 +141,7 @@ describe('ExerciseHeaderActionsComponent', () => {
             'should offer starting practice for a team %s exercise after the due date until the own practice participation exists',
             (type) => {
                 const teamParticipation = { id: 10, testRun: false, initializationState: InitializationState.FINISHED } as StudentParticipation;
-                const exercise = new ProgrammingExercise(undefined, undefined);
-                exercise.type = type;
+                const exercise = createExerciseOfType(type);
                 exercise.teamMode = true;
                 exercise.studentAssignedTeamId = 3;
                 exercise.dueDate = dayjs().subtract(1, 'hour');
@@ -150,8 +161,7 @@ describe('ExerciseHeaderActionsComponent', () => {
 
     describe('practice mode and the individual due date of the graded participation', () => {
         const createTeamExercise = (type: ExerciseType, teamParticipation: StudentParticipation) => {
-            const exercise = new ProgrammingExercise(undefined, undefined);
-            exercise.type = type;
+            const exercise = createExerciseOfType(type);
             exercise.teamMode = true;
             exercise.studentAssignedTeamId = 3;
             exercise.dueDate = dayjs().subtract(1, 'day');
@@ -163,8 +173,7 @@ describe('ExerciseHeaderActionsComponent', () => {
             'should not offer starting practice for a %s exercise while an extension is running',
             (type) => {
                 const graded = { id: 10, testRun: false, initializationState: InitializationState.FINISHED, individualDueDate: dayjs().add(1, 'hour') } as StudentParticipation;
-                const exercise = new ProgrammingExercise(undefined, undefined);
-                exercise.type = type;
+                const exercise = createExerciseOfType(type);
                 exercise.dueDate = dayjs().subtract(1, 'day');
                 exercise.studentParticipations = [graded];
                 createComponent(exercise);
@@ -175,8 +184,7 @@ describe('ExerciseHeaderActionsComponent', () => {
 
         it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])('should offer starting practice for a %s exercise once the extension has passed', (type) => {
             const graded = { id: 10, testRun: false, initializationState: InitializationState.FINISHED, individualDueDate: dayjs().subtract(1, 'hour') } as StudentParticipation;
-            const exercise = new ProgrammingExercise(undefined, undefined);
-            exercise.type = type;
+            const exercise = createExerciseOfType(type);
             exercise.dueDate = dayjs().subtract(1, 'day');
             exercise.studentParticipations = [graded];
             createComponent(exercise);

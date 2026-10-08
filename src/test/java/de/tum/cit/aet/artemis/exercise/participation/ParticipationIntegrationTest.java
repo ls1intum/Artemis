@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.participation;
 
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.doNothing;
@@ -13,12 +14,14 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 
 import java.net.URI;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -63,6 +66,7 @@ import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -70,6 +74,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
@@ -94,6 +99,7 @@ import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
@@ -145,6 +151,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private ParticipationService participationService;
+
+    @Autowired
+    private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
     @Autowired
     private ParticipationDeletionService participationDeletionService;
@@ -651,6 +660,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(participation.repositoryUri()).isNotBlank();
         assertThat(participation.id()).isNotEqualTo(teamParticipation.getId());
         assertTeamParticipationUnchanged(teamParticipation.getId(), teamParticipationState);
+
+        // the student pushes to the practice repository with a token of the practice participation, and the practice participation is the only one with a token of the student
+        assertThat(participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), participation.id())).as("a token is created for the practice participation")
+                .isPresent();
+        assertThat(participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), teamParticipation.getId()))
+                .as("practice does not create a token for the team's participation").isEmpty();
+        assertThat(participation.repositoryUri()).as("the practice repository is not the team's repository").isNotEqualTo(teamParticipation.getRepositoryUri());
     }
 
     @Test
@@ -916,7 +932,174 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst());
         examTextExercise.setMode(ExerciseMode.TEAM);
         examTextExercise = exerciseRepository.save(examTextExercise);
-        request.post("/api/exercise/exercises/" + examTextExercise.getId() + "/participations/practice", null, HttpStatus.BAD_REQUEST);
+        // the error key pins the guard that rejects the request, so another guard cannot satisfy the status by accident
+        request.postAndExpectError("/api/exercise/exercises/" + examTextExercise.getId() + "/participations/practice", null, HttpStatus.BAD_REQUEST,
+                "dueDateOver.notAvailableInExam");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceFileUploadTeamExercise_unsupportedExerciseType_notImplemented() throws Exception {
+        List<FileUploadExercise> fileUploadExercises = fileUploadExerciseUtilService.createEnrolledFileUploadExercisesWithCourse(TEST_PREFIX);
+        FileUploadExercise fileUploadExercise = fileUploadExercises.getFirst();
+        fileUploadExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        fileUploadExercise.setMode(ExerciseMode.TEAM);
+        fileUploadExercise = exerciseRepository.save(fileUploadExercise);
+
+        // a file upload exercise is still not supported, the removed team check was not the only reason for a 501
+        request.postAndExpectError("/api/exercise/exercises/" + fileUploadExercise.getId() + "/participations/practice", null, HttpStatus.NOT_IMPLEMENTED,
+                "dueDateOver.unsupportedExerciseType");
+        assertNoPracticeParticipation(fileUploadExercise, TEST_PREFIX + "student1");
+    }
+
+    /**
+     * Practice of a team exercise before the working period of the team is over: the exercise due date has not passed yet.
+     */
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "PROGRAMMING" })
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceTeamExercise_beforeDueDate_forbidden(ExerciseType type) throws Exception {
+        var setup = prepareTeamExerciseWithTeamParticipation(type, ZonedDateTime.now().plusHours(1), null);
+
+        request.post("/api/exercise/exercises/" + setup.exercise().getId() + "/participations/practice", null, HttpStatus.FORBIDDEN);
+
+        assertNoPracticeParticipation(setup.exercise(), TEST_PREFIX + "student1");
+        assertTeamParticipationUnchanged(setup.teamParticipation().getId(), setup.teamParticipation().getInitializationState());
+    }
+
+    /**
+     * The exercise due date is over, but the team has an extension that is still running: the team keeps working, so nobody of the team may practice yet.
+     */
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(value = ExerciseType.class, names = { "MODELING", "PROGRAMMING" })
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceTeamExercise_beforeTeamDueDateExtensionOver_forbidden(ExerciseType type) throws Exception {
+        var setup = prepareTeamExerciseWithTeamParticipation(type, ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(2));
+
+        request.post("/api/exercise/exercises/" + setup.exercise().getId() + "/participations/practice", null, HttpStatus.FORBIDDEN);
+
+        assertNoPracticeParticipation(setup.exercise(), TEST_PREFIX + "student1");
+    }
+
+    /**
+     * The extension of the team is over as well, so practice is available, and it is the student's own participation, not the team's.
+     */
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING" })
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceTeamExercise_afterTeamDueDateExtensionOver_successful(ExerciseType type) throws Exception {
+        var setup = prepareTeamExerciseWithTeamParticipation(type, ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusMinutes(30));
+
+        StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + setup.exercise().getId() + "/participations/practice", null,
+                StudentParticipationDTO.class, HttpStatus.CREATED);
+
+        assertThat(participation.testRun()).isTrue();
+        assertThat(participation.team()).isNull();
+        assertThat(participation.id()).isNotEqualTo(setup.teamParticipation().getId());
+        assertThat(participationRepo.findByIdElseThrow(setup.teamParticipation().getId()).getIndividualDueDate()).as("the extension of the team is not changed by practice")
+                .isCloseTo(setup.teamParticipation().getIndividualDueDate(), within(1, ChronoUnit.SECONDS));
+    }
+
+    /**
+     * The extension belongs to the team and therefore holds back every member of it, not only the one who got the extension from the instructor.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2")
+    void practiceTextExercise_teamExercise_extensionOfTheTeamAppliesToEveryMember_forbidden() throws Exception {
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        textExercise.setMode(ExerciseMode.TEAM);
+        textExercise = exerciseRepository.save(textExercise);
+        var team = createTeamForExercise(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), textExercise);
+        team.addStudents(userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+        team = teamRepository.save(team);
+        textExercise = (TextExercise) addTeamToExercise(team, textExercise);
+        var teamParticipation = participationUtilService.addTeamParticipationForExercise(textExercise, team.getId());
+        teamParticipation.setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+        participationRepo.save(teamParticipation);
+
+        request.post("/api/exercise/exercises/" + textExercise.getId() + "/participations/practice", null, HttpStatus.FORBIDDEN);
+
+        assertNoPracticeParticipation(textExercise, TEST_PREFIX + "student2");
+    }
+
+    /**
+     * The extension of another team must not hold back a student who is not part of that team.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student3")
+    void practiceTextExercise_teamExercise_extensionOfAnotherTeamDoesNotApply_successful() throws Exception {
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        textExercise.setMode(ExerciseMode.TEAM);
+        textExercise = exerciseRepository.save(textExercise);
+        var team = createTeamForExercise(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), textExercise);
+        textExercise = (TextExercise) addTeamToExercise(team, textExercise);
+        var teamParticipation = participationUtilService.addTeamParticipationForExercise(textExercise, team.getId());
+        teamParticipation.setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+        participationRepo.save(teamParticipation);
+
+        StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations/practice", null,
+                StudentParticipationDTO.class, HttpStatus.CREATED);
+
+        assertThat(participation.testRun()).isTrue();
+        assertThat(participation.student().getId()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "student3").getId());
+    }
+
+    /**
+     * Practice of a team exercise needs the student to be part of the course, like any other participation.
+     */
+    @Test
+    @WithMockUser(username = OTHER_STUDENT_LOGIN)
+    void practiceTextExercise_teamExercise_notEnrolledInCourse_forbidden() throws Exception {
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        textExercise.setMode(ExerciseMode.TEAM);
+        textExercise = exerciseRepository.save(textExercise);
+
+        request.post("/api/exercise/exercises/" + textExercise.getId() + "/participations/practice", null, HttpStatus.FORBIDDEN);
+
+        assertNoPracticeParticipation(textExercise, OTHER_STUDENT_LOGIN);
+    }
+
+    private void assertNoPracticeParticipation(Exercise exercise, String login) {
+        assertThat(participationRepo.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), userUtilService.getUserByLogin(login).getId(), true))
+                .as("a rejected request must not create the practice participation").isEmpty();
+    }
+
+    private record TeamExerciseSetup(Exercise exercise, StudentParticipation teamParticipation) {
+    }
+
+    /**
+     * Turns the exercise of the given type into a team exercise with the given due date, creates a team of student1 and the team's graded participation.
+     *
+     * @param type                  the exercise type
+     * @param dueDate               the due date of the exercise
+     * @param teamIndividualDueDate the extension of the team participation, or null
+     * @return the exercise and the team's participation
+     */
+    private TeamExerciseSetup prepareTeamExerciseWithTeamParticipation(ExerciseType type, ZonedDateTime dueDate, ZonedDateTime teamIndividualDueDate) throws Exception {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        Exercise exercise = switch (type) {
+            case TEXT -> textExercise;
+            case MODELING -> modelingExercise;
+            case PROGRAMMING -> programmingExercise;
+            default -> throw new IllegalArgumentException("unsupported type " + type);
+        };
+        if (type == ExerciseType.PROGRAMMING) {
+            prepareMocksForProgrammingExercise();
+            exercise = programmingExercise;
+        }
+        exercise.setDueDate(dueDate);
+        exercise.setMode(ExerciseMode.TEAM);
+        exercise = exerciseRepository.save(exercise);
+        var team = createTeamForExercise(student, exercise);
+        exercise = addTeamToExercise(team, exercise);
+        StudentParticipation teamParticipation = type == ExerciseType.PROGRAMMING
+                ? participationUtilService.addTeamParticipationForProgrammingExercise((ProgrammingExercise) exercise, team)
+                : participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
+        if (teamIndividualDueDate != null) {
+            teamParticipation.setIndividualDueDate(teamIndividualDueDate);
+            teamParticipation = participationRepo.save(teamParticipation);
+        }
+        return new TeamExerciseSetup(exercise, teamParticipation);
     }
 
     private void assertTeamParticipationUnchanged(long teamParticipationId, InitializationState expectedState) {
@@ -1991,6 +2174,96 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         var participations = participationService.findByExerciseAndStudentIdWithSubmissionsAndResults(exercise, student.getId());
         assertThat(participations).extracting(StudentParticipation::getId).containsExactlyInAnyOrder(teamParticipation.getId(), practiceParticipation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getParticipationsOfStudentInTeamExercise_loadsSubmissionsAndResultsOfTheTeamAndOfThePracticeParticipation() {
+        var exercise = createTextExerciseForTeam();
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var team = createTeamForExercise(student, exercise);
+        exercise = addTeamToExercise(team, exercise);
+        var teamParticipation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
+        var teamSubmission = participationUtilService.addSubmission(teamParticipation, ParticipationFactory.generateTextSubmission("team text", Language.ENGLISH, true));
+        participationUtilService.addResultToSubmission(teamSubmission, AssessmentType.MANUAL);
+        var practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        var practiceSubmission = participationUtilService.addSubmission(practiceParticipation,
+                ParticipationFactory.generateTextSubmission("practice text", Language.ENGLISH, true));
+        participationUtilService.addResultToSubmission(practiceSubmission, AssessmentType.MANUAL);
+
+        var participations = participationService.findByExerciseAndStudentIdWithSubmissionsAndResults(exercise, student.getId());
+
+        assertThat(participations).as("every participation is returned once").extracting(StudentParticipation::getId).doesNotHaveDuplicates()
+                .containsExactlyInAnyOrder(teamParticipation.getId(), practiceParticipation.getId());
+        for (var participation : participations) {
+            assertThat(Hibernate.isInitialized(participation.getSubmissions())).as("the submissions of participation " + participation.getId() + " are loaded").isTrue();
+            assertThat(participation.getSubmissions()).hasSize(1);
+            assertThat(Hibernate.isInitialized(participation.getSubmissions().iterator().next().getResults())).as("the results are loaded").isTrue();
+            assertThat(participation.getSubmissions().iterator().next().getResults()).hasSize(1);
+        }
+        assertThat(participations).filteredOn(StudentParticipation::isPracticeMode).extracting(StudentParticipation::getId).containsExactly(practiceParticipation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getParticipationsOfStudentInTeamExercise_withoutTeam_returnsOnlyThePracticeParticipation() {
+        var exercise = createTextExerciseForTeam();
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        // the practice participation of a teammate is not the student's
+        participationUtilService.createAndSavePracticeParticipationForExercise(exercise, TEST_PREFIX + "student2");
+
+        var participations = participationService.findByExerciseAndStudentIdWithSubmissionsAndResults(exercise, student.getId());
+
+        assertThat(participations).extracting(StudentParticipation::getId).containsExactly(practiceParticipation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getParticipationsOfStudentInTeamExercise_doesNotReturnThePracticeParticipationOfATeammate() {
+        var exercise = createTextExerciseForTeam();
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var team = createTeamForExercise(student, exercise);
+        team.addStudents(userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+        team = teamRepository.save(team);
+        exercise = addTeamToExercise(team, exercise);
+        var teamParticipation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
+        participationUtilService.createAndSavePracticeParticipationForExercise(exercise, TEST_PREFIX + "student2");
+
+        var participations = participationService.findByExerciseAndStudentIdWithSubmissionsAndResults(exercise, student.getId());
+
+        assertThat(participations).as("the practice work of a teammate is private").extracting(StudentParticipation::getId).containsExactly(teamParticipation.getId());
+    }
+
+    /**
+     * A practice participation of a team exercise is a shape that did not exist before: a participation of a student, without a team, in a team exercise. The views of the
+     * instructors are organized by team and read the team of every participation they list, so they must stay intact and list the participations of the teams only.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getParticipationsOfTeamExercise_asInstructor_withAPracticeParticipation_listsTheTeamParticipationsOnly() throws Exception {
+        var exercise = createTextExerciseForTeam();
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var team = createTeamForExercise(student, exercise);
+        exercise = addTeamToExercise(team, exercise);
+        var teamParticipation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
+        var practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(exercise, TEST_PREFIX + "student1");
+
+        var search = new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All");
+        var page = request.getList("/api/exercise/exercises/" + exercise.getId() + "/participations/page", HttpStatus.OK, ParticipationManagementDTO.class,
+                pageableSearchUtilService.searchMapping(search));
+
+        assertThat(page).extracting(ParticipationManagementDTO::participationId).containsExactly(teamParticipation.getId()).doesNotContain(practiceParticipation.getId());
+        assertThat(page.getFirst().teamId()).isEqualTo(team.getId());
+        assertThat(page.getFirst().testRun()).isFalse();
+
+        var scoreSearch = new ParticipationScoreSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null);
+        var scores = request.getList("/api/exercise/exercises/" + exercise.getId() + "/participations/scores", HttpStatus.OK, ParticipationScoreDTO.class,
+                pageableSearchUtilService.searchMapping(scoreSearch));
+        assertThat(scores).extracting(ParticipationScoreDTO::participationId).containsExactly(teamParticipation.getId());
+
+        var names = request.getList("/api/exercise/exercises/" + exercise.getId() + "/participations/names", HttpStatus.OK, ParticipationNameExportDTO.class);
+        assertThat(names).extracting(ParticipationNameExportDTO::participantIdentifier).containsExactly(team.getShortName());
     }
 
     @Test

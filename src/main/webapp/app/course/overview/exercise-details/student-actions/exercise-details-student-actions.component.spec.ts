@@ -323,9 +323,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         // the graded participation belongs to the team, practice is the student's own participation
         expect(comp.practiceParticipation()).toBeUndefined();
         expect(comp.isStartPracticeAvailable()).toBe(true);
-        if (type === ExerciseType.PROGRAMMING) {
-            expect(fixture.debugElement.query(By.css('jhi-start-practice-mode-button'))).not.toBeNull();
-        }
+        // only the programming exercise offers the button here, the text and modeling exercises start practice from the header
+        expect(fixture.debugElement.query(By.css('jhi-start-practice-mode-button')) !== null).toBe(type === ExerciseType.PROGRAMMING);
 
         comp.receiveNewParticipation({ id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation);
         fixture.changeDetectorRef.detectChanges();

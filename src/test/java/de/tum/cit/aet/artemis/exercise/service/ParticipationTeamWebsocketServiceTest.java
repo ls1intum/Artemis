@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionPatchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionSyncPayloadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamModelingSubmissionUpdateDTO;
@@ -222,8 +224,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         // when we submit a new modeling submission ...
         participationTeamWebsocketService.updateModelingSubmission(teamModelingParticipation.getId(), submission, getPrincipalMock("student1"));
         // the submission should be handled by the service (i.e. saved), ...
-        verify(modelingSubmissionService, timeout(2000).times(1)).handleModelingSubmission(any(), any(), any(),
-                argThat(target -> target.id() == teamModelingParticipation.getId()));
+        verify(modelingSubmissionService, timeout(2000).times(1)).handleModelingSubmission(any(), any(), any(), argThat(target -> isTargetOf(target, teamModelingParticipation)));
         // but it should NOT be broadcast (sync is handled with patches only).
         verify(websocketMessagingService, after(1000).never()).sendMessage(topic(websocketTopic(teamModelingParticipation)), eq(List.of()));
     }
@@ -236,7 +237,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         // when we submit a new modeling submission with the wrong user ...
         participationTeamWebsocketService.updateModelingSubmission(teamModelingParticipation.getId(), submission, getPrincipalMock("student2"));
         // the submission is NOT saved ...
-        verify(modelingSubmissionService, after(1000).never()).handleModelingSubmission(any(), any(), any(), argThat(target -> target.id() == teamModelingParticipation.getId()));
+        verify(modelingSubmissionService, after(1000).never()).handleModelingSubmission(any(), any(), any(), any());
         // it is also not broadcast.
         verify(websocketMessagingService, after(1000).never()).sendMessage(topic(websocketTopic(teamModelingParticipation)), eq(List.of()));
     }
@@ -249,7 +250,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         // when we submit a new text submission ...
         participationTeamWebsocketService.updateTextSubmission(teamTextParticipation.getId(), submission, getPrincipalMock("student1"));
         // the submission should be handled by the service (i.e. saved), ...
-        verify(textSubmissionService, timeout(2000).times(1)).handleTextSubmission(any(), any(), any(), argThat(target -> target.id() == teamTextParticipation.getId()));
+        verify(textSubmissionService, timeout(2000).times(1)).handleTextSubmission(any(), any(), any(), argThat(target -> isTargetOf(target, teamTextParticipation)));
         // and it should be broadcast (unlike modeling exercises).
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(topic(websocketTopic(teamTextParticipation)), eq(List.of()));
     }
@@ -354,6 +355,45 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
 
         assertThat(submissionRepository.existsByParticipationId(practiceParticipation.getId())).isFalse();
         verify(websocketMessagingService, never()).sendMessage(topic(websocketTopic(practiceParticipation) + "/text-submissions"), any(Object.class));
+        verify(textSubmissionService, never()).handleTextSubmission(any(), any(), any(), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateModelingSubmissionAddressedToThePracticeParticipationIsIgnored() {
+        StudentParticipation practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(teamModelingParticipation.getExercise(),
+                TEST_PREFIX + "student1");
+
+        TeamModelingSubmissionUpdateDTO update = new TeamModelingSubmissionUpdateDTO(null, null, null, null);
+        participationTeamWebsocketService.updateModelingSubmission(practiceParticipation.getId(), update, getPrincipalMock("student1"));
+
+        assertThat(submissionRepository.existsByParticipationId(practiceParticipation.getId())).as("nothing is written for a practice participation").isFalse();
+        assertThat(submissionRepository.existsByParticipationId(teamModelingParticipation.getId())).as("and nothing leaks into the team's participation").isFalse();
+        verify(modelingSubmissionService, never()).handleModelingSubmission(any(), any(), any(), any());
+    }
+
+    /**
+     * Positive control of the two tests above: with a practice participation of the same student in the same exercise, a message addressed to the team's participation is saved
+     * to the team's participation and broadcast, so ignoring the practice participation is not the result of the update being broken in general.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateTextSubmissionWhileThePracticeParticipationExistsIsSavedToTheTeam() {
+        StudentParticipation practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(teamTextParticipation.getExercise(),
+                TEST_PREFIX + "student1");
+
+        TeamTextSubmissionUpdateDTO update = new TeamTextSubmissionUpdateDTO(null, "Team text", Language.ENGLISH, true);
+        participationTeamWebsocketService.updateTextSubmission(teamTextParticipation.getId(), update, getPrincipalMock("student1"));
+
+        verify(textSubmissionService, timeout(2000).times(1)).handleTextSubmission(any(), any(), any(), argThat(target -> isTargetOf(target, teamTextParticipation)));
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(topic(websocketTopic(teamTextParticipation) + "/text-submissions"), any(Object.class));
+        assertThat(submissionRepository.existsByParticipationId(teamTextParticipation.getId())).isTrue();
+        assertThat(submissionRepository.existsByParticipationId(practiceParticipation.getId())).as("the practice participation stays empty").isFalse();
+    }
+
+    private static boolean isTargetOf(StudentParticipationSubmitTargetDTO target, StudentParticipation participation) {
+        return target.id() == participation.getId() && target.testRun() == participation.isPracticeMode() && target.initializationState() == participation.getInitializationState()
+                && Objects.equals(target.individualDueDate(), participation.getIndividualDueDate());
     }
 
     @Test

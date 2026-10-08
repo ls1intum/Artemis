@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.assessment;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashMap;
@@ -392,10 +393,21 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         resultRepository.deleteById(practiceResult.getId());
         assertThat(participantScoreScheduleService.isIdle()).as("deleting the result schedules no score update").isTrue();
 
+        // a task would stay scheduled for the waiting time of the scheduler, so a window longer than that shows that none was queued and finished unnoticed
+        await().during(Duration.ofMillis(3 * ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS)).atMost(Duration.ofSeconds(10))
+                .until(participantScoreScheduleService::isIdle);
+
         var teamScoresAfter = participantScoreRepository.findAllByExercise(teamExercise);
         assertThat(teamScoresAfter).hasSize(1);
-        assertThat(teamScoresAfter.getFirst().getId()).isEqualTo(teamScoresBefore.getFirst().getId());
-        assertThat(teamScoresAfter.getFirst().getLastRatedScore()).isEqualTo(teamScoresBefore.getFirst().getLastRatedScore());
+        var scoreBefore = teamScoresBefore.getFirst();
+        var scoreAfter = teamScoresAfter.getFirst();
+        assertThat(scoreAfter.getId()).isEqualTo(scoreBefore.getId());
+        assertThat(scoreAfter.getParticipant().getId()).as("the score still belongs to the team").isEqualTo(scoreBefore.getParticipant().getId());
+        assertThat(scoreAfter.getLastRatedScore()).isEqualTo(scoreBefore.getLastRatedScore()).isNotEqualTo(100.0);
+        assertThat(scoreAfter.getLastScore()).isEqualTo(scoreBefore.getLastScore()).isNotEqualTo(100.0);
+        assertThat(scoreAfter.getLastModifiedDate()).as("the score of the team was not recalculated").isEqualTo(scoreBefore.getLastModifiedDate());
+        assertThat(participantScoreRepository.findAllByExercise(teamExercise)).extracting(score -> score.getParticipant().getId())
+                .as("no score was created for the student whose id is not a team id").doesNotContain(practiceParticipation.getParticipant().getId());
     }
 
     /**
