@@ -24,6 +24,11 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDockerFlagsDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -158,6 +163,50 @@ class ProgrammingExerciseValidationServiceTest {
     void validateDockerFlags_rejectsANegativeSwapLimit() {
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerFlags(buildConfigWithDockerFlags(flags(1, 1024, -1))))
                 .withMessageContaining("memory swap limit is invalid");
+    }
+
+    @Test
+    void validateDockerFlags_rejectsASwapLimitBelowTheMemoryLimit() {
+        // Docker reads the swap limit as the total of memory and swap and refuses to create a container whose total is below its memory.
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerFlags(buildConfigWithDockerFlags(flags(1, 1024, 512))))
+                .extracting(BadRequestAlertException::getErrorKey).isEqualTo("memorySwapBelowMemoryLimit");
+        assertThatCode(() -> validationService.validateDockerFlags(buildConfigWithDockerFlags(flags(1, 1024, 1024)))).as("a swap limit equal to the memory limit disables swap")
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateContainerDockerFlags_rejectsAMemoryOverrideBelowTheInheritedSwapLimit() {
+        // the container inherits the exercise's swap limit of 512 MB, which is below the 1024 MB of memory it sets for itself
+        ProgrammingExerciseBuildConfig buildConfig = buildConfigWithDockerFlags(flags(1, 512, 512));
+        when(programmingExerciseBuildConfigService.isAllowedNetwork(any())).thenReturn(true);
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(
+                        () -> validationService.validateContainerDockerFlags(planWithContainerFlags(new BuildContainerDockerFlagsDTO(null, null, null, 1024, null)), buildConfig))
+                .extracting(BadRequestAlertException::getErrorKey).isEqualTo("buildContainerMemorySwapBelowMemory");
+        assertThatExceptionOfType(BadRequestAlertException.class).as("a swap limit the container sets below the memory it inherits")
+                .isThrownBy(
+                        () -> validationService.validateContainerDockerFlags(planWithContainerFlags(new BuildContainerDockerFlagsDTO(null, null, null, null, 256)), buildConfig))
+                .extracting(BadRequestAlertException::getErrorKey).isEqualTo("buildContainerMemorySwapBelowMemory");
+    }
+
+    @Test
+    void validateContainerDockerFlags_acceptsAMemoryOverrideTheSwapLimitCovers() {
+        when(programmingExerciseBuildConfigService.isAllowedNetwork(any())).thenReturn(true);
+
+        assertThatCode(() -> validationService.validateContainerDockerFlags(planWithContainerFlags(new BuildContainerDockerFlagsDTO(null, null, null, 1024, null)),
+                buildConfigWithDockerFlags(flags(1, 512, 2048)))).as("the inherited swap limit covers the override").doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateContainerDockerFlags(planWithContainerFlags(new BuildContainerDockerFlagsDTO(null, null, null, 1024, 1024)),
+                buildConfigWithDockerFlags(flags(1, 512, 512)))).as("the container overrides both limits").doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateContainerDockerFlags(planWithContainerFlags(new BuildContainerDockerFlagsDTO(null, null, null, 1024, null)),
+                buildConfigWithDockerFlags(flags(1, 512, 0)))).as("the exercise leaves the swap limit to Docker").doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateContainerDockerFlags(planWithContainerFlags(new BuildContainerDockerFlagsDTO(null, null, null, 1024, null)),
+                buildConfigWithDockerFlags(null))).as("the exercise sets no flags at all").doesNotThrowAnyException();
+    }
+
+    private static BuildPlanPhasesDTO planWithContainerFlags(BuildContainerDockerFlagsDTO containerFlags) {
+        BuildPhaseDTO phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of());
+        return new BuildPlanPhasesDTO(null, null, List.of(new BuildContainerDTO("student_tests", null, null, List.of(phase), containerFlags)));
     }
 
     @Test

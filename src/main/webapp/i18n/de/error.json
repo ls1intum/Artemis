@@ -134,6 +134,7 @@
         "memoryLimitInvalid": "Die Speicherbegrenzung ist ungültig. Bitte stelle sicher, dass es sich um eine positive Ganzzahl handelt und größer als 6MB ist.",
         "cpuCountInvalid": "Die CPU-Anzahl ist ungültig. Bitte stelle sicher, dass es sich um eine positive Ganzzahl handelt.",
         "memorySwapLimitInvalid": "Die maximale Swap-Speichergröße ist ungültig. Bitte stelle sicher, dass er größer oder gleich 0 ist.",
+        "memorySwapBelowMemoryLimit": "Die maximale Swap-Speichergröße darf nicht unter der Speicherbegrenzung liegen. Docker versteht sie als Summe aus Speicher und Swap.",
         "dockerFlagsParsingError": "Fehler beim Parsen der Docker-Flags.",
         "dockerNetworkNotAllowed": "Das Docker-Netzwerk eines Build-Containers ist auf dieser Instanz nicht erlaubt.",
         "dueDateOver": {
@@ -338,6 +339,7 @@
         "emptyBuildContainer": "Der Build-Container {{ container }} muss mindestens eine Build-Phase enthalten.",
         "invalidBuildContainerTimeout": "Der Timeout des Build-Containers {{ container }} muss eine positive Anzahl an Sekunden sein.",
         "buildContainerTimeoutExceedsExerciseTimeout": "Der Timeout des Build-Containers {{ container }} darf den Timeout der Aufgabe ({{ timeout }} Sekunden) nicht überschreiten.",
+        "buildContainerMemorySwapBelowMemory": "Der Build-Container {{ container }} würde mit einer maximalen Swap-Speichergröße von {{ memorySwap }} MB unterhalb seiner Speicherbegrenzung von {{ memory }} MB laufen. Setze auch seine Swap-Speichergröße oder überlasse die Speicherbegrenzung der Aufgabe.",
         "sharingInfoMissing": "Die Informationen der Sharing-Plattform fehlen.",
         "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten."
     }

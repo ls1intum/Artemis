@@ -27,6 +27,7 @@ import tools.jackson.core.JacksonException;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
@@ -288,11 +289,24 @@ public class ProgrammingExerciseValidationService {
     /**
      * Validates the Docker flags the containers of a build plan set for their own jobs with the rules that apply to the
      * exercise's flags: a set field has to satisfy the same bounds, and a network has to be allowed on this instance. A
-     * field a container leaves unset takes the exercise's value, which is validated on its own.
+     * field a container leaves unset takes the exercise's value, which is validated on its own, so the memory and swap
+     * limits are checked as the pair the job runs with: a container that overrides only the memory limit must not end
+     * up with the exercise's swap limit below it, which Docker rejects when the container is created.
      *
-     * @param buildPlan the build plan whose containers are validated
+     * @param buildPlan   the build plan whose containers are validated
+     * @param buildConfig the build configuration whose Docker flags a container inherits where it sets none
      */
-    public void validateContainerDockerFlags(BuildPlanPhasesDTO buildPlan) {
+    public void validateContainerDockerFlags(BuildPlanPhasesDTO buildPlan, ProgrammingExerciseBuildConfig buildConfig) {
+        DockerFlagsDTO exerciseFlags;
+        try {
+            exerciseFlags = programmingExerciseBuildConfigService.parseDockerFlags(buildConfig);
+        }
+        catch (IllegalArgumentException e) {
+            throw new BadRequestAlertException("Error while parsing the docker flags", "Exercise", "dockerFlagsParsingError");
+        }
+        int exerciseMemory = exerciseFlags == null ? 0 : exerciseFlags.memory();
+        int exerciseMemorySwap = exerciseFlags == null ? 0 : exerciseFlags.memorySwap();
+
         for (BuildContainerDTO container : buildPlan.effectiveContainers()) {
             BuildContainerDockerFlagsDTO flags = container.dockerFlags();
             if (flags == null) {
@@ -303,6 +317,15 @@ public class ProgrammingExerciseValidationService {
                         "dockerNetworkNotAllowed");
             }
             validateDockerFlagValues(flags.env(), flags.cpuCount(), flags.memory(), flags.memorySwap());
+
+            int effectiveMemory = flags.memory() != null ? flags.memory() : exerciseMemory;
+            int effectiveMemorySwap = flags.memorySwap() != null ? flags.memorySwap() : exerciseMemorySwap;
+            if (effectiveMemory > 0 && effectiveMemorySwap > 0 && effectiveMemorySwap < effectiveMemory) {
+                throw new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE,
+                        "The memory swap limit of the build container " + container.name() + " is below its memory limit", "buildConfig", "buildContainerMemorySwapBelowMemory",
+                        Map.of("message", "error.buildContainerMemorySwapBelowMemory", "params",
+                                Map.of("container", container.name(), "memory", effectiveMemory, "memorySwap", effectiveMemorySwap)));
+            }
         }
     }
 
@@ -334,6 +357,12 @@ public class ProgrammingExerciseValidationService {
 
         if (memorySwap != null && memorySwap < 0) {
             throw new BadRequestAlertException("The memory swap limit is invalid. The minimum memory swap limit is 0", "Exercise", "memorySwapLimitInvalid");
+        }
+
+        // Docker reads the swap limit as the total of memory and swap, so a positive limit below the memory limit cannot
+        // be applied and the container never starts; 0 leaves the swap to Docker's default
+        if (memory != null && memorySwap != null && memorySwap > 0 && memorySwap < memory) {
+            throw new BadRequestAlertException("The memory swap limit must not be below the memory limit", "Exercise", "memorySwapBelowMemoryLimit");
         }
     }
 
@@ -388,7 +417,7 @@ public class ProgrammingExerciseValidationService {
         }
 
         BuildPlanConfigurationValidator.validate(buildPlan, buildConfig.getTimeoutSeconds());
-        validateContainerDockerFlags(buildPlan);
+        validateContainerDockerFlags(buildPlan, buildConfig);
     }
 
     /**
