@@ -136,6 +136,9 @@ describe('ExamDetailComponent', () => {
         exam.numberOfExamUsers = 3;
         exam.examMaxPoints = 100;
         exam.exerciseGroups = [];
+        exam.testExam = false;
+        exam.examiner = undefined;
+        exam.gracePeriod = undefined;
         component.exam.set(exam);
     });
 
