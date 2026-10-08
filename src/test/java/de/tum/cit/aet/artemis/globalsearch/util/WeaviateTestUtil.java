@@ -96,8 +96,20 @@ public final class WeaviateTestUtil {
             : previousInterval.multipliedBy(2).compareTo(MAX_POLL_INTERVAL) > 0 ? MAX_POLL_INTERVAL : previousInterval.multipliedBy(2);
 
     /**
+     * Marks the Awaitility poll thread that is currently evaluating an {@link #awaitIndexing} assertion. Awaitility
+     * runs the assertion on its own thread, so the flag is set on that thread, around the assertion, and not on the
+     * thread that called {@link #awaitIndexing}.
+     */
+    private static final ThreadLocal<Boolean> INSIDE_INDEXING_WAIT = new ThreadLocal<>();
+
+    /**
      * Waits until the given assertion holds, for at most {@link #INDEXING_TIMEOUT}. Use it for everything that depends
      * on the outbox dispatcher having applied a write to Weaviate.
+     * <p>
+     * The wait is reentrant: the {@code assert...InWeaviate} helpers of this class await on their own, so a call made
+     * from inside the assertion of an outer wait (for example a lambda that calls several of them next to an independent check)
+     * runs its assertion directly. All nested checks then share the one deadline of the outer wait, and the failure of
+     * a nested check is reported through the outer timeout message instead of after a second full wait.
      * <p>
      * When the wait times out the failure says what the dispatcher was doing at that moment (see
      * {@link #describeOutboxDispatcher()}), so a slow Weaviate write can be told apart from a write that was never
@@ -106,11 +118,44 @@ public final class WeaviateTestUtil {
      * @param assertion the assertion that holds once the write is visible; it may throw any exception
      */
     public static void awaitIndexing(ThrowingRunnable assertion) {
-        try {
-            await().atMost(INDEXING_TIMEOUT).pollInterval(BOUNDED_BACKOFF_POLL_INTERVAL).untilAsserted(assertion);
+        awaitIndexing(INDEXING_TIMEOUT, assertion);
+    }
+
+    /**
+     * Same as {@link #awaitIndexing(ThrowingRunnable)} with an explicit ceiling, so that the behavior of the wait itself
+     * can be tested without waiting for {@link #INDEXING_TIMEOUT}.
+     *
+     * @param timeout   the longest time to wait for the assertion to hold
+     * @param assertion the assertion that holds once the write is visible; it may throw any exception
+     */
+    static void awaitIndexing(Duration timeout, ThrowingRunnable assertion) {
+        if (INSIDE_INDEXING_WAIT.get() != null) {
+            // already inside the assertion of an outer wait: do not start a second wait with its own full ceiling
+            try {
+                assertion.run();
+            }
+            catch (Error | RuntimeException e) {
+                throw e;
+            }
+            catch (Throwable e) {
+                throw new AssertionError(e.getMessage(), e);
+            }
+            return;
         }
-        catch (ConditionTimeoutException timeout) {
-            throw new AssertionError(timeout.getMessage() + System.lineSeparator() + describeOutboxDispatcher(), timeout);
+        ThrowingRunnable markedAssertion = () -> {
+            INSIDE_INDEXING_WAIT.set(Boolean.TRUE);
+            try {
+                assertion.run();
+            }
+            finally {
+                INSIDE_INDEXING_WAIT.remove();
+            }
+        };
+        try {
+            await().atMost(timeout).pollInterval(BOUNDED_BACKOFF_POLL_INTERVAL).untilAsserted(markedAssertion);
+        }
+        catch (ConditionTimeoutException timedOut) {
+            throw new AssertionError(timedOut.getMessage() + System.lineSeparator() + describeOutboxDispatcher(), timedOut);
         }
     }
 

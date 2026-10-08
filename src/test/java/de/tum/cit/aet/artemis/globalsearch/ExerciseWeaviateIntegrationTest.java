@@ -79,7 +79,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         void testInsertExercise_storesMetadataInWeaviate() throws Exception {
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
 
-            awaitIndexing(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
+            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
             var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
             assertThat(properties.get(SearchableEntitySchema.Properties.PROGRAMMING_LANGUAGE)).isEqualTo(programmingExercise.getProgrammingLanguage().name());
@@ -92,7 +92,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         void testUpdateExercise_updatesMetadataInWeaviate() throws Exception {
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
 
-            awaitIndexing(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
+            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
             // Modify exercise properties
             String updatedTitle = "Updated Weaviate Test Title";
@@ -118,11 +118,11 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         void testDeleteExercise_removesMetadataFromWeaviate() throws Exception {
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
 
-            awaitIndexing(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
+            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
             searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXERCISE, programmingExercise.getId());
 
-            awaitIndexing(() -> assertExerciseNotInWeaviate(weaviateService, programmingExercise.getId()));
+            assertExerciseNotInWeaviate(weaviateService, programmingExercise.getId());
         }
 
         @Test
@@ -184,7 +184,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         void testUpdateProblemStatement_updatesWeaviate() throws Exception {
             // Insert exercise into Weaviate first
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
-            awaitIndexing(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
+            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
             // Update problem statement via endpoint
             final var newProblem = "updated problem statement for weaviate test";
@@ -204,7 +204,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         void testUpdateTimeline_updatesWeaviate() throws Exception {
             // Insert exercise into Weaviate first
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
-            awaitIndexing(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
+            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
             // Update timeline via endpoint
             var exerciseForUpdate = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());

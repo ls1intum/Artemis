@@ -443,7 +443,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             post = postRepository.save(post);
             searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, createdChannel));
             long postId = post.getId();
-            awaitIndexing(() -> assertPostExistsInWeaviate(weaviateService, postId));
+            assertPostExistsInWeaviate(weaviateService, postId);
 
             // Create and index an answer post (reply) in the channel
             AnswerPost answerPost = new AnswerPost();
@@ -454,7 +454,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             answerPost = answerPostRepository.save(answerPost);
             searchableEntityWeaviateService.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answerPost, createdChannel));
             long answerPostId = answerPost.getId();
-            awaitIndexing(() -> assertAnswerPostExistsInWeaviate(weaviateService, answerPostId));
+            assertAnswerPostExistsInWeaviate(weaviateService, answerPostId);
 
             // Delete the channel via the REST endpoint (this is what was broken: it bypassed Weaviate cleanup)
             long channelId = createdChannel.getId();

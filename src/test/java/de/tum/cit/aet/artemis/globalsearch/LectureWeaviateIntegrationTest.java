@@ -88,12 +88,12 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     void testDeleteLecture_removesLectureFromWeaviate() throws Exception {
         Lecture lecture = lectureUtilService.createLecture(course);
         searchableEntityWeaviateService.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture));
-        awaitIndexing(() -> assertLectureExistsInWeaviate(weaviateService, lecture));
+        assertLectureExistsInWeaviate(weaviateService, lecture);
 
         long lectureId = lecture.getId();
         request.delete("/api/lecture/lectures/" + lectureId, HttpStatus.OK);
 
-        awaitIndexing(() -> assertLectureNotInWeaviate(weaviateService, lectureId));
+        assertLectureNotInWeaviate(weaviateService, lectureId);
     }
 
     @Test

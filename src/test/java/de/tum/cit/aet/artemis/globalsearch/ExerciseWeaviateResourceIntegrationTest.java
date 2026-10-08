@@ -242,7 +242,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
      * Creates a released (non-exam) text exercise in the given course, indexes it in Weaviate, and waits
      * until it is searchable. Returns the exercise title so tests can assert on its presence/absence.
      */
-    private String indexReleasedTextExercise(Course targetCourse, String titleSuffix) {
+    private String indexReleasedTextExercise(Course targetCourse, String titleSuffix) throws Exception {
         // One reference instant, so release/due/assessment are consistent with each other. The offsets stay
         // relative on purpose: "released" and "not yet due" are defined against the present, and absolute
         // dates would invert this fixture's meaning once they passed.
@@ -252,7 +252,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         exercise.setTitle(title);
         TextExercise indexed = exerciseRepository.save(exercise);
         searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(indexed));
-        awaitIndexing(() -> assertExerciseExistsInWeaviate(weaviateService, indexed));
+        assertExerciseExistsInWeaviate(weaviateService, indexed);
         return title;
     }
 
@@ -724,7 +724,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(unregisteredExercise));
             TextExercise finalExercise = unregisteredExercise;
-            awaitIndexing(() -> assertExerciseExistsInWeaviate(weaviateService, finalExercise));
+            assertExerciseExistsInWeaviate(weaviateService, finalExercise);
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exercise&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
@@ -752,7 +752,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(unassignedExercise));
             TextExercise finalExercise = unassignedExercise;
-            awaitIndexing(() -> assertExerciseExistsInWeaviate(weaviateService, finalExercise));
+            assertExerciseExistsInWeaviate(weaviateService, finalExercise);
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exercise&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
@@ -779,7 +779,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(noRegExercise));
             TextExercise finalExercise = noRegExercise;
-            awaitIndexing(() -> assertExerciseExistsInWeaviate(weaviateService, finalExercise));
+            assertExerciseExistsInWeaviate(weaviateService, finalExercise);
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20NoReg&types=exercise&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
@@ -1030,7 +1030,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(unassignedExercise));
             TextExercise finalExercise = unassignedExercise;
-            awaitIndexing(() -> assertExerciseExistsInWeaviate(weaviateService, finalExercise));
+            assertExerciseExistsInWeaviate(weaviateService, finalExercise);
 
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exam&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
