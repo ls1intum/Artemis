@@ -13,37 +13,28 @@ SMTP server, and most universities give that server one account with one limit f
 shared limit from being used up by accounts that do not need mail, what happens to a mail the SMTP server does not accept, and how to
 find out what was sent.
 
-## Test accounts do not receive e-mail until they ask for it
+## Test users do not receive e-mail until they ask for it
 
-Everywhere in Artemis, a notification setting that a user never configured means "send". For test accounts it means "do not send".
-Test accounts are the users that end-to-end tests, benchmarks and course scripts create by the thousand. None of them waits for a mail,
+Everywhere in Artemis, a notification setting that a user never configured means "send". For test users it means "do not send".
+Test users are the accounts that end-to-end tests, benchmarks and course scripts create by the thousand. None of them waits for a mail,
 and every mail they trigger counts against the quota of the shared SMTP account. A script that sets the password of 2,000 of them
 sends 2,000 mails.
 
-A login is a test account when it matches one of the regular expressions in `artemis.mail.test-account-login-patterns`. A pattern has to
-match the whole login. The default configuration contains the pattern of the published test users:
+An account is a test user when its **test user** flag is set. Administrators set the flag in **Administration > User Management**
+and with the `isTestUser` column of the user CSV import. The flag is also what the usage statistics use to leave such accounts out.
+The course scripts in `supporting_scripts/course-scripts` set it for the `artemis_test_user_` accounts they create. An account that
+is created without the flag is an ordinary account and receives its e-mail, so set the flag when you create accounts in bulk.
 
-```yaml
-artemis:
-    mail:
-        test-account-login-patterns:
-            - 'artemis_test_user_\d+'
-```
-
-For a test account, the notification settings behave as follows.
+For a test user, the notification settings behave as follows.
 
 - A notification type without a setting is switched off. The settings pages show it as off, so what a page shows is what the account
   receives.
-- A setting the account chose always wins. A test that is about e-mail signs in as the test account and enables exactly what it needs,
+- A setting the account chose always wins. A test that is about e-mail signs in as the test user and enables exactly what it needs,
   either in **User Settings > Notifications** or in the notification settings of a course, and receives exactly that.
 - Choosing a preset in the notification settings of a course, including the default preset, counts as a choice and switches the e-mail
   of that preset on. Customizing the settings starts from "no e-mail" instead of copying the e-mail of the default preset.
 - Mails that have no setting of their own, such as activation and password reset mails and the warnings of the data retention
-  features, are not sent to a test account that has not enabled any e-mail. As soon as the account has enabled one, they are sent.
-
-Add the patterns of your own bulk-created accounts to the list, and remove the default pattern if your production system uses such logins
-for real people. The published `artemis_test_user_` accounts must not exist on a production system in the first place, because their
-credentials are public.
+  features, are not sent to a test user that has not enabled any e-mail. As soon as the account has enabled one, they are sent.
 
 ## What happens to a mail the SMTP server does not accept
 
@@ -102,14 +93,14 @@ answering. Override them in the same keys if your server needs more time.
 
 ## Finding out what was sent
 
-Every successful hand-over to the SMTP server is logged at the INFO level with the subject, the login of the recipient and the id of the
-message, for example:
+Every successful hand-over to the SMTP server is logged at the INFO level with the subject and the id of the message, for example:
 
 ```text
-Sent email with subject 'New announcement in Artemis' to user 'ge12abc' (message id <1234.5678@artemis.tum.de>)
+Sent email with subject 'New announcement in Artemis' (message id <1234.5678@artemis.tum.de>)
 ```
 
-A mail that is sent after it waited in the queue says so and counts its failed attempts. The log of a mail that is not delivered names the
+The log leaves out the login and the address of the recipient on purpose, so that it holds no personal data of the people who got a mail.
+The message id is what a rejection notice of a mail server refers to, which makes a single mail traceable without them. A mail that is sent after it waited in the queue says so and counts its failed attempts. The log of a mail that is not delivered names the
 subject and the reason, so a count by subject shows which kind of mail used the quota:
 
 ```bash
@@ -119,11 +110,11 @@ journalctl -u artemis.service --since today | grep 'Sent email with subject' \
 
 A node reports its state through the following Micrometer meters, which an administrator can chart and alert on.
 
-| Meter                           | Meaning                                                                                                                                                                                                                                                                                                             |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `artemis.mail.outcome`          | Counter with the tag `outcome`. `sent` and `sent_after_retry` are accepted by the SMTP server, `queued_for_retry` waits in the queue, `rejected` and `expired` were not delivered, `dropped_queue_full` was dropped because the queue was full, and `suppressed` went to a test account that has not enabled e-mail |
-| `artemis.mail.retry.queue.size` | Gauge with the tag `priority` (`transactional` or `bulk`) for the mails that wait for another attempt                                                                                                                                                                                                               |
-| `artemis.mail.delivery.paused`  | Gauge that is `1` while the node does not contact the SMTP server                                                                                                                                                                                                                                                   |
+| Meter                           | Meaning                                                                                                                                                                                                                                                                                                          |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `artemis.mail.outcome`          | Counter with the tag `outcome`. `sent` and `sent_after_retry` are accepted by the SMTP server, `queued_for_retry` waits in the queue, `rejected` and `expired` were not delivered, `dropped_queue_full` was dropped because the queue was full, and `suppressed` went to a test user that has not enabled e-mail |
+| `artemis.mail.retry.queue.size` | Gauge with the tag `priority` (`transactional` or `bulk`) for the mails that wait for another attempt                                                                                                                                                                                                            |
+| `artemis.mail.delivery.paused`  | Gauge that is `1` while the node does not contact the SMTP server                                                                                                                                                                                                                                                |
 
 An alert on `artemis.mail.delivery.paused` or on a growing `artemis.mail.retry.queue.size` tells an administrator about an exhausted quota
 when it starts, not when a user reports a missing mail.
@@ -143,7 +134,7 @@ server, a staging server and the production server that share an account therefo
 from starving the others.
 
 - Use a separate SMTP account for the production system. Where the provider offers it, give every sender address its own limit.
-- Keep the test accounts of the test and staging servers on the default pattern, or point those servers at a mail catcher such as
+- Flag the test accounts of the test and staging servers as test users, or point those servers at a mail catcher such as
   Mailpit, so that a script run against them does not leave the account.
 - Watch `artemis.mail.outcome` on every server. A burst on a test server shows as a spike of `sent` in minutes.
 

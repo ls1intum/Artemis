@@ -93,6 +93,10 @@ class MailSendingServiceRetryTest {
         return new MailRecipientDTO(login + "@example.org", "en", login, "First", "Last");
     }
 
+    private static MailRecipientDTO testUser(String login) {
+        return new MailRecipientDTO(login + "@example.org", "en", login, "First", "Last", null, null, true);
+    }
+
     private static MailSendException quotaFailure() {
         return new MailSendException(Map.of(new Object(), new SMTPSendFailedException("DATA", 450, QUOTA_REPLY, null, null, null, null)));
     }
@@ -390,10 +394,10 @@ class MailSendingServiceRetryTest {
     }
 
     @Test
-    void shouldNotSendToATestAccountThatHasNotOptedIn() {
-        when(testAccountEmailPolicy.suppressesEmailTo("artemis_test_user_1")).thenReturn(true);
+    void shouldNotSendToATestUserThatHasNotOptedIn() {
+        when(testAccountEmailPolicy.suppressesEmailTo("test_user_1", true)).thenReturn(true);
 
-        boolean accepted = mailSendingService.sendEmailSync(recipient("artemis_test_user_1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL);
+        boolean accepted = mailSendingService.sendEmailSync(testUser("test_user_1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL);
 
         assertThat(accepted).isFalse();
         verify(javaMailSender, never()).send(any(MimeMessage.class));
@@ -402,21 +406,21 @@ class MailSendingServiceRetryTest {
     }
 
     @Test
-    void shouldNotSendAMailThatWasBuiltForATestAccountThatHasNotOptedIn() {
-        when(testAccountEmailPolicy.suppressesEmailTo("artemis_test_user_1")).thenReturn(true);
+    void shouldNotSendAMailThatWasBuiltForATestUserThatHasNotOptedIn() {
+        when(testAccountEmailPolicy.suppressesEmailTo("test_user_1", true)).thenReturn(true);
 
-        mailSendingService.buildAndSendAsync(recipient("artemis_test_user_1"), "email.key", "mail/template", Map.of());
-        boolean reported = mailSendingService.buildAndSendSyncReporting(recipient("artemis_test_user_1"), "email.key", List.of(), "mail/template", Map.of());
+        mailSendingService.buildAndSendAsync(testUser("test_user_1"), "email.key", "mail/template", Map.of());
+        boolean reported = mailSendingService.buildAndSendSyncReporting(testUser("test_user_1"), "email.key", List.of(), "mail/template", Map.of());
 
         assertThat(reported).isFalse();
         verify(javaMailSender, never()).send(any(MimeMessage.class));
     }
 
     @Test
-    void shouldSendToATestAccountThatHasOptedIn() {
-        when(testAccountEmailPolicy.suppressesEmailTo("artemis_test_user_1")).thenReturn(false);
+    void shouldSendToATestUserThatHasOptedIn() {
+        when(testAccountEmailPolicy.suppressesEmailTo("test_user_1", true)).thenReturn(false);
 
-        assertThat(mailSendingService.sendEmailSync(recipient("artemis_test_user_1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL)).isTrue();
+        assertThat(mailSendingService.sendEmailSync(testUser("test_user_1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL)).isTrue();
         verify(javaMailSender).send(any(MimeMessage.class));
     }
 

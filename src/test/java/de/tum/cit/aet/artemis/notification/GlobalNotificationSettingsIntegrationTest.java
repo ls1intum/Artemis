@@ -29,7 +29,9 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
     /**
      * Matches {@code artemis.mail.test-account-login-patterns} of the test {@code application-artemis.yml}.
      */
-    private static final String TEST_ACCOUNT_LOGIN = "artemis_test_user_9001";
+    private static final String TEST_ACCOUNT_LOGIN = TEST_PREFIX + "flaggedtestuser";
+
+    private static final String UNFLAGGED_LOGIN = "artemis_test_user_9002";
 
     @Autowired
     private GlobalNotificationSettingRepository globalNotificationSettingRepository;
@@ -64,7 +66,11 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
     }
 
     private User testAccount() {
-        return userTestRepository.findOneByLogin(TEST_ACCOUNT_LOGIN).orElseGet(() -> userUtilService.createAndSaveUser(TEST_ACCOUNT_LOGIN));
+        return userTestRepository.findOneByLogin(TEST_ACCOUNT_LOGIN).orElseGet(() -> {
+            var user = userUtilService.createAndSaveUser(TEST_ACCOUNT_LOGIN);
+            user.setTestUser(true);
+            return userTestRepository.save(user);
+        });
     }
 
     @Test
@@ -177,24 +183,24 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
 
         assertThat(settings).hasSize(GlobalNotificationType.values().length).containsOnlyKeys(enumNames()).containsValue(true).doesNotContainValue(false);
         assertThat(globalNotificationSettingService.isNotificationEnabled(testUser, GlobalNotificationType.NEW_LOGIN)).isTrue();
-        assertThat(testAccountEmailPolicy.suppressesEmailTo(testUser.getLogin())).isFalse();
+        assertThat(testAccountEmailPolicy.suppressesEmailTo(testUser.getLogin(), testUser.isTestUser())).isFalse();
     }
 
     @Test
     @WithMockUser(username = TEST_ACCOUNT_LOGIN, roles = "USER")
-    void shouldDisableAllNotificationsByDefaultForATestAccount() throws Exception {
+    void shouldDisableAllNotificationsByDefaultForATestUser() throws Exception {
         var testAccount = testAccount();
 
         Map<String, Boolean> settings = request.get("/api/notification/global-notification-settings", HttpStatus.OK, Map.class);
 
         assertThat(settings).containsOnlyKeys(enumNames()).containsValue(false).doesNotContainValue(true);
         assertThat(globalNotificationSettingService.isNotificationEnabled(testAccount, GlobalNotificationType.NEW_LOGIN)).isFalse();
-        assertThat(testAccountEmailPolicy.suppressesEmailTo(TEST_ACCOUNT_LOGIN)).isTrue();
+        assertThat(testAccountEmailPolicy.suppressesEmailTo(TEST_ACCOUNT_LOGIN, true)).isTrue();
     }
 
     @Test
     @WithMockUser(username = TEST_ACCOUNT_LOGIN, roles = "USER")
-    void shouldEnableOnlyWhatATestAccountSwitchedOn() throws Exception {
+    void shouldEnableOnlyWhatATestUserSwitchedOn() throws Exception {
         var testAccount = testAccount();
 
         request.put("/api/notification/global-notification-settings/" + GlobalNotificationType.NEW_LOGIN, Map.of("enabled", true), HttpStatus.OK);
@@ -203,7 +209,7 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
         assertThat(globalNotificationSettingService.isNotificationEnabled(testAccount, GlobalNotificationType.NEW_LOGIN)).isTrue();
         assertThat(globalNotificationSettingService.isNotificationEnabled(testAccount, GlobalNotificationType.PASSWORD_CHANGED)).isFalse();
         // ...and since it has shown that it wants e-mail, the mails that have no setting of their own are no longer suppressed.
-        assertThat(testAccountEmailPolicy.suppressesEmailTo(TEST_ACCOUNT_LOGIN)).isFalse();
+        assertThat(testAccountEmailPolicy.suppressesEmailTo(TEST_ACCOUNT_LOGIN, true)).isFalse();
 
         Map<String, Boolean> settings = request.get("/api/notification/global-notification-settings", HttpStatus.OK, Map.class);
         assertThat(settings).containsEntry(GlobalNotificationType.NEW_LOGIN.name(), true).containsEntry(GlobalNotificationType.PASSWORD_CHANGED.name(), false);
@@ -211,22 +217,22 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = TEST_ACCOUNT_LOGIN, roles = "USER")
-    void shouldKeepSuppressingEmailToATestAccountThatOnlySwitchedNotificationsOff() throws Exception {
+    void shouldKeepSuppressingEmailToATestUserThatOnlySwitchedNotificationsOff() throws Exception {
         testAccount();
 
         request.put("/api/notification/global-notification-settings/" + GlobalNotificationType.NEW_LOGIN, Map.of("enabled", false), HttpStatus.OK);
 
         // An explicit "off" is not a request for mail.
-        assertThat(testAccountEmailPolicy.suppressesEmailTo(TEST_ACCOUNT_LOGIN)).isTrue();
+        assertThat(testAccountEmailPolicy.suppressesEmailTo(TEST_ACCOUNT_LOGIN, true)).isTrue();
     }
 
     @Test
-    void shouldNotTreatAnUnknownLoginAsATestAccount() {
-        assertThat(testAccountEmailPolicy.isTestAccount(TEST_PREFIX + "student1")).isFalse();
-        assertThat(testAccountEmailPolicy.isTestAccount("artemis_test_user_")).isFalse();
-        assertThat(testAccountEmailPolicy.isTestAccount("xartemis_test_user_1")).as("a pattern has to match the whole login").isFalse();
-        assertThat(testAccountEmailPolicy.isTestAccount(null)).isFalse();
-        assertThat(testAccountEmailPolicy.isTestAccount("artemis_test_user_1")).isTrue();
+    void shouldTreatAnAccountAsATestUserOnlyWhenTheFlagIsSet() {
+        // The login looks like the one of a test user, but the flag is what decides.
+        var unflagged = userTestRepository.findOneByLogin(UNFLAGGED_LOGIN).orElseGet(() -> userUtilService.createAndSaveUser(UNFLAGGED_LOGIN));
+
+        assertThat(globalNotificationSettingService.isNotificationEnabled(unflagged, GlobalNotificationType.NEW_LOGIN)).isTrue();
+        assertThat(testAccountEmailPolicy.suppressesEmailTo(UNFLAGGED_LOGIN, unflagged.isTestUser())).isFalse();
     }
 
     private static String[] enumNames() {

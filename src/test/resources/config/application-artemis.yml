@@ -18,8 +18,6 @@ artemis:
     temp-path: ./local/server-integration-test/temp
     bcrypt-salt-rounds: 4  # We don't need secure passwords for testing. Lower rounds will speed up tests. 4 ist the lowest allowed round count.
     mail:
-        test-account-login-patterns:
-            - 'artemis_test_user_\d+'
         retry:
             # Off in tests: a mail that fails to send would otherwise be sent again by a background job while another test stubs or
             # resets the shared mail sender, which corrupts Mockito's state. The tests of the retry queue construct it with its own

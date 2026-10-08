@@ -17,10 +17,19 @@ import de.tum.cit.aet.artemis.core.dto.PasswordResetKeyDTO;
  * (e.g. {@code user.login}, {@code user.activationKey}, {@code user.getName()}).
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, @Nullable PasswordResetKeyDTO resetKey) {
+public record MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, @Nullable PasswordResetKeyDTO resetKey,
+        boolean testUser) {
+
+    /**
+     * For a recipient that is not known to be a test user, which is every recipient that is not built from a {@link User}. A test
+     * user is the one whose {@code isTestUser} flag is set; the mail layer sends it nothing unless it asked for e-mail.
+     */
+    public MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, @Nullable PasswordResetKeyDTO resetKey) {
+        this(email, langKey, login, firstName, lastName, activationKey, resetKey, false);
+    }
 
     public MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName) {
-        this(email, langKey, login, firstName, lastName, null, null);
+        this(email, langKey, login, firstName, lastName, null, null, false);
     }
 
     /**
@@ -47,7 +56,7 @@ public record MailRecipientDTO(String email, String langKey, String login, Strin
      * @return the recipient without any recovery key
      */
     public static MailRecipientDTO from(User user) {
-        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, null);
+        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, null, user.isTestUser());
     }
 
     /**
@@ -59,7 +68,7 @@ public record MailRecipientDTO(String email, String langKey, String login, Strin
      * @return the recipient carrying the given key
      */
     public static MailRecipientDTO withResetKeyFrom(User user, PasswordResetKeyDTO resetKey) {
-        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, resetKey);
+        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, resetKey, user.isTestUser());
     }
 
     /**
@@ -71,7 +80,7 @@ public record MailRecipientDTO(String email, String langKey, String login, Strin
      * @return the recipient carrying the given key
      */
     public static MailRecipientDTO withActivationKeyFrom(User user, String activationKey) {
-        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), activationKey, null);
+        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), activationKey, null, user.isTestUser());
     }
 
     @Override

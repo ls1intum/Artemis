@@ -60,16 +60,11 @@ class CourseNotificationSettingServiceTest {
     private CourseNotificationSettingPresetRegistryService courseNotificationSettingPresetRegistryService;
 
     @Mock
-    private TestAccountEmailService testAccountEmailPolicy;
-
-    @Mock
     private de.tum.cit.aet.artemis.notification.domain.setting_presets.UserCourseNotificationSettingPreset mockPreset;
 
     private final Long userId = 1L;
 
-    private final String login = "student1";
-
-    private static final String TEST_ACCOUNT_LOGIN = "artemis_test_user_1";
+    private final boolean testUser = false;
 
     private final Long courseId = 2L;
 
@@ -80,9 +75,7 @@ class CourseNotificationSettingServiceTest {
     @BeforeEach
     void setUp() {
         courseNotificationSettingService = new CourseNotificationSettingService(courseNotificationRegistryService, userCourseNotificationSettingSpecificationRepository,
-                userCourseNotificationSettingPresetRepository, courseNotificationSettingPresetRegistryService, testAccountEmailPolicy);
-        // Everybody is a regular account, except where a test says otherwise: e-mail is on by default.
-        lenient().when(testAccountEmailPolicy.isEmailEnabledByDefault(any())).thenReturn(true);
+                userCourseNotificationSettingPresetRepository, courseNotificationSettingPresetRegistryService);
     }
 
     @Test
@@ -91,7 +84,7 @@ class CourseNotificationSettingServiceTest {
         when(courseNotificationSettingPresetRegistryService.getPresetId(DefaultUserCourseNotificationSettingPreset.class)).thenReturn(defaultPresetId);
         when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(userId, courseId)).thenReturn(null);
 
-        courseNotificationSettingService.applyPreset((short) 2, userId, login, courseId);
+        courseNotificationSettingService.applyPreset((short) 2, userId, testUser, courseId);
 
         verify(userCourseNotificationSettingPresetRepository).save(any(UserCourseNotificationSettingPreset.class));
     }
@@ -103,7 +96,7 @@ class CourseNotificationSettingServiceTest {
 
         when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(userId, courseId)).thenReturn(existingPreset);
 
-        courseNotificationSettingService.applyPreset((short) 2, userId, login, courseId);
+        courseNotificationSettingService.applyPreset((short) 2, userId, testUser, courseId);
 
         verify(userCourseNotificationSettingPresetRepository, never()).save(any(UserCourseNotificationSettingPreset.class));
     }
@@ -126,7 +119,7 @@ class CourseNotificationSettingServiceTest {
         when(mockPreset.getPresetMap()).thenReturn(presetMap);
         when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn(notificationTypeId);
 
-        courseNotificationSettingService.applyPreset(customPresetId, userId, login, courseId);
+        courseNotificationSettingService.applyPreset(customPresetId, userId, testUser, courseId);
 
         verify(userCourseNotificationSettingPresetRepository).save(any(UserCourseNotificationSettingPreset.class));
         verify(userCourseNotificationSettingSpecificationRepository).saveAll(any());
@@ -144,7 +137,7 @@ class CourseNotificationSettingServiceTest {
         when(userCourseNotificationSettingSpecificationRepository.findAllEntitiesByUserIdAndCourseId(userId, courseId)).thenReturn(existingSpecs);
         when(courseNotificationSettingPresetRegistryService.getPresetById(anyShort())).thenReturn(mockPreset);
 
-        courseNotificationSettingService.applyPreset((short) 2, userId, login, courseId);
+        courseNotificationSettingService.applyPreset((short) 2, userId, testUser, courseId);
 
         verify(userCourseNotificationSettingPresetRepository).save(any(UserCourseNotificationSettingPreset.class));
         verify(userCourseNotificationSettingSpecificationRepository).deleteAll(existingSpecs);
@@ -162,7 +155,7 @@ class CourseNotificationSettingServiceTest {
         when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseIdAndCourseNotificationTypeIn(eq(userId), eq(courseId), any()))
                 .thenReturn(new ArrayList<>());
 
-        courseNotificationSettingService.applySpecification(notificationTypeChannels, userId, login, courseId);
+        courseNotificationSettingService.applySpecification(notificationTypeChannels, userId, testUser, courseId);
 
         verify(userCourseNotificationSettingPresetRepository).findUserCourseNotificationSettingPresetByUserIdAndCourseId(userId, courseId);
         verify(userCourseNotificationSettingSpecificationRepository).saveAll(any());
@@ -192,7 +185,7 @@ class CourseNotificationSettingServiceTest {
         existingPreset.setSettingPreset(customPresetId);
         when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(userId, courseId)).thenReturn(existingPreset);
 
-        courseNotificationSettingService.applySpecification(notificationTypeChannels, userId, login, courseId);
+        courseNotificationSettingService.applySpecification(notificationTypeChannels, userId, testUser, courseId);
 
         verify(userCourseNotificationSettingSpecificationRepository).saveAll(any());
     }
@@ -347,13 +340,12 @@ class CourseNotificationSettingServiceTest {
     }
 
     @Test
-    void shouldNotDeliverEmailToTestAccountThatHasNotConfiguredAnything() {
+    void shouldNotDeliverEmailToTestUserThatHasNotConfiguredAnything() {
         TestNotification notification = new TestNotification(123L);
-        User testAccount = createTestUser(1L, TEST_ACCOUNT_LOGIN);
+        User testAccount = createTestUser(1L, true);
         User regularUser = createTestUser(2L);
 
         when(userCourseNotificationSettingPresetRepository.findSettingPresetsByUserIdsAndCourseId(anySet(), eq(123L))).thenReturn(List.of());
-        when(testAccountEmailPolicy.isEmailEnabledByDefault(TEST_ACCOUNT_LOGIN)).thenReturn(false);
         when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(1), any(), any())).thenReturn(true);
 
         List<User> recipients = List.of(testAccount, regularUser);
@@ -365,9 +357,9 @@ class CourseNotificationSettingServiceTest {
     }
 
     @Test
-    void shouldDeliverEmailToTestAccountThatChoseAPreset() {
+    void shouldDeliverEmailToTestUserThatChoseAPreset() {
         TestNotification notification = new TestNotification(123L);
-        User testAccount = createTestUser(1L, TEST_ACCOUNT_LOGIN);
+        User testAccount = createTestUser(1L, true);
 
         when(userCourseNotificationSettingPresetRepository.findSettingPresetsByUserIdsAndCourseId(anySet(), eq(123L)))
                 .thenReturn(List.of(new UserCourseNotificationSettingPresetEntryDTO(1L, (short) 2)));
@@ -377,9 +369,9 @@ class CourseNotificationSettingServiceTest {
     }
 
     @Test
-    void shouldDeliverEmailToTestAccountThatEnabledItInACustomSpecification() {
+    void shouldDeliverEmailToTestUserThatEnabledItInACustomSpecification() {
         TestNotification notification = new TestNotification(123L);
-        User testAccount = createTestUser(1L, TEST_ACCOUNT_LOGIN);
+        User testAccount = createTestUser(1L, true);
 
         when(userCourseNotificationSettingPresetRepository.findSettingPresetsByUserIdsAndCourseId(anySet(), eq(123L))).thenReturn(List.of(customPreset(1L)));
         when(courseNotificationRegistryService.getNotificationIdentifier(notification.getClass())).thenReturn(notificationTypeId);
@@ -390,14 +382,13 @@ class CourseNotificationSettingServiceTest {
     }
 
     @Test
-    void shouldNotDeliverEmailToTestAccountOnACustomPresetWithoutARowForTheType() {
+    void shouldNotDeliverEmailToTestUserOnACustomPresetWithoutARowForTheType() {
         TestNotification notification = new TestNotification(123L);
-        User testAccount = createTestUser(1L, TEST_ACCOUNT_LOGIN);
+        User testAccount = createTestUser(1L, true);
 
         when(userCourseNotificationSettingPresetRepository.findSettingPresetsByUserIdsAndCourseId(anySet(), eq(123L))).thenReturn(List.of(customPreset(1L)));
         when(courseNotificationRegistryService.getNotificationIdentifier(notification.getClass())).thenReturn(notificationTypeId);
         when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdsAndCourseId(anySet(), eq(123L))).thenReturn(List.of());
-        when(testAccountEmailPolicy.isEmailEnabledByDefault(TEST_ACCOUNT_LOGIN)).thenReturn(false);
         // What the default preset would deliver is not the point: nobody configured this type for the test account.
         lenient().when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(1), any(), any())).thenReturn(true);
 
@@ -405,16 +396,15 @@ class CourseNotificationSettingServiceTest {
     }
 
     @Test
-    void shouldShowTestAccountThatChoseNothingTheDefaultPresetWithoutEmail() {
+    void shouldShowTestUserThatChoseNothingTheDefaultPresetWithoutEmail() {
         when(courseNotificationSettingPresetRegistryService.getPresetId(DefaultUserCourseNotificationSettingPreset.class)).thenReturn(1);
         when(userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(userId, courseId)).thenReturn(null);
-        when(testAccountEmailPolicy.isEmailEnabledByDefault(TEST_ACCOUNT_LOGIN)).thenReturn(false);
         when(courseNotificationSettingPresetRegistryService.getPresetById((short) 1)).thenReturn(mockPreset);
         when(mockPreset.getPresetMap()).thenReturn(
                 Map.of(NewPostNotification.class, Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, false)));
         when(courseNotificationRegistryService.getNotificationIdentifier(NewPostNotification.class)).thenReturn(notificationTypeId);
 
-        var info = courseNotificationSettingService.getSettingInfo(userId, TEST_ACCOUNT_LOGIN, courseId);
+        var info = courseNotificationSettingService.getSettingInfo(userId, true, courseId);
 
         assertThat(info.selectedPreset()).isEqualTo((short) 1);
         assertThat(info.notificationTypeChannels().get(notificationTypeId)).containsEntry(NotificationChannelOption.EMAIL, false).containsEntry(NotificationChannelOption.WEBAPP,
@@ -430,35 +420,33 @@ class CourseNotificationSettingServiceTest {
                 Map.of(NewPostNotification.class, Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, false)));
         when(courseNotificationRegistryService.getNotificationIdentifier(NewPostNotification.class)).thenReturn(notificationTypeId);
 
-        var info = courseNotificationSettingService.getSettingInfo(userId, login, courseId);
+        var info = courseNotificationSettingService.getSettingInfo(userId, testUser, courseId);
 
         assertThat(info.notificationTypeChannels().get(notificationTypeId)).containsEntry(NotificationChannelOption.EMAIL, true);
     }
 
     @Test
-    void shouldSavePresetOfTestAccountThatChoosesTheDefaultPreset() {
+    void shouldSavePresetOfTestUserThatChoosesTheDefaultPreset() {
         // Choosing the default preset is the way for a test account to switch e-mail on, so it must be stored although it equals what is shown.
         when(courseNotificationSettingPresetRegistryService.getPresetId(DefaultUserCourseNotificationSettingPreset.class)).thenReturn(1);
         when(courseNotificationSettingPresetRegistryService.getPresetById((short) 1)).thenReturn(mockPreset);
         when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(userId, courseId)).thenReturn(null);
-        when(testAccountEmailPolicy.isEmailEnabledByDefault(TEST_ACCOUNT_LOGIN)).thenReturn(false);
 
-        courseNotificationSettingService.applyPreset((short) 1, userId, TEST_ACCOUNT_LOGIN, courseId);
+        courseNotificationSettingService.applyPreset((short) 1, userId, true, courseId);
 
         verify(userCourseNotificationSettingPresetRepository).save(any(UserCourseNotificationSettingPreset.class));
     }
 
     @Test
-    void shouldStartCustomizingOfTestAccountThatChoseNothingWithoutEmail() {
+    void shouldStartCustomizingOfTestUserThatChoseNothingWithoutEmail() {
         when(courseNotificationSettingPresetRegistryService.getPresetId(DefaultUserCourseNotificationSettingPreset.class)).thenReturn(1);
         when(courseNotificationSettingPresetRegistryService.getPresetById((short) 1)).thenReturn(mockPreset);
         when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(userId, courseId)).thenReturn(null);
-        when(testAccountEmailPolicy.isEmailEnabledByDefault(TEST_ACCOUNT_LOGIN)).thenReturn(false);
         when(mockPreset.getPresetMap()).thenReturn(
                 Map.of(NewPostNotification.class, Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, false)));
         when(courseNotificationRegistryService.getNotificationIdentifier(NewPostNotification.class)).thenReturn(notificationTypeId);
 
-        courseNotificationSettingService.applyPreset(customPresetId, userId, TEST_ACCOUNT_LOGIN, courseId);
+        courseNotificationSettingService.applyPreset(customPresetId, userId, true, courseId);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<UserCourseNotificationSettingSpecification>> captor = ArgumentCaptor.forClass(List.class);
@@ -483,13 +471,14 @@ class CourseNotificationSettingServiceTest {
     }
 
     private User createTestUser(Long id) {
-        return createTestUser(id, "user" + id);
+        return createTestUser(id, false);
     }
 
-    private User createTestUser(Long id, String userLogin) {
+    private User createTestUser(Long id, boolean isTestUser) {
         User user = new User();
         user.setId(id);
-        user.setLogin(userLogin);
+        user.setLogin("user" + id);
+        user.setTestUser(isTestUser);
         return user;
     }
 

@@ -50,9 +50,6 @@ class SystemNotificationServiceTest {
     private MailSendingService mailSendingService;
 
     @Mock
-    private TestAccountEmailService testAccountEmailPolicy;
-
-    @Mock
     private GlobalNotificationSettingService globalNotificationSettingService;
 
     private SystemNotificationService systemNotificationService;
@@ -60,7 +57,7 @@ class SystemNotificationServiceTest {
     @BeforeEach
     void setUp() {
         systemNotificationService = new SystemNotificationService(websocketMessagingService, systemNotificationRepository, maintenanceEmailRecipientRepository, mailSendingService,
-                testAccountEmailPolicy, globalNotificationSettingService);
+                globalNotificationSettingService);
     }
 
     @AfterEach
@@ -89,7 +86,7 @@ class SystemNotificationServiceTest {
     }
 
     @Test
-    void shouldSendMaintenanceEmailToATestAccountOnlyWhenItSwitchedTheNotificationOn() {
+    void shouldSendMaintenanceEmailToATestUserOnlyWhenItSwitchedTheNotificationOn() {
         ZonedDateTime notificationDate = ZonedDateTime.now();
         SystemNotification notification = new SystemNotification();
         notification.setTitle("Maintenance");
@@ -98,24 +95,20 @@ class SystemNotificationServiceTest {
         notification.setExpireDate(notificationDate.plusHours(1));
         notification.setType(SystemNotificationType.WARNING);
 
-        var optedInTestAccount = new MaintenanceEmailRecipientDTO(1L, "artemis_test_user_16", "optedin@example.com", "en", "Opted", "In");
-        var silentTestAccount = new MaintenanceEmailRecipientDTO(2L, "artemis_test_user_17", "silent@example.com", "en", "Silent", "Account");
-        var regularInstructor = new MaintenanceEmailRecipientDTO(3L, "ge12abc", "instructor@example.com", "de", "Regular", "Instructor");
+        var optedInTestAccount = new MaintenanceEmailRecipientDTO(1L, "test_user_16", "optedin@example.com", "en", "Opted", "In", true);
+        var silentTestAccount = new MaintenanceEmailRecipientDTO(2L, "test_user_17", "silent@example.com", "en", "Silent", "Account", true);
+        var regularInstructor = new MaintenanceEmailRecipientDTO(3L, "ge12abc", "instructor@example.com", "de", "Regular", "Instructor", false);
         when(maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(any(ZonedDateTime.class)))
                 .thenReturn(Set.of(optedInTestAccount, silentTestAccount, regularInstructor));
-        when(testAccountEmailPolicy.isTestAccount(any())).thenAnswer(invocation -> {
-            String login = invocation.getArgument(0);
-            return login != null && login.startsWith("artemis_test_user_");
-        });
-        when(globalNotificationSettingService.isNotificationEnabled(1L, "artemis_test_user_16", GlobalNotificationType.MAINTENANCE)).thenReturn(true);
-        when(globalNotificationSettingService.isNotificationEnabled(2L, "artemis_test_user_17", GlobalNotificationType.MAINTENANCE)).thenReturn(false);
+        when(globalNotificationSettingService.isNotificationEnabled(1L, true, GlobalNotificationType.MAINTENANCE)).thenReturn(true);
+        when(globalNotificationSettingService.isNotificationEnabled(2L, true, GlobalNotificationType.MAINTENANCE)).thenReturn(false);
 
         systemNotificationService.sendMaintenanceEmails(notification);
 
         ArgumentCaptor<MailRecipientDTO> recipients = ArgumentCaptor.forClass(MailRecipientDTO.class);
         verify(mailSendingService, times(2)).buildAndSendAsync(recipients.capture(), eq("email.notification.maintenance.title"), eq("mail/notification/maintenanceEmail"),
                 anyMap());
-        // The login is part of the recipient, because it is what the mail layer uses to recognise a test account.
-        assertThat(recipients.getAllValues()).extracting(MailRecipientDTO::login).containsExactlyInAnyOrder("artemis_test_user_16", "ge12abc");
+        // The flag is part of the recipient, because the mail layer needs it for the mails that have no setting of their own.
+        assertThat(recipients.getAllValues()).extracting(MailRecipientDTO::login).containsExactlyInAnyOrder("test_user_16", "ge12abc");
     }
 }

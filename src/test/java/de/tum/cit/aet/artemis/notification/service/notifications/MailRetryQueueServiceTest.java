@@ -33,7 +33,7 @@ class MailRetryQueueServiceTest {
     }
 
     private PendingMail mail(String login, MailPriority priority) {
-        return queue.newPendingMail(login + "@example.org", login, "subject of " + login, "body of " + login, false, true, priority, NOW);
+        return queue.newPendingMail(login + "@example.org", "subject of " + login, "body of " + login, false, true, priority, NOW);
     }
 
     private double counted(Outcome outcome) {
@@ -46,9 +46,9 @@ class MailRetryQueueServiceTest {
         queue.offer(mail("bulk2", MailPriority.BULK));
         queue.offer(mail("reset", MailPriority.TRANSACTIONAL));
 
-        assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientLogin).isEqualTo("reset");
-        assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientLogin).isEqualTo("bulk1");
-        assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientLogin).isEqualTo("bulk2");
+        assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientEmail).isEqualTo("reset@example.org");
+        assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientEmail).isEqualTo("bulk1@example.org");
+        assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientEmail).isEqualTo("bulk2@example.org");
         assertThat(queue.pollDue(NOW)).isEmpty();
     }
 
@@ -57,8 +57,8 @@ class MailRetryQueueServiceTest {
         queue.offer(mail("first", MailPriority.BULK));
         queue.offer(mail("second", MailPriority.BULK));
 
-        assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientLogin).isEqualTo("first");
-        assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientLogin).isEqualTo("second");
+        assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientEmail).isEqualTo("first@example.org");
+        assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientEmail).isEqualTo("second@example.org");
     }
 
     @Test
@@ -67,10 +67,10 @@ class MailRetryQueueServiceTest {
         queue.offer(later);
         queue.offer(mail("due", MailPriority.BULK));
 
-        assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientLogin).isEqualTo("due");
+        assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientEmail).isEqualTo("due@example.org");
         assertThat(queue.pollDue(NOW)).isEmpty();
         assertThat(queue.size()).isEqualTo(1);
-        assertThat(queue.pollDue(NOW.plusSeconds(60))).get().extracting(PendingMail::recipientLogin).isEqualTo("later");
+        assertThat(queue.pollDue(NOW.plusSeconds(60))).get().extracting(PendingMail::recipientEmail).isEqualTo("later@example.org");
     }
 
     @Test
@@ -95,8 +95,8 @@ class MailRetryQueueServiceTest {
 
         assertThat(queue.size()).isEqualTo(3);
         assertThat(counted(Outcome.DROPPED_QUEUE_FULL)).isEqualTo(1);
-        assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientLogin).isEqualTo("reset");
-        assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientLogin).as("bulk1 was evicted").isEqualTo("bulk2");
+        assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientEmail).isEqualTo("reset@example.org");
+        assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientEmail).as("bulk1 was evicted").isEqualTo("bulk2@example.org");
     }
 
     @Test

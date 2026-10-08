@@ -14,7 +14,6 @@ import java.util.Optional;
 
 import jakarta.annotation.PreDestroy;
 
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -87,7 +86,6 @@ public class MailRetryQueueService {
      * attempts it already had.
      *
      * @param recipientEmail the address to send to
-     * @param recipientLogin the login of the recipient, for logs and for the test-account check
      * @param subject        the rendered subject
      * @param content        the rendered body
      * @param multipart      whether the message is multipart
@@ -97,8 +95,8 @@ public class MailRetryQueueService {
      * @param attempts       how many attempts to send it failed so far
      * @param nextAttemptAt  the earliest time of the next attempt
      */
-    public record PendingMail(String recipientEmail, @Nullable String recipientLogin, String subject, String content, boolean multipart, boolean html, MailPriority priority,
-            Instant expiresAt, int attempts, Instant nextAttemptAt) {
+    public record PendingMail(String recipientEmail, String subject, String content, boolean multipart, boolean html, MailPriority priority, Instant expiresAt, int attempts,
+            Instant nextAttemptAt) {
 
         /**
          * The same mail after one more failed attempt.
@@ -107,7 +105,7 @@ public class MailRetryQueueService {
          * @return a copy that counts the failed attempt
          */
         public PendingMail afterFailedAttempt(Instant nextAttempt) {
-            return new PendingMail(recipientEmail, recipientLogin, subject, content, multipart, html, priority, expiresAt, attempts + 1, nextAttempt);
+            return new PendingMail(recipientEmail, subject, content, multipart, html, priority, expiresAt, attempts + 1, nextAttempt);
         }
 
         /**
@@ -119,12 +117,11 @@ public class MailRetryQueueService {
         }
 
         /**
-         * Leaves the rendered body out, so that a mail that ends up in a log does not write its content there.
+         * Leaves the rendered body and the address out, so that a mail that ends up in a log does not write its content or its recipient there.
          */
         @Override
         public String toString() {
-            return "PendingMail[recipientLogin=" + recipientLogin + ", subject=" + subject + ", priority=" + priority + ", attempts=" + attempts + ", nextAttemptAt="
-                    + nextAttemptAt + ']';
+            return "PendingMail[subject=" + subject + ", priority=" + priority + ", attempts=" + attempts + ", nextAttemptAt=" + nextAttemptAt + ']';
         }
     }
 
@@ -181,7 +178,6 @@ public class MailRetryQueueService {
      * Builds the entry for a mail that was just rejected for the first time.
      *
      * @param recipientEmail the address to send to
-     * @param recipientLogin the login of the recipient
      * @param subject        the rendered subject
      * @param content        the rendered body
      * @param multipart      whether the message is multipart
@@ -190,10 +186,9 @@ public class MailRetryQueueService {
      * @param now            the current time
      * @return the mail, due immediately and expiring according to its priority
      */
-    public PendingMail newPendingMail(String recipientEmail, @Nullable String recipientLogin, String subject, String content, boolean multipart, boolean html,
-            MailPriority priority, Instant now) {
+    public PendingMail newPendingMail(String recipientEmail, String subject, String content, boolean multipart, boolean html, MailPriority priority, Instant now) {
         Duration maxAge = priority == MailPriority.TRANSACTIONAL ? retryProperties.getTransactionalMaxAge() : retryProperties.getBulkMaxAge();
-        return new PendingMail(recipientEmail, recipientLogin, subject, content, multipart, html, priority, now.plus(maxAge), 0, now);
+        return new PendingMail(recipientEmail, subject, content, multipart, html, priority, now.plus(maxAge), 0, now);
     }
 
     /**

@@ -54,13 +54,10 @@ public class CourseNotificationSettingService {
 
     private final CourseNotificationSettingPresetRegistryService courseNotificationSettingPresetRegistryService;
 
-    private final TestAccountEmailService testAccountEmailPolicy;
-
     public CourseNotificationSettingService(CourseNotificationRegistryService courseNotificationRegistryService,
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository,
             UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository,
-            CourseNotificationSettingPresetRegistryService courseNotificationSettingPresetRegistryService, TestAccountEmailService testAccountEmailPolicy) {
-        this.testAccountEmailPolicy = testAccountEmailPolicy;
+            CourseNotificationSettingPresetRegistryService courseNotificationSettingPresetRegistryService) {
         this.courseNotificationRegistryService = courseNotificationRegistryService;
         this.userCourseNotificationSettingSpecificationRepository = userCourseNotificationSettingSpecificationRepository;
         this.userCourseNotificationSettingPresetRepository = userCourseNotificationSettingPresetRepository;
@@ -89,10 +86,10 @@ public class CourseNotificationSettingService {
      *
      * @param selectedPresetId the ID of the notification preset to apply
      * @param userId           the ID of the user whose settings are being updated
-     * @param login            the login of the user, which tells whether the user is a test account
+     * @param testUser         whether the user is a test user
      * @param courseId         the ID of the course for which notification settings are being updated
      */
-    public void applyPreset(short selectedPresetId, long userId, String login, long courseId) {
+    public void applyPreset(short selectedPresetId, long userId, boolean testUser, long courseId) {
         // The entity, not the cached preset value: this path writes the row back, so it needs its identity.
         var currentPresetEntity = userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(userId, courseId);
 
@@ -100,7 +97,7 @@ public class CourseNotificationSettingService {
         course.setId(courseId);
         var user = new User(userId);
 
-        boolean testAccountWithoutChoice = currentPresetEntity == null && !testAccountEmailPolicy.isEmailEnabledByDefault(login);
+        boolean testAccountWithoutChoice = currentPresetEntity == null && testUser;
         if (currentPresetEntity == null) {
             currentPresetEntity = new UserCourseNotificationSettingPreset(user, course,
                     courseNotificationSettingPresetRegistryService.getPresetId(DefaultUserCourseNotificationSettingPreset.class).shortValue());
@@ -148,12 +145,12 @@ public class CourseNotificationSettingService {
      *
      * @param notificationTypeChannels A list of notification type IDs matched to a specific channel option
      * @param userId                   The ID of the user for whom the specification will be applied
-     * @param login                    The login of the user, which tells whether the user is a test account
+     * @param testUser                 Whether the user is a test user
      * @param courseId                 The ID of the course for which the specification will be applied
      */
-    public void applySpecification(Map<Short, Map<NotificationChannelOption, Boolean>> notificationTypeChannels, long userId, String login, long courseId) {
+    public void applySpecification(Map<Short, Map<NotificationChannelOption, Boolean>> notificationTypeChannels, long userId, boolean testUser, long courseId) {
         // First we apply the "custom" setting preset
-        applyPreset((short) 0, userId, login, courseId);
+        applyPreset((short) 0, userId, testUser, courseId);
 
         var specifications = userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseIdAndCourseNotificationTypeIn(userId, courseId,
                 notificationTypeChannels.keySet().stream().toList());
@@ -217,12 +214,12 @@ public class CourseNotificationSettingService {
      * </p>
      *
      * @param userId   The ID of the user whose notification settings are being retrieved
-     * @param login    The login of the user, which tells whether the user is a test account
+     * @param testUser Whether the user is a test user
      * @param courseId The ID of the course for which to retrieve notification settings
      * @return A CourseNotificationSettingInfoDTO containing the preset ID and a map of
      *         notification type identifiers to their channel configurations
      */
-    public CourseNotificationSettingInfoDTO getSettingInfo(long userId, String login, long courseId) {
+    public CourseNotificationSettingInfoDTO getSettingInfo(long userId, boolean testUser, long courseId) {
         short defaultPresetId = courseNotificationSettingPresetRegistryService.getPresetId(DefaultUserCourseNotificationSettingPreset.class).shortValue();
         Short selectedPreset = userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(userId, courseId);
         short presetId = selectedPreset != null ? selectedPreset : defaultPresetId;
@@ -230,7 +227,7 @@ public class CourseNotificationSettingService {
         // below are applied on top of.
         short presetToReadChannelsFrom = selectedPreset == null || selectedPreset == 0 ? defaultPresetId : selectedPreset;
         // Only the base that nobody chose is the default that a test account does not get e-mail from. A preset it chose is shown as it is.
-        boolean withoutEmail = (selectedPreset == null || selectedPreset == 0) && !testAccountEmailPolicy.isEmailEnabledByDefault(login);
+        boolean withoutEmail = (selectedPreset == null || selectedPreset == 0) && testUser;
 
         var currentPreset = courseNotificationSettingPresetRegistryService.getPresetById(presetToReadChannelsFrom);
 
@@ -339,10 +336,10 @@ public class CourseNotificationSettingService {
 
     /**
      * Whether the default preset delivers the notification on the channel to a user who did not choose a setting for it. A test
-     * account (see {@link TestAccountEmailService}) gets no e-mail from what nobody configured; its other channels keep the default.
+     * user (see {@link TestAccountEmailService}) gets no e-mail from what nobody configured; its other channels keep the default.
      */
     private boolean isEnabledByDefault(User recipient, CourseNotification notification, NotificationChannelOption channel) {
-        if (channel == NotificationChannelOption.EMAIL && !testAccountEmailPolicy.isEmailEnabledByDefault(recipient.getLogin())) {
+        if (channel == NotificationChannelOption.EMAIL && recipient.isTestUser()) {
             return false;
         }
         return courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(DEFAULT_PRESET_ID, notification.getClass(), channel);

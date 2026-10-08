@@ -60,7 +60,7 @@ public class UserCourseNotificationSettingResource {
 
         var user = userRepository.getUser();
 
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(courseNotificationSettingService.getSettingInfo(user.getId(), user.getLogin(), courseId));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(courseNotificationSettingService.getSettingInfo(user.getId(), user.isTestUser(), courseId));
     }
 
     /**
@@ -81,7 +81,7 @@ public class UserCourseNotificationSettingResource {
 
         var user = userRepository.getUser();
 
-        courseNotificationSettingService.applyPreset(presetId, user.getId(), user.getLogin(), courseId);
+        courseNotificationSettingService.applyPreset(presetId, user.getId(), user.isTestUser(), courseId);
 
         return ResponseEntity.ok().build();
     }
@@ -100,7 +100,7 @@ public class UserCourseNotificationSettingResource {
 
         var user = userRepository.getUser();
 
-        courseNotificationSettingService.applySpecification(notificationSpecifications.notificationTypeChannels(), user.getId(), user.getLogin(), courseId);
+        courseNotificationSettingService.applySpecification(notificationSpecifications.notificationTypeChannels(), user.getId(), user.isTestUser(), courseId);
 
         return ResponseEntity.ok().build();
     }

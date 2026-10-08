@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.notification.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -14,9 +12,8 @@ import org.springframework.context.annotation.Profile;
 /**
  * Configuration properties of the e-mail delivery, bound from {@code artemis.mail.*}.
  * <p>
- * Two concerns live here because both protect the one shared SMTP account of a deployment: which accounts never receive
- * mail unless they ask for it (see {@code TestAccountEmailService}), and how a mail that could not be handed to the SMTP
- * server is kept and tried again (see {@code MailRetryQueueService}).
+ * They configure how a mail that could not be handed to the SMTP server is kept and tried again (see
+ * {@code MailRetryQueueService}), which protects the one SMTP account that every server of a deployment shares.
  */
 @Profile(PROFILE_CORE)
 @Configuration
@@ -24,25 +21,7 @@ import org.springframework.context.annotation.Profile;
 @ConfigurationProperties(prefix = "artemis.mail")
 public class MailDeliveryProperties {
 
-    /**
-     * Regular expressions that mark a login as a test account. A pattern has to match the whole login.
-     * <p>
-     * A test account receives no e-mail until it has opted in by explicitly enabling an e-mail notification setting: a
-     * notification setting that was never configured counts as "off" for it, where it counts as "on" for everybody else.
-     * That keeps bulk-created test users, whose addresses are real or reach a shared SMTP account, from sending
-     * thousands of mails when a script touches them.
-     */
-    private List<String> testAccountLoginPatterns = new ArrayList<>();
-
     private final Retry retry = new Retry();
-
-    public List<String> getTestAccountLoginPatterns() {
-        return testAccountLoginPatterns;
-    }
-
-    public void setTestAccountLoginPatterns(List<String> testAccountLoginPatterns) {
-        this.testAccountLoginPatterns = testAccountLoginPatterns;
-    }
 
     public Retry getRetry() {
         return retry;
