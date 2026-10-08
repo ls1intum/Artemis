@@ -33,11 +33,13 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.IrisSessionPresenceService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -73,7 +75,8 @@ class IrisChatSessionServiceNewResultEventTest {
                 mock(IrisChatSessionRepository.class), mock(ProgrammingExerciseStudentParticipationRepository.class), mock(ProgrammingSubmissionRepository.class),
                 mock(IrisRateLimitService.class), JsonObjectMapper.get(), mock(ExerciseRepository.class), submissionRepository, mock(CourseRepository.class),
                 Optional.<LectureRepositoryApi>empty(), mock(IrisCitationService.class), mock(MessageSource.class), mock(IrisChatPipelineExecutionService.class),
-                mock(PyrisJobService.class), userAiPreferenceService, new IrisProactiveProperties(), mock(UserRepository.class));
+                mock(PyrisJobService.class), userAiPreferenceService, new IrisProactiveProperties(), mock(UserRepository.class), mock(CourseNotificationService.class),
+                mock(IrisSessionPresenceService.class));
 
         student = new User();
         student.setId(USER_ID);
