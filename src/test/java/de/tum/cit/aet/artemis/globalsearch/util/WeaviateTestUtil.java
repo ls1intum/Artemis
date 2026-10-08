@@ -10,8 +10,13 @@ import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.awaitility.core.ConditionTimeoutException;
+import org.awaitility.core.ThrowingRunnable;
+import org.awaitility.pollinterval.PollInterval;
 import org.testcontainers.DockerClientFactory;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -37,6 +42,97 @@ public final class WeaviateTestUtil {
 
     private WeaviateTestUtil() {
         // Utility class
+    }
+
+    /**
+     * The response timeout of one Weaviate REST call. The outbox dispatcher writes every row through the REST data API
+     * ({@code exists}, then {@code insert} or {@code replace}), and the production client in
+     * {@code WeaviateClientConfiguration} does not override the Weaviate client's default, whose query timeout is 60 s
+     * (client6 6.3.1, {@code Timeout()} = 30 s init, 60 s query, 120 s insert; the 120 s insert timeout only governs
+     * gRPC batch inserts, which the dispatcher does not use). A write that hangs therefore blocks the single dispatcher
+     * thread for up to this long before it fails.
+     */
+    private static final Duration WEAVIATE_REST_TIMEOUT = Duration.ofSeconds(60);
+
+    /**
+     * Delay before the first retry of a failed outbox write ({@code WeaviateOutboxProperties#baseBackoffSeconds}
+     * default; the tests do not override it).
+     */
+    private static final Duration OUTBOX_BASE_BACKOFF = Duration.ofSeconds(10);
+
+    /**
+     * Cadence of the safety-net drain tick ({@code WeaviateOutboxProperties#drainIntervalSeconds} default). A retry that
+     * has become due is picked up by the next tick, because only the enqueue nudge starts a drain outside the schedule.
+     */
+    private static final Duration OUTBOX_DRAIN_TICK = Duration.ofSeconds(5);
+
+    /**
+     * Slack for the successful write itself, the database round trips around it and a loaded machine.
+     */
+    private static final Duration INDEXING_MARGIN = Duration.ofSeconds(15);
+
+    /**
+     * How long a test waits for the outbox dispatcher to apply a write to Weaviate and for the result to become
+     * visible, which is 150 seconds.
+     * <p>
+     * It is the worst case of the dispatcher's own recovery, not a guess: the dispatcher is a single sequential
+     * writer, so the awaited row can sit behind one write that hangs for a full {@link #WEAVIATE_REST_TIMEOUT}, then
+     * its own first attempt can hang for the same time and fail, after which it is retried after
+     * {@link #OUTBOX_BASE_BACKOFF} at the next {@link #OUTBOX_DRAIN_TICK}, and the retry needs the
+     * {@link #INDEXING_MARGIN}. The 30 s that every await used before is below that, and a CI run showed the
+     * dispatcher applying nothing for 35 s on a loaded machine and then everything within a second. A longer ceiling
+     * costs nothing when the write arrives early, because the await returns as soon as the condition holds.
+     */
+    public static final Duration INDEXING_TIMEOUT = WEAVIATE_REST_TIMEOUT.multipliedBy(2).plus(OUTBOX_BASE_BACKOFF).plus(OUTBOX_DRAIN_TICK).plus(INDEXING_MARGIN);
+
+    /**
+     * Polls quickly at first and backs off, but never waits longer than this between two checks, so a condition that
+     * becomes true late in the {@link #INDEXING_TIMEOUT} is still seen close to the moment it does, not one doubled
+     * interval later.
+     */
+    private static final Duration MAX_POLL_INTERVAL = Duration.ofSeconds(2);
+
+    private static final PollInterval BOUNDED_BACKOFF_POLL_INTERVAL = (pollCount, previousInterval) -> pollCount == 1 ? Duration.ofMillis(100)
+            : previousInterval.multipliedBy(2).compareTo(MAX_POLL_INTERVAL) > 0 ? MAX_POLL_INTERVAL : previousInterval.multipliedBy(2);
+
+    /**
+     * Waits until the given assertion holds, for at most {@link #INDEXING_TIMEOUT}. Use it for everything that depends
+     * on the outbox dispatcher having applied a write to Weaviate.
+     * <p>
+     * When the wait times out the failure says what the dispatcher was doing at that moment (see
+     * {@link #describeOutboxDispatcher()}), so a slow Weaviate write can be told apart from a write that was never
+     * enqueued.
+     *
+     * @param assertion the assertion that holds once the write is visible; it may throw any exception
+     */
+    public static void awaitIndexing(ThrowingRunnable assertion) {
+        try {
+            await().atMost(INDEXING_TIMEOUT).pollInterval(BOUNDED_BACKOFF_POLL_INTERVAL).untilAsserted(assertion);
+        }
+        catch (ConditionTimeoutException timeout) {
+            throw new AssertionError(timeout.getMessage() + System.lineSeparator() + describeOutboxDispatcher(), timeout);
+        }
+    }
+
+    /**
+     * Describes what the outbox dispatcher is doing right now by looking for threads that are executing inside it. A
+     * thread parked in a Weaviate call means one write is slow or hung and everything queued behind it waits; no
+     * such thread means the dispatcher is idle, so the awaited row was never enqueued, is deferred by retry backoff
+     * after a failed write, or no drain was triggered.
+     */
+    private static String describeOutboxDispatcher() {
+        String dispatcher = "WeaviateOutboxDispatcher";
+        String busyThreads = Thread.getAllStackTraces().entrySet().stream()
+                .filter(entry -> Arrays.stream(entry.getValue()).anyMatch(frame -> frame.getClassName().contains(dispatcher)))
+                .map(entry -> "Thread \"" + entry.getKey().getName() + "\" (" + entry.getKey().getState() + ") is inside the dispatcher:" + System.lineSeparator()
+                        + Arrays.stream(entry.getValue()).limit(15).map(frame -> "    at " + frame).collect(Collectors.joining(System.lineSeparator())))
+                .collect(Collectors.joining(System.lineSeparator()));
+        if (busyThreads.isEmpty()) {
+            return "Outbox dispatcher state at timeout: no thread is executing it, so it is idle (the awaited row was not enqueued, is deferred by retry backoff after a failed write, "
+                    + "or no drain was triggered).";
+        }
+        return "Outbox dispatcher state at timeout: busy, a slow Weaviate write holds the single dispatcher thread and every later row waits behind it." + System.lineSeparator()
+                + busyThreads;
     }
 
     /**
@@ -118,7 +214,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryExerciseProperties(weaviateService, exerciseId);
             assertThat(properties).as("Exercise %d should be indexed in Weaviate before its course is deleted", exerciseId).isNotNull();
         });
@@ -135,7 +231,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryExerciseProperties(weaviateService, exercise.getId());
             assertThat(properties).as("Exercise %d should exist in Weaviate", exercise.getId()).isNotNull();
 
@@ -164,7 +260,7 @@ public final class WeaviateTestUtil {
         }
         assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
             assertThat(properties).isNotNull();
             if (programmingExercise.getProgrammingLanguage() != null) {
@@ -188,7 +284,7 @@ public final class WeaviateTestUtil {
         }
         assertExerciseExistsInWeaviate(weaviateService, modelingExercise);
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryExerciseProperties(weaviateService, modelingExercise.getId());
             assertThat(properties).isNotNull();
             if (modelingExercise.getDiagramType() != null) {
@@ -209,7 +305,7 @@ public final class WeaviateTestUtil {
         }
         assertExerciseExistsInWeaviate(weaviateService, quizExercise);
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryExerciseProperties(weaviateService, quizExercise.getId());
             assertThat(properties).isNotNull();
             if (quizExercise.getQuizMode() != null) {
@@ -233,7 +329,7 @@ public final class WeaviateTestUtil {
         }
         assertExerciseExistsInWeaviate(weaviateService, fileUploadExercise);
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryExerciseProperties(weaviateService, fileUploadExercise.getId());
             assertThat(properties).isNotNull();
             if (fileUploadExercise.getFilePattern() != null) {
@@ -254,7 +350,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryExerciseProperties(weaviateService, exerciseId);
             assertThat(properties).as("Exercise %d should exist in Weaviate", exerciseId).isNotNull();
 
@@ -325,7 +421,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryLectureProperties(weaviateService, lecture.getId());
             assertThat(properties).as("Lecture %d should exist in Weaviate", lecture.getId()).isNotNull();
 
@@ -347,7 +443,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryLectureProperties(weaviateService, lectureId);
             assertThat(properties).as("Lecture %d should not exist in Weaviate", lectureId).isNull();
         });
@@ -364,7 +460,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryExerciseProperties(weaviateService, exerciseId);
             assertThat(properties).as("Exercise %d should not exist in Weaviate", exerciseId).isNull();
         });
@@ -421,7 +517,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryExamProperties(weaviateService, examId);
             assertThat(properties).as("Exam %d should exist in Weaviate", examId).isNotNull();
         });
@@ -437,7 +533,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryExamProperties(weaviateService, examId);
             assertThat(properties).as("Exam %d should not exist in Weaviate", examId).isNull();
         });
@@ -477,7 +573,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryLectureUnitProperties(weaviateService, lectureUnitId);
             assertThat(properties).as("Lecture unit %d should exist in Weaviate", lectureUnitId).isNotNull();
         });
@@ -493,7 +589,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryLectureUnitProperties(weaviateService, lectureUnitId);
             assertThat(properties).as("Lecture unit %d should not exist in Weaviate", lectureUnitId).isNull();
         });
@@ -533,7 +629,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryFaqProperties(weaviateService, faqId);
             assertThat(properties).as("FAQ %d should exist in Weaviate", faqId).isNotNull();
         });
@@ -549,7 +645,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryFaqProperties(weaviateService, faqId);
             assertThat(properties).as("FAQ %d should not exist in Weaviate", faqId).isNull();
         });
@@ -589,7 +685,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryChannelProperties(weaviateService, channel.getId());
             assertThat(properties).as("Channel %d should exist in Weaviate", channel.getId()).isNotNull();
 
@@ -614,7 +710,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryChannelProperties(weaviateService, channelId);
             assertThat(properties).as("Channel %d should not exist in Weaviate", channelId).isNull();
         });
@@ -647,7 +743,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryCourseProperties(weaviateService, course.getId());
             assertThat(properties).as("Course %d should exist in Weaviate", course.getId()).isNotNull();
 
@@ -664,7 +760,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryCourseProperties(weaviateService, courseId);
             assertThat(properties).as("Course %d should not exist in Weaviate", courseId).isNull();
         });
@@ -701,7 +797,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryPostProperties(weaviateService, postId);
             assertThat(properties).as("Post %d should exist in Weaviate", postId).isNotNull();
         });
@@ -714,7 +810,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryPostProperties(weaviateService, postId);
             assertThat(properties).as("Post %d should not exist in Weaviate", postId).isNull();
         });
@@ -747,7 +843,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryAnswerPostProperties(weaviateService, answerPostId);
             assertThat(properties).as("Answer post %d should exist in Weaviate", answerPostId).isNotNull();
         });
@@ -760,7 +856,7 @@ public final class WeaviateTestUtil {
         if (shouldSkipWeaviateAssertions(weaviateService)) {
             return;
         }
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryAnswerPostProperties(weaviateService, answerPostId);
             assertThat(properties).as("Answer post %d should not exist in Weaviate", answerPostId).isNull();
         });
