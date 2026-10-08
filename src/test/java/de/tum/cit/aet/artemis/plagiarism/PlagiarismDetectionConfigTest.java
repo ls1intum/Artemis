@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.plagiarism;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -10,7 +12,8 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Pins the copy constructor of the plagiarism detection configuration: the settings are copied, the identity (row id,
- * exercise and its key) is not. All settings are primitives, so the copy cannot share state with its source.
+ * exercise and its key) is not. All settings are primitives, so the copy cannot share state with its source. It also pins
+ * the redaction of the settings for students and the value semantics of the configuration.
  */
 class PlagiarismDetectionConfigTest {
 
@@ -85,5 +88,78 @@ class PlagiarismDetectionConfigTest {
         assertThat(copy.getMinimumSize()).isEqualTo(50);
         assertThat(copy.getExercise()).isNull();
         assertThat(copy.getExerciseId()).isNull();
+    }
+
+    private static PlagiarismDetectionConfig storedConfig(long id) {
+        PlagiarismDetectionConfig config = PlagiarismDetectionConfig.createDefault();
+        config.setId(id);
+        return config;
+    }
+
+    @Test
+    void filteringSensitiveInformationRedactsTheSettingsAStudentMustNotSee() {
+        PlagiarismDetectionConfig config = attachedSourceWithNonDefaultSettings();
+        config.setContinuousPlagiarismControlPostDueDateChecksEnabled(true);
+
+        config.filterSensitiveInformation();
+
+        assertThat(config.isContinuousPlagiarismControlEnabled()).isFalse();
+        assertThat(config.isContinuousPlagiarismControlPostDueDateChecksEnabled()).isFalse();
+        assertThat(config.getSimilarityThreshold()).isEqualTo(-1);
+        assertThat(config.getMinimumScore()).isEqualTo(-1);
+        assertThat(config.getMinimumSize()).isEqualTo(-1);
+        assertThat(config.getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).as("the response period is not sensitive").isEqualTo(14);
+    }
+
+    @Test
+    void createDefaultHasTheDocumentedDefaults() {
+        PlagiarismDetectionConfig config = PlagiarismDetectionConfig.createDefault();
+
+        assertThat(config.isContinuousPlagiarismControlEnabled()).isFalse();
+        assertThat(config.isContinuousPlagiarismControlPostDueDateChecksEnabled()).isFalse();
+        assertThat(config.getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(7);
+        assertThat(config.getSimilarityThreshold()).isEqualTo(90);
+        assertThat(config.getMinimumScore()).isZero();
+        assertThat(config.getMinimumSize()).isEqualTo(50);
+    }
+
+    @Test
+    void configurationsAreEqualWhenRowAndEverySettingAreEqual() {
+        PlagiarismDetectionConfig config = storedConfig(1L);
+
+        assertThat(config).isEqualTo(config);
+        assertThat(config).isEqualTo(storedConfig(1L)).hasSameHashCodeAs(storedConfig(1L));
+        assertThat(config).isNotEqualTo(null);
+        assertThat(config).isNotEqualTo("not a configuration");
+        assertThat(config).as("another row").isNotEqualTo(storedConfig(2L));
+        assertThat(PlagiarismDetectionConfig.createDefault()).as("a row that is not stored has no identity to compare").isNotEqualTo(PlagiarismDetectionConfig.createDefault());
+    }
+
+    @Test
+    void configurationsWithTheSameRowDifferWhenAnySettingDiffers() {
+        PlagiarismDetectionConfig base = storedConfig(1L);
+
+        PlagiarismDetectionConfig enabled = storedConfig(1L);
+        enabled.setContinuousPlagiarismControlEnabled(true);
+        PlagiarismDetectionConfig postDueDate = storedConfig(1L);
+        postDueDate.setContinuousPlagiarismControlPostDueDateChecksEnabled(true);
+        PlagiarismDetectionConfig period = storedConfig(1L);
+        period.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(8);
+        PlagiarismDetectionConfig threshold = storedConfig(1L);
+        threshold.setSimilarityThreshold(91);
+        PlagiarismDetectionConfig score = storedConfig(1L);
+        score.setMinimumScore(1);
+        PlagiarismDetectionConfig size = storedConfig(1L);
+        size.setMinimumSize(51);
+
+        assertThat(List.of(enabled, postDueDate, period, threshold, score, size)).allSatisfy(changed -> assertThat(base).isNotEqualTo(changed));
+    }
+
+    @Test
+    void toStringListsEverySetting() {
+        PlagiarismDetectionConfig config = attachedSourceWithNonDefaultSettings();
+
+        assertThat(config.toString()).contains("continuousPlagiarismControlEnabled=true", "continuousPlagiarismControlPostDueDateChecksEnabled=false",
+                "continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod=14", "similarityThreshold=77", "minimumScore=33", "minimumSize=55");
     }
 }
