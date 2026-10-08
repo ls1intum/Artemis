@@ -2,7 +2,7 @@
 """
 format_slow_query_report.py
 ---------------------------
-Reads the JSON produced by GET /api/core/admin/performance/slow-queries and
+Reads the JSON produced by GET /api/admin/performance/slow-queries and
 prints a GitHub-flavored Markdown summary suitable for appending to a PR comment.
 Optionally also writes a self-contained, sortable HTML report (the full,
 untruncated findings) to a separate file for upload as a CI artifact.

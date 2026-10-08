@@ -11,6 +11,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -30,6 +31,7 @@ import org.springframework.web.servlet.HandlerMapping;
  */
 @Component
 @Profile(SPRING_PROFILE_E2E_PERFORMANCE)
+@Lazy
 @Order(Ordered.LOWEST_PRECEDENCE)
 public class SlowQueryRequestFilter implements Filter {
 

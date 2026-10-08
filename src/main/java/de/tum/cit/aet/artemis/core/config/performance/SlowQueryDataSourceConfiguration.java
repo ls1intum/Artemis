@@ -12,6 +12,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import net.ttddyy.dsproxy.support.ProxyDataSource;
@@ -43,6 +44,7 @@ import net.ttddyy.dsproxy.support.ProxyDataSourceBuilder;
  */
 @Configuration
 @Profile(SPRING_PROFILE_E2E_PERFORMANCE)
+@Lazy
 public class SlowQueryDataSourceConfiguration {
 
     /**
