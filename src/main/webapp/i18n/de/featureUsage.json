@@ -728,6 +728,10 @@
                     "UPCOMING_EXAMS_AND_EXERCISES": {
                         "name": "Anstehende Klausuren und Aufgaben",
                         "description": "Eine Übersicht über das Anstehende in allen Kursen."
+                    },
+                    "SCIENCE_ADMINISTRATION": {
+                        "name": "Verwaltung der Forschungsdatenerhebung",
+                        "description": "Kurse für die Erhebung von Forschungsdaten auswählen und diese Daten exportieren."
                     }
                 }
             }

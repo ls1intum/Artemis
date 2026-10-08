@@ -4,9 +4,9 @@ import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 /**
- * Guards the "/user-settings/science" route. The science settings endpoint lives in the atlas module (the server-side
- * {@link https://github.com/ls1intum/Artemis ScienceSettingsResource} is annotated with {@code @Conditional(AtlasEnabled.class)}),
- * so when the atlas module is disabled the endpoint returns 404 and the page would render empty (issue #13173).
+ * Guards the "/user-settings/science" route. The consent endpoints live in the atlas module ({@code ScienceResource} is
+ * annotated with {@code @Conditional(AtlasEnabled.class)}), so when the atlas module is disabled they return 404 and
+ * the page would render empty (issue #13173).
  *
  * The sidebar already hides the tab in that case; this guard additionally prevents direct navigation (e.g. via a
  * bookmark or URL) from opening the empty page by redirecting back to the user-settings root.
