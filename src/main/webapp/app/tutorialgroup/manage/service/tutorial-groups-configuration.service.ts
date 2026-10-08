@@ -31,7 +31,6 @@ export class TutorialGroupsConfigurationService {
 }
 
 function toRequest(settings: TutorialGroupsConfigurationFormData, loaded?: TutorialGroupConfiguration): TutorialGroupConfiguration {
-    // The form only submits a complete period, see tutorialPeriodRangeValidator.
     const [start, end] = settings.period ?? [];
     return {
         id: loaded?.id,

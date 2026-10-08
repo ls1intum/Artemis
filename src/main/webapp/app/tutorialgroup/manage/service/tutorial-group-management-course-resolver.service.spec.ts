@@ -236,7 +236,7 @@ describe('TutorialGroupManagementResolve', () => {
                         find: () => of(new HttpResponse({ body: Object.assign(new Course(), { id: 1, isAtLeastTutor: false }) })),
                     }),
                     MockProvider(TutorialGroupsConfigurationService, {
-                        getOneOfCourse: () => of(new HttpResponse<TutorialGroupConfigurationDTO>({ body: { id: 5 } })),
+                        getOneOfCourse: () => of(generateExampleTutorialGroupsConfigurationDTO({ id: 5 })),
                     }),
                 ],
             });

@@ -86,7 +86,6 @@ describe('TutorialGroupsManagementComponent', () => {
         fixture.detectChanges();
     }
 
-    /** The one request the tutorial groups resource has sent for the course; fails when there is none or more than one. */
     function expectTutorialGroupsRequest(): TestRequest {
         fixture.detectChanges();
         return httpTesting.expectOne(TUTORIAL_GROUPS_URL);

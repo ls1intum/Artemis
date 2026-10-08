@@ -17,7 +17,6 @@ const SERVER_DATE_FORMAT = 'YYYY-MM-DD';
  */
 const SERVER_DATE_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
-/** A holiday as the dialog submits it. */
 export interface TutorialGroupFreePeriodDTO {
     /** Carried as Dayjs rather than Date so the value keeps the zone it was chosen in until it is written out. */
     startDate: dayjs.Dayjs;

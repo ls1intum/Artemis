@@ -268,7 +268,6 @@ export class TutorialGroupsManagementComponent {
         });
     }
 
-    /** Fetches the groups again after an import, an export, or a deletion changed them on the server. */
     loadTutorialGroups(): void {
         this.tutorialGroupsResource.reload();
     }

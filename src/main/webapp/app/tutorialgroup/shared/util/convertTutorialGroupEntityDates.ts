@@ -50,7 +50,6 @@ export function convertTutorialGroupDatesFromServer(tutorialGroup: TutorialGroup
     return tutorialGroup;
 }
 
-/** Reads the summaries of the tutorial group list endpoint as entities, with their dates converted. */
 export function convertTutorialGroupSummariesFromServer(summaries: TutorialGroupSummary[]): TutorialGroup[] {
     return summaries.map((summary) => convertTutorialGroupDatesFromServer(hydrate(new TutorialGroup(), summary)));
 }
