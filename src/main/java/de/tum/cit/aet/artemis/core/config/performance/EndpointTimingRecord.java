@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * One HTTP request's aggregate query-time profile, recorded for every request regardless of
  * whether any individual query crossed the slow-query threshold. Where {@link SlowQueryRecord}
- * and {@link N1Suspect} answer "was any single statement slow" or "was one query shape repeated
+ * and {@link RepeatedQueryFinding} answer "was any single statement slow" or "was one query shape repeated
  * too often", this answers a question neither of them can: how much of this endpoint's total
  * latency is database time, and across how many distinct queries -- catching an endpoint that
  * fires many individually-unremarkable queries which together dominate its response time, a

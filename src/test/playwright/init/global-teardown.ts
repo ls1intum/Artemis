@@ -39,7 +39,7 @@ async function collectSlowQueryReport(): Promise<void> {
             return;
         }
 
-        const reportResponse = await ctx.get('api/core/admin/performance/slow-queries', {
+        const reportResponse = await ctx.get('api/admin/performance/slow-queries', {
             headers: { cookie: `jwt=${jwtMatch[1]}` },
         });
         if (!reportResponse.ok()) {

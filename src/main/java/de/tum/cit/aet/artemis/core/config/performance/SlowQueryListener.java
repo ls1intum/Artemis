@@ -2,12 +2,16 @@ package de.tum.cit.aet.artemis.core.config.performance;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_E2E_PERFORMANCE;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -17,6 +21,7 @@ import org.springframework.web.servlet.HandlerMapping;
 import net.ttddyy.dsproxy.ExecutionInfo;
 import net.ttddyy.dsproxy.QueryInfo;
 import net.ttddyy.dsproxy.listener.QueryExecutionListener;
+import net.ttddyy.dsproxy.proxy.ParameterSetOperation;
 
 /**
  * JDBC-level query execution listener, plugged into the datasource-proxy wrapper.
@@ -27,6 +32,8 @@ import net.ttddyy.dsproxy.listener.QueryExecutionListener;
  * <li>Extracts the current HTTP request context from Spring's {@code RequestContextHolder}
  * (method, URI path, and the {@code X-Playwright-Test-Name}/{@code X-Playwright-Phase} headers
  * injected by the Playwright test fixture).</li>
+ * <li>Computes a parameter signature (raw SQL + bound values), which tells an N+1 (same template,
+ * different values) apart from a duplicate (same template, same values).</li>
  * <li>Delegates to {@link SlowQueryCollector#record} for threshold evaluation and storage.</li>
  * </ol>
  * <p>
@@ -34,6 +41,7 @@ import net.ttddyy.dsproxy.listener.QueryExecutionListener;
  */
 @Component
 @Profile(SPRING_PROFILE_E2E_PERFORMANCE)
+@Lazy
 public class SlowQueryListener implements QueryExecutionListener {
 
     /** HTTP header injected by the Playwright {@code baseFixtures.ts} fixture. */
@@ -88,8 +96,10 @@ public class SlowQueryListener implements QueryExecutionListener {
         }
 
         long executionTimeMs = execInfo.getElapsedTime();
-        String rawSql = queryInfoList.get(0).getQuery();
+        QueryInfo queryInfo = queryInfoList.get(0);
+        String rawSql = queryInfo.getQuery();
         String normalizedSql = normalizeSql(rawSql);
+        long parameterSignature = parameterSignature(rawSql, queryInfo.getParametersList());
         int joinCount = countJoins(rawSql);
 
         // Extract HTTP context — may be null for async/background queries
@@ -113,7 +123,7 @@ public class SlowQueryListener implements QueryExecutionListener {
                 // requests that never resolved to a handler (e.g. a 404).
                 Object routeTemplate = req.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
                 httpEndpoint = routeTemplate != null ? routeTemplate.toString() : req.getRequestURI();
-                testName = req.getHeader(PLAYWRIGHT_TEST_HEADER);
+                testName = testName(req);
                 phase = req.getHeader(PLAYWRIGHT_PHASE_HEADER);
             }
         }
@@ -121,7 +131,54 @@ public class SlowQueryListener implements QueryExecutionListener {
             // No request context bound (e.g. startup, scheduled tasks)
         }
 
-        collector.record(normalizedSql, executionTimeMs, joinCount, httpMethod, httpEndpoint, testName, phase, Thread.currentThread().getName());
+        collector.record(normalizedSql, parameterSignature, executionTimeMs, joinCount, QueryCallSite::resolve, httpMethod, httpEndpoint, testName, phase,
+                Thread.currentThread().getName());
+    }
+
+    /**
+     * A hash of the raw SQL text and every bound parameter value: two executions get the same
+     * signature exactly when they ran the same statement with the same values. The raw SQL is
+     * included (not just the parameters) because Hibernate inlines some values as literals, which
+     * normalisation strips from the template but which still make two statements different. For
+     * a JDBC batch, all of its parameter sets are hashed together, so one batch counts as one
+     * execution -- batching is the fix for one-statement-per-item, not an instance of it.
+     * <p>
+     * A 64-bit hash rather than the values themselves, to keep per-request memory flat for large
+     * parameter lists; a collision would at worst merge two parameter sets of the same template
+     * within one request, which is negligible at 64 bits.
+     */
+    static long parameterSignature(String rawSql, List<List<ParameterSetOperation>> parametersList) {
+        long hash = rawSql != null ? rawSql.hashCode() : 0;
+        if (parametersList != null) {
+            for (List<ParameterSetOperation> parameterSet : parametersList) {
+                // each operation is one setXxx(index, value, ...) call; summed, so the order of the
+                // calls does not matter, and hashed by content (deepHashCode also covers byte[] values,
+                // whose plain hashCode is their identity)
+                long setHash = 0;
+                for (ParameterSetOperation operation : parameterSet) {
+                    setHash += Arrays.deepHashCode(operation.getArgs());
+                }
+                hash = hash * 1_000_003L + setHash;
+            }
+        }
+        return hash;
+    }
+
+    /**
+     * The Playwright test title of the request, which the fixture percent-encodes because HTTP
+     * header values must be ASCII and test titles may contain characters such as {@code ✕}.
+     */
+    static String testName(HttpServletRequest request) {
+        String header = request.getHeader(PLAYWRIGHT_TEST_HEADER);
+        if (header == null) {
+            return null;
+        }
+        try {
+            return URLDecoder.decode(header, StandardCharsets.UTF_8);
+        }
+        catch (IllegalArgumentException malformed) {
+            return header;
+        }
     }
 
     /** Counts SQL {@code join} keywords in the raw (un-normalised) query text. */

@@ -2,163 +2,75 @@
 """
 format_slow_query_report.py
 ---------------------------
-Reads the JSON produced by GET /api/core/admin/performance/slow-queries and
-prints a GitHub-flavored Markdown summary suitable for appending to a PR comment.
-Optionally also writes a self-contained, sortable HTML report (the full,
-untruncated findings) to a separate file for upload as a CI artifact.
+Turns the JSON produced by GET /api/admin/performance/slow-queries (plus, optionally, the
+static findings of find_slow_queries.py) into
+  * a GitHub-flavored Markdown summary for the PR comment (stdout), and
+  * a self-contained, sortable HTML report with every finding (the CI artifact).
+
+Every finding is a yes/no rule with a stable key, so a run can be compared against a baseline
+run (the latest develop run): with --baseline, findings whose key the baseline does not contain
+are marked new, and the PR comment lists only those. --keys-out writes this run's keys, which is
+what a develop run uploads as the next baseline.
 
 Usage:
-    python3 format_slow_query_report.py slow-query-report.json [run_url] [html_output_path]
-
-The Markdown summary is written to stdout; redirect to a .md file from the shell.
+    python3 format_slow_query_report.py slow-query-report.json [run_url] [html_output_path] [static_findings.json]
+        [--baseline baseline-keys.json] [--keys-out keys.json]
 """
 
+import argparse
+import hashlib
 import html
 import json
 import re
 import sys
 from datetime import timezone, datetime
 
-# GitHub caps issue/PR comment bodies at 65536 characters. A "run all tests" pass can collect
-# thousands of findings, so only the worst offenders are rendered inline; the rest are still
-# available, untruncated, in the uploaded HTML artifact (see build_html_report).
+# GitHub caps issue/PR comment bodies at 65536 characters; the HTML artifact has everything.
 MAX_ROWS_PER_SECTION = 20
+MAX_OCCURRENCES_SHOWN = 15
 
-# --- Endpoint Findings inclusion rule ---
-# Absolute floors: a pattern must clear at least one to be shown at all. Deliberately absolute,
-# not relative -- a purely percentile-based rule ("top 10%") would always surface *something*,
-# even from a run where every endpoint is genuinely healthy. Ratio is safe to fix as an absolute
-# number (already normalised, stable across environment speed); the ms floor is deliberately low
-# and generous -- not "this is bad", just "this isn't literally noise"; the repeat-count floor
-# reuses the existing N+1 threshold rather than inventing a new number.
-ENDPOINT_FINDINGS_RATIO_FLOOR = 0.3
-ENDPOINT_FINDINGS_DBTIME_FLOOR_MS = 20
-ENDPOINT_FINDINGS_REPEAT_FLOOR = 5
-# Among patterns clearing a floor, show the union of the top N% on each axis -- three separate
-# axes because they catch different failure shapes (verified against real CI data: only ~10%
-# overlap between the ratio-ranked and time-ranked sets).
-ENDPOINT_FINDINGS_TOP_PERCENT = 10
-# A pattern reproduced across many tests doesn't need one row per test to make its point.
-ENDPOINT_FINDINGS_MAX_INSTANCES_SHOWN = 15
+STATIC_RULE_LABELS = {
+    "repository_call_in_loop": "Repository call in a loop",
+    "multiple_collection_fetch": "Several collections fetched in one query",
+    "pageable_collection_fetch": "Collection fetched in a paged query",
+    "eager_to_many": "EAGER to-many association",
+    "wide_join_fetch": "More than 5 JOIN FETCHes in one @Query",
+    "wide_entitygraph": "More than 5 @EntityGraph attribute paths",
+}
+
+SHAPE_LABELS = {"N_PLUS_ONE": "N+1", "DUPLICATE": "Duplicate"}
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def load_report(path: str) -> dict:
+def load_json(path: str):
     with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
 def trunc(text: str, max_len: int = 120) -> str:
-    """Truncate a SQL string for display in a Markdown table cell."""
+    """Truncate text for a Markdown table cell."""
     if text is None:
         return ""
-    # Backticks can't be backslash-escaped inside a single-backtick code span (Markdown treats
-    # code span content as verbatim), so a literal backtick would prematurely close the span and
-    # corrupt the table. Substitute a visually similar character instead.
+    # a backtick would close the surrounding code span early; backslash-escaping does not work there
     text = text.replace("|", "\\|").replace("\n", " ").replace("`", "'")
     return text[:max_len] + "…" if len(text) > max_len else text
 
 
 def trunc_plain(text: str, max_len: int = 100) -> str:
-    """Truncate a SQL string for display in an HTML table cell (no Markdown escaping)."""
+    """Truncate text for an HTML table cell (no Markdown escaping)."""
     if not text:
         return ""
     text = text.replace("\n", " ")
     return text[:max_len] + "…" if len(text) > max_len else text
 
 
-# ---------------------------------------------------------------------------
-# Static-finding correlation
-# ---------------------------------------------------------------------------
-# Cross-references find_slow_queries.py's static source-scan findings (wide @EntityGraph/JOIN
-# FETCH definitions, wide eager-fetch association graphs) against the dynamic Slow Query / N+1
-# tables, by table name. Heuristic, not proven: the table-name guess is Hibernate's default
-# PascalCase -> snake_case naming convention, which this codebase follows in the common case but
-# doesn't guarantee for every @Table(name = ...) override.
-
-ROOT_TABLE_PATTERN = re.compile(r'\bfrom\s+(\w+)', re.IGNORECASE)
-
-
-def guess_table_name(entity_class: str) -> str:
-    """PascalCase entity class name -> snake_case table name guess (Hibernate's default physical
-    naming strategy). E.g. "ExerciseGroup" -> "exercise_group"."""
-    return re.sub(r'(?<!^)(?=[A-Z])', '_', entity_class).lower()
-
-
-def extract_root_table(sql: str) -> str:
-    """The table right after the query's own FROM clause -- deliberately not every table the
-    query happens to JOIN, so a query merely joining `course` incidentally isn't badged as an
-    eager-fetch risk just because `course` is a common join target elsewhere."""
-    if not sql:
-        return None
-    match = ROOT_TABLE_PATTERN.search(sql)
-    return match.group(1).lower() if match else None
-
-
-def build_static_index(static_findings: list) -> dict:
-    """table name guess -> list of (original index in static_findings, finding) pairs. The index
-    is kept (not just the finding dict) so a badge can point at the *exact* row to highlight in
-    build_static_findings_table_html, rather than a name a reader would have to search for --
-    a plain substring match on "Course" hits ~60 unrelated rows in this codebase (file paths under
-    the `course` package), so name-based matching is genuinely unreliable, not just less precise."""
-    index = {}
-    for i, f in enumerate(static_findings):
-        entity_class = f.get("entityClass")
-        if not entity_class:
-            continue
-        index.setdefault(guess_table_name(entity_class), []).append((i, f))
-    return index
-
-
-def static_finding_label(f: dict) -> str:
-    if f["type"] == "wide_eager_fetch":
-        return f"wide eager-fetch graph ({f['reachableEntityCount']} entities reachable)"
-    if f["type"] == "wide_join_fetch":
-        return f"wide JOIN FETCH ({f['fetchCount']} joins in one @Query)"
-    if f["type"] == "wide_entitygraph":
-        return f"wide @EntityGraph ({f['fetchCount']} attribute paths)"
-    return f["type"]
-
-
-def static_badge_html(sql: str, static_index: dict) -> str:
-    table = extract_root_table(sql)
-    matches = static_index.get(table, []) if table else []
-    if not matches:
-        return ""
-    labels = "; ".join(static_finding_label(f) for _, f in matches)
-    # data-finding-indices drives the click-to-navigate behaviour (see HTML_REPORT_JS): jumps to
-    # the Static Findings tab, clears any active filter, and scrolls to + highlights these exact
-    # row(s) by id -- precise, unlike matching on a name that could collide with unrelated rows.
-    indices = ",".join(str(i) for i, _ in matches)
-    return f'<button type="button" class="static-badge" title="{html.escape(labels)}" data-finding-indices="{indices}">🔍 static match</button>'
-
-
 def fmt_endpoint(method: str, endpoint: str, thread_name: str = None) -> str:
     if not method and not endpoint:
         return f"*(background: `{thread_name}`)*" if thread_name else "*(background)*"
     return f"`{method or '?'} {endpoint or '?'}`"
-
-
-def fmt_phase(phase: str, has_endpoint: bool = True) -> str:
-    """Markdown for the setup-vs-action badge. A query with no `httpEndpoint` at all never ran
-    inside a Playwright-driven request -- there's no setup/action phase to report, so it gets its
-    own label rather than reusing the generic `?`, which otherwise looks identical to the (real,
-    separately-diagnosed) header-corruption bug that also renders as `?`. `?` itself is now only
-    reached when there IS an HTTP context but the phase value is neither `action` nor `setup`,
-    e.g. a not-yet-fully-diagnosed edge case -- genuinely worth a reader's attention."""
-    if not has_endpoint:
-        return "⚙️ background"
-    return {"action": "🎯 action", "setup": "🔧 setup"}.get(phase, "?")
-
-
-def phase_sort_key(finding: dict, metric: str):
-    """Ranks action-phase findings ahead of setup-phase ones (worst-metric-first within
-    each group) so the top-N cap in the Markdown comment surfaces genuine test-action
-    findings before the test-setup noise they'd otherwise be drowned out by."""
-    return (finding.get("phase") == "action", finding.get(metric, 0))
 
 
 def iso_to_human(iso: str) -> str:
@@ -169,24 +81,94 @@ def iso_to_human(iso: str) -> str:
         return iso
 
 
-# ---------------------------------------------------------------------------
-# Markdown sections
-# ---------------------------------------------------------------------------
-
 def artifact_link(run_url: str) -> str:
-    """Markdown for 'the uploaded slow-query report artifact (HTML)', linked to the run's
-    Artifacts section when a run URL is available, plain text otherwise (e.g. local runs)."""
     if run_url:
-        return f"[uploaded slow-query report artifact (HTML)]({run_url})"
-    return "uploaded slow-query report artifact (HTML)"
+        return f"[HTML report artifact]({run_url})"
+    return "HTML report artifact"
 
+
+def static_key(f: dict) -> str:
+    """The finding's own stable key; the two older count-based rules have none, so one is derived
+    from the file and the query text (stable as long as that query is not edited)."""
+    if f.get("key"):
+        return f["key"]
+    digest = hashlib.sha1((f.get("snippet") or "").encode("utf-8")).hexdigest()[:10]
+    return f"{f['type']}:{(f.get('file') or '').replace(chr(92), '/').split('/')[-1]}:{digest}"
+
+
+# ---------------------------------------------------------------------------
+# Repeated queries (dynamic N+1 / duplicate findings)
+# ---------------------------------------------------------------------------
+
+def repeated_query_key(f: dict) -> str:
+    """Identity of a repeated-query finding across runs: the shape, the endpoint, the code that
+    issued it (repository method and caller -- the same repository method looped over by two
+    different callers is two places to fix) and the query. Deliberately without the test name or
+    the repetition count: both depend on what a test does and how much data it creates, while the
+    shape itself does not."""
+    return "|".join([
+        f.get("type") or "",
+        f"{f.get('httpMethod') or ''} {f.get('httpEndpoint') or ''}",
+        f.get("repositoryMethod") or "",
+        f.get("callerMethod") or "",
+        f.get("normalizedSql") or "",
+    ])
+
+
+def group_repeated_queries(findings: list) -> list:
+    """One group per key, with the individual (test, phase) occurrences it was seen in."""
+    groups = {}
+    for f in findings:
+        key = repeated_query_key(f)
+        g = groups.setdefault(key, {
+            "key": key, "type": f.get("type"), "method": f.get("httpMethod"), "endpoint": f.get("httpEndpoint"), "sql": f.get("normalizedSql") or "",
+            "repositoryMethod": f.get("repositoryMethod"), "callerMethod": f.get("callerMethod"), "max_executions": 0, "requests": 0, "tests": set(),
+            "occurrences": [],
+        })
+        g["requests"] += 1
+        g["max_executions"] = max(g["max_executions"], f.get("executions", 0))
+        if f.get("testName"):
+            g["tests"].add(f["testName"])
+        g["occurrences"].append({"test": f.get("testName"), "phase": f.get("phase"), "executions": f.get("executions", 0), "distinct": f.get("distinctParameterSets", 0)})
+    return list(groups.values())
+
+
+def link_static_confirmations(groups: list, static_findings: list):
+    """Attach to each repeated-query group the static findings about the very code that issued it:
+    a query-shape rule on the same repository method, or a repository-call-in-loop finding for the
+    same repository method inside the same calling method. An exact match on method names -- both
+    sides name code by Class.method -- not a guess from table names."""
+    by_member = {}
+    by_loop_call = {}
+    for i, f in enumerate(static_findings):
+        if f.get("type") in ("multiple_collection_fetch", "pageable_collection_fetch") and f.get("member"):
+            by_member.setdefault(f["member"], []).append(i)
+        if f.get("type") == "repository_call_in_loop":
+            by_loop_call.setdefault((f.get("member"), f.get("repositoryMethod")), []).append(i)
+    for g in groups:
+        matches = list(by_member.get(g["repositoryMethod"], []))
+        matches += by_loop_call.get((g["callerMethod"], g["repositoryMethod"]), [])
+        g["static_matches"] = sorted(set(matches))
+
+
+def rank_repeated(groups: list) -> list:
+    """New first, then confirmed by a static rule, then N+1 before duplicate, then most repetitions."""
+    return sorted(groups, key=lambda g: (not g.get("is_new", False), not g["static_matches"], g["type"] != "N_PLUS_ONE", -g["max_executions"]))
+
+
+def source_label(g: dict) -> str:
+    if g["repositoryMethod"] and g["callerMethod"]:
+        return f"{g['repositoryMethod']} ← {g['callerMethod']}"
+    return g["repositoryMethod"] or g["callerMethod"] or "?"
+
+
+# ---------------------------------------------------------------------------
+# Slow queries (context only: timing in CI is too noisy to judge a PR by)
+# ---------------------------------------------------------------------------
 
 def compute_slow_query_groups(slow_queries: list) -> list:
     """Groups raw slow-query captures by (endpoint, SQL template, background thread) -- the same
-    query at the same endpoint crossing the threshold dozens of times across a handful of tests
-    (a real, observed case: 179 raw captures, 1 distinct query, 3 tests) is one finding, not 179.
-    Returns (key, group) tuples sorted worst-first by worst execution time; each group carries
-    every individual occurrence (test, phase, duration) for the collapsible detail view."""
+    query crossing the threshold many times across a few tests is one row, not hundreds."""
     groups = {}
     for q in slow_queries:
         key = (q.get("httpMethod"), q.get("httpEndpoint"), q.get("sql", ""), q.get("threadName"))
@@ -199,196 +181,105 @@ def compute_slow_query_groups(slow_queries: list) -> list:
     return items
 
 
-def build_slow_queries_section(slow_queries: list, threshold_ms: int, run_url: str = "") -> str:
-    if not slow_queries:
-        return f"✅ **No slow queries** detected (threshold: {threshold_ms} ms)\n"
+# ---------------------------------------------------------------------------
+# Baseline comparison
+# ---------------------------------------------------------------------------
 
-    groups = compute_slow_query_groups(slow_queries)
-    # Action-phase groups first (worst-first within each group): the Markdown comment can only
-    # show MAX_ROWS_PER_SECTION rows, and test-setup traffic (page.request/context.request calls,
-    # phase="setup") runs far more often than the action a test is actually verifying, so a plain
-    # worst-first sort lets setup noise crowd out genuine action-phase findings. The full,
-    # phase-unfiltered ranking is still in the untruncated HTML artifact.
-    ranked = sorted(groups, key=lambda kv: (any(o["phase"] == "action" for o in kv[1]["occurrences"]), kv[1]["worst_ms"]), reverse=True)
-    shown = ranked[:MAX_ROWS_PER_SECTION]
-    hidden_count = len(ranked) - len(shown)
+def collect_keys(groups: list, static_findings: list) -> dict:
+    return {"repeatedQueries": sorted(g["key"] for g in groups), "static": sorted({static_key(f) for f in static_findings})}
 
-    lines = [
-        f"### 🐢 Slow Queries ({len(groups)} distinct, {len(slow_queries)} occurrences, threshold: {threshold_ms} ms)\n",
-        "| # | Worst Duration | Occurrences | Joins | Endpoint | SQL (truncated) |",
-        "|---|-----------------|-------------|-------|----------|------------------|",
-    ]
-    for i, ((method, endpoint, sql, thread_name), g) in enumerate(shown, start=1):
-        endpoint_fmt = fmt_endpoint(method, endpoint, thread_name)
-        lines.append(f"| {i} | **{g['worst_ms']} ms** | {g['count']}× | {g['join_count']} | {endpoint_fmt} | `{trunc(sql)}` |")
-    if hidden_count > 0:
-        lines.append("")
-        lines.append(f"_Showing the {len(shown)} worst (action-phase groups prioritized). {hidden_count} more not shown — see the {artifact_link(run_url)} for the full list._")
-    return "\n".join(lines) + "\n"
+
+def mark_new(groups: list, static_findings: list, baseline: dict):
+    """Marks what the baseline does not contain. Without a baseline nothing is marked: absent
+    evidence is not the same as new."""
+    if baseline is None:
+        return
+    repeated = set(baseline.get("repeatedQueries", []))
+    static = set(baseline.get("static", []))
+    for g in groups:
+        g["is_new"] = g["key"] not in repeated
+    for f in static_findings:
+        f["is_new"] = static_key(f) not in static
 
 
 # ---------------------------------------------------------------------------
-# Endpoint Findings -- replaces the old separate N+1 Suspects / Endpoint Timing sections.
+# Markdown (PR comment)
 # ---------------------------------------------------------------------------
-# Both were really the same underlying data (per-request query behaviour) answered at two
-# different grain sizes; keeping them apart just meant a reader had to cross-reference two tables
-# to see the full picture of one endpoint. Grouped by (endpoint, query-template-set) rather than
-# raw request, so the same bug tested by many different tests collapses into one row instead of
-# flooding the table with near-duplicates -- see ENDPOINT_FINDINGS_* constants above for the exact
-# inclusion rule and why each threshold is what it is.
 
-def compute_endpoint_findings(endpoint_timings: list) -> dict:
-    """Groups per-request Endpoint Timing entries into distinct (endpoint, query-template-set)
-    patterns, then applies the inclusion rule: Rule 1 (something repeats) -> floor gate (ratio,
-    absolute DB time, or the classic N+1 repeat count) -> percentile ranking (top N% per axis,
-    unioned). Returns the final sorted rows plus the funnel counts at each stage, so the report
-    can show its own filtering honestly rather than silently dropping rows."""
-    groups = {}
-    for e in endpoint_timings:
-        method = e.get("httpMethod") or "?"
-        endpoint = e.get("httpEndpoint") or "?"
-        queries = e.get("queries", [])
-        templates = tuple(sorted(q.get("sql", "") for q in queries))
-        key = (method, endpoint, templates)
-        g = groups.setdefault(key, {"instances": 0, "worst_ratio": 0.0, "worst_dbtime": 0, "worst_qcount": 0, "max_repeat": 0, "queries": {}, "occurrences": []})
-
-        total = e.get("totalDurationMs", 0)
-        db = e.get("dbTimeMs", 0)
-        ratio = (db / total) if total else 0
-        qcount = e.get("queryCount", 0)
-        g["instances"] += 1
-        g["worst_ratio"] = max(g["worst_ratio"], ratio)
-        g["worst_dbtime"] = max(g["worst_dbtime"], db)
-        g["worst_qcount"] = max(g["worst_qcount"], qcount)
-        g["occurrences"].append({"test": e.get("testName"), "phase": e.get("phase"), "ratio": ratio, "total_ms": total, "db_ms": db, "qcount": qcount})
-        for q in queries:
-            sql = q.get("sql", "")
-            count = q.get("count", 0)
-            qms = q.get("totalDurationMs", 0)
-            g["max_repeat"] = max(g["max_repeat"], count)
-            prev = g["queries"].get(sql, (0, 0))
-            g["queries"][sql] = (max(prev[0], count), max(prev[1], qms))
-
-    repeating = {k: v for k, v in groups.items() if v["max_repeat"] > 1}
-    cleared = {
-        k: v
-        for k, v in repeating.items()
-        if v["worst_ratio"] >= ENDPOINT_FINDINGS_RATIO_FLOOR or v["worst_dbtime"] >= ENDPOINT_FINDINGS_DBTIME_FLOOR_MS or v["max_repeat"] > ENDPOINT_FINDINGS_REPEAT_FLOOR
-    }
-
-    items = list(cleared.items())
-    n = max(1, int(len(items) * ENDPOINT_FINDINGS_TOP_PERCENT / 100)) if items else 0
-    top_ratio = {k for k, v in sorted(items, key=lambda kv: kv[1]["worst_ratio"], reverse=True)[:n]}
-    top_dbtime = {k for k, v in sorted(items, key=lambda kv: kv[1]["worst_dbtime"], reverse=True)[:n]}
-    top_repeat = {k for k, v in sorted(items, key=lambda kv: kv[1]["max_repeat"], reverse=True)[:n]}
-    final_keys = top_ratio | top_dbtime | top_repeat
-
-    final_rows = [(k, v) for k, v in items if k in final_keys]
-    final_rows.sort(key=lambda kv: kv[1]["worst_ratio"], reverse=True)
-
-    return {"rows": final_rows, "total_requests": len(endpoint_timings), "distinct_patterns": len(groups), "repeating_patterns": len(repeating), "floor_cleared": len(cleared)}
+def repeated_rows_md(groups: list) -> list:
+    lines = ["| Shape | Endpoint | Issued by | Max repeats / request | Tests | Query |", "|---|---|---|---|---|---|"]
+    for g in groups:
+        confirmed = " · 🔍 static rule agrees" if g["static_matches"] else ""
+        lines.append(f"| {SHAPE_LABELS.get(g['type'], g['type'])}{confirmed} | {fmt_endpoint(g['method'], g['endpoint'])} | `{trunc(source_label(g), 90)}` "
+                     f"| {g['max_executions']}× | {len(g['tests'])} | `{trunc(g['sql'], 90)}` |")
+    return lines
 
 
-def worst_query_summary(queries: dict, template_count: int) -> str:
-    if not queries:
-        return f"{template_count} templates"
-    worst_sql, (worst_count, _) = max(queries.items(), key=lambda kv: kv[1][0])
-    return f"{trunc(worst_sql, 50)} ×{worst_count}" if worst_count > 1 else f"{template_count} templates"
+def static_rows_md(findings: list) -> list:
+    lines = ["| Rule | Where | Detail |", "|---|---|---|"]
+    for f in findings:
+        where = f.get("member") or (f.get("file") or "").replace("\\", "/").split("/")[-1]
+        lines.append(f"| {STATIC_RULE_LABELS.get(f['type'], f['type'])} | `{trunc(where, 90)}` | {trunc(f.get('detail') or '', 140)} |")
+    return lines
 
 
-def build_endpoint_findings_section(findings: dict, run_url: str = "") -> str:
-    rows = findings["rows"]
-    if not rows:
-        return "✅ **No endpoint findings** above the inclusion floor (DB-time ratio, absolute DB time, or repeat count)\n"
-
-    shown = rows[:MAX_ROWS_PER_SECTION]
-    hidden_count = len(rows) - len(shown)
-
-    lines = [
-        f"### 🔁 Endpoint Findings ({len(rows)} shown, from {findings['distinct_patterns']} distinct patterns across {findings['total_requests']} requests)\n",
-        "| # | Endpoint | What Repeats | Seen In | Worst DB Time | Worst Ratio | Max Repeat |",
-        "|---|----------|--------------|---------|---------------|-------------|------------|",
-    ]
-    for i, ((method, endpoint, templates), v) in enumerate(shown, start=1):
-        what = worst_query_summary(v["queries"], len(templates))
-        lines.append(f"| {i} | `{method} {endpoint}` | `{what}` | {v['instances']} | {v['worst_dbtime']} ms | {v['worst_ratio'] * 100:.0f}% | {v['max_repeat']}× |")
-    if hidden_count > 0:
-        lines.append("")
-        lines.append(f"_Showing the {len(shown)} worst by ratio. {hidden_count} more not shown — see the {artifact_link(run_url)} for the full list._")
-    return "\n".join(lines) + "\n"
+def capped(items: list, lines_for, run_url: str, what: str) -> list:
+    shown = items[:MAX_ROWS_PER_SECTION]
+    lines = lines_for(shown)
+    if len(items) > len(shown):
+        lines += ["", f"_{len(items) - len(shown)} more {what} not shown — see the {artifact_link(run_url)}._"]
+    return lines
 
 
-def build_report(report: dict, run_url: str = "") -> str:
-    threshold_ms = report.get("thresholdMs", "?")
+def build_report(report: dict, groups: list, static_findings: list, baseline: dict, run_url: str = "") -> str:
     generated_at = iso_to_human(report.get("generatedAt", ""))
+    slow_groups = compute_slow_query_groups(report.get("slowQueries", []))
+    n_plus_one = [g for g in groups if g["type"] == "N_PLUS_ONE"]
+    duplicates = [g for g in groups if g["type"] == "DUPLICATE"]
+    ranked = rank_repeated(groups)
 
-    slow_queries = report.get("slowQueries", [])
-    slow_groups = compute_slow_query_groups(slow_queries)
-    slow_count = len(slow_groups)
-    findings = compute_endpoint_findings(report.get("endpointTimings", []))
-    findings_count = len(findings["rows"])
-
-    # --- Header --- (counts are distinct groups, not raw occurrences -- the same query crossing
-    # the threshold 179 times across 3 tests is one issue to look at, not 179)
-    if slow_count == 0 and findings_count == 0:
-        header_emoji = "✅"
-        header_status = "No performance regressions detected"
+    lines = ["", "---"]
+    if baseline is not None:
+        new_groups = [g for g in ranked if g.get("is_new")]
+        new_static = [f for f in static_findings if f.get("is_new")]
+        emoji = "✅" if not new_groups and not new_static else "⚠️"
+        status = ("No new query anti-patterns compared to develop" if emoji == "✅" else
+                  f"{len(new_groups)} new repeated quer{'y' if len(new_groups) == 1 else 'ies'} · {len(new_static)} new static finding{'' if len(new_static) == 1 else 's'} compared to develop")
+        lines += [f"## {emoji} Query Report", "", f"**{status}**", "",
+                  f"> Generated at {generated_at}, compared against the latest develop run ({iso_to_human(baseline.get('generatedAt', '?'))})."]
+        if new_groups:
+            lines += ["", f"### 🆕 New repeated queries ({len(new_groups)})", ""] + capped(new_groups, repeated_rows_md, run_url, "new repeated queries")
+        if new_static:
+            lines += ["", f"### 🆕 New static findings ({len(new_static)})", ""] + capped(new_static, static_rows_md, run_url, "new static findings")
     else:
-        header_emoji = "⚠️"
-        issues = []
-        if slow_count > 0:
-            issues.append(f"{slow_count} slow quer{'y' if slow_count == 1 else 'ies'} ({len(slow_queries)} occurrences)")
-        if findings_count > 0:
-            issues.append(f"{findings_count} endpoint finding{'s' if findings_count != 1 else ''}")
-        header_status = "Performance issues found: " + " · ".join(issues)
+        lines += ["## ℹ️ Query Report", "", "**No develop baseline available, so nothing is classified as new; the most relevant findings overall are listed instead.**", "",
+                  f"> Generated at {generated_at}."]
+        if ranked:
+            lines += ["", "### 🔁 Repeated queries", ""] + capped(ranked, repeated_rows_md, run_url, "repeated queries")
 
-    lines = [
-        "",
-        "---",
-        f"## {header_emoji} Slow Query Report",
-        "",
-        f"**{header_status}**",
-        "",
-        f"> Generated at: {generated_at}  ",
-        f"> Slow-query threshold: **{threshold_ms} ms**  ",
-        f"> Endpoint findings from {findings['total_requests']} requests → {findings['distinct_patterns']} distinct patterns → "
-        f"{findings['repeating_patterns']} with a repeated query → {findings['floor_cleared']} clearing a floor → **{findings_count} shown**",
-        "",
-        build_slow_queries_section(slow_queries, threshold_ms, run_url),
-        build_endpoint_findings_section(findings, run_url),
-        "",
-        "<details>",
-        "<summary>How to investigate</summary>",
-        "",
-        "**Slow queries** exceed the per-query execution time threshold.",
-        "Common causes: missing index, unbounded result set, complex JOIN.",
-        "",
-        "**Endpoint findings** are requests where the same query template repeated within one",
-        "request, grouped by endpoint and query shape (so the same bug tested many times shows up",
-        "once, not once per test), and shown only if it clears at least one bar: a high share of",
-        "the request's time spent in the database, a high absolute DB time, or a single query",
-        "repeating more than 5 times — a strong indicator that related data is being loaded one",
-        "entity at a time instead of in a single JOIN, or that an endpoint's overall DB engagement",
-        "is high even though no single query is individually slow.",
-        "",
-        "See the [performance guidelines](https://docs.artemis.tum.de/developer/guidelines/performance)",
-        "for remediation patterns.",
-        "",
-        "</details>",
-        "",
-        "<!-- Slow Query Report -->",
-    ]
+    static_counts = {}
+    for f in static_findings:
+        static_counts[f["type"]] = static_counts.get(f["type"], 0) + 1
+    lines += ["", "<details>", "<summary>All findings in this run</summary>", "", "| Finding | Count |", "|---|---|",
+              f"| N+1 (same query, different parameters, in one request) | {len(n_plus_one)} |",
+              f"| Duplicate (same query, same parameters, in one request) | {len(duplicates)} |"]
+    lines += [f"| Static: {STATIC_RULE_LABELS.get(t, t)} | {c} |" for t, c in sorted(static_counts.items())]
+    lines += [f"| Slow queries over {report.get('thresholdMs', '?')} ms (context only, timing in CI is not compared) | {len(slow_groups)} |", "", "</details>", "",
+              "<details>", "<summary>How to read this</summary>", "",
+              "Every finding is a yes/no rule, without a count threshold. **N+1**: one query per item where one query for all items would do. "
+              "**Duplicate**: the same data loaded again within the same request. Repeated queries name the repository method that issued them and its caller; "
+              "🔍 means a static rule flags that same code. A finding is identified by its shape, endpoint, issuing code and query — not by the test or the "
+              "repetition count, which depend on how much data a test creates.", "",
+              "See the [performance guidelines](https://docs.artemis.tum.de/developer/guidelines/performance) for remediation patterns.", "", "</details>", "",
+              "<!-- Slow Query Report -->"]
     return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
-# HTML report (full, untruncated findings; uploaded as the CI artifact)
+# HTML report (full findings; uploaded as the CI artifact)
 # ---------------------------------------------------------------------------
-# Self-contained on purpose: no external CSS/JS files. A multi-file report (like Istanbul's
-# lcov-report) breaks silently if only index.html survives being unzipped/copied around,
-# because the sortable-table styling and click-to-sort script live in separate files that
-# are easy to leave behind. Inlining both here means the single .html file downloaded from
-# the CI artifact always renders and sorts correctly, with nothing else to fetch.
+# Self-contained on purpose: a multi-file report breaks silently if only the .html survives being
+# unzipped and copied around, so all CSS and JS is inlined.
 
 HTML_REPORT_CSS = """
 :root {
@@ -402,6 +293,7 @@ HTML_REPORT_CSS = """
     --sev-medium: #d97706;
     --sev-low: #ca8a04;
     --tile-bg: #f9fafb;
+    --new: #2563eb;
     --sql-keyword: #1d4ed8;
     --sql-string: #15803d;
     --sql-number: #7c3aed;
@@ -415,6 +307,7 @@ HTML_REPORT_CSS = """
         --border: #2d323b;
         --row-hover: #1f232a;
         --tile-bg: #1c1f26;
+        --new: #7aa2f7;
         --sql-keyword: #7aa2f7;
         --sql-string: #7ee787;
         --sql-number: #d2a8ff;
@@ -425,22 +318,22 @@ HTML_REPORT_CSS = """
 body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--fg); }
 .wrapper { max-width: 100%; margin: 0; padding: 24px clamp(16px, 3vw, 48px) 64px; }
 h1 { margin-bottom: 4px; }
-h2 { margin-top: 0; }
 .muted { color: var(--muted); }
 .ok { color: #16a34a; font-weight: 600; }
-.lead { max-width: 760px; color: var(--fg); line-height: 1.5; margin: 8px 0 28px; }
+.lead { max-width: 820px; line-height: 1.5; margin: 8px 0 28px; }
 .stats { display: flex; gap: 16px; margin: 0 0 32px; flex-wrap: wrap; }
 .stat-tile { background: var(--tile-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; min-width: 160px; }
 .stat-value { display: block; font-size: 28px; font-weight: 700; }
 .stat-label { display: block; font-size: 13px; color: var(--muted); }
 .stat-sub { display: block; font-size: 12px; color: var(--muted); }
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 24px; flex-wrap: wrap; }
 .tab-btn { appearance: none; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 10px 6px; font: inherit; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; display: flex; align-items: center; gap: 8px; }
 .tab-btn:hover { color: var(--fg); }
 .tab-btn.active { color: var(--fg); border-bottom-color: var(--sev-medium); }
 .tab-count { background: var(--tile-bg); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; font-size: 12px; font-weight: 600; }
 .tab-panel[hidden] { display: none; }
 .filter-box { width: 100%; max-width: 400px; padding: 8px 10px; margin: 8px 0 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); font-size: 14px; }
+.table-scroll { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; margin-bottom: 32px; font-size: 13px; }
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
 th { cursor: pointer; user-select: none; white-space: nowrap; color: var(--muted); font-weight: 600; }
@@ -451,22 +344,21 @@ tr.sev-high td:first-child { border-left: 4px solid var(--sev-high); }
 tr.sev-medium td:first-child { border-left: 4px solid var(--sev-medium); }
 tr.sev-low td:first-child { border-left: 4px solid var(--sev-low); }
 td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
-td.sql-cell code, td.sql-cell pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+td.code, td.sql-cell code, td.sql-cell pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+td.code { font-size: 12px; word-break: break-word; }
 td.sql-cell pre { white-space: pre-wrap; word-break: break-word; margin: 6px 0 0; padding: 8px; background: var(--tile-bg); border-radius: 6px; }
 td.sql-cell summary { cursor: pointer; }
-.phase-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.badge-new { background: color-mix(in srgb, var(--new) 18%, transparent); color: var(--new); }
+.badge-existing { background: rgba(107, 114, 128, .12); color: var(--muted); }
 .phase-action { background: rgba(22, 163, 74, .15); color: #16a34a; }
 .phase-setup { background: rgba(107, 114, 128, .15); color: var(--muted); }
 .phase-background { background: rgba(107, 114, 128, .08); color: var(--muted); font-style: italic; }
 table.nested-table { width: auto; min-width: 320px; margin: 6px 0 0; font-size: 12px; }
 table.nested-table th, table.nested-table td { padding: 4px 8px; }
-table.nested-table th { cursor: default; }
-.query-breakdown summary { cursor: pointer; color: var(--muted); }
-.static-badge { display: inline-block; margin-left: 6px; padding: 0; border: none; background: none; font: inherit; font-size: 11px; color: var(--sql-keyword); cursor: pointer; white-space: nowrap; text-decoration: underline; text-underline-offset: 2px; }
+.static-badge { display: inline-block; margin-top: 4px; padding: 0; border: none; background: none; font: inherit; font-size: 12px; color: var(--sql-keyword); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 .static-badge:hover, .static-badge:focus-visible { color: var(--fg); }
-/* transition lives on the base selector, not the .highlight-flash one -- removing the class only
-   fades smoothly back to normal if the transitioning element still matches a rule that declares
-   the transition property; scoping it to the class being removed would make it snap instantly. */
+/* the transition sits on the base selector so removing the class fades back instead of snapping */
 #static-findings-table tbody tr td { transition: background 2s ease-out; }
 #static-findings-table tbody tr.highlight-flash td { background: color-mix(in srgb, var(--sev-medium) 25%, var(--bg)); }
 @media (prefers-reduced-motion: reduce) { #static-findings-table tbody tr td { transition: none; } }
@@ -477,7 +369,6 @@ table.nested-table th { cursor: default; }
 .group-row { cursor: pointer; }
 .expand-cell { width: 20px; text-align: center; color: var(--muted); }
 .detail-row td { background: var(--tile-bg); padding: 10px 10px 14px 30px; }
-.detail-row table.nested-table { width: 100%; }
 """
 
 HTML_REPORT_JS = """
@@ -505,13 +396,20 @@ document.querySelectorAll('table.sortable').forEach(function (table) {
     });
 });
 
+// A filter hides non-matching rows; in a grouped table the group row decides for its detail row.
 document.querySelectorAll('.filter-box').forEach(function (input) {
     input.addEventListener('input', function () {
         var table = document.getElementById(input.dataset.target);
         if (!table) return;
         var query = input.value.toLowerCase();
         Array.prototype.forEach.call(table.tBodies[0].rows, function (row) {
-            row.style.display = row.textContent.toLowerCase().indexOf(query) !== -1 ? '' : 'none';
+            if (row.classList.contains('detail-row')) return;
+            var visible = row.textContent.toLowerCase().indexOf(query) !== -1;
+            row.style.display = visible ? '' : 'none';
+            if (row.dataset.detailTarget) {
+                var detail = document.getElementById(row.dataset.detailTarget);
+                if (detail && !visible) detail.hidden = true;
+            }
         });
     });
 });
@@ -529,12 +427,7 @@ document.querySelectorAll('.tab-btn').forEach(function (btn) {
     btn.addEventListener('click', function () { activateTab(btn.getAttribute('aria-controls')); });
 });
 
-// Clicking a 🔍 static-match badge jumps to the Static Findings tab and scrolls to + highlights
-// the exact matching row(s) by id -- NOT a text filter: a plain substring match on an entity name
-// like "Course" hits ~60 unrelated rows in this codebase (file paths under the `course` package
-// alone), so name-based matching would be actively misleading, not just less precise. Delegated
-// on document since badges live inside dynamically shown/hidden detail rows -- a per-element
-// listener would miss ones added after the fact, and delegation works uniformly regardless.
+// A "static rule agrees" link jumps to the Static Findings tab and highlights the exact rows by id.
 document.addEventListener('click', function (e) {
     var badge = e.target.closest('.static-badge');
     if (!badge) return;
@@ -542,8 +435,6 @@ document.addEventListener('click', function (e) {
     var indices = (badge.dataset.findingIndices || '').split(',').filter(Boolean);
     if (!indices.length) return;
     activateTab('panel-static-findings');
-    // Clear any active filter first -- a stale filter term from earlier could otherwise hide the
-    // exact row(s) this click is trying to reveal.
     var filterBox = document.querySelector('input.filter-box[data-target="static-findings-table"]');
     if (filterBox && filterBox.value) {
         filterBox.value = '';
@@ -560,14 +451,8 @@ document.addEventListener('click', function (e) {
     if (firstRow) firstRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 
-// Grouped tables (Slow Queries, Endpoint Findings): rows are expand/collapse-able, and sorted
-// with this dedicated function rather than the generic sort above. The generic sort reorders
-// every <tr> in the tbody by index, which would scramble group/detail-row pairing (a detail row
-// has one colspan cell, not one per column, so `cells[colIndex]` would misalign). This moves each
-// group-row and re-attaches its detail-row by id right after it, so pairing survives sorting.
-// Nested tables *inside* a detail row (the instance list, the query breakdown) are deliberately
-// plain `table.sortable` elements instead -- no group/detail pairing to protect, so the generic
-// sort script above already handles them correctly with no extra code.
+// Grouped tables: a group row expands its detail row; sorting moves each detail row along with its
+// group row (the generic sort above would split them, since a detail row has one colspan cell).
 function setupGroupedTable(tableId, colIndex) {
     var table = document.getElementById(tableId);
     if (!table) return;
@@ -582,7 +467,6 @@ function setupGroupedTable(tableId, colIndex) {
         });
     });
     table.querySelectorAll('th[data-col]').forEach(function (th) {
-        th.style.cursor = 'pointer';
         th.addEventListener('click', function () {
             var col = th.dataset.col;
             var idx = colIndex[col];
@@ -608,49 +492,9 @@ function setupGroupedTable(tableId, colIndex) {
     });
 }
 
+setupGroupedTable('repeated-queries-table', { status: 1, shape: 2, endpoint: 3, source: 4, repeats: 6, requests: 7, tests: 8 });
 setupGroupedTable('slow-queries-table', { endpoint: 1, occurrences: 3, joins: 4, duration: 5 });
-setupGroupedTable('endpoint-findings-table', { endpoint: 1, repeats: 2, instances: 3, dbtime: 4, ratio: 5, repeat: 6, qcount: 7 });
 """
-
-
-def severity_class(ratio: float) -> str:
-    """CSS class for how far a finding is past its threshold (all rows here already exceed
-    it, so this bands *how bad*, not good-vs-bad like a coverage report's colors)."""
-    if ratio >= 5:
-        return "sev-high"
-    if ratio >= 2:
-        return "sev-medium"
-    return "sev-low"
-
-
-def phase_sort_value(phase: str) -> int:
-    """Numeric rank for the Phase column's `data-sort` (must live on the <td>, not the badge
-    <span> inside it — the HTML report's click-to-sort script reads `cells[colIndex].dataset.sort`,
-    i.e. the cell element itself)."""
-    return 1 if phase == "action" else 0
-
-
-def html_phase(phase: str, has_endpoint: bool = True) -> str:
-    """Badge for the setup-vs-action split (see phase_sort_key). A query with no `httpEndpoint`
-    never ran inside a Playwright-driven request, so it gets its own badge rather than sharing the
-    generic `?` with the (separately-diagnosed) header-corruption bug, which also renders as `?`.
-    `?` itself now only covers findings that DO have an HTTP context but an unrecognised phase
-    value -- e.g. a not-yet-diagnosed edge case, genuinely worth a reader's attention."""
-    if not has_endpoint:
-        return '<span class="phase-badge phase-background">background</span>'
-    if phase == "action":
-        return '<span class="phase-badge phase-action">action</span>'
-    if phase == "setup":
-        return '<span class="phase-badge phase-setup">setup</span>'
-    return '<span class="muted">?</span>'
-
-
-def html_endpoint(method: str, endpoint: str, thread_name: str = None) -> str:
-    if not method and not endpoint:
-        label = f"(background: {thread_name})" if thread_name else "(background)"
-        return f'<span class="muted">{html.escape(label)}</span>'
-    return html.escape(f"{method or '?'} {endpoint or '?'}")
-
 
 SQL_KEYWORDS = (
     "SELECT|FROM|WHERE|LEFT|RIGHT|INNER|OUTER|JOIN|ON|AND|OR|NOT|IN|IS|NULL|ORDER|BY|GROUP|HAVING|"
@@ -667,9 +511,7 @@ SQL_TOKEN_PATTERN = re.compile(
 
 
 def highlight_sql(sql: str) -> str:
-    """Lightweight, self-contained SQL syntax highlighting -- no external library (the report has
-    no external assets by design), just a single-pass regex tokenizer wrapping recognized pieces
-    in spans styled via the --sql-* CSS tokens."""
+    """Single-pass regex SQL highlighting, styled via the --sql-* CSS tokens (no external library)."""
     if not sql:
         return ""
     out = []
@@ -683,314 +525,225 @@ def highlight_sql(sql: str) -> str:
 
 
 def html_sql_cell(sql: str) -> str:
-    """Short queries render inline; long ones collapse behind <details> so the table stays
-    scannable while the full, untruncated SQL is still one click away (impossible in the
-    Markdown comment, which can only ever show the truncated form)."""
+    """Short queries inline; long ones behind <details>, with the full text one click away."""
     if not sql:
         return ""
     if len(sql) <= 100:
         return f"<code>{highlight_sql(sql)}</code>"
-    summary = highlight_sql(trunc_plain(sql, 100))
-    return f"<details><summary><code>{summary}</code></summary><pre>{highlight_sql(sql)}</pre></details>"
+    return f"<details><summary><code>{highlight_sql(trunc_plain(sql, 100))}</code></summary><pre>{highlight_sql(sql)}</pre></details>"
 
 
-def slow_query_instance_rows_html(occurrences: list) -> str:
-    """One row per individual threshold-crossing execution that collapsed into this group --
-    duration, phase, test. Same capping/sortable-nested-table pattern as instance_rows_html."""
-    ranked = sorted(occurrences, key=lambda o: o["ms"], reverse=True)
-    hidden_count = max(0, len(ranked) - ENDPOINT_FINDINGS_MAX_INSTANCES_SHOWN)
-    ranked = ranked[:ENDPOINT_FINDINGS_MAX_INSTANCES_SHOWN]
+def html_phase(phase: str, has_endpoint: bool = True) -> str:
+    """setup = test fixture traffic (page.request/context.request), action = what the browser page did."""
+    if not has_endpoint:
+        return '<span class="badge phase-background">background</span>'
+    if phase == "action":
+        return '<span class="badge phase-action">action</span>'
+    if phase == "setup":
+        return '<span class="badge phase-setup">setup</span>'
+    return '<span class="muted">?</span>'
+
+
+def html_endpoint(method: str, endpoint: str, thread_name: str = None) -> str:
+    if not method and not endpoint:
+        label = f"(background: {thread_name})" if thread_name else "(background)"
+        return f'<span class="muted">{html.escape(label)}</span>'
+    return html.escape(f"{method or '?'} {endpoint or '?'}")
+
+
+def html_status(item: dict, has_baseline: bool) -> str:
+    if not has_baseline:
+        return '<td data-sort="0"><span class="muted">—</span></td>'
+    if item.get("is_new"):
+        return '<td data-sort="1"><span class="badge badge-new">new</span></td>'
+    return '<td data-sort="0"><span class="badge badge-existing">existing</span></td>'
+
+
+def capped_note(hidden: int, what: str) -> str:
+    return f'<p class="muted" style="margin:6px 0 0;font-size:12px;">+ {hidden} more {what} not shown</p>' if hidden > 0 else ""
+
+
+def repeated_occurrences_html(occurrences: list) -> str:
+    ranked = sorted(occurrences, key=lambda o: o["executions"], reverse=True)
+    shown = ranked[:MAX_OCCURRENCES_SHOWN]
+    rows = "".join(
+        "<tr>"
+        f'<td class="num" data-sort="{o["executions"]}">{o["executions"]}×</td>'
+        f'<td class="num" data-sort="{o["distinct"]}">{o["distinct"]}</td>'
+        f'<td data-sort="{1 if o.get("phase") == "action" else 0}">{html_phase(o.get("phase"))}</td>'
+        f'<td>{html.escape(o["test"]) if o.get("test") else "<span class=muted>—</span>"}</td>'
+        "</tr>" for o in shown)
+    return ('<table class="nested-table sortable"><thead><tr><th data-type="number">Executions</th><th data-type="number">Distinct parameters</th>'
+            f'<th data-type="number">Phase</th><th data-type="string">Test</th></tr></thead><tbody>{rows}</tbody></table>'
+            f'{capped_note(len(ranked) - len(shown), "requests")}')
+
+
+def build_repeated_queries_table_html(groups: list, static_findings: list, has_baseline: bool) -> str:
+    if not groups:
+        return '<p class="ok">✅ No query ran more than once within a request.</p>'
     rows = []
-    for o in ranked:
-        test = html.escape(o["test"]) if o.get("test") else '<span class="muted">—</span>'
+    for idx, g in enumerate(rank_repeated(groups)):
+        detail_id = f"repeated-query-detail-{idx}"
+        severity = "sev-high" if g["static_matches"] else ("sev-medium" if g["type"] == "N_PLUS_ONE" else "sev-low")
+        confirmation = ""
+        if g["static_matches"]:
+            labels = "; ".join(STATIC_RULE_LABELS.get(static_findings[i]["type"], static_findings[i]["type"]) for i in g["static_matches"])
+            indices = ",".join(str(i) for i in g["static_matches"])
+            confirmation = f'<br><button type="button" class="static-badge" title="{html.escape(labels)}" data-finding-indices="{indices}">🔍 static rule agrees</button>'
         rows.append(
-            "<tr>"
-            f'<td class="num" data-sort="{o["ms"]}">{o["ms"]} ms</td>'
-            f'<td data-sort="{phase_sort_value(o.get("phase"))}">{html_phase(o.get("phase"), o.get("has_endpoint", True))}</td>'
-            f"<td>{test}</td>"
+            f'<tr class="{severity} group-row" data-detail-target="{detail_id}">'
+            '<td class="expand-cell"><span class="expand-arrow">&#9654;</span></td>'
+            f"{html_status(g, has_baseline)}"
+            f"<td>{SHAPE_LABELS.get(g['type'], html.escape(g['type'] or '?'))}{confirmation}</td>"
+            f"<td>{html_endpoint(g['method'], g['endpoint'])}</td>"
+            f'<td class="code">{html.escape(source_label(g))}</td>'
+            f'<td class="sql-cell">{html_sql_cell(g["sql"])}</td>'
+            f'<td class="num" data-sort="{g["max_executions"]}">{g["max_executions"]}×</td>'
+            f'<td class="num" data-sort="{g["requests"]}">{g["requests"]}</td>'
+            f'<td class="num" data-sort="{len(g["tests"])}">{len(g["tests"])}</td>'
             "</tr>"
+            f'<tr class="detail-row" id="{detail_id}" hidden><td></td><td colspan="8">{repeated_occurrences_html(g["occurrences"])}</td></tr>'
         )
-    note = ""
-    if hidden_count:
-        note = f'<p class="muted" style="margin:6px 0 0;font-size:12px;">+ {hidden_count} more occurrence{"s" if hidden_count != 1 else ""} not shown</p>'
     return (
-        '<table class="nested-table sortable"><thead><tr>'
-        '<th data-type="number">Duration</th><th data-type="number">Phase</th><th data-type="string">Test</th>'
-        f"</tr></thead><tbody>{''.join(rows)}</tbody></table>{note}"
+        '<input class="filter-box" type="search" placeholder="Filter by endpoint, method, test, new, N+1, …" data-target="repeated-queries-table">\n'
+        '<div class="table-scroll"><table class="grouped-table" id="repeated-queries-table">\n<thead><tr><th></th>'
+        '<th data-type="number" data-col="status">Status</th>'
+        '<th data-type="string" data-col="shape">Shape</th>'
+        '<th data-type="string" data-col="endpoint">Endpoint</th>'
+        '<th data-type="string" data-col="source">Issued by (repository ← caller)</th>'
+        '<th>Query</th>'
+        '<th data-type="number" data-col="repeats" title="Most executions of this query within one request">Max repeats</th>'
+        '<th data-type="number" data-col="requests">Requests</th>'
+        '<th data-type="number" data-col="tests">Tests</th>'
+        f"</tr></thead>\n<tbody>{''.join(rows)}</tbody>\n</table></div>"
     )
 
 
-def build_slow_queries_table_html(slow_queries: list, threshold_ms: int, static_index: dict = None) -> str:
-    """Grouped, collapsible Slow Queries table -- the same query at the same endpoint crossing
-    the threshold many times across a handful of tests collapses into one row (real example: 179
-    raw captures, 1 distinct query, 3 tests) instead of flooding the table with near-duplicates.
-    Click a row to see the individual occurrences it was grouped from."""
-    if not slow_queries:
-        return f'<p class="ok">✅ No slow queries detected (threshold: {threshold_ms} ms)</p>'
-    static_index = static_index or {}
+def slow_query_occurrences_html(occurrences: list) -> str:
+    ranked = sorted(occurrences, key=lambda o: o["ms"], reverse=True)
+    shown = ranked[:MAX_OCCURRENCES_SHOWN]
+    rows = "".join(
+        "<tr>"
+        f'<td class="num" data-sort="{o["ms"]}">{o["ms"]} ms</td>'
+        f'<td data-sort="{1 if o.get("phase") == "action" else 0}">{html_phase(o.get("phase"), o.get("has_endpoint", True))}</td>'
+        f'<td>{html.escape(o["test"]) if o.get("test") else "<span class=muted>—</span>"}</td>'
+        "</tr>" for o in shown)
+    return ('<table class="nested-table sortable"><thead><tr><th data-type="number">Duration</th><th data-type="number">Phase</th><th data-type="string">Test</th></tr></thead>'
+            f'<tbody>{rows}</tbody></table>{capped_note(len(ranked) - len(shown), "occurrences")}')
 
-    groups = compute_slow_query_groups(slow_queries)
-    rows_html = []
-    for idx, ((method, endpoint, sql, thread_name), g) in enumerate(groups):
-        ratio = g["worst_ms"] / threshold_ms if threshold_ms else 0
-        badge = static_badge_html(sql, static_index)
+
+def build_slow_queries_table_html(slow_queries: list, threshold_ms) -> str:
+    if not slow_queries:
+        return f'<p class="ok">✅ No query slower than {threshold_ms} ms.</p>'
+    rows = []
+    for idx, ((method, endpoint, sql, thread_name), g) in enumerate(compute_slow_query_groups(slow_queries)):
         detail_id = f"slow-query-detail-{idx}"
-        rows_html.append(
-            f'<tr class="{severity_class(ratio)} group-row" data-detail-target="{detail_id}">'
+        rows.append(
+            '<tr class="group-row" data-detail-target="' + detail_id + '">'
             '<td class="expand-cell"><span class="expand-arrow">&#9654;</span></td>'
             f"<td>{html_endpoint(method, endpoint, thread_name)}</td>"
-            f'<td class="sql-cell">{highlight_sql(trunc_plain(sql, 70))}{badge}</td>'
+            f'<td class="sql-cell">{html_sql_cell(sql)}</td>'
             f'<td class="num" data-sort="{g["count"]}">{g["count"]}×</td>'
             f'<td class="num" data-sort="{g["join_count"]}">{g["join_count"]}</td>'
             f'<td class="num" data-sort="{g["worst_ms"]}">{g["worst_ms"]} ms</td>'
             "</tr>"
-            f'<tr class="detail-row" id="{detail_id}" hidden><td></td><td colspan="5">{slow_query_instance_rows_html(g["occurrences"])}</td></tr>'
+            f'<tr class="detail-row" id="{detail_id}" hidden><td></td><td colspan="5">{slow_query_occurrences_html(g["occurrences"])}</td></tr>'
         )
-
     return (
         '<input class="filter-box" type="search" placeholder="Filter by endpoint, test, phase, or SQL…" data-target="slow-queries-table">\n'
-        # Deliberately NOT class="sortable" -- see build_endpoint_findings_table_html for why
-        # grouped tables use the dedicated setupGroupedTable() sort instead.
-        '<table class="grouped-table" id="slow-queries-table">\n'
-        "<thead><tr>"
-        "<th></th>"
-        '<th data-type="string" data-col="endpoint">Endpoint</th>'
-        "<th>SQL</th>"
+        '<div class="table-scroll"><table class="grouped-table" id="slow-queries-table">\n<thead><tr><th></th>'
+        '<th data-type="string" data-col="endpoint">Endpoint</th><th>Query</th>'
         '<th data-type="number" data-col="occurrences">Occurrences</th>'
-        '<th data-type="number" data-col="joins" title="Tables joined in this one query -- structural, doesn\'t depend on environment speed">Joins</th>'
-        '<th data-type="number" data-col="duration">Worst Duration</th>'
-        "</tr></thead>\n"
-        f"<tbody>{''.join(rows_html)}</tbody>\n"
-        "</table>"
+        '<th data-type="number" data-col="joins" title="Tables joined in this one query">Joins</th>'
+        '<th data-type="number" data-col="duration">Worst duration</th>'
+        f"</tr></thead>\n<tbody>{''.join(rows)}</tbody>\n</table></div>"
     )
 
 
-def shared_query_breakdown_html(queries: dict, static_index: dict) -> str:
-    """The query breakdown for a pattern, rendered ONCE per group rather than once per instance:
-    every instance in a group has the identical query *set* by construction (that's the grouping
-    key), so per-instance timing/count can differ slightly but repeating the full SQL text per
-    instance would just be duplication, not new information.
-
-    A plain `sortable` table, not a group/detail-row pair: there's no pairing to protect here, so
-    the shared generic click-to-sort script (see HTML_REPORT_JS) already handles it correctly."""
-    ranked = sorted(queries.items(), key=lambda kv: kv[1][1], reverse=True)
-    rows = []
-    for sql, (count, qms) in ranked:
-        badge = static_badge_html(sql, static_index)
-        rows.append(f'<tr><td class="num" data-sort="{count}">{count}×</td><td class="num" data-sort="{qms}">{qms} ms</td><td class="sql-cell">{html_sql_cell(sql)}{badge}</td></tr>')
-    label = f"{len(ranked)} distinct quer{'y' if len(ranked) == 1 else 'ies'}"
-    return (
-        f'<details class="query-breakdown"><summary>{label}</summary>'
-        '<table class="nested-table sortable"><thead><tr><th data-type="number">Count</th><th data-type="number">Total Time</th><th data-type="string">SQL</th></tr></thead>'
-        f"<tbody>{''.join(rows)}</tbody></table></details>"
-    )
-
-
-def instance_rows_html(occurrences: list) -> str:
-    """Reproduces the columns the old, ungrouped Endpoint Timing row used to show -- ratio,
-    total, DB time, query count, phase, test -- as a nested table under the pattern it belongs
-    to. Capped worst-first: a pattern seen in dozens of tests doesn't need one row per test to
-    make its point, same capping philosophy the rest of the report already uses.
-
-    A plain `sortable` table (see shared_query_breakdown_html for why that's safe here)."""
-    ranked = sorted(occurrences, key=lambda o: o["ratio"], reverse=True)
-    hidden_count = max(0, len(ranked) - ENDPOINT_FINDINGS_MAX_INSTANCES_SHOWN)
-    ranked = ranked[:ENDPOINT_FINDINGS_MAX_INSTANCES_SHOWN]
-    rows = []
-    for o in ranked:
-        has_endpoint = True  # every EndpointTimingRecord comes from a real HTTP request by construction
-        test = html.escape(o["test"]) if o.get("test") else '<span class="muted">—</span>'
-        rows.append(
-            "<tr>"
-            f'<td class="num" data-sort="{o["ratio"]:.4f}">{o["ratio"] * 100:.0f}%</td>'
-            f'<td class="num" data-sort="{o["total_ms"]}">{o["total_ms"]} ms</td>'
-            f'<td class="num" data-sort="{o["db_ms"]}">{o["db_ms"]} ms</td>'
-            f'<td class="num" data-sort="{o["qcount"]}">{o["qcount"]}</td>'
-            f'<td data-sort="{phase_sort_value(o.get("phase"))}">{html_phase(o.get("phase"), has_endpoint)}</td>'
-            f"<td>{test}</td>"
-            "</tr>"
-        )
-    note = ""
-    if hidden_count:
-        note = f'<p class="muted" style="margin:6px 0 0;font-size:12px;">+ {hidden_count} more instance{"s" if hidden_count != 1 else ""} not shown</p>'
-    return (
-        '<table class="nested-table sortable"><thead><tr>'
-        '<th data-type="number">Ratio</th><th data-type="number">Total</th><th data-type="number">DB Time</th>'
-        '<th data-type="number">Queries</th><th data-type="number">Phase</th><th data-type="string">Test</th>'
-        f"</tr></thead><tbody>{''.join(rows)}</tbody></table>{note}"
-    )
-
-
-def endpoint_findings_severity(ratio: float, max_repeat: int) -> str:
-    if ratio >= 0.6 or max_repeat > 20:
-        return "sev-high"
-    if ratio >= 0.4 or max_repeat > 10:
-        return "sev-medium"
-    return "sev-low"
-
-
-def build_endpoint_findings_table_html(findings: dict, static_index: dict = None) -> str:
-    """Grouped, collapsible Endpoint Findings table -- replaces the old separate N+1 Suspects and
-    Endpoint Timing tables. See compute_endpoint_findings for the grouping/inclusion rule."""
-    static_index = static_index or {}
-    rows = findings["rows"]
-    if not rows:
-        return '<p class="ok">✅ No endpoint findings above the inclusion floor.</p>'
-
-    rows_html = []
-    for idx, ((method, endpoint, templates), v) in enumerate(rows):
-        what_repeats = worst_query_summary_html(v["queries"], len(templates))
-        detail_id = f"endpoint-finding-detail-{idx}"
-        rows_html.append(
-            f'<tr class="{endpoint_findings_severity(v["worst_ratio"], v["max_repeat"])} group-row" data-detail-target="{detail_id}">'
-            '<td class="expand-cell"><span class="expand-arrow">&#9654;</span></td>'
-            f"<td>{html.escape(f'{method} {endpoint}')}</td>"
-            f'<td class="sql-cell">{what_repeats}</td>'
-            f'<td class="num" data-sort="{v["instances"]}">{v["instances"]}</td>'
-            f'<td class="num" data-sort="{v["worst_dbtime"]}">{v["worst_dbtime"]} ms</td>'
-            f'<td class="num" data-sort="{v["worst_ratio"]:.4f}">{v["worst_ratio"] * 100:.0f}%</td>'
-            f'<td class="num" data-sort="{v["max_repeat"]}">{v["max_repeat"]}×</td>'
-            f'<td class="num" data-sort="{v["worst_qcount"]}">{v["worst_qcount"]}</td>'
-            "</tr>"
-            f'<tr class="detail-row" id="{detail_id}" hidden><td></td><td colspan="7">'
-            f'{instance_rows_html(v["occurrences"])}<div style="margin-top:10px;">{shared_query_breakdown_html(v["queries"], static_index)}</div>'
-            "</td></tr>"
-        )
-
-    return (
-        '<input class="filter-box" type="search" placeholder="Filter by endpoint or SQL…" data-target="endpoint-findings-table">\n'
-        # Deliberately NOT class="sortable": the shared click-to-sort script reorders every <tr>
-        # in the tbody generically, which would scramble group/detail-row pairing. See the
-        # dedicated sort script scoped to #endpoint-findings-table in HTML_REPORT_JS instead.
-        '<table class="grouped-table" id="endpoint-findings-table">\n'
-        "<thead><tr>"
-        "<th></th>"
-        '<th data-type="string" data-col="endpoint">Endpoint</th>'
-        '<th data-type="string" data-col="repeats">What Repeats</th>'
-        '<th data-type="number" data-col="instances">Seen In</th>'
-        '<th data-type="number" data-col="dbtime">Worst DB Time</th>'
-        '<th data-type="number" data-col="ratio">Worst Ratio</th>'
-        '<th data-type="number" data-col="repeat">Max Repeat</th>'
-        '<th data-type="number" data-col="qcount">Total Queries</th>'
-        "</tr></thead>\n"
-        f"<tbody>{''.join(rows_html)}</tbody>\n"
-        "</table>"
-    )
-
-
-def worst_query_summary_html(queries: dict, template_count: int) -> str:
-    if not queries:
-        return f"{template_count} templates"
-    worst_sql, (worst_count, _) = max(queries.items(), key=lambda kv: kv[1][0])
-    if worst_count <= 1:
-        return f"{template_count} templates"
-    return f'{highlight_sql(trunc_plain(worst_sql, 70))} <strong>×{worst_count}</strong>'
-
-
-def reachable_path_html(paths: list) -> str:
-    """`reachablePath` is a list of already-complete chains -- one per reachable entity (e.g.
-    "studentExam", "studentExam -> exam", "studentExam -> exam -> course" are three SEPARATE
-    entries, each a full chain to a *different* entity, not three fragments of one chain. Joining
-    them together with another "->" (the previous bug here) makes independent findings look like
-    one impossibly-repeating chain -- render each as its own list item instead."""
-    if not paths:
-        return ""
-    items = "".join(f"<li>{html.escape(p)}</li>" for p in paths)
-    return f'<ul style="margin:0;padding-left:18px;">{items}</ul>'
-
-
-def build_static_findings_table_html(static_findings: list) -> str:
-    """Every static finding, unfiltered -- including ones with no dynamic match, which are
-    exactly the interesting case: a structural risk E2E's traffic never happened to exercise."""
+def build_static_findings_table_html(static_findings: list, has_baseline: bool) -> str:
     if not static_findings:
         return '<p class="ok">No static findings.</p>'
-
     rows = []
     for i, f in enumerate(static_findings):
-        # id must match the index build_static_index assigns (same list, same order, same
-        # enumerate) -- that's what a badge's data-finding-indices points at to highlight this
-        # exact row rather than searching for it by name.
-        entity = f.get("entityClass") or "—"
-        detail = html_sql_cell(f["snippet"]) if f.get("snippet") else reachable_path_html(f.get("reachablePath", []))
+        # the id is what a "static rule agrees" link points at (see link_static_confirmations)
+        location = (f.get("file") or "").replace("\\", "/").split("/src/main/java/")[-1]
+        if f.get("line"):
+            location += f":{f['line']}"
         rows.append(
             f'<tr id="static-finding-{i}">'
-            f"<td>{html.escape(f['type'])}</td>"
-            f"<td>{html.escape(entity)}</td>"
-            f"<td>{html.escape(static_finding_label(f))}</td>"
-            f'<td class="sql-cell">{detail}</td>'
-            f"<td>{html.escape(f.get('file', ''))}</td>"
+            f"{html_status(f, has_baseline)}"
+            f"<td>{html.escape(STATIC_RULE_LABELS.get(f['type'], f['type']))}</td>"
+            f'<td class="code">{html.escape(f.get("member") or f.get("entityClass") or "—")}</td>'
+            f"<td>{html.escape(f.get('detail') or '')}</td>"
+            f'<td class="sql-cell">{html_sql_cell(f.get("snippet") or "")}</td>'
+            f'<td class="code">{html.escape(location)}</td>'
             "</tr>"
         )
-
     return (
-        '<input class="filter-box" type="search" placeholder="Filter by type, entity, or file…" data-target="static-findings-table">\n'
-        '<table class="sortable" id="static-findings-table">\n'
-        "<thead><tr>"
-        '<th data-type="string">Type</th>'
-        '<th data-type="string">Entity</th>'
-        '<th data-type="string">Detail</th>'
-        '<th data-type="string">Path / Snippet</th>'
-        '<th data-type="string">File</th>'
-        "</tr></thead>\n"
-        f"<tbody>{''.join(rows)}</tbody>\n"
-        "</table>"
+        '<input class="filter-box" type="search" placeholder="Filter by rule, class, method, or file…" data-target="static-findings-table">\n'
+        '<div class="table-scroll"><table class="sortable" id="static-findings-table">\n<thead><tr>'
+        '<th data-type="number">Status</th><th data-type="string">Rule</th><th data-type="string">Where</th><th data-type="string">Detail</th>'
+        '<th data-type="string">Code</th><th data-type="string">File</th>'
+        f"</tr></thead>\n<tbody>{''.join(rows)}</tbody>\n</table></div>"
     )
 
 
-def build_html_report(report: dict, run_url: str = "", static_findings: list = None) -> str:
-    static_findings = static_findings or []
-    static_index = build_static_index(static_findings)
-    # Unlike build_report's "?" placeholder (display-only), this feeds severity_class's division
-    # below, so a missing key needs a numeric fallback rather than a string one.
-    threshold_ms = report.get("thresholdMs") if isinstance(report.get("thresholdMs"), (int, float)) else 100
-    generated_at = iso_to_human(report.get("generatedAt", ""))
+def build_html_report(report: dict, groups: list, static_findings: list, baseline: dict, run_url: str = "") -> str:
+    has_baseline = baseline is not None
+    threshold_ms = report.get("thresholdMs", "?")
     slow_queries = report.get("slowQueries", [])
-    slow_count = len(compute_slow_query_groups(slow_queries))  # distinct groups, not raw occurrences -- see build_report
-    findings = compute_endpoint_findings(report.get("endpointTimings", []))
-    findings_count = len(findings["rows"])
-    action_count = sum(1 for f in slow_queries if f.get("phase") == "action")
-    setup_count = sum(1 for f in slow_queries if f.get("phase") == "setup")
-
-    run_link_html = f'<p><a href="{html.escape(run_url)}">View CI run</a></p>' if run_url else ""
+    slow_count = len(compute_slow_query_groups(slow_queries))
+    n_plus_one = sum(1 for g in groups if g["type"] == "N_PLUS_ONE")
+    duplicates = sum(1 for g in groups if g["type"] == "DUPLICATE")
+    confirmed = sum(1 for g in groups if g["static_matches"])
+    run_link = f'<p><a href="{html.escape(run_url)}">View CI run</a></p>' if run_url else ""
+    if has_baseline:
+        new_count = sum(1 for g in groups if g.get("is_new")) + sum(1 for f in static_findings if f.get("is_new"))
+        comparison = (f"Compared against the latest develop run ({html.escape(iso_to_human(baseline.get('generatedAt', '?')))}): "
+                      f"<strong>{new_count} finding{'' if new_count == 1 else 's'} are new</strong>. Type <code>new</code> into a filter box to show only those.")
+    else:
+        comparison = "No develop baseline was available, so findings are not classified as new or existing."
 
     return f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Slow Query Report</title>
+<title>Query Report</title>
 <style>{HTML_REPORT_CSS}</style>
 </head>
 <body>
 <div class="wrapper">
-<h1>Slow Query Report</h1>
-<p class="muted">Generated at {html.escape(generated_at)}</p>
-{run_link_html}
-<p class="lead">Findings captured automatically during this E2E run: individual database queries whose execution time exceeded the configured threshold ("Slow Queries"), and endpoints whose queries repeat within a request and clear at least one significance floor ("Endpoint Findings") -- grouped by endpoint and query shape, so the same bug tested many times shows up once, not once per test.</p>
+<h1>Query Report</h1>
+<p class="muted">Generated at {html.escape(iso_to_human(report.get("generatedAt", "")))}</p>
+{run_link}
+<p class="lead">Every finding is a yes/no rule without a count threshold. <strong>Repeated queries</strong> were observed while the E2E tests ran: a query that ran
+more than once in one request, either with different parameters (<strong>N+1</strong>) or with the same ones (<strong>duplicate</strong>), together with the repository
+method that issued it and its caller. <strong>Static findings</strong> come from scanning the source code. A repeated query marked 🔍 is flagged by a static rule
+for the very same code. <strong>Slow queries</strong> are shown for context only: query timing in CI is too noisy to judge a change by. {comparison}</p>
 <div class="stats">
-<div class="stat-tile"><span class="stat-value">{slow_count}</span><span class="stat-label">Slow Queries</span><span class="stat-sub">distinct, from {len(slow_queries)} occurrences · threshold {threshold_ms} ms</span></div>
-<div class="stat-tile"><span class="stat-value">{findings_count}</span><span class="stat-label">Endpoint Findings</span><span class="stat-sub">from {findings['distinct_patterns']} distinct patterns</span></div>
-<div class="stat-tile"><span class="stat-value">{action_count}</span><span class="stat-label">Action-Phase Occurrences</span><span class="stat-sub">real UI-driven traffic — start here</span></div>
-<div class="stat-tile"><span class="stat-value">{setup_count}</span><span class="stat-label">Setup-Phase Occurrences</span><span class="stat-sub">test fixture traffic, lower priority</span></div>
+<div class="stat-tile"><span class="stat-value">{n_plus_one}</span><span class="stat-label">N+1</span><span class="stat-sub">same query, different parameters</span></div>
+<div class="stat-tile"><span class="stat-value">{duplicates}</span><span class="stat-label">Duplicate</span><span class="stat-sub">same query, same parameters</span></div>
+<div class="stat-tile"><span class="stat-value">{confirmed}</span><span class="stat-label">Confirmed statically</span><span class="stat-sub">a static rule flags the same code</span></div>
+<div class="stat-tile"><span class="stat-value">{len(static_findings)}</span><span class="stat-label">Static findings</span><span class="stat-sub">from the source scan</span></div>
 </div>
-<p class="muted">Type "action" or "setup" into a table's filter box to isolate findings by phase.</p>
 
 <div class="tabs" role="tablist">
-<button class="tab-btn active" type="button" role="tab" aria-selected="true" aria-controls="panel-slow-queries">🐢 Slow Queries <span class="tab-count">{slow_count}</span></button>
-<button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-endpoint-findings">🔁 Endpoint Findings <span class="tab-count">{findings_count}</span></button>
+<button class="tab-btn active" type="button" role="tab" aria-selected="true" aria-controls="panel-repeated-queries">🔁 Repeated Queries <span class="tab-count">{len(groups)}</span></button>
 <button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-static-findings">🔍 Static Findings <span class="tab-count">{len(static_findings)}</span></button>
+<button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-slow-queries">🐢 Slow Queries <span class="tab-count">{slow_count}</span></button>
 </div>
 
-<section class="tab-panel" id="panel-slow-queries" role="tabpanel">
-{build_slow_queries_table_html(slow_queries, threshold_ms, static_index)}
-</section>
-<section class="tab-panel" id="panel-endpoint-findings" role="tabpanel" hidden>
-<p class="muted">{findings['total_requests']} requests captured → {findings['distinct_patterns']} distinct (endpoint, query-shape) patterns → {findings['repeating_patterns']} with a repeated query → {findings['floor_cleared']} clearing a floor (DB-time ratio ≥ 30%, DB time ≥ 20ms, or a query repeating &gt;5×) → <strong>{findings_count} shown</strong> (top 10% per axis, unioned). Click a row to see the individual requests it was grouped from, and the shared query breakdown.</p>
-{build_endpoint_findings_table_html(findings, static_index)}
+<section class="tab-panel" id="panel-repeated-queries" role="tabpanel">
+<p class="muted">One row per query shape at an endpoint, issued by the same code. Click a row for the individual requests (and tests) it was seen in.</p>
+{build_repeated_queries_table_html(groups, static_findings, has_baseline)}
 </section>
 <section class="tab-panel" id="panel-static-findings" role="tabpanel" hidden>
-<p class="muted">Findings from a pure source scan (no test run needed) -- wide @EntityGraph/JOIN FETCH definitions, and entities whose eager-fetch association graph transitively touches many other entities. A 🔍 badge on a row means its root table matches one of these by name (heuristic: PascalCase → snake_case), not a proven link. Findings with no badge anywhere are just as worth a look -- they're structural risks no test happened to trigger yet.</p>
-{build_static_findings_table_html(static_findings)}
+{build_static_findings_table_html(static_findings, has_baseline)}
+</section>
+<section class="tab-panel" id="panel-slow-queries" role="tabpanel" hidden>
+<p class="muted">Queries slower than {html.escape(str(threshold_ms))} ms. Context only, not compared against develop.</p>
+{build_slow_queries_table_html(slow_queries, threshold_ms)}
 </section>
 </div>
 <script>{HTML_REPORT_JS}</script>
@@ -1003,30 +756,50 @@ def build_html_report(report: dict, run_url: str = "", static_findings: list = N
 # Entry point
 # ---------------------------------------------------------------------------
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: format_slow_query_report.py <report.json> [run_url] [html_output_path] [static_findings.json]", file=sys.stderr)
-        sys.exit(1)
+def main():
+    parser = argparse.ArgumentParser(description="Format the E2E query report")
+    parser.add_argument("report")
+    parser.add_argument("run_url", nargs="?", default="")
+    parser.add_argument("html_output_path", nargs="?", default="")
+    parser.add_argument("static_findings", nargs="?", default="")
+    parser.add_argument("--baseline", help="keys of a baseline run (written by --keys-out of that run)")
+    parser.add_argument("--keys-out", help="write this run's finding keys here, for use as a later baseline")
+    args = parser.parse_args()
 
-    report_path = sys.argv[1]
-    run_url = sys.argv[2] if len(sys.argv) > 2 else ""
-    html_output_path = sys.argv[3] if len(sys.argv) > 3 else ""
-    static_findings_path = sys.argv[4] if len(sys.argv) > 4 else ""
     try:
-        report = load_report(report_path)
+        report = load_json(args.report)
     except (json.JSONDecodeError, FileNotFoundError) as exc:
-        print(f"## ⚠️ Slow Query Report Parse Error\n\n{exc}", file=sys.stderr)
+        print(f"## ⚠️ Query Report Parse Error\n\n{exc}", file=sys.stderr)
         sys.exit(1)
 
     static_findings = []
-    if static_findings_path:
+    if args.static_findings:
         try:
-            static_findings = load_report(static_findings_path)
+            static_findings = load_json(args.static_findings)
         except (json.JSONDecodeError, FileNotFoundError) as exc:
-            print(f"Warning: could not load static findings from {static_findings_path}: {exc}", file=sys.stderr)
+            print(f"Warning: could not load static findings from {args.static_findings}: {exc}", file=sys.stderr)
 
-    print(build_report(report, run_url))
+    baseline = None
+    if args.baseline:
+        try:
+            baseline = load_json(args.baseline)
+        except (json.JSONDecodeError, FileNotFoundError) as exc:
+            print(f"Warning: could not load baseline from {args.baseline}: {exc}", file=sys.stderr)
 
-    if html_output_path:
-        with open(html_output_path, "w", encoding="utf-8") as f:
-            f.write(build_html_report(report, run_url, static_findings))
+    groups = group_repeated_queries(report.get("repeatedQueries", []))
+    link_static_confirmations(groups, static_findings)
+    mark_new(groups, static_findings, baseline)
+
+    print(build_report(report, groups, static_findings, baseline, args.run_url))
+    if args.html_output_path:
+        with open(args.html_output_path, "w", encoding="utf-8") as f:
+            f.write(build_html_report(report, groups, static_findings, baseline, args.run_url))
+    if args.keys_out:
+        keys = collect_keys(groups, static_findings)
+        keys["generatedAt"] = report.get("generatedAt")
+        with open(args.keys_out, "w", encoding="utf-8") as f:
+            json.dump(keys, f, indent=1)
+
+
+if __name__ == "__main__":
+    main()

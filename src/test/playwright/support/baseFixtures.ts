@@ -174,7 +174,8 @@ const test = baseTest.extend<
         await use({
             ...contextOptions,
             extraHTTPHeaders: mergeHeaders(contextOptions.extraHTTPHeaders, {
-                [PLAYWRIGHT_TEST_NAME_HEADER]: testInfo.title,
+                // percent-encoded: HTTP header values must be ASCII, and test titles may contain e.g. '✕'
+                [PLAYWRIGHT_TEST_NAME_HEADER]: encodeURIComponent(testInfo.title),
                 [PLAYWRIGHT_PHASE_HEADER]: 'setup',
             }),
         });

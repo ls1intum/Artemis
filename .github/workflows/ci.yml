@@ -103,6 +103,9 @@ jobs:
               - 'config/pmd/**'
               - 'supporting_scripts/analyze_java_files.py'
               - 'supporting_scripts/find_slow_queries.py'
+              - 'supporting_scripts/test_find_slow_queries.py'
+              - 'supporting_scripts/format_slow_query_report.py'
+              - 'supporting_scripts/test_format_slow_query_report.py'
             # bean-instantiations boots the *production* context (gradle test is skipped), so it
             # only cares about main sources + the build graph — not test sources or the analysis
             # helpers that has_java carries for the quality jobs.

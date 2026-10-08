@@ -11,6 +11,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -30,6 +31,7 @@ import org.springframework.web.servlet.HandlerMapping;
  */
 @Component
 @Profile(SPRING_PROFILE_E2E_PERFORMANCE)
+@Lazy
 @Order(Ordered.LOWEST_PRECEDENCE)
 public class SlowQueryRequestFilter implements Filter {
 
@@ -56,7 +58,7 @@ public class SlowQueryRequestFilter implements Filter {
                 // which sets this attribute -- has already completed.
                 Object routeTemplate = httpRequest.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
                 String httpEndpoint = routeTemplate != null ? routeTemplate.toString() : httpRequest.getRequestURI();
-                collector.recordEndpointTiming(httpRequest.getMethod(), httpEndpoint, httpRequest.getHeader(SlowQueryListener.PLAYWRIGHT_TEST_HEADER),
+                collector.recordEndpointTiming(httpRequest.getMethod(), httpEndpoint, SlowQueryListener.testName(httpRequest),
                         httpRequest.getHeader(SlowQueryListener.PLAYWRIGHT_PHASE_HEADER), totalDurationMs);
             }
             collector.resetRequestState();

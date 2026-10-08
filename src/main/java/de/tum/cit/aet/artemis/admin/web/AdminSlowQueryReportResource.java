@@ -16,15 +16,17 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.config.performance.SlowQueryCollector;
 import de.tum.cit.aet.artemis.core.config.performance.SlowQueryReportDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * Admin REST endpoint for the runtime slow-query detector.
  * <p>
  * Exposes two operations:
  * <ul>
- * <li>{@code GET  /api/core/admin/performance/slow-queries} – returns the current JSON report
+ * <li>{@code GET  /api/admin/performance/slow-queries} – returns the current JSON report
  * of all slow queries and N+1 suspects captured since the last reset.</li>
- * <li>{@code POST /api/core/admin/performance/slow-queries/reset} – clears all accumulated
+ * <li>{@code POST /api/admin/performance/slow-queries/reset} – clears all accumulated
  * data, allowing a fresh collection window to start.</li>
  * </ul>
  * <p>
@@ -36,9 +38,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
  */
 @Profile(PROFILE_CORE + " & " + SPRING_PROFILE_E2E_PERFORMANCE)
 @EnforceAdmin
+@FeatureUsage(UserFeature.MONITORING)
 @Lazy
 @RestController
-@RequestMapping("api/core/admin/performance")
+@RequestMapping("api/admin/performance/")
 public class AdminSlowQueryReportResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminSlowQueryReportResource.class);
@@ -58,7 +61,7 @@ public class AdminSlowQueryReportResource {
     @GetMapping("slow-queries")
     public ResponseEntity<SlowQueryReportDTO> getReport() {
         SlowQueryReportDTO report = collector.getReport();
-        log.debug("[SlowQuery] Report requested: {} slow queries, {} N+1 suspects", report.slowQueryCount(), report.n1SuspectCount());
+        log.debug("[SlowQuery] Report requested: {} slow queries, {} repeated-query findings", report.slowQueryCount(), report.repeatedQueryCount());
         return ResponseEntity.ok(report);
     }
 
