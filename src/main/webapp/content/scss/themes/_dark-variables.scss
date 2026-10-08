@@ -382,7 +382,7 @@ $quiz-participation-quiz-is-over-border-color: #3c763d;
 $quiz-participation-refresh-overlay-active-background: rgba(255, 255, 255, 0.6);
 $quiz-participation-btn-circle-light-border-color: transparent;
 
-$quiz-participation-question-disabled-color: $gray-600;
+$quiz-participation-question-disabled-color: $gray-500;
 $quiz-participation-question-disabled-background: transparentize(#fff, 0.9);
 $quiz-participation-question-result-border-color: $success;
 $quiz-participation-question-result-incorrect-border-color: $warning;
@@ -457,7 +457,6 @@ $code-editor-file-browser-input-color: white;
 $code-editor-file-browser-badge-background: $code-editor-file-browser-tree-hover;
 $code-editor-diff-newline-background: rgba(46, 160, 67, 0.22);
 $code-editor-gutter-newline-background: rgba(46, 160, 67, 0.6);
-$code-editor-grid-grip-lines-color: $gray-300;
 
 // Monaco editor
 $monaco-suggest-widget-background: $gray-900;

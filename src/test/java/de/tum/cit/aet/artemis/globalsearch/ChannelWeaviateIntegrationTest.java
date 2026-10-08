@@ -6,11 +6,10 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertCh
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertChannelNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryChannelProperties;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -136,7 +135,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         Channel updatedChannel = channelRepository.findByIdElseThrow(createdChannel.getId());
         assertThat(updatedChannel.getIsPublic()).isFalse();
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryChannelProperties(weaviateService, updatedChannel.getId());
             assertThat(properties).isNotNull();
             assertThat(properties.get(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC)).isEqualTo(false);
@@ -225,7 +224,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
 
         weaviateOutboxDispatcher.drain();
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryChannelProperties(weaviateService, channel.getId());
             assertThat(properties).as("the channel must be re-derived rather than removed by a stale reconcile decision").isNotNull();
             assertThat(((Number) properties.get(SearchableEntitySchema.Properties.SOURCE_SEQ)).longValue()).isEqualTo(staleDelete.getId());
@@ -328,7 +327,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             channelService.updateLectureChannel(lecture, newChannelName);
 
             Channel updatedChannel = channelRepository.findChannelByLectureId(lecture.getId());
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 var properties = queryChannelProperties(weaviateService, updatedChannel.getId());
                 assertThat(properties).isNotNull();
                 assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(newChannelName);
@@ -346,7 +345,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             exercise.setChannelName("exercise-renamed");
             channelService.updateExerciseChannel(exercise, exercise);
 
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 var properties = queryChannelProperties(weaviateService, createdChannel.getId());
                 assertThat(properties).isNotNull();
                 assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("exercise-renamed");
@@ -444,7 +443,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             post = postRepository.save(post);
             searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, createdChannel));
             long postId = post.getId();
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertPostExistsInWeaviate(weaviateService, postId));
+            assertPostExistsInWeaviate(weaviateService, postId);
 
             // Create and index an answer post (reply) in the channel
             AnswerPost answerPost = new AnswerPost();
@@ -455,14 +454,14 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             answerPost = answerPostRepository.save(answerPost);
             searchableEntityWeaviateService.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answerPost, createdChannel));
             long answerPostId = answerPost.getId();
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertAnswerPostExistsInWeaviate(weaviateService, answerPostId));
+            assertAnswerPostExistsInWeaviate(weaviateService, answerPostId);
 
             // Delete the channel via the REST endpoint (this is what was broken: it bypassed Weaviate cleanup)
             long channelId = createdChannel.getId();
             request.delete("/api/communication/courses/" + course.getId() + "/channels/" + channelId, HttpStatus.OK);
 
             // All three entries must be gone from the search index
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 assertChannelNotInWeaviate(weaviateService, channelId);
                 assertPostNotInWeaviate(weaviateService, postId);
                 assertAnswerPostNotInWeaviate(weaviateService, answerPostId);

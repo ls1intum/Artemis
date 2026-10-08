@@ -99,6 +99,13 @@ export interface IrisResponseNeedsReviewPayload {
     channelId?: number;
 }
 
+/** The values a irisResponseNotification carries. */
+export interface IrisResponsePayload {
+    sessionId?: number;
+    messagePreview?: string;
+    chatTitle?: string;
+}
+
 /** The values a newAnnouncementNotification carries. */
 export interface NewAnnouncementPayload {
     postId?: number;
@@ -270,6 +277,7 @@ export interface CourseNotificationPayloadByType {
     exerciseOpenForPracticeNotification: ExerciseOpenForPracticePayload;
     exerciseUpdatedNotification: ExerciseUpdatedPayload;
     irisResponseNeedsReviewNotification: IrisResponseNeedsReviewPayload;
+    irisResponseNotification: IrisResponsePayload;
     newAnnouncementNotification: NewAnnouncementPayload;
     newAnswerNotification: NewAnswerPayload;
     newCpcPlagiarismCaseNotification: NewCpcPlagiarismCasePayload;

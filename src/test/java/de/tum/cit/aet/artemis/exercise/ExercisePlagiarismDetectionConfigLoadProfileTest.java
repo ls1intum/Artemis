@@ -295,6 +295,70 @@ class ExercisePlagiarismDetectionConfigLoadProfileTest extends AbstractSpringInt
     }
 
     @Test
+    void attachingTheConfigurationOfOnePersistedExerciseReadsItInOneQuery() throws Exception {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(textExerciseId);
+        assertThat(exercise.getPlagiarismDetectionConfig()).as("an exercise read from the database carries no configuration").isNull();
+        PlagiarismDetectionConfig stored = plagiarismDetectionConfigRepository.findByExerciseId(textExerciseId).orElseThrow();
+
+        assertThatDb(() -> {
+            plagiarismDetectionConfigRepository.attachTo(exercise);
+            return exercise;
+        }).hasBeenCalledTimes(1);
+
+        assertThat(exercise.getPlagiarismDetectionConfig()).isNotNull();
+        assertThat(exercise.getPlagiarismDetectionConfig().getId()).isEqualTo(stored.getId());
+        assertThat(exercise.getPlagiarismDetectionConfig().getExerciseId()).isEqualTo(textExerciseId);
+        assertThat(exercise.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(90);
+    }
+
+    @Test
+    void attachingTheConfigurationOfAnExerciseThatIsNotPersistedYetReadsNothingAndLeavesTheSlotUntouched() throws Exception {
+        TextExercise unsaved = new TextExercise();
+        PlagiarismDetectionConfig placeholder = PlagiarismDetectionConfig.createDefault();
+        placeholder.setSimilarityThreshold(12);
+        unsaved.setPlagiarismDetectionConfig(placeholder);
+        assertThat(unsaved.getId()).isNull();
+
+        assertThatDb(() -> {
+            plagiarismDetectionConfigRepository.attachTo(unsaved);
+            return unsaved;
+        }).hasBeenCalledTimes(0);
+
+        assertThat(unsaved.getPlagiarismDetectionConfig()).isSameAs(placeholder);
+        assertThat(unsaved.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(12);
+    }
+
+    @Test
+    void attachingTheConfigurationOfAnExerciseWithoutAStoredRowEmptiesTheSlot() {
+        Exercise exercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exerciseRepository.findByIdElseThrow(examExerciseId).getExerciseGroup()));
+        assertThat(plagiarismDetectionConfigRepository.findByExerciseId(exercise.getId())).isEmpty();
+        exercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+
+        plagiarismDetectionConfigRepository.attachTo(exercise);
+
+        assertThat(exercise.getPlagiarismDetectionConfig()).as("a stale slot must not survive when nothing is stored").isNull();
+    }
+
+    @Test
+    void attachingTheConfigurationReplacesWhatTheSlotCarried() {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(modelingExerciseId);
+        PlagiarismDetectionConfig stale = PlagiarismDetectionConfig.createDefault();
+        stale.setSimilarityThreshold(5);
+        exercise.setPlagiarismDetectionConfig(stale);
+
+        plagiarismDetectionConfigRepository.attachTo(exercise);
+
+        assertThat(exercise.getPlagiarismDetectionConfig()).isNotSameAs(stale);
+        assertThat(exercise.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(80);
+        assertThat(exercise.getPlagiarismDetectionConfig().getExerciseId()).isEqualTo(modelingExerciseId);
+    }
+
+    @Test
+    void attachingTheConfigurationOfNoExerciseIsRejected() {
+        assertThatThrownBy(() -> plagiarismDetectionConfigRepository.attachTo((Exercise) null)).isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
     void aConfigurationWithoutAnExerciseCannotBeWritten() {
         PlagiarismDetectionConfig config = PlagiarismDetectionConfig.createDefault();
         assertThatThrownBy(() -> plagiarismDetectionConfigRepository.saveAndFlush(config)).as("a plagiarism detection configuration without an exercise").isNotNull();

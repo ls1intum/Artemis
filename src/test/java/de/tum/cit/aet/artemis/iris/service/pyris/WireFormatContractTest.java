@@ -2,11 +2,19 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureUnitDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWorkerClaimRequestDTO;
@@ -15,6 +23,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWorkerHeartbeatResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 
 /**
@@ -24,12 +34,19 @@ import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
  * <li>Inbound status update reads {@code error.code}.</li>
  * <li>Inbound ingestion status reads optional {@code displayPageNumbers} from its dedicated field.</li>
  * <li>Inbound status update silently ignores camelCase {@code errorCode} (unknown field), matching Spring Boot's default mapper config.</li>
+ * <li>Outbound course DTO lists the lectures of the course, restricted to lecture units that are released.</li>
  * <li>Inbound global search status update reads the optional {@code stage}/{@code stageSources} fields, and
  * tolerates their absence (an older Pyris that never sends them) without error.</li>
  * <li>Inbound global search status update reads the optional {@code citationSourceTypes} field the same way.</li>
  * </ul>
  */
 class WireFormatContractTest {
+
+    /** Release date of a unit that {@link de.tum.cit.aet.artemis.lecture.domain.LectureUnit#isVisibleToStudents()} accepts, fixed so the fixture does not depend on the clock. */
+    private static final ZonedDateTime PAST_RELEASE_DATE = ZonedDateTime.of(2020, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+
+    /** Release date of a unit that is not yet visible to students. */
+    private static final ZonedDateTime FUTURE_RELEASE_DATE = ZonedDateTime.of(2040, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 
     private final JsonMapper mapper = JsonMapper.builder().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).build();
 
@@ -141,5 +158,68 @@ class WireFormatContractTest {
         String json = "{\"runState\":\"FINISHED\",\"answer\":\"answer\"}";
         var dto = mapper.readValue(json, PyrisGlobalSearchAnswerStatusUpdateDTO.class);
         assertThat(dto.citationSourceTypes()).isNull();
+    }
+
+    @Test
+    void outboundCourseDTOListsLecturesWithReleasedUnitsOnly() {
+        var released = textUnit(40L, "Collisions", PAST_RELEASE_DATE);
+        var unreleased = textUnit(41L, "Open Addressing", FUTURE_RELEASE_DATE);
+        var course = courseWithLecture(lecture(4L, "Hashing", released, unreleased));
+
+        var dto = PyrisCourseDTO.of(course);
+
+        assertThat(dto.lectures()).hasSize(1);
+        var lectureDTO = dto.lectures().getFirst();
+        assertThat(lectureDTO.id()).isEqualTo(4L);
+        assertThat(lectureDTO.title()).isEqualTo("Hashing");
+        assertThat(lectureDTO.units()).extracting(PyrisLectureUnitDTO::name).containsExactly("Collisions");
+        assertThat(lectureDTO.units()).extracting(PyrisLectureUnitDTO::lectureId).containsExactly(4L);
+    }
+
+    @Test
+    void outboundCourseDTOKeepsLecturesWhoseUnitsAreAllUnreleased() {
+        // The lecture remains a valid context switch target; only the unreleased unit names must stay hidden.
+        var unreleased = textUnit(40L, "Open Addressing", FUTURE_RELEASE_DATE);
+        var course = courseWithLecture(lecture(4L, "Hashing", unreleased));
+
+        var dto = PyrisCourseDTO.of(course);
+
+        assertThat(dto.lectures()).hasSize(1);
+        assertThat(dto.lectures().getFirst().units()).isEmpty();
+    }
+
+    @Test
+    void outboundCourseDTOWithoutLecturesOmitsTheLecturesField() throws Exception {
+        var course = new Course();
+        course.setId(1L);
+
+        var dto = PyrisCourseDTO.of(course);
+
+        assertThat(dto.lectures()).isEmpty();
+        // NON_EMPTY drops the empty list on the wire; Pyris then falls back to its default
+        assertThat(mapper.writeValueAsString(dto)).doesNotContain("\"lectures\"");
+    }
+
+    private static Course courseWithLecture(Lecture lecture) {
+        var course = new Course();
+        course.setId(1L);
+        course.setLectures(Set.of(lecture));
+        return course;
+    }
+
+    private static Lecture lecture(long id, String title, TextUnit... units) {
+        var lecture = new Lecture();
+        lecture.setId(id);
+        lecture.setTitle(title);
+        lecture.setLectureUnits(List.of(units));
+        return lecture;
+    }
+
+    private static TextUnit textUnit(long id, String name, ZonedDateTime releaseDate) {
+        var unit = new TextUnit();
+        unit.setId(id);
+        unit.setName(name);
+        unit.setReleaseDate(releaseDate);
+        return unit;
     }
 }
