@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.context.MessageSource;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -72,7 +73,7 @@ class IrisChatSessionServiceNewResultEventTest {
                 mock(IrisChatSessionRepository.class), mock(ProgrammingExerciseStudentParticipationRepository.class), mock(ProgrammingSubmissionRepository.class),
                 mock(IrisRateLimitService.class), JsonObjectMapper.get(), mock(ExerciseRepository.class), submissionRepository, mock(CourseRepository.class),
                 Optional.<LectureRepositoryApi>empty(), mock(IrisCitationService.class), mock(MessageSource.class), mock(IrisChatPipelineExecutionService.class),
-                mock(PyrisJobService.class), userAiPreferenceService, new IrisProactiveProperties());
+                mock(PyrisJobService.class), userAiPreferenceService, new IrisProactiveProperties(), mock(UserRepository.class));
 
         student = new User();
         student.setId(USER_ID);

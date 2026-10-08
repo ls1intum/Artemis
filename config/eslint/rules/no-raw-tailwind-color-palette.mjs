@@ -22,6 +22,8 @@
  * source of any binding (to catch `var(--p-*-NNN)` in `[style.*]`/`[color]`).
  * See documentation/docs/developer/guidelines/client-development.mdx (### Styling).
  */
+import { isClassListAttribute } from './class-list.mjs';
+
 const TAILWIND_COLOR_NAMES = [
     'slate',
     'gray',
@@ -143,11 +145,10 @@ export default {
         // `class` plus PrimeNG class inputs (`styleClass`, component-specific `*StyleClass`), which render their
         // classes onto the host — migrated templates pass Tailwind colour utilities through them, so raw palette /
         // primitives there must be caught too.
-        const isClassListAttr = (name) => name === 'class' || name === 'styleClass' || name.endsWith('StyleClass');
         return {
             // Static class="..." / styleClass="...".
             TextAttribute(node) {
-                if (isClassListAttr(node.name)) {
+                if (isClassListAttribute(node.name)) {
                     scanClasses(node.value, node, context);
                 }
             },
@@ -155,7 +156,7 @@ export default {
             // [class.<palette>]="x": the palette token is the attribute name itself.
             // Any other binding ([style.color], [color], …): catch `var(--p-<palette>-NNN)` in the expression source.
             BoundAttribute(node) {
-                if (isClassListAttr(node.name) || node.name === 'ngClass') {
+                if (isClassListAttribute(node.name) || node.name === 'ngClass') {
                     scanClasses(node.value?.source, node, context);
                 } else if (node.keySpan?.details?.startsWith('class.')) {
                     // [class.<palette>]="x" — the token is the attribute name. Gate on the `class.` key so a

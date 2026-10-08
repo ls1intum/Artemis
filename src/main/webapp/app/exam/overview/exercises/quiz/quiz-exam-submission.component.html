@@ -1,25 +1,15 @@
-<div class="flex items-center justify-between">
-    <h3 class="mb-0! font-normal">
-        <span>
-            {{ quizConfiguration().exerciseGroup?.title }}
-        </span>
-        <span jhiTranslate="artemisApp.examParticipation.points" [translateValues]="{ points: quizConfiguration().maxPoints }"></span>
-        @if (quizConfiguration().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-            <jhi-included-in-score-badge [includedInOverallScore]="quizConfiguration().includedInOverallScore" />
-        }
-    </h3>
+<jhi-exam-exercise-header [exercise]="quizConfiguration()">
     <jhi-exercise-save-button [submission]="studentSubmission()" (save)="notifyTriggerSave()" />
-</div>
-<hr />
+</jhi-exam-exercise-header>
 
 <!-- TODO this is duplicated with quiz-participation.component.html, we should add a shared component merging bought approaches instead of copy pasting things -->
 <div class="flex flex-col md:flex-row">
     @if (quizConfiguration().quizQuestions) {
         @if (!examTimeline()) {
-            <div class="pe-3 md:shrink-0">
+            <div class="pe-4! md:shrink-0">
                 <div class="stepwizardquiz hide-scrollbar-unless-scrolling">
                     @for (question of quizConfiguration().quizQuestions; track question; let i = $index) {
-                        <div class="mb-4">
+                        <div class="mb-6!">
                             @if (question.type === DRAG_AND_DROP) {
                                 <button
                                     type="button"
@@ -74,7 +64,7 @@
             </div>
         }
 
-        <div class="quiz-content mb-4 min-w-0 flex-1">
+        <div class="quiz-content min-w-0 flex-1">
             @for (question of quizConfiguration().quizQuestions; track question; let i = $index) {
                 <div>
                     <!-- TODO: Map vs Array consistency -->

@@ -1,55 +1,44 @@
 @if (exercise()) {
-    <h3 class="font-normal">
-        <span>
-            {{ exercise().exerciseGroup?.title }}
-        </span>
-        <span
-            [jhiTranslate]="exercise().bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
-            [translateValues]="{ points: exercise().maxPoints, bonusPoints: exercise().bonusPoints }"
-        >
-        </span>
-        @if (exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-            <jhi-included-in-score-badge [includedInOverallScore]="exercise().includedInOverallScore" />
-        }
-    </h3>
-    <hr />
+    <jhi-exam-exercise-header [exercise]="exercise()" />
     <jhi-resizeable-container [examTimeline]="examTimeline()">
         <!--region Left Panel-->
         <span class="exercise-title" left-header>{{ examTimeline() ? exercise().title : ('artemisApp.exam.yourSolution' | artemisTranslate) }}</span>
         <div left-body class="w-full px-2 pb-2">
             @if (isActive && !result && exercise() && studentSubmission() && !readonly()) {
-                <div class="w-full md:w-5/6">
-                    <div>
-                        <label for="fileUploadInput" class="mb-2 inline-block" jhiTranslate="artemisApp.fileUploadSubmission.selectFile"></label>
-                        <div class="flex items-center gap-2">
-                            <div class="min-w-0 flex-1 truncate">
-                                <input
-                                    #fileInput
-                                    id="fileUploadInput"
-                                    type="file"
-                                    class="cursor-pointer file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-(--border-color) file:bg-(--hover-slightly-darker-body-bg) file:px-3 file:py-2 file:text-base file:text-(--tumaet-ui-text-color) hover:file:bg-(--border-color)"
-                                    (change)="setFileSubmissionForExercise($event)"
-                                />
-                            </div>
-                            <button
-                                type="button"
-                                tumAetUiButton
-                                data-testid="file-upload-submit"
-                                (click)="saveUploadedFile()"
-                                jhiTranslate="artemisApp.examParticipation.uploadFile"
-                            ></button>
+                <div>
+                    <label for="fileUploadInput" class="mb-2 inline-block" jhiTranslate="artemisApp.fileUploadSubmission.selectFile"></label>
+                    <!-- The field grows with the panel up to a maximum and Upload follows right after it, so the button belongs to the field; Upload wraps below on a narrow panel. -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="max-w-xl min-w-0 grow basis-96 overflow-hidden rounded-md border border-(--border-color)" data-testid="file-upload-field">
+                            <!-- file:text-sm! beats Bootstrap's unlayered font on the selector, which keeps the field as tall (34px) as the small Upload button. -->
+                            <input
+                                #fileInput
+                                id="fileUploadInput"
+                                type="file"
+                                class="block w-full cursor-pointer file:mr-3 file:cursor-pointer file:border-0 file:border-r file:border-(--border-color) file:bg-(--hover-slightly-darker-body-bg) file:px-2.5 file:py-1.5 file:text-sm! file:text-(--tumaet-ui-text-color) hover:file:bg-(--border-color)"
+                                (change)="setFileSubmissionForExercise($event)"
+                            />
                         </div>
-                        <div class="mt-2 flex flex-wrap items-center gap-1">
-                            <span jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions"></span>
-                            @for (extension of exercise().filePattern!.split(','); track extension) {
-                                <tumaet-ui-tag severity="info">{{ extension | uppercase }}</tumaet-ui-tag>
-                            }
-                        </div>
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            size="small"
+                            class="shrink-0"
+                            data-testid="file-upload-submit"
+                            (click)="saveUploadedFile()"
+                            jhiTranslate="artemisApp.examParticipation.uploadFile"
+                        ></button>
+                    </div>
+                    <div class="mt-2 flex flex-wrap items-center gap-1">
+                        <span jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions"></span>
+                        @for (extension of exercise().filePattern!.split(','); track extension) {
+                            <tumaet-ui-tag severity="info">{{ extension | uppercase }}</tumaet-ui-tag>
+                        }
                     </div>
                 </div>
             }
             @if (submittedFileName() && studentSubmission()?.filePathUrl) {
-                <div>
+                <div class="mt-3!">
                     <h6 jhiTranslate="artemisApp.fileUploadSubmission.submittedFile" [translateValues]="{ filename: submittedFileName() }"></h6>
                     <a
                         class="cursor-pointer text-primary"
