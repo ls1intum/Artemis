@@ -951,9 +951,13 @@ describe('MarkdownEditorMonacoComponent', () => {
         it('should keep the visible actions if they already match an empty selection', () => {
             comp.showTextStyleActions.set(false);
             comp.showNonTextStyleActions.set(true);
+            const showTextStyleSetSpy = vi.spyOn(comp.showTextStyleActions, 'set');
+            const showNonTextStyleSetSpy = vi.spyOn(comp.showNonTextStyleActions, 'set');
 
             comp.updateEditorActionsVisibility(undefined);
 
+            expect(showTextStyleSetSpy).not.toHaveBeenCalled();
+            expect(showNonTextStyleSetSpy).not.toHaveBeenCalled();
             expect(comp.showTextStyleActions()).toBe(false);
             expect(comp.showNonTextStyleActions()).toBe(true);
         });
