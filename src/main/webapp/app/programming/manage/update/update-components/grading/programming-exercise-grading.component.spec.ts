@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Signal } from '@angular/core';
+import { ChangeDetectorRef, Signal } from '@angular/core';
 import { MockDirective } from 'ng-mocks';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { Subject, of } from 'rxjs';
@@ -234,6 +234,30 @@ describe('ProgrammingExerciseGradingComponent', () => {
             expect(comp.formValid).toBe(false);
 
             await type(maxPenaltyInput()!, '50');
+            expect(comp.formValid).toBe(formValidBeforeEditing);
+        });
+
+        // An invalid max penalty stops counting once static code analysis is switched off, because its field is gone with it.
+        it('should recalculate the form status when the max penalty disappears together with static code analysis', async () => {
+            fixture.componentRef.setInput(
+                'programmingExerciseCreationConfig',
+                Object.assign({}, programmingExerciseCreationConfigMock, { maxPenaltyPattern: MAX_PENALTY_PATTERN }),
+            );
+            // the form edits one exercise object and the other parts of the page change it in place, so the input itself does not change
+            const editedExercise = Object.assign(new ProgrammingExercise(undefined, undefined), exercise, { staticCodeAnalysisEnabled: true });
+            fixture.componentRef.setInput('programmingExercise', editedExercise);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            const formValidBeforeEditing = comp.formValid;
+            await type(maxPenaltyInput()!, '150');
+            expect(comp.formValid).toBe(false);
+
+            editedExercise.staticCodeAnalysisEnabled = false;
+            fixture.debugElement.injector.get(ChangeDetectorRef).markForCheck();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(maxPenaltyInput()).toBeNull();
             expect(comp.formValid).toBe(formValidBeforeEditing);
         });
 

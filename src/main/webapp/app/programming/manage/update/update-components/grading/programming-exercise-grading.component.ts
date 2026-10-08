@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EffectCleanupRegisterFn, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, EffectCleanupRegisterFn, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -83,6 +83,22 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit {
         effect((onCleanup) => this.recalculateOnChangeOf(this.bonusPointsField()?.valueChanges, onCleanup));
         effect((onCleanup) => this.recalculateOnChangeOf(this.maxPenaltyField()?.valueChanges, onCleanup));
         effect((onCleanup) => this.recalculateOnChangeOf(this.submissionPolicyUpdateComponent()?.form?.valueChanges, onCleanup));
+
+        // A field that appears or disappears changes what counts for the validity as well, for example an invalid max penalty stops
+        // counting when static code analysis is switched off. Nothing is emitted for that, so the status is recalculated here.
+        // The first run only sees the fields before the first render, which the timeline status event already covers.
+        let firstRun = true;
+        effect(() => {
+            this.maxScoreField();
+            this.bonusPointsField();
+            this.maxPenaltyField();
+            this.submissionPolicyUpdateComponent();
+            if (firstRun) {
+                firstRun = false;
+                return;
+            }
+            untracked(() => this.calculateFormStatus());
+        });
     }
 
     ngAfterViewInit() {
