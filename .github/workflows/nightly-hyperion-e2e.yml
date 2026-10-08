@@ -1,0 +1,141 @@
+name: Nightly Hyperion E2E
+
+# Runs nightly against the latest develop of Artemis. It starts Artemis with Hyperion enabled and a deterministic
+# OpenAI-compatible mock LLM (a bare Python process, src/test/playwright/support/hyperion-mock-llm/) and runs the
+# AI exercise-variant generation suite (src/test/playwright/e2e/exercise/ExerciseVariantGeneration.spec.ts).
+#
+# Purpose: that suite skips itself unless Hyperion is active on the server, and no per-pull-request run enables it,
+# so nothing else ever executes it and a UI change can break it unnoticed (one test had already rotted when this
+# monitor was added). This is a non-blocking monitoring job, NOT a PR gate: a failure means the suite or the feature
+# drifted since yesterday and should be investigated; it never blocks a merge.
+#
+# Only the LLM is mocked. Unlike Iris there is no microservice and no second repository involved.
+#
+# The workflow runs on a fixed schedule against the default branch and on manual dispatch. It does not consume
+# untrusted GitHub event inputs, so command-injection vectors are not applicable here.
+
+on:
+  schedule:
+    - cron: '0 4 * * *'        # 04:00 UTC daily (an hour after the LTI nightly at 03:00, which follows Iris at 02:00)
+  workflow_dispatch:           # manual ad-hoc runs (use this to validate/iterate the workflow)
+
+concurrency:
+  group: nightly-hyperion-e2e
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  hyperion-e2e:
+    name: nightly-hyperion / variant-generation
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout Artemis
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Set up Java
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install client dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright dependencies
+        working-directory: src/test/playwright
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers (with system deps for CI)
+        working-directory: src/test/playwright
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Pre-build the Artemis server
+        # The runner starts the server with `./gradlew bootRun`. On a fresh runner that first starts a Gradle daemon,
+        # resolves the dependencies and compiles the whole server while `pnpm start` builds the client on the same four
+        # cores, and all of it has to fit in the runner's server-ready budget together with the Spring Boot start. The
+        # Iris nightly saw this fail on 3 of 40 nights, before a single test started. Doing the Gradle work here,
+        # retried and with a timeout of its own, leaves only the Spring Boot start inside the budget, and a stalled
+        # build shows in this step's log. The daemon this starts is reused by the runner's own `./gradlew`.
+        timeout-minutes: 30
+        run: |
+          for attempt in 1 2 3; do
+            if timeout 8m ./gradlew classes resolveMainClassName -x webapp; then
+              exit 0
+            fi
+            echo "::warning::Pre-building the server failed (attempt ${attempt} of 3)"
+            sleep 20
+          done
+          exit 1
+
+      - name: Run the Hyperion variant e2e against the mock LLM
+        # RUN_HYPERION=true makes the runner start the mock LLM, wait for it, enable Hyperion on the server pointed at
+        # it through spring.ai.openai.*, and only then start the tests. The suite is selected by path rather than by a
+        # title filter, so a renamed test cannot silently turn the run into "no tests found". The suite additionally
+        # skips itself unless /management/info reports the hyperion module feature.
+        env:
+          # The server is pre-built above, so this only has to cover the Spring Boot start.
+          SERVER_READY_TIMEOUT: '600'
+        run: RUN_HYPERION=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --specs "e2e/exercise/ExerciseVariantGeneration.spec.ts"
+
+      - name: Fail if the suite skipped itself
+        # The suite skips every test when /management/info does not report the hyperion module feature. Playwright
+        # counts that as a pass, which would leave this monitor green while testing nothing, the exact gap it exists
+        # to close. The runner writes the JUnit report to results-<PLAYWRIGHT_TEST_TYPE>.xml, and it exports "parallel".
+        run: |
+          report=src/test/playwright/test-reports/results-parallel.xml
+          if [ ! -f "$report" ]; then
+            echo "::error::$report was not written, so there is no proof that the suite ran"
+            exit 1
+          fi
+          summary=$(grep -m1 -o '<testsuites[^>]*>' "$report")
+          echo "$summary"
+          case "$summary" in
+            *'tests="0"'*) echo "::error::No test ran"; exit 1 ;;
+          esac
+          case "$summary" in
+            *'skipped="0"'*) ;;
+            *) echo "::error::The suite skipped tests. Is the hyperion module feature active on the server?"; exit 1 ;;
+          esac
+
+      - name: Upload Playwright report + service logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nightly-hyperion-playwright-report
+          path: |
+            src/test/playwright/playwright-report
+            src/test/playwright/test-results
+            .e2e-local/server.log
+            .e2e-local/client.log
+            .e2e-local/hyperion-mock-llm.log
+          if-no-files-found: ignore
+
+      - name: Open a tracking issue on failure
+        # Runs on any failed run. On the nightly schedule this is the primary signal (nobody is watching);
+        # on a manual workflow_dispatch it also lets us verify the notification works. Deduplicated by title,
+        # so repeated failures update one open issue instead of piling up.
+        if: failure()
+        uses: ./.github/actions/open-failure-issue
+        with:
+          title: Nightly Hyperion e2e failed
+          assignee: krusche
+          github-token: ${{ github.token }}
+          body: >-
+            The nightly Hyperion e2e failed. This is a non-blocking monitor of the AI exercise-variant generation
+            suite (Artemis develop with Hyperion enabled, only the LLM mocked); a failure means the suite or the
+            feature drifted since the last green night.
