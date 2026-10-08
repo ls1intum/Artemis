@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -2166,6 +2167,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      *
      * @param exerciseId       the exercise to query
      * @param teamMode         whether the exercise uses teams
+     * @param teamOwnerId      only include the teams owned by this tutor (nullable)
      * @param searchTerm       free-text search (matched against student login/name or team name/shortName)
      * @param filterProp       filter property name (All, Failed, NoSubmissions, NoPracticeMode, Successful, Unsuccessful, BuildFailed, Manual, Automatic, Locked)
      * @param stuckBuildCutoff for the Failed filter: participations whose latest submission has no result and was submitted before this timestamp are considered stuck (nullable)
@@ -2176,11 +2178,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param sortedColumn     the column to sort by
      * @return a page of participation IDs
      */
-    default Page<Long> findParticipationIdsForManagement(long exerciseId, boolean teamMode, String searchTerm, String filterProp, ZonedDateTime stuckBuildCutoff,
-            Integer scoreRangeLower, Integer scoreRangeUpper, Pageable pageable, SortingOrder sortOrder, String sortedColumn) {
+    default Page<Long> findParticipationIdsForManagement(long exerciseId, boolean teamMode, @Nullable Long teamOwnerId, String searchTerm, String filterProp,
+            ZonedDateTime stuckBuildCutoff, Integer scoreRangeLower, Integer scoreRangeUpper, Pageable pageable, SortingOrder sortOrder, String sortedColumn) {
         Specification<StudentParticipation> spec = Specification.where(StudentParticipationSpecs.forExercise(exerciseId)).and(StudentParticipationSpecs.forMode(teamMode))
-                .and(StudentParticipationSpecs.searchByName(searchTerm, teamMode)).and(StudentParticipationSpecs.managementFilter(filterProp, stuckBuildCutoff))
-                .and(StudentParticipationSpecs.scoreInRange(scoreRangeLower, scoreRangeUpper))
+                .and(StudentParticipationSpecs.ownedByTeamTutor(teamOwnerId)).and(StudentParticipationSpecs.searchByName(searchTerm, teamMode))
+                .and(StudentParticipationSpecs.managementFilter(filterProp, stuckBuildCutoff)).and(StudentParticipationSpecs.scoreInRange(scoreRangeLower, scoreRangeUpper))
                 .and(StudentParticipationSpecs.orderedForManagement(sortedColumn, sortOrder != null ? sortOrder : SortingOrder.ASCENDING, teamMode));
 
         Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.unsorted());

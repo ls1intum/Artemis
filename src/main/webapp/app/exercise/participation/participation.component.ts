@@ -14,7 +14,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { User } from 'app/account/user/user.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -41,6 +41,7 @@ import { TableLazyLoadEvent } from 'primeng/table';
 import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { ParticipationManagementDTO } from './participation-management-dto.model';
+import { managementDtoToParticipation, managementDtoToResult } from './participation-management.util';
 import { ParticipationSearch } from 'app/foundation/pagination/pageable-table';
 import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
 import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/team-students-list.component';
@@ -49,7 +50,6 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
 import { Range } from 'app/foundation/util/utils';
@@ -534,74 +534,12 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.exportPopover()?.close();
     }
 
-    /**
-     * Builds a Result object from the flat DTO fields for use with jhi-result.
-     */
     toResult(dto: ParticipationManagementDTO): Result | undefined {
-        if (!dto.resultId) return undefined;
-        const result = new Result();
-        result.id = dto.resultId;
-        result.score = dto.score;
-        result.successful = dto.successful;
-        result.completionDate = dto.completionDate;
-        result.assessmentType = dto.assessmentType;
-        result.testCaseCount = dto.testCaseCount;
-        result.passedTestCaseCount = dto.passedTestCaseCount;
-        result.codeIssueCount = dto.codeIssueCount;
-        result.correctionRound = dto.correctionRoundResults?.find((roundResult) => roundResult.resultId === dto.resultId)?.correctionRound;
-        return result;
+        return managementDtoToResult(dto);
     }
 
-    /**
-     * Builds the results the submission row works with: the newest one, which carries the score the table shows, and
-     * one per correction round, which is what the assessment actions of each round act on. The newest result is often
-     * one of the rounds itself, so it is not added twice.
-     */
-    private toResults(dto: ParticipationManagementDTO): Result[] {
-        const latestResult = this.toResult(dto);
-        const roundResults = (dto.correctionRoundResults ?? [])
-            .filter((roundResult) => roundResult.resultId !== dto.resultId)
-            .map((roundResult) => {
-                const result = new Result();
-                result.id = roundResult.resultId;
-                result.correctionRound = roundResult.correctionRound;
-                result.assessmentType = roundResult.assessmentType;
-                result.completionDate = roundResult.completionDate;
-                result.hasComplaint = roundResult.hasComplaint;
-                return result;
-            });
-        return latestResult ? [latestResult, ...roundResults] : roundResults;
-    }
-
-    /**
-     * Builds a minimal Participation-like object from the flat DTO so that jhi-result and
-     * manage-assessment-buttons can render results, assessment links and cancel buttons.
-     */
     toParticipation(dto: ParticipationManagementDTO): Participation {
-        const ex = this.exercise();
-        return {
-            id: dto.participationId,
-            type: ex?.type === ExerciseType.PROGRAMMING ? ParticipationType.PROGRAMMING : ParticipationType.STUDENT,
-            exercise: ex,
-            submissionCount: dto.submissionCount,
-            submissions: dto.submissionId ? [this.toSubmission(dto)] : [],
-        };
-    }
-
-    /**
-     * Builds the minimal submission that {@link toParticipation} embeds. Programming exercises get a real
-     * {@link ProgrammingSubmission}, which is where `buildFailed` is declared.
-     */
-    private toSubmission(dto: ParticipationManagementDTO): Submission {
-        const results = this.toResults(dto);
-        if (this.exercise()?.type === ExerciseType.PROGRAMMING) {
-            const submission = new ProgrammingSubmission();
-            submission.id = dto.submissionId;
-            submission.results = results;
-            submission.buildFailed = dto.buildFailed;
-            return submission;
-        }
-        return { id: dto.submissionId, results };
+        return managementDtoToParticipation(dto, this.exercise());
     }
 
     getParticipationLink(participationId: number): string[] {

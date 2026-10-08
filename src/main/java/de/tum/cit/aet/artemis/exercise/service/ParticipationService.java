@@ -17,6 +17,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -1161,11 +1162,12 @@ public class ParticipationService {
      * 2. Data query — loads full entity data and the newest results for the page-sized set of IDs (FETCH JOINs, bounded)
      * 3. DTO mapping — maps entities to flat DTOs for the REST response
      *
-     * @param exercise the exercise to query
-     * @param search   search parameters including pagination, sorting, search term, filter, and score range
+     * @param exercise    the exercise to query
+     * @param search      search parameters including pagination, sorting, search term, filter, and score range
+     * @param teamOwnerId only include the teams owned by this tutor (nullable)
      * @return a page of ParticipationManagementDTO
      */
-    public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, ParticipationSearchDTO search) {
+    public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, ParticipationSearchDTO search, @Nullable Long teamOwnerId) {
         SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
         Pageable pageable = PageRequest.of(search.page(), search.pageSize());
         boolean teamMode = exercise.isTeamMode();
@@ -1176,8 +1178,8 @@ public class ParticipationService {
             stuckBuildCutoff = ZonedDateTime.now().minusSeconds(timeoutSeconds);
         }
 
-        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, search.searchTerm(), search.filterProp(), stuckBuildCutoff,
-                search.scoreRangeLower(), search.scoreRangeUpper(), pageable, sortOrder, search.sortedColumn());
+        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, teamOwnerId, search.searchTerm(), search.filterProp(),
+                stuckBuildCutoff, search.scoreRangeLower(), search.scoreRangeUpper(), pageable, sortOrder, search.sortedColumn());
 
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {

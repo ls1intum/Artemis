@@ -93,6 +93,20 @@ public class StudentParticipationSpecs {
     }
 
     /**
+     * Matches team participations whose team is owned by the given tutor. Skipped when no owner is given.
+     *
+     * @param teamOwnerId the id of the team tutor, or null to match all participations
+     * @return specification matching participations of the teams owned by the given tutor
+     */
+    @NonNull
+    public static Specification<StudentParticipation> ownedByTeamTutor(@Nullable Long teamOwnerId) {
+        if (teamOwnerId == null) {
+            return noOp();
+        }
+        return (root, query, cb) -> cb.equal(root.get(StudentParticipation_.TEAM).get(Team_.OWNER).get(DomainObject_.ID), teamOwnerId);
+    }
+
+    /**
      * Matches participations by student or team based on team mode.
      *
      * @param teamMode whether the exercise uses teams

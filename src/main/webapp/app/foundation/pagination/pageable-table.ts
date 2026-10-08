@@ -51,4 +51,6 @@ export interface ParticipationSearch extends SearchTermPageableSearch {
     filterProp?: string;
     scoreRangeLower?: number;
     scoreRangeUpper?: number;
+    /** For team exercises, only list the teams owned by the requesting tutor. */
+    ownTeams?: boolean;
 }

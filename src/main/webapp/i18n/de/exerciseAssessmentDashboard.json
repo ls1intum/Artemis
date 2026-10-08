@@ -64,7 +64,25 @@
             "openAssessment": "Bewertung öffnen",
             "startAssessment": "Neue Bewertung starten",
             "noSubmissions": "Es gibt derzeit keine Abgaben, die du bewerten kannst.",
-            "startAssessmentFromTeamPages": "Bewertungen für Team-Übungen werden von den Seiten deiner Teams aus gestartet.",
+            "myTeams": {
+                "title": "Deine Teams",
+                "hint": "Die Teams, deren Tutor:in du bist. Nur du kannst ihre Abgaben bewerten.",
+                "empty": "Du bist in dieser Übung für kein Team als Tutor:in eingetragen.",
+                "team": "Team",
+                "status": "Status",
+                "result": "Ergebnis",
+                "repository": "Repository",
+                "commitHistory": "Commit-Verlauf",
+                "teamDetails": "Teamdetails",
+                "moreActions": "Weitere Aktionen",
+                "state": {
+                    "noSubmission": "Keine Abgabe",
+                    "notAssessed": "Nicht bewertet",
+                    "inProgress": "In Bearbeitung",
+                    "complaint": "Beschwerde",
+                    "assessed": "Bewertet"
+                }
+            },
             "complaints": "Beschwerden",
             "noComplaints": "Es gibt keine Beschwerden.",
             "noComplaintsDisplayed": "Es gibt keine Beschwerden (abgesehen von Beschwerden über deine Bewertungen)",

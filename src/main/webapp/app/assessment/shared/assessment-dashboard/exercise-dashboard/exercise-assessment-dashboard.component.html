@@ -433,7 +433,7 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    @if (unassessedSubmissionByRound()[correctionRound]?.id && !exercise().teamMode && !isTestRun()) {
+                                                    @if (unassessedSubmissionByRound()[correctionRound]?.id && !isTestRun()) {
                                                         <tr>
                                                             <td></td>
                                                             <td>{{ unassessedSubmissionByRound()[correctionRound]!.submissionDate | artemisDate }}</td>
@@ -524,15 +524,11 @@
                                             </table>
                                         } @else {
                                             <jhi-assessment-warning [exercise]="exercise()" />
-                                            @if (!exercise().teamMode) {
-                                                <div class="alert alert-info" jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissions"></div>
-                                            } @else {
-                                                <div class="alert alert-warning" jhiTranslate="artemisApp.exerciseAssessmentDashboard.startAssessmentFromTeamPages"></div>
-                                            }
+                                            <div class="alert alert-info" jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissions"></div>
                                         }
                                         @if (
                                             isExamMode() &&
-                                            (!unassessedSubmissionByRound()[correctionRound]?.id || exercise().teamMode || isTestRun()) &&
+                                            (!unassessedSubmissionByRound()[correctionRound]?.id || isTestRun()) &&
                                             numberOfSubmissions().inTime !== roundState.inTime
                                         ) {
                                             <div class="alert alert-info">
@@ -558,6 +554,9 @@
                                 <div class="alert alert-info" jhiTranslate="artemisApp.exerciseAssessmentDashboard.correctionRoundNotYetEnabled"></div>
                             }
                         </div>
+                    }
+                    @if (exercise().teamMode && (tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED)) {
+                        <jhi-team-assessment-queue class="mb-4 block" [exercise]="exercise()" />
                     }
                     <!-- Complaints -->
                     @if (tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED || isTestRun()) {

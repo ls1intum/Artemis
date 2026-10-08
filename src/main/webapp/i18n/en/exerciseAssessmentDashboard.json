@@ -64,7 +64,25 @@
             "openAssessment": "Open assessment",
             "startAssessment": "Start new assessment",
             "noSubmissions": "There are currently no submissions for you to grade.",
-            "startAssessmentFromTeamPages": "Assessments for team exercises are started from the pages of your teams.",
+            "myTeams": {
+                "title": "Your teams",
+                "hint": "The teams you are the tutor of. Only you can assess their submissions.",
+                "empty": "You are not the tutor of any team in this exercise.",
+                "team": "Team",
+                "status": "Status",
+                "result": "Result",
+                "repository": "Repository",
+                "commitHistory": "Commit history",
+                "teamDetails": "Team details",
+                "moreActions": "More actions",
+                "state": {
+                    "noSubmission": "No submission",
+                    "notAssessed": "Not assessed",
+                    "inProgress": "In progress",
+                    "complaint": "Complaint",
+                    "assessed": "Assessed"
+                }
+            },
             "complaints": "Complaints",
             "noComplaints": "There are no complaints at the moment.",
             "noComplaintsDisplayed": "There are no complaints at the moment (excluding complaints about your own assessments)",

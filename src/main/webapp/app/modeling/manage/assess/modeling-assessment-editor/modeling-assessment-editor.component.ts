@@ -639,7 +639,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.modelingExercise(), this.submission(), this.isTestRun());
+        assessmentNavigateBack(this.location, this.router, this.modelingExercise(), this.isTestRun());
     }
 
     private highlightElementsWithMissingFeedback() {

@@ -305,23 +305,21 @@
                                         }
                                         <td class="w-10 min-w-10 whitespace-nowrap xl:w-[16%]">
                                             <div class="flex flex-wrap justify-end gap-2">
-                                                @if (!exercise.teamMode) {
-                                                    <ng-container>
-                                                        <a
-                                                            data-testid="open-exercise-dashboard"
-                                                            [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
-                                                            [attr.aria-label]="'entity.action.exerciseDashboard' | artemisTranslate"
-                                                            [tumAetUiTooltip]="'entity.action.exerciseDashboard' | artemisTranslate"
-                                                            tumAetUiTooltipPlacement="top"
-                                                            tumAetUiButton
-                                                            size="small"
-                                                        >
-                                                            <fa-icon [icon]="faArrowUpRightFromSquare" aria-hidden="true" />
-                                                            <span class="hidden xl:inline" jhiTranslate="entity.action.exerciseDashboard"></span>
-                                                        </a>
-                                                    </ng-container>
-                                                } @else {
+                                                <a
+                                                    data-testid="open-exercise-dashboard"
+                                                    [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
+                                                    [attr.aria-label]="'entity.action.exerciseDashboard' | artemisTranslate"
+                                                    [tumAetUiTooltip]="'entity.action.exerciseDashboard' | artemisTranslate"
+                                                    tumAetUiTooltipPlacement="top"
+                                                    tumAetUiButton
+                                                    size="small"
+                                                >
+                                                    <fa-icon [icon]="faArrowUpRightFromSquare" aria-hidden="true" />
+                                                    <span class="hidden xl:inline" jhiTranslate="entity.action.exerciseDashboard"></span>
+                                                </a>
+                                                @if (exercise.teamMode) {
                                                     <a
+                                                        data-testid="open-exercise-teams"
                                                         [routerLink]="['/course-management', courseId(), 'exercises', exercise.id, 'teams']"
                                                         [queryParams]="{ filter: TeamFilterProp.OWN }"
                                                         [attr.aria-label]="'artemisApp.assessmentDashboard.exerciseTeams' | artemisTranslate"
@@ -329,6 +327,7 @@
                                                         tumAetUiTooltipPlacement="top"
                                                         tumAetUiButton
                                                         size="small"
+                                                        variant="outlined"
                                                     >
                                                         <fa-icon [icon]="faArrowUpRightFromSquare" aria-hidden="true" />
                                                         <span class="hidden xl:inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams"></span>

@@ -12,9 +12,11 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { Course } from 'app/course/shared/entities/course.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { of } from 'rxjs';
+import dayjs from 'dayjs/esm';
 import { provideRouter } from '@angular/router';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
@@ -59,6 +61,25 @@ describe('ManageAssessmentButtonsComponent', () => {
             id: 10,
             submissions: [{ id: 20, results: [{ id: 30, correctionRound: 0 } as Result] } as Submission],
         } as Participation);
+    });
+
+    describe('assessmentLinkSeverity', () => {
+        const withResult = (result?: Partial<Result>) =>
+            fixture.componentRef.setInput('participation', {
+                id: 10,
+                submissions: [{ id: 20, results: result ? [{ id: 30, correctionRound: 0, ...result }] : [] }],
+            } as Participation);
+
+        it.each([
+            ['success', undefined],
+            ['success', { assessmentType: AssessmentType.AUTOMATIC, completionDate: dayjs() }],
+            ['warn', { assessmentType: AssessmentType.SEMI_AUTOMATIC }],
+            ['primary', { assessmentType: AssessmentType.SEMI_AUTOMATIC, completionDate: dayjs() }],
+            ['primary', { assessmentType: AssessmentType.SEMI_AUTOMATIC, hasComplaint: true }],
+        ])('is %s', (severity, result) => {
+            withResult(result as Partial<Result> | undefined);
+            expect(comp.assessmentLinkSeverity(0)).toBe(severity);
+        });
     });
 
     describe('ngOnInit', () => {

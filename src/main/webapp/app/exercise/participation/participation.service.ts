@@ -121,6 +121,9 @@ export class ParticipationService {
         if (search.scoreRangeUpper !== undefined) {
             params['scoreRangeUpper'] = search.scoreRangeUpper;
         }
+        if (search.ownTeams) {
+            params['ownTeams'] = 'true';
+        }
         return this.http
             .get<ParticipationManagementDTO[]>(`api/exercise/exercises/${exerciseId}/participations/page`, {
                 params,

@@ -2288,6 +2288,26 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(participationRepo.findByIdWithEagerTeamStudentsElseThrow(participation.getId()).getParticipant()).as("masking never removes the stored participant").isNotNull();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void ownTeamsListsTheTeamsOfTheTutorWithTheirNames() throws Exception {
+        var exercise = createProgrammingExerciseForTeam();
+        var ownTeam = createTeamForExercise(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), exercise);
+        ownTeam.setOwner(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        ownTeam = teamRepository.save(ownTeam);
+        var participation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, ownTeam);
+        participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        var search = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "participantName", "", "All", null, null);
+        var params = pageableSearchUtilService.searchMapping(search);
+        params.add("ownTeams", "true");
+
+        var management = request.getList("/api/exercise/exercises/" + exercise.getId() + "/participations/page", HttpStatus.OK, ParticipationManagementDTO.class, params);
+
+        assertThat(management).as("the tutor sees their own team").hasSize(1);
+        assertThat(management.getFirst().teamId()).isEqualTo(ownTeam.getId());
+        assertThat(management.getFirst().participantIdentifier()).as("the team tutor sees the name of their team").isEqualTo(ownTeam.getShortName());
+    }
+
     @ParameterizedTest
     @CsvSource({ "page,student1,id", "page,'',participantName", "page,'',participantIdentifier", "page,'',buildPlanId" })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")

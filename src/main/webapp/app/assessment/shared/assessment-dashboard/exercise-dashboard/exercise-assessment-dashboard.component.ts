@@ -68,6 +68,7 @@ import { Message } from 'primeng/message';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { LanguageTableCellComponent } from './language-table-cell/language-table-cell.component';
+import { TeamAssessmentQueueComponent } from './team-assessment-queue/team-assessment-queue.component';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { TutorLeaderboardComponent } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.component';
@@ -115,6 +116,7 @@ export interface ExampleSubmissionQueryParams {
         SortDirective,
         SortByDirective,
         LanguageTableCellComponent,
+        TeamAssessmentQueueComponent,
         ResultComponent,
         AssessmentWarningComponent,
         CollapsableAssessmentInstructionsComponent,
@@ -435,14 +437,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                 }
                 this.getAllTutorAssessedSubmissionsForAllCorrectionRounds();
 
-                // The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
                 const isAfterDueDate = !exercise.dueDate || exercise.dueDate.isBefore(dayjs());
                 // Athena feedback requests, and thus the pre-due-date exception, are only supported for these exercise types
                 const supportsAthenaFeedbackRequests = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING].includes(exercise.type!);
                 // While the exam is still running the server rejects this, and the banner already explains why
                 if (
                     ((supportsAthenaFeedbackRequests && (exercise.course?.athenaFormativeFeedbackEnabled ?? false)) || isAfterDueDate) &&
-                    !exercise.teamMode &&
                     !this.isTestRun() &&
                     !this.assessmentNotPossibleYetReason()
                 ) {
@@ -570,7 +570,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
             }
             // the submissions could not be fetched while assessment was blocked, so fetch them now
             const exercise = this.exercise();
-            if (exercise && !exercise.teamMode && !this.isTestRun()) {
+            if (exercise && !this.isTestRun()) {
                 this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
             }
         }, millisecondsUntilNextChange);

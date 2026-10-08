@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -467,7 +468,8 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         participationUtilService.addSubmission(participation, new ProgrammingSubmission());
         User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
 
-        var page = participationService.findParticipationsForExercise(programmingExercise, new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null));
+        var page = participationService.findParticipationsForExercise(programmingExercise, new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null),
+                null);
 
         assertThat(page.getContent()).as("the participation is listed").hasSize(1);
         var dto = page.getContent().getFirst();
@@ -492,7 +494,8 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         Result latestResult = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, FIXED_EXERCISE_DUE_DATE.minusMinutes(1), submission, true, true, 85.0);
         User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
 
-        var page = participationService.findParticipationsForExercise(programmingExercise, new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null));
+        var page = participationService.findParticipationsForExercise(programmingExercise, new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null),
+                null);
 
         assertThat(page.getContent()).as("the participation is listed").hasSize(1);
         var dto = page.getContent().getFirst();
@@ -522,7 +525,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
         var managementPage = participationService.findParticipationsForExercise(teamExercise,
-                new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null));
+                new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null), null);
 
         assertThat(managementPage.getContent()).as("the team participation is listed").hasSize(1);
         var managementDto = managementPage.getContent().getFirst();
@@ -539,6 +542,22 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         assertThat(exportNames.getFirst().participantIdentifier()).as("the export identifies the participation by the team short name").isEqualTo(team.getShortName());
         assertThat(exportNames.getFirst().teamStudentNames()).as("the export names the members of the team")
                 .contains(userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1").getName());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void findParticipationsForExercise_listsOnlyTheTeamsOfTheGivenTeamOwner() {
+        ProgrammingExercise teamExercise = makeExerciseATeamExercise();
+        User instructor = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "instructor1");
+        Team ownTeam = teamUtilService.createTeam(Set.of(userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1")), instructor, teamExercise, "team1");
+        Team teamWithoutOwner = teamUtilService.createTeam(Set.of(userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2")), null, teamExercise, "team2");
+        participationUtilService.addTeamParticipationForExercise(teamExercise, ownTeam.getId());
+        participationUtilService.addTeamParticipationForExercise(teamExercise, teamWithoutOwner.getId());
+        var search = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null);
+
+        assertThat(participationService.findParticipationsForExercise(teamExercise, search, instructor.getId()).getContent()).as("only the team owned by the tutor is listed")
+                .extracting(ParticipationManagementDTO::teamId).containsExactly(ownTeam.getId());
+        assertThat(participationService.findParticipationsForExercise(teamExercise, search, null).getContent()).as("without an owner every team is listed").hasSize(2);
     }
 
     @Test

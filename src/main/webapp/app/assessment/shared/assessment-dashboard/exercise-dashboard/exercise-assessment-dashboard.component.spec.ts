@@ -557,6 +557,17 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             expect(programmingSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
         });
 
+        it('programmingSubmission of a team exercise', () => {
+            const teamExercise = { ...programmingExercise, exerciseGroup: undefined, course: { id: 1 }, teamMode: true } as ProgrammingExercise;
+            exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: teamExercise, headers: new HttpHeaders() })));
+
+            comp.loadAll();
+
+            // the server only hands out submissions of the teams the tutor owns, so the dashboard asks for the next one in team mode too
+            expect(programmingSubmissionStubWithoutAssessment).toHaveBeenCalled();
+            expect(comp.unassessedSubmissionByRound()[0]).toEqual(programmingSubmission);
+        });
+
         it('programmingSubmission with automatic assessment', () => {
             modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => lockLimitErrorResponse));
 

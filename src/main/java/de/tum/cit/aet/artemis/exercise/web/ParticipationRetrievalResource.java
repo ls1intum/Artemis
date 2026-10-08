@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -174,11 +175,13 @@ public class ParticipationRetrievalResource {
      *
      * @param exerciseId the exercise to query
      * @param search     search parameters including pagination, sorting, search term, filter, and score range
+     * @param ownTeams   for team exercises, only include the teams owned by the requesting tutor
      * @return a paginated list of ParticipationManagementDTO with pagination headers
      */
     @GetMapping("exercises/{exerciseId}/participations/page")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<ParticipationManagementDTO>> getParticipationsPage(@PathVariable Long exerciseId, @Valid ParticipationSearchDTO search) {
+    public ResponseEntity<List<ParticipationManagementDTO>> getParticipationsPage(@PathVariable Long exerciseId, @Valid ParticipationSearchDTO search,
+            @RequestParam(defaultValue = "false") boolean ownTeams) {
         log.debug("REST request to get paged Participations for Exercise {}", exerciseId);
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -189,8 +192,17 @@ public class ParticipationRetrievalResource {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         }
 
-        boolean hideParticipant = shouldHideParticipantInformation(exercise, search.searchTerm(), search.sortedColumn());
-        Page<ParticipationManagementDTO> page = participationService.findParticipationsForExercise(exercise, search);
+        Long teamOwnerId = null;
+        boolean hideParticipant;
+        if (ownTeams && exercise.isTeamMode()) {
+            // The team tutor already knows their teams from the team pages, so the names stay visible to them
+            teamOwnerId = userRepository.getUser().getId();
+            hideParticipant = false;
+        }
+        else {
+            hideParticipant = shouldHideParticipantInformation(exercise, search.searchTerm(), search.sortedColumn());
+        }
+        Page<ParticipationManagementDTO> page = participationService.findParticipationsForExercise(exercise, search, teamOwnerId);
         if (hideParticipant) {
             page = page.map(ParticipationManagementDTO::withoutParticipantInformation);
         }

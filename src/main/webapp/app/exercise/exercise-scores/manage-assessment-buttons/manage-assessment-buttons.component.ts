@@ -17,11 +17,12 @@ import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.ut
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonDirective, TumAetUiButtonSeverity } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-manage-assessment-buttons',
     templateUrl: './manage-assessment-buttons.component.html',
-    imports: [RouterLink, FaIconComponent, ArtemisTranslatePipe],
+    imports: [RouterLink, FaIconComponent, ArtemisTranslatePipe, TumAetUiButtonDirective],
 })
 export class ManageAssessmentButtonsComponent implements OnInit {
     private programmingAssessmentManualResultService = inject(ProgrammingAssessmentManualResultService);
@@ -72,6 +73,17 @@ export class ManageAssessmentButtonsComponent implements OnInit {
     resultForRound(correctionRound: number): Result | undefined {
         const submission = this.participation().submissions?.[0];
         return submission ? getSubmissionResultByCorrectionRound(submission, correctionRound) : undefined;
+    }
+
+    /**
+     * Green to start an assessment, blue to open a finished one or its complaint, amber to continue a draft.
+     */
+    assessmentLinkSeverity(correctionRound: number): TumAetUiButtonSeverity {
+        const result = this.resultForRound(correctionRound);
+        if ((!result?.assessmentType || result.assessmentType === AssessmentType.AUTOMATIC) && !result?.hasComplaint) {
+            return 'success';
+        }
+        return result?.completionDate || result?.hasComplaint ? 'primary' : 'warn';
     }
 
     getAssessmentLink(correctionRound = 0) {

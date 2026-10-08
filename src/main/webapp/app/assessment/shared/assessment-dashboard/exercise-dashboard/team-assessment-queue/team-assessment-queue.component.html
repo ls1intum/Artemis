@@ -1,0 +1,79 @@
+<section class="flex flex-col gap-2" data-testid="team-assessment-queue">
+    <div>
+        <h4 class="mb-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.myTeams.title"></h4>
+        <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.exerciseAssessmentDashboard.myTeams.hint"></p>
+    </div>
+    <tumaet-ui-table
+        data-testid="team-assessment-queue-table"
+        [columns]="columns()"
+        [rows]="rows()"
+        [totalRecords]="totalRecords()"
+        [loading]="isLoading()"
+        [rowActions]="rowActions"
+        [striped]="true"
+        [pageSize]="20"
+        [showRowsPerPage]="false"
+        initialSortField="participantName"
+        emptyMessage="artemisApp.exerciseAssessmentDashboard.myTeams.empty"
+        (dataRequest)="loadPage($event)"
+    />
+</section>
+
+<ng-template #teamTemplate let-cell>
+    <span class="inline-flex items-baseline gap-2" [tumAetUiTooltip]="teamMembers(cell.data)">
+        <span class="font-semibold">{{ cell.data.participantName }}</span>
+        <code class="text-sm">{{ cell.data.participantIdentifier }}</code>
+    </span>
+</ng-template>
+
+<ng-template #statusTemplate let-cell>
+    <tumaet-ui-tag data-testid="team-assessment-state" [attr.data-state]="state(cell.data)" [severity]="stateSeverity(cell.data)">
+        {{ 'artemisApp.exerciseAssessmentDashboard.myTeams.state.' + state(cell.data) | artemisTranslate }}
+    </tumaet-ui-tag>
+</ng-template>
+
+<ng-template #resultTemplate let-cell>
+    @if (toResult(cell.data); as result) {
+        <jhi-result [exercise]="exercise()" [result]="result" [participation]="toParticipation(cell.data)" [isOwnParticipation]="false" />
+    } @else {
+        <span>–</span>
+    }
+</ng-template>
+
+<ng-template #rowActions let-dto>
+    <div class="flex items-center justify-end gap-1">
+        <jhi-manage-assessment-buttons [course]="course()" [exercise]="exercise()" [participation]="toParticipation(dto)" [isLoading]="isLoading()" (refresh)="refresh()" />
+        <button
+            type="button"
+            tumAetUiButton
+            size="small"
+            variant="text"
+            severity="secondary"
+            data-testid="team-assessment-more-actions"
+            [tumAetUiMenuTrigger]="moreActionsMenu"
+            [attr.aria-label]="'artemisApp.exerciseAssessmentDashboard.myTeams.moreActions' | artemisTranslate"
+        >
+            <fa-icon [icon]="faEllipsisVertical" [fixedWidth]="true" />
+        </button>
+        <ng-template #moreActionsMenu>
+            <tumaet-ui-menu [attr.aria-label]="'artemisApp.exerciseAssessmentDashboard.myTeams.moreActions' | artemisTranslate">
+                @if (isProgrammingExercise()) {
+                    <a tumAetUiMenuItem data-testid="team-assessment-repository" [routerLink]="repositoryLink(dto)">
+                        <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                        <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.myTeams.repository"></span>
+                    </a>
+                    <a tumAetUiMenuItem data-testid="team-assessment-commit-history" [routerLink]="commitHistoryLink(dto)">
+                        <fa-icon [icon]="faCodeCommit" [fixedWidth]="true" />
+                        <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.myTeams.commitHistory"></span>
+                    </a>
+                }
+                @if (dto.teamId) {
+                    <a tumAetUiMenuItem data-testid="team-assessment-team" [routerLink]="teamLink(dto)">
+                        <fa-icon [icon]="faUsers" [fixedWidth]="true" />
+                        <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.myTeams.teamDetails"></span>
+                    </a>
+                }
+            </tumaet-ui-menu>
+        </ng-template>
+    </div>
+</ng-template>
