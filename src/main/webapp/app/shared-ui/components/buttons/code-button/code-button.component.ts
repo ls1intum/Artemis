@@ -284,7 +284,7 @@ export class CodeButtonComponent implements OnInit {
     public useSshUrl() {
         this.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.SSH);
         this.copyEnabled.set(this.doesUserHaveSSHkeys());
-        this.storeToLocalStorage();
+        this.localStorageService.store<RepositoryAuthenticationMethod>('code-button-state', this.selectedAuthenticationMechanism());
     }
 
     public useHttpsToken() {
@@ -295,19 +295,14 @@ export class CodeButtonComponent implements OnInit {
         } else {
             this.copyEnabled.set(!!this.activeParticipation()?.vcsAccessToken);
         }
-        this.storeToLocalStorage();
+        this.localStorageService.store<RepositoryAuthenticationMethod>('code-button-state', this.selectedAuthenticationMechanism());
     }
 
     public useHttpsPassword() {
         this.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Password);
         this.copyEnabled.set(true);
-        this.storeToLocalStorage();
-    }
-
-    private storeToLocalStorage() {
         this.localStorageService.store<RepositoryAuthenticationMethod>('code-button-state', this.selectedAuthenticationMechanism());
     }
-
     public formatTip(translationKey: string, url: string): string {
         return this.translateService.instant(translationKey).replace(/{link:(.*)}/, `<a href="${url}" target="_blank">$1</a>`);
     }
