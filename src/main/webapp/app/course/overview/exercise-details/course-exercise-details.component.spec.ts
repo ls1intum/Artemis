@@ -1099,6 +1099,49 @@ describe('CourseExerciseDetailsComponent', () => {
         });
     });
 
+    describe('explanation that practice of a team exercise is individual', () => {
+        const hint = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="team-practice-hint"]');
+
+        const graded = () => ({ id: 1, testRun: false, submissions: [] }) as unknown as StudentParticipation;
+        const practice = () => ({ id: 2, testRun: true, submissions: [] }) as unknown as StudentParticipation;
+
+        /** Loads a text exercise whose due date is over, so the student can start practice. */
+        const load = async (teamMode: boolean, participations: StudentParticipation[]) => {
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockImplementation((all, testRun) => (all ?? []).find((p) => !!p.testRun === testRun));
+            mergeStudentParticipationMock.mockReturnValue(participations);
+            getExerciseDetailsMock.mockReturnValue(
+                of({ body: { exercise: { ...exercise, teamMode, dueDate: dayjs().subtract(1, 'hour'), studentParticipations: participations } } }),
+            );
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        };
+
+        it('should explain in the details of a team exercise that practice is individual', async () => {
+            await load(true, [graded()]);
+
+            expect(comp.participationMode()).toBe('graded');
+            expect(hint()?.textContent?.trim()).toBe('artemisApp.exerciseActions.practiceMode.teamHint');
+        });
+
+        it('should remind the student in the practice view that the practice is their own', async () => {
+            await load(true, [graded(), practice()]);
+            comp.participationMode.set('practice');
+            fixture.detectChanges();
+
+            expect(hint()?.textContent?.trim()).toBe('artemisApp.exerciseActions.practiceMode.teamNote');
+        });
+
+        it('should not mention team practice for an individual exercise', async () => {
+            await load(false, [graded()]);
+
+            expect(hint()).toBeNull();
+            comp.participationMode.set('practice');
+            fixture.detectChanges();
+            expect(hint()).toBeNull();
+        });
+    });
+
     describe('participation changes of the websocket', () => {
         const dueDatePassed = dayjs().subtract(1, 'day');
         const athenaResult = (successful: boolean | undefined, completionDate: dayjs.Dayjs | undefined = dayjs()) =>

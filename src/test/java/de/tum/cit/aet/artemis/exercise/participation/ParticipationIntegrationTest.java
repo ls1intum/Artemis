@@ -12,6 +12,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
@@ -40,11 +41,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.athena.AbstractAthenaTest;
@@ -2239,12 +2243,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     }
 
     /**
-     * A practice participation of a team exercise is a shape that did not exist before: a participation of a student, without a team, in a team exercise. The views of the
-     * instructors are organized by team and read the team of every participation they list, so they must stay intact and list the participations of the teams only.
+     * A practice participation of a team exercise is a shape that did not exist before: a participation of a student, without a team, in a team exercise. The participation
+     * management lists it next to the participation of the team, while the scores and the name export are organized by team and list the participations of the teams only.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getParticipationsOfTeamExercise_asInstructor_withAPracticeParticipation_listsTheTeamParticipationsOnly() throws Exception {
+    void getParticipationsOfTeamExercise_asInstructor_withAPracticeParticipation_listsItInTheManagementOnly() throws Exception {
         var exercise = createTextExerciseForTeam();
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var team = createTeamForExercise(student, exercise);
@@ -2256,9 +2260,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var page = request.getList("/api/exercise/exercises/" + exercise.getId() + "/participations/page", HttpStatus.OK, ParticipationManagementDTO.class,
                 pageableSearchUtilService.searchMapping(search));
 
-        assertThat(page).extracting(ParticipationManagementDTO::participationId).containsExactly(teamParticipation.getId()).doesNotContain(practiceParticipation.getId());
+        assertThat(page).extracting(ParticipationManagementDTO::participationId).containsExactly(teamParticipation.getId(), practiceParticipation.getId());
         assertThat(page.getFirst().teamId()).isEqualTo(team.getId());
         assertThat(page.getFirst().testRun()).isFalse();
+        assertThat(page.getLast().teamId()).isNull();
+        assertThat(page.getLast().studentLogin()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(page.getLast().testRun()).isTrue();
 
         var scoreSearch = new ParticipationScoreSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null);
         var scores = request.getList("/api/exercise/exercises/" + exercise.getId() + "/participations/scores", HttpStatus.OK, ParticipationScoreDTO.class,
@@ -3296,6 +3303,434 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var search = buildScoreSearch("nonexistentstudent", "All", "id", SortingOrder.ASCENDING);
             var results = request.getList(scoresUrl, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
             assertThat(results).isEmpty();
+        }
+    }
+
+    /**
+     * The participation management of a team exercise lists the participations of the teams and the practice participations of single students. A practice participation has a
+     * student, no team and testRun set, so every search, sort and filter of the list must keep it next to the rows that have a team.
+     * <p>
+     * Rows, in the order of their ids: the participation of the team "aardvark squad" (students 1 and 2), the participation of the team "zebra squad" (student 3), the practice
+     * participations of student 1 (member of the aardvark team), student 3 (member of the zebra team) and student 4 (no team). The graded individual participation of student 2
+     * must never be listed.
+     */
+    @Nested
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    class TeamExercisePracticeManagement {
+
+        private static final String ALPHA_SHORT_NAME = TEST_PREFIX + "alpha";
+
+        private static final String ZULU_SHORT_NAME = TEST_PREFIX + "zulu";
+
+        private Exercise teamExercise;
+
+        private Team alphaTeam;
+
+        private Team zuluTeam;
+
+        private StudentParticipation alphaParticipation;
+
+        private StudentParticipation zuluParticipation;
+
+        private StudentParticipation practiceOfStudent1;
+
+        private StudentParticipation practiceOfStudent3;
+
+        private StudentParticipation practiceOfStudent4;
+
+        private StudentParticipation gradedOfStudent2;
+
+        private String managementUrl;
+
+        @BeforeEach
+        void setupTeamExercise() {
+            teamExercise = createTextExerciseForTeam();
+            managementUrl = "/api/exercise/exercises/" + teamExercise.getId() + "/participations/page";
+
+            alphaTeam = createTeam("aardvark squad", ALPHA_SHORT_NAME, "student1", "student2");
+            zuluTeam = createTeam("zebra squad", ZULU_SHORT_NAME, "student3");
+
+            alphaParticipation = participationUtilService.addTeamParticipationForExercise(teamExercise, alphaTeam.getId());
+            zuluParticipation = participationUtilService.addTeamParticipationForExercise(teamExercise, zuluTeam.getId());
+            practiceOfStudent1 = participationUtilService.createAndSavePracticeParticipationForExercise(teamExercise, TEST_PREFIX + "student1");
+            practiceOfStudent3 = participationUtilService.createAndSavePracticeParticipationForExercise(teamExercise, TEST_PREFIX + "student3");
+            practiceOfStudent4 = participationUtilService.createAndSavePracticeParticipationForExercise(teamExercise, TEST_PREFIX + "student4");
+            gradedOfStudent2 = participationUtilService.createAndSaveParticipationForExercise(teamExercise, TEST_PREFIX + "student2");
+        }
+
+        private Team createTeam(String name, String shortName, String... studentLogins) {
+            var team = new Team();
+            team.setName(name);
+            team.setShortName(shortName);
+            team.setExercise(teamExercise);
+            for (String login : studentLogins) {
+                team.addStudents(userUtilService.getUserByLogin(TEST_PREFIX + login));
+            }
+            return teamRepository.save(team);
+        }
+
+        private List<Long> allIdsById() {
+            return List.of(alphaParticipation.getId(), zuluParticipation.getId(), practiceOfStudent1.getId(), practiceOfStudent3.getId(), practiceOfStudent4.getId());
+        }
+
+        private record Listing(List<ParticipationManagementDTO> rows, String total) {
+
+            List<Long> ids() {
+                return rows.stream().map(ParticipationManagementDTO::participationId).toList();
+            }
+        }
+
+        private Listing list(ParticipationSearchDTO search) throws Exception {
+            MvcResult result = request.performMvcRequest(MockMvcRequestBuilders.get(managementUrl).params(pageableSearchUtilService.searchMapping(search)))
+                    .andExpect(status().isOk()).andReturn();
+            List<ParticipationManagementDTO> rows = request.getObjectMapper().readValue(result.getResponse().getContentAsString(),
+                    request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, ParticipationManagementDTO.class));
+            return new Listing(rows, result.getResponse().getHeader("X-Total-Count"));
+        }
+
+        private Listing list(String searchTerm, String filterProp, String sortedColumn, SortingOrder order) throws Exception {
+            return list(new ParticipationSearchDTO(0, 50, order, sortedColumn, searchTerm, filterProp));
+        }
+
+        private ParticipationManagementDTO row(Listing listing, StudentParticipation participation) {
+            return listing.rows().stream().filter(dto -> dto.participationId() == participation.getId()).findFirst().orElseThrow();
+        }
+
+        @Test
+        void listsTheTeamParticipationsAndThePracticeParticipationsOfStudents() throws Exception {
+            var listing = list("", "All", "id", SortingOrder.ASCENDING);
+
+            assertThat(listing.ids()).containsExactlyElementsOf(allIdsById());
+            assertThat(listing.ids()).as("a graded participation of a student is never part of a team exercise's list").doesNotContain(gradedOfStudent2.getId());
+            assertThat(listing.total()).isEqualTo("5");
+            assertThat(listing.rows()).extracting(ParticipationManagementDTO::testRun).containsExactly(false, false, true, true, true);
+        }
+
+        @Test
+        void practiceRowsCarryTheStudentAndNoTeam() throws Exception {
+            var listing = list("", "All", "id", SortingOrder.ASCENDING);
+
+            var practice = row(listing, practiceOfStudent1);
+            assertThat(practice.testRun()).isTrue();
+            assertThat(practice.studentId()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId());
+            assertThat(practice.studentLogin()).isEqualTo(TEST_PREFIX + "student1");
+            assertThat(practice.participantIdentifier()).isEqualTo(TEST_PREFIX + "student1");
+            assertThat(practice.participantName()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getName());
+            assertThat(practice.teamId()).isNull();
+            assertThat(practice.teamStudents()).isNullOrEmpty();
+            assertThat(practice.initializationDate()).isNotNull();
+            assertThat(practice.submissionCount()).isZero();
+
+            var practiceWithoutTeam = row(listing, practiceOfStudent4);
+            assertThat(practiceWithoutTeam.studentLogin()).isEqualTo(TEST_PREFIX + "student4");
+            assertThat(practiceWithoutTeam.participantName()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "student4").getName());
+            assertThat(practiceWithoutTeam.teamId()).isNull();
+            assertThat(practiceWithoutTeam.testRun()).isTrue();
+        }
+
+        @Test
+        void teamRowsKeepTheirTeamAndHaveNoStudent() throws Exception {
+            var listing = list("", "All", "id", SortingOrder.ASCENDING);
+
+            var alpha = row(listing, alphaParticipation);
+            assertThat(alpha.testRun()).isFalse();
+            assertThat(alpha.teamId()).isEqualTo(alphaTeam.getId());
+            assertThat(alpha.participantName()).isEqualTo("aardvark squad");
+            assertThat(alpha.participantIdentifier()).isEqualTo(ALPHA_SHORT_NAME);
+            assertThat(alpha.studentId()).isNull();
+            assertThat(alpha.studentLogin()).isNull();
+            assertThat(alpha.teamStudents()).extracting(UserNameAndLoginDTO::login).containsExactlyInAnyOrder(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+
+            var zulu = row(listing, zuluParticipation);
+            assertThat(zulu.teamId()).isEqualTo(zuluTeam.getId());
+            assertThat(zulu.participantName()).isEqualTo("zebra squad");
+            assertThat(zulu.teamStudents()).extracting(UserNameAndLoginDTO::login).containsExactly(TEST_PREFIX + "student3");
+        }
+
+        @Test
+        void searchByStudentLoginFindsThePracticeRowAndTheTeamOfTheStudent() throws Exception {
+            var listing = list("student1", "All", "id", SortingOrder.ASCENDING);
+
+            assertThat(listing.ids()).as("the practice participation of student 1 and the participation of the team student 1 belongs to")
+                    .containsExactly(alphaParticipation.getId(), practiceOfStudent1.getId());
+            assertThat(listing.total()).isEqualTo("2");
+        }
+
+        @Test
+        void searchByTheLoginOfAStudentWithoutTeamFindsOnlyThePracticeRow() throws Exception {
+            var listing = list("student4", "All", "id", SortingOrder.ASCENDING);
+
+            assertThat(listing.ids()).containsExactly(practiceOfStudent4.getId());
+            assertThat(listing.total()).isEqualTo("1");
+            assertThat(listing.rows().getFirst().studentLogin()).isEqualTo(TEST_PREFIX + "student4");
+        }
+
+        @Test
+        void searchByStudentNameFindsThePracticeRow() throws Exception {
+            var listing = list(userUtilService.getUserByLogin(TEST_PREFIX + "student4").getName(), "All", "id", SortingOrder.ASCENDING);
+
+            assertThat(listing.ids()).containsExactly(practiceOfStudent4.getId());
+        }
+
+        @Test
+        void searchByAStudentWhoseOnlyParticipationIsGradedNeverFindsTheGradedParticipation() throws Exception {
+            var listing = list("student2", "All", "id", SortingOrder.ASCENDING);
+
+            assertThat(listing.ids()).as("student 2 is a member of the aardvark team and has no practice participation").containsExactly(alphaParticipation.getId());
+            assertThat(listing.ids()).doesNotContain(gradedOfStudent2.getId());
+        }
+
+        @Test
+        void searchByTeamNameFindsTheTeamRowOnly() throws Exception {
+            var listing = list("aardvark", "All", "id", SortingOrder.ASCENDING);
+
+            assertThat(listing.ids()).containsExactly(alphaParticipation.getId());
+            assertThat(listing.rows().getFirst().teamId()).isEqualTo(alphaTeam.getId());
+        }
+
+        @Test
+        void searchByTeamShortNameFindsTheTeamRowOnly() throws Exception {
+            var listing = list("ZULU", "All", "id", SortingOrder.ASCENDING);
+
+            assertThat(listing.ids()).as("the search is case insensitive").containsExactly(zuluParticipation.getId());
+        }
+
+        @Test
+        void searchWithSeveralTermsFindsTeamRowsAndPracticeRows() throws Exception {
+            var listing = list("aardvark, student4", "All", "id", SortingOrder.ASCENDING);
+
+            assertThat(listing.ids()).containsExactly(alphaParticipation.getId(), practiceOfStudent4.getId());
+            assertThat(listing.total()).isEqualTo("2");
+        }
+
+        @Test
+        void searchWithoutAMatchIsEmpty() throws Exception {
+            var listing = list("nonexistentparticipant", "All", "id", SortingOrder.ASCENDING);
+
+            assertThat(listing.rows()).isEmpty();
+            assertThat(listing.total()).isEqualTo("0");
+        }
+
+        @Test
+        void searchWithSortingByNameKeepsEveryMatchingRow() throws Exception {
+            var listing = list("student", "All", "participantName", SortingOrder.DESCENDING);
+
+            assertThat(listing.ids()).as("every team with a member and every practice participation matches the login prefix, mixed rows sorted by their name")
+                    .containsExactly(zuluParticipation.getId(), practiceOfStudent4.getId(), practiceOfStudent3.getId(), practiceOfStudent1.getId(), alphaParticipation.getId());
+        }
+
+        @Test
+        void sortByParticipantNameOrdersTeamNamesAndStudentNamesTogether() throws Exception {
+            var ascending = list("", "All", "participantName", SortingOrder.ASCENDING);
+            var descending = list("", "All", "participantName", SortingOrder.DESCENDING);
+
+            var expected = List.of(alphaParticipation.getId(), practiceOfStudent1.getId(), practiceOfStudent3.getId(), practiceOfStudent4.getId(), zuluParticipation.getId());
+            assertThat(ascending.ids()).containsExactlyElementsOf(expected);
+            assertThat(ascending.total()).isEqualTo("5");
+            assertThat(descending.ids()).containsExactlyElementsOf(expected.reversed());
+            assertThat(descending.total()).isEqualTo("5");
+        }
+
+        @Test
+        void sortByParticipantIdentifierOrdersTeamShortNamesAndLoginsTogether() throws Exception {
+            var ascending = list("", "All", "participantIdentifier", SortingOrder.ASCENDING);
+            var descending = list("", "All", "participantIdentifier", SortingOrder.DESCENDING);
+
+            var expected = List.of(alphaParticipation.getId(), practiceOfStudent1.getId(), practiceOfStudent3.getId(), practiceOfStudent4.getId(), zuluParticipation.getId());
+            assertThat(ascending.ids()).containsExactlyElementsOf(expected);
+            assertThat(descending.ids()).containsExactlyElementsOf(expected.reversed());
+            assertThat(descending.total()).isEqualTo("5");
+        }
+
+        @Test
+        void sortByTestRunPutsThePracticeRowsAfterTheTeamRows() throws Exception {
+            var ascending = list("", "All", "testRun", SortingOrder.ASCENDING);
+            var descending = list("", "All", "testRun", SortingOrder.DESCENDING);
+
+            assertThat(ascending.ids()).containsExactly(alphaParticipation.getId(), zuluParticipation.getId(), practiceOfStudent1.getId(), practiceOfStudent3.getId(),
+                    practiceOfStudent4.getId());
+            assertThat(descending.ids()).containsExactly(practiceOfStudent1.getId(), practiceOfStudent3.getId(), practiceOfStudent4.getId(), alphaParticipation.getId(),
+                    zuluParticipation.getId());
+        }
+
+        @Test
+        void sortBySubmissionCountCountsThePracticeRowsToo() throws Exception {
+            participationUtilService.addSubmission(practiceOfStudent3, new TextSubmission());
+            participationUtilService.addSubmission(practiceOfStudent3, new TextSubmission());
+            participationUtilService.addSubmission(zuluParticipation, new TextSubmission());
+
+            var ascending = list("", "All", "submissionCount", SortingOrder.ASCENDING);
+            var descending = list("", "All", "submissionCount", SortingOrder.DESCENDING);
+
+            assertThat(ascending.ids()).containsExactly(alphaParticipation.getId(), practiceOfStudent1.getId(), practiceOfStudent4.getId(), zuluParticipation.getId(),
+                    practiceOfStudent3.getId());
+            assertThat(descending.ids()).containsExactly(practiceOfStudent3.getId(), zuluParticipation.getId(), alphaParticipation.getId(), practiceOfStudent1.getId(),
+                    practiceOfStudent4.getId());
+            assertThat(row(ascending, practiceOfStudent3).submissionCount()).isEqualTo(2);
+            assertThat(row(ascending, zuluParticipation).submissionCount()).isEqualTo(1);
+        }
+
+        @Test
+        void sortByInitializationDateOrdersTeamRowsAndPracticeRowsTogether() throws Exception {
+            var now = ZonedDateTime.now();
+            setInitializationDate(practiceOfStudent4, now.minusDays(5));
+            setInitializationDate(alphaParticipation, now.minusDays(4));
+            setInitializationDate(practiceOfStudent1, now.minusDays(3));
+            setInitializationDate(zuluParticipation, now.minusDays(2));
+            setInitializationDate(practiceOfStudent3, now.minusDays(1));
+
+            var ascending = list("", "All", "initializationDate", SortingOrder.ASCENDING);
+
+            assertThat(ascending.ids()).containsExactly(practiceOfStudent4.getId(), alphaParticipation.getId(), practiceOfStudent1.getId(), zuluParticipation.getId(),
+                    practiceOfStudent3.getId());
+        }
+
+        private void setInitializationDate(StudentParticipation participation, ZonedDateTime date) {
+            participation.setInitializationDate(date);
+            participationRepo.save(participation);
+        }
+
+        @ParameterizedTest
+        @EnumSource(SortingOrder.class)
+        void everySortableColumnKeepsEveryRow(SortingOrder order) throws Exception {
+            for (String column : List.of("id", "participationId", "participantName", "participantIdentifier", "submissionCount", "initializationState", "buildPlanId",
+                    "initializationDate", "individualDueDate", "presentationScore", "testRun", "unknownColumn")) {
+                var listing = list("", "All", column, order);
+
+                assertThat(listing.ids()).as("sorted by %s, %s", column, order).containsExactlyInAnyOrderElementsOf(allIdsById());
+                assertThat(listing.total()).as("total sorted by %s, %s", column, order).isEqualTo("5");
+            }
+        }
+
+        @Test
+        void filterNoPracticeModeLeavesTheTeamRowsOnly() throws Exception {
+            var listing = list("", "NoPracticeMode", "id", SortingOrder.ASCENDING);
+
+            assertThat(listing.ids()).containsExactly(alphaParticipation.getId(), zuluParticipation.getId());
+            assertThat(listing.total()).isEqualTo("2");
+        }
+
+        @Test
+        void filterNoSubmissionsAppliesToTeamRowsAndPracticeRows() throws Exception {
+            assertThat(list("", "NoSubmissions", "id", SortingOrder.ASCENDING).ids()).containsExactlyElementsOf(allIdsById());
+
+            participationUtilService.addSubmission(practiceOfStudent3, new TextSubmission());
+            participationUtilService.addSubmission(zuluParticipation, new TextSubmission());
+
+            var listing = list("", "NoSubmissions", "id", SortingOrder.ASCENDING);
+            assertThat(listing.ids()).containsExactly(alphaParticipation.getId(), practiceOfStudent1.getId(), practiceOfStudent4.getId());
+            assertThat(listing.total()).isEqualTo("3");
+        }
+
+        @Test
+        void filterFailedListsNothingForAnExerciseWithoutBuilds() throws Exception {
+            var listing = list("", "Failed", "id", SortingOrder.ASCENDING);
+
+            assertThat(listing.rows()).isEmpty();
+            assertThat(listing.total()).isEqualTo("0");
+        }
+
+        @Test
+        void filterAndSearchAndSortCombine() throws Exception {
+            participationUtilService.addSubmission(practiceOfStudent3, new TextSubmission());
+            participationUtilService.addSubmission(zuluParticipation, new TextSubmission());
+
+            var listing = list("student", "NoSubmissions", "participantName", SortingOrder.DESCENDING);
+
+            assertThat(listing.ids()).containsExactly(practiceOfStudent4.getId(), practiceOfStudent1.getId(), alphaParticipation.getId());
+            assertThat(listing.total()).isEqualTo("3");
+        }
+
+        @Test
+        void paginationTotalCountsTeamRowsAndPracticeRows() throws Exception {
+            var firstPage = list(new ParticipationSearchDTO(0, 2, SortingOrder.ASCENDING, "participantName", "", "All"));
+            var secondPage = list(new ParticipationSearchDTO(1, 2, SortingOrder.ASCENDING, "participantName", "", "All"));
+            var thirdPage = list(new ParticipationSearchDTO(2, 2, SortingOrder.ASCENDING, "participantName", "", "All"));
+
+            assertThat(firstPage.rows()).hasSize(2);
+            assertThat(secondPage.rows()).hasSize(2);
+            assertThat(thirdPage.rows()).hasSize(1);
+            assertThat(List.of(firstPage.total(), secondPage.total(), thirdPage.total())).containsOnly("5");
+            var all = new ArrayList<Long>();
+            all.addAll(firstPage.ids());
+            all.addAll(secondPage.ids());
+            all.addAll(thirdPage.ids());
+            assertThat(all).as("the pages are disjoint and cover every row, ordered by name").containsExactly(alphaParticipation.getId(), practiceOfStudent1.getId(),
+                    practiceOfStudent3.getId(), practiceOfStudent4.getId(), zuluParticipation.getId());
+        }
+
+        @Test
+        void paginationOfASearchCountsTheMatchingRowsOnly() throws Exception {
+            var firstPage = list(new ParticipationSearchDTO(0, 1, SortingOrder.ASCENDING, "id", "student", "All"));
+            var secondPage = list(new ParticipationSearchDTO(1, 1, SortingOrder.ASCENDING, "id", "student", "All"));
+
+            assertThat(firstPage.total()).isEqualTo("5");
+            assertThat(secondPage.total()).isEqualTo("5");
+            assertThat(firstPage.ids()).containsExactly(alphaParticipation.getId());
+            assertThat(secondPage.ids()).containsExactly(zuluParticipation.getId());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void tutorsSeeTheRowsWithoutAnyIdentity() throws Exception {
+            var listing = list("", "All", "id", SortingOrder.ASCENDING);
+
+            assertThat(listing.ids()).containsExactlyElementsOf(allIdsById());
+            assertThat(listing.total()).isEqualTo("5");
+            assertThat(listing.rows()).allSatisfy(dto -> {
+                assertThat(dto.participantName()).isNull();
+                assertThat(dto.participantIdentifier()).isNull();
+                assertThat(dto.studentId()).isNull();
+                assertThat(dto.studentLogin()).isNull();
+                assertThat(dto.teamId()).isNull();
+                assertThat(dto.teamStudents()).isNullOrEmpty();
+                assertThat(dto.buildPlanId()).isNull();
+                assertThat(dto.repositoryUri()).isNull();
+            });
+            assertThat(listing.rows()).extracting(ParticipationManagementDTO::testRun).containsExactly(false, false, true, true, true);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void tutorsMayNotSearchOrSortByIdentity() throws Exception {
+            for (var search : List.of(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "student4", "All"),
+                    new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "participantName", "", "All"),
+                    new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "participantIdentifier", "", "All"))) {
+                request.performMvcRequest(MockMvcRequestBuilders.get(managementUrl).params(pageableSearchUtilService.searchMapping(search))).andExpect(status().isForbidden());
+            }
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void studentsMayNotListTheParticipations() throws Exception {
+            request.performMvcRequest(MockMvcRequestBuilders.get(managementUrl)
+                    .params(pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All")))).andExpect(status().isForbidden());
+        }
+
+        @Test
+        @WithMockUser(username = OTHER_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void instructorsOfAnotherCourseMayNotListTheParticipations() throws Exception {
+            request.performMvcRequest(MockMvcRequestBuilders.get(managementUrl)
+                    .params(pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All")))).andExpect(status().isForbidden());
+        }
+
+        @Test
+        void anIndividualExerciseStillListsTheParticipationsOfStudentsOnly() throws Exception {
+            var graded = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            var practice = participationUtilService.createAndSavePracticeParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+            var individualUrl = "/api/exercise/exercises/" + textExercise.getId() + "/participations/page";
+
+            var result = request.getList(individualUrl, HttpStatus.OK, ParticipationManagementDTO.class,
+                    pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "participantName", "", "All")));
+
+            assertThat(result).extracting(ParticipationManagementDTO::participationId).containsExactly(graded.getId(), practice.getId());
+            assertThat(result).extracting(ParticipationManagementDTO::studentLogin).containsExactly(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+            assertThat(result).extracting(ParticipationManagementDTO::testRun).containsExactly(false, true);
+            assertThat(result).extracting(ParticipationManagementDTO::teamId).containsOnlyNulls();
+
+            var searched = request.getList(individualUrl, HttpStatus.OK, ParticipationManagementDTO.class,
+                    pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "student2", "NoSubmissions")));
+            assertThat(searched).extracting(ParticipationManagementDTO::participationId).containsExactly(practice.getId());
         }
     }
 }

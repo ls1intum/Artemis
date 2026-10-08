@@ -26,7 +26,9 @@
                 "explanation": "The practice mode allows you to keep working on the exercise after the submission due date for self-practice. This will not affect your grading! Artemis will setup a separate repository for you to clone as usual.",
                 "repositoryChoice": "You already have a graded participation from before the due date. Therefore, you can choose if the code in the separate repository should be the template repository of this exercise or your graded participation.",
                 "practiceWithTemplate": "Practice with template repository",
-                "practiceWithGradedParticipation": "Practice with graded participation"
+                "practiceWithGradedParticipation": "Practice with graded participation",
+                "teamHint": "Practice is individual. It does not change your team's result, and your teammates cannot see it.",
+                "teamNote": "You are practicing on your own. This does not change your team's result, and your teammates cannot see your practice work."
             },
             "resetRepository": {
                 "label": "Reset Repository",

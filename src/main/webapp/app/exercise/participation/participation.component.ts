@@ -46,6 +46,7 @@ import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/te
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 
 export enum FilterProp {
     ALL = 'All',
@@ -75,6 +76,7 @@ export enum FilterProp {
         TeamStudentsListComponent,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
+        TumAetUiTagComponent,
     ],
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
