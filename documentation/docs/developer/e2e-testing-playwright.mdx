@@ -688,11 +688,10 @@ When Phase 1 detects a failure, developers receive feedback within approximately
 does not consume compute resources.
 
 **For pushes to `develop` or `main`:** the pipeline skips the two-phase logic and runs the full suite in a single job.
-That job uses the multi-node stack (three Artemis nodes behind nginx) with the embedded Hazelcast cluster as distributed
-data provider. A second job then runs the full suite again on the same stack with Redis (Valkey) as the provider, in which
-no Hazelcast instance is created at all. The jobs run one after the other because the E2E cleanup stops every container
-on its host. Both runs count towards the E2E result, and locally `run-e2e-tests-local-multinode.sh --middleware redis`
-(or the `-fast` variant) runs the second one.
+That job uses the multi-node stack (three Artemis nodes behind nginx) with Redis (Valkey) as distributed data provider, so
+no Hazelcast instance is created. The suite runs once, not once per provider, because the E2E cleanup stops every
+container on its host. Locally, `run-e2e-tests-local-multinode.sh --middleware redis` (or the `-fast` variant) runs the
+same configuration, and the default `hazelcast` middleware runs the embedded cluster.
 
 ### Selective test execution and `e2e-test-mapping.json`
 

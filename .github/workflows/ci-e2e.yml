@@ -685,13 +685,16 @@ jobs:
           workflow-run-id: ${{ github.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run E2E Playwright tests (PostgreSQL, Local, Multi-Node)
+      # Redis (Valkey) is the distributed data provider of this run, not the embedded Hazelcast cluster, so no Hazelcast
+      # instance is created. The suite runs once: the E2E cleanup stops every container on its host, so a second run
+      # on the other provider would have to be serialized behind this one and double the duration.
+      - name: Run E2E Playwright tests (PostgreSQL, Local, Multi-Node, Redis)
         id: run-tests-all-non-pr
         # Advisory: a failed test must not fail the phase job. Real outcome via the `tests` output.
         continue-on-error: true
         env:
           FAST_TEST_TIMEOUT_SECONDS: 75
-        run: supporting_scripts/ci/E2E-tests/execute.sh multi-node playwright
+        run: supporting_scripts/ci/E2E-tests/execute.sh multi-node-redis playwright
 
       - name: E2E Teardown
         id: teardown
@@ -730,87 +733,6 @@ jobs:
         with:
           script: await require('./.github/scripts/classify-failures.js')(core)
 
-  # The same full run on the Redis (Valkey) distributed data provider instead of the embedded Hazelcast cluster. Both are
-  # driven through the DistributedDataProvider abstraction, so the suite has to pass on either; with Redis no Hazelcast
-  # instance is created at all. Develop only: a pull request exercises the single-node stack.
-  #
-  # Serialized behind the Hazelcast run on purpose. The E2E cleanup stops every container on its host and the stacks
-  # publish fixed ports, so two E2E jobs must never share one. `!cancelled()` still starts it after a failed Hazelcast
-  # run, because the two runs are independent signals.
-  run-e2e-all-non-pr-redis:
-    name: Run All E2E Tests (Non-PR, Redis)
-    needs: run-e2e-all-non-pr
-    if: ${{ !cancelled() && !inputs.is_pr }}
-    runs-on: [self-hosted, e2e-test]
-    timeout-minutes: 120
-    environment: playwright-e2e-tests
-    permissions:
-      contents: read
-      actions: read
-    outputs:
-      tests: ${{ steps.run-tests-all-non-pr-redis.outcome }}
-      phase_result: ${{ steps.classify.outputs.phase_result }}
-    env:
-      PLAYWRIGHT_REPORT_PHASE: all-redis
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-        with:
-          ref: ${{ inputs.commit_sha }}
-          fetch-depth: 1
-
-      - name: E2E Setup
-        uses: ./.github/actions/e2e-setup
-        with:
-          workflow-run-id: ${{ github.run_id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Run E2E Playwright tests (PostgreSQL, Local, Multi-Node, Redis)
-        id: run-tests-all-non-pr-redis
-        # Advisory: a failed test must not fail the phase job. Real outcome via the `tests` output.
-        continue-on-error: true
-        env:
-          FAST_TEST_TIMEOUT_SECONDS: 75
-        run: supporting_scripts/ci/E2E-tests/execute.sh multi-node-redis playwright
-
-      - name: E2E Teardown
-        id: teardown
-        if: ${{ !cancelled() }}
-        uses: ./.github/actions/e2e-teardown
-        with:
-          # Distinguishes this run's artifacts from the Hazelcast run's: a second upload under the same name fails.
-          artifact-name-suffix: Redis
-          require-tests: error
-
-      - name: Download all tests results
-        if: ${{ !cancelled() }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: ${{ steps.teardown.outputs.junit-artifact-name }}
-          path: all-test-results
-
-      - name: All Tests Report (Non-PR, Redis)
-        uses: mikepenz/action-junit-report@3a81627bfac62268172037048872e8ebd4207e6d  # v6.4.1
-        if: ${{ !cancelled() }}
-        with:
-          commit: ${{ inputs.commit_sha }}
-          check_name: 'All E2E Tests Report (Multi-Node, Redis)'
-          fail_on_failure: false
-          require_tests: false
-          annotate_only: false
-          detailed_summary: true
-          include_time_in_summary: true
-          report_paths: 'all-test-results/results.xml'
-
-      - name: Classify E2E failures
-        id: classify
-        if: ${{ !cancelled() }}
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          INPUT_RESULTS_FILE: all-test-results/results.xml
-          HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
-        with:
-          script: await require('./.github/scripts/classify-failures.js')(core)
-
   # Aggregates the E2E outcome and is the single E2E gate. `e2e` IS part of the required
   # `all-required-ci-passed` gate (ci.yml), so a real regression here reds the run and blocks
   # merging — but a known-flaky-only run is exonerated and passes green, so ambient flakiness never
@@ -820,7 +742,7 @@ jobs:
   # continue-on-error, so a failed test never fails a phase job; the honest verdict is decided here.
   report-results:
     name: Report E2E Overall Status
-    needs: [determine-tests, run-e2e-relevant, run-e2e-remaining, run-e2e-all-pr, run-e2e-all-non-pr, run-e2e-all-non-pr-redis]
+    needs: [determine-tests, run-e2e-relevant, run-e2e-remaining, run-e2e-all-pr, run-e2e-all-non-pr]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -839,14 +761,12 @@ jobs:
           REMAINING_RESULT: ${{ needs.run-e2e-remaining.outputs.tests }}
           ALL_PR_RESULT: ${{ needs.run-e2e-all-pr.outputs.tests }}
           ALL_NON_PR_RESULT: ${{ needs.run-e2e-all-non-pr.outputs.tests }}
-          ALL_NON_PR_REDIS_RESULT: ${{ needs.run-e2e-all-non-pr-redis.outputs.tests }}
           # Per-phase failure classification from classify-failures.js: real | flaky | clean (empty
           # when skipped). `real` = a non-flaky test failed; `flaky` = failures, all known-flaky.
           RELEVANT_CLASS: ${{ needs.run-e2e-relevant.outputs.phase_result }}
           REMAINING_CLASS: ${{ needs.run-e2e-remaining.outputs.phase_result }}
           ALL_PR_CLASS: ${{ needs.run-e2e-all-pr.outputs.phase_result }}
           ALL_NON_PR_CLASS: ${{ needs.run-e2e-all-non-pr.outputs.phase_result }}
-          ALL_NON_PR_REDIS_CLASS: ${{ needs.run-e2e-all-non-pr-redis.outputs.phase_result }}
           # Job results, to catch infra failures: determine-tests/setup/teardown are NOT
           # continue-on-error, so a broken one surfaces as job `result == failure`.
           DETERMINE_JOB: ${{ needs.determine-tests.result }}
@@ -854,13 +774,12 @@ jobs:
           REMAINING_JOB: ${{ needs.run-e2e-remaining.result }}
           ALL_PR_JOB: ${{ needs.run-e2e-all-pr.result }}
           ALL_NON_PR_JOB: ${{ needs.run-e2e-all-non-pr.result }}
-          ALL_NON_PR_REDIS_JOB: ${{ needs.run-e2e-all-non-pr-redis.result }}
         run: |
           set -Eeuo pipefail
           # `status` is the raw honest outcome (any `failure` wins; else the first `success`; else
           # `error`). It feeds the `status` output that CI Summary renders and never hides a failure.
           status=error
-          for r in "$ALL_NON_PR_RESULT" "$ALL_NON_PR_REDIS_RESULT" "$ALL_PR_RESULT" "$RELEVANT_RESULT" "$REMAINING_RESULT"; do
+          for r in "$ALL_NON_PR_RESULT" "$ALL_PR_RESULT" "$RELEVANT_RESULT" "$REMAINING_RESULT"; do
             case "$r" in
               failure) status=failure; break ;;
               success) [ "$status" = error ] && status=success ;;
@@ -871,7 +790,7 @@ jobs:
           echo "status=$status" >> "$GITHUB_OUTPUT"
 
           any_real=false; any_flaky=false
-          for c in "$RELEVANT_CLASS" "$REMAINING_CLASS" "$ALL_PR_CLASS" "$ALL_NON_PR_CLASS" "$ALL_NON_PR_REDIS_CLASS"; do
+          for c in "$RELEVANT_CLASS" "$REMAINING_CLASS" "$ALL_PR_CLASS" "$ALL_NON_PR_CLASS"; do
             [ "$c" = real ] && any_real=true
             [ "$c" = flaky ] && any_flaky=true
           done
@@ -882,7 +801,7 @@ jobs:
           # `skipped` is the normal not-selected-path result (e.g. run-all on a phased run) and must pass;
           # an empty/unknown result is treated as blocking (fail closed).
           any_job_failed=false
-          for r in "$DETERMINE_JOB" "$RELEVANT_JOB" "$REMAINING_JOB" "$ALL_PR_JOB" "$ALL_NON_PR_JOB" "$ALL_NON_PR_REDIS_JOB"; do
+          for r in "$DETERMINE_JOB" "$RELEVANT_JOB" "$REMAINING_JOB" "$ALL_PR_JOB" "$ALL_NON_PR_JOB"; do
             case "$r" in
               success|skipped) ;;
               *) any_job_failed=true ;;
