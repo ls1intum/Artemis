@@ -1,0 +1,87 @@
+package de.tum.cit.aet.artemis.demo.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO_AND_SCHEDULING;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.api.AccountDemoApi.DemoUsers;
+import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
+import de.tum.cit.aet.artemis.atlas.api.AtlasDemoApi;
+import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
+import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.demo.service.DemoExerciseSeedingService.DemoExercises;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.lecture.api.LectureDemoApi;
+import de.tum.cit.aet.artemis.lecture.api.dtos.DemoLectures;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupDemoApi;
+
+/**
+ * Seeds the content of the demo course around its exercises, see {@link DemoDataSeedingService}.
+ */
+@Service
+@Lazy
+@Profile(PROFILE_DEMO_AND_SCHEDULING)
+public class DemoCourseContentSeedingService {
+
+    /**
+     * What the later areas continue with when the lectures are not seeded.
+     */
+    private static final DemoLectures NO_LECTURES = new DemoLectures(List.of(), List.of(), List.of());
+
+    private final Optional<LectureDemoApi> lectureDemoApi;
+
+    private final Optional<AtlasDemoApi> atlasDemoApi;
+
+    private final AssessmentDemoApi assessmentDemoApi;
+
+    private final Optional<TutorialGroupDemoApi> tutorialGroupDemoApi;
+
+    private final CommunicationDemoApi communicationDemoApi;
+
+    public DemoCourseContentSeedingService(Optional<LectureDemoApi> lectureDemoApi, Optional<AtlasDemoApi> atlasDemoApi, AssessmentDemoApi assessmentDemoApi,
+            Optional<TutorialGroupDemoApi> tutorialGroupDemoApi, CommunicationDemoApi communicationDemoApi) {
+        this.lectureDemoApi = lectureDemoApi;
+        this.atlasDemoApi = atlasDemoApi;
+        this.assessmentDemoApi = assessmentDemoApi;
+        this.tutorialGroupDemoApi = tutorialGroupDemoApi;
+        this.communicationDemoApi = communicationDemoApi;
+    }
+
+    /**
+     * Seeds the content of the demo course that builds on its exercises.
+     *
+     * @param course    the demo course.
+     * @param users     the demo users.
+     * @param exercises the demo exercises by topic.
+     */
+    void seed(Course course, DemoUsers users, DemoExercises exercises) {
+        DemoLectures lectures = DemoAreas.seed("lectures",
+                () -> lectureDemoApi.map(api -> api.createDemo(course, exercises.architecture(), exercises.algorithms(), exercises.modeling())).orElse(NO_LECTURES), NO_LECTURES);
+        // Before the competencies, which update the progress of the demo students once everything is linked.
+        DemoAreas.seed("lecture unit completions", () -> lectureDemoApi.ifPresent(api -> api.completeDemoUnits(lectures, users.student())));
+        DemoAreas.seed("competencies",
+                () -> atlasDemoApi.ifPresent(api -> api.createDemo(course, learningObjects(exercises.architecture(), lectures.architecture()),
+                        learningObjects(exercises.algorithms(), lectures.algorithms()), learningObjects(exercises.modeling(), lectures.modeling()), exercises.communication(),
+                        users.students())));
+        DemoAreas.seed("grading scale", () -> assessmentDemoApi.createDemoGradingScale(course));
+        DemoAreas.seed("tutorial groups", () -> tutorialGroupDemoApi.ifPresent(api -> api.createDemo(course, users.tutor(), users.students())));
+        // The students discuss the ongoing essay, the first exercise about software architecture, in its channel.
+        DemoAreas.seed("communication",
+                () -> communicationDemoApi.createDemo(course, users.students(), users.tutor(), users.instructor(), exercises.architecture().stream().findFirst().orElse(null)));
+    }
+
+    /**
+     * The learning objects of one topic of the course: its exercises and the seeded units of its lecture.
+     */
+    private static List<LearningObject> learningObjects(List<Exercise> exercises, List<LectureUnit> lectureUnits) {
+        return Stream.<LearningObject>concat(exercises.stream(), lectureUnits.stream()).toList();
+    }
+}

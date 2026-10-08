@@ -491,14 +491,33 @@ To start Artemis with a demo course, add the `demo` profile to the active profil
 --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,demo
 ```
 
-On startup, Artemis creates whatever is missing of the following, and leaves everything that already exists untouched:
+On startup, Artemis creates whatever is missing of the demo course `Introduction to Software Engineering` (short name `demo`) and leaves everything that already exists untouched. All demo users have the password `demo1234`:
 
-- the course `demo`
-- the users `demo_student` and `demo_instructor`, both with the password `demo1234`, enrolled as student and instructor
-- the lecture `Demo Lecture` with the text unit `Demo Text Unit`
-- the competency `Demo Competency`, linked to that text unit
+| User | Role in the demo course |
+|---|---|
+| `demo_student` | Student. Use this user to explore the student view. |
+| `demo_student_1` to `demo_student_10` | Students. Their submissions fill the statistics, the scores and the assessment queue. |
+| `demo_tutor` | Tutor. Assessed the graded essay and leads the tutorial groups. |
+| `demo_editor` | Editor. |
+| `demo_instructor` | Instructor. Owns the demo content. |
 
-Restarting never duplicates the demo data, and deleted demo content is recreated on the next start.
+The demo course contains:
+
+- **Exercises:** one open exercise of every type to try out: `Essay: Monolith or Microservices?`, `Class Diagram: Library Management System`, `Poster: Comparing Sorting Algorithms`, `Quiz: Java Collections and Complexity` and the programming exercise `Sorting Algorithms in Java`. In addition, the essay `Essay: The Value of Code Reviews` has published results with feedback and an open complaint of a classmate, the submissions to `Class Diagram: Online Shop` wait in the assessment queue of `demo_tutor`, and `Quiz: Sorting and Searching` has ended, has results and statistics, and is open for practice.
+- **Exam:** the test exam `Practice Exam: Software Engineering Fundamentals` with an essay, a class diagram and a quiz, which every student can start as often as they like.
+- **Lectures:** the past lectures `Software Architecture`, `Algorithms and Complexity` and `Object-Oriented Modeling`, each with a text unit, a link to further reading and its exercises, and slides for `Software Architecture`.
+- **Competencies:** the prerequisite `Program in Java` and four competencies, linked to the exercises and lecture units of their topics and related to each other. Learning paths are enabled, and `demo_student` has completed some lecture units and made progress.
+- **Tutorial groups:** `Monday Tutorial` on campus and `Thursday Online`, each with weekly sessions over the whole course, its students and a channel, and the free period `Reading Week`, which cancels their sessions for a week.
+- **Communication:** a welcome announcement, threads with replies and, if the plagiarism module is enabled, reactions in the course channels, direct messages between `demo_student` and `demo_tutor`, and FAQs.
+- **Grading:** a grading scale from 5.0 to 1.0, with 4.0 as the first passing grade.
+
+The programming exercise is only created with a version control and a continuous integration system, for example the `localvc` and `localci` profiles, and its builds need a build agent. All other content only needs the modules it belongs to, so a disabled module simply leaves its part out.
+
+Seeding goes through the same services as the user interface, acting as the demo user who would perform each action. It therefore also sends the notifications those actions cause, including emails to the demo users' addresses `<login>@artemis.local`.
+
+The dates of the demo content are relative to the start that creates it and are never moved. A graded essay's complaint period, for example, ends a week after it was created, while the open exercises and the test exam stay open for a year.
+
+Restarting never duplicates the demo data. Deleted demo content is recreated on the next start as a whole, a deleted exercise for example with all its submissions and results. Lecture units and the links and relations of competencies are also recreated one by one, but other parts of content that still exists are not, such as a single deleted submission.
 
 <Callout variant={CalloutVariant.warning}>
     The demo credentials are publicly known. Only use the `demo` profile on demo and manual testing instances, never on a production instance.

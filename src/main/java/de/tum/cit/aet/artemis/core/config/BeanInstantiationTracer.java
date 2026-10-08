@@ -34,9 +34,7 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
     // Keep these two constants in sync with the values in .github/workflows/ci-bean-instantiations.yml
     private static final int STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD = 10;
 
-    // Raised from 16 to 17 when CourseApi was added: it sits in front of the pre-existing 16-long chain
-    // courseApi → courseAccessService → userService → ... → gradingScaleService, adding one link at the head rather than new depth.
-    private static final int DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD = 17;
+    private static final int DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD = 16;
 
     private static final Logger log = LoggerFactory.getLogger(BeanInstantiationTracer.class);
 
