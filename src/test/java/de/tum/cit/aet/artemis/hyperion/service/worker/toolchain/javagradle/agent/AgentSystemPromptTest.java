@@ -37,6 +37,14 @@ class AgentSystemPromptTest {
     }
 
     @Test
+    void reflectionGuidanceUsesTheInstalledAresApiOnlyInInstructorTests() {
+        for (String prompt : Set.of(prompts.build(input(false), Mode.GENERATE), prompts.build(input(false), Mode.ADAPT), prompts.buildStage(input(false), GenerationStage.TESTS))) {
+            assertThat(prompt).contains("de.tum.cit.ase.ares.api.util.ReflectionTestUtils", "getConstructor(getClazz(ownerName)", "invokeMethod(instance, getMethod(instance",
+                    "Reflection belongs only in instructor tests", "Never import JUnit or Ares into solution/ or template/");
+        }
+    }
+
+    @Test
     void adaptPromptBoundsInspectionAndKeepsTheExistingLayoutAuthoritative() {
         String adapt = prompts.build(input(false), Mode.ADAPT);
         String generate = prompts.build(input(false), Mode.GENERATE);

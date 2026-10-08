@@ -555,7 +555,13 @@ public class AgentSystemPrompt {
             Repair the generated source, then verify; do not repeat unchanged verification or modify the immutable harness to explain away a source error.
 
             Sources may omit a class, method, or field from the template so Artemis generates structural tests. Behaviour tests must still compile against that incomplete template,
-            so access omitted members through Ares ReflectionTestUtils. Prefer identical solution/template signatures and deliberately incomplete method bodies when structural testing
-            does not serve the learning objective.
+            so access omitted members through `de.tum.cit.ase.ares.api.util.ReflectionTestUtils` (static import of its methods is supported).
+            Resolve declared signatures explicitly: `newInstance(getConstructor(getClazz(ownerName), int.class), degrees)` and
+            `invokeMethod(instance, getMethod(instance, "sin"))`. These return Object; cast the result to the declared return type.
+            For exception assertions, use `invokeMethodRethrowing(instance, getMethod(instance, "withdraw", double.class), amount)` or
+            `newInstanceRethrowing(getConstructor(getClazz(ownerName), int.class), value)` so assertThrows sees the student's exception, not a helper assertion failure.
+            Reflection belongs only in instructor tests. Never import JUnit or Ares into solution/ or template/ and never add reflective class/member lookup there to make
+            references to absent student-created types compile. Keep given starter code independent of those absent types; a learner-owned method can have a TODO body.
+            Prefer identical solution/template signatures and deliberately incomplete method bodies when structural testing does not serve the learning objective.
             """;
 }
