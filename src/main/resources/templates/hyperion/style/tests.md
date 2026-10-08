@@ -43,6 +43,12 @@ out of the statement instead of implementing the rule. Pick different, still-rep
 
 ## Assertion discipline
 
+Each test must establish its own state. Mutable static fields and registries survive between test methods;
+`@BeforeAll` resets them only once per class, not once per scenario. If the contract needs a fresh shared state,
+use an instructor-owned `@BeforeEach` fixture for each test. Keep reset machinery in the test harness rather
+than adding reset methods to the exercise API. Do not assume counters start at zero or registries are empty
+because a different test ran first. Verify the whole suite, not only individual test methods.
+
 Assert exception TYPES, never message strings, unless the statement itself fixes the exact message — a
 message-string assertion turns wording into a graded contract nobody stated. Write assertion messages that
 tell a student what rule failed and why; the message is part of the pedagogy.

@@ -21,6 +21,11 @@ class AgentSystemPromptTest {
         return new GenerationInput(1, "de.example", null, hasDueDate, Set.of());
     }
 
+    @Test
+    void specificationDeclaresTheCompletedApiRatherThanAnIntermediateStarter() {
+        assertThat(prompts.buildStage(input(false), GenerationStage.SPEC)).contains("completed solution", "enum constants");
+    }
+
     @ParameterizedTest
     @EnumSource(Mode.class)
     void singleLoopUsesGradleLayoutAndStableGradedTestNames(Mode mode) {

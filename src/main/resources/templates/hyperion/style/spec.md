@@ -66,6 +66,11 @@ List signatures only, grouped by owner type. Do not turn private state into publ
 the implementation uses it. Later stages copy this contract; they do not invent constructors, validation, or
 alternate signatures after the specification freezes.
 
+Describe the completed solution's API, not an intermediate starter or an earlier task's API. Include all final
+enum constants and signatures required by later tasks. A rule that asks students to add a constant or member
+must agree with this final API; describe the earlier state in the task progression, not as the frozen final
+contract. Compare every numbered rule and seam against the final declarations before submitting the spec.
+
 The design table also carries the requested difficulty and learning objective. Judge difficulty by the work
 left to the student, not by the number of files or formulas. When the brief teaches a collaboration or design
 pattern, leave students meaningful work in that collaboration (defining an abstraction when appropriate,
