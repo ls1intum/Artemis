@@ -149,6 +149,49 @@ class DockerGradleBuildTest {
     }
 
     @Test
+    void installedReflectionApiPreservesResultsAndStudentExceptions() throws IOException {
+        String session = sandbox.createSession();
+        workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);
+        sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
+        String source = """
+                package de.tum.cit.aet.reference;
+                import static org.junit.jupiter.api.Assertions.*;
+                import static de.tum.cit.ase.ares.api.util.ReflectionTestUtils.*;
+                import org.junit.jupiter.api.*;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                @Public
+                @Policy(value = "SecurityPolicy.yaml")
+                @DisplayNameGeneration(DisplayNameGenerator.Simple.class)
+                class ScoreCalculatorTest {
+                    @Test
+                    @StrictTimeout(1)
+                    void reflectionUsesDeclaredTypesAndPreservesExceptions() {
+                        Class<?> owner = getClazz("de.tum.cit.aet.reference.ScoreCalculator");
+                        var method = getMethod(owner, "countPassing", int[].class);
+                        assertEquals(2, (int) invokeMethod(null, method, (Object) new int[] { 10, 60, 100 }));
+                        assertThrows(NullPointerException.class, () -> invokeMethodRethrowing(null, method, (Object) null));
+                    }
+                }
+                """;
+        String path = "tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java";
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, source.replace("ares.api.util", "ares.util")), Map.of()));
+        var wrongImport = build(session, "solution");
+        assertThat(wrongImport.exitCode()).isNotZero();
+        assertThat(wrongImport.buildDiagnostic()).contains("ares.util does not exist");
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, source), Map.of()));
+        var correct = build(session, "solution");
+        assertThat(correct.exitCode()).as(correct.buildDiagnostic()).isZero();
+        assertThat(correct.testNames()).contains("reflectionUsesDeclaredTypesAndPreservesExceptions");
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, source.replace("invokeMethodRethrowing", "invokeMethod")), Map.of()));
+        var wrappedException = build(session, "solution");
+        assertThat(wrappedException.exitCode()).isNotZero();
+        assertThat(wrappedException.testFailedNames()).contains("reflectionUsesDeclaredTypesAndPreservesExceptions");
+    }
+
+    @Test
     void verificationDoesNotLeaveADaemonHoldingTheDisposableGradleCache() throws IOException {
         String session = sandbox.createSession();
         workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);

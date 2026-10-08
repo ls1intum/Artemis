@@ -284,6 +284,11 @@ final class ApprovedStructuralContract {
         contract.put("parameterCount", type.getTypeParameters().size());
         contract.set("exerciseTypes", mapper.valueToTree(exerciseTypes.stream().sorted().toList()));
         List<String> signatures = new ArrayList<>();
+        JavaType superclass = type.getSuperClass();
+        if (superclass != null && !"java.lang.Object".equals(superclass.getFullyQualifiedName())) {
+            signatures.add("superclass:" + genericShape(superclass, type, exerciseTypes));
+        }
+        type.getImplements().stream().map(supertype -> "interface:" + genericShape(supertype, type, exerciseTypes)).forEach(signatures::add);
         type.getMethods().stream().filter(ApprovedStructuralContract::isContractVisible).map(method -> "method:" + method.getName()
                 + genericParameters(method.getParameters(), type, exerciseTypes) + ":" + genericShape(method.getReturnType(), type, exerciseTypes)).forEach(signatures::add);
         type.getConstructors().stream().filter(ApprovedStructuralContract::isContractVisible)
@@ -325,8 +330,8 @@ final class ApprovedStructuralContract {
         Set<String> surface = new LinkedHashSet<>();
         surface.add("type:" + typeKind(type) + ":modifiers=" + type.getModifiers().stream().sorted().toList() + ":parameters="
                 + type.getTypeParameters().stream().map(parameter -> canonicalTypeName(parameter.getGenericValue(), exerciseTypes, exercisePackage)).toList() + ":extends="
-                + superclass(type) + ":implements="
-                + type.getInterfaces().stream().map(interfaceType -> canonicalType(interfaceType, exerciseTypes, exercisePackage)).sorted().toList());
+                + superclass(type, exerciseTypes) + ":implements="
+                + type.getImplements().stream().map(interfaceType -> canonicalType(interfaceType, exerciseTypes, exercisePackage)).sorted().toList());
         type.getMethods().stream().filter(ApprovedStructuralContract::isContractVisible).filter(method -> !template || !studentCreates(method))
                 .map(method -> "method:" + relevantModifiers(method.getModifiers(), method.getDeclaringClass().isInterface(), method.isDefault(), method.isStatic()) + ":"
                         + method.getTypeParameters().stream().map(parameter -> canonicalTypeName(parameter.getGenericValue(), exerciseTypes, exercisePackage)).toList() + ":"
@@ -365,9 +370,9 @@ final class ApprovedStructuralContract {
         return "class";
     }
 
-    private static String superclass(JavaClass type) {
-        JavaClass superclass = type.getSuperJavaClass();
-        return superclass == null || "java.lang.Object".equals(superclass.getCanonicalName()) ? "" : superclass.getSimpleName();
+    private static String superclass(JavaClass type, Set<String> exerciseTypes) {
+        JavaType superclass = type.getSuperClass();
+        return superclass == null || "java.lang.Object".equals(superclass.getFullyQualifiedName()) ? "" : canonicalType(superclass, exerciseTypes, type.getPackageName());
     }
 
     private static List<String> relevantModifiers(List<String> declared, boolean interfaceOwner, boolean defaultMethod, boolean staticMethod) {

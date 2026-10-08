@@ -61,6 +61,13 @@ class GenericTypeTest {
             assertTrue(Arrays.equals(new Type[] { Object.class }, variable.getBounds()), "The class type parameters must be unbounded");
         }
         Set<String> actual = new HashSet<>();
+        Type superclass = owner.getGenericSuperclass();
+        if (superclass != null && superclass != Object.class) {
+            actual.add("superclass:" + shape(superclass, owner, contract));
+        }
+        for (Type supertype : owner.getGenericInterfaces()) {
+            actual.add("interface:" + shape(supertype, owner, contract));
+        }
         for (var method : owner.getDeclaredMethods()) {
             if (visible(method.getModifiers()) && !method.isSynthetic()) {
                 actual.add("method:" + method.getName() + parameters(method.getGenericParameterTypes(), owner, contract) + ":"
