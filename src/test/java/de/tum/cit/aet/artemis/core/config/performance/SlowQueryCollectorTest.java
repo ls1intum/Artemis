@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.config.performance;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -11,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.core.config.performance.RepeatedQueryFinding.Type;
+import net.ttddyy.dsproxy.proxy.ParameterSetOperation;
 
 /**
  * Covers the repeated-query shapes the collector derives per request: N+1 (same template,
@@ -125,16 +125,21 @@ class SlowQueryCollectorTest {
         assertThat(collector.getReport().repeatedQueries()).isEmpty();
     }
 
+    /** One bound parameter, as the proxy records a {@code PreparedStatement.setXxx(index, value)} call. */
+    private static List<List<ParameterSetOperation>> parameter(Object value) {
+        return List.of(List.of(new ParameterSetOperation(null, new Object[] { 1, value })));
+    }
+
     @Test
     void parameterSignatureSeparatesValuesAndMatchesEqualOnes() {
         String rawSql = "select * from participation where exercise_id=?";
-        long first = SlowQueryListener.parameterSignature(rawSql, List.of(Map.of("1", 7L)));
+        long first = SlowQueryListener.parameterSignature(rawSql, parameter(7L));
 
-        assertThat(SlowQueryListener.parameterSignature(rawSql, List.of(Map.of("1", 7L)))).isEqualTo(first);
-        assertThat(SlowQueryListener.parameterSignature(rawSql, List.of(Map.of("1", 8L)))).isNotEqualTo(first);
+        assertThat(SlowQueryListener.parameterSignature(rawSql, parameter(7L))).isEqualTo(first);
+        assertThat(SlowQueryListener.parameterSignature(rawSql, parameter(8L))).isNotEqualTo(first);
         // array values are compared by content, not identity
-        assertThat(SlowQueryListener.parameterSignature(rawSql, List.of(Map.of("1", new byte[] { 1, 2 }))))
-                .isEqualTo(SlowQueryListener.parameterSignature(rawSql, List.of(Map.of("1", new byte[] { 1, 2 }))));
+        assertThat(SlowQueryListener.parameterSignature(rawSql, parameter(new byte[] { 1, 2 })))
+                .isEqualTo(SlowQueryListener.parameterSignature(rawSql, parameter(new byte[] { 1, 2 })));
         // literals inlined by Hibernate are part of the raw SQL, so they distinguish statements too
         assertThat(SlowQueryListener.parameterSignature("select * from course where id=1", List.of()))
                 .isNotEqualTo(SlowQueryListener.parameterSignature("select * from course where id=2", List.of()));

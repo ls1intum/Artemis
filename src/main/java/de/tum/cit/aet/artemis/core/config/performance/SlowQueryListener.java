@@ -4,8 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,6 +19,7 @@ import org.springframework.web.servlet.HandlerMapping;
 import net.ttddyy.dsproxy.ExecutionInfo;
 import net.ttddyy.dsproxy.QueryInfo;
 import net.ttddyy.dsproxy.listener.QueryExecutionListener;
+import net.ttddyy.dsproxy.proxy.ParameterSetOperation;
 
 /**
  * JDBC-level query execution listener, plugged into the datasource-proxy wrapper.
@@ -98,7 +97,7 @@ public class SlowQueryListener implements QueryExecutionListener {
         QueryInfo queryInfo = queryInfoList.get(0);
         String rawSql = queryInfo.getQuery();
         String normalizedSql = normalizeSql(rawSql);
-        long parameterSignature = parameterSignature(rawSql, queryInfo.getQueryArgsList());
+        long parameterSignature = parameterSignature(rawSql, queryInfo.getParametersList());
         int joinCount = countJoins(rawSql);
 
         // Extract HTTP context — may be null for async/background queries
@@ -146,24 +145,21 @@ public class SlowQueryListener implements QueryExecutionListener {
      * parameter lists; a collision would at worst merge two parameter sets of the same template
      * within one request, which is negligible at 64 bits.
      */
-    static long parameterSignature(String rawSql, List<Map<String, Object>> queryArgsList) {
+    static long parameterSignature(String rawSql, List<List<ParameterSetOperation>> parametersList) {
         long hash = rawSql != null ? rawSql.hashCode() : 0;
-        if (queryArgsList != null) {
-            for (Map<String, Object> args : queryArgsList) {
-                // Map.hashCode would be order-independent but, like Objects.hashCode, uses identity
-                // hashes for arrays (e.g. byte[] values), making equal values look different
-                long argsHash = 0;
-                for (Map.Entry<String, Object> arg : args.entrySet()) {
-                    argsHash += 31L * arg.getKey().hashCode() + valueHash(arg.getValue());
+        if (parametersList != null) {
+            for (List<ParameterSetOperation> parameterSet : parametersList) {
+                // each operation is one setXxx(index, value, ...) call; summed, so the order of the
+                // calls does not matter, and hashed by content (deepHashCode also covers byte[] values,
+                // whose plain hashCode is their identity)
+                long setHash = 0;
+                for (ParameterSetOperation operation : parameterSet) {
+                    setHash += Arrays.deepHashCode(operation.getArgs());
                 }
-                hash = hash * 1_000_003L + argsHash;
+                hash = hash * 1_000_003L + setHash;
             }
         }
         return hash;
-    }
-
-    private static int valueHash(Object value) {
-        return value instanceof Object[] array ? Arrays.deepHashCode(array) : value instanceof byte[] bytes ? Arrays.hashCode(bytes) : Objects.hashCode(value);
     }
 
     /** Counts SQL {@code join} keywords in the raw (un-normalised) query text. */

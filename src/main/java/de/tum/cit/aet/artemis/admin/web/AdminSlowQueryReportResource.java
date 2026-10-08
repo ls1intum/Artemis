@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.config.performance.SlowQueryCollector;
 import de.tum.cit.aet.artemis.core.config.performance.SlowQueryReportDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * Admin REST endpoint for the runtime slow-query detector.
@@ -36,6 +38,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
  */
 @Profile(PROFILE_CORE + " & " + SPRING_PROFILE_E2E_PERFORMANCE)
 @EnforceAdmin
+@FeatureUsage(UserFeature.MONITORING)
 @Lazy
 @RestController
 @RequestMapping("api/admin/performance/")
