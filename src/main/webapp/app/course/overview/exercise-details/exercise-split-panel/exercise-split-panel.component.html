@@ -85,7 +85,6 @@
             @if (showComplaintView()) {
                 @defer (on idle) {
                     <jhi-complaint-student-view
-                        class="mb-2 mt-2 ms-3"
                         [exercise]="exercise()"
                         [participation]="gradedStudentParticipation()!"
                         [result]="resultWithComplaint() ? resultWithComplaint()! : latestRatedResult()!"
@@ -95,7 +94,7 @@
             @if (showRating()) {
                 @defer (on idle) {
                     <div class="row">
-                        <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult()!" [participation]="gradedStudentParticipation()!" />
+                        <jhi-rating class="mt-2" [result]="latestRatedResult()!" [participation]="gradedStudentParticipation()!" />
                     </div>
                 }
             }

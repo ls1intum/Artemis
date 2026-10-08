@@ -8,7 +8,7 @@
             @if (isLoadingSummary()) {
                 <p class="mb-4! text-(--text-body-secondary)" jhiTranslate="loading"></p>
             } @else if (summaryKeys().length > 0) {
-                <dl class="mb-4 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 rounded-md border border-(--border-color) p-3" data-testid="delete-dialog-summary">
+                <dl class="mb-6! grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 rounded-md border border-(--border-color) p-4!" data-testid="delete-dialog-summary">
                     @for (summaryKey of summaryKeys(); track summaryKey) {
                         <dt class="font-normal" [jhiTranslate]="summaryKey"></dt>
                         <dd class="m-0 font-semibold">{{ entitySummary()![summaryKey] }}</dd>
@@ -16,7 +16,7 @@
                 </dl>
             }
             @for (checkKey of additionalCheckKeys(); track checkKey; let i = $index) {
-                <div class="mb-4 flex items-center gap-2">
+                <div class="mb-6! flex items-center gap-2">
                     <tumaet-ui-checkbox
                         [inputId]="'additional-check-' + i"
                         [name]="'checkbox-' + i"
