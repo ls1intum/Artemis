@@ -79,6 +79,7 @@
                 [switchEditMode]="switchEditMode"
                 [areAuxiliaryRepositoriesValid]="isAuxiliaryRepositoryInputValid()"
                 [invalidReasons]="getInvalidReasons()"
+                [revalidate]="revalidate"
                 (save)="save()"
                 (onCancel)="previousState()"
             />
