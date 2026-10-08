@@ -10,11 +10,13 @@
 </button>
 
 <tumaet-ui-popover #popoverContent [ariaLabel]="'artemisApp.exerciseActions.codePopoverAriaLabel' | artemisTranslate" placement="bottom">
-    @if (loadingData()) {
-        <div class="flex h-40 w-120 items-center justify-center">
-            <fa-icon [icon]="faCircleNotch" animation="spin" data-testid="code-button-popover-loading" />
-        </div>
-    } @else {
-        <jhi-code-button-popover-content [authenticationMechanisms]="authenticationMechanisms" />
-    }
+    <div class="w-120">
+        @if (loadingData()) {
+            <div class="flex h-40 w-full items-center justify-center">
+                <fa-icon [icon]="faCircleNotch" animation="spin" data-testid="code-button-popover-loading" />
+            </div>
+        } @else {
+            <jhi-code-button-popover-content [authenticationMechanisms]="authenticationMechanisms" />
+        }
+    </div>
 </tumaet-ui-popover>
