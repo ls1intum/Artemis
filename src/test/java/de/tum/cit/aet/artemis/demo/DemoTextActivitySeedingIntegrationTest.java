@@ -288,9 +288,6 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     /**
-     * The ongoing and the finished demo essay, which already exist because every test seeds first.
-     */
-    /**
      * The essays of the demo course, the ongoing one first, looked up instead of seeded, so that a test only sees what seeding left behind.
      */
     private List<TextExercise> demoEssays() {
