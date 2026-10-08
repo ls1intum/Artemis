@@ -4,6 +4,7 @@ import { FlexibleConnectedPositionStrategy, OverlayRef } from '@angular/cdk/over
 import { Subscription, fromEvent } from 'rxjs';
 import { TumAetUiOverlayPlacement, TumAetUiOverlayService } from '../overlay/tumaet-ui-overlay.service';
 import { TumAetUiTooltipContentComponent } from './tumaet-ui-tooltip-content.component';
+import { setInputs } from '../internal/set-inputs';
 
 let nextTooltipId = 0;
 
@@ -65,9 +66,8 @@ export class TumAetUiTooltipDirective implements OnDestroy {
             const [text, items, isEmpty] = [this.text(), this.items(), this.isEmpty()];
             if (isEmpty) {
                 this.hideNow();
-            } else {
-                this.contentRef?.setInput('text', text);
-                this.contentRef?.setInput('items', items);
+            } else if (this.contentRef) {
+                setInputs(this.contentRef, { text, items });
             }
         });
     }
@@ -148,14 +148,13 @@ export class TumAetUiTooltipDirective implements OnDestroy {
         // CDK may emit the initial flipped position synchronously during attachment.
         this.positionSub = strategy.positionChanges.subscribe((change) => {
             this.appliedPlacement = this.overlayService.placementFromPosition(change.connectionPair);
-            this.contentRef?.setInput('placement', this.appliedPlacement);
+            if (this.contentRef) {
+                setInputs(this.contentRef, { placement: this.appliedPlacement });
+            }
             this.updateArrowOffset();
         });
         this.contentRef = this.overlayRef.attach(new ComponentPortal(TumAetUiTooltipContentComponent));
-        this.contentRef.setInput('text', this.text());
-        this.contentRef.setInput('items', this.items());
-        this.contentRef.setInput('id', this.tooltipId);
-        this.contentRef.setInput('placement', this.appliedPlacement);
+        setInputs(this.contentRef, { text: this.text(), items: this.items(), id: this.tooltipId, placement: this.appliedPlacement });
         this.updateArrowOffset();
         const contentElement = this.contentRef.location.nativeElement as HTMLElement;
         this.interactionSub = new Subscription();
@@ -204,7 +203,9 @@ export class TumAetUiTooltipDirective implements OnDestroy {
             return;
         }
         const offset = Math.min(Math.max(hostCentre - bubbleStart, ARROW_EDGE_INSET_PX), bubbleLength - ARROW_EDGE_INSET_PX);
-        this.contentRef?.setInput('arrowOffsetPx', offset);
+        if (this.contentRef) {
+            setInputs(this.contentRef, { arrowOffsetPx: offset });
+        }
     }
 
     private addDescribedBy(): void {

@@ -441,6 +441,16 @@ export default tseslint.config(
             'localRules/no-navigation-in-guard-or-resolver': 'error',
         },
     },
+    // `ComponentRef.setInput(name: string, value: unknown)` is not type checked: a misspelled input only logs NG0303 at runtime. Declare
+    // the component in a template (a `@switch` for a closed set) or use the typed `setInputs` helper. Specs set inputs on fixtures and
+    // stay exempt. Rationale: documentation/docs/developer/guidelines/client-development.mdx ("Setting inputs of a component created in code").
+    {
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-aet-ui/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'localRules/no-component-ref-set-input': 'error',
+        },
+    },
     // Module-boundary rules: enforce the foundation ← shared-ui ← editor layering.
     // foundation/ is the base layer (no DOM/UI), shared-ui/ holds generic UI primitives,
     // editor/ holds the code/markdown editor stacks. The intent:

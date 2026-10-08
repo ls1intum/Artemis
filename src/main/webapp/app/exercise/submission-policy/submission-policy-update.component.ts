@@ -108,6 +108,12 @@ export class SubmissionPolicyUpdateComponent {
 
     form!: FormGroup; // built on the first programmingExercise emission, before the reactive form template renders
 
+    /**
+     * The form, as soon as it exists. Whoever needs to follow the form (for example the grading section, which tracks its validity) cannot rely on the order in which
+     * this component and its observer run their effects, so it reads this signal instead of the plain field.
+     */
+    readonly policyForm = signal<FormGroup | undefined>(undefined);
+
     // Both start as "none" so the reactive form part of the template stays hidden until the
     // exercise input arrives and the effect below initializes the form.
     readonly selectedSubmissionPolicyType = signal<SubmissionPolicyType>(SubmissionPolicyType.NONE);
@@ -204,6 +210,7 @@ export class SubmissionPolicyUpdateComponent {
             });
             this.submissionLimitControl = this.form.get('submissionLimit')! as FormControl;
             this.exceedingPenaltyControl = this.form.get('exceedingPenalty')! as FormControl;
+            this.policyForm.set(this.form);
         } else {
             // Boxed reset values also re-apply the disabled state: on an exercise switch the editable input
             // can differ from the exercise the form was created for, and a control that stays disabled

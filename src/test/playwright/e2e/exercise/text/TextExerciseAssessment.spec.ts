@@ -60,8 +60,7 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
                 page.goto(`/course-management/${course.id}/text-exercises/${exercise.id}/${view.route}`),
             ]);
             expect(response.status()).toBe(200);
-            // The page keeps navigating while it loads, and the browser drops the body of a response whose page moved on.
-            const participations = await readResponseJson<Record<string, unknown>[]>(response);
+            const participations: Record<string, unknown>[] = await readResponseJson(response);
             expect(participations.map((participation) => participation.participationId)).toContain(participationId);
             for (const participation of participations) {
                 for (const field of ['participantName', 'participantIdentifier', 'studentId', 'studentLogin', 'teamId', 'teamStudents', 'repositoryUri', 'buildPlanId']) {
