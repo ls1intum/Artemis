@@ -64,7 +64,8 @@ without those classes; learner-owned methods can remain TODO bodies.
 
 For an existing Ares 1 harness, keep the seeded path annotations and imports instead of migrating the harness.
 Use JUnit `DisplayNameGeneration` with `DisplayNameGenerator.Simple.class` so reports retain method names.
-Start with these supported imports and inspect dependency internals only for a concrete compiler diagnostic.
+Use these supported imports and helper signatures. For a compiler diagnostic, inspect the named generated source,
+not dependency internals. The sandbox tools do not permit dependency-cache or JAR inspection.
 
 `AFTER_DUE_DATE` is Artemis visibility metadata in `test-plan.json`, not an Ares `@Hidden` or
 `@Deadline` annotation. Use the same executable test annotations for visible and after-due-date
