@@ -67,8 +67,8 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
         // There should still be the same number of programming exercises.
         assertThat(programmingExerciseRepository.count()).isEqualTo(programmingExerciseCountBefore);
         // The programming exercise in the db should also be updated.
-        ProgrammingExercise programmingExerciseFromDb = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
+        ProgrammingExercise programmingExerciseFromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId())
+                .orElseThrow();
         assertThat(programmingExerciseFromDb.getProblemStatement()).isEqualTo(newProblem);
         assertThat(programmingExerciseFromDb.getTitle()).isEqualTo(newTitle);
     }
@@ -76,16 +76,14 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExerciseOnce() throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .orElseThrow();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExerciseTwice() throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .orElseThrow();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
         updateProgrammingExercise(programmingExercise, "new problem 2", "new title 2");
     }
@@ -101,7 +99,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any(), any());
         verify(groupNotificationScheduleService, timeout(2000).times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any(), any());
 
-        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId).orElseThrow();
+        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
         assertThat(fromDb.getProblemStatement()).isEqualTo(newProblem);
     }
 
@@ -121,16 +119,14 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
         verify(examLiveEventsService, timeout(2000).times(1)).createAndSendProblemStatementUpdateEvent(any(), any(), any());
         verify(groupNotificationScheduleService, never()).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any(), any());
 
-        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId())
-                .orElseThrow();
+        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId()).orElseThrow();
         assertThat(fromDb.getProblemStatement()).isEqualTo(newProblem);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateExerciseAutomaticFeedbackNoTestCases() throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .orElseThrow();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).isEmpty();
@@ -143,8 +139,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateExerciseAutomaticFeedbackTestCasesPositiveWeight() throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .orElseThrow();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         // test cases with weights > 0, changing to automatic feedback: update should work
@@ -156,8 +151,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     @EnumSource(AssessmentType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateExerciseTestCasesZeroWeight(AssessmentType assessmentType) throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .orElseThrow();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
@@ -179,8 +173,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateProgrammingExerciseAssessmentTypeToSemiAutomatic() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .orElseThrow();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExerciseRepository.save(programmingExercise);
 
@@ -195,8 +188,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
         assertThat(updatedExercise.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
 
         // Check that assessment type was stored correctly
-        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId())
-                .orElseThrow();
+        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId()).orElseThrow();
         assertThat(fromDb.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
     }
 
@@ -204,8 +196,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateProgrammingExerciseAssessmentTypeToAutomatic() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .orElseThrow();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExerciseRepository.save(programmingExercise);
 
@@ -220,8 +211,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
         assertThat(updatedExercise.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
 
         // Check that assessment type was stored correctly
-        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId())
-                .orElseThrow();
+        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId()).orElseThrow();
         assertThat(fromDb.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
     }
 

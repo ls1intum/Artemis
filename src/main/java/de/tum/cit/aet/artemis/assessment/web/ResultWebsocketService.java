@@ -100,13 +100,15 @@ public class ResultWebsocketService {
             var students = studentParticipation.getStudents();
 
             var resultDTO = ResultDTO.of(result);
-            students.stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
+            // An instructor conducting an exam test run simulates a student and must see what the student exam shows, see ResultService#filterSensitiveInformationIfNecessary
+            boolean isExamTestRun = studentParticipation.isTestRun() && exercise.isExamExercise();
+            students.stream().filter(student -> !isExamTestRun && authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                     .forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_RESULTS.at(), resultDTO));
 
             var filteredFeedback = result.createFilteredFeedbacks(!isWorkingPeriodOver, exercise);
             var filteredFeedbackResultDTO = ResultDTO.of(result, filteredFeedback);
 
-            students.stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
+            students.stream().filter(student -> isExamTestRun || !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                     .forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_RESULTS.at(), filteredFeedbackResultDTO));
         }
     }

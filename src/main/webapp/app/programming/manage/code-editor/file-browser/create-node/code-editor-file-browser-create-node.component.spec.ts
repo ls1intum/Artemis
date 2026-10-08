@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CodeEditorFileBrowserCreateNodeComponent } from 'app/programming/manage/code-editor/file-browser/create-node/code-editor-file-browser-create-node.component';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons';
@@ -11,6 +13,7 @@ describe('CodeEditorFileBrowserCreateNodeComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [CodeEditorFileBrowserCreateNodeComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         });
 
         fixture = TestBed.createComponent(CodeEditorFileBrowserCreateNodeComponent);

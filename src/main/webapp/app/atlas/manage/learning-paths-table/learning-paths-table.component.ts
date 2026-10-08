@@ -59,9 +59,8 @@ export class LearningPathsTableComponent {
     constructor() {
         effect(() => {
             const courseId = this.courseId();
-            (async () => {
-                await Promise.all([this.loadLearningPaths(courseId), this.loadAverageProgress(courseId)]);
-            })();
+            // Both loaders report their own failures through the alert service.
+            void Promise.all([this.loadLearningPaths(courseId), this.loadAverageProgress(courseId)]);
         });
     }
 

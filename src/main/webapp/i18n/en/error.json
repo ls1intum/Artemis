@@ -38,6 +38,7 @@
         "quizAlreadyVisible": "The quiz is already visible.",
         "quizAlreadyStarted": "The quiz has already been started.",
         "quizNotEndedYet": "The quiz has not ended yet.",
+        "quizOfTestExam": "Quizzes of test exams are evaluated when an attempt is handed in.",
         "quizAlreadyOpenForPractice": "The quiz is already open for practice.",
         "unknownAction": "This action cannot be performed.",
         "groupNotFound": "The group you entered was not found.",
