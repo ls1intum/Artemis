@@ -10,7 +10,7 @@
     position: sticky;
     top: 0;
     z-index: 18;
-    max-height: calc(100vh - var(--header-height) - var(--exam-height-offset) - var(--exam-update-footer-offset));
+    max-height: calc(100vh - var(--navbar-height) - 12rem);
     overflow-y: auto;
 }
 
