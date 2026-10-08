@@ -9,7 +9,7 @@ import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service'
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import dayjs from 'dayjs/esm';
-import { faAward, faClipboard, faEye, faFlaskVial, faHeartBroken, faListAlt, faThList, faTrash, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faAward, faClipboard, faEye, faFlaskVial, faListAlt, faThList, faTrash, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
@@ -22,9 +22,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamDeleteDialogComponent } from 'app/exam/shared/delete-dialog/exam-delete-dialog.component';
 import { CourseExamArchiveButtonComponent } from 'app/shared-ui/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
 import { ExamChecklistComponent } from '../exam-checklist-component/exam-checklist.component';
-import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
@@ -44,7 +41,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         CourseExamArchiveButtonComponent,
         ExamChecklistComponent,
         DetailOverviewListComponent,
-        FeatureOverlayComponent,
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleDirective,
         TumAetUiButtonDirective,
@@ -60,7 +56,6 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private gradingService = inject(GradingService);
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
-    private profileService = inject(ProfileService);
     private eventManager = inject(EventManager);
 
     readonly exam = signal<Exam>(undefined!);
@@ -86,11 +81,8 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     faListAlt = faListAlt;
     faClipboard = faClipboard;
     faThList = faThList;
-    faHeartBroken = faHeartBroken;
     faAward = faAward;
     faFlaskVial = faFlaskVial;
-
-    readonly plagiarismEnabled = signal(false);
 
     isAdmin = false;
     readonly canHaveBonus = signal(false);
@@ -118,8 +110,6 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     this.canHaveBonus.set(gradingSystemResponse.body.gradeSteps.gradeType === GradeType.GRADE);
                 }
             });
-
-            this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
         });
     }
 
