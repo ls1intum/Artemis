@@ -582,6 +582,23 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
+     * Deletes the completed result of an older build of a submission that finalized before a newer build whose aggregate
+     * was created first. Left in place, its higher id would make it the submission's latest result over the newer build's.
+     *
+     * @param resultId the id of the older build's result
+     */
+    public void deleteSupersededResult(long resultId) {
+        Result supersededResult = resultRepository.findById(resultId).orElse(null);
+        if (supersededResult == null || supersededResult.getAssessmentType() != AssessmentType.AUTOMATIC) {
+            return;
+        }
+        if (supersededResult.getSubmission() instanceof ProgrammingSubmission submission) {
+            buildLogService.deleteContainerBuildLogs(submission, supersededResult);
+        }
+        resultService.deleteResult(supersededResult, true);
+    }
+
+    /**
      * Deletes older in-progress aggregates of the submission that no build job links to. A build interrupted between
      * creating its aggregate and linking its job leaves one that nothing completes and that would hide a later assessment.
      * The caller holds the participation's lock, under which a running build creates its aggregate and links its job, so

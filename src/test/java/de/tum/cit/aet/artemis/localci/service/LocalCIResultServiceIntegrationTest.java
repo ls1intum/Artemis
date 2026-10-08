@@ -961,6 +961,41 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(programmingSubmissionRepository.findProgrammingSubmissionWithResultsById(submissionId).orElseThrow().getLatestResult().getId()).isEqualTo(newer.getId());
     }
 
+    /**
+     * An older build that finalizes first, with a result created after the newer build's, gives way once the newer build
+     * finalizes: its higher result id would otherwise keep it the latest result.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testANewerBuildFinalizingLastReplacesTheResultOfAnOlderBuildCreatedAfterIt() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        String commitHash = "0000000000000000000000000000000000000014";
+        long submissionId = submissionOf(participation, commitHash).getId();
+        ZonedDateTime olderTriggered = ZonedDateTime.now().minusMinutes(10);
+
+        Result newer = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null).result();
+        Result older = programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "older build failed"), false, "container_a", null).result();
+        saveGroupJob("first-a-0", "first-a", participation, commitHash, BuildStatus.SUCCESSFUL, older, true, olderTriggered, 0);
+        saveGroupJob("first-b-0", "first-b", participation, commitHash, BuildStatus.SUCCESSFUL, newer, false, olderTriggered.plusMinutes(1), 0);
+        saveGroupJob("first-b-1", "first-b", participation, commitHash, BuildStatus.QUEUED, null, false, olderTriggered.plusMinutes(1), 0);
+
+        assertThat(sweep()).as("only the older build is complete").isOne();
+        assertThat(programmingSubmissionRepository.findProgrammingSubmissionWithResultsById(submissionId).orElseThrow().getLatestResult().getId()).isEqualTo(older.getId());
+
+        // the newer build's second container reports
+        BuildJob secondContainerJob = buildJobRepository.findByBuildJobIdElseThrow("first-b-1");
+        secondContainerJob.setBuildStatus(BuildStatus.SUCCESSFUL);
+        secondContainerJob.setResult(newer);
+        secondContainerJob.setBuildCompletionDate(ZonedDateTime.now().minusMinutes(5));
+        buildJobRepository.save(secondContainerJob);
+        assertThat(sweep()).isOne();
+
+        assertThat(resultRepository.findById(older.getId())).as("the older build's result is deleted").isEmpty();
+        assertThat(programmingSubmissionRepository.findProgrammingSubmissionWithResultsById(submissionId).orElseThrow().getLatestResult().getId()).isEqualTo(newer.getId());
+        assertThat(programmingSubmissionRepository.findById(submissionId).orElseThrow().isBuildFailed()).isFalse();
+    }
+
     /** An older build that finalizes after a newer one was merged into the assessment neither replaces that feedback nor the build state. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

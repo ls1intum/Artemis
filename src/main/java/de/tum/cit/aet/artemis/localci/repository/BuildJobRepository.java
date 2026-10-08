@@ -138,6 +138,26 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     boolean existsFinalizedBuildOfSubmissionTriggeredAfter(@Param("aggregatedResultId") long aggregatedResultId, @Param("submittedAfter") ZonedDateTime submittedAfter);
 
     /**
+     * Finds the completed automatic results of the aggregated result's submission that builds triggered before the given
+     * date produced, but that were created after the aggregated result and would therefore be taken for the latest result.
+     *
+     * @param aggregatedResultId the id of an aggregated result of the submission
+     * @param submittedBefore    only builds triggered before this date
+     * @return the ids of these results
+     */
+    @Query("""
+            SELECT DISTINCT b.result.id
+            FROM BuildJob b, Result aggregate
+            WHERE aggregate.id = :aggregatedResultId
+                AND b.result.submission = aggregate.submission
+                AND b.result.id > :aggregatedResultId
+                AND b.buildSubmissionDate < :submittedBefore
+                AND b.result.completionDate IS NOT NULL
+                AND b.result.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+            """)
+    List<Long> findLaterCreatedResultsOfSubmissionTriggeredBefore(@Param("aggregatedResultId") long aggregatedResultId, @Param("submittedBefore") ZonedDateTime submittedBefore);
+
+    /**
      * Links the build jobs that link to one result to another result instead.
      *
      * @param resultId  the id of the result the jobs link to now
