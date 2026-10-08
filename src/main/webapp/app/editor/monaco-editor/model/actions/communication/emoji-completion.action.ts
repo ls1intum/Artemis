@@ -52,7 +52,7 @@ export class EmojiCompletionAction extends TextEditorAction {
     static readonly DEFAULT_INSERT_TEXT = ':';
 
     constructor(private readonly emojiSearch: EmojiSearch) {
-        super(EmojiCompletionAction.ID, 'artemisApp.metis.editor.emoji', faSmile, undefined, true);
+        super(EmojiCompletionAction.ID, 'artemisApp.communication.editor.emoji', faSmile, undefined, true);
     }
 
     /**

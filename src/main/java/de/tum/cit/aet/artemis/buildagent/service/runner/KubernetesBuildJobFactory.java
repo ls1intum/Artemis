@@ -121,7 +121,7 @@ public class KubernetesBuildJobFactory {
         labels.put("artemis.cit.tum.de/retry", Integer.toString(buildJob.retryCount()));
         labels.put("artemis.cit.tum.de/network", networkMode);
 
-        long activeDeadline = effectiveBuildTimeout(buildJob) + properties.podStartTimeoutSeconds() + properties.resultCollectionTimeoutSeconds()
+        long activeDeadline = (long) effectiveBuildTimeout(buildJob) + properties.podStartTimeoutSeconds() + properties.resultCollectionTimeoutSeconds()
                 + properties.activeDeadlineGraceSeconds();
         var podSpec = new PodSpecBuilder().withRestartPolicy("Never").withServiceAccountName(properties.workloadServiceAccount()).withAutomountServiceAccountToken(false)
                 .withNodeSelector(properties.nodeSelector()).withTolerations(tolerations()).withImagePullSecrets(imagePullSecrets()).addNewVolume().withName(WORKSPACE_VOLUME)

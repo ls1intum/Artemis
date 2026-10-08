@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -45,6 +46,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
@@ -59,6 +62,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTitleDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -77,7 +81,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("management/exercise-management")
+@FeatureUsage(UserFeature.EXERCISE_MANAGEMENT)
 @RestController
 @RequestMapping("api/exercise/")
 public class ExerciseResource {
@@ -116,12 +120,16 @@ public class ExerciseResource {
 
     private final CourseAthenaConfigRepository courseAthenaConfigRepository;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository,
             QuizBatchService quizBatchService, ParticipationRepository participationRepository, ExerciseVersionService exerciseVersionService,
-            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, CourseAthenaConfigRepository courseAthenaConfigRepository) {
+            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, CourseAthenaConfigRepository courseAthenaConfigRepository,
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -169,6 +177,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise,
      *         or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.EXERCISE_DETAILS)
     @GetMapping("exercises/{exerciseId}")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -177,7 +186,9 @@ public class ExerciseResource {
         log.debug("REST request to get Exercise : {}", exerciseId);
 
         User user = userRepository.getUserWithAuthorities();
-        Exercise exercise = exerciseRepository.findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdWithCategoriesElseThrow(exerciseId);
+        // The response reports the team assignment configuration, which an exercise does not carry by itself.
+        teamAssignmentConfigRepository.attachTo(exercise);
 
         // Exam exercise
         if (exercise.isExamExercise()) {
@@ -234,6 +245,7 @@ public class ExerciseResource {
      *         403 (Forbidden) if the current user does not have access to the
      *         example solution.
      */
+    @FeatureUsage(UserFeature.EXERCISE_DETAILS)
     @GetMapping("exercises/{exerciseId}/example-solution")
     @EnforceAtLeastStudent
     public ResponseEntity<ExerciseResponseDTO> getExerciseForExampleSolution(@PathVariable Long exerciseId) {
@@ -269,6 +281,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise,
      *         or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("exercises/{exerciseId}/for-assessment-dashboard")
     @EnforceAtLeastTutor
     public ResponseEntity<ExerciseResponseDTO> getExerciseForAssessmentDashboard(@PathVariable Long exerciseId) {
@@ -283,7 +296,8 @@ public class ExerciseResource {
                 throw new BadRequestAlertException("Programming exercises with only automatic assessment should NOT be available on the assessment dashboard", "Exercise",
                         "programmingExerciseWithOnlyAutomaticAssessment");
             }
-            exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
+            exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(exerciseId);
+            teamAssignmentConfigRepository.attachTo(exercise);
         }
         // after the reload above, which answers from its own persistence context and carries no configuration
         courseAthenaConfigRepository.attachToCourseOf(exercise);
@@ -291,7 +305,8 @@ public class ExerciseResource {
         if (exercise.isExamExercise()) {
             // let the client explain why assessment is not possible yet and from when on it is, instead of running into a 403
             ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
-            var examAssessmentDates = ExerciseDateService.computeExamAssessmentDates(exercise, api.getLatestIndividualExamEndDate(exercise.getExam()));
+            var exam = exercise.getExam();
+            var examAssessmentDates = ExerciseDateService.computeExamAssessmentDates(exercise, exam, api.getLatestIndividualExamEndDate(exam));
             if (examAssessmentDates != null) {
                 exercise.setLatestExamEndDate(examAssessmentDates.latestExamEndDate());
                 exercise.setAssessmentPossibleFrom(examAssessmentDates.assessmentPossibleFrom());
@@ -322,6 +337,8 @@ public class ExerciseResource {
      * @return the title of the exercise wrapped in an ResponseEntity or 404 Not
      *         Found if no exercise with that id exists
      */
+    @FeatureUsage(UserFeature.EXERCISE_DETAILS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("exercises/{exerciseId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getExerciseTitle(@PathVariable Long exerciseId) {
@@ -351,6 +368,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the stats, or
      *         with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("exercises/{exerciseId}/stats-for-assessment-dashboard")
     @EnforceAtLeastTutor
     public ResponseEntity<StatsForDashboardDTO> getStatsForExerciseAssessmentDashboard(@PathVariable Long exerciseId) {
@@ -386,6 +404,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise,
      *         or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.EXERCISE_DETAILS)
     @GetMapping("exercises/{exerciseId}/details")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -443,6 +462,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and new state of the
      *         correction toggle state
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @PutMapping("exercises/{exerciseId}/toggle-second-correction")
     @EnforceAtLeastInstructor
     public ResponseEntity<Boolean> toggleSecondCorrectionEnabled(@PathVariable Long exerciseId) {
@@ -461,6 +481,7 @@ public class ExerciseResource {
      *                       from
      * @return the ResponseEntity with status 200 (OK) and the latest due date
      */
+    @FeatureUsage(UserFeature.EXERCISE_DETAILS)
     @GetMapping("exercises/{exerciseId}/latest-due-date")
     @EnforceAtLeastStudent
     public ResponseEntity<ZonedDateTime> getLatestDueDate(@PathVariable Long exerciseId) {

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -108,8 +109,8 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
         testCaseService.reset(programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId())
+                .orElseThrow();
 
         for (ProgrammingExerciseTestCase testCase : testCases) {
             assertThat(testCase.getWeight()).isEqualTo(1.0);
@@ -120,7 +121,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
 
         verify(groupNotificationService).notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
-        verify(websocketMessagingService).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
+        verify(websocketMessagingService).sendMessage(topic("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed"), eq(true));
     }
 
     @Test
@@ -138,13 +139,13 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
 
         testCaseService.update(programmingExercise.getId(), programmingExerciseTestCaseDTOS);
 
-        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId())
+                .orElseThrow();
 
         assertThat(testCaseRepository.findById(testCase.getId()).orElseThrow().getWeight()).isEqualTo(400);
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
         verify(groupNotificationService).notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
-        verify(websocketMessagingService).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
+        verify(websocketMessagingService).sendMessage(topic("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed"), eq(true));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -181,7 +182,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
         programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise.getId(), false);
 
         assertThat(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()).getTestCasesChanged()).isFalse();
-        verify(websocketMessagingService).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", false);
+        verify(websocketMessagingService).sendMessage(topic("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed"), eq(false));
     }
 
     /**
@@ -193,13 +194,13 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
     void shouldNotNotifyWhenTestCasesChangedAlreadyHasThatValue() {
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
         programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise.getId(), true);
-        verify(websocketMessagingService).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
+        verify(websocketMessagingService).sendMessage(topic("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed"), eq(true));
 
         programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise.getId(), true);
 
         assertThat(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()).getTestCasesChanged()).isTrue();
         // Still exactly the one message from the first call.
-        verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
+        verify(websocketMessagingService, times(1)).sendMessage(topic("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed"), eq(true));
     }
 
     /**
@@ -214,6 +215,6 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
         programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise.getId(), true);
 
         assertThat(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()).getTestCasesChanged()).isFalse();
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed"), any(Boolean.class));
+        verify(websocketMessagingService, never()).sendMessage(topic("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed"), any(Boolean.class));
     }
 }

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exam.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_EXERCISE_START_STATUS;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.cit.aet.artemis.exam.service.ExamSubmissionService.isContentEqualTo;
+import static de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics.EXERCISE_START_STATUS;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -89,8 +90,6 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Lazy
 @Service
 public class StudentExamService {
-
-    private static final String EXAM_EXERCISE_START_STATUS_TOPIC = "/topic/exams/%s/exercise-start-status";
 
     private static final Logger log = LoggerFactory.getLogger(StudentExamService.class);
 
@@ -362,7 +361,17 @@ public class StudentExamService {
         QuizSubmission quizSubmissionFromClient = (QuizSubmission) submissionFromClient;
 
         if (!isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
-            quizSubmissionRepository.save(quizSubmissionFromClient);
+            // The answers of the hand-in come without ids, and the database allows one answer per question: they are written to the rows of the stored answers,
+            // which were loaded above for the comparison. Only the answers of the submission that is saved count, so that an answer can never be moved to another one.
+            Map<Long, Long> storedAnswerIdByQuestionId = new HashMap<>();
+            if (existingSubmissionInDatabase != null && Objects.equals(existingSubmissionInDatabase.getId(), quizSubmissionFromClient.getId())) {
+                for (SubmittedAnswer storedAnswer : existingSubmissionInDatabase.getSubmittedAnswers()) {
+                    if (storedAnswer.getQuizQuestion() != null) {
+                        storedAnswerIdByQuestionId.merge(storedAnswer.getQuizQuestion().getId(), storedAnswer.getId(), Math::max);
+                    }
+                }
+            }
+            quizSubmissionRepository.saveUpdatingStoredAnswers(quizSubmissionFromClient, storedAnswerIdByQuestionId);
             saveSubmissionVersion(currentUser, submissionFromClient);
         }
     }
@@ -587,10 +596,9 @@ public class StudentExamService {
         StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true)
                 .orElseThrow(() -> new EntityNotFoundException("StudentExam with id:" + testRunId + "does not exist"));
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
+        // The participations are created as test run participations right away. Flagging them afterwards would relabel
+        // whatever the setup returned, and that is the graded participation whenever the instructor already has one.
         setUpExerciseParticipationsAndSubmissions(testRun, generatedParticipations, false);
-        // use the flag test run for all participations of the created test run
-        generatedParticipations.forEach(studentParticipation -> studentParticipation.setTestRun(true));
-        studentParticipationRepository.saveAll(generatedParticipations);
     }
 
     /**
@@ -622,20 +630,27 @@ public class StudentExamService {
         // A single student exam is a handful of exercises, so asking per exercise is cheap here. The bulk preparation in
         // startExercises asks for a whole cohort at once instead.
         Set<Long> startedExerciseIds = studentExam.isTestExam() ? Set.of()
-                : exercises.stream().filter(exercise -> hasInitializedParticipation(exercise.getId(), student)).map(Exercise::getId).collect(Collectors.toSet());
-        setUpExerciseParticipationsAndSubmissions(studentExam.getId(), student, exercises, studentExam.isTestExam(), startedExerciseIds, generatedParticipations, failFast);
+                : exercises.stream().filter(exercise -> hasInitializedParticipation(exercise.getId(), student, studentExam.isTestRun())).map(Exercise::getId)
+                        .collect(Collectors.toSet());
+        setUpExerciseParticipationsAndSubmissions(studentExam.getId(), student, exercises, studentExam.isTestExam(), studentExam.isTestRun(), startedExerciseIds,
+                generatedParticipations, failFast);
     }
 
     /**
      * Whether the student already has a participation for the exercise that reached {@link InitializationState#INITIALIZED}.
+     * <p>
+     * Only participations on the same side of the test run divide count. A test run reads back exactly its own
+     * participations, so an instructor's graded participation must not make the test run skip creating one, and the
+     * other way round: the exercise would then be conducted without a participation to submit to.
      *
      * @param exerciseId the id of the exercise
      * @param student    the student
+     * @param testRun    whether the participation is being set up for a test run
      * @return true if such a participation exists
      */
-    private boolean hasInitializedParticipation(long exerciseId, User student) {
-        return studentParticipationRepository.findByExerciseIdAndStudentId(exerciseId, student.getId()).stream().anyMatch(
-                participation -> participation.getInitializationState() != null && participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED));
+    private boolean hasInitializedParticipation(long exerciseId, User student, boolean testRun) {
+        return studentParticipationRepository.existsByExerciseIdAndStudentIdAndTestRunAndInitializationStateIn(exerciseId, student.getId(), testRun,
+                InitializationState.statesThatCompleted(InitializationState.INITIALIZED));
     }
 
     /**
@@ -648,12 +663,13 @@ public class StudentExamService {
      * @param student                 the student to create the participations for
      * @param exercises               the exercises of that student exam
      * @param testExam                whether the student exam belongs to a test exam, in which case a new participation is always created
+     * @param testRun                 whether the student exam is a test run, whose participations are kept apart from the graded ones
      * @param startedExerciseIds      the ids of those exercises the student already has a fully initialized participation for
      * @param generatedParticipations List of generated participations to track how many participations have been generated
      * @param failFast                whether to rethrow the first failure instead of continuing with the next exercise
      */
-    private void setUpExerciseParticipationsAndSubmissions(long studentExamId, User student, List<Exercise> exercises, boolean testExam, Set<Long> startedExerciseIds,
-            List<StudentParticipation> generatedParticipations, boolean failFast) {
+    private void setUpExerciseParticipationsAndSubmissions(long studentExamId, User student, List<Exercise> exercises, boolean testExam, boolean testRun,
+            Set<Long> startedExerciseIds, List<StudentParticipation> generatedParticipations, boolean failFast) {
         for (Exercise exercise : exercises) {
             // Stands in only if no caller context reached this thread; a real user's identity is kept.
             SecurityUtils.setAuthorizationObject();
@@ -666,7 +682,7 @@ public class StudentExamService {
                         programmingExercise.setTemplateParticipation(programmingExerciseReloaded.getTemplateParticipation());
                     }
                     // this will also create initial (empty) submissions for quiz, text, modeling and file upload
-                    StudentParticipation participation = participationService.startExercise(exercise, student, true);
+                    StudentParticipation participation = participationService.startExercise(exercise, student, true, testRun);
 
                     generatedParticipations.add(participation);
 
@@ -718,7 +734,8 @@ public class StudentExamService {
         var exerciseStartData = studentExamIds == null ? studentExamRepository.findExerciseStartDataByExamId(examId)
                 : studentExamRepository.findExerciseStartDataByExamIdAndStudentExamIds(examId, studentExamIds);
         var exercisesById = loadExercisesForPreparation(exerciseStartData);
-        // Which students are already set up, asked once per exercise rather than once per student and exercise
+        // Which students are already set up, asked once per exercise rather than once per student and exercise. Test runs
+        // are not prepared here, so only the graded participations count.
         var startedStudentIdsByExerciseId = testExam ? Map.<Long, Set<Long>>of() : loadStartedStudentIds(exercisesById.keySet());
         // LinkedHashMap so the student exams are prepared in the order the query returned them
         var rowsByStudentExamId = exerciseStartData.stream()
@@ -745,8 +762,8 @@ public class StudentExamService {
                 var startedExerciseIds = exercises.stream().filter(exercise -> startedStudentIdsByExerciseId.getOrDefault(exercise.getId(), Set.of()).contains(student.getId()))
                         .map(Exercise::getId).collect(Collectors.toSet());
                 return CompletableFuture
-                        .runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExamId, student, exercises, testExam, startedExerciseIds, generatedParticipations, true),
-                                threadPool)
+                        .runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExamId, student, exercises, testExam, false, startedExerciseIds, generatedParticipations,
+                                true), threadPool)
                         .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExamCount,
                                 generatedParticipations.size(), startedAt, lock))
                         .exceptionally(throwable -> {
@@ -802,7 +819,8 @@ public class StudentExamService {
         var startedStates = InitializationState.statesThatCompleted(InitializationState.INITIALIZED);
         Map<Long, Set<Long>> startedStudentIdsByExerciseId = new HashMap<>();
         for (Long exerciseId : exerciseIds) {
-            startedStudentIdsByExerciseId.put(exerciseId, studentParticipationRepository.findStudentIdsWithParticipationInStateByExerciseId(exerciseId, startedStates));
+            startedStudentIdsByExerciseId.put(exerciseId,
+                    studentParticipationRepository.findStudentIdsWithParticipationInStateByExerciseIdAndTestRun(exerciseId, false, startedStates));
         }
         return startedStudentIdsByExerciseId;
     }
@@ -831,7 +849,7 @@ public class StudentExamService {
             else {
                 log.warn("Unable to add exam exercise start status to distributed cache because it is null");
             }
-            websocketMessagingService.sendMessage(EXAM_EXERCISE_START_STATUS_TOPIC.formatted(examId), status);
+            websocketMessagingService.sendMessage(EXERCISE_START_STATUS.at(examId), status);
         }
         catch (Exception e) {
             log.warn("Failed to send exercise preparation status", e);

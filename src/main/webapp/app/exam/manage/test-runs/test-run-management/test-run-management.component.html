@@ -1,22 +1,23 @@
 <div>
     <div *titleBarTitle class="flex items-center">
-        <h5 class="mb-0">
+        <h5 class="mb-0!">
             <span jhiTranslate="artemisApp.examManagement.testRun.title"></span>
         </h5>
     </div>
     <ng-template titleBarActions>
-        <div [ngbTooltip]="'artemisApp.examManagement.testRun.createTestRunDisabled' | artemisTranslate" [disableTooltip]="examContainsExercises()">
+        <div [tumAetUiTooltip]="examContainsExercises() ? '' : ('artemisApp.examManagement.testRun.createTestRunDisabled' | artemisTranslate)">
             @if (course()?.isAtLeastInstructor) {
                 <button
+                    type="button"
                     id="createTestRunButton"
-                    tumUiButton
+                    tumAetUiButton
                     size="small"
                     (click)="openCreateTestRunModal()"
                     [disabled]="isLoading() || !examContainsExercises()"
                     [title]="'artemisApp.examManagement.testRun.setup' | artemisTranslate"
                 >
                     @if (isLoading()) {
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <fa-icon [icon]="faSpinner" animation="spin" />
                     }
                     <fa-icon [icon]="faPlus" />
                     <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.testRun.setup"></span>
@@ -24,14 +25,16 @@
             }
         </div>
         @if (exam() && !exam()?.testExam) {
-            <div [ngbTooltip]="'artemisApp.examManagement.testRun.assessTestRunDisabled' | artemisTranslate" [disableTooltip]="testRunCanBeAssessed()">
+            <div [tumAetUiTooltip]="testRunCanBeAssessed() ? '' : ('artemisApp.examManagement.testRun.assessTestRunDisabled' | artemisTranslate)">
                 @if (course()?.isAtLeastInstructor) {
                     <a
                         [title]="'artemisApp.examManagement.testRun.assess' | artemisTranslate"
-                        tumUiButton
+                        tumAetUiButton
                         size="small"
                         [routerLink]="['/course-management', course()?.id, 'exams', exam()?.id, 'test-runs', 'assess']"
-                        [class.disabled]="isLoading() || !testRunCanBeAssessed()"
+                        [attr.aria-disabled]="isLoading() || !testRunCanBeAssessed()"
+                        [attr.tabindex]="isLoading() || !testRunCanBeAssessed() ? -1 : undefined"
+                        [class.pointer-events-none]="isLoading() || !testRunCanBeAssessed()"
                     >
                         <fa-icon [icon]="faCheck" />
                         <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.testRun.assess"></span>
@@ -40,101 +43,79 @@
             </div>
         }
     </ng-template>
-    <div style="padding-bottom: 10px">
+    <div class="pb-2.5">
         <span jhiTranslate="artemisApp.examManagement.testRun.text"></span>
     </div>
-    <div class="alert alert-warning" jhiTranslate="artemisApp.examManagement.testRun.reminderToDelete"></div>
+    <tumaet-ui-message severity="warn" class="mb-4" [text]="'artemisApp.examManagement.testRun.reminderToDelete' | artemisTranslate" />
     @if (testRuns()) {
-        <div class="table-responsive">
-            <table class="table table-striped">
+        <div class="overflow-x-auto">
+            <table tumAetUiTable striped [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
                 <thead>
-                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
-                        <th class="d-none d-md-table-cell" jhiSortBy="id">
-                            <span jhiTranslate="global.field.id"></span>
-                            <fa-icon [icon]="faSort" />
-                        </th>
-                        <th class="d-none d-md-table-cell" jhiSortBy="id">
-                            <span jhiTranslate="artemisApp.examManagement.testRun.author"></span>
-                            <fa-icon [icon]="faSort" />
-                        </th>
-                        <th jhiSortBy="workingTime">
-                            <span jhiTranslate="artemisApp.studentExams.workingTime"></span>
-                            <fa-icon [icon]="faSort" />
-                        </th>
-                        <th class="d-none d-md-table-cell" jhiSortBy="started">
-                            <span jhiTranslate="artemisApp.studentExams.started"></span>
-                            <fa-icon [icon]="faSort" />
-                        </th>
-                        <th class="d-none d-md-table-cell" jhiSortBy="submitted">
-                            <span jhiTranslate="artemisApp.studentExams.submitted"></span>
-                            <fa-icon [icon]="faSort" />
-                        </th>
-                        <th class="d-none d-md-table-cell" jhiSortBy="submissionDate">
-                            <span jhiTranslate="artemisApp.studentExams.submissionDate"></span>
-                            <fa-icon [icon]="faSort" />
-                        </th>
+                    <tr>
+                        <th class="hidden md:table-cell" tumAetUiSortableColumn="id"><span jhiTranslate="global.field.id"></span></th>
+                        <th tumAetUiSortableColumn="user.name"><span jhiTranslate="artemisApp.examManagement.testRun.author"></span></th>
+                        <th tumAetUiSortableColumn="workingTime"><span jhiTranslate="artemisApp.studentExams.workingTime"></span></th>
+                        <th tumAetUiSortableColumn="started"><span jhiTranslate="artemisApp.studentExams.started"></span></th>
+                        <th tumAetUiSortableColumn="submitted"><span jhiTranslate="artemisApp.studentExams.submitted"></span></th>
+                        <th tumAetUiSortableColumn="submissionDate"><span jhiTranslate="artemisApp.studentExams.submissionDate"></span></th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     @for (testRun of testRuns(); track trackId($index, testRun)) {
                         <tr [id]="'testrun-' + testRun.id">
-                            <td class="testrun-id d-none d-md-table-cell">
+                            <td class="hidden md:table-cell" data-testid="test-run-id">
                                 <a [routerLink]="[testRun.id]">{{ testRun.id }}</a>
                             </td>
                             <td>
                                 <a> {{ testRun.user?.name || '--' }}</a>
                             </td>
-                            <td class="working-time">{{ testRun.workingTime || 0 | artemisDurationFromSeconds }}</td>
-                            <td class="started" jhiTranslate="{{ testRun.started ? 'global.generic.yes' : 'global.generic.no' }}"></td>
-                            <td class="submitted" jhiTranslate="{{ testRun.submitted ? 'global.generic.yes' : 'global.generic.no' }}"></td>
+                            <td data-testid="test-run-working-time">{{ testRun.workingTime || 0 | artemisDurationFromSeconds }}</td>
+                            <td data-testid="test-run-started" jhiTranslate="{{ testRun.started ? 'global.generic.yes' : 'global.generic.no' }}"></td>
+                            <td data-testid="test-run-submitted" jhiTranslate="{{ testRun.submitted ? 'global.generic.yes' : 'global.generic.no' }}"></td>
                             <td>{{ testRun.submissionDate | artemisDate }}</td>
-                            <td [width]="350">
-                                <div class="w-100 text-end">
-                                    @if (course()?.isAtLeastInstructor) {
-                                        <div class="btn-group">
-                                            @if (testRun.user?.id === instructor()?.id) {
-                                                @if (!testRun.submitted) {
-                                                    <a class="start-testrun btn btn-primary btn-sm me-1 mb-1" [routerLink]="['../test-runs/' + testRun.id + '/conduction']">
-                                                        @if (!testRun.started) {
-                                                            <span jhiTranslate="artemisApp.course.startDate"></span>
-                                                        } @else {
-                                                            <span jhiTranslate="artemisApp.examParticipation.continue"></span>
-                                                        }
-                                                    </a>
+                            <td class="w-88">
+                                @if (course()?.isAtLeastInstructor) {
+                                    <div class="flex flex-wrap justify-end gap-1">
+                                        @if (testRun.user?.id === instructor()?.id && !testRun.submitted) {
+                                            <a tumAetUiButton size="small" data-testid="test-run-start" [routerLink]="['../test-runs/' + testRun.id + '/conduction']">
+                                                @if (!testRun.started) {
+                                                    <span jhiTranslate="artemisApp.course.startDate"></span>
                                                 } @else {
-                                                    <a class="btn btn-primary btn-sm me-1 mb-1" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
-                                                        <span jhiTranslate="artemisApp.exam.summary"></span>
-                                                    </a>
+                                                    <span jhiTranslate="artemisApp.examParticipation.continue"></span>
                                                 }
-                                            } @else {
-                                                <a class="btn btn-primary btn-sm me-1 mb-1" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
-                                                    <span jhiTranslate="artemisApp.exam.summary"></span>
-                                                </a>
-                                            }
-                                            <a
-                                                class="manage-worktime btn btn-primary btn-sm me-1 mb-1"
-                                                [routerLink]="['/course-management', course()!.id, 'exams', exam()!.id, 'test-runs', testRun.id]"
-                                                [class.disabled]="testRun.started"
-                                            >
-                                                <span jhiTranslate="artemisApp.examManagement.testRun.manage"></span>
                                             </a>
-                                            @if (testRun.id) {
-                                                <button
-                                                    jhiDeleteButton
-                                                    [entityTitle]="'artemisApp.examManagement.testRun.testRun' | artemisTranslate"
-                                                    deleteQuestion="artemisApp.examManagement.testRun.delete.question"
-                                                    deleteConfirmationText="artemisApp.examManagement.testRun.delete.typeNameToConfirm"
-                                                    (delete)="deleteTestRun(testRun.id)"
-                                                    [dialogError]="dialogError$"
-                                                    class="delete-testrun btn btn-primary btn-sm me-1 mb-1"
-                                                >
-                                                    <fa-icon [icon]="faTimes" />
-                                                </button>
-                                            }
-                                        </div>
-                                    }
-                                </div>
+                                        } @else {
+                                            <a tumAetUiButton size="small" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
+                                                <span jhiTranslate="artemisApp.exam.summary"></span>
+                                            </a>
+                                        }
+                                        <a
+                                            tumAetUiButton
+                                            size="small"
+                                            data-testid="test-run-manage-worktime"
+                                            [routerLink]="['/course-management', course()!.id, 'exams', exam()!.id, 'test-runs', testRun.id]"
+                                            [attr.aria-disabled]="!!testRun.started"
+                                            [attr.tabindex]="testRun.started ? -1 : undefined"
+                                            [class.pointer-events-none]="testRun.started"
+                                        >
+                                            <span jhiTranslate="artemisApp.examManagement.testRun.manage"></span>
+                                        </a>
+                                        @if (testRun.id) {
+                                            <button
+                                                type="button"
+                                                tumAetUiButton
+                                                severity="danger"
+                                                size="small"
+                                                data-testid="test-run-delete"
+                                                [attr.aria-label]="'entity.action.delete' | artemisTranslate"
+                                                (click)="openDeleteDialog(testRun)"
+                                            >
+                                                <fa-icon [icon]="faTimes" />
+                                            </button>
+                                        }
+                                    </div>
+                                }
                             </td>
                         </tr>
                     }
@@ -142,4 +123,15 @@
             </table>
         </div>
     }
+    @if (createTestRunDialogVisible()) {
+        <jhi-create-test-run-modal [exam]="exam()!" [(visible)]="createTestRunDialogVisible" (testRunCreate)="createTestRun($event)" />
+    }
+    <jhi-exam-delete-dialog
+        [(visible)]="deleteDialogVisible"
+        [entityTitle]="'artemisApp.examManagement.testRun.testRun' | artemisTranslate"
+        deleteQuestion="artemisApp.examManagement.testRun.delete.question"
+        deleteConfirmationText="artemisApp.examManagement.testRun.delete.typeNameToConfirm"
+        [dialogError]="dialogError$"
+        (confirmed)="deleteTestRun(testRunToDelete()!.id!)"
+    />
 </div>

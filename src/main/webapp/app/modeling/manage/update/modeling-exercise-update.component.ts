@@ -51,7 +51,7 @@ import { getCommonExerciseInvalidReasons } from 'app/exercise/util/exercise-vali
 import { countModelElements } from 'app/modeling/shared/apollon-model.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { ModelingMarkdownExplanationEditorComponent } from 'app/modeling/shared/modeling-markdown-explanation-editor/modeling-markdown-explanation-editor.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
@@ -82,13 +82,13 @@ import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-da
         FormFooterComponent,
         ArtemisTranslatePipe,
         ExerciseTimelineComponent,
-        TumUiConfirmDialogComponent,
-        TumUiSelectComponent,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiSelectComponent,
         ModelingMarkdownExplanationEditorComponent,
         ExerciseGroupTimelineLockComponent,
         ExerciseGroupDateNoticeComponent,
     ],
-    providers: [TumUiConfirmationService],
+    providers: [TumAetUiConfirmationService],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private static readonly SCROLL_SNAP_CLASS = 'modeling-exercise-editor-scroll-snap';
@@ -107,13 +107,14 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly calendarService = inject(CalendarService);
     private readonly translateService = inject(TranslateService);
-    private readonly confirmationService = inject(TumUiConfirmationService);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
     private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
     timelineStatus = signal<TimelineStatus>({ valid: true, empty: false, invalidItems: [] });
 
     readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNamePrimengComponent);
     readonly teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
     readonly modelingEditor = viewChild(ModelingEditorComponent);
+    readonly gradingInstructionsDetails = viewChild(GradingInstructionsDetailsComponent);
 
     readonly bonusPoints = viewChild<NgModel>('bonusPoints');
     readonly points = viewChild<NgModel>('points');
@@ -412,6 +413,11 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     save() {
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor()?.getCurrentModel());
+        // Flush text-mode Monaco before isSaving disables the child (editable becomes false). A
+        // rejected parse aborts the save: the model still holds the previous grading criteria.
+        if (this.gradingInstructionsDetails()?.prepareForSave() === false) {
+            return;
+        }
         this.isSaving.set(true);
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType)

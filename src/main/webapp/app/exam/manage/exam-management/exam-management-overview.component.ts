@@ -1,18 +1,22 @@
-import { Component, OnDestroy, inject } from '@angular/core';
+import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { SortService } from 'app/foundation/service/sort.service';
-import { faFileAlt, faFileImport, faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
-import { DialogService } from 'primeng/dynamicdialog';
-import { TranslateService } from '@ngx-translate/core';
-import { ExamImportComponent, ExamImportDialogData } from 'app/exam/manage/exams/exam-import/exam-import.component';
+import { faFileAlt, faFileImport, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { ExamStatusComponent } from '../exam-status/exam-status.component';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiEmptyStateComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiDialogComponent,
+    TumAetUiEmptyStateComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+} from '@tumaet/ui-angular';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
@@ -22,18 +26,19 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-exam-management-overview',
     templateUrl: './exam-management-overview.component.html',
-    styleUrls: ['./exam-management-overview.component.scss'],
     imports: [
         ArtemisTranslatePipe,
         TranslateDirective,
         FaIconComponent,
         RouterLink,
-        SortDirective,
-        SortByDirective,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
         ExamStatusComponent,
-        TumUiButtonDirective,
-        TumUiButtonComponent,
-        TumUiEmptyStateComponent,
+        TumAetUiButtonDirective,
+        TumAetUiButtonComponent,
+        TumAetUiDialogComponent,
+        TumAetUiEmptyStateComponent,
+        ExamImportComponent,
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleDirective,
         ExamModeBadgeComponent,
@@ -42,28 +47,21 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 export class ExamManagementOverviewComponent implements OnDestroy {
     private examManagementComponent = inject(ExamManagementComponent);
     private sortService = inject(SortService);
-    private dialogService = inject(DialogService);
-    private translateService = inject(TranslateService);
     private router = inject(Router);
 
     readonly course = this.examManagementComponent.course;
     readonly exams = this.examManagementComponent.exams;
 
-    predicate: string;
-    ascending: boolean;
+    readonly predicate = signal('id');
+    readonly ascending = signal(true);
+    readonly importDialogVisible = signal(false);
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
-    faSort = faSort;
     faPlus = faPlus;
     faFileImport = faFileImport;
     faFileAlt = faFileAlt;
-
-    constructor() {
-        this.predicate = 'id';
-        this.ascending = true;
-    }
 
     /**
      * unsubscribe on component destruction
@@ -81,37 +79,30 @@ export class ExamManagementOverviewComponent implements OnDestroy {
         return exam.id;
     }
 
+    onSortChange(event: TumAetUiTableSortEvent): void {
+        this.predicate.set(event.field);
+        this.ascending.set(event.order > 0);
+        this.sortRows();
+    }
+
     sortRows() {
         // sortByProperty sorts in place; re-set a new array reference so the signal notifies and the (zoneless) view re-renders.
-        this.exams.set([...this.sortService.sortByProperty(this.exams(), this.predicate, this.ascending)]);
+        this.exams.set([...this.sortService.sortByProperty(this.exams(), this.predicate(), this.ascending())]);
     }
 
     /**
-     * Opens the import module for an exam import
+     * Opens the import dialog for an exam import
      */
     openImportModal() {
-        const dialogData: ExamImportDialogData = {
-            subsequentExerciseGroupSelection: false,
-        };
+        this.importDialogVisible.set(true);
+    }
 
-        const dialogRef = this.dialogService.open(ExamImportComponent, {
-            header: this.translateService.instant('artemisApp.examManagement.importExam'),
-            width: '50rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            draggable: false,
-            data: dialogData,
-        });
-
-        const importBaseRoute = ['/course-management', this.course().id, 'exams', 'import'];
-
-        dialogRef?.onClose.subscribe((exam: Exam | undefined) => {
-            if (exam) {
-                importBaseRoute.push(exam.id);
-                void this.router.navigate(importBaseRoute);
-            }
-        });
+    /**
+     * Closes the import dialog and continues with the import of the exam the user chose
+     * @param exam the exam chosen for the import
+     */
+    onExamSelected(exam: Exam) {
+        this.importDialogVisible.set(false);
+        void this.router.navigate(['/course-management', this.course().id, 'exams', 'import', exam.id]);
     }
 }

@@ -1,5 +1,5 @@
 import { FeedbackItemService } from 'app/exercise/feedback/item/feedback-item-service';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import {
     Feedback,
     FeedbackType,
@@ -15,7 +15,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingFeedbackItemService implements FeedbackItemService {
     private translateService = inject(TranslateService);
 

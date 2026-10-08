@@ -50,6 +50,24 @@ describe('ExerciseMetadataConflictModalComponent', () => {
         component = fixture.componentInstance;
     });
 
+    it.each(['programmingData.buildConfig', 'categories', 'competencyLinks', 'gradingCriteria', 'title'])('exposes complementary pressed states for %s choices', (field) => {
+        component.setConflicts([createConflict(field)]);
+        fixture.detectChanges();
+        const [local, incoming] = Array.from(fixture.nativeElement.querySelectorAll('.conflict-tile')) as HTMLElement[];
+        expect(local.getAttribute('aria-pressed')).toBe('true');
+        expect(incoming.getAttribute('aria-pressed')).toBe('false');
+        incoming.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        fixture.detectChanges();
+        expect(component.decisions()[field]).toBe(true);
+        expect(local.getAttribute('aria-pressed')).toBe('false');
+        expect(incoming.getAttribute('aria-pressed')).toBe('true');
+        local.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        fixture.detectChanges();
+        expect(component.decisions()[field]).toBe(false);
+        expect(local.getAttribute('aria-pressed')).toBe('true');
+        expect(incoming.getAttribute('aria-pressed')).toBe('false');
+    });
+
     it('initializes decisions to false for all conflicts', () => {
         component.setConflicts([createConflict('title'), createConflict('shortName')]);
 

@@ -7,8 +7,8 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { multiSeriesLineChart, referenceLineSeries } from 'app/shared-ui/chart/tum-ui-chart-adapters';
-import { TumUiLineChartComponent, TumUiLineChartConfig } from '@tumaet/ui-angular';
+import { multiSeriesLineChart, referenceLineSeries } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
+import { TumAetUiLineChartComponent, TumAetUiLineChartConfig } from '@tumaet/ui-angular';
 import { mean } from 'app/foundation/util/statistics.util';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -28,7 +28,7 @@ export enum SwitchTimeSpanDirection {
     selector: 'jhi-course-detail-line-chart',
     templateUrl: './course-detail-line-chart.component.html',
     styleUrls: ['./course-detail-line-chart.component.scss'],
-    imports: [RouterLink, TranslateDirective, HelpIconComponent, NgbTooltip, FaIconComponent, TumUiLineChartComponent, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [RouterLink, TranslateDirective, HelpIconComponent, NgbTooltip, FaIconComponent, TumAetUiLineChartComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class CourseDetailLineChartComponent extends ActiveStudentsChart {
     private courseManagementService = inject(CourseManagementService);
@@ -72,7 +72,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart {
         lineData.series.push(referenceLineSeries(average.name, average.value, lineData.labels.length, GraphColors.GREY));
         return lineData;
     });
-    readonly chartConfig = computed<TumUiLineChartConfig>(() => ({
+    readonly chartConfig = computed<TumAetUiLineChartConfig>(() => ({
         monotone: true,
         xAxis: { label: this.xAxisLabel(), tickFormatter: (value) => `${value}` },
         yAxis: { min: 0, max: 100, tickFormatter: this.formatYAxis },

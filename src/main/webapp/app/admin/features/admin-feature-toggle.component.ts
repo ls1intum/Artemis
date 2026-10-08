@@ -9,7 +9,7 @@ import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonComponent, TumUiMessageComponent, TumUiTagComponent, TumUiToggleSwitchComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiToggleSwitchComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -73,14 +73,14 @@ type ModuleFeatureInfo = {
         FaIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
-        TumUiToggleSwitchComponent,
-        TumUiMessageComponent,
+        TumAetUiToggleSwitchComponent,
+        TumAetUiMessageComponent,
         FormsModule,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        TumUiButtonComponent,
-        TumUiTagComponent,
-        TumUiTooltipDirective,
+        TumAetUiButtonComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
     ],
 })
 export class AdminFeatureToggleComponent implements OnInit {
@@ -155,6 +155,8 @@ export class AdminFeatureToggleComponent implements OnInit {
         [FeatureToggle.Memiris]: 'https://docs.artemis.tum.de/admin/extensions-setup#edutelligence--iris',
         [FeatureToggle.RateLimit]: 'https://docs.artemis.tum.de/admin/production-setup/security/#rate-limiting',
         [FeatureToggle.Deimos]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
+        [FeatureToggle.GlobalSearchReconcile]: 'https://docs.artemis.tum.de/admin/global-search-weaviate',
+        [FeatureToggle.GlobalSearchReconcileOrphan]: 'https://docs.artemis.tum.de/admin/global-search-weaviate',
     };
 
     /** Documentation links for profile-based features */

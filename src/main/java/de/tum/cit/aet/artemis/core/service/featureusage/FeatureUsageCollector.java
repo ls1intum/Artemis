@@ -16,6 +16,7 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 
@@ -30,6 +31,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.config.FeatureUsageProperties;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.security.Role;
 
@@ -63,7 +65,7 @@ public class FeatureUsageCollector {
      */
     private final ApplicationContext applicationContext;
 
-    private volatile FeatureUsageRegistry registry;
+    private final AtomicReference<FeatureUsageRegistry> registry = new AtomicReference<>();
 
     private final Map<UsageKey, UsageAccumulator> buckets = new ConcurrentHashMap<>();
 
@@ -134,10 +136,10 @@ public class FeatureUsageCollector {
     }
 
     private FeatureUsageRegistry registry() {
-        FeatureUsageRegistry resolved = registry;
+        FeatureUsageRegistry resolved = registry.get();
         if (resolved == null) {
             resolved = applicationContext.getBean(FeatureUsageRegistry.class);
-            registry = resolved;
+            registry.set(resolved);
         }
         return resolved;
     }
@@ -196,21 +198,28 @@ public class FeatureUsageCollector {
 
     /**
      * Records one use of a git or background feature, registering it in the inventory on first sighting.
+     * <p>
+     * An endpoint gets its feature and interaction from its annotations; an operation that no endpoint serves states them
+     * here instead. Server-side work that happens on behalf of a feature, such as a notification that was delivered or a
+     * suggestion that was computed, is an {@link FeatureInteraction#ACTION}: it is the feature doing what it exists for.
      *
      * @param featureKind the namespace, {@link FeatureKind#GIT} or {@link FeatureKind#BACKGROUND}
      * @param module      the Artemis module the feature belongs to
      * @param identifier  the canonical identifier within the namespace
+     * @param feature     the user-facing feature the operation belongs to
+     * @param interaction how the operation counts
      * @param callerRole  the caller's highest global role, or {@link Role#ANONYMOUS} when there is no caller
      * @param failed      whether the operation failed
      * @param durationMs  how long the operation took
      */
-    public void recordUsage(FeatureKind featureKind, String module, String identifier, Role callerRole, boolean failed, long durationMs) {
+    public void recordUsage(FeatureKind featureKind, String module, String identifier, UserFeature feature, FeatureInteraction interaction, Role callerRole, boolean failed,
+            long durationMs) {
         if (!isEnabled()) {
             return;
         }
         long usageDay = currentUtcEpochDay();
         submit(() -> {
-            Long featureId = registry().featureId(featureKind, module, identifier);
+            Long featureId = registry().featureId(featureKind, module, identifier, feature, interaction);
             if (featureId == null) {
                 return;
             }

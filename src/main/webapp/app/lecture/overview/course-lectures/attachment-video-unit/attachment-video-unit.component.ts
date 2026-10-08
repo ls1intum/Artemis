@@ -6,6 +6,7 @@ import {
     OnDestroy,
     ViewEncapsulation,
     afterNextRender,
+    afterRenderEffect,
     computed,
     effect,
     inject,
@@ -64,6 +65,8 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { LectureUnitFullscreenLayoutComponent } from 'app/lecture/shared/lecture-unit-fullscreen-layout/lecture-unit-fullscreen-layout.component';
 import { FormsModule } from '@angular/forms';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
+import { isPdfAttachment } from 'app/lecture/overview/course-lectures/attachment-pdf.util';
 
 type SplitSizes = [number, number];
 
@@ -98,8 +101,6 @@ const UNDETECTED_DISPLAY_PAGE_NUMBER = -1;
     encapsulation: ViewEncapsulation.None,
 })
 export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> implements OnDestroy {
-    protected readonly faDownload = faDownload;
-    protected readonly faXmark = faXmark;
     private readonly destroyRef = inject(DestroyRef);
     private readonly hostElement = inject(ElementRef<HTMLElement>);
     private readonly fileService = inject(FileService);
@@ -111,14 +112,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly themeService = inject(ThemeService);
     private readonly chatService = inject(IrisChatService);
 
-    targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
-    targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
-    /**
-     * Whether the deep link that opened this unit asks for the combined view. An Iris point-out marker sets it, so
-     * that clicking one from elsewhere in the app arrives in the same view as clicking it on this page does —
-     * the position alone is not the whole target, the toggle and its explanation live in that view too.
-     */
-    targetCombinedView = input<boolean>(false);
+    protected readonly faDownload = faDownload;
+    protected readonly faXmark = faXmark;
+
     irisSettings = input<IrisCourseSettingsWithRateLimitDTO | undefined>(undefined);
     contextsProvider = input<LectureContextsProvider | undefined>(undefined); // For collecting context from visible units
 
@@ -186,6 +182,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     /** Latches the one-off combined-view opening a deep link asks for, so a closed view stays closed. */
     private hasOpenedCombinedViewFromDeepLink = false;
+    private combinedViewDeepLink?: LectureDeepLink;
 
     // A point-out navigation target waiting to be applied once the combined view is open and the
     // relevant viewer (PDF / video) has rendered. Applied (and cleared) by an effect in the constructor.
@@ -196,10 +193,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly syncDisabledByPointOutState = signal<{ page: number; time: string } | undefined>(undefined);
     readonly syncDisabledByPointOut = this.syncDisabledByPointOutState.asReadonly();
 
-    readonly validatedPdfPage = computed(() => {
-        const page = this.targetPdfPage();
-        return page && Number.isInteger(page) && page > 0 ? page : undefined;
-    });
+    readonly targetTimestamp = computed(() => this.matchedDeepLink()?.timestamp);
+    readonly targetPdfPage = computed(() => this.matchedDeepLink()?.page);
 
     readonly showPdfSpinner = computed(() => this.isPdfLoading() && !!this.pdfUrl() && !this.pdfLoadError());
 
@@ -208,11 +203,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly synchronizationState = computed(() => this.computeSynchronizationState());
     readonly synchronizationAvailable = computed(() => this.synchronizationState().available);
 
-    readonly hasPdf = computed(() => {
-        const attachment = this.lectureUnit().attachment;
-        const candidate = attachment?.studentVersion ?? attachment?.link ?? attachment?.name;
-        return this.hasAttachment() && candidate ? candidate.toLowerCase().endsWith('.pdf') : false;
-    });
+    readonly hasPdf = computed(() => this.hasAttachment() && isPdfAttachment(this.lectureUnit().attachment));
 
     readonly hasRenderableVideo = computed(() => !!this.rawVideoSource() || !!this.youtubeVideoId());
 
@@ -320,8 +311,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         // still being resolved when this unit is first built, so the effect waits for it rather than giving up.
         // It fires once: the student closing the view again must not be overruled by it reopening on the next run.
         effect(() => {
-            if (!this.targetCombinedView()) {
+            const deepLink = this.matchedDeepLink();
+            if (deepLink !== this.combinedViewDeepLink) {
+                this.combinedViewDeepLink = deepLink;
                 this.hasOpenedCombinedViewFromDeepLink = false;
+            }
+            if (!deepLink?.combined) {
                 return;
             }
             if (this.hasOpenedCombinedViewFromDeepLink || !this.hasFullscreenContent()) {
@@ -343,6 +338,13 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
         });
 
+        effect(() => {
+            const deepLink = this.matchedDeepLink();
+            if (deepLink) {
+                untracked(() => this.applyDeepLink(deepLink));
+            }
+        });
+
         // Iris points the student to a position in the combined view, either pushed by the server while the
         // pipeline waits or raised by a marker click in the chat history.
         this.chatService.pointOut$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((pointOut) => this.handlePointOut(pointOut));
@@ -350,7 +352,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         // Apply a pending point-out target once the combined view is open and the viewer it needs has rendered, or
         // drop it once that viewer turns out not to be coming. Reading the viewChild signals here re-runs this effect
         // as they become available.
-        effect(() => {
+        // Opening the combined layout recreates its viewers. Apply only after rendering, when viewChild
+        // points at the active viewer rather than the inline viewer that is about to be destroyed.
+        afterRenderEffect(() => {
             const pointOut = this.pendingPointOut();
             // A marker click opens the combined view first, so isFullscreen() is still false on the initial
             // run here and the target simply stays pending until the view (and its viewer) is up.
@@ -396,6 +400,38 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 this.pendingPointOut.set(undefined);
             });
         });
+    }
+
+    private applyDeepLink(deepLink: LectureDeepLink): void {
+        const pdfViewer = this.pdfViewer();
+        const pageShownBefore = pdfViewer?.getCurrentPage();
+
+        if (deepLink.timestamp !== undefined) {
+            this.activePlayer()?.seekTo(deepLink.timestamp, false);
+        }
+
+        if (deepLink.page === undefined || !pdfViewer) {
+            return;
+        }
+
+        // The viewer reports a page only when it changes, and that report is what makes synchronization move the video.
+        // A request for the page already shown therefore reports nothing: the view still has to return to the top of the
+        // page, and the video to the start of its slide, which the student may have played or scrolled past.
+        const isCurrentPage = pdfViewer.getCurrentPage() === deepLink.page;
+        if (isCurrentPage && pageShownBefore !== deepLink.page) {
+            // Seeking the video has already synchronized the view to this page.
+            return;
+        }
+
+        // A page-only request lets synchronization seek the video; an explicit timestamp must take precedence. There is
+        // no report to wait for on the current page, and a target left waiting would swallow the next real change.
+        this.pendingPdfTargetPage = deepLink.timestamp !== undefined && !isCurrentPage ? deepLink.page : undefined;
+        const moved = pdfViewer.goToPage(deepLink.page);
+        if (!moved) {
+            this.pendingPdfTargetPage = undefined;
+        } else if (isCurrentPage && deepLink.timestamp === undefined) {
+            this.synchronizeVideoToPdfPage(deepLink.page);
+        }
     }
 
     /**
@@ -841,6 +877,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
 
+        this.synchronizeVideoToPdfPage(page);
+    }
+
+    /** Moves the video to the start of the slide the given PDF page shows, while slides and video are synchronized. */
+    private synchronizeVideoToPdfPage(page: number): void {
         if (!this.synchronizeVideoAndSlides()) {
             return;
         }

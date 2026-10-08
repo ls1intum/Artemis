@@ -24,7 +24,6 @@
 }
 <div [id]="'exercise-' + exercise()?.id">
     <jhi-assessment-layout
-        (navigateBack)="navigateBack()"
         [isLoading]="loadingParticipation()"
         [saveBusy]="saveBusy()"
         [submitBusy]="submitBusy()"

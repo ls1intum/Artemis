@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit, effect, inject, input, signal } from '@angular/core';
+import { TumAetUiButtonDirective, TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
-import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faEye, faListAlt, faSpinner, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -41,6 +42,8 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         HelpIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTableDirective,
     ],
 })
 export class ExamChecklistComponent implements OnInit, OnDestroy {
@@ -89,6 +92,7 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
     faUser = faUser;
     faListAlt = faListAlt;
     faThList = faThList;
+    faSpinner = faSpinner;
     faChartBar = faChartBar;
 
     private dialogErrorSource = new Subject<string>();

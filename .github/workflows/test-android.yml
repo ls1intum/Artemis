@@ -4,10 +4,10 @@ on:
   pull_request:
     paths-ignore:
       - 'README.md'
-      - 'CODE_OF_CONDUCT.md'
-      - 'CONTRIBUTING.md'
+      - '.github/CODE_OF_CONDUCT.md'
+      - '.github/CONTRIBUTING.md'
       - 'LICENSE'
-      - 'SECURITY.md'
+      - '.github/SECURITY.md'
       - 'documentation/**'
       - '.github/**'
       - '!.github/workflows/test-android.yml'
@@ -21,10 +21,10 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+'
     paths-ignore:
       - 'README.md'
-      - 'CODE_OF_CONDUCT.md'
-      - 'CONTRIBUTING.md'
+      - '.github/CODE_OF_CONDUCT.md'
+      - '.github/CONTRIBUTING.md'
       - 'LICENSE'
-      - 'SECURITY.md'
+      - '.github/SECURITY.md'
       - 'documentation/**'
       - '.github/**'
       - '!.github/workflows/test-android.yml'
@@ -44,12 +44,13 @@ jobs:
     # SECURITY: this job runs on a SELF-HOSTED runner and executes the checked-out code
     # (`gradlew bootRun` from this repo + `gradlew test` from the android repo). GitHub warns
     # against running fork PRs on self-hosted runners, so skip fork PRs — their code must not run
-    # on our infrastructure. Internal-branch PRs, pushes, and releases still run; fork changes are
+    # on our infrastructure. Internal-branch PRs, pushes, and Artemis releases still run; fork changes are
     # covered post-merge by the develop/main push. (The repo's "require approval for fork PRs"
     # setting is the complementary control for the self-hosted jobs that cannot exclude forks.)
     if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name == github.repository
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository) &&
+      (github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/'))
     runs-on: [self-hosted, ase-large-android-sdk-34]
     timeout-minutes: 60
     permissions:
@@ -58,12 +59,12 @@ jobs:
 
     steps:
       - name: Checkout Main Artemis Repo (this repo)
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           path: main-repo
 
       - name: Checkout Artemis Android Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           repository: ls1intum/artemis-android
           path: android-repo
@@ -84,7 +85,7 @@ jobs:
         run: docker volume rm artemis-mysql-data || exit 0
 
       - name: Launch mysql docker container
-        run: docker compose -f main-repo/docker/mysql.yml up -d mysql
+        run: docker compose -f main-repo/deployment/docker/mysql.yml up -d mysql
 
         # Run artemis server in a detached mode, and store the pid in variable steps.run-artemis.outputs.pid
       - name: Run Artemis Server

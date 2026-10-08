@@ -1,11 +1,12 @@
 package de.tum.cit.aet.artemis.communication;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topicMatching;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -47,6 +48,8 @@ import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -249,7 +252,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         if (!isUserMentionValid) {
             request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", toCreateAnswerPostDTO(answerPostToSave), AnswerPostResponseDTO.class,
                     HttpStatus.BAD_REQUEST);
-            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
             return;
         }
 
@@ -305,7 +308,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
 
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
@@ -329,7 +332,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     // UPDATE
@@ -363,7 +366,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         if (!isUserMentionValid) {
             request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToUpdate.getId(),
                     toUpdatePostingDTO(conversationAnswerPostToUpdate), AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
-            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
             return;
         }
 
@@ -394,6 +397,45 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         // resolvingAnswerPost is the original entity (kept above), updatedAnswerPost is the response DTO. The parent post id
         // is the same on both sides; use the entity-side reference since the DTO drops the post back-reference.
         assertThat(conversationMessageRepository.findMessagePostByIdElseThrow(resolvingAnswerPost.getPost().getId()).isResolved()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMarkMessageAsResolved_asAuthorOfOriginalMessage_keepsContentOfOtherUsersAnswer() throws Exception {
+        AnswerPost otherUsersAnswer = answerOfStudent1sMessageWrittenByTutor1();
+
+        request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + otherUsersAnswer.getId(),
+                new UpdatePostingDTO(otherUsersAnswer.getId(), otherUsersAnswer.getContent(), null, true), AnswerPostResponseDTO.class, HttpStatus.OK);
+
+        AnswerPost stored = answerPostRepository.findByIdElseThrow(otherUsersAnswer.getId());
+        assertThat(stored.doesResolvePost()).isTrue();
+        assertThat(stored.getContent()).isEqualTo(otherUsersAnswer.getContent());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMarkMessageAsResolved_asAuthorOfOriginalMessage_cannotChangeContentOfOtherUsersAnswer() throws Exception {
+        AnswerPost otherUsersAnswer = answerOfStudent1sMessageWrittenByTutor1();
+
+        request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + otherUsersAnswer.getId(),
+                new UpdatePostingDTO(otherUsersAnswer.getId(), "Content the author of the question wants the answer to say", null, true), AnswerPostResponseDTO.class,
+                HttpStatus.FORBIDDEN);
+
+        AnswerPost stored = answerPostRepository.findByIdElseThrow(otherUsersAnswer.getId());
+        assertThat(stored.getContent()).isEqualTo(otherUsersAnswer.getContent());
+        assertThat(stored.doesResolvePost()).isFalse();
+        assertThat(stored.getUpdatedDate()).isNull();
+    }
+
+    /**
+     * An answer by tutor1 to a message of student1, so that student1 may mark it as resolving but may not edit it.
+     */
+    private AnswerPost answerOfStudent1sMessageWrittenByTutor1() {
+        AnswerPost answer = existingConversationPostsWithAnswers.get(3).getAnswers().iterator().next();
+        assertThat(answer.getPost().getAuthor().getLogin()).isEqualTo(TEST_PREFIX + "student1");
+        answer.setAuthor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        answer.setResolvesPost(false);
+        return answerPostRepository.save(answer);
     }
 
     @Test
@@ -576,7 +618,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(notUpdatedAnswerPost).isNull();
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -595,7 +637,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -609,7 +651,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(updatedAnswerPostServer).isNull();
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -625,7 +667,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(updatedAnswerPostServer).isNull();
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     // DELETE
@@ -638,7 +680,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -665,7 +707,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(answerPostRepository.findById(conversationAnswerPostToDelete.getId())).isPresent();
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -794,16 +836,16 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", newReply, AnswerPostResponseDTO.class, HttpStatus.CREATED);
 
         // The student receives the update without the pending Iris reply ...
-        verify(websocketMessagingService, timeout(2000).atLeastOnce()).sendMessage(eq("/topic/user/" + student1.getId() + "/notifications/conversations"), (Object) argThat(
+        verify(websocketMessagingService, timeout(2000).atLeastOnce()).sendMessage(topic("/topic/user/" + student1.getId() + "/notifications/conversations"), (Object) argThat(
                 payload -> payload instanceof PostBroadcastDTO dto && dto.post().answers().stream().noneMatch(answer -> answer.id().equals(savedPendingIris.getId()))));
 
         // ... while a tutor still receives it so the review controls stay live.
-        verify(websocketMessagingService, timeout(2000).atLeastOnce()).sendMessage(eq("/topic/user/" + tutor.getId() + "/notifications/conversations"), (Object) argThat(
+        verify(websocketMessagingService, timeout(2000).atLeastOnce()).sendMessage(topic("/topic/user/" + tutor.getId() + "/notifications/conversations"), (Object) argThat(
                 payload -> payload instanceof PostBroadcastDTO dto && dto.post().answers().stream().anyMatch(answer -> answer.id().equals(savedPendingIris.getId()))));
 
         // Because a pending Iris reply is attached, the post is delivered per-user, never on the shared course-wide topic that students subscribe to.
         // Asserted after the per-user deliveries above so the broadcast has actually been dispatched by the time we check the course-wide topic was never used.
-        verify(websocketMessagingService, never()).sendMessage(argThat((String topic) -> topic != null && topic.contains("/courses/")), any());
+        verify(websocketMessagingService, never()).sendMessage(topicMatching(".*/courses/.*"), any(Object.class));
     }
 
     // Regression: a pending (unverified) Iris reply must not leak to students through any alternate lookup path.
@@ -1118,13 +1160,13 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
      * Matches the two destinations a post broadcast legitimately uses: the per-user conversation topic for a private
      * conversation, and the course-wide communication topic for a course-wide channel. Which of the two applies depends
      * on the conversation under test, and some helpers here cover both, so this matcher accepts either shape but
-     * nothing else - in particular neither the retired {@code /topic/metis/} mirror nor an unrelated destination, both
+     * nothing else - in particular neither the retired legacy mirror topic nor an unrelated destination, both
      * of which a bare {@code anyString()} would have accepted.
      *
      * @return a Mockito matcher for a canonical post broadcast destination
      */
-    private static String aCanonicalPostBroadcastTopic() {
-        return argThat((String topic) -> topic != null && (topic.matches("/topic/user/\\d+/notifications/conversations") || topic.matches("/topic/communication/courses/\\d+")));
+    private static WebsocketDestination aCanonicalPostBroadcastTopic() {
+        return topicMatching("/topic/user/\\d+/notifications/conversations|/topic/communication/courses/\\d+");
     }
 
 }

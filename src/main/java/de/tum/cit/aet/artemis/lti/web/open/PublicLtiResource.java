@@ -26,6 +26,7 @@ import com.nimbusds.jwt.SignedJWT;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 
 /**
@@ -33,7 +34,7 @@ import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
  */
 @Conditional(LtiEnabled.class)
 @Lazy
-@FeatureUsage("lti/launch")
+@FeatureUsage(UserFeature.LTI)
 @RestController
 public class PublicLtiResource {
 
