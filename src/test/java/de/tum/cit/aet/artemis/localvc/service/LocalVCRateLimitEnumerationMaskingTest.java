@@ -14,10 +14,13 @@ import java.util.Locale;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.core.config.RateLimitingProperties;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
@@ -27,18 +30,32 @@ import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
  * empty, a missing repository and an existing but forbidden one must be answered with an identical 429, for both the
  * fetch and the push handshake. This guards the residual oracle on top of finding F-014: before the fix a missing repo
  * returned 401 (never reaching the limiter) while an existing one returned a 500 from the uncaught rate-limit exception.
+ * <p>
+ * Rate limiting is enabled at runtime rather than through {@code @TestPropertySource}, which would spawn an extra Spring
+ * context and is forbidden by {@code SpringContextConfigurationArchitectureTest}.
  */
-@TestPropertySource(properties = { "artemis.rate-limiting.enabled=true", "artemis.rate-limiting.authentication-requests-per-minute=3" })
 class LocalVCRateLimitEnumerationMaskingTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localvcratelimit";
+
+    private static final int AUTHENTICATION_REQUESTS_PER_MINUTE = 3;
 
     // A made-up account with a wrong password, exactly as an enumerating attacker would probe.
     private static final String BOGUS_AUTHORIZATION = "Basic " + Base64.getEncoder().encodeToString("niemand999:FALSCH123".getBytes(StandardCharsets.UTF_8));
 
     private final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build();
 
+    @Autowired
+    private RateLimitingProperties rateLimitingProperties;
+
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
     private LocalVCTestRepository assignmentRepository;
+
+    private boolean previousRateLimitingEnabled;
+
+    private Integer previousAuthenticationRequestsPerMinute;
 
     @Override
     protected String getTestPrefix() {
@@ -46,12 +63,21 @@ class LocalVCRateLimitEnumerationMaskingTest extends AbstractProgrammingIntegrat
     }
 
     @BeforeEach
-    void createExistingRepository() throws Exception {
+    void enableRateLimitingAndCreateExistingRepository() throws Exception {
+        previousRateLimitingEnabled = rateLimitingProperties.isEnabled();
+        previousAuthenticationRequestsPerMinute = rateLimitingProperties.getAuthenticationRequestsPerMinute();
+        rateLimitingProperties.setEnabled(true);
+        rateLimitingProperties.setAuthenticationRequestsPerMinute(AUTHENTICATION_REQUESTS_PER_MINUTE);
+        featureToggleService.enableFeature(Feature.RateLimit);
+
         assignmentRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, assignmentRepositorySlug);
     }
 
     @AfterEach
-    void removeRepositories() throws IOException {
+    void disableRateLimitingAndRemoveRepositories() throws IOException {
+        featureToggleService.disableFeature(Feature.RateLimit);
+        rateLimitingProperties.setEnabled(previousRateLimitingEnabled);
+        rateLimitingProperties.setAuthenticationRequestsPerMinute(previousAuthenticationRequestsPerMinute);
         assignmentRepository.deleteWorkingCopy();
         RepositoryExportTestUtil.cleanupTrackedRepositories();
     }
