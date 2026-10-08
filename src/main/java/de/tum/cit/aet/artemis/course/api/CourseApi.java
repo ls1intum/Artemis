@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -45,11 +47,14 @@ public class CourseApi extends AbstractCourseApi {
 
     private final ChannelService channelService;
 
+    private final ChannelRepository channelRepository;
+
     private final CourseAccessService courseAccessService;
 
-    public CourseApi(CourseRepository courseRepository, ChannelService channelService, CourseAccessService courseAccessService) {
+    public CourseApi(CourseRepository courseRepository, ChannelService channelService, ChannelRepository channelRepository, CourseAccessService courseAccessService) {
         this.courseRepository = courseRepository;
         this.channelService = channelService;
+        this.channelRepository = channelRepository;
         this.courseAccessService = courseAccessService;
     }
 
@@ -67,6 +72,7 @@ public class CourseApi extends AbstractCourseApi {
      */
     public Course createDemo(User student, User instructor) {
         Course course = findOrCreateDemoCourse();
+        createMissingDefaultChannels(course);
         courseAccessService.addUserToCourse(student, course, CourseRole.STUDENT);
         courseAccessService.addUserToCourse(instructor, course, CourseRole.INSTRUCTOR);
         return course;
@@ -107,10 +113,24 @@ public class CourseApi extends AbstractCourseApi {
         CourseValidator.validateTimeZone(course.getTimeZone());
 
         Course createdCourse = courseRepository.saveWithDefaultConfigurations(course);
-        channelService.createDefaultChannels(createdCourse);
 
         log.info("Created demo course '{}' with id {}", DEMO_COURSE_SHORT_NAME, createdCourse.getId());
         return createdCourse;
+    }
+
+    /**
+     * Creates the default channels the demo course is missing. This is checked independently of the course itself, so that channels whose creation failed after the course was
+     * saved are created on the next startup, while existing channels are left alone.
+     *
+     * @param course the demo course.
+     */
+    private void createMissingDefaultChannels(Course course) {
+        for (DefaultChannelType channelType : DefaultChannelType.values()) {
+            if (channelRepository.findChannelByCourseIdAndName(course.getId(), channelType.getName()).isEmpty()) {
+                channelService.createDefaultChannel(course, channelType);
+                log.info("Created default channel '{}' in demo course '{}'", channelType.getName(), DEMO_COURSE_SHORT_NAME);
+            }
+        }
     }
 
     /**

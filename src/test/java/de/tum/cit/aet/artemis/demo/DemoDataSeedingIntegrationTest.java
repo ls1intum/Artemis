@@ -20,6 +20,10 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
@@ -73,6 +77,12 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     private CompetencyRepository competencyRepository;
 
     @Autowired
+    private ChannelRepository channelRepository;
+
+    @Autowired
+    private ChannelService channelService;
+
+    @Autowired
     private CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
 
     @Test
@@ -124,8 +134,30 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         DemoDataSnapshot afterReseeding = snapshotDemoData();
         assertThat(afterReseeding.competencyIds()).as("missing competency is recreated").hasSize(1);
         assertThat(afterReseeding.linkedLectureUnitIds()).as("missing competency is linked again").isEqualTo(withoutCompetency.lectureUnitIds());
-        assertThat(afterReseeding).as("everything that still existed is left alone").isEqualTo(new DemoDataSnapshot(withoutCompetency.courseIds(), withoutCompetency.userIds(),
-                withoutCompetency.lectureIds(), withoutCompetency.lectureUnitIds(), afterReseeding.competencyIds(), afterReseeding.linkedLectureUnitIds()));
+        assertThat(afterReseeding).as("everything that still existed is left alone")
+                .isEqualTo(new DemoDataSnapshot(withoutCompetency.courseIds(), withoutCompetency.userIds(), withoutCompetency.lectureIds(), withoutCompetency.lectureUnitIds(),
+                        afterReseeding.competencyIds(), afterReseeding.linkedLectureUnitIds(), withoutCompetency.channelIds()));
+    }
+
+    @Test
+    void recreatesMissingChannels() {
+        seed();
+        long courseId = demoCourse().orElseThrow().getId();
+        DemoDataSnapshot seeded = snapshotDemoData();
+        // Deleting the channels leaves the same state as a channel creation that failed after its course or lecture was saved.
+        Channel lectureChannel = channelRepository.findChannelByLectureId(demoLectures(courseId).iterator().next().getId());
+        Channel defaultChannel = channelRepository.findChannelByCourseIdAndName(courseId, DefaultChannelType.RANDOM.getName()).iterator().next();
+        channelService.deleteChannel(lectureChannel);
+        channelService.deleteChannel(defaultChannel);
+        Set<Long> untouchedChannelIds = snapshotDemoData().channelIds();
+
+        seed();
+
+        DemoDataSnapshot afterReseeding = snapshotDemoData();
+        assertThat(afterReseeding.channelIds()).as("missing channels are recreated and existing ones are left alone").hasSameSizeAs(seeded.channelIds())
+                .containsAll(untouchedChannelIds).doesNotContain(lectureChannel.getId(), defaultChannel.getId());
+        assertThat(channelRepository.findChannelByLectureId(demoLectures(courseId).iterator().next().getId())).as("the demo lecture has its channel again").isNotNull();
+        assertThat(channelRepository.findChannelByCourseIdAndName(courseId, DefaultChannelType.RANDOM.getName())).as("the default channel exists again").hasSize(1);
     }
 
     @Test
@@ -206,16 +238,16 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         Set<Long> courseIds = courseRepository.findAllByShortName(CourseApi.DEMO_COURSE_SHORT_NAME).stream().map(Course::getId).collect(Collectors.toSet());
         Optional<Course> course = demoCourse();
         if (course.isEmpty()) {
-            return new DemoDataSnapshot(courseIds, userIds, Set.of(), Set.of(), Set.of(), Set.of());
+            return new DemoDataSnapshot(courseIds, userIds, Set.of(), Set.of(), Set.of(), Set.of(), Set.of());
         }
         long courseId = course.get().getId();
         Set<Competency> competencies = competencyRepository.findAllByCourseId(courseId);
         return new DemoDataSnapshot(courseIds, userIds, demoLectures(courseId).stream().map(Lecture::getId).collect(Collectors.toSet()),
                 demoLectureUnits(courseId).stream().map(LectureUnit::getId).collect(Collectors.toSet()), competencies.stream().map(Competency::getId).collect(Collectors.toSet()),
-                linkedLectureUnitIds(competencies));
+                linkedLectureUnitIds(competencies), channelRepository.findChannelsByCourseId(courseId).stream().map(Channel::getId).collect(Collectors.toSet()));
     }
 
-    private record DemoDataSnapshot(Set<Long> courseIds, Set<Long> userIds, Set<Long> lectureIds, Set<Long> lectureUnitIds, Set<Long> competencyIds,
-            Set<Long> linkedLectureUnitIds) {
+    private record DemoDataSnapshot(Set<Long> courseIds, Set<Long> userIds, Set<Long> lectureIds, Set<Long> lectureUnitIds, Set<Long> competencyIds, Set<Long> linkedLectureUnitIds,
+            Set<Long> channelIds) {
     }
 }

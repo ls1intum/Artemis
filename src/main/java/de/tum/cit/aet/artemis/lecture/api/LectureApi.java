@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -54,19 +55,23 @@ public class LectureApi extends AbstractLectureApi {
 
     private final ChannelService channelService;
 
+    private final ChannelRepository channelRepository;
+
     public LectureApi(LectureService lectureService, LectureImportService lectureImportService, LectureRepository lectureRepository, TextUnitRepository textUnitRepository,
-            ChannelService channelService) {
+            ChannelService channelService, ChannelRepository channelRepository) {
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
         this.lectureRepository = lectureRepository;
         this.textUnitRepository = textUnitRepository;
         this.channelService = channelService;
+        this.channelRepository = channelRepository;
     }
 
     /**
      * Creates the demo lecture with a single text unit in the given course, if they do not exist yet.
      * <p>
-     * Lecture and text unit are checked independently, so a deleted text unit is recreated on the next startup without touching the lecture. This mirrors the production creation
+     * Lecture, lecture channel and text unit are checked independently, so a deleted text unit or a channel whose creation failed is recreated on the next startup without
+     * touching the lecture. This mirrors the production creation
      * path (lecture channel, unit order derived from the lecture) rather than saving the entities directly.
      *
      * @param course the demo course the lecture belongs to.
@@ -77,10 +82,14 @@ public class LectureApi extends AbstractLectureApi {
         Lecture lecture = lectureRepository.findAllByTitleAndCourseIdWithLectureUnits(DEMO_LECTURE_TITLE, course.getId()).stream().findFirst().orElseGet(() -> {
             Lecture newLecture = LectureFactory.generateLecture(DEMO_LECTURE_TITLE, "Demo lecture seeded on startup by the 'demo' profile.", null, null, course);
             Lecture savedLecture = lectureRepository.save(newLecture);
-            channelService.createLectureChannel(savedLecture, Optional.empty());
             log.info("Created demo lecture '{}' with id {}", DEMO_LECTURE_TITLE, savedLecture.getId());
             return savedLecture;
         });
+
+        if (channelRepository.findChannelByLectureId(lecture.getId()) == null) {
+            String channelName = channelService.createLectureChannel(lecture, Optional.empty());
+            log.info("Created channel '{}' for demo lecture '{}'", channelName, DEMO_LECTURE_TITLE);
+        }
 
         if (lecture.getLectureUnits().stream().noneMatch(unit -> DEMO_TEXT_UNIT_NAME.equals(unit.getName()))) {
             TextUnit textUnit = LectureFactory.generateTextUnit(DEMO_TEXT_UNIT_NAME, "Demo text unit seeded on startup by the 'demo' profile.");
