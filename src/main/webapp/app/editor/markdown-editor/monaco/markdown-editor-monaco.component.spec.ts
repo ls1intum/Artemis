@@ -27,6 +27,7 @@ import { CourseConversationsService } from 'app/communication/service/course-con
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
+import { PostingEditType } from 'app/communication/communication.util';
 import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect-to-iris-button/redirect-to-iris-button.component';
 
 // Capture the global ResizeObserver provided by the test setup so it can be restored after each test.
@@ -638,6 +639,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         let editor: MarkdownEditorMonacoComponent;
 
         const probe = () => hostFixture.nativeElement.querySelector('.preview-probe') as HTMLElement | null;
+        const isHidden = (element: HTMLElement | null) => element?.closest('.hidden') != null;
 
         beforeEach(() => {
             hostFixture = TestBed.createComponent(PreviewHostComponent);
@@ -648,20 +650,159 @@ describe('MarkdownEditorMonacoComponent', () => {
         // Preview content that renders into the document at startup (task test statuses, PlantUML diagrams) finds its anchors with a
         // document query, so it has to be connected from the start and not only after the preview tab was opened.
         it('should be connected to the document before the preview tab is opened', () => {
+            expect(editor.activeTab()).toBe(MarkdownEditorMonacoComponent.TAB_EDIT);
             expect(probe()?.isConnected).toBe(true);
-            expect(probe()?.closest('.hidden')).not.toBeNull();
+            expect(document.body.contains(probe())).toBe(true);
+            expect(document.querySelectorAll('.preview-probe')).toHaveLength(1);
+            expect(isHidden(probe())).toBe(true);
         });
 
         it('should be shown while the preview tab is active and hidden again on leaving it', () => {
+            const initialProbe = probe();
+            const onPreviewSelect = vi.fn();
+            const onEditSelect = vi.fn();
+            editor.onPreviewSelect.subscribe(onPreviewSelect);
+            editor.onEditSelect.subscribe(onEditSelect);
+
             editor.onTabChange(MarkdownEditorMonacoComponent.TAB_PREVIEW);
             hostFixture.detectChanges();
+            expect(editor.inPreviewMode()).toBe(true);
             expect(probe()?.isConnected).toBe(true);
-            expect(probe()?.closest('.hidden')).toBeNull();
+            expect(isHidden(probe())).toBe(false);
+            expect(onPreviewSelect).toHaveBeenCalledOnce();
+            expect(onEditSelect).not.toHaveBeenCalled();
 
             editor.onTabChange(MarkdownEditorMonacoComponent.TAB_EDIT);
             hostFixture.detectChanges();
+            expect(editor.inPreviewMode()).toBe(false);
             expect(probe()?.isConnected).toBe(true);
-            expect(probe()?.closest('.hidden')).not.toBeNull();
+            expect(isHidden(probe())).toBe(true);
+            expect(onEditSelect).toHaveBeenCalledOnce();
+
+            // The projected content is kept alive across the tab switches instead of being recreated.
+            expect(probe()).toBe(initialProbe);
+        });
+
+        it('should stay hidden and attached while the visual tab is active', () => {
+            const initialProbe = probe();
+
+            editor.onTabChange(MarkdownEditorMonacoComponent.TAB_VISUAL);
+            hostFixture.detectChanges();
+            expect(editor.inVisualMode()).toBe(true);
+            expect(editor.inPreviewMode()).toBe(false);
+            expect(probe()).toBe(initialProbe);
+            expect(probe()?.isConnected).toBe(true);
+            expect(isHidden(probe())).toBe(true);
+
+            // Visual to preview and back keeps working, the visual tab only adds its own lazily rendered content.
+            editor.onTabChange(MarkdownEditorMonacoComponent.TAB_PREVIEW);
+            hostFixture.detectChanges();
+            expect(isHidden(probe())).toBe(false);
+
+            editor.onTabChange(MarkdownEditorMonacoComponent.TAB_VISUAL);
+            hostFixture.detectChanges();
+            expect(isHidden(probe())).toBe(true);
+            expect(probe()).toBe(initialProbe);
+        });
+    });
+
+    describe('default preview content', () => {
+        const defaultPreview = () => fixture.nativeElement.querySelector('.markdown-preview') as HTMLElement | null;
+        const isHidden = (element: HTMLElement | null) => element?.closest('.hidden') != null;
+
+        it('should attach the default preview at startup, keep it hidden in edit mode and update it while hidden', () => {
+            fixture.detectChanges();
+
+            const preview = defaultPreview();
+            expect(preview).not.toBeNull();
+            expect(preview!.isConnected).toBe(true);
+            expect(isHidden(preview)).toBe(true);
+            expect(preview!.innerHTML).toBe('');
+
+            comp.setMarkdown('**bold text**');
+            comp.parseMarkdown();
+            fixture.detectChanges();
+
+            expect(defaultPreview()).toBe(preview);
+            expect(preview!.innerHTML).toContain('<strong>bold text</strong>');
+            expect(isHidden(preview)).toBe(true);
+        });
+
+        it('should show the rendered default preview when the preview tab is activated', () => {
+            fixture.detectChanges();
+            const preview = defaultPreview()!;
+            vi.spyOn(comp.monacoEditor()!, 'getText').mockReturnValue('# Heading\n\n*emphasis*');
+
+            comp.onTabChange(TAB_PREVIEW);
+            fixture.detectChanges();
+
+            expect(defaultPreview()).toBe(preview);
+            expect(isHidden(preview)).toBe(false);
+            expect(preview.innerHTML).toContain('<h1>Heading</h1>');
+            expect(preview.innerHTML).toContain('<em>emphasis</em>');
+
+            comp.onTabChange(TAB_EDIT);
+            fixture.detectChanges();
+            expect(isHidden(preview)).toBe(true);
+            expect(preview.innerHTML).toContain('<h1>Heading</h1>');
+        });
+
+        it('should not render a default preview and not compute its html if it is disabled', () => {
+            fixture.componentRef.setInput('showDefaultPreview', false);
+            fixture.detectChanges();
+            vi.spyOn(comp.monacoEditor()!, 'getText').mockReturnValue('**bold text**');
+
+            comp.onTabChange(TAB_PREVIEW);
+            fixture.detectChanges();
+
+            expect(defaultPreview()).toBeNull();
+            expect(comp.defaultPreviewHtml()).toBeUndefined();
+        });
+    });
+
+    describe('send and iris buttons in the preview container', () => {
+        // In edit mode the toolbar is visible and carries the send button with the id "save". Everything else inside a hidden container belongs to the preview.
+        const sendButtons = () => Array.from(fixture.nativeElement.querySelectorAll('button[jhi-posting-button]')) as HTMLElement[];
+        const irisButtons = () => Array.from(fixture.nativeElement.querySelectorAll('jhi-redirect-to-iris-button')) as HTMLElement[];
+        const previewSendButtons = () => sendButtons().filter((button) => button.id !== 'save');
+        const previewIrisButtons = () => irisButtons().filter((button) => button.closest('.hidden') !== null);
+
+        it.each([
+            { isInCommunication: true, editType: PostingEditType.CREATE, expectedButtons: 1 },
+            { isInCommunication: true, editType: undefined, expectedButtons: 1 },
+            { isInCommunication: true, editType: PostingEditType.UPDATE, expectedButtons: 0 },
+            { isInCommunication: false, editType: PostingEditType.CREATE, expectedButtons: 0 },
+            { isInCommunication: false, editType: undefined, expectedButtons: 0 },
+        ])('should render $expectedButtons send and iris button in the hidden preview for communication=$isInCommunication and editType=$editType', (testCase) => {
+            fixture.componentRef.setInput('isInCommunication', testCase.isInCommunication);
+            fixture.componentRef.setInput('editType', testCase.editType);
+            fixture.detectChanges();
+
+            expect(previewSendButtons()).toHaveLength(testCase.expectedButtons);
+            expect(previewIrisButtons()).toHaveLength(testCase.expectedButtons);
+            for (const button of previewSendButtons()) {
+                expect(button.closest('.hidden')).not.toBeNull();
+            }
+            // The toolbar offers the same actions next to the editor, so the total is one more than the preview alone.
+            expect(sendButtons()).toHaveLength(testCase.expectedButtons * 2);
+            expect(irisButtons()).toHaveLength(testCase.expectedButtons * 2);
+        });
+
+        it('should reveal the send and iris button of the preview container with the preview tab', () => {
+            fixture.componentRef.setInput('isInCommunication', true);
+            fixture.componentRef.setInput('editType', PostingEditType.CREATE);
+            fixture.detectChanges();
+            const sendButton = previewSendButtons()[0];
+            const irisButton = previewIrisButtons()[0];
+            expect(sendButton.closest('.hidden')).not.toBeNull();
+            expect(irisButton.closest('.hidden')).not.toBeNull();
+
+            comp.onTabChange(TAB_PREVIEW);
+            fixture.detectChanges();
+
+            expect(sendButton.isConnected).toBe(true);
+            expect(sendButton.closest('.hidden')).toBeNull();
+            expect(irisButton.closest('.hidden')).toBeNull();
         });
     });
 });
