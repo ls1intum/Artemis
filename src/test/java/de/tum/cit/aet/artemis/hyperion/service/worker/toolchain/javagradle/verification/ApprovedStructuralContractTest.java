@@ -17,6 +17,20 @@ class ApprovedStructuralContractTest {
     private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
     @ParameterizedTest
+    @ValueSource(strings = { "extends", "implements" })
+    void genericSupertypesRetainTheirApprovedArguments(String relationship) {
+        String declaration = "public class Box " + relationship + " Base<String> {}";
+        var parsed = ApprovedStructuralContract.parse("## Public API\n```java\n" + declaration + "\n```", Set.of("Box"));
+        assertThat(parsed.errors()).isEmpty();
+        assertThat(parsed.contract().solutionSurfaceReasons(Map.of("Box.java", declaration))).isEmpty();
+        for (String replacement : Set.of("Base", "Base<Integer>")) {
+            Map<String, String> source = Map.of("Box.java", declaration.replace("Base<String>", replacement));
+            assertThat(parsed.contract().solutionSurfaceReasons(source)).isNotEmpty();
+            assertThat(parsed.contract().templateSurfaceReasons(source, Set.of("Box"))).isNotEmpty();
+        }
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = { "", "public Document() {}" })
     void explicitAndImplicitPublicDefaultConstructorsAreEquivalent(String constructor) {
         var parsed = ApprovedStructuralContract.parse("## Public API\n```java\npublic class Document { " + constructor + " }\n```", Set.of("Document"));

@@ -144,6 +144,25 @@ class StructuralOracleSeederTest {
                 .isInstanceOf(AssertionFailedError.class).hasMessageContaining("Missing generic API contract");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "class", "interface" })
+    void seededGenericTestRejectsRawAndWrongSupertypesOnNonGenericOwners(String kind) throws Throwable {
+        String relationship = kind.equals("class") ? "extends" : "implements";
+        String declaration = "public class Box " + relationship + " Base<String> {}";
+        String parent = " " + kind + " Base<T> {}";
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        var seeded = seederWith(sandbox, Map.of(), Map.of(), Map.of(), approvedSpec("Box", declaration)).seedIfStructuralDiff(sandbox, "s", javaExercise());
+        assertThat(seeded.testNames()).contains("testGenericApi[Box]");
+        String testSource = seeded.repositoryFiles().get("test/GenericTypeTest.java");
+        String oracle = seeded.repositoryFiles().get("test/test.json");
+        executeSeededGenericTest(tempDir.resolve("typed"), declaration + parent, testSource, oracle);
+        for (String replacement : List.of("Base", "Base<Integer>")) {
+            assertThatThrownBy(() -> executeSeededGenericTest(tempDir.resolve(replacement.equals("Base") ? "raw" : "wrong"),
+                    declaration.replace("Base<String>", replacement) + parent, testSource, oracle)).isInstanceOf(AssertionFailedError.class)
+                    .hasMessageContaining("Missing generic API contract");
+        }
+    }
+
     private void executeSeededGenericTest(Path directory, String source, String testSource, String oracle) throws Throwable {
         FileUtils.writeStringToFile(directory.resolve("Box.java").toFile(), source, StandardCharsets.UTF_8);
         // Invoke the actual seeded dynamic-test body directly; Ares policy/timeout annotations are not part of this reflection check.
