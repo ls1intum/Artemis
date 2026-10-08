@@ -2,8 +2,11 @@ package de.tum.cit.aet.artemis.notification.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -20,8 +23,61 @@ public class GlobalNotificationSettingService {
 
     private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
 
-    public GlobalNotificationSettingService(GlobalNotificationSettingRepository globalNotificationSettingRepository) {
+    private final TestAccountEmailService testAccountEmailPolicy;
+
+    public GlobalNotificationSettingService(GlobalNotificationSettingRepository globalNotificationSettingRepository, TestAccountEmailService testAccountEmailPolicy) {
         this.globalNotificationSettingRepository = globalNotificationSettingRepository;
+        this.testAccountEmailPolicy = testAccountEmailPolicy;
+    }
+
+    /**
+     * Checks whether an e-mail of the given type may be sent to the user.
+     * <p>
+     * A setting the user chose decides. Without one, the answer is yes for everybody except test accounts, for which a setting
+     * that was never configured means that nothing is sent (see {@link TestAccountEmailService}).
+     *
+     * @param user the recipient
+     * @param type the type of notification
+     * @return true if the notification is enabled
+     */
+    public boolean isNotificationEnabled(User user, GlobalNotificationType type) {
+        return isNotificationEnabled(user.getId(), user.getLogin(), type);
+    }
+
+    /**
+     * Checks whether an e-mail of the given type may be sent to the user, for a caller that holds the id and the login of the
+     * user but not the entity. See {@link #isNotificationEnabled(User, GlobalNotificationType)} for what decides.
+     *
+     * @param userId the id of the recipient
+     * @param login  the login of the recipient, which tells whether the recipient is a test account
+     * @param type   the type of notification
+     * @return true if the notification is enabled
+     */
+    public boolean isNotificationEnabled(long userId, @Nullable String login, GlobalNotificationType type) {
+        return globalNotificationSettingRepository.findByUserIdAndNotificationType(userId, type).map(GlobalNotificationSetting::getEnabled)
+                .orElseGet(() -> testAccountEmailPolicy.isEmailEnabledByDefault(login));
+    }
+
+    /**
+     * Returns a map of email notification settings for a given user.
+     * Each entry in the map corresponds to an {@link GlobalNotificationType}, with the key being the enum's {@code name()},
+     * and the value indicating whether notifications of that type are enabled.
+     * If a setting is not explicitly defined for a type, it defaults to {@code true}, except for test accounts, where it defaults
+     * to {@code false}.
+     *
+     * @param user the user whose notification settings should be retrieved
+     * @return a map of {@link GlobalNotificationType} names to their enabled/disabled status
+     */
+    public Map<String, Boolean> getAllSettingsAsMap(User user) {
+        var settings = globalNotificationSettingRepository.findByUserId(user.getId());
+        boolean enabledByDefault = testAccountEmailPolicy.isEmailEnabledByDefault(user.getLogin());
+        Map<String, Boolean> result = new HashMap<>();
+        for (GlobalNotificationType type : GlobalNotificationType.values()) {
+            boolean enabled = settings.stream().filter(setting -> setting.getNotificationType() == type).findFirst().map(GlobalNotificationSetting::getEnabled)
+                    .orElse(enabledByDefault);
+            result.put(type.name(), enabled);
+        }
+        return result;
     }
 
     /**

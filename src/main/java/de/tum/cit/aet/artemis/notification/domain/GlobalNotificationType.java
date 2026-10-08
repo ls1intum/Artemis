@@ -16,7 +16,8 @@ package de.tum.cit.aet.artemis.notification.domain;
  * <li>{@link #CREDENTIALS_REVOKED} - Triggered when passkeys, SSH keys or VCS access tokens of the account are revoked.</li>
  * </ul>
  *
- * These notification types are used in user settings to control which email alerts the system should send.
+ * These notification types are used in user settings to control which email alerts the system should send. A type the user never configured is enabled,
+ * except for test accounts, for which it is disabled (see {@code TestAccountEmailService}).
  */
 public enum GlobalNotificationType {
     NEW_LOGIN, NEW_PASSKEY_ADDED, VCS_TOKEN_EXPIRED, SSH_KEY_EXPIRED, MAINTENANCE, MAVEN_CENTRAL_RATE_LIMIT, PASSWORD_CHANGED, CREDENTIALS_REVOKED

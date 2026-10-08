@@ -543,6 +543,8 @@ dependencies {
 
     implementation "org.springframework.boot:spring-boot-starter-validation:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
+    // The SMTP reply codes of the exceptions the mail sender throws (MailFailureClassifier). The starter only brings the implementation at runtime. Version managed by the Spring Boot BOM.
+    implementation "org.eclipse.angus:angus-mail"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-liquibase:${spring_boot_version}"

@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.notification.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -32,23 +30,6 @@ public interface GlobalNotificationSettingRepository extends ArtemisJpaRepositor
             """)
     Set<GlobalNotificationSetting> findByUserId(@Param("userId") long userId);
 
-    /**
-     * Returns the ids of the given users who explicitly disabled the given notification type. Users without an explicit setting are considered enabled (default) and are
-     * therefore not part of the result.
-     *
-     * @param userIds          the ids of the users to check
-     * @param notificationType the notification type to check
-     * @return the ids of the users who disabled the notification type
-     */
-    @Query("""
-            SELECT setting.userId
-            FROM GlobalNotificationSetting setting
-            WHERE setting.userId IN :userIds
-                AND setting.notificationType = :notificationType
-                AND setting.enabled = FALSE
-            """)
-    Set<Long> findUserIdsWithNotificationDisabled(@Param("userIds") Set<Long> userIds, @Param("notificationType") GlobalNotificationType notificationType);
-
     @Query("""
             SELECT setting
             FROM GlobalNotificationSetting setting
@@ -58,35 +39,22 @@ public interface GlobalNotificationSettingRepository extends ArtemisJpaRepositor
     Optional<GlobalNotificationSetting> findByUserIdAndNotificationType(@Param("userId") long userId, @Param("notificationType") @NonNull GlobalNotificationType notificationType);
 
     /**
-     * Checks whether a specific notification is enabled for a given user.
-     * Defaults to true if no explicit setting exists.
+     * Checks whether the user with the given login has explicitly switched at least one global notification on.
      *
-     * @param userId the ID of the user
-     * @param type   the type of notification
-     * @return true if the notification is enabled or no setting exists, false otherwise
+     * @param login the login of the user
+     * @return true if a setting of the user is enabled
      */
-    default boolean isNotificationEnabled(long userId, GlobalNotificationType type) {
-        return findByUserIdAndNotificationType(userId, type).map(GlobalNotificationSetting::getEnabled).orElse(true);
-    }
-
-    /**
-     * Returns a map of email notification settings for a given user.
-     * Each entry in the map corresponds to an {@link GlobalNotificationType}, with the key being the enum's {@code name()},
-     * and the value indicating whether notifications of that type are enabled.
-     * If a setting is not explicitly defined for a type, it defaults to {@code true}.
-     *
-     * @param userId the ID of the user whose notification settings should be retrieved
-     * @return a map of {@link GlobalNotificationType} names to their enabled/disabled status
-     */
-    default Map<String, Boolean> getAllSettingsAsMap(long userId) {
-        Set<GlobalNotificationSetting> settings = findByUserId(userId);
-        Map<String, Boolean> result = new HashMap<>();
-        for (GlobalNotificationType type : GlobalNotificationType.values()) {
-            boolean enabled = settings.stream().filter(s -> s.getNotificationType() == type).findFirst().map(GlobalNotificationSetting::getEnabled).orElse(true);
-            result.put(type.name(), enabled);
-        }
-        return result;
-    }
+    @Query("""
+            SELECT COUNT(setting) > 0
+            FROM GlobalNotificationSetting setting
+            WHERE setting.enabled = TRUE
+                AND setting.userId IN (
+                    SELECT user.id
+                    FROM User user
+                    WHERE user.login = :login
+                )
+            """)
+    boolean existsEnabledSettingByUserLogin(@Param("login") String login);
 
     @Transactional // ok because of deletion
     @Modifying

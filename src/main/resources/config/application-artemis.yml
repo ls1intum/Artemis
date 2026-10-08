@@ -105,6 +105,25 @@ artemis:
   git:
     name: Artemis
     email: artemis@xcit.tum.de
+  mail:
+    # Logins (regular expressions that match the whole login) of accounts that receive no e-mail until they enable one in their
+    # notification settings. The published test users of the end-to-end tests and the course scripts match, because a script that
+    # touches thousands of them must not use up the quota of the SMTP account that every Artemis instance of the deployment shares.
+    test-account-login-patterns:
+      - 'artemis_test_user_\d+'
+    # A mail the SMTP server does not accept for a temporary reason (above all an exhausted daily quota) is kept in memory and
+    # tried again, see the documentation page "E-Mail Delivery". All values below are the defaults.
+    retry:
+      enabled: true
+      max-queue-size: 5000 # Mails one node keeps for another attempt, which are a few tens of megabytes
+      initial-delay: PT1M # Wait before the second attempt, doubled with every further failed attempt
+      max-delay: PT1H # Longest wait between two attempts
+      quota-pause: PT15M # How long a node stops contacting the SMTP server after it reported that the quota is used up
+      unavailable-pause: PT2M # How long a node stops contacting the SMTP server after it could not be reached
+      transactional-max-age: PT12H # Age after which a password reset or a security notification is dropped instead of sent
+      bulk-max-age: PT48H # Age after which the e-mail of a course notification is dropped instead of sent
+      drain-interval: PT30S # Pause between two runs of the job that works off the queue
+      drain-batch-size: 200 # Most mails one run of the job sends
   rate-limiting:
     enabled: false
     account-management-requests-per-minute: 5

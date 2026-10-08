@@ -3,5 +3,5 @@ package de.tum.cit.aet.artemis.notification.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MaintenanceEmailRecipientDTO(Long id, String email, String langKey, String firstName, String lastName) {
+public record MaintenanceEmailRecipientDTO(Long id, String login, String email, String langKey, String firstName, String lastName) {
 }
