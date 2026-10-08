@@ -58,13 +58,13 @@ public final class WeaviateTestUtil {
      * Delay before the first retry of a failed outbox write ({@code WeaviateOutboxProperties#baseBackoffSeconds}
      * default; the tests do not override it).
      */
-    private static final Duration OUTBOX_BASE_BACKOFF = Duration.ofSeconds(10);
+    static final Duration OUTBOX_BASE_BACKOFF = Duration.ofSeconds(10);
 
     /**
      * Cadence of the safety-net drain tick ({@code WeaviateOutboxProperties#drainIntervalSeconds} default). A retry that
      * has become due is picked up by the next tick, because only the enqueue nudge starts a drain outside the schedule.
      */
-    private static final Duration OUTBOX_DRAIN_TICK = Duration.ofSeconds(5);
+    static final Duration OUTBOX_DRAIN_TICK = Duration.ofSeconds(5);
 
     /**
      * Slack for the successful write itself, the database round trips around it and a loaded machine.
@@ -90,9 +90,9 @@ public final class WeaviateTestUtil {
      * becomes true late in the {@link #INDEXING_TIMEOUT} is still seen close to the moment it does, not one doubled
      * interval later.
      */
-    private static final Duration MAX_POLL_INTERVAL = Duration.ofSeconds(2);
+    static final Duration MAX_POLL_INTERVAL = Duration.ofSeconds(2);
 
-    private static final PollInterval BOUNDED_BACKOFF_POLL_INTERVAL = (pollCount, previousInterval) -> pollCount == 1 ? Duration.ofMillis(100)
+    static final PollInterval BOUNDED_BACKOFF_POLL_INTERVAL = (pollCount, previousInterval) -> pollCount == 1 ? Duration.ofMillis(100)
             : previousInterval.multipliedBy(2).compareTo(MAX_POLL_INTERVAL) > 0 ? MAX_POLL_INTERVAL : previousInterval.multipliedBy(2);
 
     /**
@@ -166,7 +166,18 @@ public final class WeaviateTestUtil {
      * after a failed write, or no drain was triggered.
      */
     private static String describeOutboxDispatcher() {
-        String dispatcher = "WeaviateOutboxDispatcher";
+        return describeDispatcherThreads("WeaviateOutboxDispatcher");
+    }
+
+    /**
+     * Implementation of {@link #describeOutboxDispatcher()} with the class name fragment that identifies the dispatcher
+     * on a stack, so the idle and the busy description can be tested without depending on the real dispatcher of
+     * other tests that share the JVM.
+     *
+     * @param dispatcher the fragment of the dispatcher's class name to look for in the stack frames of all threads
+     * @return the description of what the dispatcher is doing
+     */
+    static String describeDispatcherThreads(String dispatcher) {
         String busyThreads = Thread.getAllStackTraces().entrySet().stream()
                 .filter(entry -> Arrays.stream(entry.getValue()).anyMatch(frame -> frame.getClassName().contains(dispatcher)))
                 .map(entry -> "Thread \"" + entry.getKey().getName() + "\" (" + entry.getKey().getState() + ") is inside the dispatcher:" + System.lineSeparator()
