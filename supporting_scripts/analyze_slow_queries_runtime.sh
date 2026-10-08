@@ -17,6 +17,10 @@
 # Outputs:
 #   slow-query-report.html   – full, sortable, self-contained HTML report (uploaded as the CI artifact)
 #   slow-query-summary.md    – Markdown summary (top 20 per section) for the PR comment
+#   slow-query-keys.json     – this run's finding keys (uploaded by develop runs as the baseline)
+#
+# Input, optional: slow-query-baseline.zip, the latest develop run's "Slow Query Baseline"
+# artifact, downloaded by the preceding CI step.
 #
 # Also runs find_slow_queries.py --json here (a second, independent invocation from the one
 # ci-quality.yml's separate "query-quality" job already runs for its own gate) to produce the
@@ -33,6 +37,13 @@ REPORT_SOURCE="src/test/playwright/test-reports/slow-query-report.json"
 REPORT_HTML="slow-query-report.html"
 REPORT_MD="slow-query-summary.md"
 STATIC_FINDINGS="static-findings.json"
+KEYS_FILE="slow-query-keys.json"
+BASELINE_ZIP="slow-query-baseline.zip"
+BASELINE_DIR="slow-query-baseline"
+BASELINE_KEYS="${BASELINE_DIR}/${KEYS_FILE}"
+
+# self-hosted runners keep their workspace between runs; never let a previous run's keys be uploaded
+rm -f "${KEYS_FILE}"
 
 echo "=== Slow-Query Report Collection ==="
 echo "Source: ${REPORT_SOURCE}"
@@ -60,12 +71,26 @@ fi
 # ci-quality.yml's job; this one just wants the findings for cross-referencing, if available).
 python3 supporting_scripts/find_slow_queries.py --json "${STATIC_FINDINGS}" > /dev/null 2>&1 || echo "⚠️  Static scan failed; report will render without static-finding correlation."
 
+# Develop baseline: the finding keys of the latest develop run, downloaded by the preceding CI step
+# when one exists. With it, the report marks what this run adds; without it, nothing is marked new.
+BASELINE_ARGS=()
+rm -f "${BASELINE_KEYS}"
+if [ -s "${BASELINE_ZIP}" ]; then
+    if python3 -c "import sys, zipfile; zipfile.ZipFile(sys.argv[1]).extract('${KEYS_FILE}', sys.argv[2])" "${BASELINE_ZIP}" "${BASELINE_DIR}" 2>/dev/null; then
+        BASELINE_ARGS=(--baseline "${BASELINE_KEYS}")
+        echo "✅ Comparing against the develop baseline."
+    else
+        echo "⚠️  Could not unpack ${BASELINE_ZIP}; findings will not be classified as new."
+    fi
+fi
+
 # ------------------------------------------------------------------
 # Delegate formatting to the Python script: Markdown summary to stdout (for the PR comment),
-# full untruncated HTML report to a file (for the CI artifact).
+# full untruncated HTML report to a file (for the CI artifact), and this run's finding keys
+# (uploaded by develop runs as the next baseline).
 # ------------------------------------------------------------------
 python3 supporting_scripts/format_slow_query_report.py \
-    "${REPORT_SOURCE}" "${RUN_URL}" "${REPORT_HTML}" "${STATIC_FINDINGS}" > "${REPORT_MD}"
+    "${REPORT_SOURCE}" "${RUN_URL}" "${REPORT_HTML}" "${STATIC_FINDINGS}" ${BASELINE_ARGS[@]+"${BASELINE_ARGS[@]}"} --keys-out "${KEYS_FILE}" > "${REPORT_MD}"
 
 echo ""
 echo "=== Summary preview ==="

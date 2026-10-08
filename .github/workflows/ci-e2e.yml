@@ -151,6 +151,27 @@ jobs:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
+      - name: Download develop slow-query baseline (Phase 1)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            // The keys of the latest develop run's findings: lets the report mark what this PR adds.
+            const fs = require('fs');
+            fs.rmSync('slow-query-baseline.zip', { force: true });  // self-hosted workspaces persist between runs
+            const { data } = await github.rest.actions.listArtifactsForRepo({ owner: context.repo.owner, repo: context.repo.repo, name: 'Slow Query Baseline', per_page: 50 });
+            const latest = data.artifacts
+              .filter((a) => !a.expired && a.workflow_run && a.workflow_run.head_branch === 'develop')
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+            if (!latest) {
+              core.info('No develop baseline available yet; the report will not classify findings as new.');
+              return;
+            }
+            const zip = await github.rest.actions.downloadArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: latest.id, archive_format: 'zip' });
+            fs.writeFileSync('slow-query-baseline.zip', Buffer.from(zip.data));
+            core.info(`Using baseline artifact ${latest.id} from ${latest.created_at}`);
+
       - name: Collect slow-query report (Phase 1)
         if: ${{ !cancelled() }}
         shell: bash
@@ -362,6 +383,27 @@ jobs:
         env:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
+
+      - name: Download develop slow-query baseline (Phase 2)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            // The keys of the latest develop run's findings: lets the report mark what this PR adds.
+            const fs = require('fs');
+            fs.rmSync('slow-query-baseline.zip', { force: true });  // self-hosted workspaces persist between runs
+            const { data } = await github.rest.actions.listArtifactsForRepo({ owner: context.repo.owner, repo: context.repo.repo, name: 'Slow Query Baseline', per_page: 50 });
+            const latest = data.artifacts
+              .filter((a) => !a.expired && a.workflow_run && a.workflow_run.head_branch === 'develop')
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+            if (!latest) {
+              core.info('No develop baseline available yet; the report will not classify findings as new.');
+              return;
+            }
+            const zip = await github.rest.actions.downloadArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: latest.id, archive_format: 'zip' });
+            fs.writeFileSync('slow-query-baseline.zip', Buffer.from(zip.data));
+            core.info(`Using baseline artifact ${latest.id} from ${latest.created_at}`);
 
       - name: Collect slow-query report (Phase 2)
         if: ${{ !cancelled() }}
@@ -575,6 +617,27 @@ jobs:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
+      - name: Download develop slow-query baseline (All PR)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            // The keys of the latest develop run's findings: lets the report mark what this PR adds.
+            const fs = require('fs');
+            fs.rmSync('slow-query-baseline.zip', { force: true });  // self-hosted workspaces persist between runs
+            const { data } = await github.rest.actions.listArtifactsForRepo({ owner: context.repo.owner, repo: context.repo.repo, name: 'Slow Query Baseline', per_page: 50 });
+            const latest = data.artifacts
+              .filter((a) => !a.expired && a.workflow_run && a.workflow_run.head_branch === 'develop')
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+            if (!latest) {
+              core.info('No develop baseline available yet; the report will not classify findings as new.');
+              return;
+            }
+            const zip = await github.rest.actions.downloadArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: latest.id, archive_format: 'zip' });
+            fs.writeFileSync('slow-query-baseline.zip', Buffer.from(zip.data));
+            core.info(`Using baseline artifact ${latest.id} from ${latest.created_at}`);
+
       - name: Collect slow-query report (All PR)
         if: ${{ !cancelled() }}
         shell: bash
@@ -770,6 +833,16 @@ jobs:
         with:
           name: Slow Query Report Non-PR
           path: slow-query-report.html
+          if-no-files-found: warn
+
+      - name: Upload slow-query baseline (develop)
+        if: ${{ !cancelled() && inputs.branch_name == 'develop' }}
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: Slow Query Baseline
+          path: slow-query-keys.json
+          retention-days: 90
           if-no-files-found: warn
 
       - name: E2E Teardown
