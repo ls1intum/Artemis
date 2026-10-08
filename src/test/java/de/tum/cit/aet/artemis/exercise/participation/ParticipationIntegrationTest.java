@@ -7,6 +7,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.eclipse.jgit.errors.LargeObjectException;
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -99,6 +101,7 @@ import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -2691,6 +2694,166 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/exercise/exercises/" + examExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN, null);
         assertThat(response.getContentAsString()).contains("Assignment repositories are not allowed for exam exercises. Please use the Test Run feature instead");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInProgrammingExercise_repositoryContainsTooLargeFiles_internalServerError() throws Exception {
+        prepareMocksForProgrammingExercise();
+        doThrow(new VersionControlException("copy failed", new LargeObjectException())).when(uriService).getRepositorySlugFromRepositoryUri(any());
+
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
+                HttpStatus.INTERNAL_SERVER_ERROR, null);
+
+        assertThat(response.getContentAsString()).contains("repository contains files that are too large");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInProgrammingExercise_versionControlFails_internalServerError() throws Exception {
+        prepareMocksForProgrammingExercise();
+        doThrow(new VersionControlException("copy failed")).when(uriService).getRepositorySlugFromRepositoryUri(any());
+
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
+                HttpStatus.INTERNAL_SERVER_ERROR, null);
+
+        assertThat(response.getContentAsString()).contains("the exercise repositories are not accessible");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInProgrammingExercise_unexpectedFailure_internalServerError() throws Exception {
+        prepareMocksForProgrammingExercise();
+        doThrow(new IllegalStateException("unexpected")).when(uriService).getRepositorySlugFromRepositoryUri(any());
+
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
+                HttpStatus.INTERNAL_SERVER_ERROR, null);
+
+        assertThat(response.getContentAsString()).contains("Failed to start exercise participation.");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInFileUploadExercise_dueDatePassed_forbiddenWithoutPracticeMode() throws Exception {
+        List<FileUploadExercise> fileUploadExercises = fileUploadExerciseUtilService.createEnrolledFileUploadExercisesWithCourse(TEST_PREFIX);
+        FileUploadExercise fileUploadExercise = fileUploadExercises.getFirst();
+        fileUploadExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        fileUploadExercise = exerciseRepository.save(fileUploadExercise);
+
+        // file upload exercises have no practice mode, so the error key differs from the one of the other exercise types
+        request.postAndExpectError("/api/exercise/exercises/" + fileUploadExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN, "dueDateOver.noParticipationPossible");
+    }
+
+    /**
+     * Creates a programming participation of the student with an own repository, in the given state and mode.
+     */
+    private ProgrammingExerciseStudentParticipation createStudentParticipation(ProgrammingExercise exercise, InitializationState state, boolean practiceMode) throws Exception {
+        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(state, exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participation.setPracticeMode(practiceMode);
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+        return participationRepo.save(participation);
+    }
+
+    private InitializationState initializationStateOf(Long participationId) {
+        return participationRepo.findByIdElseThrow(participationId).getInitializationState();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resumePracticeParticipation_finishesTheGradedParticipation() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        programmingExercise = exerciseRepository.save(programmingExercise);
+        var graded = participationRepo.save(ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1")));
+        var practice = createStudentParticipation(programmingExercise, InitializationState.INACTIVE, true);
+
+        var resumed = request.putWithResponseBody(
+                "/api/exercise/exercises/" + programmingExercise.getId() + "/participations/" + practice.getId() + "/resume-programming-participation", null,
+                StudentParticipationDTO.class, HttpStatus.OK);
+
+        assertThat(resumed.id()).isEqualTo(practice.getId());
+        assertThat(resumed.testRun()).isTrue();
+        assertThat(initializationStateOf(practice.getId())).isEqualTo(InitializationState.INITIALIZED);
+        assertThat(initializationStateOf(graded.getId())).as("the graded participation is finished once the practice participation is active")
+                .isEqualTo(InitializationState.FINISHED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resumePracticeParticipation_deactivatesTheGradedParticipationWhenThePracticeParticipationWasNotInactive() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        programmingExercise = exerciseRepository.save(programmingExercise);
+        var graded = participationRepo.save(ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1")));
+        var practice = createStudentParticipation(programmingExercise, InitializationState.FINISHED, true);
+
+        request.putWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/" + practice.getId() + "/resume-programming-participation", null,
+                StudentParticipationDTO.class, HttpStatus.OK);
+
+        assertThat(initializationStateOf(practice.getId())).isEqualTo(InitializationState.INITIALIZED);
+        assertThat(initializationStateOf(graded.getId())).isEqualTo(InitializationState.INACTIVE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resumeGradedParticipation_finishesThePracticeParticipation() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        programmingExercise = exerciseRepository.save(programmingExercise);
+        var graded = createStudentParticipation(programmingExercise, InitializationState.INACTIVE, false);
+        var practice = participationRepo.save(ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1")));
+        practice.setPracticeMode(true);
+        practice = participationRepo.save(practice);
+
+        request.putWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/" + graded.getId() + "/resume-programming-participation", null,
+                StudentParticipationDTO.class, HttpStatus.OK);
+
+        assertThat(initializationStateOf(graded.getId())).isEqualTo(InitializationState.INITIALIZED);
+        assertThat(initializationStateOf(practice.getId())).isEqualTo(InitializationState.FINISHED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resumePracticeParticipation_beforeTheDueDate_forbidden() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        programmingExercise = exerciseRepository.save(programmingExercise);
+        var practice = createStudentParticipation(programmingExercise, InitializationState.INACTIVE, true);
+
+        request.putWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/" + practice.getId() + "/resume-programming-participation", null,
+                StudentParticipationDTO.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void requestFeedback_programmingExercisesDisabled_serviceUnavailable() throws Exception {
+        setupAthenaForExercise(programmingExercise);
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exerciseRepository.save(programmingExercise);
+        var participation = participationRepo.save(ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1")));
+
+        featureToggleService.disableFeature(Feature.ProgrammingExercises);
+        try {
+            request.putAndExpectError("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/" + participation.getId() + "/request-feedback", null,
+                    HttpStatus.SERVICE_UNAVAILABLE, "feedbackRequest.programmingExercisesDisabled");
+        }
+        finally {
+            featureToggleService.enableFeature(Feature.ProgrammingExercises);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void requestFeedback_withoutSubmission_badRequest() throws Exception {
+        setupAthenaForExercise(textExercise);
+        var participation = participationRepo
+                .save(ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1")));
+
+        request.putAndExpectError("/api/exercise/exercises/" + textExercise.getId() + "/participations/" + participation.getId() + "/request-feedback", null,
+                HttpStatus.BAD_REQUEST, "noSubmissionExists");
     }
 
     @Nested

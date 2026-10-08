@@ -20,7 +20,10 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { LiveQuizParticipationStatus, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
+import { Complaint } from 'app/assessment/shared/entities/complaint.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/services/exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -1024,5 +1027,396 @@ describe('CourseExerciseDetailsComponent', () => {
         const merged = comp.studentParticipations.find((p) => p.id === 555);
         expect(merged?.initializationState).toBe(InitializationState.FINISHED);
         expect(merged?.submissions?.map((s) => s.id)).toEqual([1, 2, 3]);
+    });
+
+    describe('graded and practice participation', () => {
+        const result = (id: number, completionDate: dayjs.Dayjs | undefined, extra: Partial<Result> = {}): Result => ({ id, completionDate, rated: true, ...extra }) as Result;
+
+        const gradedParticipation = () =>
+            ({ id: 1, testRun: false, submissions: [{ id: 10, results: [result(100, dayjs().subtract(3, 'hour'))] }] }) as unknown as StudentParticipation;
+        const practiceParticipation = () =>
+            ({
+                id: 2,
+                testRun: true,
+                submissions: [
+                    { id: 20, results: [result(200, dayjs().subtract(2, 'hour'))] },
+                    { id: 21, results: [result(201, dayjs().subtract(1, 'hour'))] },
+                ],
+            }) as unknown as StudentParticipation;
+
+        beforeEach(() => {
+            // ParticipationService is mocked for this spec, so the graded/practice split has to behave like the real one.
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockImplementation((participations, testRun) =>
+                (participations ?? []).find((participation) => !!participation.testRun === testRun),
+            );
+        });
+
+        it('should count the results of the practice participation only', () => {
+            comp.studentParticipations = [gradedParticipation(), practiceParticipation()];
+
+            expect(comp.numberOfPracticeResults()).toBe(2);
+        });
+
+        it('should count no practice results without a practice participation', () => {
+            comp.studentParticipations = [gradedParticipation()];
+
+            expect(comp.numberOfPracticeResults()).toBe(0);
+        });
+
+        it('should order the results of both participations by completion date and hide failed Athena results', () => {
+            const failedAthena = result(300, dayjs().subtract(30, 'minute'), { assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: false });
+            const successfulAthena = result(301, dayjs().subtract(20, 'minute'), { assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true });
+            const practice = practiceParticipation();
+            practice.submissions![1].results!.push(failedAthena, successfulAthena);
+            comp.studentParticipations = [practice, gradedParticipation()];
+
+            comp.sortResults();
+
+            expect(comp.sortedHistoryResults.map((sorted) => sorted.id)).toEqual([100, 200, 201, 301]);
+            expect(comp.sortedHistoryResults.map((sorted) => sorted.submission?.participation?.id)).toEqual([1, 2, 2, 2]);
+        });
+
+        it('should show the practice mode when the student only has a practice participation', () => {
+            const practice = practiceParticipation();
+            getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: { ...exercise, studentParticipations: [practice] } } }));
+            mergeStudentParticipationMock.mockReturnValue([practice]);
+
+            comp.loadExercise();
+
+            expect(comp.gradedStudentParticipation()).toBeUndefined();
+            expect(comp.participationMode()).toBe('practice');
+        });
+
+        it('should keep the other participation untouched when one of two participations is started again', () => {
+            const graded = gradedParticipation();
+            comp.exercise = { ...exercise, studentParticipations: [] } as Exercise;
+            comp.studentParticipations = [graded, practiceParticipation()];
+
+            comp.onNewParticipation({ id: 2, testRun: true, submissions: [{ id: 22 } as Submission] } as StudentParticipation);
+
+            expect(comp.studentParticipations[0]).toBe(graded);
+            expect(comp.studentParticipations[1].submissions?.map((submission) => submission.id)).toEqual([20, 21, 22]);
+        });
+    });
+
+    describe('participation changes of the websocket', () => {
+        const dueDatePassed = dayjs().subtract(1, 'day');
+        const athenaResult = (successful: boolean | undefined, completionDate: dayjs.Dayjs | undefined = dayjs()) =>
+            ({ id: 77, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful, completionDate }) as Result;
+
+        const startWith = (participations: StudentParticipation[], exerciseType = ExerciseType.TEXT) => {
+            comp.courseId = 1;
+            comp.exercise = { id: 42, type: exerciseType, title: 'Essay', dueDate: dueDatePassed, studentParticipations: [] } as unknown as Exercise;
+            comp.studentParticipations = participations;
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockImplementation((all, testRun) =>
+                (all ?? []).find((participation) => !!participation.testRun === testRun),
+            );
+            comp.subscribeForNewResults();
+        };
+
+        const changed = (results: Result[], extra: Partial<StudentParticipation> = {}) =>
+            ({ id: 1, testRun: false, exercise: { id: 42, dueDate: dueDatePassed }, submissions: [{ id: 5, results }], ...extra }) as unknown as StudentParticipation;
+
+        it('should notify the student about a result that arrives after the due date', () => {
+            startWith([{ id: 1, testRun: false, submissions: [{ id: 5, results: [] }] } as unknown as StudentParticipation]);
+            const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+
+            participationWebsocketBehaviorSubject.next(changed([{ id: 9, completionDate: dayjs(), rated: true } as Result]));
+
+            expect(successSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.lateSubmissionResultReceived');
+        });
+
+        it('should not notify about a late result of a practice participation', () => {
+            startWith([
+                { id: 1, testRun: false, submissions: [] } as unknown as StudentParticipation,
+                { id: 2, testRun: true, submissions: [{ id: 6, results: [] }] } as unknown as StudentParticipation,
+            ]);
+            const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+
+            participationWebsocketBehaviorSubject.next(changed([{ id: 9, completionDate: dayjs(), rated: true } as Result], { id: 2, testRun: true }));
+
+            expect(successSpy).not.toHaveBeenCalled();
+        });
+
+        it('should alert the successful Athena feedback and open the submission with it', () => {
+            startWith([{ id: 1, testRun: false, submissions: [] } as unknown as StudentParticipation]);
+            const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+            const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+            // the exercise has no due date here, so only the Athena feedback is reported
+            comp.exercise!.dueDate = undefined;
+
+            participationWebsocketBehaviorSubject.next(changed([athenaResult(true)], { exercise: { id: 42 } as Exercise }));
+
+            expect(successSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.athenaFeedbackSuccessful', { title: 'Essay' });
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/courses', 1, 'exercises', 'text-exercises', 42, 'participate', 1, 'submission', 5]);
+        });
+
+        it('should open the submission with the Athena feedback of a modeling exercise', () => {
+            startWith([{ id: 1, testRun: false, submissions: [] } as unknown as StudentParticipation], ExerciseType.MODELING);
+            const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+            participationWebsocketBehaviorSubject.next(changed([athenaResult(true)], { exercise: { id: 42 } as Exercise }));
+
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/courses', 1, 'exercises', 'modeling-exercises', 42, 'participate', 1, 'submission', 5]);
+        });
+
+        it('should alert the failed Athena feedback without opening a submission', () => {
+            startWith([{ id: 1, testRun: false, submissions: [] } as unknown as StudentParticipation]);
+            const alertService = TestBed.inject(AlertService);
+            const errorSpy = vi.spyOn(alertService, 'error');
+            const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+            participationWebsocketBehaviorSubject.next(changed([athenaResult(false)], { exercise: { id: 42 } as Exercise }));
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.athenaFeedbackFailed');
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not open the Athena feedback of a programming exercise', () => {
+            startWith([{ id: 1, testRun: false, submissions: [] } as unknown as StudentParticipation], ExerciseType.PROGRAMMING);
+            const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+            participationWebsocketBehaviorSubject.next(changed([athenaResult(true)], { exercise: { id: 42 } as Exercise }));
+
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should add a participation that is not known yet and keep the known one', () => {
+            const known = { id: 1, testRun: false, submissions: [{ id: 5, results: [] }] } as unknown as StudentParticipation;
+            startWith([known]);
+
+            participationWebsocketBehaviorSubject.next(changed([], { id: 2, testRun: true }));
+
+            expect(comp.studentParticipations.map((participation) => participation.id)).toEqual([1, 2]);
+            expect(comp.studentParticipations[0]).toBe(known);
+        });
+
+        it('should leave the other participation untouched when one of two participations changes', () => {
+            const graded = { id: 1, testRun: false, submissions: [{ id: 5, results: [] }] } as unknown as StudentParticipation;
+            const practice = { id: 2, testRun: true, submissions: [{ id: 6, results: [] }] } as unknown as StudentParticipation;
+            startWith([graded, practice]);
+
+            participationWebsocketBehaviorSubject.next(changed([], { id: 2, testRun: true, submissions: [{ id: 7 } as Submission] }));
+
+            expect(comp.studentParticipations[0]).toBe(graded);
+            expect(comp.studentParticipations[1].submissions?.map((submission) => submission.id)).toEqual([6, 7]);
+        });
+    });
+
+    describe('continue to latest without a target', () => {
+        it('should not navigate without a participation', () => {
+            comp.exercise = { ...exercise, type: ExerciseType.TEXT } as unknown as Exercise;
+            comp.studentParticipations = [];
+            const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+            comp.continueToLatest();
+
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not navigate without an exercise', () => {
+            comp.studentParticipations = [{ id: 1, testRun: false } as StudentParticipation];
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue({ id: 1, testRun: false } as StudentParticipation);
+            const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+            comp.continueToLatest();
+
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not navigate when the exercise has no page for the participation', () => {
+            comp.exercise = { ...exercise, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as unknown as Exercise;
+            const participation = { id: 1, testRun: false } as StudentParticipation;
+            comp.studentParticipations = [participation];
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue(participation);
+            const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+            comp.continueToLatest();
+
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('sidebar toggle', () => {
+        it('should offer the toggle only after the sidebar registered it', () => {
+            const toggle = vi.fn();
+            expect(comp['showSidebarToggle']()).toBe(false);
+
+            comp.setSidebarToggle(true, toggle);
+            comp['toggleSidebar']();
+
+            expect(comp['showSidebarToggle']()).toBe(true);
+            expect(comp['isSidebarCollapsed']()).toBe(true);
+            expect(toggle).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('live quiz', () => {
+        it('should take over the status reported by the live quiz', () => {
+            comp.onLiveQuizStatusChange(LiveQuizParticipationStatus.PARTICIPATING);
+            expect(comp.liveQuizStatus()).toBe(LiveQuizParticipationStatus.PARTICIPATING);
+
+            comp.onLiveQuizStatusChange(undefined);
+            expect(comp.liveQuizStatus()).toBeUndefined();
+        });
+
+        it('should show the submitted quiz in the graded participation and leave the practice participation alone', () => {
+            const graded = { id: 1, testRun: false, submissions: [{ id: 10, submitted: false }] } as unknown as StudentParticipation;
+            const practice = { id: 2, testRun: true, submissions: [{ id: 20, submitted: true }] } as unknown as StudentParticipation;
+            comp.studentParticipations = [graded, practice];
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockImplementation((all, testRun) =>
+                (all ?? []).find((participation) => !!participation.testRun === testRun),
+            );
+
+            comp.onQuizSubmitted({ id: 10, submitted: true } as QuizSubmission);
+
+            expect(comp.studentParticipations[0].submissions).toEqual([{ id: 10, submitted: true }]);
+            expect(comp.studentParticipations[1]).toBe(practice);
+        });
+
+        it('should ignore a submitted quiz without a graded participation', () => {
+            const practice = { id: 2, testRun: true, submissions: [] } as unknown as StudentParticipation;
+            comp.studentParticipations = [practice];
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockImplementation((all, testRun) =>
+                (all ?? []).find((participation) => !!participation.testRun === testRun),
+            );
+
+            comp.onQuizSubmitted({ id: 10, submitted: true } as QuizSubmission);
+
+            expect(comp.studentParticipations).toEqual([practice]);
+        });
+    });
+
+    describe('complaint and latest rated result', () => {
+        const gradedWithResults = () =>
+            ({
+                id: 1,
+                testRun: false,
+                submissions: [
+                    {
+                        id: 10,
+                        results: [
+                            { id: 1, rated: true, completionDate: dayjs().subtract(2, 'hour') },
+                            { id: 2, rated: true, completionDate: dayjs().subtract(1, 'hour') },
+                            { id: 3, rated: false, completionDate: dayjs() },
+                        ],
+                    },
+                ],
+            }) as unknown as StudentParticipation;
+
+        beforeEach(() => {
+            const graded = gradedWithResults();
+            comp.studentParticipations = [graded];
+            comp.sortedHistoryResults = [{ id: 1 }];
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue(graded);
+        });
+
+        it('should load the complaint and the latest rated result of a programming exercise', () => {
+            comp.exercise = { ...exercise, type: ExerciseType.PROGRAMMING } as unknown as Exercise;
+            const complaint = { id: 9 } as Complaint;
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: { id: 9 } } as EntityResponseType));
+            vi.spyOn(complaintService, 'convertComplaintFromServer').mockReturnValue(complaint);
+
+            comp.loadComplaintAndLatestRatedResult();
+
+            expect(comp.complaint()).toBe(complaint);
+            expect(comp.latestRatedResult()?.id).toBe(2);
+        });
+
+        it('should not set a complaint when the submission has none', () => {
+            comp.exercise = { ...exercise, type: ExerciseType.PROGRAMMING } as unknown as Exercise;
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as unknown as EntityResponseType));
+            const convertSpy = vi.spyOn(complaintService, 'convertComplaintFromServer');
+
+            comp.loadComplaintAndLatestRatedResult();
+
+            expect(convertSpy).not.toHaveBeenCalled();
+            expect(comp.complaint()).toBeUndefined();
+        });
+
+        it('should not look for the latest rated result of a text exercise', () => {
+            comp.exercise = { ...exercise, type: ExerciseType.TEXT } as unknown as Exercise;
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as unknown as EntityResponseType));
+
+            comp.loadComplaintAndLatestRatedResult();
+
+            expect(comp.latestRatedResult()).toBeUndefined();
+        });
+
+        it('should load nothing without a graded submission or results to show', () => {
+            comp.exercise = { ...exercise, type: ExerciseType.PROGRAMMING } as unknown as Exercise;
+            const findSpy = vi.spyOn(complaintService, 'findBySubmissionId');
+            comp.sortedHistoryResults = [];
+
+            comp.loadComplaintAndLatestRatedResult();
+
+            expect(findSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('quiz status and result list', () => {
+        it('should report the status of a quiz and none for other exercises', () => {
+            vi.spyOn(TestBed.inject(QuizExerciseService), 'getStatus').mockReturnValue(QuizStatus.VISIBLE);
+
+            comp.exercise = { id: 5, type: ExerciseType.QUIZ } as unknown as Exercise;
+            expect(comp.quizExerciseStatus).toBe(QuizStatus.VISIBLE);
+
+            comp.exercise = { id: 5, type: ExerciseType.TEXT } as unknown as Exercise;
+            expect(comp.quizExerciseStatus).toBeUndefined();
+        });
+
+        it('should toggle showing more results', () => {
+            comp.toggleShowMoreResults();
+            expect(comp.showMoreResults()).toBe(true);
+
+            comp.toggleShowMoreResults();
+            expect(comp.showMoreResults()).toBe(false);
+        });
+
+        it.each([
+            { badge: 'bg-success', rated: true },
+            { badge: 'bg-info', rated: false },
+        ])('should use the badge $badge for a result with rated $rated', ({ badge, rated }) => {
+            expect(comp.exerciseRatedBadge({ rated } as Result)).toBe(badge);
+        });
+    });
+
+    describe('instructor actions', () => {
+        const actionsOf = (instructorExercise: Partial<Exercise>, status?: QuizStatus) => {
+            vi.spyOn(TestBed.inject(QuizExerciseService), 'getStatus').mockReturnValue(status as QuizStatus);
+            comp.courseId = 1;
+            comp.handleNewExercise({ exercise: { id: 5, studentParticipations: [], ...instructorExercise } as Exercise });
+            return comp.instructorActionItems().map((item) => item.routerLink.replace('/course-management/1/', ''));
+        };
+
+        it('should offer nothing to a student', () => {
+            expect(actionsOf({ type: ExerciseType.TEXT })).toEqual([]);
+        });
+
+        it('should offer a tutor to see the exercise, its scores and participations', () => {
+            expect(actionsOf({ type: ExerciseType.TEXT, isAtLeastTutor: true })).toEqual(['text-exercises/5/', 'text-exercises/5/scores', 'text-exercises/5/participations']);
+        });
+
+        it('should offer a tutor the preview and the solution of a quiz', () => {
+            expect(actionsOf({ type: ExerciseType.QUIZ, isAtLeastTutor: true })).toEqual([
+                'quiz-exercises/5/',
+                'quiz-exercises/5/scores',
+                'quiz-exercises/5/preview',
+                'quiz-exercises/5/solution',
+            ]);
+        });
+
+        it('should offer an editor the grading of a programming exercise and the statistics of a modeling exercise', () => {
+            expect(actionsOf({ type: ExerciseType.PROGRAMMING, isAtLeastEditor: true })).toEqual(['programming-exercises/5/grading/test-cases']);
+            expect(actionsOf({ type: ExerciseType.MODELING, isAtLeastEditor: true })).toEqual(['modeling-exercises/5/exercise-statistics']);
+        });
+
+        it('should offer an editor to edit a quiz that did not start and an instructor to re-evaluate a quiz that is open for practice', () => {
+            expect(actionsOf({ type: ExerciseType.QUIZ, isAtLeastEditor: true }, QuizStatus.INVISIBLE)).toEqual(['quiz-exercises/5/quiz-point-statistic', 'quiz-exercises/5/edit']);
+            expect(actionsOf({ type: ExerciseType.QUIZ, isAtLeastEditor: true, isAtLeastInstructor: true }, QuizStatus.OPEN_FOR_PRACTICE)).toEqual([
+                'quiz-exercises/5/quiz-point-statistic',
+                'quiz-exercises/5/re-evaluate',
+            ]);
+        });
     });
 });

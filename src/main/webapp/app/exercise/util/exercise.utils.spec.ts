@@ -1,14 +1,24 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Subject, of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { SimpleChanges } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import {
+    EditType,
+    SaveExerciseCommand,
     areManualResultsAllowed,
+    countSubmissions,
     getExerciseDueDate,
+    getPositiveAndCappedTotalScore,
+    getTotalMaxPoints,
+    hasExerciseChanged,
     hasExerciseDueDatePassed,
     isResumeExerciseAvailable,
     isStartExerciseAvailable,
     isStartPracticeAvailable,
+    problemStatementHasChanged,
     validateStrictDateSequence,
     withPracticeParticipations,
 } from 'app/exercise/util/exercise.utils';
@@ -16,6 +26,8 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 
 describe('ExerciseUtils', () => {
     const exerciseWithDueDate = (dueDate?: dayjs.Dayjs) => {
@@ -341,6 +353,188 @@ describe('ExerciseUtils', () => {
         it('should return the delivered participations when no practice participation exists', () => {
             expect(withPracticeParticipations([teamParticipation], [])).toEqual([]);
             expect(withPracticeParticipations(undefined, [teamParticipation])).toEqual([teamParticipation]);
+        });
+    });
+
+    describe('SaveExerciseCommand', () => {
+        const savedExercise = { id: 7, title: 'saved' } as Exercise;
+        const response = new HttpResponse<Exercise>({ body: savedExercise });
+        let exercise: Exercise;
+
+        const createService = () => ({
+            create: vi.fn().mockReturnValue(of(response)),
+            import: vi.fn().mockReturnValue(of(response)),
+            update: vi.fn().mockReturnValue(of(response)),
+            reevaluateAndUpdate: vi.fn().mockReturnValue(of(response)),
+        });
+
+        const createWarning = () => ({ confirmed: new Subject<void>(), reEvaluated: new Subject<void>(), canceled: new Subject<void>(), deleteFeedback: () => true });
+
+        const createCommand = (editType: EditType, hasOpenModals = false, warning?: ReturnType<typeof createWarning>) => {
+            const service = createService();
+            const modalService = { hasOpenModals: vi.fn().mockReturnValue(hasOpenModals) };
+            const popupService = { checkExerciseBeforeUpdate: vi.fn().mockResolvedValue({ componentInstance: warning }) };
+            const command = new SaveExerciseCommand(modalService as any, popupService as any, service, { id: 7 } as Exercise, editType);
+            return { command, service, popupService };
+        };
+
+        // save() subscribed to the promise of the warning service first, so awaiting it afterwards lets the subscribers run before the test continues
+        const flushPromises = async (popupService: { checkExerciseBeforeUpdate: ReturnType<typeof vi.fn> }) => {
+            await popupService.checkExerciseBeforeUpdate.mock.results[0].value;
+        };
+
+        beforeEach(() => {
+            exercise = { id: 7, title: '  padded title  ' } as Exercise;
+        });
+
+        it('should create the exercise with a trimmed title', () => {
+            const { command, service } = createCommand(EditType.CREATE);
+            let result: Exercise | undefined;
+
+            command.save(exercise, false).subscribe((saved) => (result = saved));
+
+            expect(service.create).toHaveBeenCalledOnce();
+            expect(service.create.mock.calls[0][0].title).toBe('padded title');
+            expect(result).toBe(savedExercise);
+        });
+
+        it('should import the exercise', () => {
+            const { command, service } = createCommand(EditType.IMPORT);
+
+            command.save(exercise, false).subscribe();
+
+            expect(service.import).toHaveBeenCalledOnce();
+            expect(service.create).not.toHaveBeenCalled();
+        });
+
+        it.each([
+            { notificationText: 'Changed the deadline', expected: { notificationText: 'Changed the deadline' } },
+            { notificationText: undefined, expected: {} },
+        ])('should update the exercise with the request options $expected', ({ notificationText, expected }) => {
+            const { command, service } = createCommand(EditType.UPDATE);
+
+            command.save(exercise, false, notificationText).subscribe();
+
+            expect(service.update).toHaveBeenCalledOnce();
+            expect(service.update.mock.calls[0][1]).toEqual(expected);
+            expect(service.reevaluateAndUpdate).not.toHaveBeenCalled();
+        });
+
+        it('should ignore the notification text when the exercise is created', () => {
+            const { command, service } = createCommand(EditType.CREATE);
+
+            command.save(exercise, false, 'ignored').subscribe();
+
+            expect(service.create).toHaveBeenCalledOnce();
+            expect(service.update).not.toHaveBeenCalled();
+        });
+
+        it('should wait for the confirmation of an open warning modal before it updates', async () => {
+            const warning = createWarning();
+            const { command, service, popupService } = createCommand(EditType.UPDATE, true, warning);
+            let result: Exercise | undefined;
+
+            command.save(exercise, true, 'notify').subscribe((saved) => (result = saved));
+            await flushPromises(popupService);
+
+            expect(popupService.checkExerciseBeforeUpdate).toHaveBeenCalledWith(exercise, { id: 7 }, true);
+            expect(service.update).not.toHaveBeenCalled();
+
+            warning.confirmed.next();
+
+            expect(service.update).toHaveBeenCalledOnce();
+            expect(service.update.mock.calls[0][1]).toEqual({ notificationText: 'notify' });
+            expect(result).toBe(savedExercise);
+        });
+
+        it('should reevaluate and update when the warning modal asks for it', async () => {
+            const warning = createWarning();
+            const { command, service, popupService } = createCommand(EditType.UPDATE, true, warning);
+
+            command.save(exercise, false).subscribe();
+            await flushPromises(popupService);
+            warning.reEvaluated.next();
+
+            expect(service.reevaluateAndUpdate).toHaveBeenCalledOnce();
+            expect(service.reevaluateAndUpdate.mock.calls[0][1]).toEqual({ deleteFeedback: true });
+            expect(service.update).not.toHaveBeenCalled();
+        });
+
+        it('should not save when the warning modal is canceled', async () => {
+            const warning = createWarning();
+            const { command, service, popupService } = createCommand(EditType.UPDATE, true, warning);
+            let completed = false;
+
+            command.save(exercise, false).subscribe({ complete: () => (completed = true) });
+            await flushPromises(popupService);
+            warning.canceled.next();
+            warning.confirmed.next();
+
+            expect(completed).toBe(true);
+            expect(service.update).not.toHaveBeenCalled();
+            expect(service.reevaluateAndUpdate).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('hasExerciseChanged() and problemStatementHasChanged()', () => {
+        const changes = (previousValue: Partial<Exercise> | undefined, currentValue: Partial<Exercise> | undefined) =>
+            ({ exercise: { previousValue, currentValue } }) as unknown as SimpleChanges;
+
+        it('should detect a change of the exercise id', () => {
+            expect(hasExerciseChanged(changes({ id: 1 }, { id: 2 }))).toBe(true);
+            expect(hasExerciseChanged(changes(undefined, { id: 2 }))).toBe(true);
+            expect(hasExerciseChanged(changes({ id: 2 }, { id: 2 }))).toBe(false);
+        });
+
+        it('should not detect a change without exercise or current value', () => {
+            expect(hasExerciseChanged({})).toBeFalsy();
+            expect(hasExerciseChanged(changes({ id: 1 }, undefined))).toBeFalsy();
+        });
+
+        it('should detect a change of the problem statement', () => {
+            expect(problemStatementHasChanged(changes({ problemStatement: 'a' }, { problemStatement: 'b' }))).toBe(true);
+            expect(problemStatementHasChanged(changes(undefined, { problemStatement: 'b' }))).toBe(true);
+            expect(problemStatementHasChanged(changes({ problemStatement: 'a' }, { problemStatement: 'a' }))).toBe(false);
+        });
+
+        it('should not detect a problem statement change without exercise or current value', () => {
+            expect(problemStatementHasChanged({})).toBeFalsy();
+            expect(problemStatementHasChanged(changes({ problemStatement: 'a' }, undefined))).toBeFalsy();
+        });
+    });
+
+    describe('getPositiveAndCappedTotalScore() and getTotalMaxPoints()', () => {
+        it.each([
+            { totalScore: -3, maxPoints: 10, expected: 0 },
+            { totalScore: 12.5, maxPoints: 10, expected: 10 },
+            { totalScore: 3.14159, maxPoints: 10, expected: 3.14 },
+        ])('should return $expected for the score $totalScore and the maximum $maxPoints', ({ totalScore, maxPoints, expected }) => {
+            expect(getPositiveAndCappedTotalScore(totalScore, maxPoints)).toBe(expected);
+        });
+
+        it('should add the bonus points to the maximum points', () => {
+            expect(getTotalMaxPoints({ maxPoints: 10, bonusPoints: 5 } as Exercise)).toBe(15);
+            expect(getTotalMaxPoints({ maxPoints: 10 } as Exercise)).toBe(10);
+            expect(getTotalMaxPoints(undefined)).toBe(0);
+        });
+    });
+
+    describe('countSubmissions()', () => {
+        it('should count the distinct commits of manual submissions only', () => {
+            const submission = (type: SubmissionType, commitHash?: string) => ({ type, commitHash }) as ProgrammingSubmission;
+            const participation = {
+                submissions: [
+                    submission(SubmissionType.MANUAL, 'a'),
+                    submission(SubmissionType.MANUAL, 'a'),
+                    submission(SubmissionType.MANUAL, 'b'),
+                    submission(SubmissionType.MANUAL, undefined),
+                    submission(SubmissionType.TEST, 'c'),
+                ],
+            } as StudentParticipation;
+
+            expect(countSubmissions(participation)).toBe(2);
+            expect(countSubmissions({} as StudentParticipation)).toBe(0);
+            expect(countSubmissions(undefined)).toBe(0);
         });
     });
 });

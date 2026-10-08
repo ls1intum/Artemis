@@ -7,13 +7,13 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
-import { ActivatedRoute, RouterModule, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Params, RouterModule, convertToParamMap } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTextEditorService } from 'test/helpers/mocks/service/mock-text-editor.service';
 import { TextEditorService } from 'app/text/overview/service/text-editor.service';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
 import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
@@ -45,7 +45,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { By } from '@angular/platform-browser';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -689,5 +690,332 @@ describe('TextEditorComponent', () => {
         expect(res).toBe('pendingChanges');
         // cleanup to avoid ngOnDestroy side-effects
         comp.submission.set(undefined as any);
+    });
+
+    it('unloadNotification does not block leaving the page without unsaved changes', () => {
+        comp.submission.set({ text: 'same' } as TextSubmission);
+        comp.answer.set('same');
+        const event = new Event('beforeunload') as unknown as BeforeUnloadEvent;
+        const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
+
+        expect(comp.unloadNotification(event)).toBe(true);
+        expect(preventDefaultSpy).not.toHaveBeenCalled();
+        // cleanup to avoid ngOnDestroy side-effects
+        comp.submission.set(undefined as any);
+    });
+
+    describe('loading the participation', () => {
+        const originalSnapshot = route.snapshot;
+        let routeParams: Subject<Params>;
+
+        /** A fresh participation per test, because the component writes into the exercise and the participation it receives. */
+        const loadedParticipation = (id = 42, submissions: TextSubmission[] = [{ id: 7, text: 'saved text' } as TextSubmission]) =>
+            ({ id, testRun: true, exercise: { id: 1, type: ExerciseType.TEXT, course: { id: 3 } } as TextExercise, submissions }) as StudentParticipation;
+
+        const setRouteParams = (paramMap: Record<string, string>) => {
+            (route as { snapshot: unknown }).snapshot = { paramMap: convertToParamMap(paramMap) };
+        };
+
+        beforeEach(() => {
+            routeParams = new Subject<Params>();
+            (route as { params?: unknown }).params = routeParams;
+        });
+
+        afterEach(() => {
+            (route as { snapshot: unknown }).snapshot = originalSnapshot;
+            delete (route as { params?: unknown }).params;
+        });
+
+        it('should alert an error and load nothing when the participation id of the route is not a number', () => {
+            setRouteParams({ participationId: 'abc' });
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            fixture.detectChanges();
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.textExercise.error');
+            expect(getTextForParticipationStub).not.toHaveBeenCalled();
+        });
+
+        it('should load the participation of the input directly and show a selected submission read-only', () => {
+            setRouteParams({ participationId: '42', submissionId: '7' });
+            const loaded = loadedParticipation();
+            getTextForParticipationStub.mockReturnValue(of(loaded));
+            const addParticipationSpy = vi.spyOn(TestBed.inject(ParticipationWebsocketService), 'addParticipation');
+            fixture.componentRef.setInput('participationId', 42);
+
+            fixture.detectChanges();
+
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, undefined);
+            expect(comp.participation()).toBe(loaded);
+            expect(comp.submission().id).toBe(7);
+            expect(comp.answer()).toBe('saved text');
+            expect(comp.isReadOnlyWithShowResult()).toBe(true);
+            expect(addParticipationSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not show the input participation read-only without a selected submission', () => {
+            getTextForParticipationStub.mockReturnValue(of(loadedParticipation()));
+            fixture.componentRef.setInput('participationId', 42);
+
+            fixture.detectChanges();
+
+            expect(comp.isReadOnlyWithShowResult()).toBe(false);
+        });
+
+        it('should alert when the participation of the input cannot be loaded', () => {
+            getTextForParticipationStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            fixture.componentRef.setInput('participationId', 42);
+
+            fixture.detectChanges();
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.http.404');
+        });
+
+        it('should load the participation of the route and reload it only when the participation, submission or result changes', () => {
+            setRouteParams({ participationId: '42' });
+            getTextForParticipationStub.mockImplementation((id: number) => of(loadedParticipation(id)));
+            fixture.detectChanges();
+
+            routeParams.next({ participationId: '42' });
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, undefined);
+            expect(comp.participation().id).toBe(42);
+            expect(comp.isReadOnlyWithShowResult()).toBe(false);
+
+            // the same route again is applied to the participation that is already loaded
+            routeParams.next({ participationId: '42' });
+            expect(getTextForParticipationStub).toHaveBeenCalledOnce();
+
+            // another participation
+            routeParams.next({ participationId: '43' });
+            expect(getTextForParticipationStub).toHaveBeenLastCalledWith(43, undefined);
+            expect(comp.participation().id).toBe(43);
+
+            // a selected submission
+            setRouteParams({ participationId: '43', submissionId: '7' });
+            routeParams.next({ participationId: '43' });
+            expect(getTextForParticipationStub).toHaveBeenCalledTimes(3);
+            expect(comp.isReadOnlyWithShowResult()).toBe(true);
+
+            // a selected result
+            setRouteParams({ participationId: '43', submissionId: '7', resultId: '5' });
+            routeParams.next({ participationId: '43' });
+            expect(getTextForParticipationStub).toHaveBeenLastCalledWith(43, 5);
+        });
+
+        it('should reload the loaded participation when the route changes the submission without a participation id', () => {
+            setRouteParams({ participationId: '42' });
+            getTextForParticipationStub.mockImplementation((id: number) => of(loadedParticipation(id)));
+            fixture.detectChanges();
+            routeParams.next({ participationId: '42' });
+            getTextForParticipationStub.mockClear();
+
+            setRouteParams({ submissionId: '7' });
+            routeParams.next({});
+
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, undefined);
+        });
+
+        it('should load nothing when the route changes the submission but no participation is known', () => {
+            setRouteParams({ participationId: '42' });
+            fixture.detectChanges();
+
+            setRouteParams({ submissionId: '7' });
+            routeParams.next({});
+
+            expect(getTextForParticipationStub).not.toHaveBeenCalled();
+            expect(comp.participation()).toBeUndefined();
+        });
+
+        it('should alert when the participation of the route cannot be loaded', () => {
+            setRouteParams({ participationId: '42' });
+            getTextForParticipationStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            fixture.detectChanges();
+
+            routeParams.next({ participationId: '42' });
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.http.403');
+        });
+
+        it('should keep the state when an update without a participation arrives', () => {
+            setRouteParams({ participationId: '42' });
+            getTextForParticipationStub.mockReturnValue(of(loadedParticipation()));
+            fixture.detectChanges();
+            routeParams.next({ participationId: '42' });
+            const loaded = comp.participation();
+
+            comp['updateParticipation'](undefined as unknown as StudentParticipation);
+
+            expect(comp.participation()).toBe(loaded);
+        });
+    });
+
+    describe('participation changes of the websocket', () => {
+        const athenaResult = (successful: boolean | undefined) =>
+            ({ id: 5, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful, completionDate: dayjs().subtract(1, 'minute') }) as Result;
+
+        const withResults = (results: Result[]) =>
+            ({
+                id: 42,
+                testRun: false,
+                exercise: { id: 1, title: 'Essay', type: ExerciseType.TEXT, course: { id: 3 } } as TextExercise,
+                submissions: [{ id: 7, text: 'answer', results }],
+            }) as unknown as StudentParticipation;
+
+        const openWithParticipation = (initial: StudentParticipation, isExamSummary = false) => {
+            fixture.componentRef.setInput('inputExercise', initial.exercise);
+            fixture.componentRef.setInput('inputParticipation', initial);
+            fixture.componentRef.setInput('isExamSummary', isExamSummary);
+            fixture.detectChanges();
+            return TestBed.inject(ParticipationWebsocketService).subscribeForParticipationChanges();
+        };
+
+        it('should ignore an emission without a participation', () => {
+            const participationSubject = openWithParticipation(withResults([]));
+            const updateParticipationSpy = vi.spyOn(comp, 'updateParticipation' as never);
+
+            participationSubject.next(undefined);
+
+            expect(updateParticipationSpy).not.toHaveBeenCalled();
+        });
+
+        it('should alert a failed Athena feedback request and still apply the participation', () => {
+            const participationSubject = openWithParticipation(withResults([]));
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            participationSubject.next(withResults([athenaResult(false)]));
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.athenaFeedbackFailed');
+            expect(comp.result().id).toBe(5);
+            expect(comp.hasAthenaResultForLatestSubmission).toBe(true);
+        });
+
+        it('should alert a successful Athena feedback request and remember that the latest submission has feedback', () => {
+            const participationSubject = openWithParticipation(withResults([]));
+            const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+            comp.hasAthenaResultForLatestSubmission = false;
+
+            participationSubject.next(withResults([athenaResult(true)]));
+
+            expect(successSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.athenaFeedbackSuccessful', { title: 'Essay' });
+            expect(comp.hasAthenaResultForLatestSubmission).toBe(true);
+            expect(comp.result().id).toBe(5);
+        });
+
+        it('should reload the participation with the Athena result in the exam summary', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            const reloaded = withResults([athenaResult(true)]);
+            getTextForParticipationStub.mockReturnValue(of(reloaded));
+
+            participationSubject.next(withResults([athenaResult(true)]));
+
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, 5);
+            expect(comp.participation()).toBe(reloaded);
+        });
+
+        it('should alert when the participation with the Athena result cannot be reloaded in the exam summary', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            getTextForParticipationStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            participationSubject.next(withResults([athenaResult(true)]));
+
+            expect(errorSpy).toHaveBeenCalledWith('error.http.403');
+        });
+
+        it('should not treat an unfinished Athena request as new feedback', () => {
+            const participationSubject = openWithParticipation(withResults([]));
+            const alertService = TestBed.inject(AlertService);
+            const successSpy = vi.spyOn(alertService, 'success');
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            participationSubject.next(withResults([athenaResult(undefined)]));
+
+            expect(successSpy).not.toHaveBeenCalled();
+            expect(errorSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('submitting', () => {
+        const prepareSubmission = (submission: TextSubmission, participation: StudentParticipation = { id: 1 } as StudentParticipation) => {
+            comp.participation.set(participation);
+            comp.submission.set(submission);
+            comp.textExercise.set({ id: 1 } as TextExercise);
+            comp.answer.set('abc');
+        };
+
+        it('should submit as a new submission without results when the latest submission already has Athena feedback', () => {
+            prepareSubmission({
+                id: 3,
+                results: [{ id: 5, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result],
+                participation: { id: 1 } as Participation,
+            } as TextSubmission);
+            comp.hasAthenaResultForLatestSubmission = true;
+            const updateSpy = vi.spyOn(textSubmissionService, 'update');
+
+            comp.submitExercise();
+
+            const submitted = updateSpy.mock.calls[0][0];
+            expect(submitted.id).toBeUndefined();
+            expect(submitted.results).toBeUndefined();
+            expect(submitted.text).toBe('abc');
+            expect(comp.hasAthenaResultForLatestSubmission).toBe(false);
+        });
+
+        it('should keep the id and the results of the submission without Athena feedback', () => {
+            prepareSubmission({ id: 3, results: [{ id: 5, assessmentType: AssessmentType.MANUAL } as Result], participation: { id: 1 } as Participation } as TextSubmission);
+            const updateSpy = vi.spyOn(textSubmissionService, 'update');
+
+            comp.submitExercise();
+
+            expect(updateSpy.mock.calls[0][0].id).toBe(3);
+            expect(updateSpy.mock.calls[0][0].results).toHaveLength(1);
+        });
+
+        it('should not lose the team of the participation when the server answers without it', () => {
+            const team = { id: 9 } as Team;
+            prepareSubmission({ id: 3, participation: { id: 1 } as Participation } as TextSubmission, { id: 1, team } as StudentParticipation);
+
+            comp.submitExercise();
+
+            expect(comp.participation().team).toBe(team);
+        });
+
+        it('should alert the message of the server and allow submitting again when the submission fails', () => {
+            prepareSubmission({ id: 3, participation: { id: 1 } as Participation } as TextSubmission);
+            vi.spyOn(textSubmissionService, 'update').mockReturnValue(throwError(() => ({ error: { message: 'submission failed' } })));
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            comp.submitExercise();
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('submission failed');
+            expect(comp.isSaving()).toBe(false);
+        });
+    });
+
+    describe('typing', () => {
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('should emit the submission with the typed text after the debounce time', () => {
+            vi.useFakeTimers();
+            comp.textExercise.set({ id: 1 } as TextExercise);
+            comp.submission.set(new TextSubmission());
+            const emitted: TextSubmission[] = [];
+            const subscription = comp.submissionObservable.subscribe((submission) => emitted.push(submission));
+
+            comp.onTextEditorInput({ target: { value: 'first' } } as unknown as Event);
+            comp.onTextEditorInput({ target: { value: 'second' } } as unknown as Event);
+            vi.advanceTimersByTime(1999);
+            expect(emitted).toHaveLength(0);
+            vi.advanceTimersByTime(1);
+
+            expect(emitted).toHaveLength(1);
+            expect(emitted[0].text).toBe('second');
+            expect(emitted[0].language).toBe(Language.ENGLISH);
+            subscription.unsubscribe();
+        });
     });
 });
