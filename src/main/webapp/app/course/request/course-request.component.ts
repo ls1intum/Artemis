@@ -44,6 +44,7 @@ export class CourseRequestComponent {
         startDate: [this.defaultRange?.startDate, [Validators.required]],
         endDate: [this.defaultRange?.endDate, [Validators.required]],
         testCourse: [false],
+        gradeRelevant: [true],
         reason: ['', [Validators.required]],
     });
 
@@ -84,13 +85,16 @@ export class CourseRequestComponent {
             return;
         }
 
+        const testCourse = this.form.get('testCourse')!.value ?? false;
         const payload: BaseCourseRequest = {
             title: this.form.get('title')!.value!,
             shortName: this.form.get('shortName')!.value!,
             semester: this.form.get('semester')!.value!,
             startDate,
             endDate,
-            testCourse: this.form.get('testCourse')!.value ?? false,
+            testCourse,
+            // A test course is never grade relevant, whatever the (disabled) control still holds
+            gradeRelevant: !testCourse && (this.form.get('gradeRelevant')!.value ?? true),
             reason: this.form.get('reason')!.value!,
         };
 
@@ -105,6 +109,7 @@ export class CourseRequestComponent {
                     startDate: this.defaultRange?.startDate,
                     endDate: this.defaultRange?.endDate,
                     testCourse: false,
+                    gradeRelevant: true,
                     reason: '',
                 });
                 this.previousSemester = this.defaultSemester;

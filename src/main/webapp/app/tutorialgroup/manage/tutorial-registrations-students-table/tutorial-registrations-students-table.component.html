@@ -1,20 +1,19 @@
 <div class="table-frame">
     @let actionColumn = removeActionColumnInfo();
-    <table class="table-header">
-        <thead>
-            <tr class="header-row">
-                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.name"></th>
-                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.login"></th>
-                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.email"></th>
-                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.registrationNumber"></th>
-                @if (actionColumn) {
-                    <th class="action-column" [jhiTranslate]="actionColumn.headerStringKey"></th>
-                }
-            </tr>
-        </thead>
-    </table>
     <div class="scroll-container">
-        <table class="table-body">
+        <table class="table-header table-body">
+            <thead>
+                <tr class="header-row">
+                    <th scope="col" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.name"></th>
+                    <th scope="col" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.login"></th>
+                    <th scope="col" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.email"></th>
+                    <th scope="col" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.registrationNumber"></th>
+                    @if (actionColumn) {
+                        <th scope="col" class="action-column" [jhiTranslate]="actionColumn.headerStringKey"></th>
+                    }
+                </tr>
+            </thead>
+
             <tbody>
                 @for (student of studentsWithCompleteProfilePictureUrl(); track student.id) {
                     <tr class="table-row">

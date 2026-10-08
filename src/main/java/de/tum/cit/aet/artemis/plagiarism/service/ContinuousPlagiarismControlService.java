@@ -32,10 +32,10 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmissionElement;
@@ -63,6 +63,8 @@ public class ContinuousPlagiarismControlService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
     private final PlagiarismDetectionService plagiarismDetectionService;
 
     private final PlagiarismComparisonRepository plagiarismComparisonRepository;
@@ -82,11 +84,12 @@ public class ContinuousPlagiarismControlService {
      */
     private final Optional<FeatureUsageCollector> featureUsageCollector;
 
-    public ContinuousPlagiarismControlService(ExerciseRepository exerciseRepository, PlagiarismDetectionService plagiarismDetectionService,
-            PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository,
-            PlagiarismPostService plagiarismPostService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
-            Optional<FeatureUsageCollector> featureUsageCollector) {
+    public ContinuousPlagiarismControlService(ExerciseRepository exerciseRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository,
+            PlagiarismDetectionService plagiarismDetectionService, PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService,
+            PlagiarismCaseRepository plagiarismCaseRepository, PlagiarismPostService plagiarismPostService, PlagiarismResultRepository plagiarismResultRepository,
+            UserRepository userRepository, Optional<FeatureUsageCollector> featureUsageCollector) {
         this.exerciseRepository = exerciseRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.plagiarismDetectionService = plagiarismDetectionService;
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.plagiarismCaseService = plagiarismCaseService;
@@ -103,21 +106,22 @@ public class ContinuousPlagiarismControlService {
     @Scheduled(cron = "${artemis.scheduling.continuous-plagiarism-control-trigger-time:0 0 5 * * *}")
     public void executeChecks() {
         var exercises = exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue();
+        // The query only filters on the plagiarism detection configuration, and an exercise does not carry it by itself, so
+        // the configurations of all of them are read here in one query, before the checks below look at them.
+        plagiarismDetectionConfigRepository.attachTo(exercises);
         log.info("Starting scheduled continuous plagiarism control for {} exercises: {}", exercises.size(), exercises.stream().map(Exercise::getId).toList());
         exercises.stream().filter(isBeforeDueDateOrAfterWithPostDueDateChecksEnabled).forEach(exercise -> {
             // A check whose findings nobody can act on and whose plagiarism case nobody can be named as the sender of
             // is not worth running, so a course without an instructor is skipped before the expensive part starts.
             var author = findPostAuthor(exercise);
             if (author.isEmpty()) {
-                log.warn("Skipping continuous plagiarism control, the course has no instructor to act on the findings: exerciseId={}, type={}.", exercise.getId(),
+                log.warn("Skipping continuous plagiarism control, no course instructor could be resolved to act on the findings: exerciseId={}, type={}.", exercise.getId(),
                         exercise.getExerciseType());
                 return;
             }
 
             log.info("Started continuous plagiarism control for exercise: exerciseId={}, type={}.", exercise.getId(), exercise.getExerciseType());
             final long startTime = System.nanoTime();
-
-            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(exercise, exerciseRepository);
 
             var outcome = executeChecksForExerciseSilencingExceptions(exercise);
             updatePlagiarismCases(outcome.result(), exercise, author.get());
@@ -228,10 +232,11 @@ public class ContinuousPlagiarismControlService {
      * instructor with the lowest id is taken so that repeated runs keep attributing the posts the same way.
      *
      * @param exercise the exercise the plagiarism check is about to run on
-     * @return the instructor to write the post in the name of, empty if the course has none and the check is skipped
+     * @return the instructor to write the post in the name of, empty if no course instructor can be resolved and the check is skipped
      */
     private Optional<User> findPostAuthor(Exercise exercise) {
-        return userRepository.getInstructors(exercise.getCourseViaExerciseGroupOrCourseMember()).stream().min(Comparator.comparing(User::getId));
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        return course == null ? Optional.empty() : userRepository.getInstructors(course).stream().min(Comparator.comparing(User::getId));
     }
 
     private static Post buildCpcPost(PlagiarismCase plagiarismCase, User author) {

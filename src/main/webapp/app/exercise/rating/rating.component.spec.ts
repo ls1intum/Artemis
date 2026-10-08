@@ -14,6 +14,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockRatingService } from 'test/helpers/mocks/service/mock-rating.service';
+import { By } from '@angular/platform-browser';
 
 @Component({
     selector: 'star-rating',
@@ -153,6 +154,94 @@ describe('RatingComponent', () => {
 
         expect(loadRatingSpy).not.toHaveBeenCalled();
         expect(ratingComponent.rating()).toBe(2);
+    });
+
+    describe('appearance', () => {
+        function stars(): StarRatingComponentStub {
+            return ratingComponentFixture.debugElement.query(By.directive(StarRatingComponentStub)).componentInstance;
+        }
+
+        it('should be a quiet block without a tinted box or border of its own', () => {
+            ratingComponentFixture.detectChanges();
+
+            const root = ratingComponentFixture.nativeElement.querySelector('.rating') as HTMLElement;
+            expect(root).toBeTruthy();
+            // The loud callout came from `alert alert-info` classes that the pages put on the host. The component carries none of them.
+            for (const element of [ratingComponentFixture.nativeElement as HTMLElement, root]) {
+                expect(element.classList.contains('alert')).toBe(false);
+                expect(element.classList.contains('alert-info')).toBe(false);
+            }
+        });
+
+        it('should show the prompt as a small muted label instead of bold text', () => {
+            ratingComponentFixture.detectChanges();
+
+            const label = ratingComponentFixture.nativeElement.querySelector('.rating__label') as HTMLElement;
+            expect(label).toBeTruthy();
+            expect(label.tagName.toLowerCase()).toBe('span');
+            expect(label.getAttribute('jhiTranslate')).toBe('artemisApp.rating.label');
+            expect(ratingComponentFixture.nativeElement.querySelector('b')).toBeNull();
+        });
+
+        it('should draw small stars in semantic colours that take colour only when chosen', () => {
+            ratingComponentFixture.detectChanges();
+
+            expect(stars().size()).toBe('18');
+            // Unchosen stars are muted. The chosen colour is also what a hovered star shows.
+            expect(stars().uncheckedColor()).toBe('var(--rating-star-muted)');
+            expect(stars().checkedColor()).toBe('var(--rating-star-selected)');
+            expect(stars().checkedColor()).not.toBe(stars().uncheckedColor());
+        });
+
+        it('should keep the size that a page asks for', () => {
+            ratingComponentFixture.componentRef.setInput('starSize', '24');
+            ratingComponentFixture.detectChanges();
+
+            expect(stars().size()).toBe('24');
+        });
+
+        it('should stay interactive, so that every star can be chosen', () => {
+            ratingComponentFixture.detectChanges();
+
+            expect(stars().readOnly()).toBe(false);
+            expect(stars().totalStars()).toBe(5);
+        });
+
+        it('should show the stored rating in the stars', () => {
+            vi.spyOn(ratingService, 'getRating').mockReturnValue(of(4));
+
+            ratingComponentFixture.detectChanges();
+            ratingComponentFixture.detectChanges();
+
+            expect(stars().value()).toBe(4);
+        });
+
+        it('should only change the cursor while a rating is being saved, so the layout does not jump', () => {
+            ratingComponentFixture.detectChanges();
+            const root = ratingComponentFixture.nativeElement.querySelector('.rating') as HTMLElement;
+            const classesBefore = Array.from(root.classList);
+
+            ratingComponent.disableRating.set(true);
+            ratingComponentFixture.detectChanges();
+
+            expect(root.classList.contains('non-clickable')).toBe(true);
+            expect(Array.from(root.classList).filter((name) => name !== 'non-clickable')).toEqual(classesBefore);
+        });
+
+        it('should put the prompt and the stars on one row with the inline layout', () => {
+            ratingComponentFixture.componentRef.setInput('layout', 'inline');
+            ratingComponentFixture.detectChanges();
+
+            const root = ratingComponentFixture.nativeElement.querySelector('.rating') as HTMLElement;
+            expect(root.classList.contains('rating--inline')).toBe(true);
+        });
+
+        it('should stack the prompt above the stars by default', () => {
+            ratingComponentFixture.detectChanges();
+
+            const root = ratingComponentFixture.nativeElement.querySelector('.rating') as HTMLElement;
+            expect(root.classList.contains('rating--inline')).toBe(false);
+        });
     });
 
     describe('OnRate', () => {

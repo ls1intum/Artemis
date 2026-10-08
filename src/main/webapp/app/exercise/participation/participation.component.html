@@ -171,6 +171,7 @@
 
 <ng-template #gradedPresentationCellTemplate let-cell>
     <input
+        [attr.aria-label]="'accessibility.presentationScore' | artemisTranslate"
         name="presentationGrade"
         type="number"
         min="0"

@@ -56,6 +56,9 @@
                 </ul>
             </dd>
         </dl>
+        @if (u.login) {
+            <jhi-user-course-roles class="mt-4 block" [login]="u.login" />
+        }
         <div class="mt-4">
             <a [routerLink]="['edit']" tumAetUiButton size="small" severity="warn" data-testid="edit-user-button">
                 <fa-icon [icon]="faPencil" />

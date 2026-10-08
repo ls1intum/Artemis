@@ -6,11 +6,12 @@ import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/comp
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CommonModule } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-learning-paths-analytics',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CompetencyGraphComponent, TranslateDirective, CommonModule],
+    imports: [CompetencyGraphComponent, TranslateDirective, CommonModule, ArtemisTranslatePipe],
     templateUrl: './learning-paths-analytics.component.html',
     styleUrl: './learning-paths-analytics.component.scss',
 })

@@ -111,6 +111,7 @@
                                 <div class="form-inline">
                                     <div class="input-group w-auto">
                                         <input
+                                            [attr.aria-label]="'artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction' | artemisTranslate"
                                             class="form-control"
                                             type="number"
                                             [ngModel]="verdictPointDeduction()"
@@ -142,6 +143,7 @@
                                 <div class="form">
                                     <div class="form-group">
                                         <textarea
+                                            [attr.aria-label]="'accessibility.verdictMessage' | artemisTranslate"
                                             rows="5"
                                             cols="80"
                                             maxlength="1000"
