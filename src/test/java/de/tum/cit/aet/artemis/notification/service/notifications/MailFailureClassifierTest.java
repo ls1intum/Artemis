@@ -108,6 +108,17 @@ class MailFailureClassifierTest {
     }
 
     @Test
+    void shouldNeverLetTheRefusalOfOneRecipientPauseTheNodeEvenWhenItMentionsAQuota() throws Exception {
+        var address = new InternetAddress("someone@example.org");
+        var fullMailbox = new SMTPAddressFailedException(address, "RCPT TO", 452, "452 4.2.2 The email account that you tried to reach is over quota");
+        var refused = new SMTPAddressFailedException(address, "RCPT TO", 550, "550 5.1.1 No such user");
+
+        assertThat(MailFailureClassifier.classify(wrapped(new SendFailedException("Invalid Addresses", fullMailbox, null, new Address[] { address }, null))))
+                .isEqualTo(MailFailureKind.TRANSIENT);
+        assertThat(MailFailureClassifier.classify(wrapped(refused))).isEqualTo(MailFailureKind.PERMANENT);
+    }
+
+    @Test
     void shouldClassifyAMessageThatCannotBeBuiltAsPermanent() {
         assertThat(MailFailureClassifier.classify(new MailParseException("Could not parse mail", new MessagingException("bad header")))).isEqualTo(MailFailureKind.PERMANENT);
     }
@@ -120,7 +131,8 @@ class MailFailureClassifierTest {
 
     @Test
     void shouldClassifyAnUnreachableServerAsServerUnavailable() {
-        var failure = new MailSendException("Mail server connection failed", new MessagingException("Could not connect to SMTP host", new ConnectException("Connection refused")));
+        var cause = new MessagingException("Could not connect to SMTP host", new ConnectException("Connection refused"));
+        var failure = new MailSendException("Mail server connection failed", cause, Map.of(new Object(), cause));
 
         assertThat(MailFailureClassifier.classify(failure)).isEqualTo(MailFailureKind.SERVER_UNAVAILABLE);
         assertThat(MailFailureClassifier.classify(new MessagingException("Could not connect", new UnknownHostException("postout.lrz.de"))))

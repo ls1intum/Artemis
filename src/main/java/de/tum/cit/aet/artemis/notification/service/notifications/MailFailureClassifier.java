@@ -98,7 +98,9 @@ public final class MailFailureClassifier {
             return classifyReply(smtp.getReturnCode(), smtp.getMessage());
         }
         if (throwable instanceof SMTPAddressFailedException smtp) {
-            return classifyReply(smtp.getReturnCode(), smtp.getMessage());
+            // A refusal of one recipient says something about that address only, whatever its text says about a quota (a full
+            // mailbox of someone else), so it must never make this node stop sending.
+            return classifyRecipientReply(smtp.getReturnCode());
         }
         if (throwable instanceof SMTPSenderFailedException smtp) {
             return classifyReply(smtp.getReturnCode(), smtp.getMessage());
@@ -130,6 +132,13 @@ public final class MailFailureClassifier {
             return mentionsQuota(message) ? MailFailureKind.QUOTA_EXCEEDED : MailFailureKind.TRANSIENT;
         }
         return null;
+    }
+
+    private static MailFailureKind classifyRecipientReply(int replyCode) {
+        if (replyCode >= 500 && replyCode < 600) {
+            return MailFailureKind.PERMANENT;
+        }
+        return replyCode >= 400 && replyCode < 500 ? MailFailureKind.TRANSIENT : null;
     }
 
     private static boolean mentionsQuota(String message) {

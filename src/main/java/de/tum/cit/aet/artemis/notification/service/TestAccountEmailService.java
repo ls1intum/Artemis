@@ -2,9 +2,11 @@ package de.tum.cit.aet.artemis.notification.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
@@ -51,7 +53,16 @@ public class TestAccountEmailService {
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository,
             UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository,
             CourseNotificationSettingPresetRegistryService courseNotificationSettingPresetRegistryService) {
-        this.testAccountLoginPatterns = properties.getTestAccountLoginPatterns().stream().map(Pattern::compile).toList();
+        List<Pattern> patterns = new ArrayList<>();
+        for (String pattern : properties.getTestAccountLoginPatterns()) {
+            try {
+                patterns.add(Pattern.compile(pattern));
+            }
+            catch (PatternSyntaxException e) {
+                throw new IllegalStateException("Invalid regular expression in artemis.mail.test-account-login-patterns: '" + pattern + "'", e);
+            }
+        }
+        this.testAccountLoginPatterns = List.copyOf(patterns);
         this.globalNotificationSettingRepository = globalNotificationSettingRepository;
         this.userCourseNotificationSettingSpecificationRepository = userCourseNotificationSettingSpecificationRepository;
         this.userCourseNotificationSettingPresetRepository = userCourseNotificationSettingPresetRepository;

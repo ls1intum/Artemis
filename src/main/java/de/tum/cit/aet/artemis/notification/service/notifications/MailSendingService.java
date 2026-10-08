@@ -4,11 +4,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -24,6 +26,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.mail.MailException;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -134,6 +137,11 @@ public class MailSendingService {
 
     private final TestAccountEmailService testAccountEmailPolicy;
 
+    /**
+     * Set while the queue is worked off, so that a run that is still sending when the next one is due is not joined by it.
+     */
+    private final AtomicBoolean draining = new AtomicBoolean();
+
     public MailSendingService(ArtemisProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine,
             MailRetryQueueService retryQueue, TestAccountEmailService testAccountEmailPolicy) {
         this.jHipsterProperties = jHipsterProperties;
@@ -183,13 +191,13 @@ public class MailSendingService {
      * @param content     The content of the mail. Can be enriched with HTML tags
      * @param isMultipart Whether to create a multipart that supports alternative texts, inline elements
      * @param isHtml      Whether the mail should support HTML tags
-     * @return true if the mail was handed to the transport or is kept to be handed over later, false if mail is not configured
-     *         for this deployment, the recipient is a test account that did not opt in, or the message could not be built or
-     *         sent for good. Reported rather than discarded because a caller that measures whether its channel works has no
-     *         other way to find out.
+     * @return true if the SMTP server accepted the mail, false if mail is not configured for this deployment, the recipient is a
+     *         test account that did not opt in, or the mail was not accepted. Reported rather than discarded because a caller
+     *         that measures whether its channel works has no other way to find out. A mail that is not accepted is never queued
+     *         here: a queued mail is not a delivered one.
      */
     public boolean sendEmailSync(MailRecipientDTO recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
-        return sendEmailSync(recipient, subject, content, isMultipart, isHtml, MailPriority.TRANSACTIONAL);
+        return deliver(recipient.email(), recipient.login(), subject, content, isMultipart, isHtml, MailPriority.TRANSACTIONAL, false) == Delivery.SENT;
     }
 
     /**
@@ -355,7 +363,8 @@ public class MailSendingService {
             log.info("Sent email with subject '{}' to user '{}' (message id {})", subject, recipientLogin, attempt.messageId());
             return Delivery.SENT;
         }
-        return handleFailure(mail, attempt, now, canBeQueued, false);
+        // Read the clock again: a connection that timed out has used up part of the pause the failure is about to start.
+        return handleFailure(mail, attempt, Instant.now(), canBeQueued, false);
     }
 
     /**
@@ -413,6 +422,16 @@ public class MailSendingService {
             javaMailSender.send(mimeMessage);
             return SendAttempt.accepted(messageIdOf(mimeMessage));
         }
+        catch (MailSendException e) {
+            if (e.getFailedMessages().isEmpty()) {
+                // Spring reports no failed message only if the server accepted the mail and closing the connection failed afterwards.
+                // Trying again would deliver the mail twice and stop this node from sending for no reason.
+                log.warn("Email with subject '{}' to user '{}' was accepted, but closing the connection to the SMTP server failed: {}", mail.subject(), mail.recipientLogin(),
+                        e.getMessage());
+                return SendAttempt.accepted(messageIdOf(mimeMessage));
+            }
+            return SendAttempt.failed(MailFailureClassifier.classify(e), e);
+        }
         catch (MailException | MessagingException e) {
             return SendAttempt.failed(MailFailureClassifier.classify(e), e);
         }
@@ -438,18 +457,37 @@ public class MailSendingService {
      * A run stops when the SMTP server reports that the quota is used up or cannot be reached, and after a limited number
      * of mails, so that a backlog is not sent in one burst that uses up the quota again.
      */
+    @Async("mailTaskExecutor")
     @Scheduled(fixedDelayString = "${artemis.mail.retry.drain-interval:PT30S}", initialDelayString = "${artemis.mail.retry.drain-interval:PT30S}")
     public void sendQueuedMails() {
         sendQueuedMails(Instant.now());
     }
 
-    void sendQueuedMails(Instant now) {
+    void sendQueuedMails(Instant startedAt) {
         if (!retryQueue.isEnabled() || !mailConfigured) {
             return;
         }
+        if (!draining.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            drainQueue(startedAt);
+        }
+        finally {
+            draining.set(false);
+        }
+    }
+
+    private void drainQueue(Instant startedAt) {
+        Instant clockStart = Instant.now();
         int attempted = 0;
         int sent = 0;
-        while (attempted < retryQueue.drainBatchSize() && !retryQueue.isPaused(now)) {
+        while (attempted < retryQueue.drainBatchSize()) {
+            // Sending takes time, so the moment of each mail is read anew instead of taken from the start of the run.
+            Instant now = startedAt.plus(Duration.between(clockStart, Instant.now()));
+            if (retryQueue.isPaused(now)) {
+                break;
+            }
             Optional<PendingMail> due = retryQueue.pollDue(now);
             if (due.isEmpty()) {
                 break;

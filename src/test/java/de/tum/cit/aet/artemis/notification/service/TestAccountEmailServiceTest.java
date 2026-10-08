@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.notification.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -73,6 +74,15 @@ class TestAccountEmailServiceTest {
         assertThat(withoutPatterns.isTestAccount("artemis_test_user_1")).isFalse();
         assertThat(withoutPatterns.isEmailEnabledByDefault("artemis_test_user_1")).isTrue();
         assertThat(withoutPatterns.suppressesEmailTo("artemis_test_user_1")).isFalse();
+    }
+
+    @Test
+    void shouldNameThePropertyAndThePatternWhenAPatternIsNotARegularExpression() {
+        var invalid = new MailDeliveryProperties();
+        invalid.setTestAccountLoginPatterns(List.of("artemis_test_user_(\\d+"));
+
+        assertThatThrownBy(() -> new TestAccountEmailService(invalid, globalNotificationSettingRepository, specificationRepository, presetRepository, presetRegistry))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("artemis.mail.test-account-login-patterns").hasMessageContaining("artemis_test_user_(\\d+");
     }
 
     @Test

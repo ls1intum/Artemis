@@ -4,8 +4,8 @@ title: E-Mail Delivery
 sidebar_label: E-Mail Delivery
 ---
 
-import Callout from "../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Callout from '../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../src/components/Callout/Callout.types';
 
 Artemis sends e-mail for account security (new logins, password changes, password resets), for course notifications such as announcements,
 and for system tasks such as maintenance notices and data retention warnings. Every server of an Artemis deployment hands its mail to one
@@ -25,9 +25,9 @@ match the whole login. The default configuration contains the pattern of the pub
 
 ```yaml
 artemis:
-  mail:
-    test-account-login-patterns:
-      - 'artemis_test_user_\d+'
+    mail:
+        test-account-login-patterns:
+            - 'artemis_test_user_\d+'
 ```
 
 For a test account, the notification settings behave as follows.
@@ -49,12 +49,12 @@ credentials are public.
 
 A mail that the SMTP server refuses is not lost. Artemis reads the reply of the server to decide what to do.
 
-| Reply of the server | Meaning | What Artemis does |
-| --- | --- | --- |
-| 5xx, or an address the server rejects | The mail cannot be delivered, for example because the mailbox does not exist | Logs an error and drops the mail |
-| 4xx that mentions a quota or limit | The account may not send more mail for now | Pauses the node and keeps the mail |
-| 421, or a connection or authentication failure | The server cannot be used at the moment | Pauses the node for a short time and keeps the mail |
-| Any other 4xx, or a failure Artemis does not understand | The server refused this mail for now | Keeps the mail and tries it again after a delay |
+| Reply of the server                                     | Meaning                                                                      | What Artemis does                                   |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------- |
+| 5xx, or an address the server rejects                   | The mail cannot be delivered, for example because the mailbox does not exist | Logs an error and drops the mail                    |
+| 4xx that mentions a quota or limit                      | The account may not send more mail for now                                   | Pauses the node and keeps the mail                  |
+| 421, or a connection or authentication failure          | The server cannot be used at the moment                                      | Pauses the node for a short time and keeps the mail |
+| Any other 4xx, or a failure Artemis does not understand | The server refused this mail for now                                         | Keeps the mail and tries it again after a delay     |
 
 While a node is paused it does not contact the SMTP server. Mails that arrive in the meantime go straight into the queue of the node,
 because trying each of them would only collect the same refusal. When the pause ends, the node sends the oldest queued mail as a probe.
@@ -79,21 +79,26 @@ the queue. They send directly, learn about a refusal at once and try again on th
 
 All keys are below `artemis.mail.retry`. The values shown are the defaults. Durations use the ISO-8601 notation of Spring Boot.
 
-| Key | Default | Meaning |
-| --- | --- | --- |
-| `enabled` | `true` | Whether a mail that is refused for a temporary reason is kept. When `false`, such a mail is logged and dropped |
-| `max-queue-size` | `5000` | The most mails one node keeps. Each holds its rendered body, so 5,000 mails take a few tens of megabytes |
-| `initial-delay` | `PT1M` | The wait before the second attempt, doubled with every further failed attempt |
-| `max-delay` | `PT1H` | The longest wait between two attempts for one mail |
-| `quota-pause` | `PT15M` | How long a node stops sending after the server reported that the quota is used up |
-| `unavailable-pause` | `PT2M` | How long a node stops sending after the server could not be reached |
-| `transactional-max-age` | `PT12H` | The age after which a transactional mail is dropped instead of sent |
-| `bulk-max-age` | `PT48H` | The age after which a bulk mail is dropped instead of sent |
-| `drain-interval` | `PT30S` | The pause between two runs of the job that works off the queue |
-| `drain-batch-size` | `200` | The most mails one run of the job sends |
+| Key                     | Default | Meaning                                                                                                        |
+| ----------------------- | ------- | -------------------------------------------------------------------------------------------------------------- |
+| `enabled`               | `true`  | Whether a mail that is refused for a temporary reason is kept. When `false`, such a mail is logged and dropped |
+| `max-queue-size`        | `5000`  | The most mails one node keeps. Each holds its rendered body, so 5,000 mails take a few tens of megabytes       |
+| `initial-delay`         | `PT1M`  | The wait before the second attempt, doubled with every further failed attempt                                  |
+| `max-delay`             | `PT1H`  | The longest wait between two attempts for one mail                                                             |
+| `quota-pause`           | `PT15M` | How long a node stops sending after the server reported that the quota is used up                              |
+| `unavailable-pause`     | `PT2M`  | How long a node stops sending after the server could not be reached                                            |
+| `transactional-max-age` | `PT12H` | The age after which a transactional mail is dropped instead of sent                                            |
+| `bulk-max-age`          | `PT48H` | The age after which a bulk mail is dropped instead of sent                                                     |
+| `drain-interval`        | `PT30S` | The pause between two runs of the job that works off the queue                                                 |
+| `drain-batch-size`      | `200`   | The most mails one run of the job sends                                                                        |
 
 Together, `drain-interval` and `drain-batch-size` pace a backlog. With the defaults a node sends at most 24,000 queued mails per hour. Lower
-the batch size if working off a backlog should leave room for the regular traffic of the shared account.
+the batch size if working off a backlog should leave room for the regular traffic of the shared account. The job runs on the executor for
+mail, not on the scheduler of the node, and a run that is still busy is not joined by the next one.
+
+Artemis sets default timeouts for the connection to the SMTP server (`spring.mail.properties.mail.smtp.connectiontimeout`, `timeout` and
+`writetimeout`, in milliseconds: 10,000, 30,000 and 30,000), because the mail library otherwise waits forever for a server that stopped
+answering. Override them in the same keys if your server needs more time.
 
 ## Finding out what was sent
 
@@ -114,20 +119,20 @@ journalctl -u artemis.service --since today | grep 'Sent email with subject' \
 
 A node reports its state through the following Micrometer meters, which an administrator can chart and alert on.
 
-| Meter | Meaning |
-| --- | --- |
-| `artemis.mail.outcome` | Counter with the tag `outcome`. `sent` and `sent_after_retry` are accepted by the SMTP server, `queued_for_retry` waits in the queue, `rejected` and `expired` were not delivered, `dropped_queue_full` was dropped because the queue was full, and `suppressed` went to a test account that has not enabled e-mail |
-| `artemis.mail.retry.queue.size` | Gauge with the tag `priority` (`transactional` or `bulk`) for the mails that wait for another attempt |
-| `artemis.mail.delivery.paused` | Gauge that is `1` while the node does not contact the SMTP server |
+| Meter                           | Meaning                                                                                                                                                                                                                                                                                                             |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `artemis.mail.outcome`          | Counter with the tag `outcome`. `sent` and `sent_after_retry` are accepted by the SMTP server, `queued_for_retry` waits in the queue, `rejected` and `expired` were not delivered, `dropped_queue_full` was dropped because the queue was full, and `suppressed` went to a test account that has not enabled e-mail |
+| `artemis.mail.retry.queue.size` | Gauge with the tag `priority` (`transactional` or `bulk`) for the mails that wait for another attempt                                                                                                                                                                                                               |
+| `artemis.mail.delivery.paused`  | Gauge that is `1` while the node does not contact the SMTP server                                                                                                                                                                                                                                                   |
 
 An alert on `artemis.mail.delivery.paused` or on a growing `artemis.mail.retry.queue.size` tells an administrator about an exhausted quota
 when it starts, not when a user reports a missing mail.
 
 <Callout variant={CalloutVariant.info}>
 
-  The SMTP server confirms that it accepted a mail, not that the mail reached an inbox. A mail that a recipient domain rejects later,
-  or that lands in a spam folder, is accepted by the server of the sender and logged as sent. Rejection notices are sent to the sender
-  address, which Artemis does not read.
+The SMTP server confirms that it accepted a mail, not that the mail reached an inbox. A mail that a recipient domain rejects later,
+or that lands in a spam folder, is accepted by the server of the sender and logged as sent. Rejection notices are sent to the sender
+address, which Artemis does not read.
 
 </Callout>
 

@@ -12,6 +12,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.net.SocketException;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
@@ -97,7 +98,7 @@ class MailSendingServiceRetryTest {
     }
 
     private static MailSendException smtpFailure(int replyCode, String reply) {
-        return new MailSendException(Map.of(new Object(), new SMTPSendFailedException("RCPT", replyCode, reply, null, null, null, null)));
+        return new MailSendException(Map.of(new Object(), new SMTPSendFailedException("DATA", replyCode, reply, null, null, null, null)));
     }
 
     private double counted(Outcome outcome) {
@@ -122,7 +123,7 @@ class MailSendingServiceRetryTest {
 
     @Test
     void shouldSendAMailTheServerAcceptsAndKeepNothing() {
-        boolean accepted = mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true);
+        boolean accepted = mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL);
 
         assertThat(accepted).isTrue();
         verify(javaMailSender).send(any(MimeMessage.class));
@@ -134,7 +135,7 @@ class MailSendingServiceRetryTest {
     void shouldKeepAMailAndPauseTheNodeWhenTheQuotaIsExhausted() {
         doThrow(quotaFailure()).when(javaMailSender).send(any(MimeMessage.class));
 
-        boolean accepted = mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true);
+        boolean accepted = mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL);
 
         assertThat(accepted).as("a mail that waits for another attempt is accepted for delivery").isTrue();
         assertThat(retryQueue.size()).isEqualTo(1);
@@ -146,7 +147,7 @@ class MailSendingServiceRetryTest {
     @Test
     void shouldNotContactTheServerForMailsThatArriveWhilePaused() {
         doThrow(quotaFailure()).when(javaMailSender).send(any(MimeMessage.class));
-        mailSendingService.sendEmailSync(recipient("student1"), "First", "Body", false, true);
+        mailSendingService.sendEmailSync(recipient("student1"), "First", "Body", false, true, MailPriority.TRANSACTIONAL);
 
         // These are the announcements of a whole course: every one of them would only collect the same refusal.
         for (int i = 2; i <= 50; i++) {
@@ -160,8 +161,8 @@ class MailSendingServiceRetryTest {
     @Test
     void shouldSendTheQueuedMailsOnceThePauseHasEnded() {
         doThrow(quotaFailure()).when(javaMailSender).send(any(MimeMessage.class));
-        mailSendingService.sendEmailSync(recipient("student1"), "First", "Body", false, true);
-        mailSendingService.sendEmailSync(recipient("student2"), "Second", "Body", false, true);
+        mailSendingService.sendEmailSync(recipient("student1"), "First", "Body", false, true, MailPriority.TRANSACTIONAL);
+        mailSendingService.sendEmailSync(recipient("student2"), "Second", "Body", false, true, MailPriority.TRANSACTIONAL);
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
 
         Instant afterThePause = Instant.now().plus(properties.getRetry().getQuotaPause()).plusSeconds(1);
@@ -176,7 +177,7 @@ class MailSendingServiceRetryTest {
     @Test
     void shouldNotSendAnythingBeforeThePauseHasEnded() {
         doThrow(quotaFailure()).when(javaMailSender).send(any(MimeMessage.class));
-        mailSendingService.sendEmailSync(recipient("student1"), "First", "Body", false, true);
+        mailSendingService.sendEmailSync(recipient("student1"), "First", "Body", false, true, MailPriority.TRANSACTIONAL);
 
         mailSendingService.sendQueuedMails(Instant.now().plus(properties.getRetry().getQuotaPause()).minusSeconds(30));
 
@@ -188,7 +189,7 @@ class MailSendingServiceRetryTest {
     void shouldStopTheRunAndPauseAgainWhenTheQuotaIsStillExhausted() {
         doThrow(quotaFailure()).when(javaMailSender).send(any(MimeMessage.class));
         for (int i = 1; i <= 5; i++) {
-            mailSendingService.sendEmailSync(recipient("student" + i), "Mail " + i, "Body", false, true);
+            mailSendingService.sendEmailSync(recipient("student" + i), "Mail " + i, "Body", false, true, MailPriority.TRANSACTIONAL);
         }
         Instant afterThePause = Instant.now().plus(properties.getRetry().getQuotaPause()).plusSeconds(1);
 
@@ -205,7 +206,7 @@ class MailSendingServiceRetryTest {
         properties.getRetry().setDrainBatchSize(2);
         doThrow(quotaFailure()).when(javaMailSender).send(any(MimeMessage.class));
         for (int i = 1; i <= 5; i++) {
-            mailSendingService.sendEmailSync(recipient("student" + i), "Mail " + i, "Body", false, true);
+            mailSendingService.sendEmailSync(recipient("student" + i), "Mail " + i, "Body", false, true, MailPriority.TRANSACTIONAL);
         }
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
 
@@ -233,7 +234,7 @@ class MailSendingServiceRetryTest {
     void shouldNotKeepAMailTheServerRefusedForGood() {
         doThrow(smtpFailure(550, "550 5.1.1 The email account that you tried to reach does not exist")).when(javaMailSender).send(any(MimeMessage.class));
 
-        boolean accepted = mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true);
+        boolean accepted = mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL);
 
         assertThat(accepted).isFalse();
         assertThat(retryQueue.size()).isZero();
@@ -244,7 +245,7 @@ class MailSendingServiceRetryTest {
     @Test
     void shouldRetryAMailThatFailedForItsOwnReasonAfterABackoffWithoutPausingTheNode() {
         doThrow(smtpFailure(451, "451 4.3.0 Local error in processing")).when(javaMailSender).send(any(MimeMessage.class));
-        mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true);
+        mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL);
         assertThat(retryQueue.isPaused(Instant.now())).isFalse();
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
 
@@ -259,7 +260,7 @@ class MailSendingServiceRetryTest {
     @Test
     void shouldDoubleTheBackoffWhenTheRetryFailsAgain() {
         doThrow(smtpFailure(451, "451 4.3.0 Local error in processing")).when(javaMailSender).send(any(MimeMessage.class));
-        mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true);
+        mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL);
 
         Instant firstRetry = Instant.now().plusSeconds(90);
         mailSendingService.sendQueuedMails(firstRetry);
@@ -278,7 +279,7 @@ class MailSendingServiceRetryTest {
     @Test
     void shouldDropARetryThatTheServerNowRefusesForGood() {
         doThrow(smtpFailure(451, "451 4.3.0 Local error in processing")).when(javaMailSender).send(any(MimeMessage.class));
-        mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true);
+        mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL);
         doThrow(smtpFailure(550, "550 5.1.1 No such user")).when(javaMailSender).send(any(MimeMessage.class));
 
         mailSendingService.sendQueuedMails(Instant.now().plusSeconds(90));
@@ -308,7 +309,7 @@ class MailSendingServiceRetryTest {
     void shouldPauseTheNodeForAShorterTimeWhenTheServerRefusesTheCredentials() {
         doThrow(new MailAuthenticationException("Authentication failed")).when(javaMailSender).send(any(MimeMessage.class));
 
-        mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true);
+        mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL);
 
         assertThat(retryQueue.size()).isEqualTo(1);
         assertThat(retryQueue.isPaused(Instant.now())).isTrue();
@@ -328,9 +329,33 @@ class MailSendingServiceRetryTest {
     }
 
     @Test
+    void shouldNeverQueueTheMailOfAnAdministratorWhoAsksWhetherItWasSent() {
+        doThrow(quotaFailure()).when(javaMailSender).send(any(MimeMessage.class));
+
+        boolean sent = mailSendingService.sendEmailSync(recipient("student1"), "Digest", "Body", false, true);
+
+        assertThat(sent).isFalse();
+        assertThat(retryQueue.size()).isZero();
+    }
+
+    @Test
+    void shouldNotSendAMailTwiceWhenOnlyClosingTheConnectionFailedAfterTheServerAcceptedIt() {
+        // Spring reports a failed close after a successful send as a MailSendException without any failed message.
+        doThrow(new MailSendException("Failed to close server connection after message sending", new SocketException("Broken pipe"))).when(javaMailSender)
+                .send(any(MimeMessage.class));
+
+        boolean accepted = mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL);
+
+        assertThat(accepted).isTrue();
+        assertThat(retryQueue.size()).isZero();
+        assertThat(retryQueue.isPaused(Instant.now())).isFalse();
+        assertThat(counted(Outcome.SENT)).isEqualTo(1);
+    }
+
+    @Test
     void shouldAttemptTheMailOfAReportingFlowEvenWhileTheNodeIsPaused() {
         doThrow(quotaFailure()).when(javaMailSender).send(any(MimeMessage.class));
-        mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true);
+        mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL);
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
 
         boolean delivered = mailSendingService.buildAndSendSyncReporting(recipient("student2"), "email.key", List.of(), "mail/template", Map.of());
@@ -354,7 +379,7 @@ class MailSendingServiceRetryTest {
         properties.getRetry().setEnabled(false);
         doThrow(quotaFailure()).when(javaMailSender).send(any(MimeMessage.class));
 
-        boolean accepted = mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true);
+        boolean accepted = mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL);
 
         assertThat(accepted).isFalse();
         assertThat(retryQueue.size()).isZero();
@@ -368,7 +393,7 @@ class MailSendingServiceRetryTest {
     void shouldNotSendToATestAccountThatHasNotOptedIn() {
         when(testAccountEmailPolicy.suppressesEmailTo("artemis_test_user_1")).thenReturn(true);
 
-        boolean accepted = mailSendingService.sendEmailSync(recipient("artemis_test_user_1"), "Subject", "Body", false, true);
+        boolean accepted = mailSendingService.sendEmailSync(recipient("artemis_test_user_1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL);
 
         assertThat(accepted).isFalse();
         verify(javaMailSender, never()).send(any(MimeMessage.class));
@@ -391,7 +416,7 @@ class MailSendingServiceRetryTest {
     void shouldSendToATestAccountThatHasOptedIn() {
         when(testAccountEmailPolicy.suppressesEmailTo("artemis_test_user_1")).thenReturn(false);
 
-        assertThat(mailSendingService.sendEmailSync(recipient("artemis_test_user_1"), "Subject", "Body", false, true)).isTrue();
+        assertThat(mailSendingService.sendEmailSync(recipient("artemis_test_user_1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL)).isTrue();
         verify(javaMailSender).send(any(MimeMessage.class));
     }
 
@@ -401,7 +426,7 @@ class MailSendingServiceRetryTest {
         unconfigured.getMail().setFrom("artemis@localhost");
         var service = new MailSendingService(unconfigured, javaMailSender, mock(MessageSource.class), mock(SpringTemplateEngine.class), retryQueue, testAccountEmailPolicy);
 
-        assertThat(service.sendEmailSync(recipient("student1"), "Subject", "Body", false, true)).isFalse();
+        assertThat(service.sendEmailSync(recipient("student1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL)).isFalse();
         service.sendQueuedMails(Instant.now());
 
         verify(javaMailSender, never()).send(any(MimeMessage.class));

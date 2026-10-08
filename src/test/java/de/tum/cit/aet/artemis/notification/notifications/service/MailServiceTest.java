@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Map;
 
 import jakarta.mail.internet.MimeMessage;
 
@@ -123,7 +124,7 @@ class MailServiceTest {
      */
     @Test
     void testNoMailSendExceptionThrown() {
-        doThrow(new MailSendException("Some error occurred during mail send")).when(javaMailSender).send(any(MimeMessage.class));
+        doThrow(new MailSendException(Map.of(new Object(), new IllegalStateException("Some error occurred during mail send")))).when(javaMailSender).send(any(MimeMessage.class));
         assertThatNoException().isThrownBy(() -> mailSendingService.sendEmail(MailRecipientDTO.from(student1), subject, content, false, true));
     }
 }
