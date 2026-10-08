@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -20,6 +21,20 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.commonmark.node.AbstractVisitor;
+import org.commonmark.node.BlockQuote;
+import org.commonmark.node.Code;
+import org.commonmark.node.FencedCodeBlock;
+import org.commonmark.node.HardLineBreak;
+import org.commonmark.node.Heading;
+import org.commonmark.node.HtmlBlock;
+import org.commonmark.node.HtmlInline;
+import org.commonmark.node.Image;
+import org.commonmark.node.IndentedCodeBlock;
+import org.commonmark.node.Paragraph;
+import org.commonmark.node.SoftLineBreak;
+import org.commonmark.node.Text;
+import org.commonmark.parser.Parser;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,14 +90,17 @@ public abstract class PostingService {
      */
     private static final Pattern AT_ALL_MENTION_PATTERN = Pattern.compile("(?<![\\p{L}\\p{N}_@/=])@all(?![\\p{L}\\p{N}_])", Pattern.CASE_INSENSITIVE);
 
-    /** Indentation of at most this many spaces still starts a fenced code block or a blockquote line in markdown. */
-    private static final int MAX_MARKDOWN_BLOCK_INDENT = 3;
+    /** The maximum length of the content of a posting, see {@link Posting#getContent()}. Longer content fails the validation when the posting is saved. */
+    private static final int MAX_POSTING_CONTENT_LENGTH = 5000;
 
-    /** A tab advances to the next multiple of this many columns, so a line indented by a tab is indented by at least four columns. */
-    private static final int TAB_WIDTH = 4;
+    /** The text of the token anywhere in the raw markdown, which has to be present for the token to be displayed. Markup such as emphasis may adjoin it there. */
+    private static final Pattern AT_ALL_TEXT_PATTERN = Pattern.compile("@all", Pattern.CASE_INSENSITIVE);
 
-    /** A fenced code block opens with at least this many backticks or tildes. */
-    private static final int MIN_FENCE_LENGTH = 3;
+    /** Parses the markdown of postings to find the text that is displayed as normal text. The parser is immutable and thread safe. */
+    private static final Parser MARKDOWN_PARSER = Parser.builder().build();
+
+    /** The HTML elements that the client renders as code or as a quote, so their text does not count as a mention. */
+    private static final Set<String> HTML_CODE_AND_QUOTE_ELEMENTS = Set.of("code", "pre", "blockquote");
 
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
@@ -387,146 +405,137 @@ public abstract class PostingService {
     protected abstract String getEntityName();
 
     /**
-     * Checks whether a posting contains the "@all" token, which pings every member of a group chat. Tokens in a blockquote, a fenced code block or an inline code span do not
-     * count, so quoting a message that contains "@all" or explaining the feature in code does not ping the group again. Neither does the token in a URL.
+     * Checks whether a posting contains the "@all" token, which pings every member of a group chat. Only text that is displayed as normal text counts: the token in a
+     * blockquote (including its lazy continuation lines), a fenced, indented or inline code, an HTML code, pre or blockquote element, an image description, a link
+     * destination or a URL does not. Quoting a message that contains "@all" or explaining the feature in code therefore does not ping the group again.
+     * <p>
+     * The posting is parsed as markdown, like the client does, so the block and container structure (lists, headings, fences inside lists) is respected.
      *
      * @param postingContent content of the posting, may be null
      * @return true if the content contains the "@all" token outside of quotes and code
      */
     public static boolean containsAtAllMention(String postingContent) {
-        if (postingContent == null) {
+        // most postings do not contain the text at all, they are not parsed, and content that exceeds the length of a posting is rejected when it is saved
+        if (postingContent == null || postingContent.length() > MAX_POSTING_CONTENT_LENGTH || !AT_ALL_TEXT_PATTERN.matcher(postingContent).find()) {
             return false;
         }
-        return AT_ALL_MENTION_PATTERN.matcher(withoutQuotesAndCode(postingContent)).find();
+        var textCollector = new DisplayedTextCollector();
+        MARKDOWN_PARSER.parse(postingContent).accept(textCollector);
+        return AT_ALL_MENTION_PATTERN.matcher(textCollector.getTextWithoutUrls()).find();
     }
 
     /**
-     * Removes blockquote lines, fenced code blocks (including an unterminated one that runs to the end, as in markdown), indented code blocks and inline code spans from the
-     * content. The content is user provided, so this is a single linear pass without backtracking regular expressions.
-     * <p>
-     * Consecutive lines of a paragraph are collected and processed together, because an inline code span may continue over line endings within a paragraph. A blank line, a
-     * fence and a blockquote line end the paragraph. A line indented by four or more columns that does not continue a paragraph belongs to an indented code block.
+     * Collects the text of a parsed posting that is displayed as normal text and leaves out code, quotes, images and the contents of HTML code, pre and blockquote
+     * elements. The parts that are left out are replaced by a space or a line break, so that the text around them is not joined into a token.
      */
-    private static String withoutQuotesAndCode(String content) {
-        StringBuilder result = new StringBuilder(content.length());
-        StringBuilder paragraph = new StringBuilder();
-        char openFence = 0;
-        int openFenceLength = 0;
-        int lineStart = 0;
-        while (lineStart <= content.length()) {
-            int lineEnd = content.indexOf('\n', lineStart);
-            if (lineEnd < 0) {
-                lineEnd = content.length();
-            }
-            String line = content.substring(lineStart, lineEnd);
-            lineStart = lineEnd + 1;
+    private static final class DisplayedTextCollector extends AbstractVisitor {
 
-            int indent = 0;
-            int column = 0;
-            while (indent < line.length() && (line.charAt(indent) == ' ' || line.charAt(indent) == '\t')) {
-                column = line.charAt(indent) == '\t' ? (column / TAB_WIDTH + 1) * TAB_WIDTH : column + 1;
-                indent++;
-            }
-            char first = indent < line.length() ? line.charAt(indent) : 0;
-            boolean mayStartBlock = column <= MAX_MARKDOWN_BLOCK_INDENT;
+        private final StringBuilder text = new StringBuilder();
 
-            if (openFenceLength > 0) {
-                if (mayStartBlock && first == openFence && isClosingFence(line, indent, openFenceLength)) {
-                    openFenceLength = 0;
+        /** The number of HTML code, pre and blockquote elements that are open at the current position. */
+        private int openHtmlCodeOrQuoteElements = 0;
+
+        @Override
+        public void visit(Text textNode) {
+            if (openHtmlCodeOrQuoteElements == 0) {
+                text.append(textNode.getLiteral());
+            }
+        }
+
+        @Override
+        public void visit(Code code) {
+            text.append(' ');
+        }
+
+        @Override
+        public void visit(FencedCodeBlock fencedCodeBlock) {
+            text.append('\n');
+        }
+
+        @Override
+        public void visit(IndentedCodeBlock indentedCodeBlock) {
+            text.append('\n');
+        }
+
+        @Override
+        public void visit(BlockQuote blockQuote) {
+            text.append('\n');
+        }
+
+        @Override
+        public void visit(HtmlBlock htmlBlock) {
+            text.append('\n');
+        }
+
+        @Override
+        public void visit(Image image) {
+            text.append(' ');
+        }
+
+        @Override
+        public void visit(SoftLineBreak softLineBreak) {
+            text.append('\n');
+        }
+
+        @Override
+        public void visit(HardLineBreak hardLineBreak) {
+            text.append('\n');
+        }
+
+        @Override
+        public void visit(Paragraph paragraph) {
+            visitChildren(paragraph);
+            text.append('\n');
+        }
+
+        @Override
+        public void visit(Heading heading) {
+            visitChildren(heading);
+            text.append('\n');
+        }
+
+        @Override
+        public void visit(HtmlInline htmlInline) {
+            String literal = htmlInline.getLiteral();
+            boolean closing = literal.startsWith("</");
+            int nameStart = closing ? 2 : 1;
+            int nameEnd = nameStart;
+            while (nameEnd < literal.length() && Character.isLetter(literal.charAt(nameEnd))) {
+                nameEnd++;
+            }
+            if (!HTML_CODE_AND_QUOTE_ELEMENTS.contains(literal.substring(nameStart, nameEnd).toLowerCase(Locale.ROOT))) {
+                return;
+            }
+            if (closing) {
+                openHtmlCodeOrQuoteElements = Math.max(0, openHtmlCodeOrQuoteElements - 1);
+            }
+            else if (!literal.endsWith("/>")) {
+                openHtmlCodeOrQuoteElements++;
+            }
+        }
+
+        /**
+         * The collected text without the words that contain a URL scheme separator, so a token in a URL (for example in a query value) does not count.
+         *
+         * @return the collected text
+         */
+        String getTextWithoutUrls() {
+            StringBuilder result = new StringBuilder(text.length());
+            int wordStart = 0;
+            for (int i = 0; i <= text.length(); i++) {
+                if (i == text.length() || Character.isWhitespace(text.charAt(i))) {
+                    String word = text.substring(wordStart, i);
+                    if (!word.contains("://")) {
+                        result.append(word);
+                    }
+                    if (i < text.length()) {
+                        result.append(text.charAt(i));
+                    }
+                    wordStart = i + 1;
                 }
             }
-            else if (line.isBlank()) {
-                appendWithoutInlineCode(result, paragraph);
-            }
-            else if (mayStartBlock && (first == '`' || first == '~') && opensFence(line, indent)) {
-                appendWithoutInlineCode(result, paragraph);
-                openFence = first;
-                openFenceLength = lengthOfRun(line, indent);
-            }
-            else if (mayStartBlock && first == '>') {
-                appendWithoutInlineCode(result, paragraph);
-            }
-            else if (mayStartBlock || !paragraph.isEmpty()) {
-                // an indented line directly after a paragraph line continues the paragraph
-                if (!paragraph.isEmpty()) {
-                    paragraph.append('\n');
-                }
-                paragraph.append(line);
-            }
-            // else: the line belongs to an indented code block
+            return result.toString();
         }
-        appendWithoutInlineCode(result, paragraph);
-        return result.toString();
-    }
-
-    /** Appends the collected paragraph without its inline code spans, followed by a line break, and empties the paragraph. Does nothing for an empty paragraph. */
-    private static void appendWithoutInlineCode(StringBuilder result, StringBuilder paragraph) {
-        if (!paragraph.isEmpty()) {
-            result.append(withoutInlineCode(paragraph.toString())).append('\n');
-            paragraph.setLength(0);
-        }
-    }
-
-    private static int lengthOfRun(String line, int start) {
-        int end = start;
-        while (end < line.length() && line.charAt(end) == line.charAt(start)) {
-            end++;
-        }
-        return end - start;
-    }
-
-    /** A run of at least three backticks or tildes opens a block, unless a backtick run is followed by another backtick, which makes the line an inline code span. */
-    private static boolean opensFence(String line, int indent) {
-        int length = lengthOfRun(line, indent);
-        return length >= MIN_FENCE_LENGTH && !(line.charAt(indent) == '`' && line.indexOf('`', indent + length) >= 0);
-    }
-
-    /** A closing fence consists of the fence character at least as often as the opening one and nothing but white space after it. */
-    private static boolean isClosingFence(String line, int indent, int openFenceLength) {
-        int length = lengthOfRun(line, indent);
-        return length >= openFenceLength && line.substring(indent + length).isBlank();
-    }
-
-    /**
-     * Removes inline code spans of a paragraph, which may consist of several lines. A span starts with a run of backticks and ends with the next run of exactly the same length,
-     * an unmatched run is plain text. The next run of the same length is determined once per run, so the effort is linear in the length of the paragraph.
-     */
-    private static String withoutInlineCode(String text) {
-        if (text.indexOf('`') < 0) {
-            return text;
-        }
-        List<int[]> runs = new ArrayList<>();
-        for (int i = 0; i < text.length();) {
-            if (text.charAt(i) == '`') {
-                int length = lengthOfRun(text, i);
-                runs.add(new int[] { i, length });
-                i += length;
-            }
-            else {
-                i++;
-            }
-        }
-        int[] nextRunOfSameLength = new int[runs.size()];
-        Map<Integer, Integer> lastSeenByLength = new HashMap<>();
-        for (int run = runs.size() - 1; run >= 0; run--) {
-            nextRunOfSameLength[run] = lastSeenByLength.getOrDefault(runs.get(run)[1], -1);
-            lastSeenByLength.put(runs.get(run)[1], run);
-        }
-
-        StringBuilder result = new StringBuilder(text.length());
-        int copiedUntil = 0;
-        int run = 0;
-        while (run < runs.size()) {
-            int closingRun = nextRunOfSameLength[run];
-            if (closingRun < 0) {
-                run++;
-                continue;
-            }
-            result.append(text, copiedUntil, runs.get(run)[0]).append(' ');
-            copiedUntil = runs.get(closingRun)[0] + runs.get(closingRun)[1];
-            run = closingRun + 1;
-        }
-        return result.append(text, copiedUntil, text.length()).toString();
     }
 
     /**

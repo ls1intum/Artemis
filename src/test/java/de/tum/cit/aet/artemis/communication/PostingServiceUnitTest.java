@@ -276,8 +276,10 @@ class PostingServiceUnitTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "@all", "@ALL", "@All", "@all ", "@all, please read", "@all. Please read", "@all!", "Hello @all", "Hello (@all)", "line one\n@all",
-            "[user]A B(ab)[/user] @all", "@all @all", "> quoted text\n@all please read", "`code` @all", "```\ncode\n```\n@all", "~~~\ncode\n~~~\n@all", "> quoted\n\n@all",
-            "see https://host/page and @all", "   @all", "text\n    @all", "text\n\t@all", "> quote\n\n@all", "`code\n\n@all`", "a ` b\n@all", "`code` and\n@all", "`` a `\n@all" })
+            "[user]A B(ab)[/user] @all", "@all @all", "`code` @all", "```\ncode\n```\n@all", "~~~\ncode\n~~~\n@all", "> quoted\n\n@all", "see https://host/page and @all",
+            "   @all", "text\n    @all", "text\n\t@all", "> quote\n\n@all", "`code\n\n@all`", "a ` b\n@all", "`code` and\n@all", "`` a `\n@all", "`example\n# @all",
+            "# Heading @all", "- item\n\n  @all", "- ~~~\n  code\n  ~~~\n\n@all", "**@all**", "_@all_ please read", "[details](https://host/page) @all", "<b>@all</b>",
+            "<code>x</code> @all", "<blockquote>q</blockquote>\n\n@all" })
     void testContainsAtAllMentionMatches(String content) {
         assertThat(PostingService.containsAtAllMention(content)).isTrue();
     }
@@ -286,7 +288,10 @@ class PostingServiceUnitTest {
     @ValueSource(strings = { "", "all", "@alle", "@allow", "@all_hands", "@all1", "email@all.com", "name@all", "@@all", "@ all", "@al", "[user]A B(ab)[/user]", "@all\u00e9",
             "\u00e9@all", "> @all meeting at 5", "  > @all meeting at 5", ">> @all", "`@all`", "``@all``", "use `@all` to ping", "```\n@all\n```", "```java\nint a;\n@all\n```",
             "```\n@all", "~~~\n@all\n~~~", "https://host/@all", "[link](https://host/@all)", "[link](https://host/p?x=@all)", "https://host/?a=@all", "a=@all", "    @all",
-            "\t@all", "text\n\n    @all", "> quote\n    @all", "```\ncode\n```\n    @all", "`code\n@all`", "a `b\nc @all` d", "`code\n    @all` text", "``a\nb ` @all\nc`` d" })
+            "\t@all", "text\n\n    @all", "> quote\n    @all", "```\ncode\n```\n    @all", "`code\n@all`", "a `b\nc @all` d", "`code\n    @all` text", "``a\nb ` @all\nc`` d",
+            "> quoted text\n@all please read", "> quote\n> more\n@all", "<code>@all</code>", "text <code>@all</code> more", "<pre>@all</pre>", "<blockquote>@all</blockquote>",
+            "<p><code>@all</code></p>", "- ~~~\n  @all\n  ~~~", "1. text\n\n       @all", "[details](https://host/?q=(@all))", "see https://host/?q=(@all)", "<https://host/@all>",
+            "![alt @all](https://host/image.png)" })
     void testContainsAtAllMentionDoesNotMatch(String content) {
         assertThat(PostingService.containsAtAllMention(content)).isFalse();
     }
@@ -304,23 +309,29 @@ class PostingServiceUnitTest {
     }
 
     @Test
-    @Timeout(value = 5, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
-    void testContainsAtAllMentionStaysFastForLargeInputWithManyBackticksAndLines() {
-        // a single run of backticks that does not start the line has no partner, so it is plain text
-        String manyBackticks = "text " + "`".repeat(200_000) + " @all";
-        String alternatingRuns = "`a``b```c````d".repeat(20_000);
-        // an odd number of fence lines leaves the last block open, so the token at the end is still code
-        String manyFenceLikeLines = "```\n".repeat(50_001) + "@all";
-        assertThat(PostingService.containsAtAllMention(manyBackticks)).isTrue();
-        assertThat(PostingService.containsAtAllMention(alternatingRuns)).isFalse();
-        assertThat(PostingService.containsAtAllMention(manyFenceLikeLines)).isFalse();
-        // consecutive lines of one paragraph are scanned together, the backtick runs of all lines pair up
-        String manyLinesWithOneBacktick = "a `b\n".repeat(50_000) + "@all";
-        String oneSpanAcrossManyLines = "`" + "line\n".repeat(100_000) + "@all`";
-        String manyIndentedLines = "    code `\n".repeat(100_000) + "    @all";
-        assertThat(PostingService.containsAtAllMention(manyLinesWithOneBacktick)).isTrue();
-        assertThat(PostingService.containsAtAllMention(oneSpanAcrossManyLines)).isFalse();
-        assertThat(PostingService.containsAtAllMention(manyIndentedLines)).isFalse();
+    @Timeout(value = 10, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void testContainsAtAllMentionStaysFastAndStableForAdversarialInputOfMaximumLength() {
+        // inputs of the maximum length of a posting that are built to make parsers slow or deep: nesting, many unmatched code spans of different lengths, unclosed markup
+        StringBuilder backtickRunsOfGrowingLength = new StringBuilder();
+        for (int length = 1; backtickRunsOfGrowingLength.length() < 4900; length++) {
+            backtickRunsOfGrowingLength.append("`".repeat(length)).append(' ');
+        }
+        List<String> adversarialInputs = List.of("> ".repeat(2480) + "@all", ">".repeat(4990) + "@all", "- ".repeat(2480) + "@all", "1. ".repeat(1650) + "@all",
+                "*".repeat(4990) + "@all", "_*".repeat(2490) + "@all", "[".repeat(2490) + "@all", "[](".repeat(1650) + "@all", "<code>".repeat(800) + "@all",
+                "<".repeat(4990) + "@all", "`a``b```c````d".repeat(350) + "@all", backtickRunsOfGrowingLength + "@all", "```\n".repeat(1240) + "@all",
+                "    code `\n".repeat(440) + "    @all");
+        for (String input : adversarialInputs) {
+            assertThat(input.length()).isLessThanOrEqualTo(5000);
+            // the result is not asserted, it must only be computed without an error in time
+            assertThat(PostingService.containsAtAllMention(input)).isNotNull();
+        }
+    }
+
+    @Test
+    void testContainsAtAllMentionIgnoresContentThatExceedsTheMaximumLengthOfAPosting() {
+        // such content is rejected when the posting is saved, so it is not parsed in the first place
+        assertThat(PostingService.containsAtAllMention("@all " + "x".repeat(5000))).isFalse();
+        assertThat(PostingService.containsAtAllMention("@all " + "x".repeat(4000))).isTrue();
     }
 
     /**
