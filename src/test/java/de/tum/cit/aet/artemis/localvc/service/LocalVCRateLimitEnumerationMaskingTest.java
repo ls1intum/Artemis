@@ -57,6 +57,8 @@ class LocalVCRateLimitEnumerationMaskingTest extends AbstractProgrammingIntegrat
 
     private Integer previousAuthenticationRequestsPerMinute;
 
+    private boolean previousRateLimitFeatureEnabled;
+
     @Override
     protected String getTestPrefix() {
         return TEST_PREFIX;
@@ -66,6 +68,7 @@ class LocalVCRateLimitEnumerationMaskingTest extends AbstractProgrammingIntegrat
     void enableRateLimitingAndCreateExistingRepository() throws Exception {
         previousRateLimitingEnabled = rateLimitingProperties.isEnabled();
         previousAuthenticationRequestsPerMinute = rateLimitingProperties.getAuthenticationRequestsPerMinute();
+        previousRateLimitFeatureEnabled = featureToggleService.isFeatureEnabled(Feature.RateLimit);
         rateLimitingProperties.setEnabled(true);
         rateLimitingProperties.setAuthenticationRequestsPerMinute(AUTHENTICATION_REQUESTS_PER_MINUTE);
         featureToggleService.enableFeature(Feature.RateLimit);
@@ -75,7 +78,14 @@ class LocalVCRateLimitEnumerationMaskingTest extends AbstractProgrammingIntegrat
 
     @AfterEach
     void disableRateLimitingAndRemoveRepositories() throws IOException {
-        featureToggleService.disableFeature(Feature.RateLimit);
+        // Restore the previous feature state rather than always disabling it, so a shared context that had the feature
+        // on keeps it on for later tests.
+        if (previousRateLimitFeatureEnabled) {
+            featureToggleService.enableFeature(Feature.RateLimit);
+        }
+        else {
+            featureToggleService.disableFeature(Feature.RateLimit);
+        }
         rateLimitingProperties.setEnabled(previousRateLimitingEnabled);
         rateLimitingProperties.setAuthenticationRequestsPerMinute(previousAuthenticationRequestsPerMinute);
         assignmentRepository.deleteWorkingCopy();
