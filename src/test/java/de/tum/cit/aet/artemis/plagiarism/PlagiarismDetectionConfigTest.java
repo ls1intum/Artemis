@@ -10,14 +10,15 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Pins the copy constructor of the plagiarism detection configuration: the settings are copied, the identity (row id,
- * exercise and its key) is not, and the copy does not share state with its source.
+ * exercise and its key) is not. All settings are primitives, so the copy cannot share state with its source.
  */
 class PlagiarismDetectionConfigTest {
 
     private static PlagiarismDetectionConfig attachedSourceWithNonDefaultSettings() {
         PlagiarismDetectionConfig source = new PlagiarismDetectionConfig();
         source.setContinuousPlagiarismControlEnabled(true);
-        source.setContinuousPlagiarismControlPostDueDateChecksEnabled(true);
+        // the two flags differ, so assigning one to the other is noticed
+        source.setContinuousPlagiarismControlPostDueDateChecksEnabled(false);
         source.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(14);
         source.setSimilarityThreshold(77);
         source.setMinimumScore(33);
@@ -36,11 +37,23 @@ class PlagiarismDetectionConfigTest {
         PlagiarismDetectionConfig copy = new PlagiarismDetectionConfig(attachedSourceWithNonDefaultSettings());
 
         assertThat(copy.isContinuousPlagiarismControlEnabled()).isTrue();
-        assertThat(copy.isContinuousPlagiarismControlPostDueDateChecksEnabled()).isTrue();
+        assertThat(copy.isContinuousPlagiarismControlPostDueDateChecksEnabled()).isFalse();
         assertThat(copy.getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(14);
         assertThat(copy.getSimilarityThreshold()).isEqualTo(77);
         assertThat(copy.getMinimumScore()).isEqualTo(33);
         assertThat(copy.getMinimumSize()).isEqualTo(55);
+    }
+
+    @Test
+    void copyKeepsTheFlagsApartInTheOtherCombinationToo() {
+        PlagiarismDetectionConfig source = new PlagiarismDetectionConfig();
+        source.setContinuousPlagiarismControlEnabled(false);
+        source.setContinuousPlagiarismControlPostDueDateChecksEnabled(true);
+
+        PlagiarismDetectionConfig copy = new PlagiarismDetectionConfig(source);
+
+        assertThat(copy.isContinuousPlagiarismControlEnabled()).isFalse();
+        assertThat(copy.isContinuousPlagiarismControlPostDueDateChecksEnabled()).isTrue();
     }
 
     @Test
@@ -58,22 +71,6 @@ class PlagiarismDetectionConfigTest {
         assertThat(source.getExercise()).as("copying leaves the source attached").isNotNull();
         assertThat(source.getExerciseId()).isEqualTo(123L);
         assertThat(source.getId()).isEqualTo(5L);
-    }
-
-    @Test
-    void copyDoesNotFollowLaterChangesOfTheSourceAndTheOtherWayAround() {
-        PlagiarismDetectionConfig source = attachedSourceWithNonDefaultSettings();
-        PlagiarismDetectionConfig copy = new PlagiarismDetectionConfig(source);
-
-        source.setSimilarityThreshold(1);
-        source.setMinimumSize(2);
-        source.setContinuousPlagiarismControlEnabled(false);
-        copy.setMinimumScore(99);
-
-        assertThat(copy.getSimilarityThreshold()).isEqualTo(77);
-        assertThat(copy.getMinimumSize()).isEqualTo(55);
-        assertThat(copy.isContinuousPlagiarismControlEnabled()).isTrue();
-        assertThat(source.getMinimumScore()).isEqualTo(33);
     }
 
     @Test
