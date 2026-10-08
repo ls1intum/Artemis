@@ -9,6 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('FormFooterComponent', () => {
     let fixture: ComponentFixture<FormFooterComponent>;
@@ -217,6 +218,100 @@ describe('FormFooterComponent', () => {
             fixture.componentInstance.generateWithAi.subscribe(generateSpy);
 
             fixture.componentInstance.onGenerateWithAi();
+
+            expect(generateSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should block save when there are reasons and no way to check them again', () => {
+            // the text, modeling and file upload update pages pass no revalidate, so their displayed reasons stay authoritative
+            fixture.componentRef.setInput('invalidReasons', staleReasons);
+            fixture.detectChanges();
+            const saveSpy = vi.fn();
+            fixture.componentInstance.save.subscribe(saveSpy);
+
+            clickSave();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not check the form again when no reasons are displayed', () => {
+            const revalidate = vi.fn(() => staleReasons);
+            fixture.componentRef.setInput('invalidReasons', []);
+            fixture.componentRef.setInput('revalidate', revalidate);
+            fixture.detectChanges();
+            const saveSpy = vi.fn();
+            fixture.componentInstance.save.subscribe(saveSpy);
+
+            clickSave();
+
+            expect(revalidate).not.toHaveBeenCalled();
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should check the form again once for every click that the displayed reasons block', () => {
+            const revalidate = vi.fn<() => ValidationReason[]>().mockReturnValueOnce(staleReasons).mockReturnValueOnce([]);
+            fixture.componentRef.setInput('invalidReasons', staleReasons);
+            fixture.componentRef.setInput('revalidate', revalidate);
+            fixture.detectChanges();
+            const saveSpy = vi.fn();
+            fixture.componentInstance.save.subscribe(saveSpy);
+
+            clickSave();
+            expect(revalidate).toHaveBeenCalledTimes(1);
+            expect(saveSpy).not.toHaveBeenCalled();
+
+            // the answer is read at click time and not remembered from the click before
+            clickSave();
+            expect(revalidate).toHaveBeenCalledTimes(2);
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+
+        it.each([
+            { name: 'the footer is disabled', input: 'isDisabled' },
+            { name: 'a save is running', input: 'isSaving' },
+            { name: 'the exercise is being generated with AI', input: 'isGeneratingWithAi' },
+        ])('should neither emit nor check the form again when $name', ({ input }) => {
+            const revalidate = vi.fn(() => []);
+            fixture.componentRef.setInput('invalidReasons', staleReasons);
+            fixture.componentRef.setInput('revalidate', revalidate);
+            fixture.componentRef.setInput(input, true);
+            fixture.detectChanges();
+            const saveSpy = vi.fn();
+            const generateSpy = vi.fn();
+            fixture.componentInstance.save.subscribe(saveSpy);
+            fixture.componentInstance.generateWithAi.subscribe(generateSpy);
+
+            clickSave();
+            fixture.componentInstance.onGenerateWithAi();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(generateSpy).not.toHaveBeenCalled();
+            expect(revalidate).not.toHaveBeenCalled();
+        });
+
+        it('should not emit generateWithAi when the fresh check still finds reasons', () => {
+            fixture.componentRef.setInput('invalidReasons', staleReasons);
+            fixture.componentRef.setInput('revalidate', () => staleReasons);
+            fixture.detectChanges();
+            const generateSpy = vi.fn();
+            fixture.componentInstance.generateWithAi.subscribe(generateSpy);
+
+            fixture.componentInstance.onGenerateWithAi();
+
+            expect(generateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should emit generateWithAi from a click on its button when the form is valid on a fresh check', () => {
+            fixture.componentRef.setInput('invalidReasons', staleReasons);
+            fixture.componentRef.setInput('revalidate', () => []);
+            fixture.componentRef.setInput('showGenerateWithAi', true);
+            fixture.detectChanges();
+            const generateSpy = vi.fn();
+            fixture.componentInstance.generateWithAi.subscribe(generateSpy);
+            const generateButton = fixture.debugElement.query(By.css('#generate-with-ai'));
+            expect(generateButton).not.toBeNull();
+
+            (generateButton.nativeElement as HTMLButtonElement).click();
 
             expect(generateSpy).toHaveBeenCalledOnce();
         });
