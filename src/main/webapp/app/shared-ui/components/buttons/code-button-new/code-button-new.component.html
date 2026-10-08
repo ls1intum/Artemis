@@ -15,6 +15,6 @@
             <fa-icon [icon]="faCircleNotch" animation="spin" data-testid="code-button-popover-loading" />
         </div>
     } @else {
-        <jhi-code-button-popover-content />
+        <jhi-code-button-popover-content [authenticationMechanisms]="authenticationMechanisms" />
     }
 </tumaet-ui-popover>

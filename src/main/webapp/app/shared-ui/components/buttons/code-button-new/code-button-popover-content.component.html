@@ -1,1 +1,26 @@
 <h5 jhiTranslate="artemisApp.exerciseActions.accessRepository"></h5>
+
+<div class="flex">
+    <button
+        type="button"
+        class="flex items-center gap-2 rounded-s-sm! rounded-e-none! border border-primary bg-primary px-3 text-(--tumaet-ui-primary-contrast-color)"
+        [tumAetUiMenuTrigger]="authenticationMenu"
+    >
+        {{ selectedAuthenticationMechanismLabel() }}
+        <fa-icon [icon]="faCaretDown" size="xs" aria-hidden="true" />
+    </button>
+
+    <div class="min-w-0 flex-1 rounded-e-sm border-y border-e px-3 py-2">
+        <code class="block truncate">ssh://git&#64;artemislocal.cit.tum.de:7921/git</code>
+    </div>
+</div>
+
+<ng-template #authenticationMenu>
+    <tumaet-ui-menu>
+        @for (authenticationMechanism of authenticationMechanismsWithLabels(); track authenticationMechanism.authenticationMechanism) {
+            <button type="button" tumAetUiMenuItem (triggered)="selectedAuthenticationMechanism.set(authenticationMechanism.authenticationMechanism)">
+                {{ authenticationMechanism.label }}
+            </button>
+        }
+    </tumaet-ui-menu>
+</ng-template>
