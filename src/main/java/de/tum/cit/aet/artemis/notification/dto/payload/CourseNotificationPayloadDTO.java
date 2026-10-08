@@ -19,8 +19,8 @@ import java.io.Serializable;
  */
 public sealed interface CourseNotificationPayloadDTO extends Serializable permits AddedToChannelPayloadDTO, AtlasCompetencyUpdatePayloadDTO, AttachmentChangedPayloadDTO,
         ChannelDeletedPayloadDTO, DeregisteredFromTutorialGroupPayloadDTO, DuplicateTestCasePayloadDTO, ExerciseAssessedPayloadDTO, ExerciseOpenForPracticePayloadDTO,
-        ExerciseUpdatedPayloadDTO, IrisResponseNeedsReviewPayloadDTO, NewAnnouncementPayloadDTO, NewAnswerPayloadDTO, NewCpcPlagiarismCasePayloadDTO, NewExercisePayloadDTO,
-        NewManualFeedbackRequestPayloadDTO, NewMentionPayloadDTO, NewPlagiarismCasePayloadDTO, NewPostPayloadDTO, PlagiarismCaseVerdictPayloadDTO,
+        ExerciseUpdatedPayloadDTO, IrisResponseNeedsReviewPayloadDTO, IrisResponsePayloadDTO, NewAnnouncementPayloadDTO, NewAnswerPayloadDTO, NewCpcPlagiarismCasePayloadDTO,
+        NewExercisePayloadDTO, NewManualFeedbackRequestPayloadDTO, NewMentionPayloadDTO, NewPlagiarismCasePayloadDTO, NewPostPayloadDTO, PlagiarismCaseVerdictPayloadDTO,
         ProgrammingBuildRunUpdatePayloadDTO, ProgrammingTestCasesChangedPayloadDTO, QuizExerciseStartedPayloadDTO, RegisteredToTutorialGroupPayloadDTO,
         RemovedFromChannelPayloadDTO, TutorialGroupAssignedPayloadDTO, TutorialGroupDeletedPayloadDTO, TutorialGroupUnassignedPayloadDTO {
 }
