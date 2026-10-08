@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -21,20 +20,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.commonmark.node.AbstractVisitor;
-import org.commonmark.node.BlockQuote;
-import org.commonmark.node.Code;
-import org.commonmark.node.FencedCodeBlock;
-import org.commonmark.node.HardLineBreak;
-import org.commonmark.node.Heading;
-import org.commonmark.node.HtmlBlock;
-import org.commonmark.node.HtmlInline;
-import org.commonmark.node.Image;
-import org.commonmark.node.IndentedCodeBlock;
-import org.commonmark.node.Paragraph;
-import org.commonmark.node.SoftLineBreak;
-import org.commonmark.node.Text;
-import org.commonmark.parser.Parser;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,25 +67,6 @@ public abstract class PostingService {
     private final WebsocketMessagingService websocketMessagingService;
 
     protected static final String POST_ENTITY_NAME = "messages.post";
-
-    /**
-     * Matches the literal token "@all" if it is neither preceded by a letter, digit, underscore, "@", "/" or "=" (so not in an email address, a URL path or a URL query value)
-     * nor followed by a letter, digit or underscore (so not "@alle"). The character classes are Unicode aware, the case-insensitive match only folds ASCII letters, i.e. it does
-     * not depend on the default locale.
-     */
-    private static final Pattern AT_ALL_MENTION_PATTERN = Pattern.compile("(?<![\\p{L}\\p{N}_@/=])@all(?![\\p{L}\\p{N}_])", Pattern.CASE_INSENSITIVE);
-
-    /** The maximum length of the content of a posting, see {@link Posting#getContent()}. Longer content fails the validation when the posting is saved. */
-    private static final int MAX_POSTING_CONTENT_LENGTH = 5000;
-
-    /** The text of the token anywhere in the raw markdown, which has to be present for the token to be displayed. Markup such as emphasis may adjoin it there. */
-    private static final Pattern AT_ALL_TEXT_PATTERN = Pattern.compile("@all", Pattern.CASE_INSENSITIVE);
-
-    /** Parses the markdown of postings to find the text that is displayed as normal text. The parser is immutable and thread safe. */
-    private static final Parser MARKDOWN_PARSER = Parser.builder().build();
-
-    /** The HTML elements that the client renders as code or as a quote, so their text does not count as a mention. */
-    private static final Set<String> HTML_CODE_AND_QUOTE_ELEMENTS = Set.of("code", "pre", "blockquote");
 
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
@@ -405,140 +371,6 @@ public abstract class PostingService {
     protected abstract String getEntityName();
 
     /**
-     * Checks whether a posting contains the "@all" token, which pings every member of a group chat. Only text that is displayed as normal text counts: the token in a
-     * blockquote (including its lazy continuation lines), a fenced, indented or inline code, an HTML code, pre or blockquote element, an image description, a link
-     * destination or a URL does not. Quoting a message that contains "@all" or explaining the feature in code therefore does not ping the group again.
-     * <p>
-     * The posting is parsed as markdown, like the client does, so the block and container structure (lists, headings, fences inside lists) is respected.
-     *
-     * @param postingContent content of the posting, may be null
-     * @return true if the content contains the "@all" token outside of quotes and code
-     */
-    public static boolean containsAtAllMention(String postingContent) {
-        // most postings do not contain the text at all, they are not parsed, and content that exceeds the length of a posting is rejected when it is saved
-        if (postingContent == null || postingContent.length() > MAX_POSTING_CONTENT_LENGTH || !AT_ALL_TEXT_PATTERN.matcher(postingContent).find()) {
-            return false;
-        }
-        var textCollector = new DisplayedTextCollector();
-        MARKDOWN_PARSER.parse(postingContent).accept(textCollector);
-        return AT_ALL_MENTION_PATTERN.matcher(textCollector.getTextWithoutUrls()).find();
-    }
-
-    /**
-     * Collects the text of a parsed posting that is displayed as normal text and leaves out code, quotes, images and the contents of HTML code, pre and blockquote
-     * elements. The parts that are left out are replaced by a space or a line break, so that the text around them is not joined into a token.
-     */
-    private static final class DisplayedTextCollector extends AbstractVisitor {
-
-        private final StringBuilder text = new StringBuilder();
-
-        /** The number of HTML code, pre and blockquote elements that are open at the current position. */
-        private int openHtmlCodeOrQuoteElements = 0;
-
-        @Override
-        public void visit(Text textNode) {
-            if (openHtmlCodeOrQuoteElements == 0) {
-                text.append(textNode.getLiteral());
-            }
-        }
-
-        @Override
-        public void visit(Code code) {
-            text.append(' ');
-        }
-
-        @Override
-        public void visit(FencedCodeBlock fencedCodeBlock) {
-            text.append('\n');
-        }
-
-        @Override
-        public void visit(IndentedCodeBlock indentedCodeBlock) {
-            text.append('\n');
-        }
-
-        @Override
-        public void visit(BlockQuote blockQuote) {
-            text.append('\n');
-        }
-
-        @Override
-        public void visit(HtmlBlock htmlBlock) {
-            text.append('\n');
-        }
-
-        @Override
-        public void visit(Image image) {
-            text.append(' ');
-        }
-
-        @Override
-        public void visit(SoftLineBreak softLineBreak) {
-            text.append('\n');
-        }
-
-        @Override
-        public void visit(HardLineBreak hardLineBreak) {
-            text.append('\n');
-        }
-
-        @Override
-        public void visit(Paragraph paragraph) {
-            visitChildren(paragraph);
-            text.append('\n');
-        }
-
-        @Override
-        public void visit(Heading heading) {
-            visitChildren(heading);
-            text.append('\n');
-        }
-
-        @Override
-        public void visit(HtmlInline htmlInline) {
-            String literal = htmlInline.getLiteral();
-            boolean closing = literal.startsWith("</");
-            int nameStart = closing ? 2 : 1;
-            int nameEnd = nameStart;
-            while (nameEnd < literal.length() && Character.isLetter(literal.charAt(nameEnd))) {
-                nameEnd++;
-            }
-            if (!HTML_CODE_AND_QUOTE_ELEMENTS.contains(literal.substring(nameStart, nameEnd).toLowerCase(Locale.ROOT))) {
-                return;
-            }
-            if (closing) {
-                openHtmlCodeOrQuoteElements = Math.max(0, openHtmlCodeOrQuoteElements - 1);
-            }
-            else if (!literal.endsWith("/>")) {
-                openHtmlCodeOrQuoteElements++;
-            }
-        }
-
-        /**
-         * The collected text without the words that contain a URL scheme separator, so a token in a URL (for example in a query value) does not count.
-         *
-         * @return the collected text
-         */
-        String getTextWithoutUrls() {
-            StringBuilder result = new StringBuilder(text.length());
-            int wordStart = 0;
-            for (int i = 0; i <= text.length(); i++) {
-                if (i == text.length() || Character.isWhitespace(text.charAt(i))) {
-                    String word = text.substring(wordStart, i);
-                    if (!word.contains("://")) {
-                        result.append(word);
-                    }
-                    if (i < text.length()) {
-                        result.append(text.charAt(i));
-                    }
-                    wordStart = i + 1;
-                }
-            }
-            return result.toString();
-        }
-    }
-
-    /**
      * Checks whether a posting pings all members of its conversation. The "@all" token only counts in group chats, in every other conversation it is plain text.
      *
      * @param conversation   the conversation the posting belongs to
@@ -546,7 +378,7 @@ public abstract class PostingService {
      * @return true if the posting contains the "@all" token and the conversation is a group chat
      */
     protected static boolean mentionsAllMembers(Conversation conversation, String postingContent) {
-        return conversation instanceof GroupChat && containsAtAllMention(postingContent);
+        return conversation instanceof GroupChat && AtAllMentionDetector.containsAtAllMention(postingContent);
     }
 
     /**

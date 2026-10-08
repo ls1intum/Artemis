@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -811,6 +812,41 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         // the reply is accepted, but in a channel the token is plain text, so nobody is mentioned
         await().atMost(5, TimeUnit.SECONDS).during(500, TimeUnit.MILLISECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(3, createdAnswer.id())).isEmpty());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "> @all meeting at 5\n\nI will be there", "Use `@all` to ping everybody", "```\n@all\n```\nThe syntax", "https://example.org/@all",
+            "<code>@all</code>", "<blockquote>@all</blockquote>", "<pre>@all</pre>", "> quoted text\n@all please read", "- ~~~\n  @all\n  ~~~", "www.example.org/?q=(@all)",
+            "[details](https://host/?q=(@all))" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotTreatAtAllInQuotesCodeOrUrlsAsAMentionInThreadReply(String content) throws Exception {
+        User member = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var groupChat = conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, member);
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+
+        var createdAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO(content, new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        // the author of the parent message gets the regular answer notification, the quoted token does not ping the group
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(2, createdAnswer.id())).containsExactly(member.getId()));
+        await().atMost(5, TimeUnit.SECONDS).during(500, TimeUnit.MILLISECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(3, createdAnswer.id())).isEmpty());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "<p>@all please read</p>", "<div>\n<p>@all please read</p>\n</div>", "see www.example.org @all" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldTreatAtAllAsAMentionInThreadReplyWhenItIsDisplayedAsNormalTextInHtmlOrNextToAnUrl(String content) throws Exception {
+        User member = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var groupChat = conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, member);
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+
+        var createdAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO(content, new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(notificationRecipientIds(3, createdAnswer.id())).containsExactly(member.getId());
+            assertThat(notificationRecipientIds(2, createdAnswer.id())).isEmpty();
+        });
     }
 
     @Test

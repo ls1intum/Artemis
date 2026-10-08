@@ -369,7 +369,7 @@ In a group chat, the suggestion list starts with `@all`. Any member of the group
 
 - `@all` only works in group chats. In channels and direct messages it stays plain text and does not trigger a mention notification. The message itself still sends the regular notification, like any other message.
 - Members who muted or hid the group chat are not notified, and neither is the author.
-- `@all` only counts where it is displayed as normal text. Inside a quote, inline code, a code block (also as HTML `code`, `pre` or `blockquote`), the address of a link or a URL it does not count, so quoting a message that contains `@all` does not notify the group again.
+- `@all` only counts where it is displayed as normal text. Inside a quote, inline code, a code block (also as HTML `code`, `pre` or `blockquote`), an HTML comment, the address of a link or a URL (also one that starts with `www.` or `mailto:`) it does not count, so quoting a message that contains `@all` does not notify the group again. Text in other HTML, for example in a paragraph, counts, and so does `@all` that stands next to a URL, as in `see www.example.org @all`.
 - It works for messages and for replies in a thread. Editing a message does not send any notifications.
 - A member who is mentioned by name and through `@all` in the same message receives one notification.
 

@@ -1286,7 +1286,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "> @all meeting at 5\n\nI will be there", "Use `@all` to ping everybody", "```\n@all\n```\nThe syntax", "https://example.org/@all" })
+    @ValueSource(strings = { "> @all meeting at 5\n\nI will be there", "Use `@all` to ping everybody", "```\n@all\n```\nThe syntax", "https://example.org/@all",
+            "<code>@all</code>", "<blockquote>@all</blockquote>", "<pre>@all</pre>", "> quoted text\n@all please read", "- ~~~\n  @all\n  ~~~", "www.example.org/?q=(@all)",
+            "[details](https://host/?q=(@all))" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotTreatAtAllInQuotesCodeOrUrlsAsAMention(String content) throws Exception {
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -1299,6 +1301,24 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // the member gets the regular notification, the quoted token does not ping the group again
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(notificationRecipientIds(1, "postId", createdPost.id())).containsExactly(member.getId()));
         await().during(Duration.ofMillis(500)).atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(notificationRecipientIds(3, "postId", createdPost.id())).isEmpty());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "<p>@all please read</p>", "<div>\n<p>@all please read</p>\n</div>", "see www.example.org @all" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldTreatAtAllAsAMentionWhenItIsDisplayedAsNormalTextInHtmlOrNextToAnUrl(String content) throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User member = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        Conversation groupChat = conversationUtilService.createGroupChat(course, author, member);
+
+        var createdPost = postMessage(groupChat, content);
+
+        // the paragraph is displayed as normal text, so the group is pinged and the mention replaces the new post notification
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            assertThat(notificationRecipientIds(3, "postId", createdPost.id())).containsExactly(member.getId());
+            assertThat(notificationRecipientIds(1, "postId", createdPost.id())).isEmpty();
+        });
     }
 
     @Test
