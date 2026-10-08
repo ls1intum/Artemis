@@ -58,6 +58,9 @@ public final class AtAllMentionDetector {
     private static final Set<String> HTML_HIDDEN_CONTENT_ELEMENTS = Set.of("code", "pre", "blockquote", "script", "style", "template", "title", "iframe", "noscript", "noembed",
             "noframes", "xmp", "audio", "video", "svg", "math");
 
+    /** The only hidden content element that is a formatting element for the HTML parser, which reopens it if it is closed by the closing tag of an outer element. */
+    private static final String HTML_FORMATTING_CONTENT_ELEMENT = "code";
+
     /** The hidden content elements whose contents are raw text for the HTML parser: tags inside of them are not tags, the element only ends at its own closing tag. */
     private static final Set<String> HTML_RAW_TEXT_ELEMENTS = Set.of("script", "style", "title", "iframe", "noscript", "noembed", "noframes", "xmp");
 
@@ -401,12 +404,22 @@ public final class AtAllMentionDetector {
                 if (openHiddenHtmlElementCounts.getOrDefault(name, 0) == 0) {
                     return;
                 }
+                int implicitlyClosedCodeElements = 0;
                 String closed;
                 do {
                     closed = openHiddenHtmlElements.pop();
                     openHiddenHtmlElementCounts.merge(closed, -1, Integer::sum);
+                    if (!closed.equals(name) && closed.equals(HTML_FORMATTING_CONTENT_ELEMENT)) {
+                        implicitlyClosedCodeElements++;
+                    }
                 }
                 while (!closed.equals(name));
+                // The HTML parser reopens a "code" element that another closing tag closed implicitly (as in "<pre><code>x</pre>") before the next text, so the text
+                // after it is displayed as code until a closing "code" tag
+                for (int reopened = 0; reopened < implicitlyClosedCodeElements; reopened++) {
+                    openHiddenHtmlElements.push(HTML_FORMATTING_CONTENT_ELEMENT);
+                    openHiddenHtmlElementCounts.merge(HTML_FORMATTING_CONTENT_ELEMENT, 1, Integer::sum);
+                }
             }
             else if (!selfClosing || !HTML_FOREIGN_ELEMENTS.contains(name)) {
                 openHiddenHtmlElements.push(name);

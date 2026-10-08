@@ -39,6 +39,8 @@ import { FileService } from 'app/foundation/service/file.service';
 import { ChannelDTO, ChannelIdAndNameDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import enCommunication from 'src/main/webapp/i18n/en/communication.json';
+import deCommunication from 'src/main/webapp/i18n/de/communication.json';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('MonacoEditorCommunicationActionIntegration', () => {
@@ -289,11 +291,63 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             expect(suggestions[0].label).toBe('@all');
             expect(suggestions[0].insertText).toBe('@all ');
             expect(suggestions[0].sortText! < suggestions[1].label.toString()).toBe(true);
+            // the suggestion explains what it does, shows the user icon and replaces the typed @ like the suggestions of the users
+            expect(suggestions[0].detail).toBe('artemisApp.communication.editor.allMembers');
+            expect(suggestions[0].kind).toBe(monaco.languages.CompletionItemKind.User);
+            expect(suggestions[0].range).toEqual(suggestions[1].range);
             // the users follow the synthetic suggestion and are inserted as user mentions
             suggestions.slice(1).forEach((suggestion, index) => {
                 expect(suggestion.label).toBe(`@${users[index].name}`);
                 expect(suggestion.insertText).toBe(`[user]${users[index].name}(${users[index].login})[/user]`);
+                expect(suggestion.detail).toBe(userMentionAction.label);
+                expect(suggestion.sortText).toBeUndefined();
             });
+        });
+
+        it('should search the members for the text that follows the @ and still suggest @all first', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+            const searchSpy = vi.spyOn(courseManagementService, 'searchMembersForUserMentions');
+
+            const suggestions = await suggestMentions('@bo');
+
+            // the filtering by the typed text is left to the editor, so the synthetic suggestion is part of the list whatever is typed
+            expect(searchSpy).toHaveBeenCalledExactlyOnceWith(communicationService.getCourse().id, 'bo');
+            expect(suggestions.map((suggestion) => suggestion.label)).toEqual(['@all', ...users.map((user) => `@${user.name}`)]);
+        });
+
+        it('should follow the conversation and the edit state while the editor stays open', async () => {
+            let conversation: ChannelDTO | GroupChatDTO | undefined = new GroupChatDTO();
+            let isEditing = false;
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(undefined);
+            const action = new UserMentionAction(
+                courseManagementService,
+                communicationService,
+                () => isEditing,
+                () => conversation,
+            );
+            await suggestMentions('@', action);
+            const labelsOfTheSuggestions = async () => {
+                const result = await provider.provideCompletionItems(comp.models[0], new monaco.Position(1, 2), {} as any, {} as any);
+                return result!.suggestions.map((suggestion) => suggestion.label);
+            };
+            const labelsOfTheUsers = users.map((user) => `@${user.name}`);
+
+            expect(await labelsOfTheSuggestions()).toEqual(['@all', ...labelsOfTheUsers]);
+
+            conversation = new ChannelDTO();
+            expect(await labelsOfTheSuggestions()).toEqual(labelsOfTheUsers);
+
+            conversation = new GroupChatDTO();
+            isEditing = true;
+            expect(await labelsOfTheSuggestions()).toEqual(labelsOfTheUsers);
+
+            isEditing = false;
+            expect(await labelsOfTheSuggestions()).toEqual(['@all', ...labelsOfTheUsers]);
+        });
+
+        it('should explain the @all suggestion in English and German', () => {
+            expect(enCommunication.artemisApp.communication.editor.allMembers).toBe('Notify all members of this group chat');
+            expect(deCommunication.artemisApp.communication.editor.allMembers).toBe('Alle Mitglieder dieses Gruppenchats benachrichtigen');
         });
 
         it('should suggest @all for a partially typed token in a group chat', async () => {

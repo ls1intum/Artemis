@@ -228,6 +228,31 @@ describe('PostingsMarkdownEditor', () => {
         });
     });
 
+    it('should follow the conversation and the edit type after the editor is initialized', async () => {
+        vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(undefined);
+        vi.spyOn(TestBed.inject(CourseManagementService), 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: [], status: 200 })));
+        component.ngOnInit();
+        const userMentionAction = component.defaultActions().find((action) => action instanceof UserMentionAction) as UserMentionAction;
+        const suggestions = () => userMentionAction.loadSuggestionsForSearchTerm('');
+
+        // no conversation is known, so there is nobody to ping
+        expect(await suggestions()).toEqual([]);
+
+        // the same action offers @all as soon as the posting belongs to a group chat, it is not registered again
+        fixture.componentRef.setInput('activeConversation', new GroupChatDTO());
+        expect(await suggestions()).toEqual(['all']);
+
+        fixture.componentRef.setInput('activeConversation', new ChannelDTO());
+        expect(await suggestions()).toEqual([]);
+
+        fixture.componentRef.setInput('activeConversation', new GroupChatDTO());
+        fixture.componentRef.setInput('editType', PostingEditType.UPDATE);
+        expect(await suggestions()).toEqual([]);
+
+        fixture.componentRef.setInput('editType', PostingEditType.CREATE);
+        expect(await suggestions()).toEqual(['all']);
+    });
+
     it('should have set the correct default commands on init if communication is disabled', () => {
         vi.spyOn(CourseModel, 'isCommunicationEnabled').mockReturnValueOnce(false);
         component.ngOnInit();

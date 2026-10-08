@@ -14,8 +14,10 @@ import static org.mockito.Mockito.verify;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +39,8 @@ import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.SavedPostStatus;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.dto.AnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
@@ -49,6 +53,7 @@ import de.tum.cit.aet.artemis.communication.dto.VerifyAnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
@@ -99,6 +104,9 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Autowired
     private ConversationParticipantTestRepository conversationParticipantRepository;
+
+    @Autowired
+    private ConversationTestRepository conversationRepository;
 
     private List<Post> existingConversationPostsWithAnswers;
 
@@ -799,19 +807,170 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         });
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldNotTreatAtAllAsAMentionInThreadReplyInChannel() throws Exception {
-        var channel = createChannelWithTwoStudents();
-        var post = existingConversationPostsWithAnswers.getFirst();
-        post.setConversation(channel);
-        Post savedMessage = conversationMessageRepository.save(post);
+    void shouldNotTreatAtAllAsAMentionInThreadReplyOutsideOfGroupChats(boolean oneToOneChat) throws Exception {
+        User member = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Conversation conversation = oneToOneChat ? conversationUtilService.createOneToOneChat(course, student1, member) : createChannelWithTwoStudents();
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", conversation);
 
         var createdAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
-                new CreateAnswerPostDTO("@all Check this out!", new ParentPostDTO(savedMessage.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+                new CreateAnswerPostDTO("@all Check this out!", new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
 
-        // the reply is accepted, but in a channel the token is plain text, so nobody is mentioned
+        // the reply is accepted and the author of the message gets the regular answer notification, but the token is plain text, so nobody is mentioned
+        assertThat(createdAnswer.content()).isEqualTo("@all Check this out!");
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(2, createdAnswer.id())).containsExactly(member.getId()));
         await().atMost(5, TimeUnit.SECONDS).during(500, TimeUnit.MILLISECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(3, createdAnswer.id())).isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotNotifyAHiddenParentAuthorNorMutedMembersButTheOtherMembersForAtAllInThreadReply() throws Exception {
+        User hiddenParentAuthor = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User mutedMember = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        var groupChat = conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, hiddenParentAuthor, mutedMember, tutor);
+        updateParticipant(groupChat, hiddenParentAuthor, participant -> participant.setIsHidden(true));
+        updateParticipant(groupChat, mutedMember, participant -> participant.setIsMuted(true));
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+
+        var createdAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO("@all Check this out!", new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        // the member who hid the group chat does not get the answer notification either, although they wrote the message
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(notificationRecipientIds(3, createdAnswer.id())).containsExactly(tutor.getId());
+            assertThat(notificationRecipientIds(2, createdAnswer.id())).isEmpty();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotifyAMutedMemberWhoIsMentionedByNameOnceWhenTheThreadReplyAlsoPingsAtAll() throws Exception {
+        User mutedMentionedMember = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User member = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        User outsider = userUtilService.getUserByLogin(TEST_PREFIX + "student4");
+        var groupChat = conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, mutedMentionedMember, member);
+        updateParticipant(groupChat, mutedMentionedMember, participant -> participant.setIsMuted(true));
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student3", groupChat);
+
+        var createdAnswer = request.postWithResponseBody(
+                "/api/communication/courses/" + courseId + "/answer-messages", new CreateAnswerPostDTO("@all [user]" + mutedMentionedMember.getName() + "("
+                        + mutedMentionedMember.getLogin() + ")[/user] [user]" + outsider.getName() + "(" + outsider.getLogin() + ")[/user]", new ParentPostDTO(parentPost.getId())),
+                AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        // the mention by name reaches the member who muted the group chat, the course member outside of the group chat is not reached, and the author of the message is
+        // pinged instead of getting the answer notification
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(notificationRecipientIds(3, createdAnswer.id())).containsExactlyInAnyOrder(mutedMentionedMember.getId(), member.getId());
+            assertThat(notificationRecipientIds(2, createdAnswer.id())).isEmpty();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotNotifyAnyoneForAtAllInThreadReplyIfNobodyElseWantsToBeNotified() throws Exception {
+        User hiddenMember = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User mutedMember = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        var groupChat = conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, hiddenMember, mutedMember);
+        updateParticipant(groupChat, hiddenMember, participant -> participant.setIsHidden(true));
+        updateParticipant(groupChat, mutedMember, participant -> participant.setIsMuted(true));
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+
+        var replyWithoutRecipients = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO("@all is anybody there?", new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        // the reply is created, nobody is left to ping. The member who unmutes the group chat is pinged by the next reply, which shows that the notifications work
+        assertThat(replyWithoutRecipients.content()).isEqualTo("@all is anybody there?");
+        updateParticipant(groupChat, mutedMember, participant -> participant.setIsMuted(false));
+        var replyWithRecipient = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO("@all is anybody there now?", new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(3, replyWithRecipient.id())).containsExactly(mutedMember.getId()));
+        assertThat(notificationRecipientIds(3, replyWithoutRecipients.id())).isEmpty();
+        assertThat(notificationRecipientIds(2, replyWithoutRecipients.id())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldDescribeTheThreadReplyInTheMentionNotificationOfAtAll() throws Exception {
+        User parentAuthor = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        var groupChat = nameGroupChat(conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, parentAuthor, tutor), "Exercise sheet team");
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+
+        var createdAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO("@all Check this out!", new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(3, createdAnswer.id())).hasSize(2));
+        // one notification is shared by all recipients, it points to the reply in its thread
+        Set<Long> notificationIds = courseNotificationParameterRepository.findAll().stream()
+                .filter(parameter -> "replyId".equals(parameter.getKey()) && String.valueOf(createdAnswer.id()).equals(parameter.getValue()))
+                .map(parameter -> parameter.getCourseNotification().getId()).collect(Collectors.toSet());
+        Set<Long> mentionNotificationIds = courseNotificationRepository.findAllById(notificationIds).stream().filter(notification -> notification.getType() == 3)
+                .map(CourseNotification::getId).collect(Collectors.toSet());
+        assertThat(mentionNotificationIds).hasSize(1);
+        Map<String, String> parameters = courseNotificationParameterRepository.findAll().stream()
+                .filter(parameter -> mentionNotificationIds.contains(parameter.getCourseNotification().getId()))
+                .collect(Collectors.toMap(parameter -> parameter.getKey(), parameter -> parameter.getValue()));
+        assertThat(parameters).containsEntry("replyMarkdownContent", "@all Check this out!").containsEntry("replyId", String.valueOf(createdAnswer.id()))
+                .containsEntry("replyAuthorName", student1.getName()).containsEntry("replyAuthorId", String.valueOf(student1.getId()))
+                .containsEntry("postId", String.valueOf(parentPost.getId())).containsEntry("postAuthorName", parentAuthor.getName())
+                .containsEntry("channelId", String.valueOf(groupChat.getId())).containsEntry("channelName", "Exercise sheet team");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotNotifyAnyoneWhenEditingAThreadReplyToIncludeAtAll() throws Exception {
+        User parentAuthor = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var groupChat = conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), student1, parentAuthor);
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+        var createdAnswer = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                new CreateAnswerPostDTO("Hello everybody", new ParentPostDTO(parentPost.getId())), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(2, createdAnswer.id())).containsExactly(parentAuthor.getId()));
+
+        var updatedAnswer = request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + createdAnswer.id(),
+                new UpdatePostingDTO(createdAnswer.id(), "@all Hello everybody", null, false), AnswerPostResponseDTO.class, HttpStatus.OK);
+
+        // the edit is applied, but unlike the creation of a reply it notifies nobody
+        assertThat(updatedAnswer.content()).isEqualTo("@all Hello everybody");
+        await().atMost(5, TimeUnit.SECONDS).during(500, TimeUnit.MILLISECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(3, createdAnswer.id())).isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void shouldOnlyNotifyTheUsersMentionedByNameWhenVerifyingAnIrisAnswerThatContainsAtAll() throws Exception {
+        User mentionedMember = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        User otherMember = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        // the group chat is named, as the notification of the verified reply reads the name and a generated one would need the members of the chat
+        var groupChat = nameGroupChat(conversationUtilService.createGroupChat(courseRepository.findByIdElseThrow(courseId), mentionedMember, otherMember, tutor), "Iris group");
+        Post parentPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", groupChat);
+        AnswerPost answerPostToVerify = createAnswerPost(parentPost);
+        answerPostToVerify.setAuthor(irisBot);
+        answerPostToVerify.setVerified(false);
+        AnswerPost savedAnswerPost = answerPostRepository.save(answerPostToVerify);
+
+        String editedContent = "@all [user]" + mentionedMember.getName() + "(" + mentionedMember.getLogin() + ")[/user] Check this Iris reply!";
+        request.patchWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + savedAnswerPost.getId() + "/verify",
+                new VerifyAnswerMessageDTO(editedContent), AnswerMessageDTO.class, HttpStatus.OK);
+
+        // Verifying a reply is not the creation of a reply: the token is not expanded to the members of the group chat, only the explicit mention is notified.
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(3, savedAnswerPost.getId())).containsExactly(mentionedMember.getId()));
+    }
+
+    private Conversation nameGroupChat(Conversation groupChat, String name) {
+        ((GroupChat) groupChat).setName(name);
+        return conversationRepository.save(groupChat);
+    }
+
+    private void updateParticipant(Conversation conversation, User user, Consumer<ConversationParticipant> update) {
+        ConversationParticipant participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversation.getId(), user.getId())
+                .orElseThrow();
+        update.accept(participant);
+        conversationParticipantRepository.save(participant);
     }
 
     @ParameterizedTest
