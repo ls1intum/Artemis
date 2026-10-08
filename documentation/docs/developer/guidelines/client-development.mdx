@@ -1234,16 +1234,16 @@ Production code therefore does not call `setInput`. Choose in this order:
 2. **Use `setInputs` when the component has to be created in code**, for example a widget inside an editor, a component
    rendered into markdown HTML or the content of an overlay. Import it from `app/foundation/util/set-inputs.util`:
 
-   ```ts
-   const widgetRef = this.viewContainerRef.createComponent(ReviewCommentThreadWidgetComponent);
-   setInputs(widgetRef, { thread, showLocationWarning, showFeedbackAction });
-   ```
+    ```ts
+    const widgetRef = this.viewContainerRef.createComponent(ReviewCommentThreadWidgetComponent);
+    setInputs(widgetRef, { thread, showLocationWarning, showFeedbackAction });
+    ```
 
-   The input names and the value types are checked against the component class at compile time. A misspelled name, a value
-   of the wrong type and a member that is not an input are all compile errors. Every input that is passed needs a value of
-   its declared type, so `undefined` is only accepted by an input whose type includes it. Pass a plain object, not a class
-   instance, and a ref to one component type: a union of components is rejected, because its members can declare the same
-   input differently.
+    The input names and the value types are checked against the component class at compile time. A misspelled name, a value
+    of the wrong type and a member that is not an input are all compile errors. Every input that is passed needs a value of
+    its declared type, so `undefined` is only accepted by an input whose type includes it. Pass a plain object, not a class
+    instance, and a ref to one component type: a union of components is rejected, because its members can declare the same
+    input differently.
 
 Inputs are named by the class member, and an input that is declared with an `alias` is set under its alias. When the
 component is chosen from data, narrow the data first and tie the two together with one type parameter, so that a component
