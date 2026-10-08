@@ -152,7 +152,7 @@ class StructuralOracleSeederTest {
         String parent = " " + kind + " Base<T> {}";
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         var seeded = seederWith(sandbox, Map.of(), Map.of(), Map.of(), approvedSpec("Box", declaration)).seedIfStructuralDiff(sandbox, "s", javaExercise());
-        assertThat(seeded.testNames()).contains("testGenericApi[Box]");
+        assertThat(seeded.testNames()).contains("testClass[GenericApi:Box]");
         String testSource = seeded.repositoryFiles().get("test/GenericTypeTest.java");
         String oracle = seeded.repositoryFiles().get("test/test.json");
         executeSeededGenericTest(tempDir.resolve("typed"), declaration + parent, testSource, oracle);
