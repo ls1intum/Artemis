@@ -128,6 +128,8 @@ public class ProgrammingExerciseBuildConfigService {
     }
 
     /**
+     * Merges the environment variables of a container on top of the exercise's.
+     *
      * @param exerciseEnvironment  the exercise's environment variables, or null for none
      * @param containerEnvironment the container's environment variables, or null for none
      * @return both by name, the container's value winning, or null if neither sets any
@@ -143,6 +145,8 @@ public class ProgrammingExerciseBuildConfigService {
     }
 
     /**
+     * Checks whether a Docker network is allowed on this instance.
+     *
      * @param network a Docker network, or null or blank for the default network
      * @return whether a container may join it on this instance
      */
@@ -210,9 +214,7 @@ public class ProgrammingExerciseBuildConfigService {
             throw new IllegalArgumentException("Failed to parse DockerRunConfig from JSON string: " + buildConfig.getDockerFlags(), e);
         }
 
-        if (!isAllowedNetwork(dockerFlagsDTO.network())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid network: " + dockerFlagsDTO.network());
-        }
+        requireAllowedNetwork(dockerFlagsDTO.network());
 
         return dockerFlagsDTO;
     }

@@ -504,7 +504,7 @@ public class BuildLogEntryService {
      * @throws RuntimeException      If an I/O error occurs while writing the log file.
      */
     public void saveBuildLogsToFile(List<BuildLogDTO> buildLogEntries, String buildJobId, ProgrammingExercise programmingExercise) {
-        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
+        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getShortName();
         String exerciseShortName = programmingExercise.getShortName();
         Path exerciseLogsPath = buildLogsPath.resolve(courseShortName).resolve(exerciseShortName);
         if (!Files.exists(exerciseLogsPath)) {
@@ -545,31 +545,31 @@ public class BuildLogEntryService {
      */
     public FileSystemResource retrieveBuildLogsFromFileForBuildJob(String buildJobId) {
         if (buildJobId.contains("/") || buildJobId.contains("\\") || buildJobId.contains("..")) {
-            log.warn("Invalid build job ID: {}", buildJobId);
+            log.warn("Rejected a build job ID containing a path separator or parent directory reference");
             throw new IllegalArgumentException("Invalid build job ID");
         }
 
         ProgrammingExercise programmingExercise = retrieveProgrammingExerciseByBuildJobId(buildJobId);
-        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
+        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getShortName();
         String exerciseShortName = programmingExercise.getShortName();
         Path logPath = buildLogsPath.resolve(courseShortName).resolve(exerciseShortName).resolve(buildJobId + ".log");
 
         FileSystemResource fileSystemResource = new FileSystemResource(logPath);
         if (fileSystemResource.exists()) {
-            log.debug("Retrieved build logs for build job {} from file {}", buildJobId, logPath);
+            log.debug("Retrieved build logs for programming exercise {}", programmingExercise.getId());
             return fileSystemResource;
         }
 
         // If the file is not found in the exercise directory, try to find it in the parent directory (for backwards compatibility)
-        log.warn("Build log file for build job {} not found at path {}. Searching in Parent directory...", buildJobId, logPath);
+        log.warn("Build log file for programming exercise {} not found in the exercise directory. Searching in Parent directory...", programmingExercise.getId());
         logPath = buildLogsPath.resolve(buildJobId + ".log");
         fileSystemResource = new FileSystemResource(logPath);
         if (fileSystemResource.exists()) {
-            log.debug("Retrieved build logs for build job {} from file {}", buildJobId, logPath);
+            log.debug("Retrieved build logs for programming exercise {}", programmingExercise.getId());
             return fileSystemResource;
         }
 
-        log.warn("Could not find build logs for build job {} in file {}", buildJobId, logPath);
+        log.warn("Could not find build logs for programming exercise {}", programmingExercise.getId());
         return null;
     }
 

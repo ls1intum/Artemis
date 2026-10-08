@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.globalsearch.service.migration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
@@ -61,6 +62,8 @@ class V0ToV1MigrationWeaviateIntegrationTest extends AbstractProgrammingIntegrat
 
     private static final Duration TIMEOUT = Duration.ofSeconds(30);
 
+    private Course course;
+
     private ProgrammingExercise exercise;
 
     static boolean isWeaviateEnabled() {
@@ -70,19 +73,13 @@ class V0ToV1MigrationWeaviateIntegrationTest extends AbstractProgrammingIntegrat
     @BeforeEach
     void setUp() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         dropCollections();
         // Throwaway target collection (the real one is created by WeaviateService at startup; auto-schema adds the DTO's
         // remaining properties on insert).
-        weaviateClient.collections.create(NEW_COLLECTION, collection -> {
-            collection.vectorConfig(VectorConfig.selfProvided());
-            collection.properties(Property.text(SearchableEntitySchema.Properties.TYPE));
-            collection.properties(Property.integer(SearchableEntitySchema.Properties.ENTITY_ID));
-            collection.properties(Property.text(SearchableEntitySchema.Properties.TITLE));
-            return collection;
-        });
+        createTargetCollection(Property.text(SearchableEntitySchema.Properties.TITLE));
         // Throwaway legacy collection holding only the searchable exercise ids.
         weaviateClient.collections.create(OLD_COLLECTION, collection -> {
             collection.vectorConfig(VectorConfig.selfProvided());
@@ -176,12 +173,111 @@ class V0ToV1MigrationWeaviateIntegrationTest extends AbstractProgrammingIntegrat
         assertThat(fetchTargetByEntityId(deletedExerciseId)).as("deleted exercise is not re-created").isEmpty();
     }
 
+    @Test
+    void doesNothingWhenTheLegacyCollectionIsAlreadyAbsent() throws Exception {
+        weaviateClient.collections.delete(OLD_COLLECTION);
+
+        new V0ToV1Migration(exerciseLoadService).migrate(weaviateClient, COLLECTION_PREFIX);
+
+        assertThat(weaviateClient.collections.exists(OLD_COLLECTION)).isFalse();
+        assertThat(fetchTargetByEntityId(exercise.getId())).as("a no-op migration must not create a target row").isEmpty();
+    }
+
+    @Test
+    void skipsALegacyRowWithoutAnExerciseIdAndCompletesCleanup() throws Exception {
+        // The v0 collection can contain rows produced outside Artemis. A missing id is not a migration failure:
+        // it is skipped, must not produce a target row, and must not prevent cleanup of an otherwise safe run.
+        weaviateClient.collections.use(OLD_COLLECTION).data.insert(Map.of());
+        await().atMost(TIMEOUT)
+                .untilAsserted(() -> assertThat(weaviateClient.collections.use(OLD_COLLECTION).query.fetchObjects(builder -> builder.limit(100)).objects()).hasSize(1));
+
+        new V0ToV1Migration(exerciseLoadService).migrate(weaviateClient, COLLECTION_PREFIX);
+
+        assertThat(weaviateClient.collections.exists(OLD_COLLECTION)).isFalse();
+        assertThat(fetchTargetByEntityId(exercise.getId())).as("a malformed legacy row is never migrated").isEmpty();
+    }
+
+    @Test
+    void migratesAnExerciseOnTheSecondCursorPage() throws Exception {
+        // The migration page size is 50. Put non-existent legacy ids before the real exercise under lower UUIDs,
+        // then make the real source the first row after the cursor. Without the after-cursor continuation, the
+        // migration would clean up the legacy collection while silently leaving this exercise out of the target.
+        for (int index = 1; index <= 50; index++) {
+            insertLegacyExerciseId(9_990_000L + index, String.format("00000000-0000-4000-8000-%012d", index));
+        }
+        ProgrammingExercise secondPageExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        insertLegacyExerciseId(secondPageExercise.getId(), "ffffffff-ffff-4fff-8fff-ffffffffffff");
+        await().atMost(TIMEOUT)
+                .untilAsserted(() -> assertThat(weaviateClient.collections.use(OLD_COLLECTION).query.fetchObjects(builder -> builder.limit(100)).objects()).hasSize(51));
+
+        new V0ToV1Migration(exerciseLoadService).migrate(weaviateClient, COLLECTION_PREFIX);
+
+        await().atMost(TIMEOUT).untilAsserted(() -> assertThat(fetchTargetByEntityId(secondPageExercise.getId())).as("the row after a full first page is migrated").isPresent());
+        assertThat(weaviateClient.collections.exists(OLD_COLLECTION)).as("cleanup waits for every cursor page").isFalse();
+    }
+
+    @Test
+    void preservesLegacyRowsAndExistingTargetRowsWhenBatchInsertReportsAnError() throws Exception {
+        // A locally controlled schema mismatch makes this database-backed exercise fail the real batch insert: its
+        // DTO has a String title, while this throwaway target accepts integer titles only. No live collection is used.
+        weaviateClient.collections.delete(NEW_COLLECTION);
+        createTargetCollection(Property.integer(SearchableEntitySchema.Properties.TITLE));
+
+        long sentinelId = 9_990_999L;
+        String sentinelUuid = WeaviateUuidUtil.deterministicUuid(SearchableEntitySchema.TypeValues.EXERCISE, sentinelId);
+        Map<String, Object> sentinel = new HashMap<>();
+        sentinel.put(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.EXERCISE);
+        sentinel.put(SearchableEntitySchema.Properties.ENTITY_ID, sentinelId);
+        sentinel.put(SearchableEntitySchema.Properties.TITLE, 7L);
+        weaviateClient.collections.use(NEW_COLLECTION).data.insert(sentinel, builder -> builder.uuid(sentinelUuid));
+        await().atMost(TIMEOUT).untilAsserted(() -> assertThat(weaviateClient.collections.use(NEW_COLLECTION).data.exists(sentinelUuid)).isTrue());
+        seedLegacyExerciseId(sentinelId);
+        seedLegacyExerciseId(exercise.getId());
+
+        assertThatThrownBy(() -> new V0ToV1Migration(exerciseLoadService).migrate(weaviateClient, COLLECTION_PREFIX)).isInstanceOf(java.io.IOException.class)
+                .hasMessageContaining("Migration failed");
+
+        assertThat(weaviateClient.collections.exists(OLD_COLLECTION)).as("a failed batch must not trigger legacy cleanup").isTrue();
+        assertThat(weaviateClient.collections.use(OLD_COLLECTION).query.fetchObjects(builder -> builder.limit(100)).objects()).as("legacy source rows remain for retry").hasSize(2);
+        assertThat(fetchTargetByEntityId(exercise.getId())).as("the failed target write is not treated as migrated").isEmpty();
+        Map<String, Object> unchangedSentinel = fetchTargetByEntityId(sentinelId).orElseThrow();
+        assertThat(((Number) unchangedSentinel.get(SearchableEntitySchema.Properties.TITLE)).longValue()).as("a failed batch leaves an unrelated existing target row unchanged")
+                .isEqualTo(7L);
+    }
+
+    private void createTargetCollection(Property titleProperty) throws Exception {
+        weaviateClient.collections.create(NEW_COLLECTION, collection -> {
+            collection.vectorConfig(VectorConfig.selfProvided());
+            collection.properties(Property.text(SearchableEntitySchema.Properties.TYPE));
+            collection.properties(Property.integer(SearchableEntitySchema.Properties.ENTITY_ID));
+            collection.properties(titleProperty);
+            return collection;
+        });
+    }
+
     private void seedLegacyExerciseId(long exerciseId) throws Exception {
+        seedLegacyExerciseId(exerciseId, null);
+    }
+
+    private void seedLegacyExerciseId(long exerciseId, String uuid) throws Exception {
+        insertLegacyExerciseId(exerciseId, uuid);
+        await().atMost(TIMEOUT)
+                .untilAsserted(() -> assertThat(weaviateClient.collections.use(OLD_COLLECTION).query.fetchObjects(builder -> builder.limit(100)).objects()).anySatisfy(object -> {
+                    Object rawId = object.properties().get("exercise_id");
+                    assertThat(rawId).isInstanceOf(Number.class);
+                    assertThat(((Number) rawId).longValue()).isEqualTo(exerciseId);
+                }));
+    }
+
+    private void insertLegacyExerciseId(long exerciseId, String uuid) throws Exception {
         Map<String, Object> properties = new HashMap<>();
         properties.put("exercise_id", exerciseId);
-        weaviateClient.collections.use(OLD_COLLECTION).data.insert(properties);
-        await().atMost(TIMEOUT)
-                .untilAsserted(() -> assertThat(weaviateClient.collections.use(OLD_COLLECTION).query.fetchObjects(builder -> builder.limit(100)).objects()).isNotEmpty());
+        if (uuid == null) {
+            weaviateClient.collections.use(OLD_COLLECTION).data.insert(properties);
+        }
+        else {
+            weaviateClient.collections.use(OLD_COLLECTION).data.insert(properties, builder -> builder.uuid(uuid));
+        }
     }
 
     private Optional<Map<String, Object>> fetchTargetByEntityId(long entityId) {

@@ -12,7 +12,7 @@ export class SuspiciousSessionsService {
             .set('differentStudentExamsSameIPAddress', options.sameIpAddressDifferentStudentExams.toString())
             .set('differentStudentExamsSameBrowserFingerprint', options.sameBrowserFingerprintDifferentStudentExams.toString())
             .set('sameStudentExamDifferentIPAddresses', options.differentIpAddressesSameStudentExam.toString())
-            .set('sameStudentExamDifferentBrowserFingerprints', options.differentIpAddressesSameStudentExam.toString())
+            .set('sameStudentExamDifferentBrowserFingerprints', options.differentBrowserFingerprintsSameStudentExam.toString())
             .set('ipOutsideOfRange', options.ipAddressOutsideOfRange.toString());
 
         // If subnet is provided, add it to the params

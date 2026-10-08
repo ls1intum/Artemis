@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.service;
 
 import static de.tum.cit.aet.artemis.iris.web.IrisWebsocketTopics.COMPETENCY_GENERATION;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
@@ -73,7 +74,7 @@ public class IrisCompetencyGenerationService {
      * @param courseDescription   the description of the course
      * @param currentCompetencies the current competencies of the course (to avoid re-extraction)
      */
-    public void executeCompetencyExtractionPipeline(User user, Course course, String courseDescription, PyrisCompetencyRecommendationDTO[] currentCompetencies) {
+    public void executeCompetencyExtractionPipeline(User user, Course course, String courseDescription, List<PyrisCompetencyRecommendationDTO> currentCompetencies) {
         var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled()) {
             throw new ConflictException("Competency extraction is disabled for this course", "Iris", "irisDisabled");
@@ -87,7 +88,7 @@ public class IrisCompetencyGenerationService {
                 settings.supportLevel().jsonValue(),
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user.getId())),
-                executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, currentCompetencies, CompetencyTaxonomy.values(), 5),
+                executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, currentCompetencies, List.of(CompetencyTaxonomy.values()), 5),
                 (runId, runState, error) -> websocketService.send(user.getLogin(), COMPETENCY_GENERATION.at(course.getId()),
                         new IrisCompetencyGenerationStatusDTO(runState, error, null))
         );

@@ -4,7 +4,9 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -81,6 +83,7 @@ public class OIDCService extends OidcUserService {
         // The claim may carry an uppercase letter, and the lookup below is an exact match. Canonicalize once here so that
         // the lookup and the account createNewUserFromOidc stores use the same value User#setLogin would persist anyway.
         username = User.canonicalLogin(username);
+        logReceivedClaimNames(userRequest, oidcUser);
 
         // Check if user with given username already exists
         Optional<User> localUser = userRepository.findOneWithAuthoritiesByLogin(username);
@@ -100,28 +103,10 @@ public class OIDCService extends OidcUserService {
         else {
             // Update user information and store changes if necessary
             actualUser = localUser.get();
-            String firstName = oidcUser.getAttribute(firstNameClaimKey);
-            String lastName = oidcUser.getAttribute(lastNameClaimKey);
-            String email = User.canonicalEmail(oidcUser.getAttribute(emailClaimKey));
-            boolean isUpdated = false;
-
-            if (firstName != null && !firstName.isBlank() && !Objects.equals(actualUser.getFirstName(), firstName)) {
-                actualUser.setFirstName(firstName);
-                isUpdated = true;
-            }
-            if (lastName != null && !lastName.isBlank() && !Objects.equals(actualUser.getLastName(), lastName)) {
-                actualUser.setLastName(lastName);
-                isUpdated = true;
-            }
-            // Deliberately keeps the stored address when the claim is absent or blank, unlike the LDAP path, which
-            // clears it. A directory lookup returns the whole record, so a missing address there means the user has
-            // none; a token carries only the claims that were configured and granted, so an absent one says nothing
-            // about the account. Dropping an address because a token did not mention it is not recoverable.
-            if (email != null && userCreationService.updateEmailIfChanged(actualUser, email)) {
-                isUpdated = true;
-            }
-            if (isUpdated) {
-                userRepository.save(actualUser);
+            boolean isUpdated = applyProfileClaims(actualUser, oidcUser);
+            boolean isMatriculationNumberUpdated = updateMatriculationNumberIfChanged(actualUser, oidcUser.getAttribute(matriculationClaimKey));
+            if (isUpdated || isMatriculationNumberUpdated) {
+                actualUser = saveProfileUpdates(actualUser, oidcUser, isMatriculationNumberUpdated);
             }
         }
         // Don't issue JWT cookie for inactive users
@@ -130,6 +115,105 @@ public class OIDCService extends OidcUserService {
             throw new OAuth2AuthenticationException(new OAuth2Error("user_deactivated"), "User account is deactivated.");
         }
         return oidcUser;
+    }
+
+    /**
+     * Copies the name and email claims onto an existing account. The matriculation number is handled separately, because it can collide with another account.
+     *
+     * @param user     the account to update, which is not saved here
+     * @param oidcUser the user whose claims are applied
+     * @return whether the account changed
+     */
+    private boolean applyProfileClaims(User user, OidcUser oidcUser) {
+        String firstName = oidcUser.getAttribute(firstNameClaimKey);
+        String lastName = oidcUser.getAttribute(lastNameClaimKey);
+        String email = User.canonicalEmail(oidcUser.getAttribute(emailClaimKey));
+        boolean isUpdated = false;
+
+        if (firstName != null && !firstName.isBlank() && !Objects.equals(user.getFirstName(), firstName)) {
+            user.setFirstName(firstName);
+            isUpdated = true;
+        }
+        if (lastName != null && !lastName.isBlank() && !Objects.equals(user.getLastName(), lastName)) {
+            user.setLastName(lastName);
+            isUpdated = true;
+        }
+        // Deliberately keeps the stored address when the claim is absent or blank, unlike the LDAP path, which
+        // clears it. A directory lookup returns the whole record, so a missing address there means the user has
+        // none; a token carries only the claims that were configured and granted, so an absent one says nothing
+        // about the account. Dropping an address because a token did not mention it is not recoverable.
+        if (email != null && userCreationService.updateEmailIfChanged(user, email)) {
+            isUpdated = true;
+        }
+        return isUpdated;
+    }
+
+    /**
+     * Saves the claims applied to an existing account. Another account can take the matriculation number between the ownership lookup and this save, and the save then fails
+     * on the unique constraint. The failed save rolled back its repository transaction, so a confirmed conflict is recovered from by reloading the account and storing the other
+     * profile updates without the contested number in a fresh one. Any other failure is not recoverable here and propagates.
+     *
+     * @param user                         the account with the applied claims
+     * @param oidcUser                     the user whose claims were applied
+     * @param isMatriculationNumberUpdated whether the matriculation number is among the applied changes
+     * @return the saved account
+     */
+    private User saveProfileUpdates(User user, OidcUser oidcUser, boolean isMatriculationNumberUpdated) {
+        try {
+            return userRepository.save(user);
+        }
+        catch (DataIntegrityViolationException e) {
+            if (!isMatriculationNumberUpdated || findOtherOwnerOfMatriculationNumber(user, user.getRegistrationNumber()).isEmpty()) {
+                throw e;
+            }
+            log.warn("OIDC matriculation number of user '{}' was not synchronized because another account claimed it in the meantime.", user.getLogin());
+            User reloadedUser = userRepository.findOneWithAuthoritiesByLogin(user.getLogin())
+                    .orElseThrow(() -> new OAuth2AuthenticationException("Failed to reload the account after a matriculation number conflict"));
+            return applyProfileClaims(reloadedUser, oidcUser) ? userRepository.save(reloadedUser) : reloadedUser;
+        }
+    }
+
+    private Optional<User> findOtherOwnerOfMatriculationNumber(User user, String matriculationNumber) {
+        return userRepository.findUserWithAuthoritiesByRegistrationNumber(matriculationNumber).filter(owner -> !Objects.equals(owner.getId(), user.getId()));
+    }
+
+    /**
+     * Logs which claims the identity provider delivered, to diagnose a mapping that does not resolve, for example a matriculation number that never arrives.
+     * Only the claim names are logged and never their values, because the values are personal data. That includes the login, which is the value of the username claim.
+     *
+     * @param userRequest the request that carries the ID token
+     * @param oidcUser    the user whose userinfo claims were merged in by the provider
+     */
+    private void logReceivedClaimNames(OidcUserRequest userRequest, OidcUser oidcUser) {
+        Set<String> idTokenClaims = new TreeSet<>(userRequest.getIdToken().getClaims().keySet());
+        Set<String> userInfoClaims = oidcUser.getUserInfo() == null ? Set.of() : new TreeSet<>(oidcUser.getUserInfo().getClaims().keySet());
+        String matriculationNumber = oidcUser.getAttribute(matriculationClaimKey);
+        boolean matriculationPresent = matriculationNumber != null && !matriculationNumber.isBlank();
+        log.info("OIDC login received the claims {} in the ID token and {} in the userinfo response. The configured matriculation claim '{}' is {}.", idTokenClaims, userInfoClaims,
+                matriculationClaimKey, matriculationPresent ? "present" : "missing or blank");
+    }
+
+    /**
+     * Stores the matriculation number from the token when it differs from the stored one. An absent or blank claim keeps the stored value, for the same reason as the email:
+     * a token carries only the claims that were configured and granted, so an absent one says nothing about the account. A number that already belongs to another account is
+     * skipped instead of rejected, because the unique constraint on it would otherwise turn a profile sync into a failed login. A number that another account takes after this
+     * check is caught when the account is saved, see {@link #saveProfileUpdates}.
+     *
+     * @param user                the account to update, which is not saved here
+     * @param matriculationNumber the claim value, which may be {@code null} or blank
+     * @return whether the stored matriculation number changed
+     */
+    private boolean updateMatriculationNumberIfChanged(User user, @Nullable String matriculationNumber) {
+        if (matriculationNumber == null || matriculationNumber.isBlank() || matriculationNumber.equals(user.getRegistrationNumber())) {
+            return false;
+        }
+        Optional<User> owner = findOtherOwnerOfMatriculationNumber(user, matriculationNumber);
+        if (owner.isPresent()) {
+            log.warn("OIDC matriculation number of user '{}' was not synchronized because it already belongs to user '{}'.", user.getLogin(), owner.get().getLogin());
+            return false;
+        }
+        user.setRegistrationNumber(matriculationNumber);
+        return true;
     }
 
     /**

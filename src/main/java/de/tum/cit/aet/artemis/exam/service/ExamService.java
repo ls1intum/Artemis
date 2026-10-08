@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -1364,14 +1365,14 @@ public class ExamService {
                 log.debug("StatsTimeLog: number of student exams submitted done in {}", TimeLogUtil.formatDurationFrom(start));
             }
 
-            return new ExamChecklistDTO(numberOfGeneratedStudentExams, numberOfTestRuns, totalNumberOfAssessmentsFinished, totalNumberOfParticipationsForAssessment,
+            return new ExamChecklistDTO(numberOfGeneratedStudentExams, numberOfTestRuns, Arrays.asList(totalNumberOfAssessmentsFinished), totalNumberOfParticipationsForAssessment,
                     numberOfStudentExamsSubmitted, numberOfStudentExamsStarted, totalNumberOfComplaints, totalNumberOfComplaintResponse, exercisesPrepared, existsUnassessedQuizzes,
                     existsUnsubmittedExercises);
 
         }
 
         // For non-instructors, consider what limited information they should receive and adjust accordingly
-        return new ExamChecklistDTO(totalNumberOfAssessmentsFinished, totalNumberOfParticipationsForAssessment, existsUnassessedQuizzes, existsUnsubmittedExercises);
+        return new ExamChecklistDTO(Arrays.asList(totalNumberOfAssessmentsFinished), totalNumberOfParticipationsForAssessment, existsUnassessedQuizzes, existsUnsubmittedExercises);
     }
 
     /**

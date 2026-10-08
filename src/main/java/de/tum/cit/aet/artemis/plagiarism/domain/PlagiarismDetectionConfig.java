@@ -4,13 +4,19 @@ import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
  * Stores configuration for manual and continuous plagiarism control.
@@ -19,6 +25,26 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @Table(name = "plagiarism_detection_config")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PlagiarismDetectionConfig extends DomainObject {
+
+    /**
+     * The exercise this configuration belongs to. The key lives here rather than on the exercise: the exercise carries no
+     * mapped association to its plagiarism detection configuration, so loading an exercise can never pull this row in, and
+     * the configuration cannot outlive the exercise. Read it through {@code PlagiarismDetectionConfigRepository} where it is
+     * needed.
+     */
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "exercise_id", nullable = false, unique = true)
+    @JsonIgnore
+    @Parent
+    private Exercise exercise;
+
+    /**
+     * The key of {@link #exercise}, read without touching the lazy association, so that the configurations of many
+     * exercises can be matched to their exercises after one query. Written through {@link #exercise} only.
+     */
+    @JsonIgnore
+    @Column(name = "exercise_id", insertable = false, updatable = false)
+    private Long exerciseId;
 
     public PlagiarismDetectionConfig() {
     }
@@ -62,6 +88,18 @@ public class PlagiarismDetectionConfig extends DomainObject {
     @Column(name = "minimum_size")
     @Min(0)
     private int minimumSize;
+
+    public Exercise getExercise() {
+        return exercise;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
+    }
+
+    public Long getExerciseId() {
+        return exerciseId;
+    }
 
     /**
      * Set all sensitive information to placeholders, so no info about plagiarism checks gets leaked to students through json.

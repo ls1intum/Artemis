@@ -38,6 +38,7 @@
         "quizAlreadyVisible": "The quiz is already visible.",
         "quizAlreadyStarted": "The quiz has already been started.",
         "quizNotEndedYet": "The quiz has not ended yet.",
+        "quizOfTestExam": "Quizzes of test exams are evaluated when an attempt is handed in.",
         "quizAlreadyOpenForPractice": "The quiz is already open for practice.",
         "unknownAction": "This action cannot be performed.",
         "groupNotFound": "The group you entered was not found.",
@@ -134,6 +135,7 @@
         "memoryLimitInvalid": "The memory limit is invalid. Please make sure it is a positive integer and larger than 6MB.",
         "cpuCountInvalid": "The CPU count is invalid. Please make sure it is a positive integer.",
         "memorySwapLimitInvalid": "The memory swap limit is invalid. Please make sure it is larger or equal to 0.",
+        "memorySwapBelowMemoryLimit": "The memory swap limit must not be below the memory limit. Docker reads it as the total of memory and swap.",
         "dockerFlagsParsingError": "Error while parsing the docker flags.",
         "dockerNetworkNotAllowed": "The Docker network of a build container is not allowed on this instance.",
         "dueDateOver": {
@@ -336,6 +338,7 @@
         "emptyBuildContainer": "The build container {{ container }} must contain at least one build phase.",
         "invalidBuildContainerTimeout": "The timeout of the build container {{ container }} must be a positive number of seconds.",
         "buildContainerTimeoutExceedsExerciseTimeout": "The timeout of the build container {{ container }} must not exceed the timeout of the exercise ({{ timeout }} seconds).",
+        "buildContainerMemorySwapBelowMemory": "The build container {{ container }} would run with a memory swap limit of {{ memorySwap }} MB below its memory limit of {{ memory }} MB. Set its memory swap limit as well, or leave the memory limit to the exercise.",
         "sharingInfoMissing": "The sharing platform information is missing.",
         "problemStatementTooLong": "The problem statement must not exceed 100,000 characters."
     }

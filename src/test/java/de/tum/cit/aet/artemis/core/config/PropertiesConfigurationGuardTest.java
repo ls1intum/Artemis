@@ -81,7 +81,7 @@ class PropertiesConfigurationGuardTest {
     @ValueSource(strings = { "dev.env", "dev-local-vc-local-ci.env", "prod-multinode.env", "migration-check.env", "playwright.env", "prod-multinode-fast.env" })
     void allowsShippedLocalDeploymentMetadata(String file) throws IOException {
         var properties = new Properties();
-        try (var reader = Files.newBufferedReader(Path.of("docker/artemis/config", file))) {
+        try (var reader = Files.newBufferedReader(Path.of("deployment/docker/artemis/config", file))) {
             properties.load(reader);
         }
         assertThatNoException().isThrownBy(
@@ -96,7 +96,7 @@ class PropertiesConfigurationGuardTest {
     @ParameterizedTest
     @ValueSource(strings = { "values.yaml", "values-cluster-example.yaml" })
     void rejectsUnconfiguredProductionChartMetadata(String file) throws IOException {
-        var values = new YamlPropertySourceLoader().load("chart", new FileSystemResource("helm/artemis/" + file)).getFirst();
+        var values = new YamlPropertySourceLoader().load("chart", new FileSystemResource("deployment/helm/artemis/" + file)).getFirst();
         assertThatIllegalArgumentException()
                 .isThrownBy(guard((String) values.getProperty("artemis.config.operator.name"), (String) values.getProperty("artemis.config.operator.adminName"),
                         (String) values.getProperty("artemis.config.operator.universityName"))::afterPropertiesSet)
@@ -105,7 +105,7 @@ class PropertiesConfigurationGuardTest {
 
     @Test
     void allowsDockerDesktopChartMetadata() throws IOException {
-        var values = new YamlPropertySourceLoader().load("chart", new FileSystemResource("helm/artemis/values-docker-desktop.yaml")).getFirst();
+        var values = new YamlPropertySourceLoader().load("chart", new FileSystemResource("deployment/helm/artemis/values-docker-desktop.yaml")).getFirst();
         assertThatNoException().isThrownBy(guard((String) values.getProperty("artemis.config.operator.name"), (String) values.getProperty("artemis.config.operator.adminName"),
                 (String) values.getProperty("artemis.config.operator.universityName"))::afterPropertiesSet);
     }

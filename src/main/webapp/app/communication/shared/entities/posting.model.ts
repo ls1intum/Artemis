@@ -2,7 +2,7 @@ import { BaseEntity } from 'app/foundation/model/base-entity';
 import { User } from 'app/account/user/user.model';
 import dayjs from 'dayjs/esm';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { UserRole } from 'app/communication/metis.util';
+import { UserRole } from 'app/communication/communication.util';
 import { Conversation } from 'app/communication/shared/entities/conversation/conversation.model';
 
 // NOTE: this should be the same as on the server side to avoid issues.

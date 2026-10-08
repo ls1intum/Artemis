@@ -471,7 +471,9 @@ public class FileUtil {
         FileUtils.copyInputStreamToFile(resource.getInputStream(), targetPath.toFile());
 
         if (targetPath.endsWith("gradlew")) {
-            targetPath.toFile().setExecutable(true);
+            if (!targetPath.toFile().setExecutable(true)) {
+                log.warn("Could not mark {} as executable", targetPath);
+            }
         }
     }
 

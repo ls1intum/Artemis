@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
@@ -68,6 +69,7 @@ class CourseNotificationWebappServiceTest {
 
     @Test
     void shouldCompleteNormallyWhenEverySendSucceeds() {
+        mockSuccessfulWebsocketDelivery();
         CourseNotificationDTO notification = createTestNotification(123L);
         List<CourseNotificationRecipientDTO> recipients = List.of(createTestUser(1L, "user1"));
 
@@ -78,6 +80,7 @@ class CourseNotificationWebappServiceTest {
 
     @Test
     void shouldSendNotificationToEachRecipientWhenMultipleRecipientsProvided() {
+        mockSuccessfulWebsocketDelivery();
         CourseNotificationDTO notification = createTestNotification(123L);
         List<CourseNotificationRecipientDTO> recipients = List.of(createTestUser(1L, "user1"), createTestUser(2L, "user2"), createTestUser(3L, "user3"));
 
@@ -105,6 +108,7 @@ class CourseNotificationWebappServiceTest {
 
     @Test
     void shouldSendToCorrectTopicWhenCourseIdProvided() {
+        mockSuccessfulWebsocketDelivery();
         long courseId = 456L;
         CourseNotificationDTO notification = createTestNotification(courseId);
         var user = createTestUser(1L, "testuser");
@@ -114,6 +118,31 @@ class CourseNotificationWebappServiceTest {
         verify(websocketMessagingService, times(1)).sendMessageToUser(eq("testuser"), userTopic(WEBSOCKET_TOPIC_PREFIX + "456"), eq(notification));
         verify(websocketMessagingService, times(1)).sendMessageToUser(eq("testuser"), userTopic(WEBSOCKET_BROADCAST_TOPIC_PREFIX), eq(notification));
         verify(websocketMessagingService, times(2)).sendMessageToUser(any(), any(), any());
+    }
+
+    @Test
+    void twoCoursesDeliverOnlyToTheirOwnRecipientsAndPersonalAggregateFeeds() {
+        mockSuccessfulWebsocketDelivery();
+        CourseNotificationDTO courseA = createTestNotification(42L);
+        CourseNotificationDTO courseB = createTestNotification(43L);
+        var shared = createTestUser(3L, "shared");
+
+        ReflectionTestUtils.invokeMethod(courseNotificationWebappService, "sendCourseNotification", courseA, List.of(createTestUser(1L, "a-only"), shared));
+        ReflectionTestUtils.invokeMethod(courseNotificationWebappService, "sendCourseNotification", courseB, List.of(createTestUser(2L, "b-only"), shared));
+
+        verify(websocketMessagingService).sendMessageToUser(eq("a-only"), userTopic("/topic/notification/42"), eq(courseA));
+        verify(websocketMessagingService).sendMessageToUser(eq("a-only"), userTopic("/topic/notification/all"), eq(courseA));
+        verify(websocketMessagingService).sendMessageToUser(eq("shared"), userTopic("/topic/notification/42"), eq(courseA));
+        verify(websocketMessagingService).sendMessageToUser(eq("shared"), userTopic("/topic/notification/all"), eq(courseA));
+        verify(websocketMessagingService).sendMessageToUser(eq("b-only"), userTopic("/topic/notification/43"), eq(courseB));
+        verify(websocketMessagingService).sendMessageToUser(eq("b-only"), userTopic("/topic/notification/all"), eq(courseB));
+        verify(websocketMessagingService).sendMessageToUser(eq("shared"), userTopic("/topic/notification/43"), eq(courseB));
+        verify(websocketMessagingService).sendMessageToUser(eq("shared"), userTopic("/topic/notification/all"), eq(courseB));
+        verifyNoMoreInteractions(websocketMessagingService);
+    }
+
+    private void mockSuccessfulWebsocketDelivery() {
+        when(websocketMessagingService.sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any())).thenReturn(CompletableFuture.completedFuture(null));
     }
 
     private CourseNotificationRecipientDTO createTestUser(Long id, String login) {

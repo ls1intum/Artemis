@@ -193,7 +193,7 @@ public class ProgrammingExerciseBuildPlanService {
         // disallowed networks, invalid resource limits), so the build plan editor cannot persist a configuration the
         // regular editing path would reject. This runs before any save, so a rejected payload leaves the config unchanged.
         programmingExerciseValidationService.validateDockerFlags(buildConfig);
-        programmingExerciseValidationService.validateContainerDockerFlags(buildPlanConfiguration.buildPlan());
+        programmingExerciseValidationService.validateContainerDockerFlags(buildPlanConfiguration.buildPlan(), buildConfig);
 
         // this endpoint is LocalCI-only, so updateBuildPlanForExercise never takes its non-LocalCI delete-and-recreate
         // branch here; it is still called for parity with the shared full exercise update path
