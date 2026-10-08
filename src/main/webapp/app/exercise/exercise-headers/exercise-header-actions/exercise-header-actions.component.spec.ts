@@ -148,6 +148,64 @@ describe('ExerciseHeaderActionsComponent', () => {
         );
     });
 
+    describe('practice mode and the individual due date of the graded participation', () => {
+        const createTeamExercise = (type: ExerciseType, teamParticipation: StudentParticipation) => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.type = type;
+            exercise.teamMode = true;
+            exercise.studentAssignedTeamId = 3;
+            exercise.dueDate = dayjs().subtract(1, 'day');
+            exercise.studentParticipations = [teamParticipation];
+            return exercise;
+        };
+
+        it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])(
+            'should not offer starting practice for a %s exercise while an extension is running',
+            (type) => {
+                const graded = { id: 10, testRun: false, initializationState: InitializationState.FINISHED, individualDueDate: dayjs().add(1, 'hour') } as StudentParticipation;
+                const exercise = new ProgrammingExercise(undefined, undefined);
+                exercise.type = type;
+                exercise.dueDate = dayjs().subtract(1, 'day');
+                exercise.studentParticipations = [graded];
+                createComponent(exercise);
+
+                expect(fixture.componentInstance.isStartPracticeAvailable()).toBe(false);
+            },
+        );
+
+        it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])('should offer starting practice for a %s exercise once the extension has passed', (type) => {
+            const graded = { id: 10, testRun: false, initializationState: InitializationState.FINISHED, individualDueDate: dayjs().subtract(1, 'hour') } as StudentParticipation;
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.type = type;
+            exercise.dueDate = dayjs().subtract(1, 'day');
+            exercise.studentParticipations = [graded];
+            createComponent(exercise);
+
+            expect(fixture.componentInstance.isStartPracticeAvailable()).toBe(true);
+        });
+
+        it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])(
+            'should use the extension of the team and not of the own practice participation for a team %s exercise',
+            (type) => {
+                const teamParticipation = {
+                    id: 10,
+                    testRun: false,
+                    initializationState: InitializationState.FINISHED,
+                    individualDueDate: dayjs().add(1, 'hour'),
+                } as StudentParticipation;
+                createComponent(createTeamExercise(type, teamParticipation));
+
+                expect(fixture.componentInstance.isStartPracticeAvailable()).toBe(false);
+
+                fixture.componentInstance.receiveNewParticipation({ id: 20, testRun: true, initializationState: InitializationState.REPO_COPIED } as StudentParticipation);
+                expect(fixture.componentInstance.gradedParticipation()?.id).toBe(10);
+                expect(fixture.componentInstance.practiceParticipation()?.id).toBe(20);
+                // the practice participation of a programming exercise still needs its setup, so only the extension of the team keeps the button hidden
+                expect(fixture.componentInstance.isStartPracticeAvailable()).toBe(false);
+            },
+        );
+    });
+
     describe('feedback button participation', () => {
         // Lives here rather than in the header spec, which mocks the button away.
         it('should follow the participation mode when choosing the participation for feedback', () => {

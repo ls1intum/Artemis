@@ -178,21 +178,38 @@ export const isResumeExerciseAvailable = (exercise: Exercise, participation?: St
 };
 
 /**
+ * Whether the work period for practicing is over, the same condition as the server checks before it starts the practice mode: the exercise due date has passed and, if the
+ * graded participation has an individual due date (an extension), that due date has passed as well. There is no practice without a due date.
+ * @param exercise the exercise that the student wants to practice
+ * @param deadlineParticipation the graded participation of the student or the team, which may carry an individual due date
+ */
+const isPracticeDeadlineOver = (exercise: Exercise, deadlineParticipation?: StudentParticipation): boolean => {
+    const dueDate = getExerciseDueDate(exercise, deadlineParticipation);
+    return exercise.dueDate != undefined && dueDate != undefined && dayjs().isAfter(exercise.dueDate) && dayjs().isAfter(dueDate);
+};
+
+/**
  * The start practice button should be available for programming, quiz, text, and modeling exercises
  * - For quizzes when they are open for practice and the regular work period is over
- * - For programming, text, and modeling exercises when it's after the due date, also for a team exercise, which is practiced individually by each student
+ * - For programming, text, and modeling exercises when it's after the due date, also for a team exercise, which is practiced individually by each student.
+ *   While the graded participation has an individual due date (an extension), practicing is only possible after that one, the server answers 403 before.
  * @param exercise the exercise that the student wants to practice
- * @param participation the potentially existing participation
+ * @param participation the potentially existing practice participation
+ * @param deadlineParticipation the graded participation of the student (or of the team for a team exercise), which defines the individual due date. Defaults to the participation.
  */
-export const isStartPracticeAvailable = (exercise: Exercise, participation?: StudentParticipation): boolean => {
+export const isStartPracticeAvailable = (
+    exercise: Exercise,
+    participation?: StudentParticipation,
+    deadlineParticipation: StudentParticipation | undefined = participation,
+): boolean => {
     switch (exercise.type) {
         case ExerciseType.QUIZ:
             return hasDueDatePassed(exercise);
         case ExerciseType.PROGRAMMING:
-            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && (!participation || programmingSetupNotFinished(participation));
+            return isPracticeDeadlineOver(exercise, deadlineParticipation) && (!participation || programmingSetupNotFinished(participation));
         case ExerciseType.TEXT:
         case ExerciseType.MODELING:
-            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !isPracticeMode(participation);
+            return isPracticeDeadlineOver(exercise, deadlineParticipation) && !isPracticeMode(participation);
         default:
             return false;
     }

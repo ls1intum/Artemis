@@ -176,6 +176,87 @@ describe('ExerciseUtils', () => {
             expect(isStartPracticeAvailable(exercise, { testRun: true })).toBe(false);
         });
 
+        describe('with an individual due date of the graded participation', () => {
+            const exerciseOfType = (type: ExerciseType, dueDate: dayjs.Dayjs | undefined, teamMode = false): Exercise => ({
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+                type,
+                teamMode,
+                dueDate,
+            });
+            const gradedParticipation = (individualDueDate?: dayjs.Dayjs): StudentParticipation => ({ testRun: false, individualDueDate }) as StudentParticipation;
+            const practiceParticipation = { testRun: true, initializationState: InitializationState.REPO_COPIED } as StudentParticipation;
+            const practiceTypes = [ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING];
+
+            it.each(practiceTypes)('should not offer practice for a %s exercise while an extension lies in the future', (type) => {
+                const exercise = exerciseOfType(type, dayjs().subtract(1, 'day'));
+
+                expect(isStartPracticeAvailable(exercise, undefined, gradedParticipation(dayjs().add(1, 'hour')))).toBe(false);
+            });
+
+            it.each(practiceTypes)('should offer practice for a %s exercise once the extension has passed', (type) => {
+                const exercise = exerciseOfType(type, dayjs().subtract(2, 'day'));
+
+                expect(isStartPracticeAvailable(exercise, undefined, gradedParticipation(dayjs().subtract(1, 'hour')))).toBe(true);
+            });
+
+            it.each(practiceTypes)('should offer practice for a %s exercise if the graded participation has no extension', (type) => {
+                const exercise = exerciseOfType(type, dayjs().subtract(1, 'day'));
+
+                expect(isStartPracticeAvailable(exercise, undefined, gradedParticipation())).toBe(true);
+            });
+
+            it.each(practiceTypes)('should wait for the exercise due date of a %s exercise if the extension is earlier than that', (type) => {
+                const exerciseDueDateInFuture = exerciseOfType(type, dayjs().add(1, 'day'));
+                const exerciseDueDatePassed = exerciseOfType(type, dayjs().subtract(1, 'hour'));
+                const earlierExtension = gradedParticipation(dayjs().subtract(1, 'day'));
+
+                // the server answers 403 until the exercise due date has passed, whatever the individual due date says
+                expect(isStartPracticeAvailable(exerciseDueDateInFuture, undefined, earlierExtension)).toBe(false);
+                expect(isStartPracticeAvailable(exerciseDueDatePassed, undefined, earlierExtension)).toBe(true);
+            });
+
+            it.each(practiceTypes)('should not offer practice without a due date for a %s exercise whatever the extension is', (type) => {
+                const exercise = exerciseOfType(type, undefined);
+
+                expect(isStartPracticeAvailable(exercise, undefined, gradedParticipation(dayjs().subtract(1, 'day')))).toBe(false);
+            });
+
+            it('should keep using the practice participation for the practice checks and the deadline participation for the deadline', () => {
+                const exercise = exerciseOfType(ExerciseType.PROGRAMMING, dayjs().subtract(1, 'day'));
+
+                // a practice participation that still needs its setup does not hide the button, the extension of the graded one does
+                expect(isStartPracticeAvailable(exercise, practiceParticipation, gradedParticipation())).toBe(true);
+                expect(isStartPracticeAvailable(exercise, practiceParticipation, gradedParticipation(dayjs().add(1, 'hour')))).toBe(false);
+                // a finished setup of the practice participation hides the button even without an extension
+                expect(
+                    isStartPracticeAvailable(exercise, { testRun: true, initializationState: InitializationState.INITIALIZED } as StudentParticipation, gradedParticipation()),
+                ).toBe(false);
+            });
+
+            it.each([ExerciseType.TEXT, ExerciseType.MODELING])('should not offer practice for a %s exercise that already has a practice participation', (type) => {
+                const exercise = exerciseOfType(type, dayjs().subtract(1, 'day'));
+
+                expect(isStartPracticeAvailable(exercise, { testRun: true } as StudentParticipation, gradedParticipation())).toBe(false);
+            });
+
+            it.each(practiceTypes)('should evaluate the extension of the team for a team %s exercise', (type) => {
+                const exercise = exerciseOfType(type, dayjs().subtract(1, 'day'), true);
+                const teamParticipation = gradedParticipation(dayjs().add(1, 'hour'));
+
+                expect(isStartPracticeAvailable(exercise, undefined, teamParticipation)).toBe(false);
+                expect(isStartPracticeAvailable(exercise, undefined, gradedParticipation(dayjs().subtract(1, 'hour')))).toBe(true);
+            });
+
+            it('should default the deadline participation to the participation for backward compatibility', () => {
+                const exercise = exerciseOfType(ExerciseType.TEXT, dayjs().subtract(1, 'day'));
+
+                expect(isStartPracticeAvailable(exercise, gradedParticipation(dayjs().add(1, 'hour')))).toBe(false);
+                expect(isStartPracticeAvailable(exercise, gradedParticipation(dayjs().subtract(1, 'hour')))).toBe(true);
+            });
+        });
+
         it.each([ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD, undefined])('should not allow practicing for other exercises', (type) => {
             const exercise: Exercise = {
                 numberOfAssessmentsOfCorrectionRounds: [],
