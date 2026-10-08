@@ -52,6 +52,9 @@ Report only high-confidence defects that would make later artifacts faithfully i
 Before reporting an omission or unsupported addition, test the diagnosis against the whole specification. A passage elsewhere may satisfy a requirement; a necessary
 operational choice may make the requested scenario executable. Decision Ledger labels and Contract Risk Inventory entries are provenance, not independent authority.
 Every inventory seam must trace to its rules and meaningful admitted partitions; report an ambiguity only when an omitted partition's behavior is actually undefined.
+Compare the numbered rules and task progression with the completed solution's Public API. Its declarations must include every final enum constant and member required
+by later tasks, not only the earlier starter state. Report a required extension absent from the final API as an internal conflict; downstream authoring cannot satisfy
+both a required addition and a frozen API that forbids that addition. Do not invent extensions the rules do not require.
 Do not demand duplicate prose, a preferred theme, exact error messages, or a particular implementation when the contract is already coherent.
 For each boundary or error OUTCOME the brief requires, return a boundaryChecks item with a legal public setup and the operation where that outcome is observed.
 A caller precondition excludes inputs; it does not require an outcome for excluded inputs. Do not turn a scope exclusion into an unreachable-outcome finding.

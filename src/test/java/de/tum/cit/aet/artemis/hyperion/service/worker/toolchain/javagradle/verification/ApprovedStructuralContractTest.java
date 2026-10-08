@@ -216,6 +216,21 @@ class ApprovedStructuralContractTest {
     }
 
     @Test
+    void completedEnumContractRequiresTheExtensionWithoutAdmittingOtherConstants() {
+        var completed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public enum Mode { FIRST, SECOND, ADDED; }
+                ```
+                """, Set.of("Mode"));
+        assertThat(completed.errors()).isEmpty();
+        assertThat(completed.contract().solutionSurfaceReasons(Map.of("Mode.java", "public enum Mode { FIRST, SECOND, ADDED; }"))).isEmpty();
+        assertThat(completed.contract().solutionSurfaceReasons(Map.of("Mode.java", "public enum Mode { FIRST, SECOND; }"))).anyMatch(reason -> reason.contains("enum:ADDED"));
+        assertThat(completed.contract().solutionSurfaceReasons(Map.of("Mode.java", "public enum Mode { FIRST, SECOND, ADDED, INVENTED; }")))
+                .anyMatch(reason -> reason.contains("enum:INVENTED"));
+    }
+
+    @Test
     void privateInterfaceHelperDoesNotBecomeAContractMethod() {
         var result = ApprovedStructuralContract.parse("""
                 ## Public API

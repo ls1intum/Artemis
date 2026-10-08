@@ -191,6 +191,51 @@ class DockerGradleBuildTest {
     }
 
     @Test
+    void instructorFixturesResetSharedStatePerTestWithoutChangingTheExerciseApi() throws IOException {
+        String session = sandbox.createSession();
+        workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);
+        sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
+        String calculator = new String(read("hyperion/readiness/java/solution/src/de/tum/cit/aet/reference/ScoreCalculator.java"), StandardCharsets.UTF_8);
+        calculator = calculator.substring(0, calculator.lastIndexOf('}')) + "private static int nextId; public static int nextId() { return nextId++; }\n}";
+        String source = """
+                package de.tum.cit.aet.reference;
+                import static org.junit.jupiter.api.Assertions.*;
+                import org.junit.jupiter.api.*;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                @Public
+                @Policy(value = "SecurityPolicy.yaml")
+                @DisplayNameGeneration(DisplayNameGenerator.Simple.class)
+                @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+                class ScoreCalculatorTest {
+                    @BeforeAll
+                    static void resetState() throws Exception {
+                        var counter = ScoreCalculator.class.getDeclaredField("nextId");
+                        counter.setAccessible(true);
+                        counter.setInt(null, 0);
+                    }
+                    @Test @Order(1) @StrictTimeout(1)
+                    void firstScenario() { assertEquals(0, ScoreCalculator.nextId()); assertEquals(1, ScoreCalculator.nextId()); }
+                    @Test @Order(2) @StrictTimeout(1)
+                    void secondScenario() { assertEquals(0, ScoreCalculator.nextId()); assertEquals(1, ScoreCalculator.nextId()); }
+                }
+                """;
+        String path = "tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java";
+        sandbox.copyIn(session, "/workspace",
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of("solution/src/de/tum/cit/aet/reference/ScoreCalculator.java", calculator, path, source), Map.of()));
+        var sharedFixture = build(session, "solution");
+        assertThat(sharedFixture.testFailedNames()).as(sharedFixture.buildDiagnostic()).containsExactly("secondScenario");
+        sandbox.copyIn(session, "/workspace",
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, source.replace("@BeforeAll", "@BeforeEach").replace("static void resetState", "void resetState")), Map.of()));
+        var isolatedFixture = build(session, "solution");
+        assertThat(isolatedFixture.exitCode()).as(isolatedFixture.buildDiagnostic()).isZero();
+        assertThat(isolatedFixture.testNames()).contains("firstScenario", "secondScenario");
+        assertThat(isolatedFixture.failures()).isZero();
+    }
+
+    @Test
     void verificationDoesNotLeaveADaemonHoldingTheDisposableGradleCache() throws IOException {
         String session = sandbox.createSession();
         workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);

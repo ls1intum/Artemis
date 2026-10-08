@@ -191,7 +191,8 @@ public class AgentSystemPrompt {
               supplies and what the learner changes in Role. Given types stay complete and identical across repositories. Student-created types are absent from the starter.
               State who owns mutable state and whether it survives replacement. Supplied declarations must not depend on an absent type; omit only student-owned dependent
               members, marked `/** @studentCreates */` in Public API, with their own owner seam when independently actionable.
-            - `## Public API`: one `### TypeName` subsection per type, each with a fenced `java` block containing the type declaration and exact contract-visible signatures.
+            - `## Public API`: one `### TypeName` subsection per type, each with a fenced `java` block containing the completed solution's type declaration and exact
+              contract-visible signatures, including all final enum constants. This is the final graded contract, not an intermediate starter or an earlier task's API.
               Use `{ ... }` for constructor bodies and semicolons for method signatures. List fields only when deliberately public and graded. Private state is not a reflective API.
             - `## Testing Strategy`: table `| Seam | Owner type | Observable responsibility | Weight | Hidden variant |`. S1, S2, ... identify independently actionable units
               of student work, not individual tests. Owner type is one exact, bare Design type that is stubbed or student-created. Describe the test-controlled setup and observed
