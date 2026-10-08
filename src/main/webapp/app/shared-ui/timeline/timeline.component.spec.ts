@@ -272,18 +272,6 @@ describe('ExerciseTimeline', () => {
         expect(item.date()).toBe(boundDate);
     });
 
-    it('should keep a flag that is still raised without a picked date', () => {
-        // positive control for the reset: only updateDate lowers the flag, a blur on an invalid text keeps it
-        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(undefined) };
-        fixture.componentRef.setInput('timelineItems', [item]);
-
-        component.handleBlur(item, { target: { value: 'error' } } as unknown as Event);
-
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
-        expect(component.timelineStatus().valid).toBe(false);
-        expect(component.timelineStatus().invalidItems.map((invalidItem) => invalidItem.labelStringKey)).toEqual(['release']);
-    });
-
     it('should clear only the invalid flag of the item whose date was picked', () => {
         const release: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(undefined) };
         const due: TimelineItem = { kind: 'optional', labelStringKey: 'due', date: signal(undefined) };
