@@ -5,6 +5,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { firstValueFrom } from 'rxjs';
 import { UserNameAndLoginDTO } from 'app/account/user/user.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-editor.interface';
@@ -22,7 +23,9 @@ type UserMentionSuggestion = UserNameAndLoginDTO | typeof ALL_MEMBERS_SUGGESTION
  * Action to insert a user mention into the editor. Users that type a @ will see a list of available users to mention.
  * Users will be fetched repeatedly as the user types to provide up-to-date results.
  * In a group chat, the list starts with the suggestion "@all", which notifies every member of the group chat when a new posting is created.
- * The constructor takes a callback that tells whether an existing posting is being edited, in which case no "@all" is suggested.
+ * The constructor takes a callback that tells whether an existing posting is being edited, in which case no "@all" is suggested, and a callback that provides the
+ * conversation of the posting. The latter is used for the group chat check, with the current conversation of the communication service as fallback, because the two differ
+ * e.g. when a thread is opened from the view with all messages.
  */
 export class UserMentionAction extends TextEditorAction {
     disposableCompletionProvider?: Disposable;
@@ -37,6 +40,7 @@ export class UserMentionAction extends TextEditorAction {
         private readonly courseManagementService: CourseManagementService,
         private readonly communicationService: CommunicationService,
         private readonly isEditingPosting: () => boolean = () => false,
+        private readonly getPostingConversation: () => ConversationDTO | undefined = () => undefined,
     ) {
         super(UserMentionAction.ID, 'artemisApp.communication.editor.user', faAt);
     }
@@ -98,7 +102,7 @@ export class UserMentionAction extends TextEditorAction {
         const users = await this.loadUsersForSearchTerm(searchTerm);
         // Only group chats support the token, in all other conversations the server treats it as plain text. Editing a posting never notifies anyone, so the suggestion
         // would promise a notification that is not sent.
-        const suggestsAllMembers = !this.isEditingPosting() && !!getAsGroupChatDTO(this.communicationService.getCurrentConversation());
+        const suggestsAllMembers = !this.isEditingPosting() && !!getAsGroupChatDTO(this.getPostingConversation() ?? this.communicationService.getCurrentConversation());
         return suggestsAllMembers ? [ALL_MEMBERS_SUGGESTION, ...users] : users;
     }
 

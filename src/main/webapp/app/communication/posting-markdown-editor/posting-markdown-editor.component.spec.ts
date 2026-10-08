@@ -48,6 +48,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PostingEditType } from 'app/communication/communication.util';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -194,6 +195,36 @@ describe('PostingsMarkdownEditor', () => {
             const suggestions = await userMentionAction.loadSuggestionsForSearchTerm('');
 
             expect(suggestions).toEqual(suggestsAll ? ['all'] : []);
+        });
+    });
+
+    describe('@all suggestion for the conversation of the posting', () => {
+        const suggestionsOfUserMentionAction = async () => {
+            vi.spyOn(TestBed.inject(CourseManagementService), 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: [], status: 200 })));
+            component.ngOnInit();
+            const userMentionAction = component.defaultActions().find((action) => action instanceof UserMentionAction) as UserMentionAction;
+            return userMentionAction.loadSuggestionsForSearchTerm('');
+        };
+
+        it('should offer @all if the posting belongs to a group chat that is not the current conversation', async () => {
+            // e.g. a reply in a thread that is opened from the view with all messages
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(undefined);
+            fixture.componentRef.setInput('activeConversation', new GroupChatDTO());
+
+            expect(await suggestionsOfUserMentionAction()).toEqual(['all']);
+        });
+
+        it('should prefer the conversation of the posting over the current conversation', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+            fixture.componentRef.setInput('activeConversation', new ChannelDTO());
+
+            expect(await suggestionsOfUserMentionAction()).toEqual([]);
+        });
+
+        it('should fall back to the current conversation if the posting provides none', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+
+            expect(await suggestionsOfUserMentionAction()).toEqual(['all']);
         });
     });
 

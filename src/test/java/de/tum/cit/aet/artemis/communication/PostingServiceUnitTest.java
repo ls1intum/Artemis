@@ -277,7 +277,7 @@ class PostingServiceUnitTest {
     @ParameterizedTest
     @ValueSource(strings = { "@all", "@ALL", "@All", "@all ", "@all, please read", "@all. Please read", "@all!", "Hello @all", "Hello (@all)", "line one\n@all",
             "[user]A B(ab)[/user] @all", "@all @all", "> quoted text\n@all please read", "`code` @all", "```\ncode\n```\n@all", "~~~\ncode\n~~~\n@all", "> quoted\n\n@all",
-            "see https://host/page and @all" })
+            "see https://host/page and @all", "   @all", "text\n    @all", "text\n\t@all", "> quote\n\n@all", "`code\n\n@all`", "a ` b\n@all", "`code` and\n@all", "`` a `\n@all" })
     void testContainsAtAllMentionMatches(String content) {
         assertThat(PostingService.containsAtAllMention(content)).isTrue();
     }
@@ -285,7 +285,8 @@ class PostingServiceUnitTest {
     @ParameterizedTest
     @ValueSource(strings = { "", "all", "@alle", "@allow", "@all_hands", "@all1", "email@all.com", "name@all", "@@all", "@ all", "@al", "[user]A B(ab)[/user]", "@all\u00e9",
             "\u00e9@all", "> @all meeting at 5", "  > @all meeting at 5", ">> @all", "`@all`", "``@all``", "use `@all` to ping", "```\n@all\n```", "```java\nint a;\n@all\n```",
-            "```\n@all", "~~~\n@all\n~~~", "https://host/@all", "[link](https://host/@all)" })
+            "```\n@all", "~~~\n@all\n~~~", "https://host/@all", "[link](https://host/@all)", "[link](https://host/p?x=@all)", "https://host/?a=@all", "a=@all", "    @all",
+            "\t@all", "text\n\n    @all", "> quote\n    @all", "```\ncode\n```\n    @all", "`code\n@all`", "a `b\nc @all` d", "`code\n    @all` text", "``a\nb ` @all\nc`` d" })
     void testContainsAtAllMentionDoesNotMatch(String content) {
         assertThat(PostingService.containsAtAllMention(content)).isFalse();
     }
@@ -313,6 +314,13 @@ class PostingServiceUnitTest {
         assertThat(PostingService.containsAtAllMention(manyBackticks)).isTrue();
         assertThat(PostingService.containsAtAllMention(alternatingRuns)).isFalse();
         assertThat(PostingService.containsAtAllMention(manyFenceLikeLines)).isFalse();
+        // consecutive lines of one paragraph are scanned together, the backtick runs of all lines pair up
+        String manyLinesWithOneBacktick = "a `b\n".repeat(50_000) + "@all";
+        String oneSpanAcrossManyLines = "`" + "line\n".repeat(100_000) + "@all`";
+        String manyIndentedLines = "    code `\n".repeat(100_000) + "    @all";
+        assertThat(PostingService.containsAtAllMention(manyLinesWithOneBacktick)).isTrue();
+        assertThat(PostingService.containsAtAllMention(oneSpanAcrossManyLines)).isFalse();
+        assertThat(PostingService.containsAtAllMention(manyIndentedLines)).isFalse();
     }
 
     /**

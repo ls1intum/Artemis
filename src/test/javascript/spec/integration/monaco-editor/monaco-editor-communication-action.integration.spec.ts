@@ -315,6 +315,64 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             expect(suggestions.map((suggestion) => suggestion.label)).not.toContain('@all');
         });
 
+        it('should prefer the conversation of the posting over the current conversation', async () => {
+            // e.g. a thread opened from the view with all messages, where the current conversation is not the one of the posting
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new ChannelDTO());
+            const replyAction = new UserMentionAction(
+                courseManagementService,
+                communicationService,
+                () => false,
+                () => new GroupChatDTO(),
+            );
+
+            const suggestions = await suggestMentions('@', replyAction);
+
+            expect(suggestions).toHaveLength(users.length + 1);
+            expect(suggestions[0].label).toBe('@all');
+        });
+
+        it('should not suggest @all if the conversation of the posting is no group chat, although the current conversation is one', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+            const replyAction = new UserMentionAction(
+                courseManagementService,
+                communicationService,
+                () => false,
+                () => new ChannelDTO(),
+            );
+
+            const suggestions = await suggestMentions('@', replyAction);
+
+            expect(suggestions).toHaveLength(users.length);
+            expect(suggestions.map((suggestion) => suggestion.label)).not.toContain('@all');
+        });
+
+        it('should fall back to the current conversation if the posting has no conversation', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+            const replyAction = new UserMentionAction(
+                courseManagementService,
+                communicationService,
+                () => false,
+                () => undefined,
+            );
+
+            const suggestions = await suggestMentions('@', replyAction);
+
+            expect(suggestions[0].label).toBe('@all');
+        });
+
+        it('should not suggest @all while editing a posting of a group chat, even if the posting provides its conversation', async () => {
+            const editingAction = new UserMentionAction(
+                courseManagementService,
+                communicationService,
+                () => true,
+                () => new GroupChatDTO(),
+            );
+
+            const suggestions = await suggestMentions('@', editingAction);
+
+            expect(suggestions.map((suggestion) => suggestion.label)).not.toContain('@all');
+        });
+
         it.each([
             { description: 'a channel', conversation: new ChannelDTO() },
             { description: 'a one-to-one chat', conversation: new OneToOneChatDTO() },

@@ -69,13 +69,17 @@ public abstract class PostingService {
     protected static final String POST_ENTITY_NAME = "messages.post";
 
     /**
-     * Matches the literal token "@all" if it is neither preceded by a letter, digit, underscore, "@" or "/" (so not in an email address or a URL) nor followed by a letter, digit
-     * or underscore (so not "@alle"). The character classes are Unicode aware, the case-insensitive match only folds ASCII letters, i.e. it does not depend on the default locale.
+     * Matches the literal token "@all" if it is neither preceded by a letter, digit, underscore, "@", "/" or "=" (so not in an email address, a URL path or a URL query value)
+     * nor followed by a letter, digit or underscore (so not "@alle"). The character classes are Unicode aware, the case-insensitive match only folds ASCII letters, i.e. it does
+     * not depend on the default locale.
      */
-    private static final Pattern AT_ALL_MENTION_PATTERN = Pattern.compile("(?<![\\p{L}\\p{N}_@/])@all(?![\\p{L}\\p{N}_])", Pattern.CASE_INSENSITIVE);
+    private static final Pattern AT_ALL_MENTION_PATTERN = Pattern.compile("(?<![\\p{L}\\p{N}_@/=])@all(?![\\p{L}\\p{N}_])", Pattern.CASE_INSENSITIVE);
 
     /** Indentation of at most this many spaces still starts a fenced code block or a blockquote line in markdown. */
     private static final int MAX_MARKDOWN_BLOCK_INDENT = 3;
+
+    /** A tab advances to the next multiple of this many columns, so a line indented by a tab is indented by at least four columns. */
+    private static final int TAB_WIDTH = 4;
 
     /** A fenced code block opens with at least this many backticks or tildes. */
     private static final int MIN_FENCE_LENGTH = 3;
@@ -397,11 +401,15 @@ public abstract class PostingService {
     }
 
     /**
-     * Removes blockquote lines, fenced code blocks (including an unterminated one that runs to the end, as in markdown) and inline code spans from the content. The content is
-     * user provided, so this is a single linear pass without backtracking regular expressions.
+     * Removes blockquote lines, fenced code blocks (including an unterminated one that runs to the end, as in markdown), indented code blocks and inline code spans from the
+     * content. The content is user provided, so this is a single linear pass without backtracking regular expressions.
+     * <p>
+     * Consecutive lines of a paragraph are collected and processed together, because an inline code span may continue over line endings within a paragraph. A blank line, a
+     * fence and a blockquote line end the paragraph. A line indented by four or more columns that does not continue a paragraph belongs to an indented code block.
      */
     private static String withoutQuotesAndCode(String content) {
         StringBuilder result = new StringBuilder(content.length());
+        StringBuilder paragraph = new StringBuilder();
         char openFence = 0;
         int openFenceLength = 0;
         int lineStart = 0;
@@ -414,27 +422,49 @@ public abstract class PostingService {
             lineStart = lineEnd + 1;
 
             int indent = 0;
-            while (indent < line.length() && line.charAt(indent) == ' ') {
+            int column = 0;
+            while (indent < line.length() && (line.charAt(indent) == ' ' || line.charAt(indent) == '\t')) {
+                column = line.charAt(indent) == '\t' ? (column / TAB_WIDTH + 1) * TAB_WIDTH : column + 1;
                 indent++;
             }
             char first = indent < line.length() ? line.charAt(indent) : 0;
-            boolean mayStartBlock = indent <= MAX_MARKDOWN_BLOCK_INDENT;
+            boolean mayStartBlock = column <= MAX_MARKDOWN_BLOCK_INDENT;
 
             if (openFenceLength > 0) {
                 if (mayStartBlock && first == openFence && isClosingFence(line, indent, openFenceLength)) {
                     openFenceLength = 0;
                 }
             }
+            else if (line.isBlank()) {
+                appendWithoutInlineCode(result, paragraph);
+            }
             else if (mayStartBlock && (first == '`' || first == '~') && opensFence(line, indent)) {
+                appendWithoutInlineCode(result, paragraph);
                 openFence = first;
                 openFenceLength = lengthOfRun(line, indent);
             }
-            else if (!(mayStartBlock && first == '>')) {
-                result.append(withoutInlineCode(line));
+            else if (mayStartBlock && first == '>') {
+                appendWithoutInlineCode(result, paragraph);
             }
-            result.append('\n');
+            else if (mayStartBlock || !paragraph.isEmpty()) {
+                // an indented line directly after a paragraph line continues the paragraph
+                if (!paragraph.isEmpty()) {
+                    paragraph.append('\n');
+                }
+                paragraph.append(line);
+            }
+            // else: the line belongs to an indented code block
         }
+        appendWithoutInlineCode(result, paragraph);
         return result.toString();
+    }
+
+    /** Appends the collected paragraph without its inline code spans, followed by a line break, and empties the paragraph. Does nothing for an empty paragraph. */
+    private static void appendWithoutInlineCode(StringBuilder result, StringBuilder paragraph) {
+        if (!paragraph.isEmpty()) {
+            result.append(withoutInlineCode(paragraph.toString())).append('\n');
+            paragraph.setLength(0);
+        }
     }
 
     private static int lengthOfRun(String line, int start) {
@@ -458,17 +488,17 @@ public abstract class PostingService {
     }
 
     /**
-     * Removes inline code spans of one line. A span starts with a run of backticks and ends with the next run of exactly the same length, an unmatched run is plain text.
-     * The next run of the same length is determined once per run, so the effort is linear in the length of the line.
+     * Removes inline code spans of a paragraph, which may consist of several lines. A span starts with a run of backticks and ends with the next run of exactly the same length,
+     * an unmatched run is plain text. The next run of the same length is determined once per run, so the effort is linear in the length of the paragraph.
      */
-    private static String withoutInlineCode(String line) {
-        if (line.indexOf('`') < 0) {
-            return line;
+    private static String withoutInlineCode(String text) {
+        if (text.indexOf('`') < 0) {
+            return text;
         }
         List<int[]> runs = new ArrayList<>();
-        for (int i = 0; i < line.length();) {
-            if (line.charAt(i) == '`') {
-                int length = lengthOfRun(line, i);
+        for (int i = 0; i < text.length();) {
+            if (text.charAt(i) == '`') {
+                int length = lengthOfRun(text, i);
                 runs.add(new int[] { i, length });
                 i += length;
             }
@@ -483,7 +513,7 @@ public abstract class PostingService {
             lastSeenByLength.put(runs.get(run)[1], run);
         }
 
-        StringBuilder result = new StringBuilder(line.length());
+        StringBuilder result = new StringBuilder(text.length());
         int copiedUntil = 0;
         int run = 0;
         while (run < runs.size()) {
@@ -492,11 +522,11 @@ public abstract class PostingService {
                 run++;
                 continue;
             }
-            result.append(line, copiedUntil, runs.get(run)[0]).append(' ');
+            result.append(text, copiedUntil, runs.get(run)[0]).append(' ');
             copiedUntil = runs.get(closingRun)[0] + runs.get(closingRun)[1];
             run = closingRun + 1;
         }
-        return result.append(line, copiedUntil, line.length()).toString();
+        return result.append(text, copiedUntil, text.length()).toString();
     }
 
     /**
