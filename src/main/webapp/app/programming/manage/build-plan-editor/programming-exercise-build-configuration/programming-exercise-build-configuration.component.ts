@@ -10,14 +10,9 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { parseJson } from 'app/foundation/util/json.util';
 import { DOCKER_FLAGS_MAX_LENGTH } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { MIN_DOCKER_CPU_COUNT, MIN_DOCKER_MEMORY_MB, MIN_DOCKER_MEMORY_SWAP_MB } from 'app/programming/shared/entities/build-plan-phases.model';
 
 const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.EMPTY];
-
-// the bounds the server applies in ProgrammingExerciseValidationService#validateDockerFlags, mirrored here so an invalid
-// value is caught inline instead of only by the save request
-const MIN_DOCKER_CPU_COUNT = 1;
-const MIN_DOCKER_MEMORY_MB = 6;
-const MIN_DOCKER_MEMORY_SWAP_MB = 0;
 
 interface DockerFlags {
     network?: string;
@@ -40,10 +35,6 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     private profileService = inject(ProfileService);
 
     programmingExercise = input<ProgrammingExercise>();
-    dockerImage = input.required<string>();
-    // the language default image, shown as a placeholder while the field is empty instead of being written into it
-    dockerImagePlaceholder = input<string>('');
-    dockerImageChange = output<string>();
 
     timeout = input<number>();
     timeoutChange = output<number>();

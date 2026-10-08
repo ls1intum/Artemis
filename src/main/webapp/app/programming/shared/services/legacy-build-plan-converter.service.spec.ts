@@ -38,11 +38,11 @@ describe('LegacyBuildPlanConverterService', () => {
         expect(buildPlanPhases).toBeDefined();
         expect(buildPlanPhases?.dockerImage).toBe('legacy/image:2.0');
         expect(buildPlanPhases?.phases).toHaveLength(1);
-        expect(buildPlanPhases?.phases[0].name).toBe('script');
-        expect(buildPlanPhases?.phases[0].resultPaths).toEqual(['build/test-results/test/*.xml', 'coverage.xml']);
-        expect(buildPlanPhases?.phases[0].script).toContain('cd /var/tmp/testing-dir\n');
-        expect(buildPlanPhases?.phases[0].script).toContain('cat << \'  __LEGACY_INNER_SCRIPT_END__\' > "${tmp_file}"');
-        expect(buildPlanPhases?.phases[0].script).toContain('./gradlew test\n');
+        expect(buildPlanPhases?.phases?.[0].name).toBe('script');
+        expect(buildPlanPhases?.phases?.[0].resultPaths).toEqual(['build/test-results/test/*.xml', 'coverage.xml']);
+        expect(buildPlanPhases?.phases?.[0].script).toContain('cd /var/tmp/testing-dir\n');
+        expect(buildPlanPhases?.phases?.[0].script).toContain('cat << \'  __LEGACY_INNER_SCRIPT_END__\' > "${tmp_file}"');
+        expect(buildPlanPhases?.phases?.[0].script).toContain('./gradlew test\n');
     });
 
     it('should convert build script with invalid json', () => {
@@ -51,8 +51,8 @@ describe('LegacyBuildPlanConverterService', () => {
         expect(buildPlanPhases).toBeDefined();
         expect(buildPlanPhases?.dockerImage).toBeUndefined();
         expect(buildPlanPhases?.phases).toHaveLength(1);
-        expect(buildPlanPhases?.phases[0].resultPaths).toEqual([]);
-        expect(buildPlanPhases?.phases[0].script).toContain('./gradlew test\n');
+        expect(buildPlanPhases?.phases?.[0].resultPaths).toEqual([]);
+        expect(buildPlanPhases?.phases?.[0].script).toContain('./gradlew test\n');
     });
 
     it('should return undefined for invalid json without build script', () => {
@@ -69,8 +69,8 @@ describe('LegacyBuildPlanConverterService', () => {
 
         expect(buildPlanPhases).toBeDefined();
         expect(buildPlanPhases?.dockerImage).toBeUndefined();
-        expect(buildPlanPhases?.phases[0].resultPaths).toEqual([]);
-        expect(buildPlanPhases?.phases[0].script).toContain('./gradlew test\n');
+        expect(buildPlanPhases?.phases?.[0].resultPaths).toEqual([]);
+        expect(buildPlanPhases?.phases?.[0].script).toContain('./gradlew test\n');
     });
 
     it('should convert build script when parsed configuration is not an object', () => {
@@ -78,7 +78,7 @@ describe('LegacyBuildPlanConverterService', () => {
 
         expect(buildPlanPhases).toBeDefined();
         expect(buildPlanPhases?.dockerImage).toBeUndefined();
-        expect(buildPlanPhases?.phases[0].resultPaths).toEqual([]);
+        expect(buildPlanPhases?.phases?.[0].resultPaths).toEqual([]);
     });
 
     it('should convert without docker image', () => {
@@ -120,7 +120,7 @@ describe('LegacyBuildPlanConverterService', () => {
         );
 
         expect(buildPlanPhases).toBeDefined();
-        expect(buildPlanPhases?.phases[0].resultPaths).toEqual(['']);
+        expect(buildPlanPhases?.phases?.[0].resultPaths).toEqual(['']);
     });
 
     it('should convert build script without actions', () => {
@@ -132,7 +132,7 @@ describe('LegacyBuildPlanConverterService', () => {
         );
 
         expect(buildPlanPhases).toBeDefined();
-        expect(buildPlanPhases?.phases[0].resultPaths).toEqual([]);
+        expect(buildPlanPhases?.phases?.[0].resultPaths).toEqual([]);
     });
 
     it('should convert build script with non-array actions', () => {
@@ -145,7 +145,7 @@ describe('LegacyBuildPlanConverterService', () => {
         );
 
         expect(buildPlanPhases).toBeDefined();
-        expect(buildPlanPhases?.phases[0].resultPaths).toEqual([]);
+        expect(buildPlanPhases?.phases?.[0].resultPaths).toEqual([]);
     });
 
     it('should ignore malformed action results', () => {
@@ -162,7 +162,7 @@ describe('LegacyBuildPlanConverterService', () => {
         );
 
         expect(buildPlanPhases).toBeDefined();
-        expect(buildPlanPhases?.phases[0].resultPaths).toEqual([]);
+        expect(buildPlanPhases?.phases?.[0].resultPaths).toEqual([]);
     });
 
     it('should ignore non-textual result path', () => {
@@ -179,7 +179,7 @@ describe('LegacyBuildPlanConverterService', () => {
         );
 
         expect(buildPlanPhases).toBeDefined();
-        expect(buildPlanPhases?.phases[0].resultPaths).toEqual([]);
+        expect(buildPlanPhases?.phases?.[0].resultPaths).toEqual([]);
     });
 
     it('should convert legacy actions when build script is missing', () => {
@@ -210,8 +210,8 @@ describe('LegacyBuildPlanConverterService', () => {
         expect(buildPlanPhases).toBeDefined();
         expect(buildPlanPhases?.dockerImage).toBe('legacy/image:2.0');
         expect(buildPlanPhases?.phases).toHaveLength(1);
-        expect(buildPlanPhases?.phases[0].resultPaths).toEqual(['build/test-results/compile/*.xml', 'build/test-results/test/*.xml']);
-        expect(buildPlanPhases?.phases[0].script).toBe(`# feel free to remove the code surrounding your script and split your script into multiple phases
+        expect(buildPlanPhases?.phases?.[0].resultPaths).toEqual(['build/test-results/compile/*.xml', 'build/test-results/test/*.xml']);
+        expect(buildPlanPhases?.phases?.[0].script).toBe(`# feel free to remove the code surrounding your script and split your script into multiple phases
 cd /var/tmp/testing-dir
 local tmp_file=$(mktemp)
 cat << '  __LEGACY_INNER_SCRIPT_END__' > "\${tmp_file}"  # two leading spaces are intentional as the final script will be indented be for a phase

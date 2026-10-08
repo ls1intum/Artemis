@@ -62,6 +62,8 @@ public class DistributedDataAccessService {
 
     private DistributedMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
+    private DistributedMap<String, Boolean> resultAggregationLocks;
+
     private DistributedTopic<String> canceledBuildJobsTopic;
 
     private DistributedTopic<String> pauseBuildAgentTopic;
@@ -419,6 +421,19 @@ public class DistributedDataAccessService {
             this.dockerImageCleanupInfo = this.distributedDataProvider.getMap("dockerImageCleanupInfo");
         }
         return this.dockerImageCleanupInfo;
+    }
+
+    /**
+     * Returns the distributed map whose per-key locks serialize the result aggregation of a build group across nodes; its
+     * values are never used.
+     *
+     * @return the distributed map backing the result-aggregation locks
+     */
+    public DistributedMap<String, Boolean> getResultAggregationLockMap() {
+        if (this.resultAggregationLocks == null) {
+            this.resultAggregationLocks = this.distributedDataProvider.getMap("resultAggregationLocks");
+        }
+        return this.resultAggregationLocks;
     }
 
     /**

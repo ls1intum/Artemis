@@ -8,6 +8,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * Repositories cloned by the build agent and ready to be copied into an isolated build environment.
  * Git credentials never need to be exposed to the build workload.
+ * The test repository is null for a build container that does not list it.
  */
-public record PreparedBuildJob(Path assignmentRepository, Path testRepository, @Nullable Path solutionRepository, List<Path> auxiliaryRepositories) {
+public record PreparedBuildJob(Path assignmentRepository, @Nullable Path testRepository, @Nullable Path solutionRepository, List<Path> auxiliaryRepositories) {
 }

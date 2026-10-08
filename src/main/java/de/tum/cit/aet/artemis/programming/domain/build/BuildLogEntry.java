@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -32,6 +33,11 @@ public class BuildLogEntry extends DomainObject {
 
     @Column(name = "log")
     private String log;
+
+    // The build container that produced this line, null for a single-container build. Not persisted: only the files of
+    // FailedBuildLogService carry it, since nothing writes this table any more.
+    @Transient
+    private String containerName;
 
     @ManyToOne
     @JsonIgnore
@@ -68,6 +74,14 @@ public class BuildLogEntry extends DomainObject {
 
     public void setLog(String log) {
         this.log = log;
+    }
+
+    public String getContainerName() {
+        return containerName;
+    }
+
+    public void setContainerName(String containerName) {
+        this.containerName = containerName;
     }
 
     public ProgrammingSubmission getProgrammingSubmission() {
