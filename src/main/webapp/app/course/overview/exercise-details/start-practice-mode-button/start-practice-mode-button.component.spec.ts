@@ -210,10 +210,11 @@ describe('JhiStartPracticeModeButtonComponent', () => {
             const practicePart = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation;
             const started: StudentParticipation[] = [];
             comp.practiceModeStarted.subscribe((participation) => started.push(participation));
-            await renderPopover(true);
+            const popover = await renderPopover(true);
             startPracticeStub.mockReturnValue(of(practicePart));
 
-            comp.startPractice(false);
+            // click the only button of the rendered popover instead of calling the component method, so the click wiring of the template is covered
+            popover.querySelector<HTMLButtonElement>('button[jhi-exercise-action-button]')!.click();
 
             expect(startPracticeStub).toHaveBeenCalledExactlyOnceWith(45, false, comp.exercise());
             expect(started).toEqual([practicePart]);
