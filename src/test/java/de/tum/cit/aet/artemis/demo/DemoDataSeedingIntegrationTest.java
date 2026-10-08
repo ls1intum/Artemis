@@ -62,8 +62,7 @@ import de.tum.cit.aet.artemis.text.api.TextDemoApi;
  * <p>
  * Seeding deliberately uses fixed identifiers, so these tests write a course named {@code demo} and the demo users into the shared test database instead of prefixed test data.
  * That is safe precisely because seeding is idempotent, which is also why every test can seed first and still be correct regardless of which demo test ran before it. The methods
- * must not run
- * in parallel though, hence {@link ExecutionMode#SAME_THREAD}.
+ * must not run in parallel though, hence {@link ExecutionMode#SAME_THREAD}.
  */
 @Execution(ExecutionMode.SAME_THREAD)
 class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependentTest {
