@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ChangeDetectorRef, Signal } from '@angular/core';
+import { ChangeDetectorRef, Signal, signal } from '@angular/core';
 import { MockDirective } from 'ng-mocks';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { Subject, of } from 'rxjs';
@@ -189,13 +189,14 @@ describe('ProgrammingExerciseGradingComponent', () => {
     });
 
     it('should update form section calculation', () => {
-        const submissionPolicyUpdateComponent = { form: { valueChanges: new Subject() } } as unknown as SubmissionPolicyUpdateComponent;
+        const policyFormChanges = new Subject<boolean>();
+        const submissionPolicyUpdateComponent = { policyForm: signal({ valueChanges: policyFormChanges }) } as unknown as SubmissionPolicyUpdateComponent;
         vi.spyOn(internals(comp), 'submissionPolicyUpdateComponent').mockReturnValue(submissionPolicyUpdateComponent);
 
         fixture.detectChanges();
         const calculateFormStatusSpy = vi.spyOn(comp, 'calculateFormStatus');
 
-        (submissionPolicyUpdateComponent.form.valueChanges as Subject<boolean>).next(false);
+        policyFormChanges.next(false);
 
         expect(calculateFormStatusSpy).toHaveBeenCalledOnce();
 
@@ -203,6 +204,21 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
         expect(calculateFormStatusSpy).toHaveBeenCalledTimes(2);
         expect(comp.timelineStatus()).toEqual({ valid: false, empty: true, invalidItems: [] });
+    });
+
+    it('should follow the form of the submission policy component that is only built after the component itself exists', () => {
+        const policyForm = signal<{ valueChanges: Subject<boolean> } | undefined>(undefined);
+        const submissionPolicyUpdateComponent = { policyForm } as unknown as SubmissionPolicyUpdateComponent;
+        vi.spyOn(internals(comp), 'submissionPolicyUpdateComponent').mockReturnValue(submissionPolicyUpdateComponent);
+        fixture.detectChanges();
+        const calculateFormStatusSpy = vi.spyOn(comp, 'calculateFormStatus');
+        const policyFormChanges = new Subject<boolean>();
+
+        policyForm.set({ valueChanges: policyFormChanges });
+        fixture.detectChanges();
+        policyFormChanges.next(false);
+
+        expect(calculateFormStatusSpy).toHaveBeenCalled();
     });
 
     describe('fields that appear after the first render', () => {

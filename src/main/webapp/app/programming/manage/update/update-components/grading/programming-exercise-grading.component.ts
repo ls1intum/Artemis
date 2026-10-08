@@ -82,7 +82,7 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit {
         effect((onCleanup) => this.recalculateOnChangeOf(this.maxScoreField()?.valueChanges, onCleanup));
         effect((onCleanup) => this.recalculateOnChangeOf(this.bonusPointsField()?.valueChanges, onCleanup));
         effect((onCleanup) => this.recalculateOnChangeOf(this.maxPenaltyField()?.valueChanges, onCleanup));
-        effect((onCleanup) => this.recalculateOnChangeOf(this.submissionPolicyUpdateComponent()?.form?.valueChanges, onCleanup));
+        effect((onCleanup) => this.recalculateOnChangeOf(this.submissionPolicyUpdateComponent()?.policyForm()?.valueChanges, onCleanup));
 
         // A field that appears or disappears changes what counts for the validity as well, for example an invalid max penalty stops
         // counting when static code analysis is switched off. Nothing is emitted for that, so the status is recalculated here.
