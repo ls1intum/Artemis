@@ -1,9 +1,12 @@
 package de.tum.cit.aet.artemis.admin.dataexport;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
@@ -22,6 +25,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -36,6 +41,7 @@ import de.tum.cit.aet.artemis.admin.dto.DataExportAdminDTO;
 import de.tum.cit.aet.artemis.admin.dto.DataExportDTO;
 import de.tum.cit.aet.artemis.admin.dto.RequestDataExportDTO;
 import de.tum.cit.aet.artemis.admin.service.export.DataExportService;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.test_repository.DataExportTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
@@ -146,6 +152,21 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         var dataExport = initDataExportWithMissingFile();
 
         request.get("/api/core/data-exports/" + dataExport.getId(), HttpStatus.NOT_FOUND, Resource.class);
+
+        assertExportNotMarkedAsDownloaded(dataExport);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDataExportDownload_fileCannotBeOpened_exportUntouched() throws Exception {
+        var dataExport = prepareDataExportForDownload();
+        var filePath = Path.of(dataExport.getFilePath());
+
+        // The file passes the readability check but is gone when it is opened, which is possible between the two calls.
+        try (MockedStatic<Files> files = mockStatic(Files.class, Mockito.CALLS_REAL_METHODS)) {
+            files.when(() -> Files.newInputStream(eq(filePath))).thenThrow(new IOException("file vanished"));
+            assertThatThrownBy(() -> dataExportService.downloadDataExport(dataExport)).isInstanceOf(InternalServerErrorException.class);
+        }
 
         assertExportNotMarkedAsDownloaded(dataExport);
     }

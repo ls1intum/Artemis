@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.admin.service.export;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneId;
@@ -107,15 +108,33 @@ public class DataExportService {
                     dataExport.getId(), filePath);
             throw new EntityNotFoundException("Data export file", dataExport.getId());
         }
-        dataExport.setDownloadDate(ZonedDateTime.now());
-        dataExport.setDataExportState(DataExportState.DOWNLOADED);
-        dataExportRepository.save(dataExport);
+        // Open the file before recording the download: the check above does not guarantee that the file can still be opened.
+        InputStream inputStream;
         try {
-            return new InputStreamResource(Files.newInputStream(filePath));
+            inputStream = Files.newInputStream(filePath);
         }
         catch (IOException e) {
-            log.error("Could not find data export file", e);
+            log.error("Could not open data export file", e);
             throw new InternalServerErrorException("Could not find data export file");
+        }
+        try {
+            dataExport.setDownloadDate(ZonedDateTime.now());
+            dataExport.setDataExportState(DataExportState.DOWNLOADED);
+            dataExportRepository.save(dataExport);
+        }
+        catch (RuntimeException e) {
+            closeQuietly(inputStream, e);
+            throw e;
+        }
+        return new InputStreamResource(inputStream);
+    }
+
+    private static void closeQuietly(InputStream inputStream, RuntimeException cause) {
+        try {
+            inputStream.close();
+        }
+        catch (IOException closeException) {
+            cause.addSuppressed(closeException);
         }
     }
 
