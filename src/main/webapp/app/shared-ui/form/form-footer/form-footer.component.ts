@@ -42,6 +42,12 @@ export class FormFooterComponent {
     isSaving = input(false);
     isDisabled = input(false);
     invalidReasons = input<ValidationReason[]>([]);
+    /**
+     * Reads the reasons from the current state of the form. The displayed {@link invalidReasons} come from the last change
+     * detection pass and can lag behind a form that mutates through template-driven fields (for instance while a date
+     * picker still processes a blur and a selection), so a click that they block is checked against the form again.
+     */
+    revalidate = input<(() => ValidationReason[]) | undefined>();
     notificationText = input<string | undefined>();
     switchEditMode = input<(() => void) | undefined>();
     isImport = input<boolean>();
@@ -72,8 +78,24 @@ export class FormFooterComponent {
     // The submit buttons are aria-disabled rather than disabled, so they stay focusable and can explain
     // themselves. That leaves them clickable, hence the guards.
     onSave() {
-        if (!this.isSubmitDisabled()) {
+        if (!this.isBlocked()) {
             this.save.emit();
         }
+    }
+
+    /**
+     * Whether a click on a submit button is held back. Reasons that block it are confirmed against the form first, so that a
+     * valid form can always be submitted. Everything else that blocks it (a running save, a disabled footer) is not
+     * something a fresh read of the form could change.
+     */
+    private isBlocked(): boolean {
+        if (this.isDisabled() || this.isSaving()) {
+            return true;
+        }
+        if (!this.invalidReasons().length) {
+            return false;
+        }
+        const freshReasons = this.revalidate()?.();
+        return freshReasons === undefined || freshReasons.length > 0;
     }
 }
