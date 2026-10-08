@@ -122,9 +122,9 @@ failure", yet the log's `E2E counts:` line shows `0 failed`.
 
 **Tell.** `gh run view <run-id> --json jobs` shows the failing step is not the test step but
 `E2E Teardown`, and the log has `rm: cannot remove '...': Permission denied`. The Playwright
-container runs as root and owns `src/test/playwright/test-reports/`, so the runner user cannot
-delete files in it. Only the multi-node stack leaves files for the teardown to delete, because it
-runs two Playwright projects and merges their reports.
+container runs as root and creates the suite's `test-reports` folder during the run, so the runner
+user cannot delete files in it. Only the multi-node stack leaves files for the teardown to delete,
+because it runs two Playwright projects and merges their reports.
 
 **What to do.** Fix the file that is left behind, in `run-tests.sh`, not the teardown. Do not add
 `|| true` to the teardown: it would hide the next real teardown failure.
