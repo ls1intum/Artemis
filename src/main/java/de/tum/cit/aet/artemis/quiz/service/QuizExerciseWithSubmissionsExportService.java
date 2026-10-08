@@ -74,12 +74,14 @@ public class QuizExerciseWithSubmissionsExportService {
         List<Path> imagesToExport = new ArrayList<>();
         for (var quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
-                if (dragAndDropQuestion.getBackgroundFilePath() != null) {
-                    imagesToExport.add(new FileSystemLocation.DragAndDropBackground(dragAndDropQuestion.getBackgroundFilePath()).path());
+                String backgroundFilePath = dragAndDropQuestion.getBackgroundFilePath();
+                if (backgroundFilePath != null) {
+                    imagesToExport.add(new FileSystemLocation.DragAndDropBackground(backgroundFilePath).path());
                 }
                 for (var dragItem : dragAndDropQuestion.getDragItems()) {
-                    if (dragItem.getPictureFilePath() != null) {
-                        imagesToExport.add(new FileSystemLocation.DragItem(dragItem.getPictureFilePath()).path());
+                    String pictureFilePath = dragItem.getPictureFilePath();
+                    if (pictureFilePath != null) {
+                        imagesToExport.add(new FileSystemLocation.DragItem(pictureFilePath).path());
 
                     }
                 }

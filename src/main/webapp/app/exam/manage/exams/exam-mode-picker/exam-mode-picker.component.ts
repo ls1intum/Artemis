@@ -1,13 +1,12 @@
 import { Component, input, output } from '@angular/core';
+import { TumAetUiButtonDirective, TumAetUiButtonGroupComponent } from '@tumaet/ui-angular';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-mode-picker',
     templateUrl: './exam-mode-picker.component.html',
-    styleUrls: ['./exam-mode-picker.component.scss'],
-    imports: [NgClass, TranslateDirective],
+    imports: [TranslateDirective, TumAetUiButtonDirective, TumAetUiButtonGroupComponent],
 })
 export class ExamModePickerComponent {
     exam = input.required<Exam>();

@@ -1,6 +1,6 @@
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { TextEditorDomainActionWithOptions } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
 import { ValueItem } from 'app/editor/markdown-editor/value-item.model';
@@ -22,10 +22,10 @@ export class ExerciseReferenceAction extends TextEditorDomainActionWithOptions {
     private titleLoad?: Promise<ValueItem[]>;
 
     constructor(
-        private readonly metisService: MetisService,
+        private readonly communicationService: CommunicationService,
         private readonly exerciseService: ExerciseService,
     ) {
-        super(ExerciseReferenceAction.ID, 'artemisApp.metis.editor.exercise');
+        super(ExerciseReferenceAction.ID, 'artemisApp.communication.editor.exercise');
     }
 
     /**
@@ -39,7 +39,7 @@ export class ExerciseReferenceAction extends TextEditorDomainActionWithOptions {
      * the next invocation retries instead of leaving the editor permanently empty.
      */
     private loadTitles(): Promise<ValueItem[]> {
-        this.titleLoad ??= firstValueFrom(this.exerciseService.getTitlesForCourse(this.metisService.getCourse().id!))
+        this.titleLoad ??= firstValueFrom(this.exerciseService.getTitlesForCourse(this.communicationService.getCourse().id!))
             .then((exercises) => {
                 const values = exercises
                     .filter((exercise) => !!exercise.title)
@@ -72,7 +72,7 @@ export class ExerciseReferenceAction extends TextEditorDomainActionWithOptions {
                 new TextEditorCompletionItem(
                     `/exercise ${item.value}`,
                     item.type,
-                    `[${item.type}]${item.value}(${this.metisService.getLinkForExercise(item.id)})[/${item.type}]`,
+                    `[${item.type}]${item.value}(${this.communicationService.getLinkForExercise(item.id)})[/${item.type}]`,
                     TextEditorCompletionItemKind.Default,
                     range,
                 ),

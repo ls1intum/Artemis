@@ -15,6 +15,20 @@ export interface AddedToChannelPayload {
     channelId?: number;
 }
 
+/** The values a atlasCompetencyUpdateNotification carries. */
+export interface AtlasCompetencyUpdatePayload {
+    outcome?: string;
+    exerciseCount?: number;
+    appliedCount?: number;
+    createdCount?: number;
+    editedCount?: number;
+    deletedCount?: number;
+    assignedCount?: number;
+    unassignedCount?: number;
+    changesMarkdown?: string;
+    omittedCount?: number;
+}
+
 /** The values a attachmentChangedNotification carries. */
 export interface AttachmentChangedPayload {
     attachmentName?: string;
@@ -83,6 +97,13 @@ export interface IrisResponseNeedsReviewPayload {
     replyConfidence?: number;
     channelName?: string;
     channelId?: number;
+}
+
+/** The values a irisResponseNotification carries. */
+export interface IrisResponsePayload {
+    sessionId?: number;
+    messagePreview?: string;
+    chatTitle?: string;
 }
 
 /** The values a newAnnouncementNotification carries. */
@@ -247,6 +268,7 @@ export interface TutorialGroupUnassignedPayload {
 /** Maps a notification type to the payload it carries. */
 export interface CourseNotificationPayloadByType {
     addedToChannelNotification: AddedToChannelPayload;
+    atlasCompetencyUpdateNotification: AtlasCompetencyUpdatePayload;
     attachmentChangedNotification: AttachmentChangedPayload;
     channelDeletedNotification: ChannelDeletedPayload;
     deregisteredFromTutorialGroupNotification: DeregisteredFromTutorialGroupPayload;
@@ -255,6 +277,7 @@ export interface CourseNotificationPayloadByType {
     exerciseOpenForPracticeNotification: ExerciseOpenForPracticePayload;
     exerciseUpdatedNotification: ExerciseUpdatedPayload;
     irisResponseNeedsReviewNotification: IrisResponseNeedsReviewPayload;
+    irisResponseNotification: IrisResponsePayload;
     newAnnouncementNotification: NewAnnouncementPayload;
     newAnswerNotification: NewAnswerPayload;
     newCpcPlagiarismCaseNotification: NewCpcPlagiarismCasePayload;

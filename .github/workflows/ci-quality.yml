@@ -40,11 +40,11 @@ jobs:
       contents: read
       checks: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: 'temurin'
           java-version: '${{ env.java }}'
@@ -64,6 +64,11 @@ jobs:
       - name: Dependency Families
         run: ./gradlew verifyDependencyFamilies -x webapp
         if: ${{ !cancelled() }}
+      # Libraries with a known vulnerability must stay at their patched version on the build-script (plugin) classpath,
+      # which GitHub's dependency graph reports separately from the shipped WAR. Same reason for running it explicitly.
+      - name: Build-Script Classpath Pins
+        run: ./gradlew verifyBuildscriptClasspathPins -x webapp
+        if: ${{ !cancelled() }}
       - name: Java Architecture Tests
         run: ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
         if: ${{ !cancelled() }}
@@ -82,7 +87,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Setup pnpm
@@ -90,7 +95,7 @@ jobs:
         with:
           run_install: false
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: '${{ env.node }}'
           cache: 'pnpm'
@@ -126,7 +131,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Setup pnpm
@@ -134,7 +139,7 @@ jobs:
         with:
           run_install: false
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: '${{ env.node }}'
           cache: 'pnpm'
@@ -176,7 +181,7 @@ jobs:
       - name: Test TUM AET UI With Latest Compatible Peer Versions
         run: pnpm run tum-aet-ui:test:consumer latest
         if: ${{ !cancelled() && inputs.has_tum_aet_ui && steps.tum-aet-ui-package.outcome == 'success' }}
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure() && inputs.has_tum_aet_ui
         with:
           name: tum-aet-ui-consumer
@@ -196,11 +201,11 @@ jobs:
         # No `ref: commit_sha` (unlike the style jobs): analyze_java_files.py diffs against the
         # base via `git diff origin/<base>...HEAD`, so this job keeps the default checkout +
         # full history rather than a detached PR-head checkout.
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           fetch-depth: 0
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: '3.14'
       - name: Check LOC and number of class dependencies
@@ -237,13 +242,13 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           # find_slow_queries.py is a pure source scan (no git diff), so pin the PR head to
           # match the style jobs and exercise exactly the tree Build/Test do.
           ref: ${{ inputs.commit_sha }}
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: '3.14'
       - name: Query quality check

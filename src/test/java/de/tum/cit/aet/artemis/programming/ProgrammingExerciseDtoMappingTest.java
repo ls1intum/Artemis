@@ -504,6 +504,7 @@ class ProgrammingExerciseDtoMappingTest {
         teamAssignmentConfig.setId(1L);
         teamAssignmentConfig.setMinTeamSize(2);
         teamAssignmentConfig.setMaxTeamSize(4);
+        exercise.setMode(ExerciseMode.TEAM);
         exercise.setTeamAssignmentConfig(teamAssignmentConfig);
 
         PlagiarismDetectionConfig plagiarismDetectionConfig = PlagiarismDetectionConfig.createDefault();

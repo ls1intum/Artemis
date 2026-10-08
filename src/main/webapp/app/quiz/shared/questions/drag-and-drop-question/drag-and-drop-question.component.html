@@ -112,6 +112,7 @@
                             @for (dropLocation of dragAndDropQuestion().dropLocations; track dropLocation) {
                                 <div
                                     id="drop-location"
+                                    data-testid="drop-location"
                                     class="drop-location"
                                     [ngClass]="dropAllowed() ? 'drop-allowed' : ''"
                                     [style]="{
@@ -180,11 +181,7 @@
                                                 <span jhiTranslate="artemisApp.quizQuestion.invalid"></span>
                                             }
                                             @if (dropLocation.invalid || dragAndDropQuestion().invalid || invalidDragItemForDropLocation(dropLocation)) {
-                                                <fa-icon
-                                                    ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
-                                                    style="color: black"
-                                                    [icon]="faQuestionCircle"
-                                                />
+                                                <fa-icon ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct." [icon]="faQuestionCircle" />
                                             }
                                         </div>
                                         @if (dragItemForDropLocation(dropLocation)) {
@@ -245,11 +242,7 @@
                                                 <span jhiTranslate="artemisApp.quizQuestion.invalid"></span>
                                             }
                                             @if (dropLocation.invalid || dragAndDropQuestion().invalid) {
-                                                <fa-icon
-                                                    ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
-                                                    style="color: black"
-                                                    [icon]="faQuestionCircle"
-                                                />
+                                                <fa-icon ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct." [icon]="faQuestionCircle" />
                                             }
                                         </div>
                                         @if (dropLocation && correctDragItemForDropLocation(dropLocation) && !dropLocation.invalid && !dragAndDropQuestion().invalid) {

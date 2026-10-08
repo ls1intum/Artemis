@@ -61,14 +61,14 @@ class PdfDropZoneStubComponent {
             [showDropZone]="false"
             [editingUnitId]="editingUnitId()"
             [editorTemplate]="editor"
-            (onSaveEditingClicked)="saved.push($event)"
+            (onDoneEditingClicked)="done.push($event)"
         />
     `,
     imports: [LectureUnitManagementComponent],
 })
 class EditingHostComponent {
     readonly editingUnitId = signal<number | undefined>(undefined);
-    readonly saved: LectureUnit[] = [];
+    readonly done: LectureUnit[] = [];
 }
 
 describe('LectureUnitManagementComponent', () => {
@@ -223,6 +223,25 @@ describe('LectureUnitManagementComponent', () => {
         };
 
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(mockUnit as unknown as LectureUnit)).toBe('');
+    });
+
+    it('should offer orchestration only for supported lecture units with extractable content', () => {
+        attachmentVideoUnit.description = 'Attachment description';
+        textUnit.content = 'Recursion calls itself until a base case is reached.';
+
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(textUnit)).toBe(true);
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(new OnlineUnit())).toBe(true);
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(attachmentVideoUnit)).toBe(true);
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(exerciseUnit)).toBe(false);
+
+        attachmentVideoUnit.description = '   ';
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(attachmentVideoUnit)).toBe(false);
+    });
+
+    it.each([undefined, '', '   ', '\n\t'])('should not offer orchestration for a text unit with blank content %j', (content) => {
+        textUnit.content = content;
+
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(textUnit)).toBe(false);
     });
 
     it('should give the correct confirmation text translation key', () => {
@@ -826,7 +845,7 @@ describe('LectureUnitManagementComponent', () => {
 
             expect(rows.filter((row) => row.attributes['data-editing'] === 'true')).toHaveLength(1);
             expect(editingRow.query(By.css('[data-testid="lecture-unit-editing-tag"]'))).not.toBeNull();
-            expect(editingRow.query(By.css('[data-testid="lecture-unit-save"]'))).not.toBeNull();
+            expect(editingRow.query(By.css('[data-testid="lecture-unit-done"]'))).not.toBeNull();
             expect(editingRow.query(By.css('[data-testid="lecture-unit-edit"]'))).toBeNull();
             expect(editingRow.query(By.css('[data-testid="lecture-unit-editor"]')).nativeElement.textContent).toContain(`Editing ${textUnit.id}`);
             expect(rows.filter((row) => row !== editingRow).every((row) => row.classes['opacity-60'])).toBe(true);
@@ -834,10 +853,10 @@ describe('LectureUnitManagementComponent', () => {
             expect(hostFixture.debugElement.query(By.directive(CdkDropList)).injector.get(CdkDropList).disabled).toBe(true);
         });
 
-        it('should report Save of the edited unit', () => {
-            queryAll('lecture-unit-save')[0].nativeElement.click();
+        it('should report Done of the edited unit', () => {
+            queryAll('lecture-unit-done')[0].nativeElement.click();
 
-            expect(host.saved).toEqual([expect.objectContaining({ id: textUnit.id })]);
+            expect(host.done).toEqual([expect.objectContaining({ id: textUnit.id })]);
         });
 
         it('should move the keyboard focus to the Edit button of a unit once its form closed', () => {

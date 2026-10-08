@@ -10,6 +10,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-exam-general-information',
@@ -23,18 +24,13 @@ import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mod
         ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
         ExamModeBadgeComponent,
+        TumAetUiTagComponent,
     ],
 })
 export class ExamGeneralInformationComponent {
     readonly exam = input<Exam>(undefined!);
     readonly studentExam = input<StudentExam>(undefined!);
     readonly reviewIsOpen = input(false);
-
-    /**
-     * The exam cover will contain e.g. the number of exercises which is hidden in the exam summary as
-     * the information is shown in the {@link ExamResultOverviewComponent}
-     */
-    readonly displayOnExamCover = input(false);
 
     readonly examEndDate = signal<dayjs.Dayjs | undefined>(undefined);
     normalWorkingTime?: number;

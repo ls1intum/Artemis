@@ -24,7 +24,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -42,8 +41,6 @@ import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-compon
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 @Component({
     template: '',
@@ -83,7 +80,6 @@ describe('ExamDetailComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
                 MockDirective(HasAnyAuthorityDirective),
-                MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockDirective(FeatureToggleLinkDirective),
                 MockDirective(ExerciseDetailDirective),
@@ -112,7 +108,6 @@ describe('ExamDetailComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ArtemisDurationFromSecondsPipe),
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: DialogService, useClass: MockDialogService },
             ],
         }).compileComponents();
 

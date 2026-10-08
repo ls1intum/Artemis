@@ -148,7 +148,11 @@ public class ProgrammingExerciseImportService {
         final var targetExerciseProjectKey = newExercise.getProjectKey();
         final var templatePlanName = BuildPlanType.TEMPLATE.getName();
         final var solutionPlanName = BuildPlanType.SOLUTION.getName();
-        final var targetName = newExercise.getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase(Locale.ROOT) + " " + newExercise.getTitle();
+        final var targetCourse = newExercise.getCourseViaExerciseGroupOrCourseMember();
+        if (targetCourse == null) {
+            throw new IllegalStateException("The course of programming exercise " + newExercise.getId() + " could not be resolved");
+        }
+        final var targetName = targetCourse.getShortName().toUpperCase(Locale.ROOT) + " " + newExercise.getTitle();
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         continuousIntegration.createProjectForExercise(newExercise);
         continuousIntegration.copyBuildPlan(sourceExercise, templatePlanName, newExercise, targetName, templatePlanName, false);

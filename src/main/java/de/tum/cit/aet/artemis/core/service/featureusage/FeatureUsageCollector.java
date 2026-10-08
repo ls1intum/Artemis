@@ -16,6 +16,7 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 
@@ -64,7 +65,7 @@ public class FeatureUsageCollector {
      */
     private final ApplicationContext applicationContext;
 
-    private volatile FeatureUsageRegistry registry;
+    private final AtomicReference<FeatureUsageRegistry> registry = new AtomicReference<>();
 
     private final Map<UsageKey, UsageAccumulator> buckets = new ConcurrentHashMap<>();
 
@@ -135,10 +136,10 @@ public class FeatureUsageCollector {
     }
 
     private FeatureUsageRegistry registry() {
-        FeatureUsageRegistry resolved = registry;
+        FeatureUsageRegistry resolved = registry.get();
         if (resolved == null) {
             resolved = applicationContext.getBean(FeatureUsageRegistry.class);
-            registry = resolved;
+            registry.set(resolved);
         }
         return resolved;
     }

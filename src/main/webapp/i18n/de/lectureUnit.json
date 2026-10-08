@@ -2,6 +2,9 @@
     "artemisApp": {
         "lectureUnit": {
             "deleted": "Inhalt gelöscht",
+            "deepLink": {
+                "unitGone": "Der verlinkte Vorlesungsinhalt existiert nicht mehr, daher wird nur die Vorlesung geöffnet."
+            },
             "retryProcessing": "Verarbeitung wiederholen",
             "processingRetryStarted": "Verarbeitungswiederholung gestartet",
             "home": {
@@ -49,7 +52,9 @@
             "created": "Neuer Textinhalt erstellt",
             "updated": "Textinhalt aktualisiert",
             "tooltip": "Das ist ein Textinhalt",
-            "isolated": "Isoliert öffnen",
+            "isolated": "Vollbild anzeigen",
+            "backToLecture": "Zurück zur Vorlesung",
+            "notFound": "Dieser Textinhalt existiert nicht oder ist für dich nicht verfügbar.",
             "originalVersion": "Originalversion",
             "notReleasedTooltip": "Text nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "cachedMarkdown": "Artemis hat ungespeichertes Markdown im local storage gefunden. Möchtest du es laden? Speicherdatum:",
@@ -140,8 +145,8 @@
                 }
             },
             "createAttachmentVideoUnits": {
-                "noFile": "Es gibt keine Datei für die automatische Verarbeitung. Bitte gehe einen Schritt zurück und versuche es erneut.",
-                "noUnitDetected": "Es wurde kein Inhalt erkannt und konnte nicht automatisch geteilt werden. Bitte füge Informationen für jeden Inhalt hinzu!",
+                "noFile": "Es gibt keine Datei zum Aufteilen. Starte das Aufteilen erneut in der Bearbeitung der Vorlesung.",
+                "noUnitDetected": "Dieses PDF enthält keine Folie mit dem Wort „Outline“ oder „Gliederung“, daher konnte Artemis keine Inhalte vorschlagen. Lege die Inhalte und ihre Folien mit „Inhalt hinzufügen“ an.",
                 "pageTitle": "Inhalte verarbeiten",
                 "addUnit": "Inhalt hinzufügen",
                 "removeSlides": "Entferne Folien",
@@ -175,7 +180,8 @@
                     "summarySingle": "Artemis hat 1 Abschnitt in {{ slides }} Folien gefunden.",
                     "hint": "Jede Zeile wird ein Inhalt mit ihren Folien. Prüfe die Namen und Folienbereiche, bevor du die Inhalte erstellst.",
                     "slides": "Folien",
-                    "summaryNone": "Artemis hat in {{ slides }} Folien keine Abschnitte gefunden."
+                    "summaryNone": "Artemis hat in {{ slides }} Folien keine Abschnitte gefunden.",
+                    "detectionHint": "Artemis beginnt bei jeder Folie, die das Wort „Outline“ oder „Gliederung“ genau so geschrieben enthält, einen neuen Abschnitt und schlägt einen Namen aus dem Text dieser Folie vor. Das funktioniert mit PDFs aus jedem Programm, etwa PowerPoint, Keynote oder LaTeX, solange sich ihr Text markieren lässt. Prüfe die vorgeschlagenen Namen und Folien."
                 },
                 "processTimeInfo": "Die Verarbeitung der Vorlesungsinhalte kann einige Sekunden dauern. Habe bitte etwas Geduld.",
                 "removeSource": "Den ursprünglichen PDF-Inhalt „{{ name }}“ nach dem Aufteilen entfernen",
@@ -223,16 +229,15 @@
                 "transcriptionHint": "Videos aus unterstützten Quellen werden nach dem Speichern automatisch transkribiert. Den Fortschritt der Transkription kannst du auf der Vorlesungsverwaltungsseite verfolgen.",
                 "useAsVideoSource": "Als Video-URL verwenden",
                 "notifyStudents": "Studierende über die neue Version benachrichtigen",
-                "uploadVersion": "Version {{ version }} hochladen",
-                "uploadHint": "Artemis teilt danach die Folien und verarbeitet den Inhalt erneut.",
                 "saveVideoSource": "Video-URL speichern",
                 "discardVideoSource": "Aktuelle URL behalten",
                 "videoSourceHint": "Artemis transkribiert das Video danach und verarbeitet es erneut.",
                 "discardNewFile": "Datei verwerfen",
                 "notifyStudentsNewFile": "Studierende über die neue Datei benachrichtigen",
-                "uploadFile": "Datei hochladen",
-                "uploadFileHint": "Artemis teilt danach die Folien und verarbeitet den Inhalt.",
-                "discardNewVideoSource": "URL verwerfen"
+                "discardNewVideoSource": "URL verwerfen",
+                "uploading": "Wird hochgeladen…",
+                "replaceFileHint": "Eine Datei, die du auswählst, wird sofort als Version {{ version }} hochgeladen und von Artemis erneut verarbeitet. In der aktuellen Datei ausgeblendete Folien werden wieder angezeigt.",
+                "newFileHint": "Eine Datei, die du auswählst, wird sofort hochgeladen und von Artemis verarbeitet."
             },
             "editAttachmentVideoUnit": {
                 "title": "Datei-/Video-Inhalt bearbeiten"

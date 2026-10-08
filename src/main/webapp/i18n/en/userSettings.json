@@ -289,7 +289,7 @@
                 "cloudTitle": "Cloud AI",
                 "cloudDescription": "Your AI features are powered by state-of-the-art LLMs (e.g., GPT-5) hosted on EU servers. Your data is processed securely and never used for training.",
                 "localTitle": "Local AI (Experimental)",
-                "localDescription": "Your AI features run on open-source LLMs (e.g., Llama) hosted entirely on university infrastructure. Your data never leaves university servers, but response quality may be lower than Cloud AI.",
+                "localDescription": "Your AI features run on open-source LLMs (e.g., Qwen) hosted entirely on university infrastructure. Your data never leaves university servers, but response quality may be lower than Cloud AI.",
                 "noAiTitle": "No AI",
                 "noAiDescription": "AI features like Iris tutoring, AI feedback, and smart suggestions are disabled. All other Artemis features continue to work normally.",
                 "noSelectionTitle": "No AI mode selected",

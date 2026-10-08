@@ -1,0 +1,57 @@
+@if (visible()) {
+    <tumaet-ui-dialog [(visible)]="visible" [header]="headerKey() | artemisTranslate" size="medium">
+        <form name="deleteForm" #deleteForm="ngForm" (ngSubmit)="deleteForm.valid && confirm()">
+            <p class="mb-4!" [jhiTranslate]="deleteQuestion()" [translateValues]="translationValues()"></p>
+            @if (entitySummaryTitle()) {
+                <p class="mb-2! font-semibold" [jhiTranslate]="entitySummaryTitle()!"></p>
+            }
+            @if (isLoadingSummary()) {
+                <p class="mb-4! text-(--text-body-secondary)" jhiTranslate="loading"></p>
+            } @else if (summaryKeys().length > 0) {
+                <dl class="mb-6! grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 rounded-md border border-(--border-color) p-4!" data-testid="delete-dialog-summary">
+                    @for (summaryKey of summaryKeys(); track summaryKey) {
+                        <dt class="font-normal" [jhiTranslate]="summaryKey"></dt>
+                        <dd class="m-0 font-semibold">{{ entitySummary()![summaryKey] }}</dd>
+                    }
+                </dl>
+            }
+            @for (checkKey of additionalCheckKeys(); track checkKey; let i = $index) {
+                <div class="mb-6! flex items-center gap-2">
+                    <tumaet-ui-checkbox
+                        [inputId]="'additional-check-' + i"
+                        [name]="'checkbox-' + i"
+                        [checked]="!!checkValues()[checkKey]"
+                        (changed)="setCheck(checkKey, $event.checked)"
+                    />
+                    <label class="mb-0! text-state-danger" [for]="'additional-check-' + i">{{ additionalChecks()![checkKey] | artemisTranslate }}</label>
+                </div>
+            }
+            @if (needsEntityName()) {
+                <jhi-confirm-entity-name
+                    [confirmationText]="deleteConfirmationText()!"
+                    [entityName]="entityTitle()"
+                    warningTextColor="text-state-danger"
+                    [(ngModel)]="confirmEntityName"
+                    name="confirmEntityName"
+                />
+            }
+        </form>
+        <ng-template #footer>
+            <button tumAetUiButton type="button" severity="secondary" (click)="clear()">
+                <span jhiTranslate="entity.action.cancel"></span>
+            </button>
+            <button
+                id="delete"
+                tumAetUiButton
+                type="button"
+                data-testid="delete-dialog-confirm-button"
+                [severity]="isDestructive() ? 'danger' : 'primary'"
+                [disabled]="deleteForm.invalid"
+                (click)="confirm()"
+            >
+                <fa-icon [icon]="icon()" />
+                <span [jhiTranslate]="actionKey()"></span>
+            </button>
+        </ng-template>
+    </tumaet-ui-dialog>
+}

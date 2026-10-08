@@ -14,6 +14,7 @@ import { LectureUnitCombinedStatus, LectureUnitProcessingStatus, LectureUnitServ
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import {
     IconDefinition,
@@ -31,7 +32,6 @@ import {
     faLink,
     faPencilAlt,
     faRepeat,
-    faSave,
     faScroll,
     faSpinner,
     faTrash,
@@ -48,6 +48,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PdfDropZoneComponent } from '../../pdf-drop-zone/pdf-drop-zone.component';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 
 @Component({
     selector: 'jhi-lecture-unit-management',
@@ -68,6 +69,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         PdfDropZoneComponent,
+        AtlasOrchestrationTriggerComponent,
     ],
 })
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
@@ -90,7 +92,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     protected readonly faEyeSlash = faEyeSlash;
     protected readonly faFlag = faFlag;
     protected readonly faGripVertical = faGripVertical;
-    protected readonly faSave = faSave;
+    protected readonly faCheck = faCheck;
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ActionType = ActionType;
@@ -106,8 +108,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     readonly editingUnitId = input<number | undefined>(undefined);
     /** The form of the unit that is edited in place, shown right below it. */
     readonly editorTemplate = input<TemplateRef<{ $implicit: LectureUnit }>>();
-    /** Emits when Save of the unit that is edited in place is pressed. */
-    readonly onSaveEditingClicked = output<LectureUnit>();
+    /** Emits when Done of the unit that is edited in place is pressed. */
+    readonly onDoneEditingClicked = output<LectureUnit>();
     private readonly editButtons = viewChildren('editButton', { read: ElementRef<HTMLButtonElement> });
 
     lectureUnits = signal<LectureUnit[]>([]);
@@ -297,6 +299,24 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             case LectureUnitType.TEXT:
             case LectureUnitType.ONLINE:
                 return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Client mirror of the server's ContentExtractionService.isLectureUnitEligibleForOrchestration: only offer a manual
+     * Atlas run for units whose learning text the orchestrator can actually read, so a blank unit never gets a trigger
+     * that could only end as a no-op.
+     */
+    isOrchestrationAvailable(lectureUnit: LectureUnit): boolean {
+        switch (lectureUnit.type) {
+            case LectureUnitType.TEXT:
+                return !!(lectureUnit as TextUnit).content?.trim();
+            case LectureUnitType.ONLINE:
+                return true;
+            case LectureUnitType.ATTACHMENT_VIDEO:
+                return !!(lectureUnit as AttachmentVideoUnit).description?.trim();
             default:
                 return false;
         }

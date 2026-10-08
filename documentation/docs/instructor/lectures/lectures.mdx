@@ -56,8 +56,10 @@ It marks a section that needs attention. **Save** and **Close** stay at the bott
 footer names the sections with unsaved changes, and **Close** turns into **Cancel** as soon as there are any; leaving
 the page with unsaved changes asks first. **Save**, or Enter in a field of the details, saves the lecture details;
 changes to the content are saved automatically. Content that could not be saved counts as unsaved as well, so the
-footer names it and leaving asks first. Saving a new lecture opens its editor, where you add the content. Saving an
-existing lecture keeps the editor open and confirms the time of the save.
+footer names it and leaving asks first. While content is still being saved, the footer shows **Saving content…**, and
+leaving asks you to keep editing until it is saved, because a save that fails after you left would lose the change.
+Saving a new lecture opens its editor, where you add the content. Saving an existing lecture keeps the editor open and
+confirms the time of the save.
 
 ### Option 2: Create from PDFs
 
@@ -101,25 +103,31 @@ you stop typing or when you leave the field; a release date or a competency is s
 shows whether it is saving, when all changes were saved, and when a change could not be saved: the change is kept, and
 **Retry** sends it again. A change that cannot be saved as it is, such as an empty name, waits until you correct it.
 **Discard change and close** drops a change that cannot be saved or failed to save and keeps what was saved before.
-**Save**, or Enter in a single-line field, saves at once; **Save** also closes the item. Leaving the editor, reloading
-the page or closing the tab asks first while a change is still being saved, could not be saved or was not confirmed.
+Enter in a single-line field saves at once. **Done** saves at once and closes the item once it is saved. Leaving the
+editor, reloading the page or closing the tab asks first while a change is still being saved, could not be saved or was
+not confirmed.
 
 <Image src={editUnitInPlace} alt="Content item edited in place" size={ImageSize.large} caption={"A content item edited in place"}></Image>
 
-A new file or a new video URL is saved only when you confirm it, because Artemis then processes the content again.
-After choosing a new file, select **Upload version N**, optionally with **Notify students about the new version**;
-**Keep current file** goes back, also after a failed upload. A video item without a file gets its first one the same
-way, with **Upload file** or **Discard file**. After changing the video URL, select **Save video URL** or **Keep current
-URL**. Until you do, **Save**, opening another item and adding one keep the item open and ask you to decide first.
+A file you choose is uploaded right away as the next version, and Artemis processes the content again. The form says
+which version the file becomes before you choose it, so select **Notify students about the new version** first if
+students should hear about it. While the file is uploaded, the item shows **Uploading…**; **Keep current file** goes
+back after a failed upload. A video item without a file gets its first one the same way; **Discard file** goes back
+after a failed upload. A new video URL is saved only when you confirm it, because Artemis then processes the video
+again: select **Save video URL** or **Keep current URL**. Until you do, **Done**, opening another item and adding one
+keep the item open and ask you to decide first.
 
-<Image src={replaceFileInPlace} alt="New file waiting for confirmation" size={ImageSize.large} caption={"A new file that is uploaded once you confirm it"}></Image>
+<Image src={replaceFileInPlace} alt="New file being uploaded" size={ImageSize.large} caption={"A new file that is uploaded right away"}></Image>
 
 ### Split a Lecture PDF
 
 Artemis can split a lecture PDF into one item per section instead of you adding them one at a time. Choose a PDF item
 of the lecture under **Split a lecture PDF into several items** in the editor and select **Split into sections**, or
-select **Upload another PDF** for a PDF that is not part of the lecture yet. Artemis looks for the outline slide, a
-slide titled *Outline* that lists the sections, repeated at the start of every section.
+select **Upload another PDF** for a PDF that is not part of the lecture yet. Artemis starts a new item at every slide
+that contains the word *Outline* or *Gliederung*, spelled exactly like this, and proposes a name from the text of that
+slide, so it needs slides that repeat their outline before each section. Slides before the first such slide belong to
+the first item. This works for PDFs from any program, such as PowerPoint, Keynote or LaTeX, as long as their text can
+be selected. For a PDF without such slides, add the items and their slides with **Add item**.
 
 <Image src={automaticUnitProcessing} alt="Automatic Unit Processing" size={ImageSize.large} caption={"Splitting a lecture PDF"}></Image>
 
@@ -144,8 +152,8 @@ Artemis can convert the website link from common video sources to an embeddable 
 select **Use as video URL**.
 Students complete this unit when they watch the video for at least five minutes and download the attachment.
 When a unit is edited, the form shows its current file with its version. **Open** shows the file, and **Replace file**
-chooses a new file that becomes the next version: in the lecture editor when you confirm it, on the unit's own edit
-page when you save the unit. Slides hidden in the current file are not hidden in the new one.
+chooses a new file that becomes the next version: in the lecture editor right away, on the unit's own edit page when
+you save the unit. Slides hidden in the current file are not hidden in the new one.
 
 <Image src={createAttachmentVideoUnit} alt="Create Attachment Video Unit" size={ImageSize.large} caption={"Create Attachment Video Unit"}></Image>
 

@@ -1,6 +1,6 @@
 ---
 name: e2e-pr-check
-description: Select, run, or debug Artemis Playwright tests for a branch or pull request.
+description: Select, run, or debug Artemis Playwright tests for a branch or pull request, or write a layout contract that measures element sizes and alignment.
 ---
 
 # Run the E2E tests this change affects
@@ -14,12 +14,12 @@ Use the CI resolver instead of selecting specs by inspection. Its output depends
 revision and committed diff:
 
 ```bash
-./.ci/E2E-tests/determine-relevant-tests.sh origin/develop
+./supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh origin/develop
 ```
 
 It prints five `OUTPUT:` lines. The ones that matter:
 
-- `RUN_ALL_TESTS=true` means the change hit `runAllTestsPatterns` (Spring config, `docker/`,
+- `RUN_ALL_TESTS=true` means the change hit `runAllTestsPatterns` (Spring config, `deployment/docker/`,
   `build.gradle`, `angular.json`) or touched Playwright infrastructure outside `e2e/`. Say so
   explicitly rather than quietly running a subset. Then either run the full suite or agree with the
   user on a narrower scope, but do not present a subset as sufficient coverage.
@@ -42,14 +42,14 @@ Two things about the input:
 Default to the single-node runner. It is faster and it is what most changes need.
 
 ```bash
-./run-e2e-tests-local-fast.sh --specs "<RELEVANT_TESTS from step 1>"
+./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --specs "<RELEVANT_TESTS from step 1>"
 ```
 
 Use the multi-node runner instead when the diff touches cluster-sensitive code, because a single
 node cannot reproduce cross-node failures at all:
 
 ```bash
-./run-e2e-tests-local-multinode-fast.sh --specs "<RELEVANT_TESTS from step 1>"
+./supporting_scripts/e2e/run-e2e-tests-local-multinode-fast.sh --specs "<RELEVANT_TESTS from step 1>"
 ```
 
 Treat a change as cluster-sensitive when it touches any of:
@@ -65,7 +65,7 @@ providers. Redis has to pass the same tests as Hazelcast, and with `--middleware
 instance is created at all, which is what makes it a genuine test of the abstraction:
 
 ```bash
-./run-e2e-tests-local-multinode-fast.sh --middleware redis --specs "<paths>"
+./supporting_scripts/e2e/run-e2e-tests-local-multinode-fast.sh --middleware redis --specs "<paths>"
 ```
 
 ## Step 3: re-runs
@@ -73,7 +73,7 @@ instance is created at all, which is what makes it a genuine test of the abstrac
 The runners keep services alive between runs. After the first run, reuse them:
 
 ```bash
-./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --specs "<paths>"
+./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --specs "<paths>"
 ```
 
 For the multi-node runner the equivalent is `--skip-build --skip-up`.
@@ -107,6 +107,30 @@ actually waiting for.
 makes Playwright print `Error: No tests found.` and exit non-zero, which the runner reports as a
 failed run. So a red run with no test output at all is a path problem, not a test problem. Check
 the executed count against what step 1 selected before reading anything else.
+
+## Writing a layout contract
+
+To pin how big an element is, how elements line up or that a page does not scroll sideways,
+measure in the browser. Never compare screenshots, and never find an element by a styling class.
+
+1. State the rule as a number or as a relation between elements.
+2. Find the elements by `data-testid`; add one to the template when it is missing.
+3. Assert inside `forEachViewport` from `src/test/playwright/support/layout.ts` with
+   `expectHeight`, `expectAligned`, `expectFillsParent`, `expectInside` (with a `margin` for air),
+   `expectInset` (name the scroll containers as `scrollers`, so that their scrollbars are not
+   counted as inset), `expectGap` (the divider between two panels), `expectBelow`, `expectNoOverlap`,
+   `expectInsideOrBelow` (a layout that depends on the room), `expectWithinViewport`,
+   `expectNoHorizontalOverflow`, `expectNoHorizontalScrollAround` or `expectSameComputedStyle`, and
+   give each element a `name`. A page in a card that scrolls on its own needs both sideways-scroll
+   helpers, because the document keeps the width of the window. A click that must not move the page
+   runs inside `expectScrollPositionKept`. A divider that is dragged keeps the width it was given in
+   px, which a smaller window does not undo, so drag it after the viewport matrix.
+4. For a new or changed helper, add a case that holds and one that must fail to
+   `src/test/playwright/e2e/shared/LayoutHelpers.spec.ts`.
+
+A change under `src/test/playwright/support/` makes the resolver in step 1 report
+`RUN_ALL_TESTS=true`. The helpers, the viewport matrix and the exam example are in the section
+"Layout contract tests" of `documentation/docs/developer/e2e-testing-playwright.mdx`.
 
 ## Reporting back
 
