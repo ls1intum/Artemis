@@ -23,6 +23,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.service.CourseLoadService;
@@ -69,7 +70,7 @@ class PyrisPipelineServiceTest {
         var materialVersionService = mock(IrisLectureMaterialVersionService.class);
         var service = new PyrisPipelineService(pyrisConnectorService, pyrisJobService, mock(PyrisDTOService.class), irisChatWebsocketService,
                 mock(StudentParticipationRepository.class), userRepository, mock(CourseLoadService.class), mock(FeatureToggleService.class), mock(UserAiPreferenceService.class),
-                materialVersionService);
+                materialVersionService, mock(ChannelRepository.class));
         ReflectionTestUtils.setField(service, "artemisBaseUrl", "https://artemis.example");
 
         var session = new IrisChatSession();
@@ -100,7 +101,7 @@ class PyrisPipelineServiceTest {
 
         var service = new PyrisPipelineService(mock(PyrisConnectorService.class), pyrisJobService, mock(PyrisDTOService.class), mock(IrisChatWebsocketService.class),
                 mock(StudentParticipationRepository.class), userRepository, mock(CourseLoadService.class), mock(FeatureToggleService.class), mock(UserAiPreferenceService.class),
-                mock(IrisLectureMaterialVersionService.class));
+                mock(IrisLectureMaterialVersionService.class), mock(ChannelRepository.class));
         ReflectionTestUtils.setField(service, "artemisBaseUrl", "https://artemis.example");
 
         var session = new IrisChatSession();
@@ -136,7 +137,7 @@ class PyrisPipelineServiceTest {
 
         var service = new PyrisPipelineService(pyrisConnectorService, pyrisJobService, mock(PyrisDTOService.class), mock(IrisChatWebsocketService.class),
                 mock(StudentParticipationRepository.class), userRepository, mock(CourseLoadService.class), mock(FeatureToggleService.class), mock(UserAiPreferenceService.class),
-                mock(IrisLectureMaterialVersionService.class));
+                mock(IrisLectureMaterialVersionService.class), mock(ChannelRepository.class));
         ReflectionTestUtils.setField(service, "artemisBaseUrl", "https://artemis.example");
 
         doThrow(new PyrisConnectorException("boom")).when(pyrisConnectorService).executePipeline(eq("chat"), any(), any());
@@ -169,7 +170,7 @@ class PyrisPipelineServiceTest {
 
         var service = new PyrisPipelineService(pyrisConnectorService, pyrisJobService, mock(PyrisDTOService.class), irisChatWebsocketService,
                 mock(StudentParticipationRepository.class), userRepository, mock(CourseLoadService.class), mock(FeatureToggleService.class), mock(UserAiPreferenceService.class),
-                mock(IrisLectureMaterialVersionService.class));
+                mock(IrisLectureMaterialVersionService.class), mock(ChannelRepository.class));
         ReflectionTestUtils.setField(service, "artemisBaseUrl", "https://artemis.example");
 
         doThrow(new PyrisConnectorException("boom")).when(pyrisConnectorService).executePipeline(eq("struggle-intervention"), any(), any());
@@ -221,7 +222,7 @@ class PyrisPipelineServiceTest {
 
         var service = new PyrisPipelineService(pyrisConnectorService, pyrisJobService, mock(PyrisDTOService.class), mock(IrisChatWebsocketService.class),
                 mock(StudentParticipationRepository.class), userRepository, mock(CourseLoadService.class), mock(FeatureToggleService.class), userAiPreferenceService,
-                mock(IrisLectureMaterialVersionService.class));
+                mock(IrisLectureMaterialVersionService.class), mock(ChannelRepository.class));
         ReflectionTestUtils.setField(service, "artemisBaseUrl", "https://artemis.example");
         ReflectionTestUtils.setField(service, "responseStreamingEnabled", responseStreamingEnabled);
 

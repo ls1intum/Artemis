@@ -16,6 +16,7 @@ public enum UserDeletionReferencePolicy {
 
     ANSWER_POST_AUTHOR("answer_post", "author_id", UserDeletionDataCategory.COMMUNICATION, UserDeletionAction.DELETE, true),
     ANSWER_POST_VERIFIER("answer_post", "verified_by_id", UserDeletionDataCategory.COMMUNICATION, UserDeletionAction.DETACH_ACTOR, true),
+    ANSWER_POST_RESOLVER("answer_post", "resolved_by_id", UserDeletionDataCategory.COMMUNICATION, UserDeletionAction.DETACH_ACTOR, true),
     ASSESSMENT_NOTE_CREATOR("assessment_note", "creator_id", UserDeletionDataCategory.ASSESSMENT, UserDeletionAction.DETACH_ACTOR, true),
     CALENDAR_SUBSCRIPTION("calendar_subscription_token_store", "jhi_user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
     COMPETENCY_PROGRESS("competency_user", "user_id", UserDeletionDataCategory.LEARNING_ANALYTICS, UserDeletionAction.DELETE, true),

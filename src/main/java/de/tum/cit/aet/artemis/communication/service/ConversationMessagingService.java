@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.AutonomousTutorApi;
+import de.tum.cit.aet.artemis.iris.api.CourseMemoryIngestionApi;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnnouncementNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewPostNotification;
@@ -83,6 +84,8 @@ public class ConversationMessagingService extends PostingService {
 
     private final Optional<AutonomousTutorApi> autonomousTutorApi;
 
+    private final Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi;
+
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, ConversationMessageRepository conversationMessageRepository,
@@ -90,7 +93,7 @@ public class ConversationMessagingService extends PostingService {
             ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository, ChannelAuthorizationService channelAuthorizationService,
             SavedPostRepository savedPostRepository, CourseNotificationService courseNotificationService, PostRepository postRepository,
             SingleUserNotificationService singleUserNotificationService, Optional<AutonomousTutorApi> autonomousTutorApi,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -99,6 +102,7 @@ public class ConversationMessagingService extends PostingService {
         this.postRepository = postRepository;
         this.singleUserNotificationService = singleUserNotificationService;
         this.autonomousTutorApi = autonomousTutorApi;
+        this.courseMemoryIngestionApi = courseMemoryIngestionApi;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
@@ -369,8 +373,16 @@ public class ConversationMessagingService extends PostingService {
         existingMessage.setTitle(messagePost.title());
         existingMessage.setUpdatedDate(ZonedDateTime.now());
 
+        // The thread's Course Memory version is bumped before and after the save: the stored question is derived from this
+        // post, so an entry built from the old wording is outdated once the edit is saved. The bump after covers a refresh
+        // that read the old wording in between (see ConversationMessageRepository#bumpCourseMemoryVersionIfTracked).
+        conversationMessageRepository.bumpCourseMemoryVersionIfTracked(postId);
         Post updatedPost = conversationMessageRepository.save(existingMessage);
+        conversationMessageRepository.bumpCourseMemoryVersionIfTracked(postId);
         updatedPost.setConversation(conversation);
+
+        // Right after the change, before the work below that can fail; only a thread with an entry needs it.
+        refreshCourseMemoryIfTracked(updatedPost.getId(), user, course);
 
         syncPostWithWeaviate(updatedPost, conversation);
 
@@ -399,7 +411,19 @@ public class ConversationMessagingService extends PostingService {
         post.setConversation(conversation);
 
         // delete
+        // Read before the row is gone: only a thread that ever had a Course Memory operation can have an entry.
+        boolean hadCourseMemory = conversationMessageRepository.findCourseMemoryVersion(postId).orElse(0L) > 0;
         conversationMessageRepository.deleteById(postId);
+        // The thread is gone, so its Course Memory entry must go too. Right after the deletion, before the work below
+        // that can fail; the nightly Course Memory sync retracts it if this does not get through.
+        try {
+            if (hadCourseMemory) {
+                courseMemoryIngestionApi.ifPresent(api -> api.onThreadDeleted(postId, course.getId(), user));
+            }
+        }
+        catch (Exception e) {
+            log.error("Failed to delete course memory for deleted thread {}", postId, e);
+        }
         searchableEntityWeaviateService.ifPresent(service -> {
             service.deleteEntityAsync(SearchableEntitySchema.TypeValues.POST, postId);
             service.deleteAllAnswerPostsForPostAsync(postId);
@@ -414,6 +438,24 @@ public class ConversationMessagingService extends PostingService {
         conversationService.notifyAllConversationMembersAboutUpdate(conversation);
         preparePostForBroadcast(post);
         broadcastForPost(post, CommunicationCrudAction.DELETE, course.getId(), null);
+    }
+
+    /**
+     * Rebuilds the thread's Course Memory entry after an edit of its root post, if it has one. Best-effort: the version was
+     * already bumped with the edit, so the nightly Course Memory sync retracts an entry this does not update.
+     */
+    private void refreshCourseMemoryIfTracked(long postId, User actor, Course course) {
+        if (courseMemoryIngestionApi.isEmpty()) {
+            return;
+        }
+        try {
+            if (conversationMessageRepository.findCourseMemoryVersion(postId).orElse(0L) > 0) {
+                courseMemoryIngestionApi.get().onThreadChanged(postId, actor, course);
+            }
+        }
+        catch (Exception e) {
+            log.error("Failed to update course memory after edit of thread {}", postId, e);
+        }
     }
 
     /**

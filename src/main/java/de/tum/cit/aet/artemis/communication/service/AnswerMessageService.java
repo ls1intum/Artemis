@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearch
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.AutonomousTutorApi;
+import de.tum.cit.aet.artemis.iris.api.CourseMemoryIngestionApi;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnswerNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
@@ -76,6 +77,8 @@ public class AnswerMessageService extends PostingService {
 
     private final Optional<AutonomousTutorApi> autonomousTutorApi;
 
+    private final Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi;
+
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     @SuppressWarnings("PMD.ExcessiveParameterList")
@@ -84,7 +87,8 @@ public class AnswerMessageService extends PostingService {
             ConversationService conversationService, ExerciseRepository exerciseRepository, SavedPostRepository savedPostRepository,
             WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository,
             ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, CourseNotificationService courseNotificationService,
-            Optional<AutonomousTutorApi> autonomousTutorApi, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            Optional<AutonomousTutorApi> autonomousTutorApi, Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.answerPostRepository = answerPostRepository;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -93,6 +97,7 @@ public class AnswerMessageService extends PostingService {
         this.singleUserNotificationService = singleUserNotificationService;
         this.postRepository = postRepository;
         this.courseNotificationService = courseNotificationService;
+        this.courseMemoryIngestionApi = courseMemoryIngestionApi;
         this.autonomousTutorApi = autonomousTutorApi;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
@@ -225,6 +230,8 @@ public class AnswerMessageService extends PostingService {
         // message may mark someone else's answer as resolving, but that does not allow them to rewrite its content.
         // A request that toggles the flag usually sends the stored content back unchanged; any different content is
         // checked like an ordinary edit.
+        boolean resolutionChanged = false;
+        boolean contentChanged = false;
         if (existingAnswerMessage.doesResolvePost() != answerMessage.resolvesPost()) {
             // check if requesting user is allowed to mark this answer message as resolving, i.e. if user is author or original message or at least tutor
             mayMarkAnswerMessageAsResolvingElseThrow(existingAnswerMessage, user, course);
@@ -233,26 +240,73 @@ public class AnswerMessageService extends PostingService {
                 mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
                 existingAnswerMessage.setContent(answerMessage.content());
                 existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
+                contentChanged = true;
             }
-            existingAnswerMessage.setResolvesPost(answerMessage.resolvesPost());
+            // Records the endorser along with the flag: Course Memory derives the trust tier of the thread's entry
+            // from who marked the answer resolving, and has to be able to re-derive it later from this answer alone.
+            existingAnswerMessage.setResolution(answerMessage.resolvesPost(), user);
             // sets the message as resolved if there exists any resolving answer
             existingAnswerMessage.getPost().setResolved(existingAnswerMessage.getPost().getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
             postRepository.save(existingAnswerMessage.getPost());
+            resolutionChanged = true;
         }
         else {
             // check if requesting user is allowed to update the content, i.e. if user is author of answer message or at least tutor
             mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
+            contentChanged = !Objects.equals(existingAnswerMessage.getContent(), answerMessage.content());
             existingAnswerMessage.setContent(answerMessage.content());
             existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
         }
+        if (contentChanged && !authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            // A tutor's endorsement or approval vouches for the text the tutor read, not for whatever replaces it.
+            existingAnswerMessage.withdrawSignOffs();
+        }
 
+        // The thread's Course Memory version is bumped before and after the save, so an entry built from the old text is
+        // outdated even if the refresh below never reaches Pyris. The bump after covers a refresh that read the old text in
+        // between (see ConversationMessageRepository#bumpCourseMemoryVersionIfTracked).
+        if (resolutionChanged || contentChanged) {
+            conversationMessageRepository.bumpCourseMemoryVersionIfTracked(existingAnswerMessage.getPost().getId());
+        }
         updatedAnswerMessage = answerPostRepository.save(existingAnswerMessage);
+        if (resolutionChanged || contentChanged) {
+            conversationMessageRepository.bumpCourseMemoryVersionIfTracked(existingAnswerMessage.getPost().getId());
+        }
         updatedAnswerMessage.getPost().setConversation(conversation);
+
+        // Right after the change, before the work below that can fail. A resolution change can start the thread's first
+        // entry; a content edit only matters for a thread that has one.
+        if (resolutionChanged || contentChanged) {
+            refreshCourseMemory(updatedAnswerMessage.getPost().getId(), user, course, resolutionChanged);
+        }
 
         syncAnswerPostWithWeaviate(updatedAnswerMessage, conversation);
 
         this.preparePostAndBroadcast(updatedAnswerMessage, course);
         return updatedAnswerMessage;
+    }
+
+    /**
+     * Rebuilds or retracts the thread's Course Memory entry after a change to it. Best-effort: a failure must not fail the
+     * user's request; the thread's version was already bumped, so the nightly Course Memory sync retracts an outdated entry.
+     *
+     * @param postId the thread's root post id
+     * @param actor  the user who made the change
+     * @param course the course
+     * @param always {@code true} to refresh even a thread that never had an entry, e.g. when an answer was marked resolving
+     */
+    private void refreshCourseMemory(long postId, User actor, Course course, boolean always) {
+        if (courseMemoryIngestionApi.isEmpty()) {
+            return;
+        }
+        try {
+            if (always || conversationMessageRepository.findCourseMemoryVersion(postId).orElse(0L) > 0) {
+                courseMemoryIngestionApi.get().onThreadChanged(postId, actor, course);
+            }
+        }
+        catch (Exception e) {
+            log.error("Failed to update course memory of thread {}", postId, e);
+        }
     }
 
     private Conversation mayUpdateOrDeleteAnswerMessageElseThrow(AnswerPost existingAnswerPost, User user) {
@@ -302,11 +356,16 @@ public class AnswerMessageService extends PostingService {
         updatedMessage.removeAnswerPost(answerMessage);
         updatedMessage.setResolved(updatedMessage.getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
         updatedMessage.setConversation(conversation);
+        // The thread's Course Memory version is bumped before and after the deletion: the entry may contain this answer's
+        // text. The bump after covers a refresh that read the answer in between (see ConversationMessageRepository#bumpCourseMemoryVersionIfTracked).
+        conversationMessageRepository.bumpCourseMemoryVersionIfTracked(updatedMessage.getId());
         // update on the message properties
         conversationMessageRepository.save(updatedMessage);
 
         // delete
         answerPostRepository.deleteById(answerMessageId);
+        conversationMessageRepository.bumpCourseMemoryVersionIfTracked(updatedMessage.getId());
+        refreshCourseMemory(updatedMessage.getId(), user, course, false);
         searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.ANSWER_POST, answerMessageId));
         preparePostForBroadcast(updatedMessage);
 
@@ -398,10 +457,23 @@ public class AnswerMessageService extends PostingService {
         if (!answerPostRepository.verifyIfUnverified(answerMessageId, user, ZonedDateTime.now(), updatedContent)) {
             throw new BadRequestAlertException("Answer message is already verified", ANSWER_POST_ENTITY_NAME, "alreadyVerified");
         }
+        // The approval can change the thread's stored answer. Bumped after it, so an entry from a refresh that read the
+        // thread before the approval is outdated even if the refresh below never reaches Pyris (see ConversationMessageRepository#bumpCourseMemoryVersionIfTracked).
+        conversationMessageRepository.bumpCourseMemoryVersionIfTracked(existingAnswerMessage.getPost().getId());
 
         // The update above is a bulk statement and does not touch the instance read before it, so re-read what is
         // broadcast and returned. Each repository call runs in its own session, so this read sees the committed row.
         AnswerPost verifiedAnswerMessage = answerPostRepository.findAnswerMessageWithPostConversationAndVerifierByIdElseThrow(answerMessageId);
+
+        // A tutor approved (IRIS_AUTO) or edited (IRIS_CORRECTED) an Iris draft; the thread's entry is rebuilt from the
+        // current state, in which the approval is recorded. Right after the approval, before the work below that can fail.
+        try {
+            courseMemoryIngestionApi.ifPresent(api -> api.onAnswerVerified(verifiedAnswerMessage, user, course));
+        }
+        catch (Exception e) {
+            log.error("Failed to ingest verified answer post {} into course memory", verifiedAnswerMessage.getId(), e);
+        }
+
         Conversation conversation = conversationService.getConversationById(verifiedAnswerMessage.getPost().getConversation().getId());
         verifiedAnswerMessage.getPost().setConversation(conversation);
 

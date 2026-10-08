@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.mock.http.client.MockClientHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.ExpectedCount;
@@ -40,6 +41,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutono
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisCourseMemoryCourseSyncDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryDeletionExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitMetadataWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitVisibilityWebhookDTO;
@@ -96,12 +100,22 @@ public class IrisRequestMockProvider {
 
     private AutoCloseable closeable;
 
+    private ClientHttpRequestFactory originalRequestFactory;
+
+    private ClientHttpRequestFactory originalShortTimeoutRequestFactory;
+
     public IrisRequestMockProvider(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
     public void enableMockingOfRequests() {
+        // Remember what the templates used before binding, so unbindMockServers() can put it back. These
+        // RestTemplates are singleton beans shared with every other test class in the same Spring context.
+        if (originalRequestFactory == null) {
+            originalRequestFactory = restTemplate.getRequestFactory();
+            originalShortTimeoutRequestFactory = shortTimeoutRestTemplate.getRequestFactory();
+        }
         // Use unordered mode so tests don't fail due to request ordering
         // (e.g., when cleanup sends DELETE before processing sends INGEST)
         mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).build();
@@ -113,10 +127,31 @@ public class IrisRequestMockProvider {
         if (mockServer != null) {
             mockServer.reset();
         }
+        unbindMockServers();
 
         if (closeable != null) {
             closeable.close();
         }
+    }
+
+    /**
+     * Restores the request factories the Pyris {@link RestTemplate}s had before mocking was enabled.
+     * <p>
+     * {@link MockRestServiceServer} replaces the factory on the template and offers no way to undo it, and
+     * these templates are singleton beans shared across the whole Spring context. Resetting alone therefore
+     * leaves a strict, expectation-less mock server bound to them for every test class that runs afterwards
+     * in the same JVM — so an unrelated test that happens to trigger any Pyris call (deleting a lecture,
+     * an exercise or a course fires a Course Memory purge) fails with "No further requests expected"
+     * instead of the connection error the connector is built to swallow. Which classes break then depends
+     * purely on execution order.
+     */
+    private void unbindMockServers() {
+        if (originalRequestFactory != null) {
+            restTemplate.setRequestFactory(originalRequestFactory);
+            shortTimeoutRestTemplate.setRequestFactory(originalShortTimeoutRequestFactory);
+        }
+        mockServer = null;
+        shortTimeoutMockServer = null;
     }
 
     public void mockProgrammingExerciseChatResponse(Consumer<PyrisChatPipelineExecutionDTO> responseConsumer) {
@@ -189,6 +224,55 @@ public class IrisRequestMockProvider {
 
     public void mockFaqIngestionWebhookRunResponse(Consumer<PyrisWebhookFaqIngestionExecutionDTO> responseConsumer) {
         mockWebhookPost("/faqs/ingest", PyrisWebhookFaqIngestionExecutionDTO.class, responseConsumer);
+    }
+
+    public void mockCourseMemoryIngestionWebhookRunResponse(Consumer<PyrisWebhookCourseMemoryIngestionExecutionDTO> responseConsumer) {
+        mockWebhookPost("/course-memory/ingest", PyrisWebhookCourseMemoryIngestionExecutionDTO.class, responseConsumer);
+    }
+
+    public void mockCourseMemoryIngestionWebhookRunResponse(Consumer<PyrisWebhookCourseMemoryIngestionExecutionDTO> responseConsumer, ExpectedCount count) {
+        mockWebhookPost("/course-memory/ingest", PyrisWebhookCourseMemoryIngestionExecutionDTO.class, responseConsumer, count);
+    }
+
+    public void mockCourseMemoryDeletionWebhookRunResponse(Consumer<PyrisWebhookCourseMemoryDeletionExecutionDTO> responseConsumer) {
+        mockWebhookPost("/course-memory/delete", PyrisWebhookCourseMemoryDeletionExecutionDTO.class, responseConsumer);
+    }
+
+    public void mockCourseMemoryDeletionWebhookRunResponse(Consumer<PyrisWebhookCourseMemoryDeletionExecutionDTO> responseConsumer, ExpectedCount count) {
+        mockWebhookPost("/course-memory/delete", PyrisWebhookCourseMemoryDeletionExecutionDTO.class, responseConsumer, count);
+    }
+
+    public void mockCourseMemoryCourseSyncResponse(Consumer<PyrisCourseMemoryCourseSyncDTO> responseConsumer) {
+        // One request per course with tracked threads; the shared test database may hold other tests' courses too, or none.
+        mockWebhookPost("/course-memory/sync/course", PyrisCourseMemoryCourseSyncDTO.class, responseConsumer, ExpectedCount.between(0, Integer.MAX_VALUE));
+    }
+
+    /**
+     * Nightly instance sync. The consumer receives the raw request body, so a test can check the wire format Pyris
+     * parses, not only what Jackson reads back.
+     *
+     * @param rawBodyConsumer receives the request body as sent
+     */
+    public void mockCourseMemoryInstanceSyncResponse(Consumer<String> rawBodyConsumer) {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/course-memory/sync/instance")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            rawBodyConsumer.accept(((MockClientHttpRequest) request).getBodyAsString());
+            return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+        });
+    }
+
+    /**
+     * Course Memory ingestion webhook that reaches Pyris and is rejected. The body still reaches the consumer, so a
+     * test can read the job token out of it and assert what Artemis did with the job the dispatch never started.
+     *
+     * @param responseConsumer receives the request body before the error response is produced
+     * @param httpStatus       the status Pyris answers with
+     */
+    public void mockCourseMemoryIngestionWebhookRunError(Consumer<PyrisWebhookCourseMemoryIngestionExecutionDTO> responseConsumer, int httpStatus) {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/course-memory/ingest")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            var mockRequest = (MockClientHttpRequest) request;
+            responseConsumer.accept(mapper.readValue(mockRequest.getBodyAsString(), PyrisWebhookCourseMemoryIngestionExecutionDTO.class));
+            return MockRestResponseCreators.withRawStatus(httpStatus).createResponse(request);
+        });
     }
 
     public void mockDeletionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer) {

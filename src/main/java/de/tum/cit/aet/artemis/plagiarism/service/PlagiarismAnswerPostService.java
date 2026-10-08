@@ -125,7 +125,8 @@ public class PlagiarismAnswerPostService extends PostingService {
         boolean resolveFlagChanging = request.resolvesPost() != null && !Objects.equals(existingAnswerPost.doesResolvePost(), request.resolvesPost());
         if (resolveFlagChanging) {
             mayMarkAnswerPostAsResolvingElseThrow(existingAnswerPost, user, course);
-            existingAnswerPost.setResolvesPost(request.resolvesPost());
+            // Keeps the flag and its endorsement in step, as AnswerMessageService does for messages.
+            existingAnswerPost.setResolution(request.resolvesPost(), user);
             // re-evaluate the parent post's resolved status — any resolving answer keeps the post marked as resolved
             existingAnswerPost.getPost().setResolved(existingAnswerPost.getPost().getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
             postRepository.save(existingAnswerPost.getPost());

@@ -864,4 +864,13 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             WHERE course.id = :courseId
             """)
     Optional<CourseForOverviewDTO> findForOverview(@Param("courseId") long courseId);
+
+    /**
+     * @return the ids of all courses
+     */
+    @Query("""
+            SELECT course.id
+            FROM Course course
+            """)
+    Set<Long> findAllCourseIds();
 }

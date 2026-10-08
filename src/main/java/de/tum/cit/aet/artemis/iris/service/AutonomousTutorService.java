@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -90,9 +91,11 @@ public class AutonomousTutorService {
 
     private final UserRepository userRepository;
 
+    private final ChannelRepository channelRepository;
+
     public AutonomousTutorService(IrisBotUserService irisBotUserService, ConversationMessageRepository conversationMessageRepository, AnswerPostRepository answerPostRepository,
             ConversationParticipantRepository conversationParticipantRepository, FeatureToggleService featureToggleService, WebsocketMessagingService websocketMessagingService,
-            CourseNotificationService courseNotificationService, UserRepository userRepository) {
+            CourseNotificationService courseNotificationService, UserRepository userRepository, ChannelRepository channelRepository) {
         this.irisBotUserService = irisBotUserService;
         this.conversationMessageRepository = conversationMessageRepository;
         this.answerPostRepository = answerPostRepository;
@@ -101,6 +104,7 @@ public class AutonomousTutorService {
         this.websocketMessagingService = websocketMessagingService;
         this.courseNotificationService = courseNotificationService;
         this.userRepository = userRepository;
+        this.channelRepository = channelRepository;
     }
 
     /**
@@ -142,9 +146,13 @@ public class AutonomousTutorService {
 
         ensureBotIsParticipant(botUser, conversation);
 
-        boolean isVerified = confidence >= AUTO_VERIFY_CONFIDENCE_THRESHOLD;
+        // Publishing unreviewed also requires that every channel the run drew Course Memory entries from is still readable
+        // by every student. Checked before saving, and again after the reply was saved as a draft: a channel made private in
+        // between sends the reply to a tutor instead. A reply whose sources are unknown is never published unreviewed.
+        boolean publishable = confidence >= AUTO_VERIFY_CONFIDENCE_THRESHOLD && courseMemorySourcesReadable(statusUpdate, course.getId());
 
-        AnswerPost answerPost = createAndSaveAnswerPost(statusUpdate.result(), botUser, originalPost, confidence, isVerified);
+        AnswerPost answerPost = createAndSaveAnswerPost(statusUpdate.result(), botUser, originalPost, confidence);
+        boolean isVerified = publishable && publishIfSourcesStillReadable(answerPost, statusUpdate, course.getId());
 
         if (isVerified) {
             Set<ConversationNotificationRecipientSummary> recipientSummaries = getNotificationRecipients(conversation, course);
@@ -163,6 +171,47 @@ public class AutonomousTutorService {
                 job.courseId());
     }
 
+    /**
+     * Whether every channel the run drew Course Memory entries from is still readable by every student of the course.
+     * {@code false} when Pyris did not report the channels.
+     */
+    private boolean courseMemorySourcesReadable(PyrisAutonomousTutorPipelineStatusUpdateDTO statusUpdate, long courseId) {
+        List<Long> used = statusUpdate.usedCourseMemoryConversationIds();
+        if (used == null) {
+            return false;
+        }
+        if (used.isEmpty()) {
+            return true;
+        }
+        return channelRepository.findIdsOfChannelsReadableByAllStudents(courseId, ZonedDateTime.now()).containsAll(used);
+    }
+
+    /**
+     * Publishes a reply that was saved as a draft, if its Course Memory sources are still readable by every student. Any
+     * failure, of the check or of the save, leaves the draft for review: a reply is never left published by mistake.
+     *
+     * @return whether the reply was published
+     */
+    private boolean publishIfSourcesStillReadable(AnswerPost draft, PyrisAutonomousTutorPipelineStatusUpdateDTO statusUpdate, long courseId) {
+        try {
+            if (!courseMemorySourcesReadable(statusUpdate, courseId)) {
+                log.info("Holding autonomous tutor answer {} for review: a Course Memory source channel stopped being readable", draft.getId());
+                return false;
+            }
+            draft.setVerified(true);
+            // auto-verified answers are implicitly approved by the system, there is no human reviewer
+            draft.setVerifiedAt(ZonedDateTime.now());
+            answerPostRepository.save(draft);
+            return true;
+        }
+        catch (RuntimeException e) {
+            draft.setVerified(false);
+            draft.setVerifiedAt(null);
+            log.warn("Could not publish autonomous tutor answer {}; holding it for review", draft.getId(), e);
+            return false;
+        }
+    }
+
     private void ensureBotIsParticipant(User botUser, Conversation conversation) {
         var existingParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversation.getId(), botUser.getId());
         if (existingParticipant.isEmpty()) {
@@ -172,18 +221,17 @@ public class AutonomousTutorService {
         }
     }
 
-    private AnswerPost createAndSaveAnswerPost(String content, User botUser, Post originalPost, Double confidence, boolean isVerified) {
+    /**
+     * Saves the reply as an unverified draft, which only staff can see.
+     */
+    private AnswerPost createAndSaveAnswerPost(String content, User botUser, Post originalPost, Double confidence) {
         AnswerPost answerPost = new AnswerPost();
         answerPost.setContent(content);
         answerPost.setAuthor(botUser);
         answerPost.setPost(originalPost);
         answerPost.setResolvesPost(false);
         answerPost.setConfidenceScore(confidence);
-        answerPost.setVerified(isVerified);
-        if (isVerified) {
-            // auto-verified answers are implicitly approved by the system, there is no human reviewer
-            answerPost.setVerifiedAt(ZonedDateTime.now());
-        }
+        answerPost.setVerified(false);
         AnswerPost savedAnswer = answerPostRepository.save(answerPost);
         savedAnswer.setAuthorRole(UserRole.USER);
         savedAnswer.setIsSaved(false);

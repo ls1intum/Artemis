@@ -71,6 +71,7 @@ public class UserReferenceCleanupService {
         bindings.put(UserDeletionReferencePolicy.POST_AUTHOR, bind(communication::countPosts, communication::deletePosts));
         bindings.put(UserDeletionReferencePolicy.ANSWER_POST_AUTHOR, bind(communication::countAnswerPosts, communication::deleteAnswerPosts));
         bindings.put(UserDeletionReferencePolicy.ANSWER_POST_VERIFIER, bind(communication::countVerifiedAnswerPosts, communication::detachVerifiedAnswerPosts));
+        bindings.put(UserDeletionReferencePolicy.ANSWER_POST_RESOLVER, bind(communication::countResolvedAnswerPosts, communication::detachResolvedAnswerPosts));
         bindings.put(UserDeletionReferencePolicy.REACTION_AUTHOR, bind(communication::countReactions, communication::deleteReactions));
         bindings.put(UserDeletionReferencePolicy.SAVED_POST, bind(communication::countSavedPosts, communication::deleteSavedPosts));
         bindings.put(UserDeletionReferencePolicy.CONVERSATION_CREATOR, bind(communication::countCreatedConversations, communication::detachCreatedConversations));

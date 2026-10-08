@@ -40,4 +40,9 @@ public class IrisWebsocketTopics implements WebsocketTopicProvider {
      * The answer to a global search question.
      */
     public static final WebsocketUserTopic GLOBAL_SEARCH_ANSWER = WebsocketUserTopic.of("/topic/iris/global-search-answer");
+
+    /**
+     * Progress of the Course Memory ingestion or removal a user triggered in a course by resolving a thread or approving an Iris draft.
+     */
+    public static final WebsocketUserTopic COURSE_MEMORY = WebsocketUserTopic.of("/topic/iris/course-memory/{courseId}");
 }
