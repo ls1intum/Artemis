@@ -172,6 +172,239 @@ def read(file_path):
         return file.read()
 
 
+# --- Yes/no query-shape rules ---
+# Unlike the two count-based checks at the top of this file, each rule below either applies or it
+# doesn't -- there is no count to tune. Every finding carries a stable "key" (rule + class + member,
+# never a line number, which shifts with every edit) so a run can later be compared against a
+# baseline run.
+#
+#   multiple_collection_fetch  -- one query fetches two or more collections of the SAME parent
+#                                 (e.g. c.exerciseLinks and c.lectureUnitLinks): the result rows
+#                                 are the cartesian product of both collections. Fetching along a
+#                                 chain (results -> feedbacks) is not flagged: its rows are just
+#                                 the total number of children.
+#   pageable_collection_fetch  -- a paged method (Pageable parameter) whose query fetches a
+#                                 collection: Hibernate cannot page in SQL then, so it loads every
+#                                 row and pages in memory (warning HHH90003004).
+#   eager_to_many              -- a to-many association declared FetchType.EAGER: every load of the
+#                                 owner loads the whole collection, wherever it is used.
+
+ANNOTATED_FIELD_PATTERN = re.compile(r'(?:private|protected|public)\s+(?:final\s+)?([\w.]+(?:<[^;=(){}]*>)?)\s+(\w+)\s*(?:=[^;]+)?;')
+# anchored to a declaration line, so the word "class" in a Javadoc sentence is never taken for one
+ENTITY_CLASS_PATTERN = re.compile(r'^\s*(?:public\s+|abstract\s+|final\s+)*class\s+(\w+)(?:\s*<[^{]*?>)?(?:\s+extends\s+(\w+))?', re.MULTILINE)
+TO_MANY_ANNOTATIONS = ('@OneToMany', '@ManyToMany', '@ElementCollection')
+TO_ONE_ANNOTATIONS = ('@ManyToOne', '@OneToOne')
+REPOSITORY_ENTITY_PATTERN = re.compile(r'\binterface\s+\w+\s+extends\s+[\w.]*Repository\s*<\s*(\w+)\s*,')
+QUERY_START_PATTERN = re.compile(r'@Query\s*\(')
+ENTITYGRAPH_START_PATTERN = re.compile(r'@EntityGraph\s*\(')
+TEXT_BLOCK_OR_STRING = re.compile(r'"""(.*?)"""|"((?:[^"\\\n]|\\.)*)"', re.DOTALL)
+FROM_ALIAS_PATTERN = re.compile(r'\b(?:FROM|,)\s+(\w+)\s+(?:AS\s+)?(\w+)', re.IGNORECASE)
+JOIN_PATTERN = re.compile(r'\bJOIN\s+(FETCH\s+)?(?:TREAT\s*\(\s*)?(\w+)\.(\w+)(?:\s+AS\s+\w+\s*\))?(?:\s+(?:AS\s+)?(\w+))?', re.IGNORECASE)
+JPQL_KEYWORDS = {'join', 'left', 'right', 'inner', 'outer', 'where', 'on', 'order', 'group', 'having', 'fetch', 'and', 'or', 'with', 'union'}
+
+
+def line_of(content, index):
+    return content.count('\n', 0, index) + 1
+
+
+def matching_paren(content, open_index):
+    """Index of the ')' closing the '(' at open_index, skipping string and text-block literals
+    (a JPQL query can contain parentheses of its own)."""
+    depth, i = 0, open_index
+    while i < len(content):
+        if content.startswith('"""', i):
+            end = content.find('"""', i + 3)
+            i = len(content) if end == -1 else end + 3
+            continue
+        ch = content[i]
+        if ch == '"':
+            i += 1
+            while i < len(content) and content[i] != '"':
+                i += 2 if content[i] == '\\' else 1
+        elif ch == '(':
+            depth += 1
+        elif ch == ')':
+            depth -= 1
+            if depth == 0:
+                return i
+        i += 1
+    return -1
+
+
+def collect_entity_facts(content, entities, superclass_of):
+    """Records, for every @Entity/@MappedSuperclass, each association field as
+    {field: (kind, target, eager)} with kind 'many' or 'one', plus the class it extends, so a field
+    declared on a superclass is still found from a subclass (see lookup_field)."""
+    if '@Entity' not in content and '@MappedSuperclass' not in content:
+        return
+    class_match = ENTITY_CLASS_PATTERN.search(content)
+    if not class_match:
+        return
+    entity_name = class_match.group(1)
+    if class_match.group(2):
+        superclass_of[entity_name] = class_match.group(2)
+    fields = entities.setdefault(entity_name, {})
+    for match in ANNOTATED_FIELD_PATTERN.finditer(content):
+        field_type, field_name = match.group(1), match.group(2)
+        # same bounded "annotations since the previous statement" window as collect_eager_edges
+        preceding = content[max(0, match.start() - 1500):match.start()]
+        annotations = preceding[preceding.rfind(';') + 1:]
+        if any(a in annotations for a in TO_MANY_ANNOTATIONS):
+            # the element type is the last type argument: Set<Result> -> Result, Map<K, V> -> V
+            type_arguments = re.findall(r'\w+', field_type[field_type.find('<'):]) if '<' in field_type else []
+            target = type_arguments[-1] if type_arguments else None
+            fields[field_name] = ('many', target, 'FetchType.EAGER' in annotations, line_of(content, match.start()))
+        elif any(a in annotations for a in TO_ONE_ANNOTATIONS):
+            fields[field_name] = ('one', field_type.split('.')[-1], 'FetchType.LAZY' not in annotations, line_of(content, match.start()))
+
+
+def lookup_field(entity, field, entities, superclass_of):
+    """The association facts for entity.field, walking up the superclass chain; None if unknown."""
+    seen = set()
+    while entity and entity not in seen:
+        seen.add(entity)
+        if field in entities.get(entity, {}):
+            return entities[entity][field]
+        entity = superclass_of.get(entity)
+    return None
+
+
+def unambiguous_kind(field, entities):
+    """Fallback when the owning entity of a fetched field can't be resolved (e.g. an alias the
+    simple JPQL parsing below doesn't understand): the field's kind, but only if every entity
+    declaring a field of that name agrees on it -- so an unresolvable alias never produces a guess."""
+    kinds = {facts[field][0] for facts in entities.values() if field in facts}
+    return kinds.pop() if len(kinds) == 1 else None
+
+
+def collection_fetches_of_query(jpql, entities, superclass_of):
+    """[(parent alias, field)] for every JOIN FETCH in the query that fetches a collection."""
+    alias_entity = {}
+    for entity, alias in FROM_ALIAS_PATTERN.findall(jpql):
+        if alias.lower() not in JPQL_KEYWORDS and entity in entities:
+            alias_entity[alias] = entity
+    joins = JOIN_PATTERN.findall(jpql)
+    # resolve join aliases in order; a few passes cover joins that refer to a later-declared alias
+    for _ in range(3):
+        for _fetch, parent, field, alias in joins:
+            if alias and alias.lower() not in JPQL_KEYWORDS and parent in alias_entity and alias not in alias_entity:
+                facts = lookup_field(alias_entity[parent], field, entities, superclass_of)
+                if facts and facts[1] in entities:
+                    alias_entity[alias] = facts[1]
+    fetches = []
+    for fetch, parent, field, _alias in joins:
+        if not fetch:
+            continue
+        facts = lookup_field(alias_entity[parent], field, entities, superclass_of) if parent in alias_entity else None
+        kind = facts[0] if facts else unambiguous_kind(field, entities)
+        if kind == 'many':
+            fetches.append((parent, field))
+    return fetches
+
+
+def collection_fetches_of_entity_graph(paths, root_entity, entities, superclass_of):
+    """[(parent path, field)] for every attributePaths entry that fetches a collection, resolving
+    each dotted segment from the repository's own entity type."""
+    fetches = []
+    for path in paths:
+        entity, parent = root_entity, ''
+        # every segment is fetched, not just the last: "results.feedbacks" fetches results too
+        for segment in path.split('.'):
+            facts = lookup_field(entity, segment, entities, superclass_of) if entity else None
+            kind = facts[0] if facts else unambiguous_kind(segment, entities)
+            if kind == 'many':
+                fetches.append((parent or '<root>', segment))
+            entity = facts[1] if facts else None
+            parent = f"{parent}.{segment}" if parent else segment
+    # "a" and "a.b" both name collection a; count each (parent, field) once
+    return sorted(set(fetches))
+
+
+def method_after(content, close_index):
+    """Name of the method an annotation ending at close_index belongs to: the first identifier
+    followed by '(' once any further annotations in between are skipped."""
+    i = close_index + 1
+    while True:
+        rest = content[i:]
+        stripped = rest.lstrip()
+        i += len(rest) - len(stripped)
+        annotation = re.match(r'@[\w.]+', stripped)
+        if not annotation:
+            break
+        i += annotation.end()
+        if content[i:].lstrip().startswith('('):
+            i = matching_paren(content, content.index('(', i)) + 1
+    declaration = content[i:i + 600].split(';')[0].split('{')[0]
+    name = re.search(r'(\w+)\s*\(', declaration)
+    return (name.group(1) if name else None), declaration
+
+
+def sibling_groups(fetches):
+    by_parent = {}
+    for parent, field in fetches:
+        by_parent.setdefault(parent, []).append(field)
+    return {parent: fields for parent, fields in by_parent.items() if len(fields) >= 2}
+
+
+def is_paged(declaration):
+    return re.search(r'\bPageable\b', declaration) is not None
+
+
+def check_query_shapes(file_path, content, entities, superclass_of, findings):
+    class_name = os.path.splitext(os.path.basename(file_path))[0]
+    root_match = REPOSITORY_ENTITY_PATTERN.search(content)
+    root_entity = root_match.group(1) if root_match else None
+
+    for start_pattern, kind in ((QUERY_START_PATTERN, 'query'), (ENTITYGRAPH_START_PATTERN, 'entitygraph')):
+        for match in start_pattern.finditer(content):
+            open_index = match.end() - 1
+            close_index = matching_paren(content, open_index)
+            if close_index == -1:
+                continue
+            annotation = content[open_index + 1:close_index]
+            if kind == 'query':
+                literal = TEXT_BLOCK_OR_STRING.search(annotation)
+                if not literal or 'nativeQuery = true' in annotation.replace('nativeQuery=true', 'nativeQuery = true'):
+                    continue
+                snippet = (literal.group(1) or literal.group(2) or '').strip()
+                fetches = collection_fetches_of_query(snippet, entities, superclass_of)
+            else:
+                paths_match = re.search(r'attributePaths\s*=\s*\{([^}]*)\}|attributePaths\s*=\s*"([^"]+)"', annotation)
+                if not paths_match:
+                    continue
+                paths = re.findall(r'"([^"]+)"', paths_match.group(1)) if paths_match.group(1) is not None else [paths_match.group(2)]
+                snippet = f"@EntityGraph(attributePaths = {{{', '.join(paths)}}})"
+                fetches = collection_fetches_of_entity_graph(paths, root_entity, entities, superclass_of)
+            if not fetches:
+                continue
+
+            method, declaration = method_after(content, close_index)
+            member = f"{class_name}.{method}" if method else f"{class_name}:{line_of(content, match.start())}"
+            line = line_of(content, match.start())
+            for parent, fields in sibling_groups(fetches).items():
+                detail = f"fetches {len(fields)} collections of {parent}: {', '.join(fields)}"
+                print(f"\n[MultipleCollectionFetch] {member} ({file_path}:{line}): {detail}")
+                findings.append({"type": "multiple_collection_fetch", "key": f"multiple_collection_fetch:{member}:{parent}", "file": file_path, "line": line,
+                                 "member": member, "entityClass": root_entity, "detail": detail, "snippet": snippet})
+            if is_paged(declaration):
+                fields = ', '.join(field for _, field in fetches)
+                detail = f"paged method fetches collection(s) {fields}; Hibernate pages in memory"
+                print(f"\n[PageableCollectionFetch] {member} ({file_path}:{line}): {detail}")
+                findings.append({"type": "pageable_collection_fetch", "key": f"pageable_collection_fetch:{member}", "file": file_path, "line": line,
+                                 "member": member, "entityClass": root_entity, "detail": detail, "snippet": snippet})
+
+
+def check_eager_to_many(entities, entity_files, findings):
+    for entity, fields in sorted(entities.items()):
+        for field, (kind, target, eager, line) in sorted(fields.items()):
+            if kind == 'many' and eager:
+                member = f"{entity}.{field}"
+                detail = f"to-many association to {target} is FetchType.EAGER"
+                print(f"\n[EagerToMany] {member} ({entity_files.get(entity)}:{line}): {detail}")
+                findings.append({"type": "eager_to_many", "key": f"eager_to_many:{member}", "file": entity_files.get(entity), "line": line,
+                                 "member": member, "entityClass": entity, "detail": detail})
+
+
 def main():
     parser = argparse.ArgumentParser(description="Static query-quality scanner")
     parser.add_argument("--json", metavar="PATH", help="Also write all findings as structured JSON to PATH")
@@ -185,6 +418,22 @@ def main():
     for directory in SEARCH_DIRECTORIES:
         scan_directory(directory, lambda file_path: scan_file(file_path, findings))
         scan_directory(directory, lambda file_path: collect_eager_edges(file_path, read(file_path), eager_edges, subclasses_of, non_single_table))
+
+    # Yes/no query-shape rules: one pass to learn every entity's associations, one to apply the rules
+    entities, superclass_of, entity_files, sources = {}, {}, {}, {}
+
+    def learn(file_path):
+        content = sources[file_path] = read(file_path)
+        known = set(entities)
+        collect_entity_facts(content, entities, superclass_of)
+        for entity in set(entities) - known:
+            entity_files[entity] = file_path
+
+    for directory in SEARCH_DIRECTORIES:
+        scan_directory(directory, learn)
+    for file_path, content in sources.items():
+        check_query_shapes(file_path, content, entities, superclass_of, findings)
+    check_eager_to_many(entities, entity_files, findings)
 
     analyze_eager_fetch_graph(eager_edges, subclasses_of, non_single_table, findings)
     eager_fetch_findings = [f for f in findings if f["type"] == "wide_eager_fetch"]
