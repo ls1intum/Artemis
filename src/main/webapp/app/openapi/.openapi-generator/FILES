@@ -9,6 +9,7 @@ api/hyperion-exercise-variant-resources.ts
 api/hyperion-faq-api.ts
 api/hyperion-problem-statement-api.ts
 api/hyperion-quiz-question-generation-api.ts
+api/query-params.ts
 api/quiz-exercise-batch-api.ts
 api/quiz-participation-api.ts
 api/quiz-participation-resources.ts

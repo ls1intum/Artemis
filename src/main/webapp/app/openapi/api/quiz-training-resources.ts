@@ -17,6 +17,7 @@ import { httpResource, HttpResourceRef } from '@angular/common/http';
 import { Signal } from '@angular/core';
 import { LeaderboardSetting } from '../model/leaderboard-setting';
 import { LeaderboardWithCurrentUserEntry } from '../model/leaderboard-with-current-user-entry';
+
 const BASE_PATH = '';
 
 /**

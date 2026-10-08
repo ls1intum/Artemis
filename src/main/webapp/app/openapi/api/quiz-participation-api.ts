@@ -16,6 +16,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { StudentQuizParticipation } from '../model/student-quiz-participation';
+import { appendQueryParam } from './query-params';
 
 @Injectable({ providedIn: 'root' })
 export class QuizParticipationApi {
@@ -31,9 +32,7 @@ export class QuizParticipationApi {
      */
     getParticipationResult(exerciseId: number, participationId: number, submissionId?: number): Observable<StudentQuizParticipation> {
         const queryParams = new URLSearchParams();
-        if (submissionId !== undefined && submissionId !== null) {
-            queryParams.set('submissionId', String(submissionId));
-        }
+        appendQueryParam(queryParams, 'submissionId', submissionId);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/quiz/quiz-exercises/${exerciseId}/participations/${participationId}/result${queryString ? `?${queryString}` : ''}`;
         return this.http.get<StudentQuizParticipation>(url);

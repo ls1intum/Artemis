@@ -19,6 +19,7 @@ import { TutorialGroupFreePeriod } from '../model/tutorial-group-free-period';
 import { TutorialGroupFreePeriodRequest } from '../model/tutorial-group-free-period-request';
 import { TutorialGroupSessionCount } from '../model/tutorial-group-session-count';
 import { TutorialGroupFreePeriodSessionCount } from '../model/tutorial-group-free-period-session-count';
+import { appendQueryParam } from './query-params';
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupFreePeriodApi {
@@ -71,15 +72,9 @@ export class TutorialGroupFreePeriodApi {
      */
     getOverlappingSessionCount(courseId: number, from: string, to: string, editedFreePeriodId?: number): Observable<number> {
         const queryParams = new URLSearchParams();
-        if (from !== undefined && from !== null) {
-            queryParams.set('from', String(from));
-        }
-        if (to !== undefined && to !== null) {
-            queryParams.set('to', String(to));
-        }
-        if (editedFreePeriodId !== undefined && editedFreePeriodId !== null) {
-            queryParams.set('editedFreePeriodId', String(editedFreePeriodId));
-        }
+        appendQueryParam(queryParams, 'from', from);
+        appendQueryParam(queryParams, 'to', to);
+        appendQueryParam(queryParams, 'editedFreePeriodId', editedFreePeriodId);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-free-periods/overlapping-session-count${queryString ? `?${queryString}` : ''}`;
         return this.http.get<number>(url);
@@ -94,12 +89,8 @@ export class TutorialGroupFreePeriodApi {
      */
     getSessionCounts(courseId: number, from: string, to: string): Observable<Array<TutorialGroupSessionCount>> {
         const queryParams = new URLSearchParams();
-        if (from !== undefined && from !== null) {
-            queryParams.set('from', String(from));
-        }
-        if (to !== undefined && to !== null) {
-            queryParams.set('to', String(to));
-        }
+        appendQueryParam(queryParams, 'from', from);
+        appendQueryParam(queryParams, 'to', to);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-free-periods/session-counts${queryString ? `?${queryString}` : ''}`;
         return this.http.get<Array<TutorialGroupSessionCount>>(url);

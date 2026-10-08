@@ -18,6 +18,7 @@ import { Signal } from '@angular/core';
 import { TutorialGroupFreePeriod } from '../model/tutorial-group-free-period';
 import { TutorialGroupSessionCount } from '../model/tutorial-group-session-count';
 import { TutorialGroupFreePeriodSessionCount } from '../model/tutorial-group-free-period-session-count';
+import { appendQueryParam } from './query-params';
 
 const BASE_PATH = '';
 
@@ -71,15 +72,9 @@ export function getOverlappingSessionCountResource(courseId: Signal<number | und
         }
         const queryParams = params();
         const searchParams = new URLSearchParams();
-        if (queryParams.from !== undefined && queryParams.from !== null) {
-            searchParams.set('from', String(queryParams.from));
-        }
-        if (queryParams.to !== undefined && queryParams.to !== null) {
-            searchParams.set('to', String(queryParams.to));
-        }
-        if (queryParams.editedFreePeriodId !== undefined && queryParams.editedFreePeriodId !== null) {
-            searchParams.set('editedFreePeriodId', String(queryParams.editedFreePeriodId));
-        }
+        appendQueryParam(searchParams, 'from', queryParams.from);
+        appendQueryParam(searchParams, 'to', queryParams.to);
+        appendQueryParam(searchParams, 'editedFreePeriodId', queryParams.editedFreePeriodId);
         const query = searchParams.toString();
         return `${BASE_PATH}/api/tutorialgroup/courses/${courseIdValue}/tutorial-free-periods/overlapping-session-count${query ? `?${query}` : ''}`;
     });
@@ -108,12 +103,8 @@ export function getSessionCountsResource(courseId: Signal<number | undefined> | 
         }
         const queryParams = params();
         const searchParams = new URLSearchParams();
-        if (queryParams.from !== undefined && queryParams.from !== null) {
-            searchParams.set('from', String(queryParams.from));
-        }
-        if (queryParams.to !== undefined && queryParams.to !== null) {
-            searchParams.set('to', String(queryParams.to));
-        }
+        appendQueryParam(searchParams, 'from', queryParams.from);
+        appendQueryParam(searchParams, 'to', queryParams.to);
         const query = searchParams.toString();
         return `${BASE_PATH}/api/tutorialgroup/courses/${courseIdValue}/tutorial-free-periods/session-counts${query ? `?${query}` : ''}`;
     });

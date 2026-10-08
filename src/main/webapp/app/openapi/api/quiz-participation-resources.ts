@@ -16,6 +16,7 @@
 import { httpResource, HttpResourceRef } from '@angular/common/http';
 import { Signal } from '@angular/core';
 import { StudentQuizParticipation } from '../model/student-quiz-participation';
+import { appendQueryParam } from './query-params';
 
 const BASE_PATH = '';
 
@@ -46,9 +47,7 @@ export function getParticipationResultResource(exerciseId: Signal<number | undef
         }
         const queryParams = params?.() ?? {};
         const searchParams = new URLSearchParams();
-        if (queryParams.submissionId !== undefined && queryParams.submissionId !== null) {
-            searchParams.set('submissionId', String(queryParams.submissionId));
-        }
+        appendQueryParam(searchParams, 'submissionId', queryParams.submissionId);
         const query = searchParams.toString();
         return `${BASE_PATH}/api/quiz/quiz-exercises/${exerciseIdValue}/participations/${participationIdValue}/result${query ? `?${query}` : ''}`;
     });

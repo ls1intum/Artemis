@@ -16,6 +16,7 @@
 import { httpResource, HttpResourceRef } from '@angular/common/http';
 import { Signal } from '@angular/core';
 import { GlobalSearchResult } from '../model/global-search-result';
+import { appendQueryParam } from './query-params';
 
 const BASE_PATH = '';
 
@@ -42,27 +43,13 @@ export function globalSearchResource(params: Signal<GlobalSearchParams>): HttpRe
     return httpResource<Array<GlobalSearchResult>>(() => {
         const queryParams = params();
         const searchParams = new URLSearchParams();
-        if (queryParams.q !== undefined && queryParams.q !== null) {
-            searchParams.set('q', String(queryParams.q));
-        }
-        if (queryParams.types !== undefined && queryParams.types !== null) {
-            searchParams.set('types', String(queryParams.types));
-        }
-        if (queryParams.excludeTypes !== undefined && queryParams.excludeTypes !== null) {
-            searchParams.set('excludeTypes', String(queryParams.excludeTypes));
-        }
-        if (queryParams.courseIds?.length) {
-            queryParams.courseIds.forEach(value => searchParams.append('courseIds', String(value)));
-        }
-        if (queryParams.excludeCourseIds?.length) {
-            queryParams.excludeCourseIds.forEach(value => searchParams.append('excludeCourseIds', String(value)));
-        }
-        if (queryParams.limit !== undefined && queryParams.limit !== null) {
-            searchParams.set('limit', String(queryParams.limit));
-        }
-        if (queryParams.courseId !== undefined && queryParams.courseId !== null) {
-            searchParams.set('courseId', String(queryParams.courseId));
-        }
+        appendQueryParam(searchParams, 'q', queryParams.q);
+        appendQueryParam(searchParams, 'types', queryParams.types);
+        appendQueryParam(searchParams, 'excludeTypes', queryParams.excludeTypes);
+        appendQueryParam(searchParams, 'courseIds', queryParams.courseIds);
+        appendQueryParam(searchParams, 'excludeCourseIds', queryParams.excludeCourseIds);
+        appendQueryParam(searchParams, 'limit', queryParams.limit);
+        appendQueryParam(searchParams, 'courseId', queryParams.courseId);
         const query = searchParams.toString();
         return `${BASE_PATH}/api/search${query ? `?${query}` : ''}`;
     });

@@ -17,6 +17,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { CreateOrUpdateTutorialGroupSessionRequest } from '../model/create-or-update-tutorial-group-session-request';
 import { TutorialGroupSession } from '../model/tutorial-group-session';
+import { appendQueryParam } from './query-params';
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupSessionApi {
@@ -45,9 +46,7 @@ export class TutorialGroupSessionApi {
      */
     cancelSession(courseId: number, tutorialGroupId: number, sessionId: number, explanation?: string): Observable<void> {
         const queryParams = new URLSearchParams();
-        if (explanation !== undefined && explanation !== null) {
-            queryParams.set('explanation', String(explanation));
-        }
+        appendQueryParam(queryParams, 'explanation', explanation);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/cancel${queryString ? `?${queryString}` : ''}`;
         return this.http.patch<void>(url, null);

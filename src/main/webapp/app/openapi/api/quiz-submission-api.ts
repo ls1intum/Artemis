@@ -19,6 +19,7 @@ import { QuizSubmissionBeforeEvaluation } from '../model/quiz-submission-before-
 import { QuizSubmissionFromLiveClient } from '../model/quiz-submission-from-live-client';
 import { QuizSubmissionFromStudent } from '../model/quiz-submission-from-student';
 import { ResultAfterEvaluationWithSubmission } from '../model/result-after-evaluation-with-submission';
+import { appendQueryParam } from './query-params';
 
 @Injectable({ providedIn: 'root' })
 export class QuizSubmissionApi {
@@ -34,9 +35,7 @@ export class QuizSubmissionApi {
      */
     saveOrSubmitForLiveMode(exerciseId: number, quizSubmissionFromLiveClient: QuizSubmissionFromLiveClient, submit?: boolean): Observable<QuizSubmissionBeforeEvaluation> {
         const queryParams = new URLSearchParams();
-        if (submit !== undefined && submit !== null) {
-            queryParams.set('submit', String(submit));
-        }
+        appendQueryParam(queryParams, 'submit', submit);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/quiz/exercises/${exerciseId}/submissions/live${queryString ? `?${queryString}` : ''}`;
         return this.http.post<QuizSubmissionBeforeEvaluation>(url, quizSubmissionFromLiveClient);
