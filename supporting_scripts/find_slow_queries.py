@@ -394,6 +394,255 @@ def check_query_shapes(file_path, content, entities, superclass_of, findings):
                                  "member": member, "entityClass": root_entity, "detail": detail, "snippet": snippet})
 
 
+# --- repository_call_in_loop: one query per item instead of one query for all items ---
+# Flags a call on one of the class's own repository fields that sits inside a loop body: a for /
+# for-each / while / do loop, or a lambda (or method reference) that runs once per element --
+# Iterable/Map.forEach, removeIf, a stream operation, or a Collectors.toMap/groupingBy function.
+# This is the source-code side of the dynamic N+1 shape.
+#
+# Precision measures, each against a concrete false-positive source:
+#   * comments and string literals are blanked out first (same length, so indices still line up):
+#     a commented-out call is no finding, and a '{' inside a string does not derail brace matching;
+#   * the receiver must be a field of the class whose declared type is a repository, not just any
+#     identifier ending in "Repository";
+#   * map/filter/flatMap/... count only inside a stream pipeline, so Optional.map(...) -- not a loop,
+#     and everywhere in this codebase as findById(id).map(...) -- is not flagged;
+#   * nested loops report a call once, keyed by (enclosing method, repository method).
+# Known blind spots: a repository reached indirectly (a service method called in the loop, or an
+# Optional<...Api> module wrapper) is not followed -- the dynamic check covers those at runtime.
+
+# any "Type name;" / "Type name =" declaration; filtered down to repository types afterwards (a
+# pattern spelling out the "Repository" suffix backtracks through every capitalized word, ~100x slower)
+TYPED_DECLARATION_PATTERN = re.compile(r'\b([A-Z]\w*)\s+([a-z]\w*)\s*[;=]')
+LOOP_KEYWORD_PATTERN = re.compile(r'\b(for|while)\s*\(')
+DO_LOOP_PATTERN = re.compile(r'\bdo\s*\{')
+LAMBDA_ARROW_PATTERN = re.compile(r'->')
+METHOD_REFERENCE_PATTERN = re.compile(r'\b(?:this\.)?(\w+)::(\w+)')
+METHOD_DECLARATION_PATTERN = re.compile(
+    r'(?:(?:public|protected|private|static|final|synchronized|default|abstract)\s+)*(?:<[^>]+>\s+)?[\w.]+(?:<[^;{}()]*>)?(?:\[\])*\s+(\w+)\s*\([^;{}]*\)\s*(?:throws\s+[\w.,\s]+)?\{')
+# operations whose function argument runs once per element, wherever they are called
+PER_ELEMENT_ALWAYS = {'forEach', 'forEachRemaining', 'removeIf', 'replaceAll', 'toMap', 'groupingBy', 'partitioningBy', 'mapping', 'flatMapping', 'filtering'}
+# per element only on a stream: the same names exist on Optional, where they run at most once
+PER_ELEMENT_ON_STREAM = {'map', 'flatMap', 'filter', 'peek', 'anyMatch', 'allMatch', 'noneMatch', 'mapToInt', 'mapToLong', 'mapToDouble', 'mapToObj', 'takeWhile',
+                         'dropWhile', 'sorted', 'min', 'max', 'reduce', 'collect'}
+STREAM_SOURCE_PATTERN = re.compile(r'\.(?:stream|parallelStream|chars|lines)\s*\(|\b(?:Stream|IntStream|LongStream|DoubleStream|StreamSupport)\.')
+STREAM_TERMINAL_OPERATIONS = {'max', 'min', 'findFirst', 'findAny', 'reduce', 'collect', 'toList', 'toArray', 'count', 'anyMatch', 'allMatch', 'noneMatch', 'average',
+                              'sum'}
+NON_QUERYING_REPOSITORY_METHODS ={'getReferenceById', 'getReference'}  # return a proxy without a query
+# a Spring Data repository interface; entity classes like AuxiliaryRepository or JGit's Repository share the suffix
+REPOSITORY_INTERFACE_PATTERN = re.compile(r'\binterface\s+(\w+)(?:<[^>{]*>)?\s+extends\s+[^{]*?\b\w*Repository\s*<')
+
+
+# one alternation, so whichever construct starts first wins: a "//" inside a string stays a string
+COMMENT_OR_LITERAL_PATTERN = re.compile(r'//[^\n]*|/\*.*?\*/|""".*?"""|"(?:[^"\\\n]|\\.)*"|' + r"'(?:[^'\\\n]|\\.)*'", re.DOTALL)
+
+
+def blank_comments_and_strings(content):
+    """content with comments and the inside of string, text-block and char literals replaced by
+    spaces (newlines kept), so every index still points at the same place in the original."""
+
+    def blank(match):
+        text = match.group(0)
+        if text.startswith('//') or text.startswith('/*'):
+            return re.sub(r'[^\n]', ' ', text)
+        quote = 3 if text.startswith('"""') else 1
+        return text[:quote] + re.sub(r'[^\n]', ' ', text[quote:-quote]) + text[-quote:]
+
+    return COMMENT_OR_LITERAL_PATTERN.sub(blank, content)
+
+
+def matching_close(code, open_index, open_char, close_char):
+    """Index of the bracket closing the one at open_index; code must already be blanked."""
+    depth = 0
+    for i in range(open_index, len(code)):
+        if code[i] == open_char:
+            depth += 1
+        elif code[i] == close_char:
+            depth -= 1
+            if depth == 0:
+                return i
+    return len(code)
+
+
+def statement_body_end(code, start):
+    """End of a brace-less loop body: the first ';' at bracket depth 0."""
+    depth = 0
+    for i in range(start, len(code)):
+        ch = code[i]
+        if ch in '({[':
+            depth += 1
+        elif ch in ')}]':
+            depth -= 1
+        elif ch == ';' and depth <= 0:
+            return i + 1
+    return len(code)
+
+
+def enclosing_call(code, index):
+    """(method name, index of its '(') of the call whose argument list contains index, or (None, -1)."""
+    depth = 0
+    for i in range(index - 1, -1, -1):
+        ch = code[i]
+        if ch in ')]':
+            depth += 1
+        elif ch in '([':
+            if depth == 0:
+                if ch == '[':
+                    return None, -1
+                j = i - 1
+                while j >= 0 and code[j].isspace():
+                    j -= 1
+                name_end = j + 1
+                while j >= 0 and (code[j].isalnum() or code[j] == '_'):
+                    j -= 1
+                return (code[j + 1:name_end] or None), i
+            depth -= 1
+        elif ch in '{};' and depth == 0:
+            return None, -1
+    return None, -1
+
+
+def statement_start(code, index):
+    """Start of the statement containing index: just after the nearest ';', '{' or '}' outside brackets."""
+    depth = 0
+    for i in range(index - 1, -1, -1):
+        ch = code[i]
+        if ch in ')]':
+            depth += 1
+        elif ch in '([':
+            depth -= 1
+        elif ch in ';{}' and depth <= 0:
+            return i + 1
+    return 0
+
+
+def chain_calls(segment):
+    """Names of the method calls chained at the top level of segment (inside arguments ignored)."""
+    names, depth = [], 0
+    for match in re.finditer(r'\.\s*(\w+)\s*\(|[()]', segment):
+        token = match.group(0)
+        if token == '(':
+            depth += 1
+        elif token == ')':
+            depth = max(0, depth - 1)  # the segment may start inside the source call, e.g. right after ".stream("
+        else:
+            if depth == 0:
+                names.append(match.group(1))
+            depth += 1  # the call's own '(' was consumed by this match
+    return names
+
+
+def runs_per_element(code, call_name, call_open):
+    if call_name in PER_ELEMENT_ALWAYS:
+        return True
+    if call_name in PER_ELEMENT_ON_STREAM:
+        statement = code[statement_start(code, call_open):call_open]
+        sources = list(STREAM_SOURCE_PATTERN.finditer(statement))
+        if not sources:
+            return False
+        # a terminal operation ends the stream: in stream().max(...).flatMap(...) the flatMap is Optional.flatMap
+        between = statement[sources[-1].end():].rsplit(call_name, 1)[0]
+        return not any(name in STREAM_TERMINAL_OPERATIONS for name in chain_calls(between))
+    return False
+
+
+def lambda_body_span(code, arrow_index, call_open):
+    """(start, end) of the lambda body after the arrow: a {...} block, or an expression ending at
+    the first ',' or ')' that closes it inside the enclosing call."""
+    start = arrow_index + 2
+    while start < len(code) and code[start].isspace():
+        start += 1
+    if start < len(code) and code[start] == '{':
+        return start, matching_close(code, start, '{', '}')
+    depth = 0
+    for i in range(start, len(code)):
+        ch = code[i]
+        if ch in '({[':
+            depth += 1
+        elif ch in ')}]':
+            if depth == 0:
+                return start, i
+            depth -= 1
+        elif ch in ',;' and depth == 0:
+            return start, i
+    return start, len(code)
+
+
+def loop_bodies(code):
+    """[(start, end, kind)] for every loop body and per-element lambda in the (blanked) code."""
+    bodies = []
+    for match in LOOP_KEYWORD_PATTERN.finditer(code):
+        header_close = matching_close(code, match.end() - 1, '(', ')')
+        after = header_close + 1
+        while after < len(code) and code[after].isspace():
+            after += 1
+        if code.startswith('{', after):
+            bodies.append((after, matching_close(code, after, '{', '}'), match.group(1)))
+        elif match.group(1) == 'for' or not code.startswith(';', after):  # "} while (...);" ends a do loop
+            bodies.append((after, statement_body_end(code, after), match.group(1)))
+    for match in DO_LOOP_PATTERN.finditer(code):
+        brace = match.end() - 1
+        bodies.append((brace, matching_close(code, brace, '{', '}'), 'do'))
+    for match in LAMBDA_ARROW_PATTERN.finditer(code):
+        call_name, call_open = enclosing_call(code, match.start())
+        if call_name and runs_per_element(code, call_name, call_open):
+            start, end = lambda_body_span(code, match.start(), call_open)
+            bodies.append((start, end, call_name))
+    return bodies
+
+
+def method_spans(code):
+    spans = []
+    for match in METHOD_DECLARATION_PATTERN.finditer(code):
+        if match.group(1) in ('if', 'for', 'while', 'switch', 'catch', 'synchronized', 'return', 'new'):
+            continue
+        brace = match.end() - 1
+        spans.append((brace, matching_close(code, brace, '{', '}'), match.group(1)))
+    return spans
+
+
+def enclosing_method(spans, index):
+    inside = [s for s in spans if s[0] <= index <= s[1]]
+    return min(inside, key=lambda s: s[1] - s[0])[2] if inside else None
+
+
+def check_repository_calls_in_loops(file_path, content, repository_types, findings):
+    code = blank_comments_and_strings(content)
+    repository_fields = {name: type_ for type_, name in TYPED_DECLARATION_PATTERN.findall(code) if type_ in repository_types}
+    if not repository_fields:
+        return
+    class_name = os.path.splitext(os.path.basename(file_path))[0]
+    call_pattern = re.compile(r'\b(?:this\.)?(' + '|'.join(map(re.escape, repository_fields)) + r')\s*\.\s*(\w+)\s*\(')
+    spans = method_spans(code)
+    reported = set()
+
+    def report(index, field, repository_method, loop_kind):
+        if repository_method in NON_QUERYING_REPOSITORY_METHODS:
+            return
+        method = enclosing_method(spans, index)
+        member = f"{class_name}.{method}" if method else class_name
+        repository_call = f"{repository_fields[field]}.{repository_method}"
+        key = f"repository_call_in_loop:{member}:{repository_call}"
+        if key in reported:
+            return
+        reported.add(key)
+        line = line_of(content, index)
+        detail = f"{repository_call} called once per iteration ({loop_kind})"
+        print(f"\n[RepositoryCallInLoop] {member} ({file_path}:{line}): {detail}")
+        findings.append({"type": "repository_call_in_loop", "key": key, "file": file_path, "line": line, "member": member, "repositoryMethod": repository_call,
+                         "detail": detail, "snippet": content[index:content.find('\n', index)].strip()})
+
+    for start, end, kind in sorted(loop_bodies(code)):
+        for call in call_pattern.finditer(code, start, end):
+            report(call.start(), call.group(1), call.group(2), kind)
+    # method references to a repository passed to a per-element operation: .map(participationRepository::findById)
+    for ref in METHOD_REFERENCE_PATTERN.finditer(code):
+        if ref.group(1) in repository_fields:
+            call_name, call_open = enclosing_call(code, ref.start())
+            if call_name and runs_per_element(code, call_name, call_open):
+                report(ref.start(), ref.group(1), ref.group(2), call_name)
+
+
 def check_eager_to_many(entities, entity_files, findings):
     for entity, fields in sorted(entities.items()):
         for field, (kind, target, eager, line) in sorted(fields.items()):
@@ -431,8 +680,10 @@ def main():
 
     for directory in SEARCH_DIRECTORIES:
         scan_directory(directory, learn)
+    repository_types = {name for content in sources.values() for name in REPOSITORY_INTERFACE_PATTERN.findall(content)}
     for file_path, content in sources.items():
         check_query_shapes(file_path, content, entities, superclass_of, findings)
+        check_repository_calls_in_loops(file_path, content, repository_types, findings)
     check_eager_to_many(entities, entity_files, findings)
 
     analyze_eager_fetch_graph(eager_edges, subclasses_of, non_single_table, findings)
