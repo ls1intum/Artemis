@@ -359,9 +359,6 @@ class DemoAtlasSeedingIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     /**
-     * The exercises of the demo course of the given types, which is how the demo exercises are grouped into the topics of the course, with the weight of their link.
-     */
-    /**
      * The essays of the demo course with the given weight: the open one is about software architecture, the graded one about code reviews.
      */
     private Map<Long, Double> essays(long courseId, double weight, boolean open) {
@@ -370,6 +367,9 @@ class DemoAtlasSeedingIntegrationTest extends AbstractSpringIntegrationIndepende
                 .collect(Collectors.toMap(Exercise::getId, exercise -> weight));
     }
 
+    /**
+     * The exercises of the demo course of the given types, which is how the demo exercises are grouped into the topics of the course, with the weight of their link.
+     */
     private Map<Long, Double> exercises(long courseId, double weight, Class<?>... types) {
         return exerciseRepository.findAllExercisesByCourseId(courseId).stream().filter(exercise -> Stream.of(types).anyMatch(type -> type.isInstance(exercise)))
                 .collect(Collectors.toMap(Exercise::getId, exercise -> weight));

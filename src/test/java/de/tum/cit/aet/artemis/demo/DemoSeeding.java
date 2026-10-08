@@ -47,6 +47,8 @@ final class DemoSeeding {
      */
     static List<String> seedAndCollectErrors(DemoDataSeedingService demoDataSeedingService) {
         Logger seedingLogger = (Logger) LoggerFactory.getLogger(SEEDING_LOGGER);
+        // Seeding logs a failing area on the calling thread, while demo tests of other test contexts may seed concurrently in the same JVM.
+        String seedingThread = Thread.currentThread().getName();
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
         appender.start();
         seedingLogger.addAppender(appender);
@@ -56,6 +58,7 @@ final class DemoSeeding {
         finally {
             seedingLogger.detachAppender(appender);
         }
-        return appender.list.stream().filter(event -> event.getLevel() == Level.ERROR).map(ILoggingEvent::getFormattedMessage).toList();
+        return appender.list.stream().filter(event -> event.getLevel() == Level.ERROR && seedingThread.equals(event.getThreadName())).map(ILoggingEvent::getFormattedMessage)
+                .toList();
     }
 }
