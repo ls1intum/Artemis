@@ -27,6 +27,7 @@ import { ProblemStatementGlobalRefinementRequest } from '../model/problem-statem
 import { ProblemStatementTargetedRefinementRequest } from '../model/problem-statement-targeted-refinement-request';
 import { ProblemStatementRewriteResponse } from '../model/problem-statement-rewrite-response';
 import { ProblemStatementRewriteRequest } from '../model/problem-statement-rewrite-request';
+import { appendQueryParam } from './query-params';
 
 @Injectable({ providedIn: 'root' })
 export class HyperionProblemStatementApi {
@@ -76,9 +77,7 @@ export class HyperionProblemStatementApi {
      */
     checkExerciseConsistency(exerciseId: number, skipThreadContext?: boolean): Observable<ConsistencyCheckResponse> {
         const queryParams = new URLSearchParams();
-        if (skipThreadContext !== undefined && skipThreadContext !== null) {
-            queryParams.set('skipThreadContext', String(skipThreadContext));
-        }
+        appendQueryParam(queryParams, 'skipThreadContext', skipThreadContext);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/consistency-check${queryString ? `?${queryString}` : ''}`;
         return this.http.post<ConsistencyCheckResponse>(url, null);

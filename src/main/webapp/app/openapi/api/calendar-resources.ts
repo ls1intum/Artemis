@@ -16,6 +16,7 @@
 import { httpResource, HttpResourceRef } from '@angular/common/http';
 import { Signal } from '@angular/core';
 import { CalendarEvent } from '../model/calendar-event';
+import { appendQueryParam } from './query-params';
 
 const BASE_PATH = '';
 
@@ -43,15 +44,9 @@ export function getCalendarEventSubscriptionFileResource(courseId: Signal<number
         }
         const queryParams = params();
         const searchParams = new URLSearchParams();
-        if (queryParams.token !== undefined && queryParams.token !== null) {
-            searchParams.set('token', String(queryParams.token));
-        }
-        if (queryParams.filterOptions?.length) {
-            queryParams.filterOptions.forEach(value => searchParams.append('filterOptions', String(value)));
-        }
-        if (queryParams.language !== undefined && queryParams.language !== null) {
-            searchParams.set('language', String(queryParams.language));
-        }
+        appendQueryParam(searchParams, 'token', queryParams.token);
+        appendQueryParam(searchParams, 'filterOptions', queryParams.filterOptions);
+        appendQueryParam(searchParams, 'language', queryParams.language);
         const query = searchParams.toString();
         return `${BASE_PATH}/api/calendar/courses/${courseIdValue}/calendar-events-ics${query ? `?${query}` : ''}`;
     });
@@ -92,15 +87,9 @@ export function getCalendarEventsOverlappingMonthsResource(courseId: Signal<numb
         }
         const queryParams = params();
         const searchParams = new URLSearchParams();
-        if (queryParams.monthKeys?.length) {
-            queryParams.monthKeys.forEach(value => searchParams.append('monthKeys', String(value)));
-        }
-        if (queryParams.timeZone !== undefined && queryParams.timeZone !== null) {
-            searchParams.set('timeZone', String(queryParams.timeZone));
-        }
-        if (queryParams.language !== undefined && queryParams.language !== null) {
-            searchParams.set('language', String(queryParams.language));
-        }
+        appendQueryParam(searchParams, 'monthKeys', queryParams.monthKeys);
+        appendQueryParam(searchParams, 'timeZone', queryParams.timeZone);
+        appendQueryParam(searchParams, 'language', queryParams.language);
         const query = searchParams.toString();
         return `${BASE_PATH}/api/calendar/courses/${courseIdValue}/calendar-events${query ? `?${query}` : ''}`;
     });

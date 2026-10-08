@@ -16,6 +16,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { GlobalSearchResult } from '../model/global-search-result';
+import { appendQueryParam } from './query-params';
 
 @Injectable({ providedIn: 'root' })
 export class GlobalSearchApi {
@@ -35,27 +36,13 @@ export class GlobalSearchApi {
      */
     globalSearch(q: string, types?: string, excludeTypes?: string, courseIds?: Array<number>, excludeCourseIds?: Array<number>, limit?: number, courseId?: number): Observable<Array<GlobalSearchResult>> {
         const queryParams = new URLSearchParams();
-        if (q !== undefined && q !== null) {
-            queryParams.set('q', String(q));
-        }
-        if (types !== undefined && types !== null) {
-            queryParams.set('types', String(types));
-        }
-        if (excludeTypes !== undefined && excludeTypes !== null) {
-            queryParams.set('excludeTypes', String(excludeTypes));
-        }
-        if (courseIds !== undefined && courseIds !== null) {
-            courseIds.forEach(item => queryParams.append('courseIds', String(item)));
-        }
-        if (excludeCourseIds !== undefined && excludeCourseIds !== null) {
-            excludeCourseIds.forEach(item => queryParams.append('excludeCourseIds', String(item)));
-        }
-        if (limit !== undefined && limit !== null) {
-            queryParams.set('limit', String(limit));
-        }
-        if (courseId !== undefined && courseId !== null) {
-            queryParams.set('courseId', String(courseId));
-        }
+        appendQueryParam(queryParams, 'q', q);
+        appendQueryParam(queryParams, 'types', types);
+        appendQueryParam(queryParams, 'excludeTypes', excludeTypes);
+        appendQueryParam(queryParams, 'courseIds', courseIds);
+        appendQueryParam(queryParams, 'excludeCourseIds', excludeCourseIds);
+        appendQueryParam(queryParams, 'limit', limit);
+        appendQueryParam(queryParams, 'courseId', courseId);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/search${queryString ? `?${queryString}` : ''}`;
         return this.http.get<Array<GlobalSearchResult>>(url);

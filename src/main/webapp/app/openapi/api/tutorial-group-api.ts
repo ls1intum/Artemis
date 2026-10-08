@@ -23,6 +23,7 @@ import { TutorialGroupSchedule } from '../model/tutorial-group-schedule';
 import { TutorialGroupSummary } from '../model/tutorial-group-summary';
 import { TutorialGroupStudentImportData } from '../model/tutorial-group-student-import-data';
 import { TutorialGroupImportData } from '../model/tutorial-group-import-data';
+import { appendQueryParam } from './query-params';
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupApi {
@@ -84,9 +85,7 @@ export class TutorialGroupApi {
      */
     exportTutorialGroupsToCSV(courseId: number, fields: Array<string>): Observable<HttpResponse<Blob>> {
         const queryParams = new URLSearchParams();
-        if (fields !== undefined && fields !== null) {
-            fields.forEach(item => queryParams.append('fields', String(item)));
-        }
+        appendQueryParam(queryParams, 'fields', fields);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/export/csv${queryString ? `?${queryString}` : ''}`;
         return this.http.get(url, { responseType: 'blob', observe: 'response' });
@@ -100,9 +99,7 @@ export class TutorialGroupApi {
      */
     exportTutorialGroupsToJSON(courseId: number, fields: Array<string>): Observable<Array<TutorialGroupExportData>> {
         const queryParams = new URLSearchParams();
-        if (fields !== undefined && fields !== null) {
-            fields.forEach(item => queryParams.append('fields', String(item)));
-        }
+        appendQueryParam(queryParams, 'fields', fields);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/export/json${queryString ? `?${queryString}` : ''}`;
         return this.http.get<Array<TutorialGroupExportData>>(url);
@@ -205,15 +202,9 @@ export class TutorialGroupApi {
      */
     searchUnregisteredStudents(courseId: number, tutorialGroupId: number, loginOrName: string, pageIndex: number, pageSize: number): Observable<Array<TutorialGroupStudent>> {
         const queryParams = new URLSearchParams();
-        if (loginOrName !== undefined && loginOrName !== null) {
-            queryParams.set('loginOrName', String(loginOrName));
-        }
-        if (pageIndex !== undefined && pageIndex !== null) {
-            queryParams.set('pageIndex', String(pageIndex));
-        }
-        if (pageSize !== undefined && pageSize !== null) {
-            queryParams.set('pageSize', String(pageSize));
-        }
+        appendQueryParam(queryParams, 'loginOrName', loginOrName);
+        appendQueryParam(queryParams, 'pageIndex', pageIndex);
+        appendQueryParam(queryParams, 'pageSize', pageSize);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/unregistered-students${queryString ? `?${queryString}` : ''}`;
         return this.http.get<Array<TutorialGroupStudent>>(url);

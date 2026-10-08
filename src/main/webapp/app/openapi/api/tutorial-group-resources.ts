@@ -20,6 +20,8 @@ import { TutorialGroupStudent } from '../model/tutorial-group-student';
 import { TutorialGroupDetailData } from '../model/tutorial-group-detail-data';
 import { TutorialGroupSchedule } from '../model/tutorial-group-schedule';
 import { TutorialGroupSummary } from '../model/tutorial-group-summary';
+import { appendQueryParam } from './query-params';
+
 const BASE_PATH = '';
 
 /**
@@ -44,9 +46,7 @@ export function exportTutorialGroupsToCSVResource(courseId: Signal<number | unde
         }
         const queryParams = params();
         const searchParams = new URLSearchParams();
-        if (queryParams.fields?.length) {
-            queryParams.fields.forEach(value => searchParams.append('fields', String(value)));
-        }
+        appendQueryParam(searchParams, 'fields', queryParams.fields);
         const query = searchParams.toString();
         return `${BASE_PATH}/api/tutorialgroup/courses/${courseIdValue}/tutorial-groups/export/csv${query ? `?${query}` : ''}`;
     });
@@ -74,9 +74,7 @@ export function exportTutorialGroupsToJSONResource(courseId: Signal<number | und
         }
         const queryParams = params();
         const searchParams = new URLSearchParams();
-        if (queryParams.fields?.length) {
-            queryParams.fields.forEach(value => searchParams.append('fields', String(value)));
-        }
+        appendQueryParam(searchParams, 'fields', queryParams.fields);
         const query = searchParams.toString();
         return `${BASE_PATH}/api/tutorialgroup/courses/${courseIdValue}/tutorial-groups/export/json${query ? `?${query}` : ''}`;
     });
@@ -222,15 +220,9 @@ export function searchUnregisteredStudentsResource(courseId: Signal<number | und
         }
         const queryParams = params();
         const searchParams = new URLSearchParams();
-        if (queryParams.loginOrName !== undefined && queryParams.loginOrName !== null) {
-            searchParams.set('loginOrName', String(queryParams.loginOrName));
-        }
-        if (queryParams.pageIndex !== undefined && queryParams.pageIndex !== null) {
-            searchParams.set('pageIndex', String(queryParams.pageIndex));
-        }
-        if (queryParams.pageSize !== undefined && queryParams.pageSize !== null) {
-            searchParams.set('pageSize', String(queryParams.pageSize));
-        }
+        appendQueryParam(searchParams, 'loginOrName', queryParams.loginOrName);
+        appendQueryParam(searchParams, 'pageIndex', queryParams.pageIndex);
+        appendQueryParam(searchParams, 'pageSize', queryParams.pageSize);
         const query = searchParams.toString();
         return `${BASE_PATH}/api/tutorialgroup/courses/${courseIdValue}/tutorial-groups/${tutorialGroupIdValue}/unregistered-students${query ? `?${query}` : ''}`;
     });
