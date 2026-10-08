@@ -620,4 +620,49 @@ describe('MarkdownEditorMonacoComponent', () => {
 
         expect(result).toBeUndefined();
     });
+
+    describe('applyAriaAttributesToTextarea', () => {
+        it('sets aria-describedby and aria-invalid when given', () => {
+            fixture.detectChanges();
+            const textarea = document.createElement('textarea');
+
+            comp.applyAriaAttributesToTextarea(textarea, 'field_error_id', true);
+
+            expect(textarea.getAttribute('aria-describedby')).toBe('field_error_id');
+            expect(textarea.getAttribute('aria-invalid')).toBe('true');
+        });
+
+        it('removes aria-describedby and clears aria-invalid when the describedBy id is undefined', () => {
+            fixture.detectChanges();
+            const textarea = document.createElement('textarea');
+            textarea.setAttribute('aria-describedby', 'leftover');
+            textarea.setAttribute('aria-invalid', 'true');
+
+            comp.applyAriaAttributesToTextarea(textarea, undefined, false);
+
+            expect(textarea.hasAttribute('aria-describedby')).toBe(false);
+            expect(textarea.getAttribute('aria-invalid')).toBe('false');
+        });
+    });
+
+    it('forwards aria-describedby and aria-invalid to the active Monaco textarea when the inputs change', () => {
+        fixture.detectChanges();
+
+        // Supply a textarea through the mocked active editor so the forwarding effect has a real DOM target. This
+        // covers the effect -> helper wiring end to end; the applyAriaAttributesToTextarea tests only exercise the
+        // helper in isolation and would still pass if the effect were disconnected from it.
+        const textarea = document.createElement('textarea');
+        const domNode = document.createElement('div');
+        domNode.appendChild(textarea);
+        (comp.monacoEditor()! as any).getActiveEditor = vi.fn().mockReturnValue({
+            getDomNode: () => domNode,
+        });
+
+        fixture.componentRef.setInput('ariaDescribedBy', 'field_codeOfConduct_error');
+        fixture.componentRef.setInput('ariaInvalid', true);
+        fixture.detectChanges();
+
+        expect(textarea.getAttribute('aria-describedby')).toBe('field_codeOfConduct_error');
+        expect(textarea.getAttribute('aria-invalid')).toBe('true');
+    });
 });

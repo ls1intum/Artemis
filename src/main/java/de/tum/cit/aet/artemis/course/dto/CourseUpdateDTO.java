@@ -61,7 +61,7 @@ public record CourseUpdateDTO(
 
         // UI settings
         @Nullable String color, @Nullable String courseIcon, @Nullable Boolean enrollmentEnabled, @Nullable @Size(max = 2000) String enrollmentConfirmationMessage,
-        boolean unenrollmentEnabled, @Nullable String courseInformationSharingMessagingCodeOfConduct,
+        boolean unenrollmentEnabled, @Nullable @Size(max = 10000) String courseInformationSharingMessagingCodeOfConduct,
 
         // Course features
         boolean learningPathsEnabled, @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,

@@ -710,6 +710,93 @@ describe('Course Management Update Component', () => {
         });
     });
 
+    describe('code of conduct length cap', () => {
+        beforeEach(() => {
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+        });
+
+        it('reflects the live source length through the computed signal', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('abc');
+            expect(comp.codeOfConductLength()).toBe(3);
+
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('');
+            expect(comp.codeOfConductLength()).toBe(0);
+        });
+
+        it('keeps the control valid at the exact limit and marks it invalid one over', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            const control = comp.courseForm.get('courseInformationSharingMessagingCodeOfConduct')!;
+
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('x'.repeat(comp.CODE_OF_CONDUCT_LIMIT));
+            expect(control.hasError('maxlength')).toBe(false);
+            expect(control.valid).toBe(true);
+
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('x'.repeat(comp.CODE_OF_CONDUCT_LIMIT + 1));
+            expect(control.hasError('maxlength')).toBe(true);
+            expect(control.valid).toBe(false);
+        });
+
+        it('reveals the inline error and invalid state on a user edit over the limit, before any save attempt', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            const control = comp.courseForm.get('courseInformationSharingMessagingCodeOfConduct')!;
+
+            // Baseline: an untouched, pristine control shows no error and is not flagged invalid.
+            expect(control.dirty).toBe(false);
+            expect(comp.showError('courseInformationSharingMessagingCodeOfConduct')).toBe(false);
+
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('x'.repeat(comp.CODE_OF_CONDUCT_LIMIT + 1));
+
+            // A genuine user edit marks the control dirty, so the error and aria-invalid surface without pressing save.
+            expect(control.dirty).toBe(true);
+            expect(comp.submitAttempted()).toBe(false);
+            expect(comp.showError('courseInformationSharingMessagingCodeOfConduct')).toBe(true);
+        });
+
+        it('does not flag an error on load before the user edits the code of conduct', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            const control = comp.courseForm.get('courseInformationSharingMessagingCodeOfConduct')!;
+
+            // The programmatic [(markdown)] load does not call the user-edit handler, so the control stays pristine
+            // and no error is shown until the user actually edits.
+            expect(control.dirty).toBe(false);
+            expect(control.touched).toBe(false);
+            expect(comp.showError('courseInformationSharingMessagingCodeOfConduct')).toBe(false);
+        });
+
+        it('surfaces the code-of-conduct issue in the footer list once the limit is exceeded', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('x'.repeat(comp.CODE_OF_CONDUCT_LIMIT + 1));
+            fixture.detectChanges();
+
+            const issueControls = comp.issues().map((issue) => issue.control);
+            expect(issueControls).toContain('courseInformationSharingMessagingCodeOfConduct');
+        });
+
+        it('blocks save through the submit guard when the code of conduct is over the limit', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('x'.repeat(comp.CODE_OF_CONDUCT_LIMIT + 1));
+            fixture.detectChanges();
+
+            const saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => undefined);
+            // jsdom does not implement scrollIntoView; onSubmit calls focusIssue which scrolls to the first issue.
+            Element.prototype.scrollIntoView = vi.fn();
+
+            comp.onSubmit();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+    });
+
     describe('changeComplaintsEnabled', () => {
         it('should initialize values if enabled and reset if disabled', () => {
             comp.courseForm = new FormGroup({
