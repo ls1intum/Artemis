@@ -583,12 +583,22 @@ describe('ExerciseHeaderActionsComponent', () => {
             expect(fixture.componentInstance.isStartExerciseAvailable()).toBe(true);
         });
 
-        it('should not offer starting, resuming or practicing in the exam mode', () => {
+        it('should not offer starting the exercise in the exam mode', () => {
+            const exercise = programmingExercise([]);
+            exercise.dueDate = dayjs().add(1, 'day');
+            createComponent(exercise);
+            expect(fixture.componentInstance.isStartExerciseAvailable()).toBe(true);
+            TestBed.resetTestingModule();
+
+            createComponent(exercise, { examMode: true });
+            expect(fixture.componentInstance.isStartExerciseAvailable()).toBe(false);
+        });
+
+        it('should not offer resuming or practicing in the exam mode', () => {
             const exercise = programmingExercise([]);
             exercise.dueDate = dayjs().subtract(1, 'day');
             createComponent(exercise, { examMode: true });
 
-            expect(fixture.componentInstance.isStartExerciseAvailable()).toBe(false);
             expect(fixture.componentInstance.isResumeExerciseAvailable({ testRun: true } as StudentParticipation)).toBe(false);
             expect(fixture.componentInstance.isStartPracticeAvailable()).toBe(false);
         });

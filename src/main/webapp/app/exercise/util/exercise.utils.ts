@@ -1,4 +1,3 @@
-import { SimpleChanges } from '@angular/core';
 import { Exercise, ExerciseType, hasDueDatePassed } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { InitializationState, Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -102,18 +101,6 @@ export class SaveExerciseCommand<T extends Exercise> {
         );
     }
 }
-
-export const hasExerciseChanged = (changes: SimpleChanges) => {
-    return changes.exercise && changes.exercise.currentValue && (!changes.exercise.previousValue || changes.exercise.previousValue.id !== changes.exercise.currentValue.id);
-};
-
-export const problemStatementHasChanged = (changes: SimpleChanges) => {
-    return (
-        changes.exercise &&
-        changes.exercise.currentValue &&
-        (!changes.exercise.previousValue || changes.exercise.previousValue.problemStatement !== changes.exercise.currentValue.problemStatement)
-    );
-};
 
 /**
  * Checks if the due date of a given exercise lies in the past. If there is no due date it evaluates to false.

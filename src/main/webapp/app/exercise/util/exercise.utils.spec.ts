@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Subject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { SimpleChanges } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -13,12 +12,10 @@ import {
     getExerciseDueDate,
     getPositiveAndCappedTotalScore,
     getTotalMaxPoints,
-    hasExerciseChanged,
     hasExerciseDueDatePassed,
     isResumeExerciseAvailable,
     isStartExerciseAvailable,
     isStartPracticeAvailable,
-    problemStatementHasChanged,
     validateStrictDateSequence,
     withPracticeParticipations,
 } from 'app/exercise/util/exercise.utils';
@@ -473,33 +470,6 @@ describe('ExerciseUtils', () => {
             expect(completed).toBe(true);
             expect(service.update).not.toHaveBeenCalled();
             expect(service.reevaluateAndUpdate).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('hasExerciseChanged() and problemStatementHasChanged()', () => {
-        const changes = (previousValue: Partial<Exercise> | undefined, currentValue: Partial<Exercise> | undefined) =>
-            ({ exercise: { previousValue, currentValue } }) as unknown as SimpleChanges;
-
-        it('should detect a change of the exercise id', () => {
-            expect(hasExerciseChanged(changes({ id: 1 }, { id: 2 }))).toBe(true);
-            expect(hasExerciseChanged(changes(undefined, { id: 2 }))).toBe(true);
-            expect(hasExerciseChanged(changes({ id: 2 }, { id: 2 }))).toBe(false);
-        });
-
-        it('should not detect a change without exercise or current value', () => {
-            expect(hasExerciseChanged({})).toBeFalsy();
-            expect(hasExerciseChanged(changes({ id: 1 }, undefined))).toBeFalsy();
-        });
-
-        it('should detect a change of the problem statement', () => {
-            expect(problemStatementHasChanged(changes({ problemStatement: 'a' }, { problemStatement: 'b' }))).toBe(true);
-            expect(problemStatementHasChanged(changes(undefined, { problemStatement: 'b' }))).toBe(true);
-            expect(problemStatementHasChanged(changes({ problemStatement: 'a' }, { problemStatement: 'a' }))).toBe(false);
-        });
-
-        it('should not detect a problem statement change without exercise or current value', () => {
-            expect(problemStatementHasChanged({})).toBeFalsy();
-            expect(problemStatementHasChanged(changes({ problemStatement: 'a' }, undefined))).toBeFalsy();
         });
     });
 
