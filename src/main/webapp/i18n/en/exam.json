@@ -779,7 +779,7 @@
                 }
             },
             "reset": {
-                "question": "Are you sure you want to permanently reset the Exam <strong>{{ title }}</strong>? All Student Exams will be deleted. Registered students and the exercise configurations will remain. This action can NOT be undone!",
+                "question": "Are you sure you want to permanently reset the Exam <strong>{{ title }}</strong>? All Student Exams will be deleted and all registered students will be removed from the exam. The exam itself and the exercise configurations will remain. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the exam to confirm:",
                 "success": "The exam has been successfully reset."
             },

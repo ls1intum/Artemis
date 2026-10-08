@@ -196,6 +196,8 @@ public class ExamDeletionService {
      * <li>All student participations, submissions, and results for exam exercises</li>
      * <li>All plagiarism results for exam exercises</li>
      * <li>All exam live events</li>
+     * <li>All ExamUsers, i.e. the registrations of the students with their seating, identity-check flags and signature and photo images,
+     * so no student is registered for the exam afterwards. The students themselves stay in the course.</li>
      * </ul>
      * <p>
      * The preserved elements are:

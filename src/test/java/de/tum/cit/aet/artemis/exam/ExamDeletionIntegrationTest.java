@@ -15,12 +15,16 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
+import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -48,6 +52,15 @@ class ExamDeletionIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private ExamSessionRepository examSessionRepository;
+
+    @Autowired
+    private ExamTestRepository examRepository;
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -157,6 +170,33 @@ class ExamDeletionIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // Verify all student exams are deleted
         var studentExamsAfter = studentExamRepository.findByExamId(resetExam.getId());
         assertThat(studentExamsAfter).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetExam_shouldUnregisterAllStudentsButKeepExamAndCourseEnrollment() throws Exception {
+        Exam resetExam = examUtilService.addExam(course);
+        // Every exam has a channel, and the deletion summary reads it.
+        examUtilService.addExamChannel(resetExam, "reset exam channel");
+        resetExam = examUtilService.registerUsersForExamAndSaveExam(resetExam, TEST_PREFIX, NUMBER_OF_STUDENTS);
+        resetExam = examUtilService.addTextModelingProgrammingExercisesToExam(resetExam, false, false);
+        examUtilService.addStudentExamWithUser(resetExam, student1);
+
+        String summaryUrl = "/api/exam/courses/" + course.getId() + "/exams/" + resetExam.getId() + "/deletion-summary";
+        assertThat(examUserRepository.findAllByExamId(resetExam.getId())).as("all students are registered before the reset").hasSize(NUMBER_OF_STUDENTS);
+        assertThat(request.get(summaryUrl, HttpStatus.OK, ExamDeletionSummaryDTO.class).numberRegisteredStudents()).isEqualTo(NUMBER_OF_STUDENTS);
+        int enrolledStudentsBefore = userCourseRoleTestRepository.findByCourse_IdAndRole(course.getId(), CourseRole.STUDENT).size();
+
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + resetExam.getId() + "/reset", HttpStatus.OK);
+
+        // The dialog of the reset promises that all registered students are removed from the exam, so none is left, including their seating data.
+        assertThat(examUserRepository.findAllByExamId(resetExam.getId())).as("no student is registered after the reset").isEmpty();
+        assertThat(request.get(summaryUrl, HttpStatus.OK, ExamDeletionSummaryDTO.class).numberRegisteredStudents()).isZero();
+        // The exam and its exercise configuration remain, and the students stay enrolled in the course.
+        assertThat(examRepository.findById(resetExam.getId())).as("the exam itself is kept").isPresent();
+        assertThat(examRepository.findByIdWithExerciseGroupsElseThrow(resetExam.getId()).getExerciseGroups()).as("the exercise groups are kept").isNotEmpty();
+        assertThat(userCourseRoleTestRepository.findByCourse_IdAndRole(course.getId(), CourseRole.STUDENT)).as("the students stay enrolled in the course")
+                .hasSize(enrolledStudentsBefore);
     }
 
     private void addStudentExam(User student, boolean isStarted, boolean isSubmitted) {
