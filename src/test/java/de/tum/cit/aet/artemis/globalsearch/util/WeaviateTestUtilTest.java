@@ -5,25 +5,43 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.INDEXING
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.MAX_POLL_INTERVAL;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.OUTBOX_BASE_BACKOFF;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.OUTBOX_DRAIN_TICK;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.WEAVIATE_REST_TIMEOUT;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.describeDispatcherThreads;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.isInsideIndexingWait;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.runMarked;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.weaviateClientDefaultRestTimeout;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.RETURNS_SELF;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionFactory;
 import org.awaitility.core.ConditionTimeoutException;
+import org.awaitility.core.ThrowingRunnable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.mockito.MockedStatic;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateOutboxProperties;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateOutboxDispatcher;
 
 /**
  * Unit tests for the wait helper {@link WeaviateTestUtil#awaitIndexing}. No Spring context and no Weaviate are needed,
@@ -98,15 +116,7 @@ class WeaviateTestUtilTest {
 
     @Test
     @Timeout(30)
-    void awaitIndexing_nestedCheckedExceptionSurfacesAsAssertionError() {
-        assertThatThrownBy(() -> awaitIndexing(OUTER_CEILING, () -> awaitIndexing(() -> {
-            throw new Exception("checked failure");
-        }))).isInstanceOf(AssertionError.class).hasMessageContaining("checked failure");
-    }
-
-    @Test
-    @Timeout(30)
-    void awaitIndexing_nestedCheckedExceptionIsRetriedByTheOuterWaitAsAnAssertionFailure() {
+    void awaitIndexing_nestedCheckedExceptionBecomesAnAssertionErrorThatTheOuterWaitRetries() {
         AtomicInteger attempts = new AtomicInteger();
 
         assertThatThrownBy(() -> awaitIndexing(Duration.ofSeconds(1), () -> awaitIndexing(() -> {
@@ -133,28 +143,48 @@ class WeaviateTestUtilTest {
 
     @Test
     @Timeout(30)
-    void awaitIndexing_aSecondTopLevelWaitStartsFreshAfterANestedOne() {
-        awaitIndexing(OUTER_CEILING, () -> awaitIndexing(() -> assertThat(true).isTrue()));
-        AtomicInteger attempts = new AtomicInteger();
+    void runMarked_marksTheThreadOnlyWhileTheAssertionRunsAndClearsItAfterAPassingAssertion() throws Throwable {
+        AtomicBoolean markedInside = new AtomicBoolean();
 
-        // If the nested marker leaked, this top-level call would run its assertion once and not retry it.
-        awaitIndexing(OUTER_CEILING, () -> assertThat(attempts.incrementAndGet()).isGreaterThanOrEqualTo(2));
+        assertThat(isInsideIndexingWait()).isFalse();
+        runMarked(() -> markedInside.set(isInsideIndexingWait()));
 
-        assertThat(attempts).hasValueGreaterThanOrEqualTo(2);
+        assertThat(markedInside).as("the assertion runs with the marker set").isTrue();
+        assertThat(isInsideIndexingWait()).as("a leaked marker would turn the next top-level wait on this thread into a single unretried check").isFalse();
     }
 
     @Test
     @Timeout(30)
-    void awaitIndexing_aTopLevelWaitStartsFreshAfterAFailedNestedWait() {
-        assertThatThrownBy(() -> awaitIndexing(Duration.ofSeconds(1), () -> awaitIndexing(() -> {
-            throw new AssertionError("first wait fails");
-        }))).isInstanceOf(AssertionError.class).hasMessageContaining("first wait fails");
-        AtomicInteger attempts = new AtomicInteger();
+    void runMarked_clearsTheMarkerAfterAFailingAssertion() {
+        assertThatThrownBy(() -> runMarked(() -> {
+            throw new AssertionError("failed while marked");
+        })).isInstanceOf(AssertionError.class).hasMessage("failed while marked");
 
-        // If the failed wait left the nested marker behind, this wait would run its assertion once and not retry it.
-        awaitIndexing(OUTER_CEILING, () -> assertThat(attempts.incrementAndGet()).isGreaterThanOrEqualTo(2));
+        assertThat(isInsideIndexingWait()).as("the marker must also be removed when the assertion throws").isFalse();
+    }
 
-        assertThat(attempts).hasValueGreaterThanOrEqualTo(2);
+    @Test
+    @Timeout(30)
+    void awaitIndexing_topLevelWaitNeverMarksTheCallingThread() {
+        awaitIndexing(OUTER_CEILING, () -> assertThat(isInsideIndexingWait()).as("the assertion runs on the poll thread, marked").isTrue());
+
+        assertThat(isInsideIndexingWait()).isFalse();
+    }
+
+    @Test
+    @Timeout(30)
+    void awaitIndexing_usesTheIndexingTimeoutAndTheBoundedBackoffPollInterval() {
+        ConditionFactory factory = mock(ConditionFactory.class, RETURNS_SELF);
+        try (MockedStatic<Awaitility> awaitility = mockStatic(Awaitility.class)) {
+            awaitility.when(Awaitility::await).thenReturn(factory);
+
+            awaitIndexing(() -> {
+            });
+
+            verify(factory).atMost(INDEXING_TIMEOUT);
+            verify(factory).pollInterval(BOUNDED_BACKOFF_POLL_INTERVAL);
+            verify(factory).untilAsserted(any(ThrowingRunnable.class));
+        }
     }
 
     @Test
@@ -247,17 +277,27 @@ class WeaviateTestUtilTest {
 
     @Test
     void indexingTimeoutCoversTheWorstCaseRecoveryOfTheDispatcher() {
+        assertThat(WEAVIATE_REST_TIMEOUT).as("test copy of the Weaviate client default query timeout, which the production client does not override")
+                .isEqualTo(weaviateClientDefaultRestTimeout());
+        // two hung REST calls (one ahead in the queue, one of the awaited row), the retry backoff and one drain tick, plus a margin
         assertThat(INDEXING_TIMEOUT).isEqualTo(Duration.ofSeconds(150));
-        // two hung REST calls of 60 s (one ahead in the queue, one of the awaited row), the retry backoff and one drain tick, plus a margin
-        assertThat(INDEXING_TIMEOUT).isGreaterThan(Duration.ofSeconds(2 * 60).plus(OUTBOX_BASE_BACKOFF).plus(OUTBOX_DRAIN_TICK));
+        assertThat(INDEXING_TIMEOUT).isGreaterThan(WEAVIATE_REST_TIMEOUT.multipliedBy(2).plus(OUTBOX_BASE_BACKOFF).plus(OUTBOX_DRAIN_TICK));
     }
 
     @Test
-    void indexingTimeoutSizingMatchesTheProductionOutboxDefaults() {
+    void indexingTimeoutSizingMatchesTheProductionOutboxDefaults() throws Exception {
         WeaviateOutboxProperties defaults = new Binder(new MapConfigurationPropertySource()).bindOrCreate("artemis.weaviate.outbox", WeaviateOutboxProperties.class);
+        Scheduled scheduled = WeaviateOutboxDispatcher.class.getMethod("scheduledDrain").getAnnotation(Scheduled.class);
+        Matcher placeholderDefault = Pattern.compile("^\\$\\{artemis\\.weaviate\\.outbox\\.drain-interval-seconds:(\\d+)}$").matcher(scheduled.fixedDelayString());
 
         assertThat(OUTBOX_BASE_BACKOFF).as("test copy of WeaviateOutboxProperties#baseBackoffSeconds").isEqualTo(Duration.ofSeconds(defaults.baseBackoffSeconds()));
-        assertThat(OUTBOX_DRAIN_TICK).as("test copy of WeaviateOutboxProperties#drainIntervalSeconds").isEqualTo(Duration.ofSeconds(defaults.drainIntervalSeconds()));
+        assertThat(scheduled.timeUnit()).isEqualTo(TimeUnit.SECONDS);
+        assertThat(placeholderDefault.matches()).as("the @Scheduled placeholder of the dispatcher drain tick: " + scheduled.fixedDelayString()).isTrue();
+        // the record default is not what the scheduler applies: the placeholder default is
+        assertThat(OUTBOX_DRAIN_TICK).as("test copy of the default in the @Scheduled placeholder of WeaviateOutboxDispatcher#scheduledDrain")
+                .isEqualTo(Duration.ofSeconds(Long.parseLong(placeholderDefault.group(1))));
+        assertThat(OUTBOX_DRAIN_TICK).as("the record default declared for strict binding must agree with the placeholder")
+                .isEqualTo(Duration.ofSeconds(defaults.drainIntervalSeconds()));
     }
 
     @Test

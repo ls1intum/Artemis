@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import io.weaviate.client6.v1.api.collections.query.Filter;
+import io.weaviate.client6.v1.internal.Timeout;
 
 /**
  * Utility class for Weaviate-related assertions in integration tests.
@@ -52,7 +53,17 @@ public final class WeaviateTestUtil {
      * gRPC batch inserts, which the dispatcher does not use). A write that hangs therefore blocks the single dispatcher
      * thread for up to this long before it fails.
      */
-    private static final Duration WEAVIATE_REST_TIMEOUT = Duration.ofSeconds(60);
+    static final Duration WEAVIATE_REST_TIMEOUT = Duration.ofSeconds(60);
+
+    /**
+     * Reads the response timeout that the Weaviate client applies to a REST call when nothing overrides it, so that a
+     * test can check {@link #WEAVIATE_REST_TIMEOUT} against it.
+     *
+     * @return the default query timeout of the client in seconds
+     */
+    static Duration weaviateClientDefaultRestTimeout() {
+        return Duration.ofSeconds(new Timeout().querySeconds());
+    }
 
     /**
      * Delay before the first retry of a failed outbox write ({@code WeaviateOutboxProperties#baseBackoffSeconds}
@@ -129,7 +140,7 @@ public final class WeaviateTestUtil {
      * @param assertion the assertion that holds once the write is visible; it may throw any exception
      */
     static void awaitIndexing(Duration timeout, ThrowingRunnable assertion) {
-        if (INSIDE_INDEXING_WAIT.get() != null) {
+        if (isInsideIndexingWait()) {
             // already inside the assertion of an outer wait: do not start a second wait with its own full ceiling
             try {
                 assertion.run();
@@ -142,21 +153,39 @@ public final class WeaviateTestUtil {
             }
             return;
         }
-        ThrowingRunnable markedAssertion = () -> {
-            INSIDE_INDEXING_WAIT.set(Boolean.TRUE);
-            try {
-                assertion.run();
-            }
-            finally {
-                INSIDE_INDEXING_WAIT.remove();
-            }
-        };
         try {
-            await().atMost(timeout).pollInterval(BOUNDED_BACKOFF_POLL_INTERVAL).untilAsserted(markedAssertion);
+            await().atMost(timeout).pollInterval(BOUNDED_BACKOFF_POLL_INTERVAL).untilAsserted(() -> runMarked(assertion));
         }
         catch (ConditionTimeoutException timedOut) {
             throw new AssertionError(timedOut.getMessage() + System.lineSeparator() + describeOutboxDispatcher(), timedOut);
         }
+    }
+
+    /**
+     * Runs the assertion of a top-level wait with the nested-wait marker set on the current thread and removes the
+     * marker afterwards, whether the assertion passes or fails. Awaitility calls it on its poll thread. It is a
+     * separate method so that the cleanup can be tested on the test thread, where a leaked marker is observable.
+     *
+     * @param assertion the assertion of the top-level wait
+     * @throws Throwable whatever the assertion throws
+     */
+    static void runMarked(ThrowingRunnable assertion) throws Throwable {
+        INSIDE_INDEXING_WAIT.set(Boolean.TRUE);
+        try {
+            assertion.run();
+        }
+        finally {
+            INSIDE_INDEXING_WAIT.remove();
+        }
+    }
+
+    /**
+     * Tells whether the current thread is evaluating the assertion of a top-level {@link #awaitIndexing} wait.
+     *
+     * @return {@code true} while {@link #runMarked} is on the stack of this thread
+     */
+    static boolean isInsideIndexingWait() {
+        return INSIDE_INDEXING_WAIT.get() != null;
     }
 
     /**
