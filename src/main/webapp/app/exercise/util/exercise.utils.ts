@@ -195,13 +195,9 @@ const isPracticeDeadlineOver = (exercise: Exercise, deadlineParticipation?: Stud
  *   While the graded participation has an individual due date (an extension), practicing is only possible after that one, the server answers 403 before.
  * @param exercise the exercise that the student wants to practice
  * @param participation the potentially existing practice participation
- * @param deadlineParticipation the graded participation of the student (or of the team for a team exercise), which defines the individual due date. Defaults to the participation.
+ * @param deadlineParticipation the graded participation of the student (or of the team for a team exercise), which defines the individual due date.
  */
-export const isStartPracticeAvailable = (
-    exercise: Exercise,
-    participation?: StudentParticipation,
-    deadlineParticipation: StudentParticipation | undefined = participation,
-): boolean => {
+export const isStartPracticeAvailable = (exercise: Exercise, participation?: StudentParticipation, deadlineParticipation?: StudentParticipation): boolean => {
     switch (exercise.type) {
         case ExerciseType.QUIZ:
             return hasDueDatePassed(exercise);

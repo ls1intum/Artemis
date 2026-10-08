@@ -248,13 +248,6 @@ describe('ExerciseUtils', () => {
                 expect(isStartPracticeAvailable(exercise, undefined, teamParticipation)).toBe(false);
                 expect(isStartPracticeAvailable(exercise, undefined, gradedParticipation(dayjs().subtract(1, 'hour')))).toBe(true);
             });
-
-            it('should default the deadline participation to the participation for backward compatibility', () => {
-                const exercise = exerciseOfType(ExerciseType.TEXT, dayjs().subtract(1, 'day'));
-
-                expect(isStartPracticeAvailable(exercise, gradedParticipation(dayjs().add(1, 'hour')))).toBe(false);
-                expect(isStartPracticeAvailable(exercise, gradedParticipation(dayjs().subtract(1, 'hour')))).toBe(true);
-            });
         });
 
         it.each([ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD, undefined])('should not allow practicing for other exercises', (type) => {
