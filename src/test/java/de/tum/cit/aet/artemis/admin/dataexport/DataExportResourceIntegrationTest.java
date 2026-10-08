@@ -142,15 +142,27 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDataExportDownload_fileDoesntExist_internalServerError() throws Exception {
-        var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+    void testDataExportDownload_fileDoesntExist_notFoundAndExportUntouched() throws Exception {
+        var dataExport = initDataExportWithMissingFile();
+
+        request.get("/api/core/data-exports/" + dataExport.getId(), HttpStatus.NOT_FOUND, Resource.class);
+
+        assertExportNotMarkedAsDownloaded(dataExport);
+    }
+
+    private DataExport initDataExportWithMissingFile() {
         DataExport dataExport = new DataExport();
-        dataExport.setUser(userForExport);
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport.setFilePath("not-existent");
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
-        dataExport = dataExportRepository.save(dataExport);
-        request.get("/api/core/data-exports/" + dataExport.getId(), HttpStatus.INTERNAL_SERVER_ERROR, Resource.class);
+        return dataExportRepository.save(dataExport);
+    }
 
+    /** A download that found no file is not a download: the state and the date it would have set must still be the ones before. */
+    private void assertExportNotMarkedAsDownloaded(DataExport dataExport) {
+        var afterwards = dataExportRepository.findByIdElseThrow(dataExport.getId());
+        assertThat(afterwards.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
+        assertThat(afterwards.getDownloadDate()).isNull();
     }
 
     @ParameterizedTest
@@ -457,6 +469,16 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDownloadDataExportAsAdmin_notFound() throws Exception {
         request.get("/api/admin/data-exports/999999/download", HttpStatus.NOT_FOUND, Resource.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testDownloadDataExportAsAdmin_fileDoesntExist_notFoundAndExportUntouched() throws Exception {
+        var dataExport = initDataExportWithMissingFile();
+
+        request.get("/api/admin/data-exports/" + dataExport.getId() + "/download", HttpStatus.NOT_FOUND, Resource.class);
+
+        assertExportNotMarkedAsDownloaded(dataExport);
     }
 
     @Test

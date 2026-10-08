@@ -90,17 +90,26 @@ public class DataExportService {
 
     /**
      * Download the data export for the given data export id.
+     * <p>
+     * The export only counts as downloaded once its file has been found: a request that finds none leaves the state and the
+     * download date as they were.
      *
      * @param dataExport the data export to download
-     * @return the file path where the data export is stored
-     * @throws EntityNotFoundException  if the data export or the user could not be found
-     * @throws AccessForbiddenException if the user is not allowed to download the data export
+     * @return the resource that streams the data export file
+     * @throws EntityNotFoundException      if the file of the data export does not exist on this instance, either because it is gone or because it was written to
+     *                                          a folder that the instances do not share
+     * @throws InternalServerErrorException if the file exists but could not be opened
      */
     public Resource downloadDataExport(DataExport dataExport) {
+        var filePath = Path.of(dataExport.getFilePath());
+        if (!Files.isReadable(filePath)) {
+            log.warn("The file of data export {} cannot be read on this instance: {}. If the instances do not share artemis.data-export-path, it is on another one.",
+                    dataExport.getId(), filePath);
+            throw new EntityNotFoundException("Data export file", dataExport.getId());
+        }
         dataExport.setDownloadDate(ZonedDateTime.now());
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
-        dataExport = dataExportRepository.save(dataExport);
-        var filePath = Path.of(dataExport.getFilePath());
+        dataExportRepository.save(dataExport);
         try {
             return new InputStreamResource(Files.newInputStream(filePath));
         }
