@@ -11,6 +11,7 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { BuildLogService } from 'app/programming/shared/services/build-log.service';
+import { BuildLogEntryArray } from 'app/localci/shared/entities/build-log.model';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/programming-feedback-item.service';
@@ -519,6 +520,24 @@ describe('FeedbackComponent', () => {
         expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
         expect(comp.loadingFailed()).toBe(true);
         expect(comp.isLoading()).toBe(false);
+    });
+
+    it('should leave a margin below the last build log entry of a timestamp', () => {
+        buildlogsStub.mockReturnValue(
+            of(
+                BuildLogEntryArray.fromBuildLogs([
+                    { time: '2024-01-01T10:00:00Z', log: 'first' },
+                    { time: '2024-01-01T10:00:00Z', log: 'second' },
+                    { time: '2024-01-01T10:00:05Z', log: 'third' },
+                ]),
+            ),
+        );
+
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        const entries: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('dl.buildoutput dd'));
+        expect(entries.map((entry) => entry.classList.contains('mb-4!'))).toEqual([false, true, false]);
     });
 
     it('should not show test details to students', () => {
