@@ -1,0 +1,20 @@
+<button
+    type="button"
+    tumAetUiButton
+    [attr.aria-label]="'artemisApp.exerciseActions.code' | artemisTranslate"
+    [tumAetUiPopoverTrigger]="popoverContent"
+    data-testid="code-button-new"
+>
+    <fa-icon [icon]="faCode" />
+    {{ 'artemisApp.exerciseActions.code' | artemisTranslate }}
+</button>
+
+<tumaet-ui-popover #popoverContent [ariaLabel]="'artemisApp.exerciseActions.codePopoverAriaLabel' | artemisTranslate" placement="bottom">
+    @if (loadingData()) {
+        <div class="flex h-40 w-120 items-center justify-center">
+            <fa-icon [icon]="faCircleNotch" animation="spin" data-testid="code-button-popover-loading" />
+        </div>
+    } @else {
+        <jhi-code-button-popover-content />
+    }
+</tumaet-ui-popover>

@@ -104,6 +104,7 @@
 @source './app/localci/build-agent-details';
 @source './app/localci/build-job-statistics';
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
+@source './app/shared-ui/components/buttons/code-button-new';
 @source './app/quiz/manage/apollon-diagrams';
 /* AI exercise variant generation: the navbar progress tray and the wizard modal. */
 @source './app/core/navbar/variant-generation-tray';
