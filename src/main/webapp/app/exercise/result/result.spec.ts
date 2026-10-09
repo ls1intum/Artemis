@@ -177,7 +177,7 @@ describe('ResultComponent', () => {
         expect(component.result()).toEqual(result1);
         expect(component.textColorClass()).toBe('text-muted-color');
         expect(component.resultIconClass()).toEqual(faCheckCircle);
-        expect(component.resultString()).toBe('artemisApp.result.resultString.automaticAIFeedbackSuccessful (artemisApp.result.preliminary)');
+        expect(component.resultString()).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
         expect(component.templateStatus()).toBe(ResultTemplateStatus.HAS_RESULT);
     });
 

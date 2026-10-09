@@ -25,13 +25,13 @@
             <fa-icon animation="spin" size="lg" [icon]="faCircleNotch" />
         </div>
     } @else {
-        @if (!loadingFailed() && feedbackItemNodes()?.length) {
+        @if (!loadingFailed() && (feedbackItemNodes()?.length || completedAiScore() !== undefined)) {
             <div class="result-detail-container">
                 @if (!isExamReviewPage()) {
                     <div>
                         <div class="flex justify-between items-start">
                             <h4>
-                                @if (result().assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+                                @if (result().assessmentType === AssessmentType.AUTOMATIC_ATHENA && completedAiScore() === undefined) {
                                     <span jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip"></span>
                                 } @else {
                                     @if (!resolvedExercise()?.maxPoints) {
@@ -78,7 +78,18 @@
                     </div>
                 }
 
-                @if (scoreChartVisible() && resolvedExercise()) {
+                @if (completedAiScore() !== undefined) {
+                    <p class="text-muted-color" jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip"></p>
+                    @if (showScoreChart()) {
+                        <tumaet-ui-progress-bar
+                            class="block mb-6"
+                            data-testid="ai-feedback-score-bar"
+                            [value]="completedAiScore()!"
+                            [showValue]="false"
+                            [ariaLabel]="'artemisApp.feedback.modal.scoreChartAriaLabel' | artemisTranslate"
+                        />
+                    }
+                } @else if (result().assessmentType !== AssessmentType.AUTOMATIC_ATHENA && scoreChartVisible() && resolvedExercise()) {
                     <div class="mb-12">
                         <div data-testid="feedback-chart" class="chart-space h-20">
                             <tumaet-ui-bar-chart

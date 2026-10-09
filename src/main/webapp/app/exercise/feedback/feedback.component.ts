@@ -42,7 +42,7 @@ import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { Participation, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiProgressBarComponent } from '@tumaet/ui-angular';
 
 const CODE_REFERENCE_CONTEXT_LINES = 2;
 const MAX_DISPLAYED_CODE_REFERENCE_LINES = 50;
@@ -55,6 +55,7 @@ const MAX_DISPLAYED_CODE_REFERENCE_LINES = 50;
         TranslateDirective,
         FaIconComponent,
         TumAetUiBarChartComponent,
+        TumAetUiProgressBarComponent,
         TagModule,
         ButtonModule,
         TooltipModule,
@@ -122,6 +123,10 @@ export class FeedbackComponent implements OnInit {
     );
     /** Whether the score chart is currently shown; seeded from the input, hidden at runtime once we know there is no chart data (see updateChart). */
     readonly scoreChartVisible = linkedSignal(() => this.showScoreChart());
+    readonly completedAiScore = computed(() => {
+        const result = this.result();
+        return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === true && Number.isFinite(result.score) ? result.score : undefined;
+    });
 
     readonly isExamReviewPage = input(false);
     readonly isPrinting = input(false);

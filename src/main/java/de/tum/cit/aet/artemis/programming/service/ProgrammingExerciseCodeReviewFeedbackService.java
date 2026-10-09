@@ -111,13 +111,6 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         Result automaticResult = this.submissionService.saveNewEmptyResult(submission);
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         automaticResult.setRated(true);
-        Result firstResult = submission.getFirstResult();
-        if (firstResult != null && firstResult.getScore() != null) {
-            automaticResult.setScore(firstResult.getScore());
-        }
-        else {
-            automaticResult.setScore(0.0);
-        }
         automaticResult.setSuccessful(null);
         automaticResult.setCompletionDate(ZonedDateTime.now().plusMinutes(5)); // we do not want to show dates without a completion date, but we want the students to know their
                                                                                // feedback request is in work
@@ -132,6 +125,16 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
             AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA));
             var athenaResponse = api.getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission, false, requestingUser);
+
+            // Athena already scales credits to the exercise points. Include even suggestions hidden by the code-hint filters.
+            Double maxPoints = programmingExercise.getMaxPoints();
+            double totalCredits = athenaResponse.stream().mapToDouble(item -> item.credits()).sum();
+            if (!athenaResponse.isEmpty() && maxPoints != null && Double.isFinite(maxPoints) && maxPoints > 0 && Double.isFinite(totalCredits)) {
+                double score = totalCredits / maxPoints * 100;
+                if (Double.isFinite(score)) {
+                    automaticResult.setScore(score, programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+                }
+            }
 
             List<Feedback> feedbacks = athenaResponse.stream().filter(individualFeedbackItem -> individualFeedbackItem.filePath() != null)
                     .filter(individualFeedbackItem -> individualFeedbackItem.description() != null).map(individualFeedbackItem -> {
@@ -161,6 +164,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
                         return feedback;
                     }).sorted(Comparator.comparing(Feedback::getSeverity, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
 
+            // For preliminary AI results, successful means generation completed, regardless of the score.
             automaticResult.setSuccessful(true);
             automaticResult.setCompletionDate(ZonedDateTime.now());
 
@@ -170,6 +174,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         }
         catch (Exception e) {
             log.error("Could not generate feedback", e);
+            automaticResult.score(null);
             automaticResult.setSuccessful(false);
             automaticResult.setCompletionDate(ZonedDateTime.now());
             this.resultRepository.save(automaticResult);
