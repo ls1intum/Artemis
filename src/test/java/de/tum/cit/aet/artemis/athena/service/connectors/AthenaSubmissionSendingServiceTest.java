@@ -78,7 +78,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        course = courseRepository.save(course);
+        course = courseUtilService.saveWithConfigurations(course);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(course);
 
@@ -179,7 +179,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSendSubmissionsWithFeedbackSuggestionsDisabledText() {
-        textExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
+        textExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(new CourseAthenaConfig());
         assertThatThrownBy(() -> athenaSubmissionSendingService.sendSubmissions(textExercise)).isInstanceOf(IllegalArgumentException.class);
     }
 }

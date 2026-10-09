@@ -289,9 +289,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly inPreviewMode = signal<boolean>(false);
     readonly inVisualMode = signal<boolean>(false);
     readonly inEditMode = signal<boolean>(true);
-    /** Tracks whether the visual/preview content has been activated at least once, mirroring ngbNav's lazy `destroyOnHide=false` behavior. */
+    /** Tracks whether the visual content has been activated at least once. It is rendered on first activation and kept in the DOM afterwards. */
     protected readonly visualTabActivated = signal<boolean>(false);
-    protected readonly previewTabActivated = signal<boolean>(false);
     readonly uniqueMarkdownEditorId = signal<string>(undefined!);
     resizeObserver?: ResizeObserver;
     /** Disposable for the selection change listener */
@@ -766,7 +765,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     updateEditorActionsVisibility(selection: EditorRange | undefined): void {
         const isEmpty = !selection || (selection.startLineNumber == selection.endLineNumber && selection.startColumn == selection.endColumn);
-        if (!isEmpty === this.showTextStyleActions() && isEmpty === this.showNonTextStyleActions()) {
+        if (isEmpty !== this.showTextStyleActions() && isEmpty === this.showNonTextStyleActions()) {
             return;
         }
         this.showTextStyleActions.set(!isEmpty);
@@ -866,9 +865,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.inEditMode.set(newId === this.TAB_EDIT);
         if (newId === this.TAB_VISUAL) {
             this.visualTabActivated.set(true);
-        }
-        if (newId === this.TAB_PREVIEW) {
-            this.previewTabActivated.set(true);
         }
 
         if (this.inEditMode()) {

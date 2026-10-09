@@ -49,6 +49,7 @@ export { TumAetUiMenuItemDirective } from './lib/menu/tumaet-ui-menu-item.direct
 export { TumAetUiMenuTriggerDirective } from './lib/menu/tumaet-ui-menu-trigger.directive';
 export { TumAetUiMenuComponent } from './lib/menu/tumaet-ui-menu.component';
 export { TumAetUiMessageComponent, type TumAetUiMessageSeverity } from './lib/message/tumaet-ui-message.component';
+export { TumAetUiMultiSelectComponent, type TumAetUiMultiSelectSize, type TumAetUiMultiSelectVariant } from './lib/multi-select/tumaet-ui-multi-select.component';
 export { TumAetUiPaginatorComponent } from './lib/paginator/tumaet-ui-paginator.component';
 export { TumAetUiPanelComponent } from './lib/panel/tumaet-ui-panel.component';
 export { TumAetUiPopoverTriggerDirective } from './lib/popover/tumaet-ui-popover-trigger.directive';
@@ -70,7 +71,7 @@ export { TumAetUiTabPanelsComponent } from './lib/tabs/tumaet-ui-tab-panels.comp
 export { TumAetUiTabComponent } from './lib/tabs/tumaet-ui-tab.component';
 export { TumAetUiTabsComponent } from './lib/tabs/tumaet-ui-tabs.component';
 export type { TumAetUiTabValue } from './lib/tabs/tumaet-ui-tabs.service';
-export { TumAetUiTagComponent, type TumAetUiTagSeverity } from './lib/tag/tumaet-ui-tag.component';
+export { TumAetUiTagComponent, type TumAetUiTagSeverity, type TumAetUiTagSize } from './lib/tag/tumaet-ui-tag.component';
 export { TumAetUiToggleSwitchComponent } from './lib/toggle-switch/tumaet-ui-toggle-switch.component';
 export { TumAetUiTooltipDirective } from './lib/tooltip/tumaet-ui-tooltip.directive';
 export type { TumAetUiOverlayPlacement } from './lib/overlay/tumaet-ui-overlay.service';

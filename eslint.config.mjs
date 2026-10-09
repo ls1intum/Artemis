@@ -441,6 +441,16 @@ export default tseslint.config(
             'localRules/no-navigation-in-guard-or-resolver': 'error',
         },
     },
+    // `ComponentRef.setInput(name: string, value: unknown)` is not type checked: a misspelled input only logs NG0303 at runtime. Declare
+    // the component in a template (a `@switch` for a closed set) or use the typed `setInputs` helper. Specs set inputs on fixtures and
+    // stay exempt. Rationale: documentation/docs/developer/guidelines/client-development.mdx ("Setting inputs of a component created in code").
+    {
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-aet-ui/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'localRules/no-component-ref-set-input': 'error',
+        },
+    },
     // Module-boundary rules: enforce the foundation ← shared-ui ← editor layering.
     // foundation/ is the base layer (no DOM/UI), shared-ui/ holds generic UI primitives,
     // editor/ holds the code/markdown editor stacks. The intent:
@@ -715,7 +725,9 @@ export default tseslint.config(
             // Only the modal shell is migrated; its search subcomponents go with the navbar/search follow-up.
             'src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.html',
             'src/main/webapp/app/course/overview/setup-passkey-modal/**/*.html',
-            'src/main/webapp/app/notification/course-notification/course-notification-popup-overlay/**/*.html',
+            'src/main/webapp/app/notification/**/*.html',
+            'src/main/webapp/app/calendar/**/*.html',
+            'src/main/webapp/app/shared-ui/profile-picture/**/*.html',
             'src/main/webapp/app/localci/build-agent-summary/**/*.html',
             'src/main/webapp/app/localci/build-agent-details/**/*.html',
             'src/main/webapp/app/localci/build-job-statistics/**/*.html',
@@ -748,10 +760,37 @@ export default tseslint.config(
             'localRules/no-bootstrap-classes': 'error',
         },
     },
+    {
+        // Bootstrap and Tailwind define the same spacing class names (`mb-3`, `px-4`, `gap-5`) with different values for
+        // 3 to 5, and Bootstrap wins while it is loaded, so a bare one renders differently once Bootstrap is removed.
+        // These templates of the student exam mode and the pages it shows (the exam, the feedback, the complaints and
+        // the text and file upload editors) are laid out with Tailwind and must say which value they mean. Add a folder
+        // here once it is scanned by tailwind.css (`migration-source-coverage` checks this) and its findings are fixed.
+        // See client-development.mdx (### Styling).
+        files: [
+            'src/main/webapp/app/exam/overview/**/*.html',
+            'src/main/webapp/app/exam/shared/**/*.html',
+            'src/main/webapp/app/assessment/overview/**/*.html',
+            'src/main/webapp/app/assessment/manage/complaints-for-tutor/**/*.html',
+            'src/main/webapp/app/assessment/manage/complaint-response/**/*.html',
+            'src/main/webapp/app/exercise/feedback/**/*.html',
+            'src/main/webapp/app/text/overview/text-editor/**/*.html',
+            'src/main/webapp/app/fileupload/overview/file-upload-submission/**/*.html',
+        ],
+        languageOptions: {
+            parser: angularTemplateParser,
+        },
+        plugins: {
+            localRules: localRulesPlugin,
+        },
+        rules: {
+            'localRules/no-ambiguous-spacing-utility': 'error',
+        },
+    },
     // The exam mode is migrated to TUM AET UI and Tailwind: neither PrimeNG nor ng-bootstrap may be imported anywhere in it, including specs.
     // Like the other `no-restricted-imports` blocks, this one overrides the rule, so the shared restrictions are repeated.
     {
-        files: ['src/main/webapp/app/exam/**/*.ts'],
+        files: ['src/main/webapp/app/exam/**/*.ts', 'src/main/webapp/app/notification/**/*.ts', 'src/main/webapp/app/calendar/**/*.ts'],
         rules: {
             'no-restricted-imports': [
                 'error',
@@ -767,7 +806,7 @@ export default tseslint.config(
                         {
                             group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
                             message:
-                                'The exam mode uses TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
+                                'The exam mode, the notifications and the calendar use TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
                         },
                     ],
                 },

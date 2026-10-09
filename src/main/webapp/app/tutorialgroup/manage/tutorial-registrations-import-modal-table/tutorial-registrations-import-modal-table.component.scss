@@ -10,6 +10,13 @@
         border-collapse: collapse;
         box-sizing: border-box;
 
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background-color: var(--tumaet-ui-content-background);
+        }
+
         th,
         td {
             border: 1px solid var(--border-color);

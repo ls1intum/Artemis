@@ -7,7 +7,7 @@ artemis:
   legal-path: ./legal                             # a folder in which legal documents (imprint and privacy statements) are stored.
   repo-clone-path: ./repos                        # a folder in which git repos for the online code editor are stored. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes
   repo-download-clone-path: ./repos-download      # a temporary folder, in which git repos are downloaded that are immediately deleted afterwards (e.g. exports, plagiarism checks), should NOT be in a shared file system area
-  data-export-path: ./data-exports                # a folder in which data exports are stored
+  data-export-path: ./data-exports                # a folder in which data exports are stored. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), because the node that serves a download is rarely the one that created the export
   build-logs-path: ./build-logs                   # a folder in which the complete log of every build job is stored, keyed by build job id, for download
   failed-build-logs-path: ./failed-build-logs     # a folder in which the build logs of failed builds are stored, keyed by submission id, to serve the build output panel, Iris and Hyperion. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS)
   bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
@@ -147,6 +147,8 @@ artemis:
       model: gpt-5.6-luna
       temperature: 1.0
       reasoning-effort: xhigh
+      worker-model: gpt-5.6-luna
+      worker-reasoning-effort: high
       responses-api-enabled: true
       # Automatic competency orchestration (Feature.AtlasAgent). Disabled by default;
       # admins flip the toggle to opt the instance in. The scheduler ticks at scheduler-rate-ms and only

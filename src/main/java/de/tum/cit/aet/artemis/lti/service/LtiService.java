@@ -170,7 +170,7 @@ public class LtiService {
      * @param exercise Exercise to launch
      */
     public void onSuccessfulLtiAuthentication(User user, Exercise exercise) {
-        enrollUserInCourse(user, exercise.getCourseViaExerciseGroupOrCourseMember());
+        enrollUserInCourse(user, exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow());
     }
 
     /**

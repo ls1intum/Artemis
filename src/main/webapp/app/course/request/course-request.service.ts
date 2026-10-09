@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
-import { BaseCourseRequest, CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/course/request/course-request.model';
+import { BaseCourseRequest, CourseRequest, CourseRequestInstructorCourse, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/course/request/course-request.model';
 import { User } from 'app/account/user/user.model';
 import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
 
@@ -13,6 +13,7 @@ interface BaseCourseRequestDTO {
     startDate?: string;
     endDate?: string;
     testCourse: boolean;
+    gradeRelevant: boolean;
     reason: string;
 }
 
@@ -25,6 +26,7 @@ interface CourseRequestDTO extends BaseCourseRequestDTO {
     requester?: User;
     createdCourseId?: number;
     instructorCourseCount?: number;
+    instructorCourses?: CourseRequestInstructorCourse[];
 }
 
 interface CourseRequestsAdminOverviewDTO {
@@ -77,6 +79,7 @@ export class CourseRequestService {
             title: courseRequest.title,
             shortName: courseRequest.shortName,
             testCourse: courseRequest.testCourse,
+            gradeRelevant: courseRequest.gradeRelevant,
             reason: courseRequest.reason,
         };
         dto.semester = courseRequest.semester;
@@ -90,6 +93,7 @@ export class CourseRequestService {
             title: dto.title,
             shortName: dto.shortName,
             testCourse: dto.testCourse,
+            gradeRelevant: dto.gradeRelevant,
             reason: dto.reason,
         };
         response.id = dto.id;
@@ -104,6 +108,7 @@ export class CourseRequestService {
         response.requester = dto.requester;
         response.createdCourseId = dto.createdCourseId;
         response.instructorCourseCount = dto.instructorCourseCount;
+        response.instructorCourses = dto.instructorCourses;
         return response;
     }
 }

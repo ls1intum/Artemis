@@ -55,6 +55,7 @@
                             </div>
                             @if (checkboxStates()[competencyLink.competency.id]) {
                                 <select
+                                    [attr.aria-label]="'accessibility.competencyWeight' | artemisTranslate"
                                     [ngModel]="
                                         competencyLink.weight < LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF
                                             ? LOW_COMPETENCY_LINK_WEIGHT

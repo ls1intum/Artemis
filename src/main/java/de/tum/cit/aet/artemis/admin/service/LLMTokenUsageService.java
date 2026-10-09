@@ -175,17 +175,27 @@ public class LLMTokenUsageService {
     public void trackChatResponseTokenUsage(@Nullable ChatResponse chatResponse, LLMServiceType serviceType, String pipelineId,
             Function<LLMTokenUsageBuilder, LLMTokenUsageBuilder> builderFunction) {
         try {
-            if (chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {
+            if (chatResponse == null) {
+                log.warn("Failed to store token usage for pipeline [{}]: chat response is missing.", pipelineId);
                 return;
             }
+            // Spring AI declares the metadata and its usage as never null, so only the token counts below can be missing.
             ChatResponseMetadata metadata = chatResponse.getMetadata();
             Usage usage = metadata.getUsage();
             if (usage instanceof org.springframework.ai.chat.metadata.EmptyUsage) {
                 return;
             }
-            // Spring AI is @NullMarked: token counts are never null; the model is defaulted because mocked metadata (tests) can return null
+            Integer promptTokens = usage.getPromptTokens();
+            Integer completionTokens = usage.getCompletionTokens();
+            // Defaulting a missing count to zero would persist a record that understates usage and cost; reported zeros are kept.
+            if (promptTokens == null || completionTokens == null) {
+                log.warn("Failed to store token usage for pipeline [{}]: usage metadata is incomplete (prompt tokens: {}, completion tokens: {}).", pipelineId, promptTokens,
+                        completionTokens);
+                return;
+            }
+            // The model is defaulted because mocked metadata (tests) can return null
             String model = Objects.requireNonNullElse(metadata.getModel(), "");
-            LLMRequest llmRequest = buildLLMRequest(model, usage.getPromptTokens(), usage.getCompletionTokens(), pipelineId);
+            LLMRequest llmRequest = buildLLMRequest(model, promptTokens, completionTokens, pipelineId);
             saveLLMTokenUsage(List.of(llmRequest), serviceType, builderFunction);
         }
         catch (Exception e) {
