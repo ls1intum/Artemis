@@ -266,6 +266,30 @@ class IrisCitationServiceTest {
         verify(materialVersionService).getSnapshot("job");
     }
 
+    @Test
+    void stampCitationVersionsWithCurrentMaterial_pinsTheCourseMaterialAsItIsNow() {
+        when(lectureUnitRepositoryApi.findIngestedVersionsByCourseId(COURSE_ID)).thenReturn(List.of(ingested(LECTURE_UNIT_ID, 3, 2), ingested(SECOND_LECTURE_UNIT_ID, 8, null)));
+
+        var stamped = citationService.stampCitationVersionsWithCurrentMaterial("A [cite:L:42::30::Locks:] and B [cite:L:7:2:::Threads:]", COURSE_ID);
+
+        // An answer carried over from global search has no run snapshot, so the run snapshot is never consulted.
+        assertThat(stamped).isEqualTo("A [cite:L:42::30::Locks::vt2] and B [cite:L:7:2:::Threads::va8]");
+        verifyNoInteractions(materialVersionService);
+    }
+
+    @Test
+    void stampCitationVersionsWithCurrentMaterial_marksMaterialOutsideTheCourseUnverified() {
+        when(lectureUnitRepositoryApi.findIngestedVersionsByCourseId(COURSE_ID)).thenReturn(List.of(ingested(SECOND_LECTURE_UNIT_ID, 8, null)));
+
+        assertThat(citationService.stampCitationVersionsWithCurrentMaterial("[cite:L:42:7:::Deadlocks:]", COURSE_ID)).isEqualTo("[cite:L:42:7:::Deadlocks::va0]");
+    }
+
+    @Test
+    void stampCitationVersionsWithCurrentMaterial_loadsNoVersionsWithoutACitation() {
+        assertThat(citationService.stampCitationVersionsWithCurrentMaterial("No citations here.", COURSE_ID)).isEqualTo("No citations here.");
+        verifyNoInteractions(lectureUnitRepositoryApi);
+    }
+
     /**
      * The citation pattern accepts any run of digits, so a model inventing an ID beyond {@code long} produces a well-formed citation that cannot name a lecture unit. It
      * has to be skipped rather than throw: the lookup already ignores it, and a valid citation next to it is enough to reach the stamping loop, where an escaping
