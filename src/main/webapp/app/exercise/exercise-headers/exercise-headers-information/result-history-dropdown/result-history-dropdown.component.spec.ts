@@ -396,6 +396,22 @@ describe('ResultHistoryDropdownComponent', () => {
         });
     });
 
+    describe.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])('%s AI feedback history', (type) => {
+        it.each([0, 75, 100])('renders the completed score of %s percent alongside the AI indicator', (score) => {
+            const result: Result = { id: 1, score, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
+            fixture.componentRef.setInput('exercise', { ...defaultExercise, type });
+            fixture.componentRef.setInput('sortedHistoryResults', [result]);
+            fixture.detectChanges();
+
+            component.resultsPopover()?.show(new Event('click'));
+            fixture.detectChanges();
+
+            const row = document.querySelector<HTMLElement>('[data-testid="result-history-row"]');
+            expect(row?.textContent).toContain(`${score}%`);
+            expect(row?.querySelector('[data-testid="ai-feedback-indicator"]')).toBeTruthy();
+        });
+    });
+
     describe('pending Athena feedback display', () => {
         it('should hide score and metadata for unfinished Athena results', () => {
             const result = { id: 1, score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined } as Result;

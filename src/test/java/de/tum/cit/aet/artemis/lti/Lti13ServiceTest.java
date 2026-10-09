@@ -408,7 +408,7 @@ class Lti13ServiceTest {
         doReturn(course).when(courseRepository).findByIdElseThrow(course.getId());
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
         doReturn(List.of(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
-        doReturn(Optional.empty()).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(Optional.empty()).when(resultRepository).findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId());
         doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
         lti13Service.onNewResult(participation);
@@ -441,7 +441,7 @@ class Lti13ServiceTest {
         doReturn(course).when(courseRepository).findByIdElseThrow(course.getId());
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
         doReturn(List.of(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
-        doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(Optional.of(result)).when(resultRepository).findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId());
         doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
         lti13Service.onNewResult(participation);
@@ -470,7 +470,7 @@ class Lti13ServiceTest {
         doReturn(course).when(courseRepository).findByIdElseThrow(course.getId());
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
         doReturn(List.of(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
-        doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(Optional.of(result)).when(resultRepository).findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId());
         doReturn(null).when(tokenRetriever).getToken(eq(clientRegistration), eq(Scopes.AGS_SCORE));
         doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
@@ -504,7 +504,7 @@ class Lti13ServiceTest {
         ClientRegistration clientRegistration = state.clientRegistration();
 
         doReturn(List.of(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
-        doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(Optional.of(result)).when(resultRepository).findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId());
         doReturn(course).when(courseRepository).findByIdElseThrow(course.getId());
         doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(clientRegistrationId);
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());

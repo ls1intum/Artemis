@@ -173,7 +173,10 @@ export class ResultService implements IResultService {
         } else if (isAIResultAndTimedOut(result)) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
         } else if (isAIResultAndProcessed(result)) {
-            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackSuccessful');
+            buildAndTestMessage =
+                result.score !== undefined
+                    ? this.getResultStringNonProgrammingExercise(relativeScore, points, short)
+                    : this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackSuccessful');
         } else if (latestSubmission?.buildFailed) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildFailed');
         } else if (!result.testCaseCount && result.assessmentType !== AssessmentType.MANUAL && result.assessmentType !== AssessmentType.SEMI_AUTOMATIC) {
