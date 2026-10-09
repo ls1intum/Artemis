@@ -281,7 +281,9 @@ public class PresentationAssessmentService {
     }
 
     private void applyInstanceDto(long courseId, PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceRequestDTO dto) {
-        User student = resolveAssignedCourseStudent(courseId, dto.studentLogin());
+        // The course membership is only checked when the presenter changes, so a grade or remark can still be recorded for a student who left the course.
+        boolean presenterUnchanged = dto.studentLogin() != null && dto.studentLogin().trim().equals(instance.getStudent().getLogin());
+        User student = presenterUnchanged ? instance.getStudent() : resolveAssignedCourseStudent(courseId, dto.studentLogin());
         applyInstanceData(assessment, instance, dto);
         instance.setStudent(student);
     }

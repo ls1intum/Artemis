@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstanceDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstanceRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstancesBatchCreateDTO;
+import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
@@ -611,6 +613,107 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         assertThat(stored.getMode()).isEqualTo(PresentationAssessmentMode.ONLINE);
         assertThat(stored.getLocation()).isNull();
         assertThat(stored.getMeetingLink()).isEqualTo("https://example.org/presentation");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updatePresentationAssessmentInstance_afterStudentLeftCourse_shouldStillRecordResult() throws Exception {
+        PresentationAssessmentInstanceDTO individual = createSearchInstance(presentationAssessment, "student1", null);
+        userUtilService.unenrollUserFromCourse(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), course);
+        PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(individual.id(), individual.presentationDate(), 9.0,
+                individual.student().login(), individual.language(), individual.mode(), individual.location(), null, "Graded after the student left");
+
+        PresentationAssessmentInstanceDTO updated = request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + individual.id(), updateDto,
+                PresentationAssessmentInstanceDTO.class, HttpStatus.OK);
+
+        assertThat(updated.student().login()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(updated.resultPoints()).isEqualTo(9.0);
+        PresentationAssessmentInstance stored = presentationAssessmentInstanceRepository.findByIdElseThrow(individual.id());
+        assertThat(stored.getResultPoints()).isEqualTo(9.0);
+        assertThat(stored.getRemark()).isEqualTo("Graded after the student left");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updatePresentationAssessmentInstance_toStudentOutsideCourse_shouldReturnBadRequest() throws Exception {
+        PresentationAssessmentInstanceDTO individual = createSearchInstance(presentationAssessment, "student1", null);
+        userUtilService.unenrollUserFromCourse(userUtilService.getUserByLogin(TEST_PREFIX + "student2"), course);
+        PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(individual.id(), individual.presentationDate(), null,
+                TEST_PREFIX + "student2", individual.language(), individual.mode(), individual.location(), null, null);
+
+        request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + individual.id(), updateDto, PresentationAssessmentInstanceDTO.class,
+                HttpStatus.BAD_REQUEST);
+
+        PresentationAssessmentInstance stored = presentationAssessmentInstanceRepository
+                .findByIdAndPresentationAssessmentIdAndPresentationAssessmentCourseId(individual.id(), presentationAssessment.getId(), course.getId()).orElseThrow();
+        assertThat(stored.getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deletePresentationAssessmentInstance_shouldDeleteOnlyThatInstance() throws Exception {
+        PresentationAssessmentInstanceDTO first = createSearchInstance(presentationAssessment, "student1", null);
+        PresentationAssessmentInstanceDTO second = createSearchInstance(presentationAssessment, "student2", null);
+
+        request.delete(getInstancesUrl(course, presentationAssessment) + "/" + first.id(), HttpStatus.NO_CONTENT);
+
+        assertThat(presentationAssessmentInstanceRepository.findById(first.id())).isEmpty();
+        assertThat(presentationAssessmentInstanceRepository.findById(second.id())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deletePresentationAssessmentInstance_withWrongAssessment_shouldReturnNotFound() throws Exception {
+        PresentationAssessmentInstanceDTO instance = createSearchInstance(presentationAssessment, "student1", null);
+        PresentationAssessment otherAssessment = createSearchAssessment("Other presentation", false);
+
+        request.delete(getInstancesUrl(course, otherAssessment) + "/" + instance.id(), HttpStatus.NOT_FOUND);
+
+        assertThat(presentationAssessmentInstanceRepository.findById(instance.id())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPresentationAssessmentStatistics_shouldCountTotalAndAssessedInstances() throws Exception {
+        createSearchInstance(presentationAssessment, "student1", 5.0);
+        createSearchInstance(presentationAssessment, "student2", null);
+
+        PresentationAssessmentStatisticsDTO statistics = request.get(getBaseUrl(course) + "/statistics", HttpStatus.OK, PresentationAssessmentStatisticsDTO.class);
+
+        assertThat(statistics.totalCount()).isEqualTo(2);
+        assertThat(statistics.assessedCount()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void savePresentationAssessmentInstances_withPointsAboveMaximum_shouldReturnBadRequest() throws Exception {
+        long instancesBeforeRequest = presentationAssessmentInstanceRepository.count();
+        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, presentationAssessment.getMaxPoints() + 1,
+                List.of(TEST_PREFIX + "student1"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
+
+        request.post(getInstancesUrl(course, presentationAssessment), dto, HttpStatus.BAD_REQUEST);
+
+        assertThat(presentationAssessmentInstanceRepository.count()).isEqualTo(instancesBeforeRequest);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "zoom.example.org/j/1", "/j/1", "javascript:alert(1)", "https://", "https://exa mple.org" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void savePresentationAssessmentInstances_withMeetingLinkWithoutHttpScheme_shouldReturnBadRequest(String meetingLink) throws Exception {
+        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, null, List.of(TEST_PREFIX + "student1"), "en",
+                PresentationAssessmentMode.ONLINE, null, meetingLink, null);
+
+        request.post(getInstancesUrl(course, presentationAssessment), dto, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void savePresentationAssessmentInstances_withTooManyStudents_shouldReturnBadRequest() throws Exception {
+        List<String> logins = IntStream.range(0, 501).mapToObj(index -> TEST_PREFIX + "student" + index).toList();
+        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, null, logins, "en", PresentationAssessmentMode.IN_PERSON,
+                "Room 1", null, null);
+
+        request.post(getInstancesUrl(course, presentationAssessment), dto, HttpStatus.BAD_REQUEST);
     }
 
     @Test

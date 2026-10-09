@@ -1,15 +1,10 @@
 package de.tum.cit.aet.artemis.assessment.domain;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -45,9 +40,6 @@ public class PresentationAssessment extends DomainObject {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Exercise exercise;
-
-    @OneToMany(mappedBy = "presentationAssessment", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<PresentationAssessmentInstance> instances = new HashSet<>();
 
     public String getTitle() {
         return title;
@@ -87,14 +79,6 @@ public class PresentationAssessment extends DomainObject {
 
     public void setExercise(Exercise exercise) {
         this.exercise = exercise;
-    }
-
-    public Set<PresentationAssessmentInstance> getInstances() {
-        return instances;
-    }
-
-    public void setInstances(Set<PresentationAssessmentInstance> instances) {
-        this.instances = instances;
     }
 
     public long getVersion() {
