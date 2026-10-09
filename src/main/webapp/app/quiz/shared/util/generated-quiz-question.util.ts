@@ -3,7 +3,7 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
-import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
+import { BaseEntityWithTempId, DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
@@ -39,15 +39,28 @@ function hydrateEach<T extends object, S extends object>(create: () => T, source
     return sources?.map((source) => hydrate(create(), source));
 }
 
+/**
+ * Hydrates a drag item, drop location, spot or solution. Their constructors assign a random `tempID`, which identifies
+ * a part only until the server stores it. A stored part keeps its server id instead: with a random `tempID`, two loads of
+ * the same question differ, and the re-evaluation warning reports unchanged mappings as changed.
+ */
+function toQuestionPart<T extends BaseEntityWithTempId, S extends { id?: number }>(part: T, source: S): T & S {
+    const questionPart = hydrate(part, source);
+    if (questionPart.id !== undefined) {
+        delete questionPart.tempID;
+    }
+    return questionPart;
+}
+
 function toDragAndDropMapping(mapping: GeneratedDragAndDropMapping): DragAndDropMapping {
-    const dragItem = mapping.dragItem ? hydrate(new DragItem(), mapping.dragItem) : undefined;
-    const dropLocation = mapping.dropLocation ? hydrate(new DropLocation(), mapping.dropLocation) : undefined;
+    const dragItem = mapping.dragItem ? toQuestionPart(new DragItem(), mapping.dragItem) : undefined;
+    const dropLocation = mapping.dropLocation ? toQuestionPart(new DropLocation(), mapping.dropLocation) : undefined;
     return hydrate(new DragAndDropMapping(dragItem, dropLocation), { id: mapping.id, invalid: mapping.invalid });
 }
 
 function toShortAnswerMapping(mapping: GeneratedShortAnswerMapping): ShortAnswerMapping {
-    const spot = mapping.spot ? hydrate(new ShortAnswerSpot(), mapping.spot) : undefined;
-    const solution = mapping.solution ? hydrate(new ShortAnswerSolution(), mapping.solution) : undefined;
+    const spot = mapping.spot ? toQuestionPart(new ShortAnswerSpot(), mapping.spot) : undefined;
+    const solution = mapping.solution ? toQuestionPart(new ShortAnswerSolution(), mapping.solution) : undefined;
     return hydrate(new ShortAnswerMapping(spot, solution), { id: mapping.id, invalid: mapping.invalid });
 }
 
@@ -71,15 +84,15 @@ export function toQuizQuestion(question: QuizQuestionWithSolution | QuizQuestion
         }
         case 'drag-and-drop': {
             const dragAndDropQuestion: DragAndDropQuestion = hydrate(new DragAndDropQuestion(), question);
-            dragAndDropQuestion.dropLocations = hydrateEach(() => new DropLocation(), question.dropLocations);
-            dragAndDropQuestion.dragItems = hydrateEach(() => new DragItem(), question.dragItems);
+            dragAndDropQuestion.dropLocations = question.dropLocations?.map((dropLocation) => toQuestionPart(new DropLocation(), dropLocation));
+            dragAndDropQuestion.dragItems = question.dragItems?.map((dragItem) => toQuestionPart(new DragItem(), dragItem));
             dragAndDropQuestion.correctMappings = 'correctMappings' in question ? question.correctMappings?.map(toDragAndDropMapping) : undefined;
             return dragAndDropQuestion;
         }
         case 'short-answer': {
             const shortAnswerQuestion: ShortAnswerQuestion = hydrate(new ShortAnswerQuestion(), question);
-            shortAnswerQuestion.spots = hydrateEach(() => new ShortAnswerSpot(), question.spots);
-            shortAnswerQuestion.solutions = hydrateEach(() => new ShortAnswerSolution(), question.solutions);
+            shortAnswerQuestion.spots = question.spots?.map((spot) => toQuestionPart(new ShortAnswerSpot(), spot));
+            shortAnswerQuestion.solutions = question.solutions?.map((solution) => toQuestionPart(new ShortAnswerSolution(), solution));
             shortAnswerQuestion.correctMappings = 'correctMappings' in question ? question.correctMappings?.map(toShortAnswerMapping) : undefined;
             return shortAnswerQuestion;
         }
@@ -207,7 +220,7 @@ export function toSubmittedAnswer(answer: SubmittedAnswerAfterEvaluation | Submi
             shortAnswerAnswer.quizQuestion = quizQuestion;
             shortAnswerAnswer.submittedTexts = answer.submittedTexts?.map((submittedText) => {
                 const submittedTextInstance = hydrate(new ShortAnswerSubmittedText(), submittedText);
-                submittedTextInstance.spot = submittedText.spot ? hydrate(new ShortAnswerSpot(), submittedText.spot) : undefined;
+                submittedTextInstance.spot = submittedText.spot ? toQuestionPart(new ShortAnswerSpot(), submittedText.spot) : undefined;
                 return submittedTextInstance;
             });
             return shortAnswerAnswer;

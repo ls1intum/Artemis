@@ -56,6 +56,7 @@ describe('CourseTrainingQuizComponent', () => {
         { quizQuestionWithSolutionDTO: question2, isRated: true, questionIds: [1], isNewSession: true },
         { quizQuestionWithSolutionDTO: question3, isRated: false, questionIds: [1], isNewSession: true },
     ];
+    const loadedQuestions = mockQuestions.map(({ quizQuestionWithSolutionDTO, isRated }) => ({ question: toQuizQuestion(quizQuestionWithSolutionDTO), isRated }));
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -121,12 +122,30 @@ describe('CourseTrainingQuizComponent', () => {
         component.page.set(0);
         component.loadQuestions();
         expect(component.allLoadedQuestions()).toHaveLength(3);
-        expect(component.allLoadedQuestions()[0].quizQuestionWithSolutionDTO).toEqual(question1);
+        expect(component.allLoadedQuestions()[0].question).toEqual(classQuestion1);
+    });
+
+    it('should keep the current question instance when the next page is appended', () => {
+        component.page.set(0);
+        component.loadQuestions();
+        // A short-answer question rebuilds its inputs when it receives a new instance, which loses text a student is typing.
+        component.currentIndex.set(2);
+        const currentQuestion = component.currentQuestion();
+        const nextPage: QuizQuestionTraining[] = [{ quizQuestionWithSolutionDTO: { ...question2, id: 4 }, isRated: true }];
+        vi.spyOn(quizTrainingApi, 'getQuizQuestionsForPractice').mockReturnValue(
+            of(new HttpResponse<QuizQuestionTraining[]>({ body: nextPage, headers: { get: () => 'false' } as any })),
+        );
+
+        component.page.set(1);
+        component.loadQuestions();
+
+        expect(component.allLoadedQuestions()).toHaveLength(4);
+        expect(component.currentQuestion()).toBe(currentQuestion);
     });
 
     it('should check for last question', () => {
         component.totalItems.set(3);
-        component.allLoadedQuestions.set(mockQuestions);
+        component.allLoadedQuestions.set(loadedQuestions);
         component.currentIndex.set(0);
         expect(component.isLastQuestion()).toBeFalsy();
         component.currentIndex.set(2);
@@ -141,13 +160,13 @@ describe('CourseTrainingQuizComponent', () => {
     });
 
     it('should return the current question based on currentIndex', () => {
-        component.allLoadedQuestions.set(mockQuestions);
+        component.allLoadedQuestions.set(loadedQuestions);
         component.currentIndex.set(0);
         expect(component.currentQuestion()).toEqual(classQuestion1);
     });
 
     it('should go to the next question and call initQuestion', () => {
-        component.allLoadedQuestions.set(mockQuestions);
+        component.allLoadedQuestions.set(loadedQuestions);
         component.currentIndex.set(0);
         const initQuestionSpy = vi.spyOn(component, 'initQuestion');
         component.nextQuestion();

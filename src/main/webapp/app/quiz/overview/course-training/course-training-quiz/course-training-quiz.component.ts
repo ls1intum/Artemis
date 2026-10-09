@@ -26,6 +26,15 @@ import { DialogModule } from 'primeng/dialog';
 import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
 import { ButtonModule } from 'primeng/button';
 
+/**
+ * A loaded training question. The question is converted once, when its page arrives: appending a later page must keep
+ * the instance the question components render, or a short-answer question rebuilds its inputs while a student types.
+ */
+interface TrainingQuestion {
+    question: QuizQuestion;
+    isRated?: boolean;
+}
+
 @Component({
     selector: 'jhi-course-training-quiz',
     imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent, TranslateDirective, DialogModule, ButtonModule],
@@ -49,7 +58,7 @@ export class CourseTrainingQuizComponent {
     page = signal(0);
     size = 20;
     totalItems = signal(0);
-    allLoadedQuestions = signal<QuizQuestionTraining[]>([]);
+    allLoadedQuestions = signal<TrainingQuestion[]>([]);
     hasNext = signal(false);
 
     // Reactive chain for loading quiz questions based on the current route
@@ -99,7 +108,7 @@ export class CourseTrainingQuizComponent {
         if (questions.length === 0) {
             return undefined;
         }
-        return toQuizQuestion(questions[this.currentIndex()].quizQuestionWithSolutionDTO);
+        return questions[this.currentIndex()].question;
     });
 
     isRated = computed(() => {
@@ -149,10 +158,11 @@ export class CourseTrainingQuizComponent {
                     this.isNewSession = res.body[0].isNewSession ?? false;
                 }
 
+                const loadedQuestions = (res.body ?? []).map((training) => ({ question: toQuizQuestion(training.quizQuestionWithSolutionDTO), isRated: training.isRated }));
                 if (this.page() === 0) {
-                    this.allLoadedQuestions.set(res.body || []);
+                    this.allLoadedQuestions.set(loadedQuestions);
                 } else {
-                    this.allLoadedQuestions.update((current) => [...current, ...(res.body || [])]);
+                    this.allLoadedQuestions.update((current) => [...current, ...loadedQuestions]);
                 }
 
                 if (this.allLoadedQuestions().length > 0 && this.currentIndex() === 0) {
