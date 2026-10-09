@@ -1,0 +1,19 @@
+# Context filter for .oss-scanner/Dockerfile. BuildKit reads this file instead of the root .dockerignore, which is deny-all
+# for dotfiles and so would hide .github (the workflows are part of what the scanner should see) from /src.
+# Host build output is left out; the image builds its own.
+**/node_modules
+/build
+/.gradle
+
+# Local secrets and private keys. A fresh clone has none; this keeps them out when the Dockerfile is built from a working
+# tree. The root .dockerignore also drops application-localci.yml and application-localvc.yml, which are production
+# profile configs, so they are re-admitted here as they are in .gitignore.
+/src/main/resources/config/application-local*.yml
+!/src/main/resources/config/application-localci.yml
+!/src/main/resources/config/application-localvc.yml
+/src/main/resources/id_*
+/src/main/resources/known_hosts
+/deployment/docker/.env
+/deployment/docker/local-secrets.yml
+/deployment/docker/artemis/config/local-secrets.env
+/deployment/docker/.docker-data
