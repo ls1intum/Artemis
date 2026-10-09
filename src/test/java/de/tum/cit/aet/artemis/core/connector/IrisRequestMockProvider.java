@@ -179,14 +179,6 @@ public class IrisRequestMockProvider {
         mockPostRequest("/competency-extraction/run", PyrisCompetencyExtractionPipelineExecutionDTO.class, responseConsumer);
     }
 
-    public void mockIngestionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer) {
-        mockWebhookPost("/lectures/ingest", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer);
-    }
-
-    public void mockIngestionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer, ExpectedCount count) {
-        mockWebhookPost("/lectures/ingest", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer, count);
-    }
-
     public void mockFaqIngestionWebhookRunResponse(Consumer<PyrisWebhookFaqIngestionExecutionDTO> responseConsumer) {
         mockWebhookPost("/faqs/ingest", PyrisWebhookFaqIngestionExecutionDTO.class, responseConsumer);
     }
@@ -231,10 +223,6 @@ public class IrisRequestMockProvider {
 
     public void mockRunError(int httpStatus) {
         mockPostError(pipelinesApiURL.toString(), "/programming-exercise-chat/run", httpStatus);
-    }
-
-    public void mockIngestionWebhookRunError(int httpStatus) {
-        mockPostError(webhooksApiURL.toString(), "/lectures/ingest", httpStatus);
     }
 
     /**

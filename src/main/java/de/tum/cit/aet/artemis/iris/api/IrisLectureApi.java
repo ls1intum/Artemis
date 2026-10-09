@@ -29,21 +29,6 @@ public class IrisLectureApi extends AbstractIrisApi {
     }
 
     /**
-     * Adds the provided PDF attachment video unit to the vector database in Pyris.
-     * <p>
-     * This method calls {@link PyrisWebhookService#addLectureUnitToPyrisDB(AttachmentVideoUnit, String, boolean)}.
-     * The lecture ingestion must be enabled for the course.
-     *
-     * @param attachmentVideoUnit the attachment video unit to be added
-     * @param contentFingerprint  fingerprint of the unit's source content; stamped verbatim into the vector store by Pyris
-     * @param forceReingest       true for quality re-ingestions: Iris bypasses its structural skip checks
-     * @return a job token if ingestion is triggered successfully, otherwise null
-     */
-    public String addLectureUnitToPyrisDB(AttachmentVideoUnit attachmentVideoUnit, String contentFingerprint, boolean forceReingest) {
-        return pyrisWebhookService.addLectureUnitToPyrisDB(attachmentVideoUnit, contentFingerprint, forceReingest);
-    }
-
-    /**
      * Deletes the given lecture's attachments from the vector database in Pyris.
      * <p>
      * This method calls {@link PyrisWebhookService#deleteLectureFromPyrisDB(List)}.
@@ -65,11 +50,11 @@ public class IrisLectureApi extends AbstractIrisApi {
     }
 
     /**
-     * Whether an ingestion request for this unit would actually be dispatched to Pyris
+     * Whether an ingestion job for this unit would actually be prepared for Pyris
      * (Iris enabled for the course and the unit's content eligible).
      *
      * @param attachmentVideoUnit the unit to check
-     * @return true if dispatching the unit would trigger ingestion
+     * @return true if claiming the unit would hand an ingestion job to Pyris
      */
     public boolean isLectureUnitProcessable(AttachmentVideoUnit attachmentVideoUnit) {
         return pyrisWebhookService.isLectureUnitProcessableForPyris(attachmentVideoUnit);

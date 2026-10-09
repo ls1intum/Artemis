@@ -79,11 +79,26 @@ public class TumLiveService {
     }
 
     /**
+     * Whether the URL has the shape of a TUM Live watch page ({@code /w/<courseSlug>/<streamId>}). Checks only the shape, without calling the TUM Live API,
+     * so it also holds while that API is unreachable.
+     *
+     * @param videoUrl the video URL to check
+     * @return true if the URL names a TUM Live stream
+     */
+    public boolean isTumLiveUrl(String videoUrl) {
+        return extractCourseSlugAndStreamId(videoUrl) != null;
+    }
+
+    /**
      * Extracts courseSlug and streamId from TUM Live public video URLs.
      */
     private StreamInfo extractCourseSlugAndStreamId(String videoUrl) {
         try {
             String path = new URI(videoUrl).getPath();
+            if (path == null) {
+                // An opaque URI such as "mailto:..." has no path to match
+                return null;
+            }
             Matcher matcher = TUM_LIVE_PATTERN.matcher(path);
             if (matcher.find()) {
                 return new StreamInfo(matcher.group(1), matcher.group(2));

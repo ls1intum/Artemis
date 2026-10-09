@@ -86,6 +86,13 @@ class LectureIngestionReconcileServiceTest {
         irisLectureApi = mock(IrisLectureApi.class);
         contentFingerprintService = mock(LectureUnitContentFingerprintService.class);
         processingService = mock(LectureContentProcessingService.class);
+        // The content rule of the processing service: a stored PDF or a video link (every link of these tests is a supported source unless a
+        // test says otherwise)
+        when(processingService.hasProcessableContent(any())).thenAnswer(invocation -> {
+            AttachmentVideoUnit checked = invocation.getArgument(0);
+            return checked != null
+                    && ((checked.getAttachment() != null && checked.getAttachment().isStoredPdf()) || (checked.getVideoSource() != null && !checked.getVideoSource().isBlank()));
+        });
 
         reconcileService = new LectureIngestionReconcileService(processingStateRepository, reconcileStateRepository, attachmentVideoUnitRepository, Optional.of(irisLectureApi),
                 contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10, transcriptionRepository);
@@ -824,6 +831,83 @@ class LectureIngestionReconcileServiceTest {
         }
 
         @Test
+        void shouldNotTouchTheCursorWhileTheBacklogIsFull() {
+            when(processingStateRepository.countOpenBackgroundUnits(anyInt())).thenReturn(10L);
+
+            assertThat(reconcileService.walkNextCourses()).isZero();
+
+            verify(attachmentVideoUnitRepository, never()).findReconcileCourseIdsAfter(anyLong(), any());
+            verify(irisLectureApi, never()).getIngestionCensus(anyLong());
+        }
+
+        @Test
+        void shouldSpendOnlyTheFreeBacklogRoom() {
+            // A bound of 10 with 9 background units still open leaves room for one more
+            AttachmentVideoUnit secondUnit = new AttachmentVideoUnit();
+            secondUnit.setId(101L);
+            secondUnit.setLecture(lecture);
+            secondUnit.setVideoSource("https://live.rbg.tum.de/w/course/67890");
+            LectureUnitProcessingState secondState = new LectureUnitProcessingState(secondUnit);
+            secondState.setId(2L);
+            secondState.setPhase(ProcessingPhase.DONE);
+            state.setPhase(ProcessingPhase.DONE);
+            when(contentFingerprintService.computeFingerprint(secondUnit)).thenReturn(FINGERPRINT);
+            when(attachmentVideoUnitRepository.findAllWithAttachmentByCourseId(COURSE_ID)).thenReturn(List.of(unit, secondUnit));
+            when(processingStateRepository.findWithLectureUnitByCourseId(COURSE_ID)).thenReturn(List.of(state, secondState));
+            when(processingStateRepository.countOpenBackgroundUnits(anyInt())).thenReturn(9L);
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
+                    .thenAnswer(invocation -> (long) invocation.getArgument(0) < COURSE_ID ? List.of(COURSE_ID) : List.<Long>of());
+            givenCensus();
+
+            assertThat(reconcileService.backlogBudget()).isEqualTo(1);
+            assertThat(reconcileService.walkNextCourses()).isEqualTo(1);
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(secondState.getPhase()).isEqualTo(ProcessingPhase.DONE);
+        }
+
+        @Test
+        void shouldContinueOnlyAnActivePassAndEndItAtTheWrap() {
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
+                    .thenAnswer(invocation -> (long) invocation.getArgument(0) < COURSE_ID ? List.of(COURSE_ID) : List.<Long>of());
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
+
+            assertThat(reconcileService.continuePass()).as("no pass is active before the first cron tick").isZero();
+            verify(attachmentVideoUnitRepository, never()).findReconcileCourseIdsAfter(anyLong(), any());
+
+            reconcileService.startOrContinuePass();
+            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(0L), any());
+
+            // The continuation takes the next step, which finds no course after the cursor and ends the pass
+            reconcileService.continuePass();
+            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(COURSE_ID), any());
+
+            reconcileService.continuePass();
+            verify(attachmentVideoUnitRepository, org.mockito.Mockito.times(2)).findReconcileCourseIdsAfter(anyLong(), any());
+
+            // The next cron tick starts a new pass from the beginning
+            reconcileService.startOrContinuePass();
+            verify(attachmentVideoUnitRepository, org.mockito.Mockito.times(2)).findReconcileCourseIdsAfter(eq(0L), any());
+        }
+
+        @Test
+        void shouldKeepTheCursorOfTheActivePassOnACronTick() {
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
+                    .thenAnswer(invocation -> (long) invocation.getArgument(0) < COURSE_ID ? List.of(COURSE_ID) : List.<Long>of());
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
+
+            reconcileService.startOrContinuePass();
+            // A cron tick while the pass is active continues after the walked course instead of starting over
+            reconcileService.startOrContinuePass();
+
+            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(0L), any());
+            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(COURSE_ID), any());
+        }
+
+        @Test
         void shouldWrapTheCursorAfterAFullPass() {
             // One answer per cursor position; a second when() stub would consume the first
             // sequential answer during its own stubbing invocation
@@ -989,6 +1073,36 @@ class LectureIngestionReconcileServiceTest {
             assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
 
             verify(processingService).retryRemovedContentCleanup(unit, state.getId());
+        }
+
+        @Test
+        void shouldCleanUpAUnitWhoseOnlyContentIsAnUnsupportedVideo() {
+            // DONE before only supported videos counted; its markers still record the link, so the cleanup settles it
+            unit.setVideoSource("https://example.com/recording");
+            unit.setAttachment(null);
+            when(processingService.hasProcessableContent(unit)).thenReturn(false);
+            state.setPhase(ProcessingPhase.DONE);
+            state.setVideoSourceHash("old-video-hash");
+            givenCensus();
+            when(processingService.retryRemovedContentCleanup(unit, state.getId())).thenReturn(true);
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
+
+            verify(processingService).retryRemovedContentCleanup(unit, state.getId());
+            verify(processingService, never()).triggerProcessingAsBacklog(any());
+        }
+
+        @Test
+        void shouldNotTriggerAStatelessUnitWhoseOnlyContentIsAnUnsupportedVideo() {
+            unit.setVideoSource("https://example.com/recording");
+            unit.setAttachment(null);
+            when(processingService.hasProcessableContent(unit)).thenReturn(false);
+            when(processingStateRepository.findWithLectureUnitByCourseId(COURSE_ID)).thenReturn(List.of());
+            givenCensus();
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isZero();
+
+            verify(processingService, never()).triggerProcessingAsBacklog(any());
         }
 
         @Test

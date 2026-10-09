@@ -104,6 +104,7 @@ public class PyrisLectureUnitSyncService {
     }
 
     private boolean isLectureUnitProcessableForPyris(AttachmentVideoUnit attachmentVideoUnit) {
-        return irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse()) && PyrisLectureUnitEligibility.isProcessable(attachmentVideoUnit);
+        return irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse())
+                && PyrisLectureUnitEligibility.isProcessable(attachmentVideoUnit, videoSourceResolver);
     }
 }

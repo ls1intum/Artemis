@@ -41,10 +41,10 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepos
  * Note: Cleanup of orphaned states (where lecture unit was deleted) is handled
  * automatically by database CASCADE DELETE on the foreign key constraint.
  * <p>
- * Runs only on the scheduling node: multiple nodes running stuck recovery, backfill, and the
- * dispatch tick concurrently would each apply the concurrency cap independently. Direct dispatch
- * from triggers and callbacks still happens on any node; row claiming stays safe everywhere through
- * conditional claim updates, which only one caller can win.
+ * Runs only on the scheduling node (one node per installation): stuck recovery, backfill and the
+ * reconcile walk keep their state and their bound on background work in memory. Pyris workers claim
+ * jobs through any node; claiming stays safe everywhere through conditional claim updates, which only
+ * one caller can win.
  */
 @Conditional(LectureWithIrisEnabled.class)
 @Profile(PROFILE_SCHEDULING)
@@ -166,22 +166,12 @@ public class LectureContentProcessingScheduler {
     }
 
     /**
-     * Periodically check for processing states that need attention and dispatch pending jobs.
+     * Periodically check for processing states that need attention: lapsed worker leases, stalled and stuck runs,
+     * interrupted content changes, and abandoned claims. Queued jobs need nothing here: Pyris workers claim them,
+     * retries included once their backoff has passed.
      * <p>
-     * Handles two scenarios:
-     * <ol>
-     * <li>Stuck states: Jobs that never received a callback (timeout-based) — reset to IDLE for re-dispatch</li>
-     * <li>Dispatch: Claim IDLE jobs and send them to Iris if capacity is available (backup trigger)</li>
-     * </ol>
-     * <p>
-     * The dispatcher is also triggered by job creation and completion callbacks, so this
-     * scheduled run serves as a safety net for edge cases (missed callbacks, node restarts).
-     * <p>
-     * This interval is also the granularity of the retry backoff: a unit whose {@code retryEligibleAt}
-     * has passed waits here until the next pass, so the scan interval is added to the backoff whenever
-     * no other job completes in the meantime. Keep it well below the smallest backoff step (2 minutes)
-     * so it does not dominate the wait. {@code fixedDelay} rather than {@code fixedRate}: the pass does
-     * real work, and overlapping passes would contend on the same claim rows for nothing.
+     * {@code fixedDelay} rather than {@code fixedRate}: the pass does real work, and overlapping passes would contend
+     * on the same rows for nothing.
      */
     @Scheduled(fixedDelayString = "${artemis.iris.ingestion.retry-scan.interval:PT1M}")
     public void processScheduledRetries() {
@@ -211,13 +201,10 @@ public class LectureContentProcessingScheduler {
         // Then resume content changes interrupted after the run's token was invalidated; nothing above can match them
         resumeInterruptedContentChanges();
 
-        // Then release dispatch claims whose owner never finished dispatching them, e.g. a node killed by a rolling
-        // deploy between taking the claim and writing the phase. Nothing else selects those rows, so without this the
-        // unit waits forever; see releaseAbandonedIdleClaims.
+        // Then release claims whose activation never happened, e.g. a node killed by a rolling deploy between
+        // taking the claim and writing the phase. Nothing else selects those rows, so without this the unit waits
+        // forever; see releaseAbandonedIdleClaims.
         releaseAbandonedDispatchClaims();
-
-        // Then, dispatch any IDLE jobs waiting in the queue (backup trigger)
-        callbackService.dispatchPendingJobs();
     }
 
     /**
@@ -476,8 +463,9 @@ public class LectureContentProcessingScheduler {
      * Periodically process legacy AttachmentVideoUnits that don't have a processing state yet.
      * This handles units that existed before the automated processing pipeline was deployed.
      * <p>
-     * Only processes units from active, non-test courses to avoid unnecessary work.
-     * Limited by the configured maximum number of concurrent jobs to avoid overwhelming external services.
+     * Only processes units from active, non-test courses to avoid unnecessary work. Shares the bound on open
+     * background work with the reconcile walk ({@link LectureIngestionReconcileService#backlogBudget}), so the two
+     * together never queue more than Iris works off.
      */
     @Scheduled(fixedRate = 900000) // 15 minutes
     public void backfillUnprocessedUnits() {
@@ -493,16 +481,11 @@ public class LectureContentProcessingScheduler {
 
         log.debug("Checking for unprocessed lecture units to backfill...");
 
-        // Check how many jobs are currently processing
-        int maxConcurrentJobs = callbackService.getMaxConcurrentJobs();
-        long currentlyProcessing = processingStateRepository.countByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING));
-        if (currentlyProcessing >= maxConcurrentJobs) {
-            log.debug("Already {} units processing (max {}), skipping backfill", currentlyProcessing, maxConcurrentJobs);
+        int availableSlots = reconcileService.backlogBudget();
+        if (availableSlots <= 0) {
+            log.debug("The backlog of open background units is full, skipping backfill");
             return;
         }
-
-        // Calculate how many more jobs we can start
-        int availableSlots = (int) (maxConcurrentJobs - currentlyProcessing);
 
         List<AttachmentVideoUnit> unprocessedUnits = attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(ZonedDateTime.now(), PageRequest.of(0, availableSlots));
 
@@ -528,9 +511,10 @@ public class LectureContentProcessingScheduler {
     /**
      * Periodically reconcile the vector index against the database: requeue units whose confirmed state,
      * current content, and index stamp diverge, trigger units that never entered the pipeline, and delete
-     * orphaned index rows. Walks a budgeted slice of courses per run, so a full pass over all courses
-     * takes several runs and never floods the queue; see {@link LectureIngestionReconcileService}. Like every scheduled job, it is
-     * disabled by setting its schedule property to {@code -}.
+     * orphaned index rows. Each tick starts a pass over all courses, or continues the active one;
+     * {@link #continueIngestionReconcile} takes the further steps. See {@link LectureIngestionReconcileService}.
+     * Like every scheduled job, it is disabled by setting its schedule property to {@code -}, which also stops the
+     * continuation, since only this schedule starts a pass.
      */
     @Scheduled(cron = "${artemis.scheduling.lecture-ingestion-reconcile-time:0 */15 * * * *}")
     public void reconcileIngestionState() {
@@ -543,15 +527,25 @@ public class LectureContentProcessingScheduler {
             return;
         }
 
-        int spent = reconcileService.walkNextCourses();
+        int spent = reconcileService.startOrContinuePass();
         if (spent > 0) {
-            log.info("Ingestion reconcile requeued or triggered {} units, dispatching", spent);
-            callbackService.dispatchPendingJobs();
+            log.info("Ingestion reconcile requeued or triggered {} units", spent);
         }
-        else {
-            // Logged even when the pass changes nothing: without this line a healthy reconciler and one that
-            // never ran look identical in the log, which is the only place its liveness is observable.
-            log.info("Ingestion reconcile pass completed with nothing to requeue");
+    }
+
+    /**
+     * Take the next step of the active reconcile pass, as soon as the background work it added is done. Without this, a step whose units
+     * Iris finishes in seconds (an unchanged unit costs no work) would leave the walk idle until the next cron tick. Does nothing while no
+     * pass is active.
+     */
+    @Scheduled(fixedDelayString = "${artemis.iris.ingestion.reconcile.continuation-interval:PT30S}", initialDelayString = "${artemis.iris.ingestion.reconcile.continuation-interval:PT30S}")
+    public void continueIngestionReconcile() {
+        if (!featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing) || !processingService.hasProcessingCapabilities()) {
+            return;
+        }
+        int spent = reconcileService.continuePass();
+        if (spent > 0) {
+            log.info("Ingestion reconcile requeued or triggered {} units", spent);
         }
     }
 }

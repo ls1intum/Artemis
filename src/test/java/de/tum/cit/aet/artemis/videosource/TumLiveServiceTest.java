@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.videosource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -93,5 +95,14 @@ class TumLiveServiceTest {
         Optional<String> result = unconfiguredService.getTumLivePlaylistLink("https://live.rbg.tum.de/w/abc-course/12345");
 
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void isTumLiveUrl_checksTheWatchPageShapeWithoutCallingTheApi() {
+        assertThat(tumLiveService.isTumLiveUrl("https://live.rbg.tum.de/w/abc-course/12345")).isTrue();
+        assertThat(tumLiveService.isTumLiveUrl("https://example.com/some/path")).isFalse();
+        assertThat(tumLiveService.isTumLiveUrl("mailto:lecturer@example.com")).as("an opaque URI has no path").isFalse();
+        assertThat(tumLiveService.isTumLiveUrl("http://exa mple.com/w/a/1")).as("a malformed URL").isFalse();
+        verify(restClient, never()).get();
     }
 }
