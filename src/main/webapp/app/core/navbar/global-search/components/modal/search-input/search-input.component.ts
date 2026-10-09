@@ -41,8 +41,8 @@ export class SearchInputComponent {
     chipRemoved = output<number>();
     /** Emitted with the chip index when the chip is clicked, to select (focus) it. */
     chipSelected = output<number>();
-    /** Emitted when Backspace is pressed while the cursor is at the beginning of the input. */
-    backspaceOnEmpty = output<void>();
+    /** Emitted with the key event when Backspace is pressed while the cursor is at the beginning of the input. */
+    backspaceAtStart = output<KeyboardEvent>();
     /** Emitted when the Filter button (or Cmd/Ctrl+F) requests the guided filter picker. */
     filterTrigger = output<void>();
 
@@ -76,7 +76,7 @@ export class SearchInputComponent {
         // which is always up-to-date (unlike the signal that may lag during keydown).
         const el = this.searchInputElement()?.nativeElement;
         if (event.key === 'Backspace' && el && el.selectionStart === 0 && el.selectionEnd === 0) {
-            this.backspaceOnEmpty.emit();
+            this.backspaceAtStart.emit(event);
         }
         this.searchKeyDown.emit(event);
     }

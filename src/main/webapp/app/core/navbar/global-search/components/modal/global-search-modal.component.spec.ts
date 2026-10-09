@@ -644,16 +644,17 @@ describe('GlobalSearchModalComponent', () => {
             vi.useRealTimers();
         });
 
-        it('does not remove a filter on backspace over the empty input', () => {
+        it('only selects the last filter on backspace over the empty input, without removing it', () => {
             component['tokens'].set([
                 { facet: 'type', value: 'exercise' },
                 { facet: 'type', value: 'lecture' },
             ]);
 
-            component['onBackspaceRemoveFilter']();
+            component['onBackspaceAtStart'](new KeyboardEvent('keydown', { key: 'Backspace' }));
 
             expect(component['activeFilters']()).toEqual(['exercise', 'lecture', 'lecture_unit']);
             expect(component['tokens']()).toHaveLength(2);
+            expect(component['selectedChip']()).toBe(1);
         });
 
         it('should re-trigger search when filter changes even if query stays the same', () => {
@@ -1126,6 +1127,48 @@ describe('GlobalSearchModalComponent', () => {
             expect((component as any).selectedChip()).toBe(-1);
             expect((component as any).searchQuery()).toBe('course:');
         });
+
+        describe('Backspace at the start of the input', () => {
+            const pressBackspace = (repeat = false) => {
+                const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+                input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true, repeat }));
+            };
+
+            beforeEach(() => {
+                (component as any).tokens.set([
+                    { facet: 'type', value: 'exercise' },
+                    { facet: 'course', value: '5' },
+                ]);
+                fixture.detectChanges();
+            });
+
+            it('selects the last chip on the first press and removes it on the second', () => {
+                (component as any).selectedIndex.set(1);
+
+                pressBackspace();
+
+                expect((component as any).tokens()).toHaveLength(2);
+                expect((component as any).selectedChip()).toBe(1);
+                expect((component as any).selectedIndex()).toBe(-1);
+
+                pressBackspace();
+
+                expect((component as any).tokens()).toEqual([{ facet: 'type', value: 'exercise' }]);
+                expect((component as any).selectedChip()).toBe(0);
+            });
+
+            it('does not select or remove chips while the key is held down', () => {
+                pressBackspace(true);
+
+                expect((component as any).selectedChip()).toBe(-1);
+
+                pressBackspace();
+                pressBackspace(true);
+
+                expect((component as any).tokens()).toHaveLength(2);
+                expect((component as any).selectedChip()).toBe(1);
+            });
+        });
     });
 
     describe('Context Filters', () => {
@@ -1282,9 +1325,8 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['courseIdsParam']()[0]).toBe(42);
             expect(component['activeFilters']()).toEqual(['exercise']);
 
-            // Backspace over the empty input must not remove filters (removal requires chip navigation).
-            component['onBackspaceRemoveFilter']();
-            component['onBackspaceRemoveFilter']();
+            // Backspace over the empty input only selects a filter; removing it takes a second press.
+            component['onBackspaceAtStart'](new KeyboardEvent('keydown', { key: 'Backspace' }));
 
             expect(component['activeFilters']()).toEqual(['exercise']);
             expect(component['courseIdsParam']()[0]).toBe(42);

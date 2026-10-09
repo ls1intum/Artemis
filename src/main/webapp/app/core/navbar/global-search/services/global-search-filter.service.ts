@@ -492,12 +492,21 @@ export class GlobalSearchFilterService {
     }
 
     /**
-     * Backspace on the empty input intentionally does nothing: a filter must not disappear from an accidental
-     * keystroke. To remove a chip, click its × button, or arrow-navigate to it (which selects it) and press
-     * Delete / Backspace — that path is handled by the modal's chip-navigation keydown handler.
+     * Backspace with the cursor at the start of the input selects the last chip instead of removing it, so a filter
+     * never disappears from one stray keystroke; a second Backspace removes the selected chip through the modal's
+     * chip-navigation keydown handler. A held key does not select, so holding Backspace to clear the text stops
+     * before the chips. Marks the event as handled so that same handler does not remove the chip it just selected.
+     *
+     * @returns whether a chip was selected
      */
-    onBackspaceRemoveFilter(): void {
-        // no-op by design (see doc comment)
+    selectLastChipOnBackspace(event: KeyboardEvent): boolean {
+        const tokenCount = this.tokens().length;
+        if (event.repeat || tokenCount === 0 || this.selectedChip() >= 0 || this.filterMenuOpen()) {
+            return false;
+        }
+        event.preventDefault();
+        this.selectedChip.set(tokenCount - 1);
+        return true;
     }
 
     /**

@@ -375,9 +375,12 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.returnHomeIfEmpty();
     }
 
-    /** Called by the search-input component when Backspace is pressed on an empty input. Removes the last token. */
-    protected onBackspaceRemoveFilter() {
-        this.filter.onBackspaceRemoveFilter();
+    /** Backspace with the cursor at the start of the input selects the last chip; a second Backspace removes it. */
+    protected onBackspaceAtStart(event: KeyboardEvent) {
+        if (this.filter.selectLastChipOnBackspace(event)) {
+            // The chips row is now the active zone, so no result row stays highlighted alongside the chip.
+            this.selectedIndex.set(-1);
+        }
     }
 
     /** Removes the chip at the given index (its remove button was clicked). */
@@ -620,7 +623,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 break;
             case 'Backspace':
             case 'Delete':
-                if (this.selectedChip() >= 0) {
+                // A handled event is the keystroke that just selected the chip, and a held key must not keep
+                // removing chips: each removal takes its own press.
+                if (this.selectedChip() >= 0 && !event.defaultPrevented && !event.repeat) {
                     event.preventDefault();
                     this.removeSelectedChip();
                 }
