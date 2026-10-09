@@ -483,8 +483,15 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             return;
         }
 
-        this.presentationAssessmentService.deleteInstance(this.courseId(), presentationAssessment.id, instance.id).subscribe({
+        const courseId = this.courseId();
+        const generation = this.courseContextGeneration;
+
+        this.presentationAssessmentService.deleteInstance(courseId, presentationAssessment.id, instance.id).subscribe({
             next: () => {
+                if (generation !== this.courseContextGeneration) {
+                    return;
+                }
+
                 if (this.loadedStudentRows().length === 1 && this.overviewPage() > 0) {
                     this.overviewPage.update((page) => page - 1);
                 } else {
@@ -492,7 +499,11 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                 }
                 this.statisticsResource.reload();
             },
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            error: (res: HttpErrorResponse) => {
+                if (generation === this.courseContextGeneration) {
+                    onError(this.alertService, res);
+                }
+            },
         });
     }
 
@@ -501,12 +512,25 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             return;
         }
 
+        const courseId = this.courseId();
+        const generation = this.courseContextGeneration;
+
         this.isSaving.set(true);
         this.presentationAssessmentService
-            .delete(this.courseId(), presentationAssessment.id)
-            .pipe(finalize(() => this.isSaving.set(false)))
+            .delete(courseId, presentationAssessment.id)
+            .pipe(
+                finalize(() => {
+                    if (generation === this.courseContextGeneration) {
+                        this.isSaving.set(false);
+                    }
+                }),
+            )
             .subscribe({
                 next: () => {
+                    if (generation !== this.courseContextGeneration) {
+                        return;
+                    }
+
                     this.dialogErrorSource.next('');
                     this.presentationDialogVisible.set(false);
                     const remainingAssessments = this.presentationAssessments().filter((assessment) => assessment.id !== presentationAssessment.id);
@@ -527,7 +551,11 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                     this.statisticsResource.reload();
                     this.alertService.success('artemisApp.presentationAssessment.deleted', { title: presentationAssessment.title });
                 },
-                error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                error: (error: HttpErrorResponse) => {
+                    if (generation === this.courseContextGeneration) {
+                        this.dialogErrorSource.next(error.message);
+                    }
+                },
             });
     }
 
@@ -627,20 +655,38 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             return;
         }
 
+        const courseId = this.courseId();
+        const generation = this.courseContextGeneration;
         const request: Observable<unknown> =
             result.kind === 'create'
-                ? this.presentationAssessmentService.saveInstances(this.courseId(), presentationAssessment.id, result.request)
-                : this.presentationAssessmentService.updateInstance(this.courseId(), presentationAssessment.id, result.instance);
+                ? this.presentationAssessmentService.saveInstances(courseId, presentationAssessment.id, result.request)
+                : this.presentationAssessmentService.updateInstance(courseId, presentationAssessment.id, result.instance);
 
         this.isSaving.set(true);
-        request.pipe(finalize(() => this.isSaving.set(false))).subscribe({
-            next: () => {
-                this.instanceDialogVisible.set(false);
-                this.studentRowsResource.reload();
-                this.statisticsResource.reload();
-            },
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
-        });
+        request
+            .pipe(
+                finalize(() => {
+                    if (generation === this.courseContextGeneration) {
+                        this.isSaving.set(false);
+                    }
+                }),
+            )
+            .subscribe({
+                next: () => {
+                    if (generation !== this.courseContextGeneration) {
+                        return;
+                    }
+
+                    this.instanceDialogVisible.set(false);
+                    this.studentRowsResource.reload();
+                    this.statisticsResource.reload();
+                },
+                error: (res: HttpErrorResponse) => {
+                    if (generation === this.courseContextGeneration) {
+                        onError(this.alertService, res);
+                    }
+                },
+            });
     }
 
     handleInstanceDialogCancel(): void {

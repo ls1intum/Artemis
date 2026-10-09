@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PresentationAssessmentManagementComponent } from 'app/presentation/manage/presentation-assessment-management.component';
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
+import { PresentationAssessmentInstanceFormResult } from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import {
@@ -800,6 +801,81 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.isSaving()).toBe(false);
     });
 
+    it.each([
+        ['create', 'success'],
+        ['create', 'error'],
+        ['update', 'success'],
+        ['update', 'error'],
+    ] as const)('should ignore a stale instance %s %s after switching courses', (kind, outcome) => {
+        const oldResponse = new Subject<HttpResponse<unknown>>();
+        const currentResponse = new Subject<HttpResponse<unknown>>();
+        const saveMethod = kind === 'create' ? presentationAssessmentService.saveInstances : presentationAssessmentService.updateInstance;
+        saveMethod.mockReturnValueOnce(oldResponse).mockReturnValueOnce(currentResponse);
+
+        const result: PresentationAssessmentInstanceFormResult =
+            kind === 'create'
+                ? {
+                      kind: 'create',
+                      request: {
+                          presentationDate,
+                          resultPoints: 10,
+                          studentLogins: ['student1'],
+                          language: 'en',
+                          mode: PresentationAssessmentMode.IN_PERSON,
+                      },
+                  }
+                : {
+                      kind: 'update',
+                      instance: {
+                          id: instances[0].id,
+                          presentationDate,
+                          resultPoints: 10,
+                          studentLogin: 'student1',
+                          language: 'en',
+                          mode: PresentationAssessmentMode.IN_PERSON,
+                      },
+                  };
+
+        component.startCreateInstance(presentationAssessment);
+        component.handleInstanceDialogSave(result);
+        expect(component.isSaving()).toBe(true);
+
+        const currentAssessment: PresentationAssessment = {
+            id: 99,
+            title: 'Course B presentation',
+            maxPoints: 20,
+            courseId: 2,
+        };
+        presentationAssessmentService.findAllByCourseId.mockReturnValue(of(new HttpResponse({ body: [currentAssessment] })));
+
+        routeParamMap.next(convertToParamMap({ courseId: 2 }));
+        fixture.detectChanges();
+        expect(component.isSaving()).toBe(false);
+
+        component.startCreateInstance(currentAssessment);
+        component.handleInstanceDialogSave(result);
+        expect(component.isSaving()).toBe(true);
+
+        alertService.success.mockClear();
+        alertService.addAlert.mockClear();
+
+        if (outcome === 'success') {
+            oldResponse.next(new HttpResponse({ body: [] }));
+            oldResponse.complete();
+        } else {
+            oldResponse.error(new HttpErrorResponse({ status: 500 }));
+        }
+
+        expect(component.presentationAssessments()).toEqual([currentAssessment]);
+        expect(component.instanceDialogVisible()).toBe(true);
+        expect(component.isSaving()).toBe(true);
+        expect(alertService.success).not.toHaveBeenCalled();
+        expect(alertService.addAlert).not.toHaveBeenCalled();
+
+        currentResponse.complete();
+        expect(component.isSaving()).toBe(false);
+    });
+
     it('should close the instance dialog after saving instances', async () => {
         presentationAssessmentService.saveInstances.mockReturnValue(of(new HttpResponse({ body: [] })));
         component.startCreateInstance(presentationAssessment);
@@ -824,6 +900,107 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledTimes(1);
         expect(presentationAssessmentService.findStudentRows).toHaveBeenCalledOnce();
         expect(presentationAssessmentService.getStatistics).toHaveBeenCalledOnce();
+    });
+
+    it.each(['success', 'error'])('should ignore a stale presentation deletion %s after switching courses', (outcome) => {
+        const oldResponse = new Subject<HttpResponse<void>>();
+        const currentResponse = new Subject<HttpResponse<PresentationAssessment>>();
+        presentationAssessmentService.delete.mockReturnValue(oldResponse);
+        presentationAssessmentService.create.mockReturnValue(currentResponse);
+
+        component.deletePresentationAssessment(presentationAssessment);
+
+        const currentAssessment: PresentationAssessment = {
+            id: 99,
+            title: 'Course B presentation',
+            maxPoints: 20,
+            courseId: 2,
+        };
+        presentationAssessmentService.findAllByCourseId.mockReturnValue(of(new HttpResponse({ body: [currentAssessment] })));
+
+        routeParamMap.next(convertToParamMap({ courseId: 2 }));
+        fixture.detectChanges();
+
+        component.startCreate();
+        component.handlePresentationDialogSave({
+            presentationAssessment: {
+                title: 'Another course B presentation',
+                maxPoints: 20,
+                courseId: 2,
+            },
+        });
+        component.overviewPage.set(1);
+
+        const reloadRows = vi.spyOn(component['studentRowsResource'], 'reload');
+        const reloadStatistics = vi.spyOn(component['statisticsResource'], 'reload');
+        const dialogErrors = vi.fn();
+        const subscription = component.dialogError$.subscribe(dialogErrors);
+        alertService.success.mockClear();
+        alertService.addAlert.mockClear();
+
+        if (outcome === 'success') {
+            oldResponse.next(new HttpResponse<void>());
+            oldResponse.complete();
+        } else {
+            oldResponse.error(new HttpErrorResponse({ status: 500 }));
+        }
+
+        expect(component.presentationAssessments()).toEqual([currentAssessment]);
+        expect(component.selectedPresentationId()).toBe(currentAssessment.id);
+        expect(component.presentationDialogVisible()).toBe(true);
+        expect(component.overviewPage()).toBe(1);
+        expect(component.isSaving()).toBe(true);
+        expect(reloadRows).not.toHaveBeenCalled();
+        expect(reloadStatistics).not.toHaveBeenCalled();
+        expect(dialogErrors).not.toHaveBeenCalled();
+        expect(alertService.success).not.toHaveBeenCalled();
+        expect(alertService.addAlert).not.toHaveBeenCalled();
+
+        subscription.unsubscribe();
+        currentResponse.complete();
+        expect(component.isSaving()).toBe(false);
+    });
+
+    it.each(['success', 'error'])('should ignore a stale instance deletion %s after switching courses', (outcome) => {
+        const oldResponse = new Subject<HttpResponse<void>>();
+        presentationAssessmentService.deleteInstance.mockReturnValue(oldResponse);
+
+        component.deleteInstance(presentationAssessment, instances[0]);
+
+        const currentAssessment: PresentationAssessment = {
+            id: 99,
+            title: 'Course B presentation',
+            maxPoints: 20,
+            courseId: 2,
+        };
+        presentationAssessmentService.findAllByCourseId.mockReturnValue(of(new HttpResponse({ body: [currentAssessment] })));
+
+        routeParamMap.next(convertToParamMap({ courseId: 2 }));
+        fixture.detectChanges();
+
+        component.startCreateInstance(currentAssessment);
+        component.overviewPage.set(1);
+
+        const reloadRows = vi.spyOn(component['studentRowsResource'], 'reload');
+        const reloadStatistics = vi.spyOn(component['statisticsResource'], 'reload');
+        alertService.success.mockClear();
+        alertService.addAlert.mockClear();
+
+        if (outcome === 'success') {
+            oldResponse.next(new HttpResponse<void>());
+            oldResponse.complete();
+        } else {
+            oldResponse.error(new HttpErrorResponse({ status: 500 }));
+        }
+
+        expect(component.presentationAssessments()).toEqual([currentAssessment]);
+        expect(component.selectedPresentationId()).toBe(currentAssessment.id);
+        expect(component.instanceDialogVisible()).toBe(true);
+        expect(component.overviewPage()).toBe(1);
+        expect(reloadRows).not.toHaveBeenCalled();
+        expect(reloadStatistics).not.toHaveBeenCalled();
+        expect(alertService.success).not.toHaveBeenCalled();
+        expect(alertService.addAlert).not.toHaveBeenCalled();
     });
 
     it('should delete a presentation assessment from the table', async () => {
