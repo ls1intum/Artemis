@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -93,6 +95,29 @@ public class IrisCitationService {
      * @return the text with pinned-version fields appended, or the unchanged text when there is nothing to stamp
      */
     public String stampCitationVersions(String text, String jobId) {
+        return stampCitationVersions(text, () -> materialVersionService.getSnapshot(jobId));
+    }
+
+    /**
+     * Pins every lecture citation of an answer that was written outside a chat run, such as a global search answer carried into a chat, to the versions the course's
+     * material has now.
+     * <p>
+     * Such an answer has no run snapshot. It was generated from the material indexed at this moment, so the current versions are the ones its citations are about.
+     * Citations of material outside the course find no version and are stamped with version 0 (unverified), as in {@link #stampCitationVersions(String, String)}.
+     *
+     * @param text     the answer; may be {@code null} or blank
+     * @param courseId the course whose current material versions apply
+     * @return the text with pinned-version fields appended, or the unchanged text when there is nothing to stamp
+     */
+    public String stampCitationVersionsWithCurrentMaterial(String text, long courseId) {
+        return stampCitationVersions(text, () -> lectureUnitRepositoryApi.map(api -> api.findIngestedVersionsByCourseId(courseId)).orElse(List.of()).stream()
+                .collect(Collectors.toUnmodifiableMap(LectureUnitIngestedVersionsDTO::lectureUnitId, Function.identity())));
+    }
+
+    /**
+     * Stamps every lecture citation of the text with the versions the supplier yields. The supplier is only asked when the text actually contains a citation.
+     */
+    private String stampCitationVersions(String text, Supplier<Map<Long, LectureUnitIngestedVersionsDTO>> versionsSupplier) {
         if (text == null || text.isBlank()) {
             return text;
         }
@@ -102,7 +127,7 @@ public class IrisCitationService {
         if (!matcher.find()) {
             return text;
         }
-        var ingestedVersions = materialVersionService.getSnapshot(jobId);
+        var ingestedVersions = versionsSupplier.get();
         var stamped = new StringBuilder();
         int lastEnd = 0;
         do {
