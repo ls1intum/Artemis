@@ -116,24 +116,16 @@
                                                     </td>
                                                     <td>
                                                         @if (row.assessed) {
-                                                            <tumaet-ui-tag
-                                                                severity="success"
-                                                                [bold]="false"
-                                                                [value]="'artemisApp.presentationAssessment.assessed' | artemisTranslate"
-                                                            />
+                                                            <tumaet-ui-tag severity="success" size="sm" [value]="'artemisApp.presentationAssessment.assessed' | artemisTranslate" />
                                                         } @else {
-                                                            <tumaet-ui-tag
-                                                                severity="warn"
-                                                                [bold]="false"
-                                                                [value]="'artemisApp.presentationAssessment.pending' | artemisTranslate"
-                                                            />
+                                                            <tumaet-ui-tag severity="warn" size="sm" [value]="'artemisApp.presentationAssessment.pending' | artemisTranslate" />
                                                         }
                                                     </td>
                                                     <td>
                                                         @if (row.assessed) {
                                                             <tumaet-ui-tag
                                                                 severity="info"
-                                                                [bold]="false"
+                                                                size="sm"
                                                                 [value]="row.instance!.resultPoints + ' / ' + presentationAssessment.maxPoints"
                                                             />
                                                         } @else {
@@ -346,7 +338,7 @@
                                                 <td>
                                                     <tumaet-ui-tag
                                                         [severity]="row.presentationAssessment.exerciseId ? 'success' : 'info'"
-                                                        [bold]="false"
+                                                        size="sm"
                                                         [value]="
                                                             (row.presentationAssessment.exerciseId
                                                                 ? 'artemisApp.presentationAssessment.typeExercise'
@@ -359,7 +351,7 @@
                                                 <td>
                                                     <tumaet-ui-tag
                                                         [severity]="row.assessed ? 'success' : 'warn'"
-                                                        [bold]="false"
+                                                        size="sm"
                                                         [value]="
                                                             (row.assessed ? 'artemisApp.presentationAssessment.assessed' : 'artemisApp.presentationAssessment.pending')
                                                                 | artemisTranslate
@@ -370,7 +362,7 @@
                                                     @if (row.assessed) {
                                                         <tumaet-ui-tag
                                                             severity="success"
-                                                            [bold]="false"
+                                                            size="sm"
                                                             [value]="row.instance.resultPoints + ' / ' + row.presentationAssessment.maxPoints"
                                                         />
                                                     } @else {
