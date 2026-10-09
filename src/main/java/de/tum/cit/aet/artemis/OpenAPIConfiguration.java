@@ -127,16 +127,6 @@ public class OpenAPIConfiguration {
         };
     }
 
-    /**
-     * Marks the primitive components of DTO records as required.
-     * <p>
-     * A primitive is never null, and {@code @JsonInclude(NON_EMPTY)} still writes default values such as {@code 0} and {@code false}, so
-     * such a property is always present. Springdoc only marks a property required when it carries a Bean Validation annotation, which
-     * would let generated clients read {@code long count} as {@code count?: number}. Runs before the DTO suffix is stripped, while the
-     * schema names still match the record names.
-     *
-     * @param schemas the component schemas, keyed by the simple record name or the name set with {@code @Schema}
-     */
     static void markPrimitiveRecordComponentsRequired(Map<String, Schema> schemas) {
         Map<String, List<Class<?>>> recordsBySchemaName = findRecordsBySchemaName();
         schemas.forEach((name, schema) -> {

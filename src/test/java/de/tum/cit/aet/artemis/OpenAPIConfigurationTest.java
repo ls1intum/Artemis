@@ -29,7 +29,6 @@ class OpenAPIConfigurationTest {
 
     @Test
     void shouldGiveEverySearchTermSubclassItsOwnSchemaName() {
-        // @Schema is @Inherited: a subclass without its own name would reuse the base schema name and lose its extra fields.
         var scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AssignableTypeFilter(SearchTermPageableSearchDTO.class));
         for (BeanDefinition candidate : scanner.findCandidateComponents("de.tum.cit.aet.artemis")) {

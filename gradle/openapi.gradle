@@ -300,8 +300,6 @@
     }
 
     private static boolean operationContainsNullSchema(Map<String, Object> operationDefinition, String pathName) {
-        // An operation the DTO-only spec cannot describe is dropped rather than left invalid: a parameter whose schema was
-        // pruned (e.g. Spring's Pageable), or a path variable bound into a request object instead of a declared parameter.
         boolean parameterHasNullSchema = operationDefinition.parameters?.any { parameter -> parameter.schema == null && parameter.content == null }
         Set<String> declaredPathParameters = (operationDefinition.parameters ?: []).findAll { it.in == 'path' }.collect { it.name } as Set<String>
         boolean pathVariableUndeclared = (pathName =~ /\{([^}]+)\}/).collect { it[1] }.any { !declaredPathParameters.contains(it) }
