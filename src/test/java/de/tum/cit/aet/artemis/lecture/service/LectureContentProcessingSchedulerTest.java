@@ -20,6 +20,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.IntUnaryOperator;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -27,7 +28,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -40,10 +40,11 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRecoveryRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
+import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 
 /**
  * Unit tests for {@link LectureContentProcessingScheduler}.
- * Tests stuck state recovery, dispatch triggering, and backfill logic.
+ * Tests stuck state recovery, the backfill, and the reconcile schedule.
  */
 class LectureContentProcessingSchedulerTest {
 
@@ -63,7 +64,7 @@ class LectureContentProcessingSchedulerTest {
 
     private LectureUnitProcessingStateRecoveryRepository strandedRunRepository;
 
-    private static final int MAX_CONCURRENT_JOBS = 2;
+    private static final int BACKLOG_BUDGET = 2;
 
     private static final long PROCESSING_STATE_ID = 4242L;
 
@@ -86,7 +87,6 @@ class LectureContentProcessingSchedulerTest {
 
         when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
         when(processingService.hasProcessingCapabilities()).thenReturn(true);
-        when(callbackService.getMaxConcurrentJobs()).thenReturn(MAX_CONCURRENT_JOBS);
 
         scheduler = new LectureContentProcessingScheduler(processingStateRepository, attachmentVideoUnitRepository, processingService, callbackService, reconcileService,
                 recoveryService, strandedRunRepository, featureToggleService, Duration.ofMinutes(30), Duration.ofMinutes(45), 20, Duration.ofSeconds(30), 12);
@@ -172,7 +172,6 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             verify(recoveryService).reclaimLapsedLease(eq(PROCESSING_STATE_ID), eq(JOB_TOKEN), any(), any(ZonedDateTime.class));
-            verify(callbackService).dispatchPendingJobs();
         }
 
         @Test
@@ -242,7 +241,6 @@ class LectureContentProcessingSchedulerTest {
             var claim = org.mockito.ArgumentCaptor.forClass(String.class);
             verify(strandedRunRepository).claimStrandedRun(eq(testState.getId()), claim.capture(), any(ZonedDateTime.class), any(ZonedDateTime.class));
             verify(processingService).recoverInterruptedContentChange(testUnit, claim.getValue());
-            verify(callbackService).dispatchPendingJobs();
         }
 
         @Test
@@ -305,7 +303,6 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             verify(callbackService).handleProcessingFailureIfStillLive(testState, null, null, testState.getLastUpdated());
-            verify(callbackService).dispatchPendingJobs();
         }
 
         @Test
@@ -428,23 +425,12 @@ class LectureContentProcessingSchedulerTest {
     }
 
     @Nested
-    class DispatchTrigger {
-
-        @Test
-        void shouldCallDispatchPendingJobsAsBackup() {
-            // Given: No stuck states
-            when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class), any(ZonedDateTime.class))).thenReturn(List.of());
-
-            // When
-            scheduler.processScheduledRetries();
-
-            // Then: Should call dispatchPendingJobs as backup trigger
-            verify(callbackService).dispatchPendingJobs();
-        }
-    }
-
-    @Nested
     class BackfillUnprocessedUnits {
+
+        /** The reconcile service runs the backfill under its guard with the given free room, as spendBacklog does. */
+        private void givenBacklogRoom(int room) {
+            when(reconcileService.spendBacklog(any())).thenAnswer(invocation -> room <= 0 ? 0 : invocation.<IntUnaryOperator>getArgument(0).applyAsInt(room));
+        }
 
         @Test
         void shouldSkipBackfillWhenNoProcessingCapabilities() {
@@ -452,13 +438,13 @@ class LectureContentProcessingSchedulerTest {
 
             scheduler.backfillUnprocessedUnits();
 
-            verify(processingStateRepository, never()).countByPhaseIn(anyList());
+            verify(reconcileService, never()).spendBacklog(any());
             verify(processingService, never()).triggerProcessingAsBacklog(any());
         }
 
         @Test
         void shouldTriggerProcessingForUnprocessedUnits() {
-            when(processingStateRepository.countByPhaseIn(anyList())).thenReturn(0L);
+            givenBacklogRoom(BACKLOG_BUDGET);
 
             AttachmentVideoUnit unit1 = new AttachmentVideoUnit();
             unit1.setId(101L);
@@ -474,8 +460,8 @@ class LectureContentProcessingSchedulerTest {
         }
 
         @Test
-        void shouldSkipBackfillWhenMaxConcurrentReached() {
-            when(processingStateRepository.countByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING))).thenReturn((long) MAX_CONCURRENT_JOBS);
+        void shouldSkipBackfillWhenTheBacklogIsFull() {
+            givenBacklogRoom(0);
 
             scheduler.backfillUnprocessedUnits();
 
@@ -484,19 +470,18 @@ class LectureContentProcessingSchedulerTest {
 
         @Test
         void shouldLimitToAvailableSlots() {
-            // The configured cap is 2, so 1 active leaves 1 available slot
-            when(processingStateRepository.countByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING))).thenReturn(1L);
+            // Room for one more background unit
+            givenBacklogRoom(1);
             when(attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), any())).thenReturn(List.of());
 
             scheduler.backfillUnprocessedUnits();
 
-            verify(attachmentVideoUnitRepository).findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class),
-                    eq(org.springframework.data.domain.PageRequest.of(0, MAX_CONCURRENT_JOBS - 1)));
+            verify(attachmentVideoUnitRepository).findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), eq(org.springframework.data.domain.PageRequest.of(0, 1)));
         }
 
         @Test
         void shouldCatchExceptionsAndContinueProcessingOtherUnits() {
-            when(processingStateRepository.countByPhaseIn(anyList())).thenReturn(0L);
+            givenBacklogRoom(BACKLOG_BUDGET);
 
             AttachmentVideoUnit unit1 = new AttachmentVideoUnit();
             unit1.setId(201L);
@@ -566,7 +551,6 @@ class LectureContentProcessingSchedulerTest {
 
             verify(callbackService).handleProcessingFailureIfStillLive(testState, null, testState.getLastProgressAt(), null);
             verify(processingStateRepository, times(2)).findStuckStates(any(), any(ZonedDateTime.class), any(ZonedDateTime.class));
-            verify(callbackService).dispatchPendingJobs();
         }
 
         @Test
@@ -666,9 +650,8 @@ class LectureContentProcessingSchedulerTest {
             when(transcriptionRepository.findByLectureUnit_Id(anyLong())).thenReturn(Optional.empty());
 
             ProcessingStateCallbackService realCallbackService = new ProcessingStateCallbackService(raceRepository, transcriptionRepository, mock(AttachmentRepository.class),
-                    Optional.empty(), new ProcessingStateNotificationService(mock(WebsocketMessagingService.class), transcriptionRepository),
-                    mock(LectureUnitContentFingerprintService.class), mock(DistributedDataProvider.class), mock(FeatureToggleService.class), MAX_CONCURRENT_JOBS, 20,
-                    Duration.ofSeconds(90), 8, 3, mock(IrisLectureUnitSyncStateRepository.class));
+                    new ProcessingStateNotificationService(mock(WebsocketMessagingService.class), transcriptionRepository), mock(LectureUnitContentFingerprintService.class),
+                    mock(FeatureToggleService.class), mock(VideoSourceResolverService.class), 20, 8, 3, mock(IrisLectureUnitSyncStateRepository.class));
 
             FeatureToggleService raceFeatureToggleService = mock(FeatureToggleService.class);
             when(raceFeatureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
@@ -749,22 +732,32 @@ class LectureContentProcessingSchedulerTest {
     class ReconcileTick {
 
         @Test
-        void shouldWalkAndDispatchWhenReconcileRequeuedUnits() {
-            when(reconcileService.walkNextCourses()).thenReturn(3);
+        void shouldStartOrContinueAPassOnEachTick() {
+            when(reconcileService.startOrContinuePass()).thenReturn(3);
 
             scheduler.reconcileIngestionState();
 
-            verify(reconcileService).walkNextCourses();
-            verify(callbackService).dispatchPendingJobs();
+            verify(reconcileService).startOrContinuePass();
         }
 
         @Test
-        void shouldNotDispatchWhenReconcileFoundNothing() {
-            when(reconcileService.walkNextCourses()).thenReturn(0);
+        void shouldContinueTheActivePassBetweenTicks() {
+            scheduler.continueIngestionReconcile();
 
-            scheduler.reconcileIngestionState();
+            verify(reconcileService).continuePass();
+            verify(reconcileService, never()).startOrContinuePass();
+        }
 
-            verify(callbackService, never()).dispatchPendingJobs();
+        @Test
+        void shouldNotContinueWhileTheFeatureIsDisabled() {
+            FeatureToggleService disabledToggle = mock(FeatureToggleService.class);
+            LectureContentProcessingScheduler disabledScheduler = new LectureContentProcessingScheduler(processingStateRepository, attachmentVideoUnitRepository, processingService,
+                    callbackService, reconcileService, recoveryService, strandedRunRepository, disabledToggle, Duration.ofMinutes(30), Duration.ofMinutes(45), 20,
+                    Duration.ofSeconds(30), 12);
+
+            disabledScheduler.continueIngestionReconcile();
+
+            verify(reconcileService, never()).continuePass();
         }
 
         @Test
@@ -772,8 +765,10 @@ class LectureContentProcessingSchedulerTest {
             when(processingService.hasProcessingCapabilities()).thenReturn(false);
 
             scheduler.reconcileIngestionState();
+            scheduler.continueIngestionReconcile();
 
-            verify(reconcileService, never()).walkNextCourses();
+            verify(reconcileService, never()).startOrContinuePass();
+            verify(reconcileService, never()).continuePass();
         }
     }
 }

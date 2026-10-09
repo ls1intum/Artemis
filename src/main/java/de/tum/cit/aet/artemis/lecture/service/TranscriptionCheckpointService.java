@@ -141,10 +141,10 @@ public class TranscriptionCheckpointService {
             }
             log.info("Enriched transcription saved for unit {}, transitioning to INGESTING", lectureUnitId);
 
-            // Notify UI via WebSocket, mirroring the just-persisted transition without a second read.
-            state.resetRetryCount();
-            state.transitionTo(ProcessingPhase.INGESTING);
-            notificationService.notifyProcessingStateChange(state, TranscriptionStatus.COMPLETED);
+            // Notify the client with the row as the transition wrote it. Mirroring the transition in memory would drop the fields the
+            // statement keeps, such as the worker lease, and the badge would briefly show the run without it.
+            processingStateRepository.findById(state.getId())
+                    .ifPresent(transitioned -> notificationService.notifyProcessingStateChange(transitioned, TranscriptionStatus.COMPLETED));
         }
         else {
             // The row stays TRANSCRIBING either way, so a write that fails after this check is replayed by the redelivery.

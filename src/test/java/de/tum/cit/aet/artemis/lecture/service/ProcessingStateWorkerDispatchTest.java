@@ -6,18 +6,12 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -26,12 +20,8 @@ import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
-import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
-import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
-import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
@@ -42,11 +32,11 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
+import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 
 /**
  * Unit tests for the pull-based worker dispatch in {@link ProcessingStateCallbackService}: claiming,
- * claim activation, lease renewal, and the suppression of legacy push dispatch while a worker is
- * present. The worker-seen state is backed by a real map so the mode switch is tested end to end.
+ * claim activation and lease renewal.
  */
 class ProcessingStateWorkerDispatchTest {
 
@@ -60,7 +50,7 @@ class ProcessingStateWorkerDispatchTest {
 
     private FeatureToggleService featureToggleService;
 
-    private Map<String, String> workerMapBacking;
+    private VideoSourceResolverService videoSourceResolver;
 
     private AttachmentVideoUnit testUnit;
 
@@ -68,7 +58,6 @@ class ProcessingStateWorkerDispatchTest {
 
     private WebsocketMessagingService websocketMessagingService;
 
-    @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() {
         processingStateRepository = mock(LectureUnitProcessingStateRepository.class);
@@ -78,21 +67,13 @@ class ProcessingStateWorkerDispatchTest {
         LectureUnitContentFingerprintService contentFingerprintService = mock(LectureUnitContentFingerprintService.class);
         when(contentFingerprintService.computeFingerprint(any())).thenReturn("v1:test-fingerprint");
 
-        workerMapBacking = new HashMap<>();
-        DistributedMap<String, String> workerMap = mock(DistributedMap.class);
-        when(workerMap.get(anyString())).thenAnswer(invocation -> workerMapBacking.get(invocation.<String>getArgument(0)));
-        doAnswer(invocation -> workerMapBacking.put(invocation.getArgument(0), invocation.getArgument(1))).when(workerMap).put(anyString(), anyString());
-        DistributedDataProvider distributedDataProvider = mock(DistributedDataProvider.class);
-        doReturn(workerMap).when(distributedDataProvider).getMap(anyString());
-        doReturn(mock(DistributedLock.class)).when(distributedDataProvider).getLock(anyString());
-
-        Optional<IrisLectureApi> irisLectureApi = Optional.of(mock(IrisLectureApi.class));
+        videoSourceResolver = mock(VideoSourceResolverService.class);
         featureToggleService = mock(FeatureToggleService.class);
         when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
 
-        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, irisLectureApi,
-                new ProcessingStateNotificationService(websocketMessagingService, transcriptionRepository), contentFingerprintService, distributedDataProvider,
-                featureToggleService, 2, 20, Duration.ofSeconds(90), 8, 3, mock(IrisLectureUnitSyncStateRepository.class));
+        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository,
+                new ProcessingStateNotificationService(websocketMessagingService, transcriptionRepository), contentFingerprintService, featureToggleService, videoSourceResolver,
+                20, 8, 3, mock(IrisLectureUnitSyncStateRepository.class));
 
         Lecture lecture = new Lecture();
         lecture.setId(1L);
@@ -106,7 +87,7 @@ class ProcessingStateWorkerDispatchTest {
     }
 
     @Test
-    void claimReturnsPreparedScalarsAndMarksWorkerSeen() {
+    void claimReturnsPreparedScalars() {
         when(processingStateRepository.findIdleForDispatch(any(), eq(2))).thenReturn(List.of(testState));
         when(processingStateRepository.claimIdleForDispatch(eq(500L), anyString(), any(), anyInt())).thenReturn(1);
 
@@ -117,7 +98,26 @@ class ProcessingStateWorkerDispatchTest {
         assertThat(claim.lectureUnitId()).isEqualTo(100L);
         assertThat(claim.contentFingerprint()).isEqualTo("v1:test-fingerprint");
         assertThat(claim.targetPhase()).isEqualTo(ProcessingPhase.INGESTING);
-        assertThat(workerMapBacking).containsKey("lastSeenAt");
+    }
+
+    @Test
+    void claimTranscribesOnlyASupportedVideo() {
+        testUnit.setVideoSource("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+        when(videoSourceResolver.isSupportedSource("https://www.youtube.com/watch?v=dQw4w9WgXcQ")).thenReturn(true);
+        when(processingStateRepository.findIdleForDispatch(any(), eq(2))).thenReturn(List.of(testState));
+        when(processingStateRepository.claimIdleForDispatch(eq(500L), anyString(), any(), anyInt())).thenReturn(1);
+
+        assertThat(callbackService.claimUnitsForWorker(WORKER_BOOT_ID, 2)).singleElement().extracting(ClaimedIngestionUnitDTO::targetPhase).isEqualTo(ProcessingPhase.TRANSCRIBING);
+    }
+
+    @Test
+    void claimIngestsAUnitWithAnUnsupportedVideoWithoutTranscribing() {
+        // A link to a video page Iris cannot transcribe: the payload carries no video, so the run must not wait for a transcript
+        testUnit.setVideoSource("https://example.com/lecture-recording");
+        when(processingStateRepository.findIdleForDispatch(any(), eq(2))).thenReturn(List.of(testState));
+        when(processingStateRepository.claimIdleForDispatch(eq(500L), anyString(), any(), anyInt())).thenReturn(1);
+
+        assertThat(callbackService.claimUnitsForWorker(WORKER_BOOT_ID, 2)).singleElement().extracting(ClaimedIngestionUnitDTO::targetPhase).isEqualTo(ProcessingPhase.INGESTING);
     }
 
     @Test
@@ -130,34 +130,12 @@ class ProcessingStateWorkerDispatchTest {
     }
 
     @Test
-    void claimWithoutFreeSlotsClaimsNothingButStillMarksTheWorkerSeen() {
+    void claimWithoutFreeSlotsClaimsNothing() {
         List<ClaimedIngestionUnitDTO> claims = callbackService.claimUnitsForWorker(WORKER_BOOT_ID, 0);
 
         assertThat(claims).isEmpty();
         verify(processingStateRepository, never()).findIdleForDispatch(any(), anyInt());
         verify(processingStateRepository, never()).findStatesReadyForRetry(any(), any(), anyInt());
-        assertThat(workerMapBacking).containsKey("lastSeenAt");
-    }
-
-    @Test
-    void pushDispatchIsSuppressedWhileAWorkerIsPresent() {
-        workerMapBacking.put("lastSeenAt", Instant.now().toString());
-
-        callbackService.dispatchPendingJobs();
-
-        // Returns before the capacity check: jobs stay IDLE for the worker's next claim.
-        verify(processingStateRepository, never()).countByPhaseIn(any());
-    }
-
-    @Test
-    void pushDispatchResumesAfterTheWorkerDisappears() {
-        workerMapBacking.put("lastSeenAt", Instant.now().minusSeconds(600).toString());
-        when(processingStateRepository.countByPhaseIn(any())).thenReturn(2L);
-
-        callbackService.dispatchPendingJobs();
-
-        // Past the worker grace, the legacy push path runs again (here it stops at full capacity).
-        verify(processingStateRepository).countByPhaseIn(any());
     }
 
     @Test
@@ -167,7 +145,6 @@ class ProcessingStateWorkerDispatchTest {
         assertThat(callbackService.claimUnitsForWorker(WORKER_BOOT_ID, 2)).isEmpty();
 
         verify(processingStateRepository, never()).findIdleForDispatch(any(), anyInt());
-        assertThat(workerMapBacking).containsKey("lastSeenAt");
     }
 
     @Test
