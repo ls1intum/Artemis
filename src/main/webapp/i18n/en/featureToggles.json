@@ -162,11 +162,6 @@
                     "description": "Uses Iris to suggest answers for tutors when responding to student questions in the communication module.",
                     "disableWarning": "Tutors will not receive AI-assisted answer suggestions from Iris in the communication module."
                 },
-                "AtlasML": {
-                    "name": "Atlas Machine Learning",
-                    "description": "Uses machine learning to automatically generate competency recommendations based on course content, predict student performance, and provide intelligent suggestions for learning path optimization.",
-                    "disableWarning": "Automatic competency generation, performance predictions, and ML-based learning recommendations will not be available."
-                },
                 "AtlasAgent": {
                     "name": "Atlas Agent",
                     "description": "Enables an AI agent that helps students understand and master competencies by providing personalized explanations, answering questions about learning objectives, and guiding them through their competency-based learning journey.",

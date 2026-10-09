@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 147 features, 1052 REST endpoints in 28 modules, and 62 interaction overrides.
+Currently 20 product areas, 147 features, 1050 REST endpoints in 28 modules, and 61 interaction overrides.
 
 ## Courses
 
@@ -1152,7 +1152,7 @@ Also recorded outside REST by `AthenaFeedbackSuggestionsService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| atlas | `CompetencyResource` | 3 | 0 | 0 | 0 |
+| atlas | `CompetencyResource` | 1 | 0 | 0 | 0 |
 | atlas | `CourseCompetencyResource` | 1 | 0 | 0 | 0 |
 | iris | `PyrisInternalStatusUpdateResource` | 0 | 0 | 0 | 1 |
 
@@ -1436,7 +1436,6 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 ### Counted as actions
 
 * `GET api/admin/sbom/vulnerabilities/refresh` (`DEPENDENCIES`)
-* `GET api/atlas/courses/{courseId}/competencies/relations/suggest` (`AI_COMPETENCY_GENERATION`)
 * `GET api/exam/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction` (`EXAM_TAKE`)
 * `GET api/exam/courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction` (`EXAM_CONDUCTION_MANAGEMENT`)
 * `GET api/exercise/programming-exercises/{programmingExerciseId}/consistency-check` (`PROGRAMMING_CONSISTENCY_CHECK`)

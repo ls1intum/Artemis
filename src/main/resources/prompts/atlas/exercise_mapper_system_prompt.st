@@ -28,10 +28,8 @@ Example response: {"courseId": 1, "competencies": [{"id": 42, "title": "Data Str
 Generate preview for exercise-to-competency mappings
 mappings: array of {competencyId, weight, suggested}
 weight: 0.25 (LOW), 0.5 (MEDIUM), or 1.0 (HIGH)
-suggested: normally leave false — the server overrides this via AtlasML automatically.
-  EXCEPTION: if AtlasML is unavailable, the server preserves your suggested flags.
-  In that case, use your own judgment: set suggested=true for competencies whose title
-  semantically matches the exercise title/description (max 1-3, never all).
+suggested: set suggested=true for competencies whose title semantically matches the
+  exercise title/description (max 1-3, never all).
 Set viewOnly=true for viewing only (no action buttons)
 Set viewOnly=false for create/update previews (shows action buttons)
 Returns: "Preview generated successfully for exercise-to-competency mapping."
@@ -75,8 +73,7 @@ Your Process:
 2. Call getCourseCompetencies(courseId) to get ALL available competency IDs and titles
 3. Build mappings array for ALL competencies:
    - Assign weight based on how relevant each competency title is to the exercise title (0.25/0.5/1.0)
-   - Set suggested=true for competencies whose title semantically matches the exercise — the server will override
-     these with AtlasML results if available, or use your flags as fallback if AtlasML is down (max 1-3, never all)
+   - Set suggested=true for competencies whose title semantically matches the exercise (max 1-3, never all)
    - server automatically marks alreadyMapped based on existing links
 4. Call previewExerciseCompetencyMapping(courseId, exerciseId, mappings[], viewOnly=false)
    - CRITICAL: Array MUST contain ALL competencies, not just the ones you consider relevant
@@ -178,7 +175,6 @@ You:
      {competencyId: 30, weight: 0.5, suggested: true},
      {competencyId: 20, weight: 0.25, suggested: false}
    ], viewOnly=false)
-   - Server overrides suggested with AtlasML results (or keeps your flags if AtlasML is down)
 4. Respond: "I've prepared competency mapping suggestions for this exercise. Review and adjust selections before saving."
 
 Approve:
@@ -194,7 +190,7 @@ You:
 CRITICAL REMINDERS
 -----------------
 
-- **FIRST STEP:** Call getCourseCompetencies(courseId), then immediately call previewExerciseCompetencyMapping with ALL competencies. Set suggested=true on competencies that semantically match the exercise — the server uses AtlasML to override these when available, or falls back to your flags when AtlasML is down.
+- **FIRST STEP:** Call getCourseCompetencies(courseId), then immediately call previewExerciseCompetencyMapping with ALL competencies. Set suggested=true on competencies that semantically match the exercise.
 - **Exercise selection is handled by the orchestrator.** You always receive EXERCISE_ID and EXERCISE_TITLE in the brief. Never ask the user to pick an exercise.
 - **For existing mappings:** Mark them with alreadyMapped=true for different UI styling
 - **For saves:** ONLY call saveExerciseCompetencyMappings() when [CREATE_APPROVED_EXERCISE_MAPPING] is received

@@ -30,8 +30,6 @@ import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
-import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -118,13 +116,11 @@ public class TextExerciseResource {
 
     private final ChannelRepository channelRepository;
 
-    private final Optional<AtlasMLApi> atlasMLApi;
-
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, UserRepository userRepository, AuthorizationCheckService authCheckService,
             StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, CourseRepository courseRepository, ChannelRepository channelRepository,
-            Optional<ExamAccessApi> examAccessApi, Optional<AtlasMLApi> atlasMLApi, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            Optional<ExamAccessApi> examAccessApi, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
             PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
@@ -142,7 +138,6 @@ public class TextExerciseResource {
         this.courseRepository = courseRepository;
         this.channelRepository = channelRepository;
         this.examAccessApi = examAccessApi;
-        this.atlasMLApi = atlasMLApi;
     }
 
     /**
@@ -229,9 +224,6 @@ public class TextExerciseResource {
         var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, textExercise, user);
-
-        // Notify AtlasML about the exercise deletion before actual deletion
-        notifyAtlasML(textExercise, OperationTypeDTO.DELETE, "text exercise deletion");
 
         // NOTE: we use the exerciseDeletionService here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
@@ -355,23 +347,5 @@ public class TextExerciseResource {
         SearchResultPageDTO<TextExercise> page = textExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user);
         List<TextExerciseListItemDTO> content = page.getResultsOnPage().stream().map(TextExerciseListItemDTO::of).toList();
         return ResponseEntity.ok(new SearchResultPageDTO<>(content, page.getNumberOfPages()));
-    }
-
-    /**
-     * Helper method to notify AtlasML about text exercise changes with consistent error handling.
-     *
-     * @param exercise             the exercise to save
-     * @param operationType        the operation type (UPDATE or DELETE)
-     * @param operationDescription the description of the operation for logging purposes
-     */
-    private void notifyAtlasML(TextExercise exercise, OperationTypeDTO operationType, String operationDescription) {
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(exercise, operationType);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());
-            }
-        });
     }
 }

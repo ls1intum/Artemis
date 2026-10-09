@@ -4,12 +4,6 @@
             "created": "Kompetenz erstellt",
             "deleted": "Kompetenz gelöscht",
             "updated": "Kompetenz bearbeitet",
-            "suggested": "KI-Vorschlag",
-            "acceptSuggestion": "Diesen Kompetenzvorschlag akzeptieren",
-            "dismissSuggestion": "Diesen Kompetenzvorschlag verwerfen",
-            "suggestions": {
-                "loadError": "Kompetenzvorschläge konnten nicht geladen werden. Bitte versuche es später erneut."
-            },
             "competencyButton": "Kompetenzen",
             "title": "Titel",
             "description": "Beschreibung",
@@ -136,9 +130,6 @@
                     "medium": "Mittel",
                     "high": "Hoch"
                 }
-            },
-            "suggestion": {
-                "tooltip": "Diese Kompetenz wird von der KI auf Grundlage der Aufgabenstellung vorgeschlagen."
             },
             "competencyCard": {
                 "connectedLectureUnits": "Verbundene Vorlesungsinhalte",
@@ -299,18 +290,6 @@
                         "competency": "Dieser Knoten repräsentiert eine Kompetenz",
                         "prerequisite": "Dieser Knoten repräsentiert eine Voraussetzung"
                     }
-                },
-                "suggestions": {
-                    "fetch": "KI-Vorschläge",
-                    "title": "Vorschläge",
-                    "empty": "Keine Vorschläge",
-                    "aiBadge": "KI",
-                    "aiTooltip": "Von KI vorgeschlagen",
-                    "aiSuggestionsTitle": "KI-Vorschläge",
-                    "addSuggestions": "Vorschläge hinzufügen ({{count}})",
-                    "addSelectedSuggestions": "Ausgewählte Vorschläge hinzufügen",
-                    "alreadyExists": "(bereits vorhanden)",
-                    "getAiSuggestionsTooltip": "KI-Vorschläge abrufen"
                 }
             },
             "featureExplanation": {

@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
  * first half that requires a bean from the second is invisible in review and in every test, because every test context
  * enables both. It only shows up in production, where the missing bean definition cannot be created and
  * {@code DeferredEagerBeanInitializer} shuts the application down. That is how the crash this split fixed reached
- * develop, and it happened a second time within the same change, to {@code AtlasMLShortlistService}.
+ * develop, and it happened a second time within the same change.
  */
 class AtlasFeatureGatingArchitectureTest extends AbstractArchitectureTest {
 

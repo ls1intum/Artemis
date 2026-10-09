@@ -2,15 +2,11 @@ package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -24,14 +20,9 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.ExerciseCompetencyMappingDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -69,13 +60,7 @@ class ExerciseMappingToolsServiceTest {
     private UserTestRepository userRepository;
 
     @Mock
-    private AtlasMLApi atlasMLApi;
-
-    @Mock
     private AtlasAgentSessionCacheService sessionCacheService;
-
-    @Mock
-    private ContentExtractionService contentExtractionService;
 
     private ExerciseMappingToolsService service;
 
@@ -93,12 +78,7 @@ class ExerciseMappingToolsServiceTest {
     void setUp() {
         objectMapper = JsonObjectMapper.get();
         service = new ExerciseMappingToolsService(exerciseRepository, courseCompetencyRepository, competencyExerciseLinkRepository, courseRepository, authorizationCheckService,
-                userRepository, Optional.of(atlasMLApi), sessionCacheService, contentExtractionService);
-
-        // Content extraction is mocked: the preview path builds the AtlasML suggestion description via
-        // extractContent(exercise, true) (flavor stripping enabled). Stubbing eq(true) keeps the test honest -
-        // a regression that drops the flag would no longer match. Lenient: not every test reaches the preview path.
-        lenient().when(contentExtractionService.extractContent(any(), eq(true))).thenReturn(new ExtractedContentDTO("Bubble Sort", "Bubble Sort", Map.of()));
+                userRepository, sessionCacheService);
 
         course = new Course();
         course.setId(10L);
@@ -144,15 +124,13 @@ class ExerciseMappingToolsServiceTest {
     }
 
     @Test
-    void preview_generatesPreview_withAtlasMLSuggestions() {
+    void preview_usesLlmSuggestedFlags() {
         when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
         when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
         when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L)).thenReturn(List.of());
-        when(atlasMLApi.suggestCompetencies(any(SuggestCompetencyRequestDTO.class)))
-                .thenReturn(new SuggestCompetencyResponseDTO(List.of(new AtlasMLCompetencyDTO(1L, "Sorting Algorithms", null, 10L))));
         when(courseCompetencyRepository.findAllById(List.of(1L, 2L))).thenReturn(List.of(competency1, competency2));
 
-        var mappings = List.of(new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(1L, 1.0, false, false),
+        var mappings = List.of(new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(1L, 1.0, false, true),
                 new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(2L, 0.5, false, false));
 
         String result = service.previewExerciseCompetencyMapping(10L, 42L, mappings, false);
@@ -162,55 +140,9 @@ class ExerciseMappingToolsServiceTest {
         ExerciseCompetencyMappingDTO preview = ExerciseMappingToolsService.getExerciseMappingPreview();
         assertThat(preview).isNotNull();
         assertThat(preview.exerciseId()).isEqualTo(42L);
-        // competency1 (id=1) was returned by AtlasML -> suggested=true
         assertThat(preview.competencies().get(0).suggested()).isTrue();
-        // competency2 (id=2) not in AtlasML response -> suggested=false
         assertThat(preview.competencies().get(1).suggested()).isFalse();
         assertThat(preview.viewOnly()).isFalse();
-
-        // The preview path must request flavor-stripped content so the AtlasML query matches the cleaned text.
-        verify(contentExtractionService, atLeastOnce()).extractContent(any(), eq(true));
-    }
-
-    @Test
-    void preview_usesLlmSuggestedFlags_whenAtlasMLUnavailable() {
-        when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
-        when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
-        when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L)).thenReturn(List.of());
-        when(atlasMLApi.suggestCompetencies(any(SuggestCompetencyRequestDTO.class))).thenThrow(new RuntimeException("AtlasML down"));
-        when(courseCompetencyRepository.findAllById(any())).thenReturn(List.of(competency1, competency2));
-
-        var mappings = List.of(new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(1L, 1.0, false, true),
-                new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(2L, 0.5, false, false));
-
-        service.previewExerciseCompetencyMapping(10L, 42L, mappings, false);
-
-        ExerciseCompetencyMappingDTO preview = ExerciseMappingToolsService.getExerciseMappingPreview();
-        assertThat(preview).isNotNull();
-        assertThat(preview.competencies().get(0).suggested()).isTrue();   // LLM flag preserved
-        assertThat(preview.competencies().get(1).suggested()).isFalse();
-    }
-
-    @Test
-    void preview_usesLlmSuggestedFlags_whenAtlasMLApiMissing() {
-        ExerciseMappingToolsService serviceWithoutAtlasML = new ExerciseMappingToolsService(exerciseRepository, courseCompetencyRepository, competencyExerciseLinkRepository,
-                courseRepository, authorizationCheckService, userRepository, Optional.empty(), sessionCacheService, contentExtractionService);
-
-        when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
-        when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
-        when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L)).thenReturn(List.of());
-        when(courseCompetencyRepository.findAllById(any())).thenReturn(List.of(competency1, competency2));
-
-        var mappings = List.of(new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(1L, 1.0, false, true),
-                new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(2L, 0.5, false, false));
-
-        serviceWithoutAtlasML.previewExerciseCompetencyMapping(10L, 42L, mappings, false);
-
-        ExerciseCompetencyMappingDTO preview = ExerciseMappingToolsService.getExerciseMappingPreview();
-        assertThat(preview).isNotNull();
-        assertThat(preview.competencies().get(0).suggested()).isTrue();
-        assertThat(preview.competencies().get(1).suggested()).isFalse();
-        verify(atlasMLApi, never()).suggestCompetencies(any(SuggestCompetencyRequestDTO.class));
     }
 
     @Test
@@ -223,7 +155,6 @@ class ExerciseMappingToolsServiceTest {
         when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
         when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
         when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L)).thenReturn(List.of(existingLink));
-        when(atlasMLApi.suggestCompetencies(any())).thenReturn(new SuggestCompetencyResponseDTO(List.of()));
         when(courseCompetencyRepository.findAllById(any())).thenReturn(List.of(competency1));
 
         var mappings = List.of(new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(1L, 0.5, false, false));
@@ -238,7 +169,6 @@ class ExerciseMappingToolsServiceTest {
         when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
         when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
         when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L)).thenReturn(List.of());
-        when(atlasMLApi.suggestCompetencies(any())).thenReturn(new SuggestCompetencyResponseDTO(List.of()));
         when(courseCompetencyRepository.findAllById(any())).thenReturn(List.of(competency1));
 
         var mappings = List.of(new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(1L, 0.5, false, false));
@@ -275,7 +205,6 @@ class ExerciseMappingToolsServiceTest {
         ArgumentCaptor<List<CompetencyExerciseLink>> linkCaptor = ArgumentCaptor.forClass(List.class);
         verify(competencyExerciseLinkRepository).saveAll(linkCaptor.capture());
         assertThat(linkCaptor.getValue()).singleElement().satisfies(link -> assertThat(link.isGeneratedByAi()).isTrue());
-        verify(atlasMLApi).mapCompetencyToExercise(42L, 1L);
     }
 
     @Test
@@ -294,7 +223,6 @@ class ExerciseMappingToolsServiceTest {
 
         assertThat(json.get("success").asBoolean()).isTrue();
         verify(competencyExerciseLinkRepository).deleteAll(any());
-        verify(atlasMLApi, never()).mapCompetencyToExercise(any(), any());
     }
 
     @Test
@@ -315,7 +243,6 @@ class ExerciseMappingToolsServiceTest {
 
         assertThat(existingLink.getWeight()).isEqualTo(1.0);
         assertThat(existingLink.isGeneratedByAi()).isTrue();
-        verify(atlasMLApi, never()).mapCompetencyToExercise(any(), any());
     }
 
     @Test
@@ -332,8 +259,11 @@ class ExerciseMappingToolsServiceTest {
         var llmMappings = List.of(new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(1L, 1.0, false, false));
         service.saveExerciseCompetencyMappings(10L, 42L, llmMappings);
 
-        verify(atlasMLApi).mapCompetencyToExercise(42L, 2L);   // user's competency was used
-        verify(atlasMLApi, never()).mapCompetencyToExercise(42L, 1L);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Iterable<CompetencyExerciseLink>> savedLinks = ArgumentCaptor.forClass(Iterable.class);
+        verify(competencyExerciseLinkRepository).saveAll(savedLinks.capture());
+        // the user's competency was used, not the LLM's
+        assertThat(savedLinks.getValue()).extracting(link -> link.getCompetency().getId()).containsExactly(2L);
     }
 
     @Test
@@ -351,7 +281,6 @@ class ExerciseMappingToolsServiceTest {
         when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
         when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
         when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L)).thenReturn(List.of());
-        when(atlasMLApi.suggestCompetencies(any())).thenReturn(new SuggestCompetencyResponseDTO(List.of()));
         when(courseCompetencyRepository.findAllById(any())).thenReturn(List.of());
 
         var mappings = List.of(new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(1L, 0.5, false, false));

@@ -89,10 +89,6 @@ artemis:
             enabled: true # Production defaults this off; the agent and orchestrator tests need their beans, and the shared ChatClient is mocked.
         orchestrator:
             responses-api-enabled: false # General integration tests mock the shared ChatClient; adapter tests enable Responses explicitly.
-        atlasml:
-            enabled: true
-            base-url: https://fake.fake
-            auth-token: fake-token
     apollon:
         enabled: true
         conversion-service-url: http://localhost:8080

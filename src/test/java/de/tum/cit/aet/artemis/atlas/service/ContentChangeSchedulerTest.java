@@ -244,7 +244,7 @@ class ContentChangeSchedulerTest {
         // inside the debounce window must leave the queue, so the mixed batch neither passes it to the
         // orchestrator nor counts it as a processed change.
         MutableClock clock = new MutableClock(Instant.parse("2026-04-24T12:00:00Z"));
-        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("test", 1.0, "", "test", "high", false, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP, 30000L, 10);
+        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("test", 1.0, "", "test", "high", false, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP, 30000L);
         LectureUnitRepositoryApi lectureUnitRepositoryApi = mock(LectureUnitRepositoryApi.class);
         ContentChangeAccumulatorService realAccumulator = new ContentChangeAccumulatorService(Optional.of(new LocalDataProviderService()), clock, properties,
                 courseConfigurationRepository, Optional.of(lectureUnitRepositoryApi));
@@ -280,7 +280,7 @@ class ContentChangeSchedulerTest {
         // made while the run is in flight has nothing to remove. When that run then fails, the requeue must re-check
         // the persisted unit instead of restoring it, so the retry neither passes nor counts the blank unit.
         MutableClock clock = new MutableClock(Instant.parse("2026-04-24T12:00:00Z"));
-        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("test", 1.0, "", "test", "high", false, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP, 30000L, 10);
+        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("test", 1.0, "", "test", "high", false, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP, 30000L);
         LectureUnitRepositoryApi lectureUnitRepositoryApi = mock(LectureUnitRepositoryApi.class);
         ContentChangeAccumulatorService realAccumulator = new ContentChangeAccumulatorService(Optional.of(new LocalDataProviderService()), clock, properties,
                 courseConfigurationRepository, Optional.of(lectureUnitRepositoryApi));

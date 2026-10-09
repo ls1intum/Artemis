@@ -43,7 +43,6 @@ import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.Batc
 import de.tum.cit.aet.artemis.atlas.service.OrchestratorPromptRenderer.ExerciseChange;
 import de.tum.cit.aet.artemis.atlas.service.OrchestratorPromptRenderer.LectureUnitChange;
 import de.tum.cit.aet.artemis.atlas.service.OrchestratorToolContextKeys.AppliedActionsBuffer;
-import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLShortlistService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
@@ -118,8 +117,6 @@ public class CompetencyOrchestrationService {
 
     private final UserRepository userRepository;
 
-    private final AtlasMLShortlistService shortlistService;
-
     private final AtomicReference<DistributedMap<Long, RunInfo>> runMap = new AtomicReference<>();
 
     public CompetencyOrchestrationService(ExerciseRepository exerciseRepository, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
@@ -129,7 +126,7 @@ public class CompetencyOrchestrationService {
             @Qualifier("orchestratorPlanningToolCallbackProvider") AtlasToolSurface orchestratorPlanningToolCallbackProvider,
             @Qualifier("orchestratorDelegationToolCallbackProvider") AtlasToolSurface orchestratorDelegationToolCallbackProvider,
             Optional<DistributedDataProvider> distributedDataProvider, AtlasOrchestratorProperties properties, ContentChangeAccumulatorService contentChangeAccumulatorService,
-            LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, AtlasMLShortlistService shortlistService) {
+            LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
         this.exerciseRepository = exerciseRepository;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.contentExtractionService = contentExtractionService;
@@ -147,7 +144,6 @@ public class CompetencyOrchestrationService {
         this.contentChangeAccumulatorService = contentChangeAccumulatorService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
-        this.shortlistService = shortlistService;
     }
 
     /** Per-course IN_PROGRESS guard map, resolved lazily (see {@link #resolveRunMap}). */
@@ -537,12 +533,10 @@ public class CompetencyOrchestrationService {
             CompetencyIndexResponseDTO competencyIndex = orchestratorPlanningToolsService.listCompetencyIndex(courseId);
             String renderedIndex = OrchestratorPromptRenderer.renderCompetencyIndex(competencyIndex);
             String renderedChanges = OrchestratorPromptRenderer.renderChangeBatch(changes, List.of());
-            String renderedShortlist = renderAtlasMLShortlist(courseId, changes);
             // Map.of key order is irrelevant: the prompt template references the placeholders by
-            // name, and the fence sanitization in OrchestratorPromptRenderer /
-            // the shortlist service guarantees no user-supplied string can break out and reposition another.
-            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH,
-                    Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex, "atlasMLShortlist", renderedShortlist));
+            // name, and the fence sanitization in OrchestratorPromptRenderer guarantees no
+            // user-supplied string can break out and reposition another.
+            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH, Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
         }
         catch (Exception ex) {
             log.warn("Atlas orchestrator preparation failed for exercise {}: {}", exerciseId, ex.getMessage(), ex);
@@ -636,9 +630,7 @@ public class CompetencyOrchestrationService {
             CompetencyIndexResponseDTO competencyIndex = orchestratorPlanningToolsService.listCompetencyIndex(courseId);
             String renderedIndex = OrchestratorPromptRenderer.renderCompetencyIndex(competencyIndex);
             String renderedChanges = OrchestratorPromptRenderer.renderChangeBatch(exerciseChanges, lectureUnitChanges);
-            String renderedShortlist = renderAtlasMLShortlist(courseId, exerciseChanges);
-            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH,
-                    Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex, "atlasMLShortlist", renderedShortlist));
+            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH, Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
         }
         catch (Exception ex) {
             log.warn("Atlas orchestrator (batch) preparation failed for course {}: {}", courseId, ex.getMessage(), ex);
@@ -815,25 +807,8 @@ public class CompetencyOrchestrationService {
     }
 
     /**
-     * Fetches and renders the per-exercise AtlasML similarity shortlist for the batch. The cleaned learning
-     * text of each change is the AtlasML query; the result is the injection-safe block interpolated into the
-     * execute prompt. Best-effort: an unavailable or failing AtlasML yields an omitted block (see {@link AtlasMLShortlistService}).
-     * The whole path is guarded here so an unexpected shortlist failure can never abort the surrounding
-     * orchestration-preparation try with an INTERNAL_ERROR — the section is simply dropped.
+     * /** Distributed map entry guarding per-course runs; expired via {@link #RUN_LEASE} in {@link #claimRun}.
      */
-    private String renderAtlasMLShortlist(long courseId, List<ExerciseChange> changes) {
-        try {
-            List<AtlasMLShortlistService.ExerciseExtract> extracts = changes.stream()
-                    .map(change -> new AtlasMLShortlistService.ExerciseExtract(change.exerciseId(), change.problemStatement())).toList();
-            return shortlistService.renderShortlist(shortlistService.fetchShortlists(courseId, extracts));
-        }
-        catch (Exception ex) {
-            log.debug("AtlasML shortlist generation failed for course {}; continuing without shortlist: {}", courseId, ex.getMessage(), ex);
-            return "";
-        }
-    }
-
-    /** Distributed map entry guarding per-course runs; expired via {@link #RUN_LEASE} in {@link #claimRun}. */
     record RunInfo(String runId, long exerciseId, @Nullable Instant startedAt) implements Serializable {
 
         @Serial

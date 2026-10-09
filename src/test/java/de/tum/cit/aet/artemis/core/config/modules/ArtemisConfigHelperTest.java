@@ -27,24 +27,6 @@ class ArtemisConfigHelperTest {
         testProperty(artemisConfigHelper::isAtlasEnabled, Constants.ATLAS_ENABLED_PROPERTY_NAME);
     }
 
-    @Test
-    void testAtlasMLProperty() {
-        mockProperty(Constants.ATLAS_ENABLED_PROPERTY_NAME, true);
-
-        mockProperty(Constants.ATLASML_ENABLED_PROPERTY_NAME, true);
-        assertThat(artemisConfigHelper.isAtlasMLEnabled(mockEnv)).isTrue();
-
-        mockProperty(Constants.ATLASML_ENABLED_PROPERTY_NAME, false);
-        assertThat(artemisConfigHelper.isAtlasMLEnabled(mockEnv)).isFalse();
-
-        mockProperty(Constants.ATLASML_ENABLED_PROPERTY_NAME, null);
-        assertThatThrownBy(() -> artemisConfigHelper.isAtlasMLEnabled(mockEnv)).isInstanceOf(RuntimeException.class).hasMessageContaining(Constants.ATLASML_ENABLED_PROPERTY_NAME);
-
-        mockProperty(Constants.ATLAS_ENABLED_PROPERTY_NAME, false);
-        mockProperty(Constants.ATLASML_ENABLED_PROPERTY_NAME, true);
-        assertThat(artemisConfigHelper.isAtlasMLEnabled(mockEnv)).isFalse();
-    }
-
     /**
      * The last case is the one that matters in production: a build agent runs with the Atlas module off and never
      * defines the AtlasLLM property, so the short-circuit on the module flag is what keeps it from throwing.

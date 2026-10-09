@@ -21,7 +21,6 @@ class ModuleFeatureInfoContributorTest {
     // @formatter:off
     private static final List<String> modulePropertyNames = List.of(
         Constants.ATLAS_ENABLED_PROPERTY_NAME,
-        Constants.ATLASML_ENABLED_PROPERTY_NAME,
         Constants.ATLASLLM_ENABLED_PROPERTY_NAME,
         Constants.HYPERION_ENABLED_PROPERTY_NAME,
         Constants.DEIMOS_ENABLED_PROPERTY_NAME,
@@ -48,7 +47,6 @@ class ModuleFeatureInfoContributorTest {
     // @formatter:off
     private static final List<String> moduleFeatures = List.of(
         Constants.MODULE_FEATURE_ATLAS,
-        Constants.MODULE_FEATURE_ATLASML,
         Constants.MODULE_FEATURE_ATLASLLM,
         Constants.MODULE_FEATURE_HYPERION,
         Constants.MODULE_FEATURE_DEIMOS,

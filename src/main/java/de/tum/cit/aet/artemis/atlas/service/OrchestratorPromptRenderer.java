@@ -93,7 +93,7 @@ final class OrchestratorPromptRenderer {
      * (never mid surrogate pair). Preserves {@code \n}/{@code \t} for the multi-line execute-prompt body.
      */
     static String sanitizeForPrompt(@Nullable String raw, int maxChars) {
-        return AtlasPromptSanitizer.sanitizeForPrompt(raw, maxChars, false, "(empty)");
+        return AtlasPromptSanitizer.sanitizeForPrompt(raw, maxChars, "(empty)");
     }
 
     static String renderCompetencyIndex(CompetencyIndexResponseDTO index) {

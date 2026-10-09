@@ -76,7 +76,7 @@ class AtlasWorkerResponsesTest {
         var templates = mock(AtlasPromptTemplateService.class);
         when(templates.render(anyString(), anyMap())).thenReturn("Worker instructions");
         var usage = mock(LLMTokenUsageService.class);
-        var properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", true, 300, 10, 30000L, 10);
+        var properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", true, 300, 10, 30000L);
         var harness = new AtlasAgentDelegationService(null, templates, null, new AtlasAgentProperties("interactive", 1.0), properties,
                 new AtlasResponsesChatClient(ChatClient.create(new AtlasResponsesChatModel(client, new JsonMapper(), "gpt-5.6-luna"))));
         Map<String, Object> context = new HashMap<>();

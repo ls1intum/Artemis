@@ -20,12 +20,9 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyRelationDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyRelationService;
@@ -57,9 +54,6 @@ class CompetencyMappingToolsServiceTest {
     private AtlasAgentSessionCacheService sessionCacheService;
 
     @Mock
-    private AtlasMLApi atlasMLApi;
-
-    @Mock
     private AuthorizationCheckService authorizationCheckService;
 
     @Mock
@@ -79,7 +73,7 @@ class CompetencyMappingToolsServiceTest {
     void setUp() {
         objectMapper = JsonObjectMapper.get();
         service = new CompetencyMappingToolsService(objectMapper, courseCompetencyRepository, competencyRelationRepository, competencyRelationService, courseTestRepository,
-                sessionCacheService, Optional.of(atlasMLApi), authorizationCheckService, userRepository);
+                sessionCacheService, authorizationCheckService, userRepository);
 
         course = new Course();
         course.setId(123L);
@@ -169,23 +163,5 @@ class CompetencyMappingToolsServiceTest {
 
         assertThat(json.get("success").asBoolean()).isFalse();
         assertThat(json.get("failed").asInt()).isEqualTo(1);
-    }
-
-    @Test
-    void suggestRelations_happyPath() throws Exception {
-        when(atlasMLApi.suggestCompetencyRelations(123L)).thenReturn(new SuggestCompetencyRelationsResponseDTO(List.of(new AtlasMLCompetencyRelationDTO(1L, 2L, "ASSUMES"))));
-
-        JsonNode json = objectMapper.readTree(service.suggestRelationMappingsUsingML(123L));
-
-        assertThat(json.get("count").asInt()).isEqualTo(1);
-    }
-
-    @Test
-    void suggestRelations_mlFailure_returnsError() throws Exception {
-        when(atlasMLApi.suggestCompetencyRelations(123L)).thenThrow(new RuntimeException("boom"));
-
-        JsonNode json = objectMapper.readTree(service.suggestRelationMappingsUsingML(123L));
-
-        assertThat(json.get("error").asString()).contains("Failed to get ML-based");
     }
 }

@@ -182,7 +182,7 @@ class AutonomousCompetencyLectureUnitEventListenerTest {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         stubCourseEnabled(true);
         LocalDataProviderService provider = new LocalDataProviderService();
-        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("test", 1.0, "", "test", "high", false, 60, 3, 30000L, 10);
+        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("test", 1.0, "", "test", "high", false, 60, 3, 30000L);
         ContentChangeAccumulatorService realAccumulator = new ContentChangeAccumulatorService(Optional.of(provider), Clock.systemUTC(), properties, courseConfigurationRepository,
                 Optional.of(lectureUnitRepositoryApi));
         listener = new AutonomousCompetencyLectureUnitEventListener(realAccumulator, featureToggleService, courseConfigurationRepository, Optional.of(lectureUnitRepositoryApi));
@@ -216,7 +216,7 @@ class AutonomousCompetencyLectureUnitEventListenerTest {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         stubCourseEnabled(true);
         LocalDataProviderService provider = new LocalDataProviderService();
-        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("test", 1.0, "", "test", "high", false, 60, 3, 30000L, 10);
+        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("test", 1.0, "", "test", "high", false, 60, 3, 30000L);
         ContentChangeAccumulatorService realAccumulator = new ContentChangeAccumulatorService(Optional.of(provider), Clock.systemUTC(), properties, courseConfigurationRepository,
                 Optional.of(lectureUnitRepositoryApi));
         listener = new AutonomousCompetencyLectureUnitEventListener(realAccumulator, featureToggleService, courseConfigurationRepository, Optional.of(lectureUnitRepositoryApi));

@@ -1,7 +1,6 @@
 import { Component, OnInit, forwardRef, inject, input, output, signal } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { faLightbulb, faQuestionCircle, faStar } from '@fortawesome/free-solid-svg-icons';
-import { HttpClient } from '@angular/common/http';
+import { faQuestionCircle, faStar } from '@fortawesome/free-solid-svg-icons';
 import {
     CompetencyLearningObjectLink,
     CourseCompetency,
@@ -14,7 +13,6 @@ import {
 } from 'app/atlas/shared/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { finalize } from 'rxjs';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -22,9 +20,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
@@ -38,28 +33,16 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
             useExisting: forwardRef(() => CompetencySelectionPrimengComponent),
         },
     ],
-    imports: [
-        FaStackComponent,
-        NgbTooltip,
-        FaIconComponent,
-        FaStackItemSizeDirective,
-        FormsModule,
-        TranslateDirective,
-        ArtemisTranslatePipe,
-        FeatureToggleHideDirective,
-        ButtonComponent,
-    ],
+    imports: [FaStackComponent, NgbTooltip, FaIconComponent, FaStackItemSizeDirective, FormsModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class CompetencySelectionPrimengComponent implements OnInit, ControlValueAccessor {
     private route = inject(ActivatedRoute);
     private courseStorageService = inject(CourseStorageService);
     private courseCompetencyService = inject(CourseCompetencyService);
     private profileService = inject(ProfileService);
-    private http = inject(HttpClient);
 
     labelName = input<string>('');
     labelTooltip = input<string>('');
-    exerciseDescription = input<string | undefined>(undefined);
 
     valueChange = output<CompetencyLearningObjectLink[] | undefined>();
     availableCount = output<number>();
@@ -70,19 +53,14 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
     // all course competencies (rebuilt as a fresh array on every write so the template re-renders under zoneless)
     readonly competencyLinks = signal<CompetencyLearningObjectLink[] | undefined>(undefined);
 
-    readonly isSuggesting = signal(false);
     // rebuilt as a fresh object on every write so the template re-renders under zoneless
     readonly checkboxStates = signal<Record<number, boolean>>(undefined!);
-    suggestedCompetencyIds = new Set<number>();
     /** Pending links received via refreshWithLinks before competency loading finished. */
     private pendingRefreshLinks?: CompetencyLearningObjectLink[];
 
     getIcon = getIcon;
     faQuestionCircle = faQuestionCircle;
     faStar = faStar;
-    faLightbulb = faLightbulb;
-
-    protected readonly FeatureToggle = FeatureToggle;
 
     _onChange = (_value: CompetencyLearningObjectLink[] | undefined) => {};
 
@@ -92,9 +70,6 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
     protected readonly LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF = LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF; // halfway between low and medium
     protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF;
     // halfway between medium and high
-
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
 
     ngOnInit(): void {
         // it's an explicit design decision to not clutter every component that uses this component with the need to check if the atlas profile is enabled
@@ -253,63 +228,6 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
     }
 
     registerOnTouched(_fn: () => void): void {}
-
-    suggestCompetencies(): void {
-        if (!this.exerciseDescription()?.trim()) {
-            return;
-        }
-
-        this.isSuggesting.set(true);
-        this.suggestedCompetencyIds.clear();
-
-        const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        const requestBody = { description: this.exerciseDescription(), course_id: courseId?.toString() };
-
-        this.http
-            .post<{ competencies: { id: number | string }[] }>('/api/atlas/competencies/suggest', requestBody)
-            .pipe(
-                finalize(() => {
-                    this.isSuggesting.set(false);
-                }),
-            )
-            .subscribe({
-                next: (response) => {
-                    response.competencies.forEach((suggestion) => {
-                        const matchingLink = this.competencyLinks()?.find((link) => link.competency?.id === Number(suggestion.id));
-                        if (matchingLink?.competency?.id) {
-                            this.suggestedCompetencyIds.add(matchingLink.competency.id);
-                        }
-                    });
-                    this.sortCompetenciesBySuggestion();
-                },
-                error: (error) => {
-                    // console.error('Error getting competency suggestions:', error);
-                },
-            });
-    }
-
-    isSuggested(competencyId: number): boolean {
-        return this.suggestedCompetencyIds.has(competencyId);
-    }
-
-    sortCompetenciesBySuggestion(): void {
-        const competencyLinks = this.competencyLinks();
-        if (competencyLinks) {
-            // Sort a copy and commit a fresh reference so the dependent template re-renders under zoneless.
-            const sorted = [...competencyLinks].sort((a, b) => {
-                const aIsSuggested = a.competency?.id ? this.isSuggested(a.competency.id) : false;
-                const bIsSuggested = b.competency?.id ? this.isSuggested(b.competency.id) : false;
-
-                // Sort suggested competencies to the top
-                if (aIsSuggested && !bIsSuggested) return -1;
-                if (!aIsSuggested && bIsSuggested) return 1;
-
-                // Keep original order for items with same suggestion status
-                return 0;
-            });
-            this.competencyLinks.set(sorted);
-        }
-    }
 
     setDisabledState?(isDisabled: boolean): void {
         this.disabled.set(isDisabled);

@@ -12,13 +12,11 @@ import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
@@ -64,10 +62,8 @@ import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService.RunInfo;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
-import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLShortlistService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap;
@@ -138,19 +134,12 @@ class CompetencyOrchestrationServiceTest {
     @Mock
     private UserTestRepository userRepository;
 
-    @Mock
-    private AtlasMLShortlistService shortlistService;
-
     private AtlasOrchestratorProperties properties;
 
     @BeforeEach
     void setUp() {
-        properties = new AtlasOrchestratorProperties("gpt-test-orchestrator", 1.0, "", "gpt-5.6-luna", "high", false, 300, 10, 30000L, 10);
+        properties = new AtlasOrchestratorProperties("gpt-test-orchestrator", 1.0, "", "gpt-5.6-luna", "high", false, 300, 10, 30000L);
         runMap = spy(new LocalMap<>());
-        // The shortlist never returns null in production; stub it leniently so render-reaching tests that do
-        // not care about the shortlist still get a non-null prompt variable (Map.of rejects null values). The
-        // empty string mirrors the off path, where the section is omitted entirely.
-        lenient().when(shortlistService.renderShortlist(any())).thenReturn("");
     }
 
     @Test
@@ -944,31 +933,22 @@ class CompetencyOrchestrationServiceTest {
     }
 
     @Test
-    void run_injectsAtlasMLShortlistIntoExecutePrompt() {
+    void run_rendersExecutePromptWithChangesAndIndex() {
         ProgrammingExercise exercise = courseExercise(21L);
         when(exerciseRepository.findByIdElseThrow(21L)).thenReturn(exercise);
         stubRunMap();
         when(contentExtractionService.extractContent(exercise)).thenReturn(new ExtractedContentDTO("Loops", "Learn loops", Map.of()));
         when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
-        // Sentinel map so we can prove the exact instance fetched is the one handed to renderShortlist (not a fresh/empty map).
-        Map<Long, List<AtlasMLCompetencyDTO>> fetched = Map.of(21L, List.of(new AtlasMLCompetencyDTO(99L, "Loops", "desc", COURSE_ID)));
-        when(shortlistService.fetchShortlists(eq(COURSE_ID), anyList())).thenReturn(fetched);
-        when(shortlistService.renderShortlist(same(fetched))).thenReturn("SHORTLIST_BLOCK");
         // Stop right after the prompt is rendered so we assert the render inputs without driving the LLM.
         when(templateService.render(anyString(), anyMap())).thenThrow(new RuntimeException("stop after prepare"));
 
         createServiceWithRunMap(mock(ChatClient.class)).run(21L);
 
-        // The cleaned learning text is forwarded to AtlasML keyed by the exercise id...
-        verify(shortlistService).fetchShortlists(eq(COURSE_ID),
-                argThat(extracts -> extracts.size() == 1 && extracts.getFirst().exerciseId() == 21L && "Learn loops".equals(extracts.getFirst().description())));
-        // ...the exact fetched map (not some other/empty map) is passed to renderShortlist...
-        verify(shortlistService).renderShortlist(same(fetched));
-        // ...and the rendered block is wired into the execute prompt under the atlasMLShortlist variable.
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, String>> captor = ArgumentCaptor.forClass(Map.class);
         verify(templateService).render(anyString(), captor.capture());
-        assertThat(captor.getValue()).containsEntry("atlasMLShortlist", "SHORTLIST_BLOCK");
+        assertThat(captor.getValue()).containsOnlyKeys("exerciseChanges", "competencyIndex");
+        assertThat(captor.getValue().get("exerciseChanges")).contains("Learn loops");
     }
 
     @org.junit.jupiter.params.ParameterizedTest
@@ -1016,7 +996,7 @@ class CompetencyOrchestrationServiceTest {
         return new CompetencyOrchestrationService(exerciseRepository, Optional.of(lectureUnitRepositoryApi), contentExtractionService, orchestratorPlanningToolsService,
                 templateService, delegationService, new AtlasToolSurface(terminalToolCallbackProvider), new AtlasToolSurface(orchestratorReadToolCallbackProvider),
                 new AtlasToolSurface(orchestratorPlanningToolCallbackProvider), new AtlasToolSurface(orchestratorDelegationToolCallbackProvider),
-                Optional.of(distributedDataProvider), properties, contentChangeAccumulatorService, llmTokenUsageService, userRepository, shortlistService);
+                Optional.of(distributedDataProvider), properties, contentChangeAccumulatorService, llmTokenUsageService, userRepository);
     }
 
     private CompetencyOrchestrationService createServiceWithRunMap(@Nullable ChatClient chatClient) {
