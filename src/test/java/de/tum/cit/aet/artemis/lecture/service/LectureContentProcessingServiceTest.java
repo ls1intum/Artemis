@@ -195,6 +195,16 @@ class LectureContentProcessingServiceTest {
             assertThat(stateCaptor.getValue().getPhase()).as("an uppercase .PDF is processable content").isEqualTo(ProcessingPhase.IDLE);
         }
 
+        /**
+         * The walk and the backfill queue background units under one guard on the free backlog room; the row has to be written before the
+         * guard is released, so the backlog trigger must not hand the work to another thread.
+         */
+        @Test
+        void shouldTriggerBacklogWorkOnTheCallingThread() throws NoSuchMethodException {
+            assertThat(LectureContentProcessingService.class.getMethod("triggerProcessingAsBacklog", AttachmentVideoUnit.class)
+                    .isAnnotationPresent(org.springframework.scheduling.annotation.Async.class)).isFalse();
+        }
+
         @Test
         void shouldNotProcessUnitWithNoContent() {
             testUnit.setVideoSource(null);

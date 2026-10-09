@@ -130,10 +130,13 @@ public class LectureContentProcessingService {
     /**
      * Trigger processing with backlog priority: used by the backfill scheduler and the ingestion
      * reconciler, whose work must never starve fresh, user-triggered uploads in the dispatch queue.
+     * <p>
+     * Synchronous on purpose: both callers run on the scheduling node and queue units within the free
+     * backlog room ({@link LectureIngestionReconcileService#spendBacklog}). The row must exist before
+     * that guard is released, or the next run would count the room as still free.
      *
      * @param unit the attachment video unit to process
      */
-    @Async
     public void triggerProcessingAsBacklog(AttachmentVideoUnit unit) {
         SecurityUtils.setAuthorizationObject();
         doTriggerProcessing(unit, Optional.empty(), BACKLOG_DISPATCH_PRIORITY);
