@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TumAetUiMessageComponent, TumAetUiSelectComponent, TumAetUiToggleSwitchComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
@@ -252,7 +253,13 @@ export class ProgrammingExerciseSecurityComponent {
                 this.settle(next);
             },
             error: (error: unknown) => {
-                this.patchConfig({ status: SecurityActivationStatus.ERROR, errorDetail: error instanceof Error ? error.message : String(error) });
+                const errorDetail =
+                    error instanceof HttpErrorResponse
+                        ? (error.headers.get('X-artemisApp-message') ?? error.error?.title ?? error.error?.detail ?? error.error?.message ?? error.message)
+                        : error instanceof Error
+                          ? error.message
+                          : String(error);
+                this.patchConfig({ status: SecurityActivationStatus.ERROR, errorDetail });
             },
         });
     }
