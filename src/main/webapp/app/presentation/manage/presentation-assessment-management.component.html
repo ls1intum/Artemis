@@ -83,7 +83,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @for (row of filteredSelectedPresentationStudentRows(); track row.rowKey) {
+                                            @for (row of studentRows(); track row.rowKey) {
                                                 <tr>
                                                     <td>
                                                         <button
@@ -180,7 +180,9 @@
                                                                 @if (row.instance.mode === PresentationAssessmentMode.ONLINE) {
                                                                     <div>
                                                                         <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.meetingLink"></span>:
-                                                                        <a [href]="row.instance.meetingLink" target="_blank">{{ row.instance.meetingLink || '-' }}</a>
+                                                                        <a [href]="row.instance.meetingLink" target="_blank" rel="noopener noreferrer">{{
+                                                                            row.instance.meetingLink || '-'
+                                                                        }}</a>
                                                                     </div>
                                                                 } @else {
                                                                     <div>
@@ -304,7 +306,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @for (row of paginatedStudentRows(); track row.instance.id + ':' + row.studentLogin) {
+                                        @for (row of studentRows(); track row.instance.id + ':' + row.studentLogin) {
                                             <tr>
                                                 <td>
                                                     <button
@@ -421,7 +423,9 @@
                                                             @if (row.instance.mode === PresentationAssessmentMode.ONLINE) {
                                                                 <div>
                                                                     <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.meetingLink"></span>:
-                                                                    <a [href]="row.instance.meetingLink" target="_blank">{{ row.instance.meetingLink || '-' }}</a>
+                                                                    <a [href]="row.instance.meetingLink" target="_blank" rel="noopener noreferrer">{{
+                                                                        row.instance.meetingLink || '-'
+                                                                    }}</a>
                                                                 </div>
                                                             } @else {
                                                                 <div>

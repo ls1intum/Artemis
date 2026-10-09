@@ -59,6 +59,11 @@
                 [completeOnFocus]="true"
                 placeholder="{{ 'artemisApp.presentationAssessment.noExercise' | artemisTranslate }}"
             />
+            @if (editForm.controls.exercise.hasError('exerciseNotSelected') && editForm.controls.exercise.touched) {
+                <tumaet-ui-message severity="error" data-testid="presentation-exercise-error">
+                    <span jhiTranslate="artemisApp.presentationAssessment.validation.exerciseNotSelected"></span>
+                </tumaet-ui-message>
+            }
         </div>
 
         <div class="presentation-assessment-field presentation-assessment-description-field">

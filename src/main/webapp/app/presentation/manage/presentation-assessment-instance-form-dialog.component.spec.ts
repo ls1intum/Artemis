@@ -208,6 +208,22 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         expect(component.editForm.controls.meetingLink.value).toBe('');
     });
 
+    it.each([
+        ['https://zoom.example.org/j/123', false],
+        ['HTTP://example.org/meeting', false],
+        ['', false],
+        ['zoom.example.org/j/123', true],
+        ['/j/123', true],
+        ['javascript:alert(1)', true],
+        ['https://', true],
+    ])('should validate the meeting link "%s" (invalid: %s)', (meetingLink, invalid) => {
+        component.editForm.controls.mode.setValue(PresentationAssessmentMode.ONLINE);
+
+        component.editForm.controls.meetingLink.setValue(meetingLink);
+
+        expect(component.editForm.controls.meetingLink.hasError('pattern')).toBe(invalid);
+    });
+
     it('should retain a valid location when switching away from in-person mode', () => {
         const location = 'Room 101';
         component.editForm.controls.location.setValue(location);

@@ -103,8 +103,10 @@
                     class="w-full"
                     type="url"
                     formControlName="meetingLink"
-                    [attr.aria-invalid]="editForm.controls.meetingLink.hasError('maxlength')"
-                    [attr.aria-describedby]="editForm.controls.meetingLink.hasError('maxlength') ? 'presentation-instance-link-error' : undefined"
+                    [attr.aria-invalid]="editForm.controls.meetingLink.hasError('maxlength') || editForm.controls.meetingLink.hasError('pattern')"
+                    [attr.aria-describedby]="
+                        editForm.controls.meetingLink.hasError('maxlength') || editForm.controls.meetingLink.hasError('pattern') ? 'presentation-instance-link-error' : undefined
+                    "
                 />
                 @if (editForm.controls.meetingLink.hasError('maxlength')) {
                     <tumaet-ui-message severity="error" id="presentation-instance-link-error" role="alert">
@@ -112,6 +114,10 @@
                             jhiTranslate="artemisApp.presentationAssessment.meetingLinkTooLong"
                             [translateValues]="{ max: editForm.controls.meetingLink.getError('maxlength').requiredLength }"
                         ></span>
+                    </tumaet-ui-message>
+                } @else if (editForm.controls.meetingLink.hasError('pattern')) {
+                    <tumaet-ui-message severity="error" id="presentation-instance-link-error" role="alert" data-testid="presentation-instance-link-invalid">
+                        <span jhiTranslate="artemisApp.presentationAssessment.validation.meetingLinkInvalid"></span>
                     </tumaet-ui-message>
                 }
             </div>

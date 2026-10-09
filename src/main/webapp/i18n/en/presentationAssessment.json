@@ -21,10 +21,11 @@
                 "description": "Enter a description"
             },
             "validation": {
-                "numberRequired": "Please enter a number.",
                 "maxPointsMin": "Please enter a value greater than 0.",
                 "resultPointsMin": "Points must be at least 0.",
-                "pointsMax": "Points must not exceed {{ max }}."
+                "pointsMax": "Points must not exceed {{ max }}.",
+                "exerciseNotSelected": "Select an exercise from the list or clear the field.",
+                "meetingLinkInvalid": "Please enter a link that starts with http:// or https://."
             },
             "presentationDate": "Presentation date",
             "presentationTime": "Time",
@@ -32,12 +33,6 @@
             "presentation": "Presentation",
             "presenter": "Presenter",
             "presenters": "Presenters",
-            "addPresenters": "Add presenters",
-            "score": "Score",
-            "overview": "Overview",
-            "grading": "Grading",
-            "byPresentation": "By presentation",
-            "byStudent": "By student",
             "overallOverview": "Overall overview",
             "standalone": "Standalone",
             "linkedToExercise": "Linked to an exercise",
@@ -47,7 +42,6 @@
             "assessment": "Assessment",
             "remark": "Remark",
             "remarkTooLong": "The remark must not exceed {{ max }} characters.",
-            "note": "Remark",
             "assessed": "Assessed",
             "pending": "Pending",
             "searchStudent": "Search for a student",
@@ -57,15 +51,12 @@
             "type": "Type",
             "typeStandalone": "Standalone",
             "typeExercise": "Exercise",
-            "assessedBy": "Assessed by",
             "rows": "rows",
             "statistics": {
                 "total": "Total"
             },
             "exercise": "Linked exercise",
-            "linkedExercise": "Linked exercise:",
             "noExercise": "No exercise",
-            "exerciseNotInCourse": "The linked exercise must belong to this course.",
             "instanceRequiresPresenter": "Select at least one presenter.",
             "language": "Language",
             "languageOptions": {
@@ -85,7 +76,6 @@
             },
             "filter": {
                 "all": "All",
-                "future": "Future",
                 "allPresentations": "All presentations",
                 "allTypes": "All types",
                 "presentation": "Filter by presentation",
@@ -102,7 +92,6 @@
                 "typeNameToConfirm": "Please type in the title of the presentation assessment to confirm."
             },
             "students": {
-                "newPresentation": "New presentation",
                 "removeQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this presentation instance?"
             }
         }

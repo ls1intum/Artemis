@@ -29,6 +29,8 @@ const MAX_POINTS_UPPER_BOUND = 10000;
 const MIN_POINTS = 0.001;
 const notBlank: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
     typeof control.value === 'string' && control.value.trim().length === 0 ? { required: true } : null;
+/** The autocomplete writes the typed text into the control; only a selected exercise (an object) or an empty field is a valid value. */
+const exerciseSelected: ValidatorFn = (control: AbstractControl): ValidationErrors | null => (typeof control.value === 'string' ? { exerciseNotSelected: true } : null);
 
 @Component({
     selector: 'jhi-presentation-assessment-form-dialog',
@@ -73,7 +75,7 @@ export class PresentationAssessmentFormDialogComponent {
         title: ['', [Validators.required, notBlank, Validators.maxLength(255)]],
         description: ['', [Validators.maxLength(1000)]],
         maxPoints: [undefined as number | undefined, [Validators.required, Validators.min(MIN_POINTS), Validators.max(MAX_POINTS_UPPER_BOUND)]],
-        exercise: [undefined as ExerciseTitle | undefined],
+        exercise: [undefined as ExerciseTitle | undefined, [exerciseSelected]],
     });
 
     constructor() {

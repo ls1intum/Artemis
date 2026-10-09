@@ -548,6 +548,18 @@ describe('NavbarComponent', () => {
             });
         });
 
+        it.each(['/17', '/17/exercises/42'])('ends the breadcrumbs at the presentations overview for the selected presentation route %s', (suffix) => {
+            router.setUrl(`/course-management/1/presentations${suffix}`);
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs().at(-1)).toEqual({
+                label: 'artemisApp.presentationAssessment.home.title',
+                translate: true,
+                uri: '/course-management/1/presentations/',
+            });
+            expect(component.breadcrumbs().some((crumb) => crumb.uri.includes('/exercises/'))).toBe(false);
+        });
+
         it('submissions link to the scores, since there is no list of submissions only', () => {
             router.setUrl('/course-management/1/text-exercises/2/submissions');
 

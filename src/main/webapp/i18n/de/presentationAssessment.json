@@ -21,10 +21,11 @@
                 "description": "Beschreibung eingeben"
             },
             "validation": {
-                "numberRequired": "Bitte gib eine Zahl ein.",
                 "maxPointsMin": "Bitte gib einen Wert größer als 0 ein.",
                 "resultPointsMin": "Punkte müssen mindestens 0 betragen.",
-                "pointsMax": "Punkte dürfen {{ max }} nicht überschreiten."
+                "pointsMax": "Punkte dürfen {{ max }} nicht überschreiten.",
+                "exerciseNotSelected": "Wähle eine Aufgabe aus der Liste aus oder leere das Feld.",
+                "meetingLinkInvalid": "Bitte gib einen Link ein, der mit http:// oder https:// beginnt."
             },
             "presentationDate": "Präsentationstermin",
             "presentationTime": "Uhrzeit",
@@ -32,12 +33,6 @@
             "presentation": "Präsentation",
             "presenter": "Präsentierende Person",
             "presenters": "Präsentierende",
-            "addPresenters": "Präsentierende hinzufügen",
-            "score": "Punkte",
-            "overview": "Übersicht",
-            "grading": "Bewertung",
-            "byPresentation": "Nach Präsentation",
-            "byStudent": "Nach Studierenden",
             "overallOverview": "Gesamtübersicht",
             "standalone": "Eigenständig",
             "linkedToExercise": "An Aufgabe geknüpft",
@@ -47,7 +42,6 @@
             "assessment": "Bewertung",
             "remark": "Anmerkung",
             "remarkTooLong": "Die Anmerkung darf höchstens {{ max }} Zeichen enthalten.",
-            "note": "Anmerkung",
             "assessed": "Bewertet",
             "pending": "Ausstehend",
             "searchStudent": "Studierende Person suchen",
@@ -57,15 +51,12 @@
             "type": "Typ",
             "typeStandalone": "Eigenständig",
             "typeExercise": "Aufgabe",
-            "assessedBy": "Bewertet von",
             "rows": "Zeilen",
             "statistics": {
                 "total": "Gesamt"
             },
             "exercise": "Verknüpfte Aufgabe",
-            "linkedExercise": "Verknüpfte Aufgabe:",
             "noExercise": "Keine Aufgabe",
-            "exerciseNotInCourse": "Die verknüpfte Aufgabe muss zu diesem Kurs gehören.",
             "instanceRequiresPresenter": "Wähle mindestens eine präsentierende Person aus.",
             "language": "Sprache",
             "languageOptions": {
@@ -85,7 +76,6 @@
             },
             "filter": {
                 "all": "Alle",
-                "future": "Zukünftige",
                 "allPresentations": "Alle Präsentationen",
                 "allTypes": "Alle Typen",
                 "presentation": "Präsentation filtern",
@@ -102,7 +92,6 @@
                 "typeNameToConfirm": "Bitte gib den Titel der Präsentationsbewertung zur Bestätigung ein."
             },
             "students": {
-                "newPresentation": "Neue Präsentation",
                 "removeQuestion": "Soll der Benutzer mit Login <strong>{{ title }}</strong> wirklich aus dieser Präsentationsinstanz entfernt werden?"
             }
         }

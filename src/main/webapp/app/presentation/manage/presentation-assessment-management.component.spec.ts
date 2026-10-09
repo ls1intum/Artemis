@@ -131,6 +131,57 @@ describe('PresentationAssessmentManagementComponent', () => {
         fixture.detectChanges();
     });
 
+    /** Applies a search term the way the debounced input does once typing has paused. */
+    function applySearch(searchTerm: string): void {
+        component.studentSearchTerm.set(searchTerm);
+        component.overviewPage.set(0);
+    }
+
+    it('should send the search term only after typing paused and start on the first page', () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+        try {
+            component.overviewPage.set(2);
+            fixture.detectChanges();
+            presentationAssessmentService.findStudentRows.mockClear();
+
+            component.updateStudentSearch('s');
+            component.updateStudentSearch('st');
+            vi.advanceTimersByTime(299);
+            component.updateStudentSearch('stu');
+            vi.advanceTimersByTime(299);
+            fixture.detectChanges();
+
+            expect(component.studentSearchTerm()).toBe('');
+            expect(component.overviewPage()).toBe(2);
+            expect(presentationAssessmentService.findStudentRows).not.toHaveBeenCalled();
+
+            vi.advanceTimersByTime(1);
+            fixture.detectChanges();
+
+            expect(component.studentSearchTerm()).toBe('stu');
+            expect(component.overviewPage()).toBe(0);
+            expect(presentationAssessmentService.findStudentRows).toHaveBeenCalledOnce();
+            expect(presentationAssessmentService.findStudentRows).toHaveBeenCalledWith(courseId, expect.objectContaining({ searchTerm: 'stu', page: 0 }));
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('should not apply a pending search term in the next course', () => {
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+        try {
+            component.updateStudentSearch('abc');
+            routeParamMap.next(convertToParamMap({ courseId: 2 }));
+            fixture.detectChanges();
+
+            vi.advanceTimersByTime(300);
+
+            expect(component.studentSearchTerm()).toBe('');
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it.each(['language', 'translations'])('should refresh management labels on %s changes', (eventType) => {
         component.presentationFilterOptions();
         component.typeFilterOptions();
@@ -163,8 +214,8 @@ describe('PresentationAssessmentManagementComponent', () => {
 
         expect(presentationAssessmentService.findStudentRows).toHaveBeenLastCalledWith(courseId, expect.objectContaining({ page: 1, size: 1 }));
         expect(component.totalStudentRows()).toBe(2);
-        expect(component.paginatedStudentRows()).toHaveLength(1);
-        expect(component.paginatedStudentRows()[0].instance.id).toBe(instance.id);
+        expect(component.studentRows()).toHaveLength(1);
+        expect(component.studentRows()[0].instance.id).toBe(instance.id);
     });
 
     it('should load presentation assessments for the course', () => {
@@ -214,7 +265,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         );
 
         component.setViewMode('students');
-        component.updateStudentSearch('STUDENT2');
+        applySearch('STUDENT2');
         fixture.detectChanges();
 
         expect(component.viewMode()).toBe('students');
@@ -240,7 +291,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         component.retryLoading();
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(component.filteredSelectedPresentationStudentRows()[0].assessed).toBe(false);
+        expect(component.studentRows()[0].assessed).toBe(false);
 
         presentationAssessmentService.findStudentRows.mockReturnValue(
             of(
@@ -258,7 +309,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         component.retryLoading();
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(component.filteredSelectedPresentationStudentRows()[0].assessed).toBe(true);
+        expect(component.studentRows()[0].assessed).toBe(true);
     });
 
     it('should request and display rows for the selected presentation', () => {
@@ -276,7 +327,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         fixture.detectChanges();
 
         expect(presentationAssessmentService.findStudentRows).toHaveBeenLastCalledWith(courseId, expect.objectContaining({ assessmentId: presentationAssessment.id, page: 0 }));
-        expect(component.filteredSelectedPresentationStudentRows().map((row) => row.studentLogin)).toEqual(['student2']);
+        expect(component.studentRows().map((row) => row.studentLogin)).toEqual(['student2']);
     });
 
     it('should display no student rows when the server returns an empty page', () => {
@@ -292,7 +343,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         routeParamMap.next(convertToParamMap({ presentationId: presentationAssessment.id }));
         fixture.detectChanges();
 
-        expect(component.filteredSelectedPresentationStudentRows()).toEqual([]);
+        expect(component.studentRows()).toEqual([]);
         expect(component.totalStudentRows()).toBe(0);
         expect(component.isLoadingStudentRows()).toBe(false);
         expect(component.studentRowsLoadFailed()).toBe(false);
@@ -302,7 +353,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         const response = new Subject<HttpResponse<PresentationAssessmentStudentRow[]>>();
         presentationAssessmentService.findStudentRows.mockReturnValue(response);
 
-        component.updateStudentSearch('student2');
+        applySearch('student2');
         fixture.detectChanges();
 
         expect(component.isLoadingStudentRows()).toBe(true);
@@ -328,7 +379,7 @@ describe('PresentationAssessmentManagementComponent', () => {
     it('should retry failed student rows without reloading presentation definitions', () => {
         presentationAssessmentService.findStudentRows.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
-        component.updateStudentSearch('student2');
+        applySearch('student2');
         fixture.detectChanges();
 
         expect(component.studentRowsLoadFailed()).toBe(true);
@@ -362,10 +413,10 @@ describe('PresentationAssessmentManagementComponent', () => {
         const secondResponse = new Subject<HttpResponse<PresentationAssessmentStudentRow[]>>();
         presentationAssessmentService.findStudentRows.mockReturnValueOnce(firstResponse).mockReturnValueOnce(secondResponse);
 
-        component.updateStudentSearch('student1');
+        applySearch('student1');
         fixture.detectChanges();
 
-        component.updateStudentSearch('student2');
+        applySearch('student2');
         fixture.detectChanges();
 
         secondResponse.next(
@@ -499,11 +550,11 @@ describe('PresentationAssessmentManagementComponent', () => {
     });
 
     it('should expose stable keys and expansion state in the row view models', () => {
-        const row = component.filteredSelectedPresentationStudentRows()[0];
+        const row = component.studentRows()[0];
         component.toggleStudentRowDetails(row);
 
-        const selectedRow = component.filteredSelectedPresentationStudentRows()[0];
-        const overviewRow = component.paginatedStudentRows()[0];
+        const selectedRow = component.studentRows()[0];
+        const overviewRow = component.studentRows()[0];
         expect(selectedRow).toMatchObject({ rowKey: '11:student1', assessed: true, expanded: true });
         expect(overviewRow).toMatchObject({ rowKey: '11:student1', assessed: true, expanded: true });
         expect(selectedRow.student).toBe(row.student);
@@ -780,6 +831,22 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.isSaving()).toBe(false);
     });
 
+    it.each([
+        ['should not add a generic alert when the server already reports the conflict', { errorKey: 'concurrentModification' }, 0],
+        ['should still alert when the conflict carries no server message', undefined, 1],
+    ])('%s', (_description, errorBody, expectedAlerts) => {
+        presentationAssessmentService.saveInstances.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409, error: errorBody })));
+        component.startCreateInstance(presentationAssessment);
+
+        component.handleInstanceDialogSave({
+            kind: 'create',
+            request: { presentationDate, resultPoints: 10, studentLogins: ['student1'], language: 'en', mode: PresentationAssessmentMode.IN_PERSON },
+        });
+
+        expect(alertService.addAlert).toHaveBeenCalledTimes(expectedAlerts);
+        expect(component.instanceDialogVisible()).toBe(true);
+    });
+
     it('should keep the instance dialog open when create instance fails', () => {
         presentationAssessmentService.saveInstances.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
         component.startCreateInstance(presentationAssessment);
@@ -1035,6 +1102,36 @@ describe('PresentationAssessmentManagementComponent', () => {
 
         expect(component.selectedPresentationId()).toBe(99);
         expect(component.presentationFilter()).toBe('all');
+    });
+
+    it('should go to the overview after deleting the selected presentation', () => {
+        const remaining = { ...presentationAssessment, id: 99 };
+        component.presentationAssessments.set([presentationAssessment, remaining]);
+        component.selectedPresentationId.set(presentationAssessment.id);
+        component.viewMode.set('presentations');
+        presentationAssessmentService.delete.mockReturnValue(of(new HttpResponse<void>()));
+        router.navigate.mockClear();
+
+        component.deletePresentationAssessment(presentationAssessment);
+
+        expect(component.viewMode()).toBe('students');
+        expect(router.navigate).toHaveBeenCalledOnce();
+        expect(router.navigate).toHaveBeenCalledWith(['/course-management', courseId, 'presentations']);
+    });
+
+    it('should not navigate when the page was left while the presentation deletion was pending', () => {
+        const response = new Subject<HttpResponse<void>>();
+        const remaining = { ...presentationAssessment, id: 99 };
+        component.presentationAssessments.set([presentationAssessment, remaining]);
+        component.selectedPresentationId.set(presentationAssessment.id);
+        presentationAssessmentService.delete.mockReturnValue(response);
+        router.navigate.mockClear();
+
+        component.deletePresentationAssessment(presentationAssessment);
+        fixture.destroy();
+        response.next(new HttpResponse<void>());
+
+        expect(router.navigate).not.toHaveBeenCalled();
     });
 
     it('should preserve selection and filter referencing another assessment', () => {

@@ -79,6 +79,11 @@
         "userExists": "Login bereits vergeben!",
         "emailExists": "E-Mail wird bereits verwendet!",
         "idExists": "Ein neuer {{entityName}} kann noch keine ID haben",
+        "concurrentModification": "Die Präsentation wurde geändert, während deine Änderung geprüft wurde. Bitte lade die Seite neu und versuche es erneut.",
+        "studentNotInCourse": "Die ausgewählte Person ist keine Studentin oder kein Student dieses Kurses.",
+        "maxPointsBelowExistingResult": "Die maximale Punktzahl darf nicht unter einem bereits eingetragenen Ergebnis liegen.",
+        "resultPointsExceedMaxPoints": "Die erreichten Punkte dürfen die maximale Punktzahl nicht überschreiten.",
+        "exerciseNotInCourse": "Die verknüpfte Aufgabe muss zu diesem Kurs gehören.",
         "invalidOrganizationReference": "Eine oder mehrere ausgewählte Organisationen sind ungültig oder nicht mehr vorhanden.",
         "ambiguousContext": "Ein neuer {{entityName}} muss einen eindeutigen Kontext haben",
         "invalid": {

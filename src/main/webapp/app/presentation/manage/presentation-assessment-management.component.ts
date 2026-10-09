@@ -1,9 +1,9 @@
-import { Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
-import { rxResource, toSignal } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
+import { rxResource, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, merge } from 'rxjs';
-import { finalize, map, tap } from 'rxjs/operators';
+import { debounceTime, finalize, map, tap } from 'rxjs/operators';
 
 import { faArrowUpRightFromSquare, faLink, faPencilAlt, faPlus, faSearch, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -26,7 +26,7 @@ import {
 
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { onError } from 'app/foundation/util/global.utils';
+import { isErrorAlert, onError } from 'app/foundation/util/global.utils';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import {
@@ -69,6 +69,8 @@ const presentationSidebarCollapseStateRecord: Record<string, boolean> = { standa
 const PRESENTATION_SIDEBAR_COLLAPSE_STATE = presentationSidebarCollapseStateRecord as CollapseState;
 const presentationSidebarAlwaysShowRecord: Record<string, boolean> = {};
 const PRESENTATION_SIDEBAR_ALWAYS_SHOW = presentationSidebarAlwaysShowRecord as SidebarItemShowAlways;
+/** Time without typing before the search term is sent to the server. */
+const STUDENT_SEARCH_DEBOUNCE_MS = 300;
 
 function studentRowKey(row: PresentationStudentRow | SelectedPresentationStudentRow): string {
     return `${row.instance?.id ?? 'new'}:${row.studentLogin}`;
@@ -129,6 +131,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     private readonly alertService = inject(AlertService);
     private readonly exerciseService = inject(ExerciseService);
     private readonly translateService = inject(TranslateService);
+    private readonly destroyRef = inject(DestroyRef);
     private readonly translationChanges = toSignal(merge(this.translateService.onLangChange, this.translateService.onTranslationChange));
     private readonly routeSelection = toSignal(
         this.route.paramMap.pipe(
@@ -245,26 +248,22 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     });
     readonly currentPageStudentRows = computed<PresentationStudentRow[]>(() =>
         this.loadedStudentRows().flatMap(({ presentationAssessment, instance }): PresentationStudentRow[] => {
-            const studentLogin = instance.student?.login;
-            if (!studentLogin) {
+            const student = instance.student;
+            if (!student?.login) {
                 return [];
             }
 
             return [
                 {
-                    studentLogin,
-                    student: instance.student ? hydrate(new User(), instance.student) : new User(undefined, studentLogin),
+                    studentLogin: student.login,
+                    student: hydrate(new User(), student),
                     presentationAssessment,
                     instance,
                 },
             ];
         }),
     );
-    readonly filteredSelectedPresentationStudentRows = computed(() => {
-        const expandedRows = this.expandedStudentRows();
-        return this.currentPageStudentRows().map((row) => decorateStudentRow(row, expandedRows));
-    });
-    readonly paginatedStudentRows = computed(() => {
+    readonly studentRows = computed(() => {
         const expandedRows = this.expandedStudentRows();
         return this.currentPageStudentRows().map((row) => decorateStudentRow(row, expandedRows));
     });
@@ -294,8 +293,17 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     });
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    private readonly studentSearchInput = new Subject<{ searchTerm: string; generation: number }>();
 
     constructor() {
+        // The term is only committed (and sent to the server) once typing pauses; a new page starts with the new term.
+        // A term typed in a previous course is dropped, like every other stale callback of this component.
+        this.studentSearchInput.pipe(debounceTime(STUDENT_SEARCH_DEBOUNCE_MS), takeUntilDestroyed()).subscribe(({ searchTerm, generation }) => {
+            if (generation === this.courseContextGeneration) {
+                this.studentSearchTerm.set(searchTerm);
+                this.overviewPage.set(0);
+            }
+        });
         effect(() => {
             const { courseId, presentationId, exerciseId } = this.routeSelection();
             const assessments = this.presentationAssessments();
@@ -424,8 +432,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     }
 
     updateStudentSearch(searchTerm: string): void {
-        this.studentSearchTerm.set(searchTerm);
-        this.overviewPage.set(0);
+        this.studentSearchInput.next({ searchTerm, generation: this.courseContextGeneration });
     }
 
     onStudentSort(event: TumAetUiTableSortEvent): void {
@@ -501,7 +508,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             },
             error: (res: HttpErrorResponse) => {
                 if (generation === this.courseContextGeneration) {
-                    onError(this.alertService, res);
+                    this.onWriteError(res);
                 }
             },
         });
@@ -519,6 +526,8 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.presentationAssessmentService
             .delete(courseId, presentationAssessment.id)
             .pipe(
+                // A response that arrives after the user left the page must not navigate them back.
+                takeUntilDestroyed(this.destroyRef),
                 finalize(() => {
                     if (generation === this.courseContextGeneration) {
                         this.isSaving.set(false);
@@ -536,12 +545,10 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                     const remainingAssessments = this.presentationAssessments().filter((assessment) => assessment.id !== presentationAssessment.id);
                     this.presentationAssessments.set(remainingAssessments);
                     if (this.selectedPresentationId() === presentationAssessment.id) {
-                        const nextPresentation = remainingAssessments[0];
-                        if (nextPresentation) {
-                            this.selectPresentation(nextPresentation);
-                        } else {
-                            this.setViewMode('students');
-                        }
+                        // The route still names the deleted presentation until the navigation completes, and the route handling
+                        // sends such a route to the overview. Going there directly keeps the outcome deterministic.
+                        this.selectedPresentationId.set(remainingAssessments[0]?.id);
+                        this.setViewMode('students');
                     }
                     if (this.presentationFilter() === presentationAssessment.id) {
                         this.presentationFilter.set('all');
@@ -557,6 +564,13 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                     }
                 },
             });
+    }
+
+    /** The server already shows its own message for errors that carry an error key (for example a 409 conflict), so no generic alert is added. */
+    private onWriteError(error: HttpErrorResponse): void {
+        if (!isErrorAlert(error)) {
+            onError(this.alertService, error);
+        }
     }
 
     private navigateToPresentation(presentationAssessment: PresentationAssessment, replaceUrl = false): void {
@@ -618,7 +632,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                 },
                 error: (res: HttpErrorResponse) => {
                     if (generation === this.courseContextGeneration) {
-                        onError(this.alertService, res);
+                        this.onWriteError(res);
                     }
                 },
             });
@@ -683,7 +697,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                 },
                 error: (res: HttpErrorResponse) => {
                     if (generation === this.courseContextGeneration) {
-                        onError(this.alertService, res);
+                        this.onWriteError(res);
                     }
                 },
             });

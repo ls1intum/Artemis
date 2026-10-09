@@ -93,11 +93,7 @@
 
 .presentation-detail-row > td {
     padding: 1rem 1.5rem;
-    background: var(--hover-slightly-darker-body-bg);
-}
-
-.presentation-student-row-striped > td {
-    background: var(--hover-slightly-darker-body-bg);
+    background: var(--module-bg);
 }
 
 .presentation-overview {
@@ -160,10 +156,6 @@
     flex: 0 0 auto;
     margin-top: auto;
     padding: 0.5rem 1rem 0.75rem;
-}
-
-.presentation-detail-row:not(.presentation-student-row-striped) > td {
-    background: var(--module-bg);
 }
 
 .instance-detail-grid {

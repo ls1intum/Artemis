@@ -103,6 +103,31 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         expect(saved).toHaveBeenCalledWith({ presentationAssessment: expect.objectContaining({ exerciseId: replacement.id }) });
     });
 
+    it('should not save while typed exercise text has not been selected from the list', () => {
+        fixture.componentRef.setInput('presentationAssessment', { ...presentationAssessment, exerciseId: exercise.id });
+        fixture.detectChanges();
+        // The autocomplete writes the raw text into the control while the user types.
+        component.editForm.controls.exercise.setValue('Linked exer' as unknown as ExerciseTitle);
+        component.editForm.controls.exercise.markAsDirty();
+
+        component.save();
+
+        expect(component.editForm.controls.exercise.hasError('exerciseNotSelected')).toBe(true);
+        expect(component.editForm.controls.exercise.touched).toBe(true);
+        expect(saved).not.toHaveBeenCalled();
+    });
+
+    it('should save once an exercise is selected after typing', () => {
+        component.editForm.controls.exercise.setValue('Linked exer' as unknown as ExerciseTitle);
+        component.editForm.controls.exercise.markAsDirty();
+        component.editForm.controls.exercise.setValue(exercise);
+
+        component.save();
+
+        expect(component.editForm.controls.exercise.hasError('exerciseNotSelected')).toBe(false);
+        expect(saved).toHaveBeenCalledWith({ presentationAssessment: expect.objectContaining({ exerciseId: exercise.id }) });
+    });
+
     it('should allow editing and saving a presentation with the smallest valid max points', () => {
         fixture.componentRef.setInput('presentationAssessment', { ...presentationAssessment, maxPoints: 0.001 });
         fixture.detectChanges();
