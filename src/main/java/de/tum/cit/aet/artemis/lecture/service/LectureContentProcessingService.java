@@ -31,20 +31,21 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRecoveryRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
+import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 
 /**
  * Service that orchestrates the automated lecture content processing pipeline.
  * <p>
- * Uses a database-backed job queue pattern (PostgreSQL SKIP LOCKED) with processing phases:
+ * Uses a database-backed job queue with processing phases:
  * <ul>
- * <li>IDLE: Queued, waiting for dispatch to Iris</li>
+ * <li>IDLE: Queued, waiting for a Pyris worker to claim it</li>
  * <li>TRANSCRIBING: Iris is generating transcription (video download → Whisper → slide alignment)</li>
  * <li>INGESTING: Iris is ingesting content into the vector database</li>
  * <li>DONE: Processing completed successfully</li>
  * <li>FAILED: Processing failed after max retries</li>
  * </ul>
  * <p>
- * Artemis sends ONE request to Iris with all available data. Iris orchestrates what processing
+ * A claimed job carries all available data in one payload. Iris orchestrates what processing
  * is needed (transcription, ingestion, or both) and sends checkpoint callbacks to advance the state.
  */
 @Conditional(LectureWithIrisEnabled.class)
@@ -84,9 +85,14 @@ public class LectureContentProcessingService {
 
     private final LectureTranscriptionRepository transcriptionRepository;
 
+    private final VideoSourceResolverService videoSourceResolver;
+
+    private final ProcessingStateNotificationService notificationService;
+
     public LectureContentProcessingService(LectureUnitProcessingStateRepository processingStateRepository, Optional<IrisLectureApi> irisLectureApi,
             FeatureToggleService featureToggleService, ProcessingStateCallbackService processingStateCallbackService, AttachmentRepository attachmentRepository,
-            LectureUnitProcessingStateRecoveryRepository recoveryRepository, LectureTranscriptionRepository transcriptionRepository) {
+            LectureUnitProcessingStateRecoveryRepository recoveryRepository, LectureTranscriptionRepository transcriptionRepository, VideoSourceResolverService videoSourceResolver,
+            ProcessingStateNotificationService notificationService) {
         this.processingStateRepository = processingStateRepository;
         this.irisLectureApi = irisLectureApi;
         this.featureToggleService = featureToggleService;
@@ -94,6 +100,8 @@ public class LectureContentProcessingService {
         this.attachmentRepository = attachmentRepository;
         this.recoveryRepository = recoveryRepository;
         this.transcriptionRepository = transcriptionRepository;
+        this.videoSourceResolver = videoSourceResolver;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -112,9 +120,7 @@ public class LectureContentProcessingService {
      * Main entry point: Trigger processing for an AttachmentVideoUnit.
      * Called when a unit is created or updated.
      * <p>
-     * Creates an IDLE processing state (enqueues the job) and then calls the dispatcher
-     * to send it to Iris if capacity is available. If no slots are free, the job stays
-     * queued and will be dispatched when a slot opens.
+     * Creates an IDLE processing state (enqueues the job), which a Pyris worker claims when it has capacity.
      *
      * @param unit the attachment video unit to process
      */
@@ -127,22 +133,24 @@ public class LectureContentProcessingService {
     /**
      * Trigger processing with backlog priority: used by the backfill scheduler and the ingestion
      * reconciler, whose work must never starve fresh, user-triggered uploads in the dispatch queue.
+     * <p>
+     * Synchronous on purpose: both callers run on the scheduling node and queue units within the free
+     * backlog room ({@link LectureIngestionReconcileService#spendBacklog}). The row must exist before
+     * that guard is released, or the next run would count the room as still free.
      *
      * @param unit the attachment video unit to process
      */
-    @Async
     public void triggerProcessingAsBacklog(AttachmentVideoUnit unit) {
         SecurityUtils.setAuthorizationObject();
         doTriggerProcessing(unit, Optional.empty(), BACKLOG_DISPATCH_PRIORITY);
     }
 
     /**
-     * Core processing logic - enqueues a job as IDLE and triggers dispatch.
+     * Core processing logic - enqueues a job as IDLE for the next worker claim.
      * <p>
      * Always creates the IDLE state even when the feature toggle is OFF, so units
-     * are immediately picked up when the toggle is turned ON (instead of waiting
-     * up to 15 minutes for the backfill scheduler). Dispatch is only attempted
-     * when the toggle is ON.
+     * are picked up as soon as the toggle is turned ON (instead of waiting up to
+     * 15 minutes for the backfill scheduler): workers only claim while it is ON.
      *
      * @param unit             the attachment video unit to process
      * @param stateToDelete    if present, delete this state after preflight checks pass (used by retryProcessing)
@@ -164,9 +172,18 @@ public class LectureContentProcessingService {
         boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().isStoredPdf();
         Optional<LectureUnitProcessingState> existingState = stateToDelete.isPresent() ? Optional.empty() : processingStateRepository.findByLectureUnit_Id(unit.getId());
 
-        if (!hasVideo && !hasPdf) {
-            existingState.ifPresent(state -> cleanupRemovedProcessableContent(unit, state));
-            log.debug("Unit {} has no video or PDF to process", unit.getId());
+        if (!hasProcessableContent(unit)) {
+            if (existingState.isPresent()) {
+                cleanupRemovedProcessableContent(unit, existingState.get());
+            }
+            else if (hasVideo && stateToDelete.isEmpty()) {
+                // Only a link to a video Iris cannot transcribe: record the unit as not applicable. Without a row, the backfill, which picks units
+                // with a video link and no processing state, would pick it again on every run. No content markers, so nothing is cleaned up later.
+                LectureUnitProcessingState skipped = new LectureUnitProcessingState(unit);
+                skipped.transitionTo(ProcessingPhase.SKIPPED);
+                notificationService.notifyWithTranscriptionStatus(processingStateRepository.save(skipped));
+            }
+            log.debug("Unit {} has no PDF and no supported video to process", unit.getId());
             return false;
         }
 
@@ -235,15 +252,8 @@ public class LectureContentProcessingService {
             processingStateRepository.updateContentMarkers(state.getId(), state.getVideoSourceHash(), state.getAttachmentVersion(), dispatchPriority, ZonedDateTime.now());
         }
         log.info("Enqueued unit {} for processing (IDLE)", unit.getId());
-
-        // Only dispatch if the feature toggle is ON — otherwise the IDLE state
-        // waits in the queue and gets dispatched when the toggle is turned ON
-        // (picked up by the scheduler within 5 minutes).
-        if (featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)) {
-            processingStateCallbackService.dispatchPendingJobs();
-        }
-        else {
-            log.info("Feature toggle OFF — unit {} queued as IDLE, will dispatch when toggle is enabled", unit.getId());
+        if (!featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)) {
+            log.info("Feature toggle OFF — unit {} queued as IDLE, workers claim it once the toggle is enabled", unit.getId());
         }
         return true;
     }
@@ -280,7 +290,7 @@ public class LectureContentProcessingService {
 
     /**
      * Manually retry processing for a unit that failed.
-     * Deletes the FAILED state, creates a fresh IDLE state, and triggers dispatch.
+     * Deletes the FAILED state and creates a fresh IDLE state for the next worker claim.
      *
      * @param lectureUnit the unit to retry (must be in FAILED state)
      * @return the processing state after retry attempt, or null if retry not possible
@@ -331,7 +341,7 @@ public class LectureContentProcessingService {
     }
 
     // -------------------- Retry (no longer phase-specific) --------------------
-    // Retries are handled by resetting to IDLE and going through dispatchPendingJobs().
+    // A failed run schedules its retry, which the next worker claim takes once it is due.
     // See ProcessingStateCallbackService.handleProcessingFailureIfStillLive().
 
     // -------------------- Helper Methods --------------------
@@ -379,8 +389,8 @@ public class LectureContentProcessingService {
             }
 
             if (videoAdded || videoRemoved || videoChanged) {
-                // Delete stored transcription before Iris cleanup: dispatchPendingJobs() checks
-                // for a COMPLETED transcription to decide whether to skip straight to INGESTING.
+                // Delete stored transcription before Iris cleanup: the next claim checks for a
+                // COMPLETED transcription to decide whether to skip straight to INGESTING.
                 // Leaving the old record would cause stale text from the previous video to be ingested.
                 processingStateCallbackService.deleteTranscriptionForUnit(unit.getId());
                 cleanupForReprocessing(unit);
@@ -396,6 +406,20 @@ public class LectureContentProcessingService {
         }
 
         return false;
+    }
+
+    /**
+     * Whether Iris can ingest anything of the unit: a stored PDF, or a video from a source Iris can transcribe (YouTube, or TUM Live when it is
+     * configured). A link to any other video page is no processable content, so a unit that has only such a link is never queued, and one that
+     * had content before is cleaned up and settled. The video markers stay based on the raw link (see {@link #hasVideoSourceChanged}), so changing
+     * the link is still a content change.
+     *
+     * @param unit the unit as it currently is
+     * @return true if the unit has a stored PDF or a supported video
+     */
+    public boolean hasProcessableContent(AttachmentVideoUnit unit) {
+        boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().isStoredPdf();
+        return hasPdf || videoSourceResolver.isSupportedSource(unit.getVideoSource());
     }
 
     /**
@@ -488,8 +512,10 @@ public class LectureContentProcessingService {
         }
         boolean cleanupSucceeded = deleteFromIris(unit);
         int closed;
-        if (!hasVideo && !hasPdf) {
-            closed = cleanupSucceeded ? recoveryRepository.settleStrandedRunIfClaimed(state.getId(), claimToken, ZonedDateTime.now()) : 0;
+        if (!hasProcessableContent(unit)) {
+            // A unit that still links a video, from a source Iris cannot transcribe, settles as SKIPPED (not applicable); one without any content as DONE
+            ProcessingPhase settledPhase = hasVideo ? ProcessingPhase.SKIPPED : ProcessingPhase.DONE;
+            closed = cleanupSucceeded ? recoveryRepository.settleStrandedRunIfClaimed(state.getId(), claimToken, settledPhase, ZonedDateTime.now()) : 0;
         }
         else {
             closed = recoveryRepository.requeueStrandedRunIfClaimed(state.getId(), claimToken, hasVideo ? computeHash(unit.getVideoSource()) : null,
@@ -497,6 +523,11 @@ public class LectureContentProcessingService {
         }
         if (closed == 0 && recoveryRepository.requeueRunExposedToRecoveryCleanup(unit.getId(), claimToken, FRESH_DISPATCH_PRIORITY, ZonedDateTime.now()) == 1) {
             log.warn("Unit {} was taken over during the recovery of its interrupted content change; requeued the newer run after the Iris cleanup", unit.getId());
+            closed = 1;
+        }
+        if (closed == 1) {
+            // No worker claims a settled row, so nothing else would tell an open lecture page that its badge changed
+            processingStateRepository.findByLectureUnit_Id(unit.getId()).ifPresent(notificationService::notifyWithTranscriptionStatus);
         }
     }
 

@@ -134,12 +134,13 @@ public interface LectureUnitProcessingStateRecoveryRepository extends ArtemisJpa
             @Param("attachmentVersion") Integer attachmentVersion, @Param("dispatchPriority") Integer dispatchPriority, @Param("now") ZonedDateTime now);
 
     /**
-     * Settle a claimed row whose unit no longer has processable content as DONE with nothing indexed: the content markers
-     * and fingerprints go, together with the run-scoped fields an in-flight row still carries, but only while the claim taken
+     * Settle a claimed row whose unit no longer has processable content with nothing indexed: the content markers and
+     * fingerprints go, together with the run-scoped fields an in-flight row still carries, but only while the claim taken
      * by {@link #claimStrandedRun} or {@link #claimForContentRemoval} still holds.
      *
      * @param id         the processing state to settle
      * @param claimToken the recovery's claim
+     * @param phase      DONE for a unit without any content, SKIPPED for one that only links a video Iris cannot transcribe
      * @param now        recorded as the new {@code lastUpdated}
      * @return 1 when settled, 0 when the claim no longer holds
      */
@@ -147,7 +148,7 @@ public interface LectureUnitProcessingStateRecoveryRepository extends ArtemisJpa
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE LectureUnitProcessingState ps
-            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.DONE, ps.startedAt = NULL, ps.claimToken = NULL,
+            SET ps.phase = :phase, ps.startedAt = NULL, ps.claimToken = NULL,
                 ps.ingestionJobToken = NULL, ps.retryEligibleAt = NULL, ps.errorKey = NULL, ps.retryCount = 0,
                 ps.videoSourceHash = NULL, ps.attachmentVersion = NULL, ps.contentFingerprint = NULL, ps.confirmedFingerprint = NULL,
                 ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL, ps.currentStage = NULL, ps.stageStartedAt = NULL,
@@ -159,7 +160,7 @@ public interface LectureUnitProcessingStateRecoveryRepository extends ArtemisJpa
                 de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.DONE, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED,
                 de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.SKIPPED)
             """)
-    int settleStrandedRunIfClaimed(@Param("id") long id, @Param("claimToken") String claimToken, @Param("now") ZonedDateTime now);
+    int settleStrandedRunIfClaimed(@Param("id") long id, @Param("claimToken") String claimToken, @Param("phase") ProcessingPhase phase, @Param("now") ZonedDateTime now);
 
     /**
      * Requeue the run that took a unit over while a recovery was cleaning it up, for a recovery whose own requeue or settle
@@ -204,8 +205,8 @@ public interface LectureUnitProcessingStateRecoveryRepository extends ArtemisJpa
     /**
      * Reset an in-flight run to IDLE after a Pyris restart, without charging its retry budget, but only while it is still the run read
      * at batch time (same phase and token, so a terminal callback in between is not reverted) and it belongs to the Pyris process that
-     * restarted: a push run, which records no owner, or a pull run whose worker lease is held by the departed boot. Runs a worker of the
-     * new process already claimed stay untouched.
+     * restarted: a run whose worker lease is held by the departed boot, or a run without an owner, which an Artemis version that still
+     * pushed jobs to Pyris started before an upgrade. Runs a worker of the new process already claimed stay untouched.
      *
      * @param id             the processing state to reset
      * @param phaseAtRead    the in-flight phase observed at batch-read time
@@ -230,30 +231,4 @@ public interface LectureUnitProcessingStateRecoveryRepository extends ArtemisJpa
     int resetToIdleIfStillLiveAndOwnedBy(@Param("id") long id, @Param("phaseAtRead") ProcessingPhase phaseAtRead, @Param("tokenAtRead") String tokenAtRead,
             @Param("departedBootId") String departedBootId, @Param("now") ZonedDateTime now);
 
-    /**
-     * Reset an in-flight push run to IDLE after a Pyris restart detected without a boot id (DOWN to UP), with the same run guard as
-     * {@link #resetToIdleIfStillLiveAndOwnedBy}. Runs held by a worker lease are left to lease expiry, since the restart cannot be
-     * attributed to their worker.
-     *
-     * @param id          the processing state to reset
-     * @param phaseAtRead the in-flight phase observed at batch-read time
-     * @param tokenAtRead the job token observed at batch-read time
-     * @param now         recorded as the new {@code lastUpdated}
-     * @return 1 when the run was reset, 0 when it moved on or is held by a worker
-     */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE LectureUnitProcessingState ps
-            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.ingestionJobToken = NULL, ps.claimToken = NULL,
-                ps.startedAt = NULL, ps.retryEligibleAt = NULL, ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL,
-                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL,
-                ps.lastProgressAt = NULL, ps.lastUpdated = :now
-            WHERE ps.id = :id
-            AND ps.phase = :phaseAtRead
-            AND ps.ingestionJobToken = :tokenAtRead
-            AND ps.lockedBy IS NULL
-            """)
-    int resetToIdleIfStillLiveAndUnowned(@Param("id") long id, @Param("phaseAtRead") ProcessingPhase phaseAtRead, @Param("tokenAtRead") String tokenAtRead,
-            @Param("now") ZonedDateTime now);
 }
