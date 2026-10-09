@@ -45,6 +45,7 @@
             "practiceModeTooltip": "Der Übungsmodus ermöglicht es dir nach der Einreichungsfrist zu Übungszwecken weiter an der Aufgabe zu arbeiten. Dies beeinflusst deine Bewertung nicht! Artemis setzt dafür ein separates Repository auf, das du erneut clonen musst.",
             "code": "Code",
             "codePopoverAriaLabel": "Repository-Aktionen",
+            "codePopoverError": "Ein unerwarteter Fehler ist aufgetreten. Bitte lade die Seite neu.",
             "accessRepository": "Greif auf dein Repository zu",
             "cloneSourceTree": {
                 "button": "Im Git Client klonen",

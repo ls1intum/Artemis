@@ -45,6 +45,7 @@
             "practiceModeTooltip": "The practice mode allows you to keep working on the exercise after the submission due date for self-practice. This will not affect your grading! Artemis will set up a separate repository for you to clone.",
             "code": "Code",
             "codePopoverAriaLabel": "Repository actions",
+            "codePopoverError": "An unexpected error has occurred. Please refresh the page.",
             "accessRepository": "Access your Repository",
             "cloneSourceTree": {
                 "button": "Clone in Git client",

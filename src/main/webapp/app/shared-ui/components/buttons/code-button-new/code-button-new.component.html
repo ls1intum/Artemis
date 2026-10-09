@@ -11,12 +11,22 @@
 
 <tumaet-ui-popover #popoverContent [ariaLabel]="'artemisApp.exerciseActions.codePopoverAriaLabel' | artemisTranslate" placement="bottom">
     <div class="w-120">
-        @if (loadingData()) {
-            <div class="flex h-40 w-full items-center justify-center">
-                <fa-icon [icon]="faCircleNotch" animation="spin" data-testid="code-button-popover-loading" />
-            </div>
-        } @else {
-            <jhi-code-button-popover-content [authenticationMechanisms]="authenticationMechanisms" />
+        @let state = dataState();
+        @switch (state.status) {
+            @case ('loading') {
+                <div class="flex h-40 w-full items-center justify-center">
+                    <fa-icon [icon]="faCircleNotch" animation="spin" data-testid="code-button-popover-loading" />
+                </div>
+            }
+            @case ('loaded') {
+                <jhi-code-button-popover-content [authenticationMechanisms]="state.data.authenticationMechanisms" />
+            }
+            @default {
+                <div class="flex h-40 w-full flex-col items-center justify-center gap-2 text-center">
+                    <fa-icon class="text-state-danger" [icon]="faCircleExclamation" size="2x" aria-hidden="true" />
+                    <span class="max-w-70">{{ 'artemisApp.exerciseActions.codePopoverError' | artemisTranslate }}</span>
+                </div>
+            }
         }
     </div>
 </tumaet-ui-popover>
