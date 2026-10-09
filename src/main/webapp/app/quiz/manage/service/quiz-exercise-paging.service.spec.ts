@@ -44,15 +44,19 @@ describe('QuizExercisePagingService', () => {
         };
 
         service.search(pageable, options).subscribe((result) => {
-            expect(result).toEqual(mockResult);
+            expect(result.numberOfPages).toBe(mockResult.numberOfPages);
+            expect(result.resultsOnPage.map((quizExercise) => [quizExercise.id, quizExercise.title])).toEqual(
+                mockResult.resultsOnPage.map((quizExercise) => [quizExercise.id, quizExercise.title]),
+            );
+            result.resultsOnPage.forEach((quizExercise) => expect(quizExercise).toBeInstanceOf(QuizExercise));
         });
 
         const req = httpMock.expectOne((request) => {
             return (
-                request.url === 'api/quiz/quiz-exercises' &&
-                request.params.get('isCourseFilter') === 'true' &&
-                request.params.get('isExamFilter') === 'false' &&
-                request.params.get('searchTerm') === 'test'
+                request.url.startsWith('/api/quiz/quiz-exercises') &&
+                new URL(request.url, 'http://localhost').searchParams.get('isCourseFilter') === 'true' &&
+                new URL(request.url, 'http://localhost').searchParams.get('isExamFilter') === 'false' &&
+                new URL(request.url, 'http://localhost').searchParams.get('searchTerm') === 'test'
             );
         });
 
@@ -76,15 +80,19 @@ describe('QuizExercisePagingService', () => {
         };
 
         service.search(pageable, options).subscribe((result) => {
-            expect(result).toEqual(mockResult);
+            expect(result.numberOfPages).toBe(mockResult.numberOfPages);
+            expect(result.resultsOnPage.map((quizExercise) => [quizExercise.id, quizExercise.title])).toEqual(
+                mockResult.resultsOnPage.map((quizExercise) => [quizExercise.id, quizExercise.title]),
+            );
+            result.resultsOnPage.forEach((quizExercise) => expect(quizExercise).toBeInstanceOf(QuizExercise));
         });
 
         const req = httpMock.expectOne((request) => {
             return (
-                request.url === 'api/quiz/quiz-exercises' &&
-                request.params.get('isCourseFilter') === 'false' &&
-                request.params.get('isExamFilter') === 'true' &&
-                request.params.get('searchTerm') === 'exam quiz'
+                request.url.startsWith('/api/quiz/quiz-exercises') &&
+                new URL(request.url, 'http://localhost').searchParams.get('isCourseFilter') === 'false' &&
+                new URL(request.url, 'http://localhost').searchParams.get('isExamFilter') === 'true' &&
+                new URL(request.url, 'http://localhost').searchParams.get('searchTerm') === 'exam quiz'
             );
         });
 
@@ -108,11 +116,19 @@ describe('QuizExercisePagingService', () => {
         };
 
         service.search(pageable, options).subscribe((result) => {
-            expect(result).toEqual(mockResult);
+            expect(result.numberOfPages).toBe(mockResult.numberOfPages);
+            expect(result.resultsOnPage.map((quizExercise) => [quizExercise.id, quizExercise.title])).toEqual(
+                mockResult.resultsOnPage.map((quizExercise) => [quizExercise.id, quizExercise.title]),
+            );
+            result.resultsOnPage.forEach((quizExercise) => expect(quizExercise).toBeInstanceOf(QuizExercise));
         });
 
         const req = httpMock.expectOne((request) => {
-            return request.url === 'api/quiz/quiz-exercises' && request.params.get('isCourseFilter') === 'true' && request.params.get('isExamFilter') === 'true';
+            return (
+                request.url.startsWith('/api/quiz/quiz-exercises') &&
+                new URL(request.url, 'http://localhost').searchParams.get('isCourseFilter') === 'true' &&
+                new URL(request.url, 'http://localhost').searchParams.get('isExamFilter') === 'true'
+            );
         });
 
         expect(req.request.method).toBe('GET');
@@ -140,11 +156,11 @@ describe('QuizExercisePagingService', () => {
 
         const req = httpMock.expectOne((request) => {
             return (
-                request.url === 'api/quiz/quiz-exercises' &&
-                request.params.get('page') === '3' &&
-                request.params.get('pageSize') === '50' &&
-                request.params.get('sortedColumn') === 'dueDate' &&
-                request.params.get('sortingOrder') === 'DESCENDING'
+                request.url.startsWith('/api/quiz/quiz-exercises') &&
+                new URL(request.url, 'http://localhost').searchParams.get('page') === '3' &&
+                new URL(request.url, 'http://localhost').searchParams.get('pageSize') === '50' &&
+                new URL(request.url, 'http://localhost').searchParams.get('sortedColumn') === 'dueDate' &&
+                new URL(request.url, 'http://localhost').searchParams.get('sortingOrder') === 'DESCENDING'
             );
         });
 

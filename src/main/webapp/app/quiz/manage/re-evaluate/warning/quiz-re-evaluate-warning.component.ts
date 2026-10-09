@@ -1,6 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { QuizReEvaluateService } from 'app/quiz/manage/re-evaluate/services/quiz-re-evaluate.service';
+import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluation-api';
+import { toQuizExerciseReEvaluate } from 'app/quiz/shared/util/quiz-exercise-reevaluate-request.util';
+import { toNamedFiles } from 'app/quiz/shared/util/quiz-exercise-creation-request.util';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -22,7 +24,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     private dialogRef = inject(DynamicDialogRef);
     private dialogConfig = inject(DynamicDialogConfig);
     private quizExerciseService = inject(QuizExerciseService);
-    private quizReEvaluateService = inject(QuizReEvaluateService);
+    private quizExerciseEvaluationApi = inject(QuizExerciseEvaluationApi);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
 
     isSaving = false;
@@ -58,8 +60,8 @@ export class QuizReEvaluateWarningComponent implements OnInit {
         this.quizExercise = this.dialogConfig.data.quizExercise;
         this.files = this.dialogConfig.data.files;
         this.isSaving = false;
-        this.quizExerciseService.find(this.quizExercise.id!).subscribe((res) => {
-            this.backUpQuiz = res.body!;
+        this.quizExerciseService.find(this.quizExercise.id!).subscribe((quizExercise) => {
+            this.backUpQuiz = quizExercise;
             this.loadQuizSuccess();
         });
     }
@@ -254,7 +256,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     confirmChange(): void {
         this.busy.set(true);
 
-        this.quizReEvaluateService.reevaluate(this.quizExercise, this.files).subscribe({
+        this.quizExerciseEvaluationApi.reEvaluateQuizExercise(this.quizExercise.id!, toQuizExerciseReEvaluate(this.quizExercise), toNamedFiles(this.files)).subscribe({
             next: () => {
                 this.busy.set(false);
                 this.successful.set(true);

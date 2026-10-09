@@ -88,7 +88,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe((res) => {
-                this.loadQuizSuccess(res.body!);
+                this.loadQuizSuccess(res);
             });
 
         // update displayed times in UI regularly
@@ -149,7 +149,8 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         }
         this.quizExercise.set(quizExercise);
         this.waitingForQuizStart = !quizExercise.quizStarted;
-        this.quizPointStatistic = quizExercise.quizPointStatistic;
+        // The contract leaves the distribution optional; without one there is nothing to plot, so the chart stays empty.
+        this.quizPointStatistic = quizExercise.quizPointStatistic ?? new QuizPointStatistic();
         this.maxScore.set(calculateMaxScore(quizExercise));
 
         this.loadData();

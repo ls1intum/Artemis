@@ -102,11 +102,7 @@ export class QuizQuestionListEditExistingComponent {
         }
         const selectedCourse = this.courses().find((course) => course.id === Number(this.selectedCourseId))!;
         this.quizExerciseService.findForCourse(selectedCourse.id!).subscribe({
-            next: (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
-                if (quizExercisesResponse.body) {
-                    this.applyQuestionsAndFilter(quizExercisesResponse.body);
-                }
-            },
+            next: (quizExercises) => this.applyQuestionsAndFilter(quizExercises),
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
     }
@@ -127,11 +123,7 @@ export class QuizQuestionListEditExistingComponent {
 
         // For the given exam, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise
         this.quizExerciseService.findForExam(selectedExam.id!).subscribe({
-            next: (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
-                if (quizExercisesResponse.body) {
-                    this.applyQuestionsAndFilter(quizExercisesResponse.body);
-                }
-            },
+            next: (quizExercises) => this.applyQuestionsAndFilter(quizExercises),
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
     }
@@ -317,8 +309,7 @@ export class QuizQuestionListEditExistingComponent {
      */
     private applyQuestionsAndFilter(quizExercises: QuizExercise[]) {
         for (const quizExercise of quizExercises) {
-            this.quizExerciseService.find(quizExercise.id!).subscribe((response: HttpResponse<QuizExercise>) => {
-                const quizExerciseResponse = response.body!;
+            this.quizExerciseService.find(quizExercise.id!).subscribe((quizExerciseResponse) => {
                 if (quizExerciseResponse.quizQuestions && quizExerciseResponse.quizQuestions.length > 0) {
                     for (const question of quizExerciseResponse.quizQuestions) {
                         question.exercise = quizExercise;
