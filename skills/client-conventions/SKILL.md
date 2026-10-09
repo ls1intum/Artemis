@@ -15,7 +15,7 @@ Use `input()` / `input.required()`, `output()`, `viewChild()` / `viewChild.requi
 
 The legacy decorators `@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, and
 `@ContentChildren` are banned throughout the application, including co-located specs and test
-helpers. `localRules/enforce-signal-apis` (`rules/enforce-signal-apis.mjs`) enforces this under
+helpers. `localRules/enforce-signal-apis` (`config/eslint/rules/enforce-signal-apis.mjs`) enforces this under
 `src/main/webapp/app/` and `src/test/javascript/`. Use signal APIs when changing an existing
 component; there is no unmigrated-module exception.
 
@@ -55,7 +55,7 @@ caller.
 ## `ngOnChanges` is banned
 
 Use `computed()` or `effect()`. Enforced at error level by
-`localRules/prefer-signal-reactivity-over-ngonchanges` (`rules/prefer-signal-reactivity-over-ngonchanges.mjs`)
+`localRules/prefer-signal-reactivity-over-ngonchanges` (`config/eslint/rules/prefer-signal-reactivity-over-ngonchanges.mjs`)
 across `src/main/webapp/app`, `packages/tum-aet-ui/src/lib`, and `src/test/javascript`, including specs
 and undecorated base classes.
 
@@ -94,6 +94,28 @@ or already described next to it (`@angular-eslint/template/alt-text`). Keep keyb
 order; do not use a positive `tabindex` to reorder controls
 (`@angular-eslint/template/no-positive-tabindex`). Move markup when the DOM order is wrong.
 
+## Components created in code
+
+Do not call `ComponentRef.setInput` in production code. It takes the input name as a plain string
+and accepts any value, so a misspelled input only logs NG0303 at runtime (no exception) and the
+component silently keeps its default. For a closed set of components, declare them in a template
+with a `@switch`; the template compiler checks the inputs (`SidebarCardComponent`). When a
+component has to be created in code, use `setInputs(ref, { ... })` from
+`app/foundation/util/set-inputs.util`, which checks names and value types at compile time; a
+value must have the declared type of its input, so `undefined` needs an input that allows it.
+Inputs are named by class member, and an aliased input is set under its alias. When the component is chosen
+from data, `switch` on the discriminant and pass component and data to one generic method
+(`ExerciseDetailDirective.render`), because `InputSignal` is invariant and a lookup table cannot
+tie a component to its data. `packages/tum-aet-ui` keeps an internal copy of the helper in
+`packages/tum-aet-ui/src/lib/internal/set-inputs.ts`, because it must not import from the application.
+
+`localRules/no-component-ref-set-input` bans any use of the `setInput` member, also aliased or
+destructured, at error level in production code of the application and the UI kit; specs are
+exempt. The helpers are the only places that disable it. Pass `setInputs` a plain object and a ref to
+one component type; a union of components is rejected.
+`inputBinding`, `ngComponentOutlet` inputs and the PrimeNG `DialogService` `inputValues` use
+string names too and are no substitute; the rule does not cover them.
+
 ## Redirecting from guards and resolvers
 
 A guard returns or emits `router.createUrlTree(...)`, or `new RedirectCommand(urlTree, options)`
@@ -116,7 +138,7 @@ navigation on the spot and starts a new one, so the original `replaceUrl` and
 navigation receives `false`, and the navigation still happens when another guard rejects the
 route. A `return false` or `EMPTY` after the call changes nothing.
 
-`localRules/no-navigation-in-guard-or-resolver` (`rules/no-navigation-in-guard-or-resolver.mjs`)
+`localRules/no-navigation-in-guard-or-resolver` (`config/eslint/rules/no-navigation-in-guard-or-resolver.mjs`)
 enforces this at error level under `src/main/webapp`. It follows the guard into nested callbacks,
 into methods of its own class reached through `this`, and into functions of the same file. It is
 file-local and does not resolve types, so it misses navigation in an injected service the guard
@@ -150,7 +172,7 @@ In production `src/main/webapp/app/**/*.ts`, use the wrappers in
 - `cloneWith(x, { a, b })` deep-clones the source and applies overrides by reference.
 - `hydrate(new Course(), dto)` gives a parsed DTO its prototype.
 
-`rules/prefer-deep-clone.mjs` bans object spread, `Object.assign` and `structuredClone` in that
+`config/eslint/rules/prefer-deep-clone.mjs` bans object spread, `Object.assign` and `structuredClone` in that
 scope, even for plain objects; specs are exempt. `eslint.config.mjs` also restricts direct lodash
 cloning imports. Array spread and object rest remain allowed.
 
@@ -177,6 +199,21 @@ only partly enforced**: `localRules/no-bootstrap-classes` covers the migrated di
 in `eslint.config.mjs`.
 The convention applies throughout the client even where lint does not enforce it. Add newly
 migrated directories to that list.
+
+Bootstrap and Tailwind share the spacing class names (`m`, `p` and `gap` with their side and axis
+forms) but differ for 3 to 5: Bootstrap renders 16, 24 and 48px, Tailwind 12, 16 and 20px, and
+Bootstrap's `!important` rule wins while it is loaded. `localRules/no-ambiguous-spacing-utility`
+therefore rejects a bare `*-3`, `*-4` or `*-5` and suggests the important spelling that keeps the
+value Bootstrap renders (`mb-3` to `mb-4!`, `mb-4` to `mb-6!`, `mb-5` to `mb-12!`) or the Tailwind
+value (`mb-3!`, `mb-4!`, `mb-5!`). Never write a bare `mb-6`: it loses to Bootstrap's Reboot margins
+and to component SCSS.
+
+The rule is enabled for the Tailwind-laid-out templates of the student exam mode and the pages it
+shows, in the block of `eslint.config.mjs` that lists the folders. To adopt it elsewhere, add
+`<folder>/**/*.html` to that block, make sure `tailwind.css` scans the folder with `@source`
+(`migration-source-coverage` checks it), apply the suggestion that keeps the value, and update the
+specs that assert the old class names. See _Ambiguous Spacing Utilities_ in
+`documentation/docs/developer/guidelines/client-development.mdx`.
 
 Never hand-write PrimeNG root classes such as `class="p-button"` or `class="p-inputtext"`. Render
 the real PrimeNG component so its styles load deterministically. Enforced by

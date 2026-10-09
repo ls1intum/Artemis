@@ -289,9 +289,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly inPreviewMode = signal<boolean>(false);
     readonly inVisualMode = signal<boolean>(false);
     readonly inEditMode = signal<boolean>(true);
-    /** Tracks whether the visual/preview content has been activated at least once, mirroring ngbNav's lazy `destroyOnHide=false` behavior. */
+    /** Tracks whether the visual content has been activated at least once. It is rendered on first activation and kept in the DOM afterwards. */
     protected readonly visualTabActivated = signal<boolean>(false);
-    protected readonly previewTabActivated = signal<boolean>(false);
     readonly uniqueMarkdownEditorId = signal<string>(undefined!);
     resizeObserver?: ResizeObserver;
     /** Disposable for the selection change listener */
@@ -766,7 +765,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     updateEditorActionsVisibility(selection: EditorRange | undefined): void {
         const isEmpty = !selection || (selection.startLineNumber == selection.endLineNumber && selection.startColumn == selection.endColumn);
-        if (!isEmpty === this.showTextStyleActions() && isEmpty === this.showNonTextStyleActions()) {
+        if (isEmpty !== this.showTextStyleActions() && isEmpty === this.showNonTextStyleActions()) {
             return;
         }
         this.showTextStyleActions.set(!isEmpty);
@@ -867,9 +866,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (newId === this.TAB_VISUAL) {
             this.visualTabActivated.set(true);
         }
-        if (newId === this.TAB_PREVIEW) {
-            this.previewTabActivated.set(true);
-        }
 
         if (this.inEditMode()) {
             this.onEditSelect.emit();
@@ -886,11 +882,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         // Parse the markdown when switching away from the edit tab or from visual to preview mode, as the visual mode may make changes to the markdown.
         if (previousId === this.TAB_EDIT || (previousId === this.TAB_VISUAL && this.inPreviewMode())) {
             // Preview must read Monaco synchronously because textChanged is debounced.
-            const liveMarkdown = this.monacoEditor()?.getText();
-            if (liveMarkdown !== undefined) {
-                this.currentMarkdown.set(liveMarkdown);
-            }
-            this.parseMarkdown();
+            this.flushLiveMarkdownAndParse();
         }
 
         // Mirror ngbNav's `(shown)` event: re-layout and focus the editor once the edit tab content is visible.
@@ -905,6 +897,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     onDiffOriginalPaneLayoutChanged(originalWidth: number): void {
         this.diffOriginalPaneWidth.set(originalWidth);
+    }
+
+    /**
+     * Reads Monaco's live buffer into {@link currentMarkdown} (user edits may still be inside the
+     * textChanged debounce window), then runs {@link parseMarkdown}.
+     */
+    flushLiveMarkdownAndParse(domainActionsToCheck: TextEditorDomainAction[] = this.domainActions()): void {
+        const liveMarkdown = this.monacoEditor()?.getText();
+        if (liveMarkdown !== undefined) {
+            this.currentMarkdown.set(liveMarkdown);
+        }
+        this.parseMarkdown(domainActionsToCheck);
     }
 
     parseMarkdown(domainActionsToCheck: TextEditorDomainAction[] = this.domainActions()): void {

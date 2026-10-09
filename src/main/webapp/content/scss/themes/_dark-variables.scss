@@ -382,7 +382,7 @@ $quiz-participation-quiz-is-over-border-color: #3c763d;
 $quiz-participation-refresh-overlay-active-background: rgba(255, 255, 255, 0.6);
 $quiz-participation-btn-circle-light-border-color: transparent;
 
-$quiz-participation-question-disabled-color: $gray-600;
+$quiz-participation-question-disabled-color: $gray-500;
 $quiz-participation-question-disabled-background: transparentize(#fff, 0.9);
 $quiz-participation-question-result-border-color: $success;
 $quiz-participation-question-result-incorrect-border-color: $warning;
@@ -457,7 +457,6 @@ $code-editor-file-browser-input-color: white;
 $code-editor-file-browser-badge-background: $code-editor-file-browser-tree-hover;
 $code-editor-diff-newline-background: rgba(46, 160, 67, 0.22);
 $code-editor-gutter-newline-background: rgba(46, 160, 67, 0.6);
-$code-editor-grid-grip-lines-color: $gray-300;
 
 // Monaco editor
 $monaco-suggest-widget-background: $gray-900;
@@ -512,7 +511,6 @@ $text-editor-color: $white;
 $text-editor-border-color: $gray-800;
 
 // Exam (Manage)
-$exam-checklist-exercise-group-table-background: $gray-800;
 
 $exercise-group-border-color: $neutral-dark-l-10;
 $exercise-group-header-background: $neutral-dark-l-5;
@@ -554,7 +552,6 @@ $exam-navigation-bar-exercise-index-color: white;
 $exam-timer-label-color: white;
 $exam-timer-remaining-time-background: black;
 $exam-timer-critical-background: $warning;
-$exam-exercise-overview-table-background: $neutral-dark-l-5;
 $exam-participation-footer-background: $neutral-dark;
 $exam-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
 $exam-participation-footer-connected-background: #114d4f;

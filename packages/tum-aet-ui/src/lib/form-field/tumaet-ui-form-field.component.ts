@@ -1,7 +1,11 @@
-import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { TUM_AET_UI_FORM_FIELD, TumAetUiFormFieldContext } from './tumaet-ui-form-field.token';
 
 let nextFormFieldId = 0;
+
+/** Elements the browser focuses itself when their `<label for>` is clicked. */
+const LABELABLE_ELEMENTS = 'button, input, meter, output, progress, select, textarea';
 
 /**
  * Labelled wrapper around a single form control: it owns the label, the required marker, and the hint and
@@ -31,11 +35,14 @@ let nextFormFieldId = 0;
     styleUrl: './tumaet-ui-form-field.component.scss',
     host: {
         class: 'tumaet-ui-form-field',
+        '(click)': 'onClick($event)',
     },
     providers: [{ provide: TUM_AET_UI_FORM_FIELD, useExisting: TumAetUiFormFieldComponent }],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumAetUiFormFieldComponent implements TumAetUiFormFieldContext {
+    private readonly document = inject(DOCUMENT);
+
     /** Label text. Omit it when projecting a `[tumAetUiFormFieldLabel]` slot instead. */
     readonly label = input<string>('');
 
@@ -70,10 +77,26 @@ export class TumAetUiFormFieldComponent implements TumAetUiFormFieldContext {
 
     readonly explicitControlId = this.controlId;
 
+    readonly labelId = signal(`tumaet-ui-form-field-${this.fieldId}-label`).asReadonly();
+
     readonly labelTargetId = computed(() => this.controlId() ?? this.reportedControlId() ?? this.generatedControlId);
 
     adoptControlId(id: string): void {
         this.reportedControlId.set(id);
+    }
+
+    /**
+     * A click on the label focuses the control it labels. The browser does this for a labelable element by itself;
+     * this covers the one that is not, such as a `div` with `role="combobox"`, which is focusable through `tabindex`.
+     */
+    protected onClick(event: MouseEvent): void {
+        if (!(event.target instanceof Element) || event.target.closest('.tumaet-ui-form-field-label') === null) {
+            return;
+        }
+        const target = this.document.getElementById(this.labelTargetId());
+        if (target && !target.matches(LABELABLE_ELEMENTS)) {
+            target.focus();
+        }
     }
 
     protected readonly showHint = computed(() => !!this.hint()?.trim() && !this.invalid());

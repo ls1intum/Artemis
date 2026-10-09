@@ -2,6 +2,9 @@
     "artemisApp": {
         "lectureUnit": {
             "deleted": "Content deleted",
+            "deepLink": {
+                "unitGone": "The linked lecture content no longer exists, so only the lecture is opened."
+            },
             "retryProcessing": "Retry processing",
             "processingRetryStarted": "Processing retry started",
             "home": {
@@ -49,7 +52,9 @@
             "created": "New text content created",
             "updated": "Text content updated",
             "tooltip": "This is text content",
-            "isolated": "View Isolated",
+            "isolated": "View Fullscreen",
+            "backToLecture": "Back to lecture",
+            "notFound": "This text content does not exist or is not available to you.",
             "originalVersion": "Original Version",
             "notReleasedTooltip": "Text only visible to teaching assistants and instructors. Release date:",
             "cachedMarkdown": "Artemis found some unsaved markdown in the local storage. Do you want to load it? Save Date:",
@@ -117,18 +122,38 @@
             "awaitingProcessing": "Awaiting Processing",
             "processingTranscribing": "Transcribing",
             "processingIngesting": "Indexing",
-            "processingComplete": "Processing complete",
+            "processingVerifying": "Verifying",
+            "processingLostContact": "Lost contact",
+            "processingComplete": "Indexed",
             "processingFailed": "Processing Failed",
+            "processingSkipped": "Not indexed",
+            "processingSkippedTooltip": "Iris did not index this unit. Either Iris is not enabled for this course, or the unit has no PDF and its video is not from YouTube or TUM Live. It is indexed automatically once this changes.",
             "videoSlideSync": {
                 "toggle": "Synchronize slides and video",
                 "disabledByPointOut": "Synchronization disabled: Iris points to page {{page}} and timestamp {{time}}."
             },
             "processing": {
+                "lostContactTooltip": "Iris has stopped reporting liveness for this run. It will be reclaimed and retried automatically without spending the retry budget.",
+                "lastSeen": "seen {{ time }} ago",
                 "cancelled": "Processing was cancelled",
+                "retriedLabelOne": "retry",
+                "retriedLabelOther": "retries",
+                "retriedTooltip": "Automatically retried {{ count }} time(s) after a transient error.",
+                "stage": {
+                    "readingSlides": "Reading slides",
+                    "summarizingSlides": "Summarizing slides",
+                    "summarizingTranscript": "Summarizing transcript",
+                    "indexingTranscript": "Indexing transcript",
+                    "downloadingVideo": "Downloading video",
+                    "extractingAudio": "Extracting audio",
+                    "aligningSlides": "Aligning slides",
+                    "splittingTranscript": "Splitting transcript"
+                },
                 "error": {
                     "invalidUnitType": "Invalid lecture unit type for processing",
+                    "attachmentUnreadable": "The attachment file could not be read from the server. Re-upload the file to trigger processing again.",
                     "processingFailed": "Processing failed",
-                    "transcriptionFailed": "Transcription generation failed after multiple attempts",
+                    "transcriptionFailed": "The video could not be transcribed.",
                     "ingestionFailed": "Content indexing failed after multiple attempts",
                     "noPlaylist": "Video playlist is no longer available",
                     "timeout": "Processing timed out after multiple attempts",
@@ -136,12 +161,14 @@
                     "youtubeLive": "The video is a live stream and cannot be transcribed.",
                     "youtubeTooLong": "The video exceeds the maximum duration and cannot be transcribed.",
                     "youtubeUnavailable": "The video is unavailable (removed, region-blocked, or age-restricted).",
-                    "youtubeDownloadFailed": "The video could not be downloaded for transcription."
+                    "youtubeDownloadFailed": "The video could not be downloaded for transcription.",
+                    "noIngestibleContent": "No content could be indexed: the PDF has no readable pages and no transcript could be produced from the video. Check the file and the video source, then retry.",
+                    "recoveryLimitReached": "Processing was interrupted several times in a row without finishing (for example by service restarts). It will be retried automatically."
                 }
             },
             "createAttachmentVideoUnits": {
-                "noFile": "There is no file for automatic processing. Please go back and try again.",
-                "noUnitDetected": "No content was detected and could not split automatically. Please add information for each content section!",
+                "noFile": "There is no file to split. Start the split again from the lecture editor.",
+                "noUnitDetected": "This PDF has no slide with the word “Outline” or “Gliederung”, so Artemis could not propose items. Add the items and their slides with “Add item”.",
                 "pageTitle": "Process content",
                 "addUnit": "Add item",
                 "removeSlides": "Remove slides",
@@ -175,7 +202,8 @@
                     "summarySingle": "Artemis found 1 section in {{ slides }} slides.",
                     "hint": "Each row becomes one content item with its slides. Check the names and slide ranges before you create the items.",
                     "slides": "Slides",
-                    "summaryNone": "Artemis found no sections in {{ slides }} slides."
+                    "summaryNone": "Artemis found no sections in {{ slides }} slides.",
+                    "detectionHint": "Artemis starts a new section at every slide that contains the word “Outline” or “Gliederung”, spelled exactly like this, and proposes a name from the text of that slide. This works for PDFs from any program, such as PowerPoint, Keynote or LaTeX, as long as their text can be selected. Check the proposed names and slides."
                 },
                 "processTimeInfo": "The processing of lecture content can take a few seconds. Please be patient.",
                 "removeSource": "Remove the original PDF item “{{ name }}” after splitting",
@@ -223,16 +251,15 @@
                 "transcriptionHint": "Videos from supported sources are automatically transcribed after saving. You can track the transcription progress on the lecture management page.",
                 "useAsVideoSource": "Use as video URL",
                 "notifyStudents": "Notify students about the new version",
-                "uploadVersion": "Upload version {{ version }}",
-                "uploadHint": "Artemis then splits the slides and processes the content again.",
                 "saveVideoSource": "Save video URL",
                 "discardVideoSource": "Keep current URL",
                 "videoSourceHint": "Artemis then transcribes the video and processes it again.",
                 "discardNewFile": "Discard file",
                 "notifyStudentsNewFile": "Notify students about the new file",
-                "uploadFile": "Upload file",
-                "uploadFileHint": "Artemis then splits the slides and processes the content.",
-                "discardNewVideoSource": "Discard URL"
+                "discardNewVideoSource": "Discard URL",
+                "uploading": "Uploading…",
+                "replaceFileHint": "A file you choose is uploaded right away as version {{ version }}, and Artemis processes it again. Slides hidden in the current file are shown again.",
+                "newFileHint": "A file you choose is uploaded right away, and Artemis processes it."
             },
             "editAttachmentVideoUnit": {
                 "title": "Edit File/Video Content"

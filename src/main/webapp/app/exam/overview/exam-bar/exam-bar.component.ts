@@ -1,5 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, computed, inject, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, input, output } from '@angular/core';
 
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -11,21 +10,19 @@ import { ExamTimerComponent } from 'app/exam/overview/timer/exam-timer.component
 import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/button/exam-live-events-button.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-exam-bar',
-    imports: [CommonModule, ExamTimerComponent, ExamLiveEventsButtonComponent, FontAwesomeModule, TranslateDirective],
+    imports: [ExamTimerComponent, ExamLiveEventsButtonComponent, FontAwesomeModule, TranslateDirective, TumAetUiButtonDirective, TumAetUiTagComponent, ArtemisTranslatePipe],
     templateUrl: './exam-bar.component.html',
-    styleUrl: './exam-bar.component.scss',
 })
-export class ExamBarComponent implements AfterViewInit, OnDestroy {
-    private readonly elementRef = inject(ElementRef);
-
+export class ExamBarComponent {
     protected readonly faDoorClosed = faDoorClosed;
 
     readonly onExamHandInEarly = output<void>();
     readonly examAboutToEnd = output<void>();
-    readonly heightChange = output<number>();
 
     readonly examTimeLineView = input(false);
     readonly endDate = input<dayjs.Dayjs>(undefined!);
@@ -42,36 +39,6 @@ export class ExamBarComponent implements AfterViewInit, OnDestroy {
     readonly isTestRun = computed(() => this.studentExam()?.testRun ?? false);
     readonly examTitle = computed(() => this.exam()?.title ?? '');
     readonly exercises = computed<Exercise[]>(() => this.studentExam()?.exercises ?? []);
-
-    private previousHeight!: number; // set in ngAfterViewInit() before the ResizeObserver callback reads it
-    private resizeObserver: ResizeObserver | undefined;
-
-    /**
-     * It sets up a ResizeObserver to monitor changes in the height of the exam bar element.
-     * When a change in height is detected, it triggers the onHeightChange method,
-     * passing the new height as an argument.
-     */
-    ngAfterViewInit(): void {
-        const barElement = this.elementRef.nativeElement.querySelector('.exam-bar');
-        this.previousHeight = barElement.offsetHeight;
-
-        this.resizeObserver = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                if (entry.target === barElement) {
-                    const newHeight = entry.contentRect.height;
-                    if (newHeight !== this.previousHeight) {
-                        this.previousHeight = newHeight;
-                        this.onHeightChange(newHeight);
-                    }
-                }
-            }
-        });
-        this.resizeObserver.observe(barElement);
-    }
-
-    ngOnDestroy(): void {
-        this.resizeObserver?.disconnect();
-    }
 
     /**
      * Save the currently active exercise
@@ -92,12 +59,5 @@ export class ExamBarComponent implements AfterViewInit, OnDestroy {
 
     handInEarly() {
         this.onExamHandInEarly.emit();
-    }
-
-    /**
-     * Notify parent component when the height of the bar changes
-     */
-    onHeightChange(newHeight: number) {
-        this.heightChange.emit(newHeight);
     }
 }

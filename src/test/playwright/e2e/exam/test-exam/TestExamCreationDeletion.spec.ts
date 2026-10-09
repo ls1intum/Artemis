@@ -9,7 +9,8 @@ import { SEED_COURSES } from '../../../support/seedData';
 import { admin } from '../../../support/users';
 
 // Common primitives
-const examData = {
+/** The data of a new test exam, taken when a test starts, so that the dates are relative to that moment and nothing is shared between tests. */
+const newExamData = () => ({
     title: 'exam' + generateUUID(),
     visibleDate: dayjs(),
     startDate: dayjs().add(1, 'day'),
@@ -21,7 +22,7 @@ const examData = {
     endText: 'Exam end text',
     confirmationStartText: 'Exam confirmation start text',
     confirmationEndText: 'Exam confirmation end text',
-};
+});
 
 const course = { id: SEED_COURSES.testExam.id } as any;
 
@@ -29,6 +30,7 @@ test.describe('Test Exam creation/deletion', { tag: '@fast' }, () => {
     let exam: Exam;
 
     test('Creates a test exam', async ({ login, page, examManagement, examCreation }) => {
+        const examData = newExamData();
         await login(admin);
         await page.goto(`/course-management/${course.id}/exams/new`);
         await examCreation.setTitle(examData.title);
@@ -65,20 +67,30 @@ test.describe('Test Exam creation/deletion', { tag: '@fast' }, () => {
     });
 
     test.describe('Test exam deletion', () => {
+        let title: string;
+
         test.beforeEach(async ({ login, examAPIRequests }) => {
             await login(admin);
-            examData.title = 'exam' + generateUUID();
+            title = 'exam' + generateUUID();
             const examConfig = {
                 course,
-                title: examData.title,
+                title,
                 testExam: true,
             };
             exam = await examAPIRequests.createExam(examConfig);
         });
 
-        test('Deletes an existing test exam', async ({ page, examDetails }) => {
+        test('Deletes an existing test exam', async ({ page, examDetails, examManagement }) => {
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}`);
-            await examDetails.deleteExam(examData.title);
+            const response = await examDetails.deleteExam(title);
+            expect(response.status()).toBe(200);
+
+            // The user is taken back to the exam list, which no longer offers the test exam ...
+            await page.waitForURL(`**/course-management/${course.id}/exams`);
+            await expect(examManagement.getExamSelector(title)).toHaveCount(0);
+            // ... and the server no longer knows it.
+            const lookup = await page.request.get(`api/exam/courses/${course.id}/exams/${exam.id}`);
+            expect(lookup.status()).toBe(404);
         });
     });
 

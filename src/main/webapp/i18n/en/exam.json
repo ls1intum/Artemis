@@ -49,6 +49,7 @@
                     "number": "Room Number",
                     "name": "Name",
                     "building": "Building",
+                    "registeredStudentsUnknown": "The number of registered students is not available yet, or it could not be loaded. You can distribute the students as soon as it is known; if this message stays, close the dialog and open it again.",
                     "enoughSeatsForStudents": "You can seat all {{ totalStudents }} students.",
                     "notEnoughSeatsForStudents": "You can only seat {{ usableCapacity }} of the {{ totalStudents }} students ({{ percentage }}%).",
                     "distribute": "Distribute",
@@ -393,6 +394,7 @@
                 "explanation": "Your submission and your results are stored on the server, nothing is lost. Please check your internet connection and try again.",
                 "retry": "Retry"
             },
+            "programmingActions": "Programming exercise actions",
             "saveExercise": "Save exercise",
             "exerciseSaved": "Exercise saved",
             "reloadWarning": "You are about to reload the page. All unsaved changes will be lost. Are you sure you want to continue?"
@@ -584,6 +586,8 @@
                 "setup": "Create a Test Run",
                 "author": "Author",
                 "setWorkingTime": "Set a working time (minutes and seconds):",
+                "workingTimeMinutes": "Working time minutes",
+                "workingTimeSeconds": "Working time seconds",
                 "setupHint": "Select an exercise for every exercise group by clicking on it.\n<strong>Note:</strong> If you have already created a test run with one of the exercises, the exercise will already contain a submission and result.",
                 "assess": "Assess Your Test Runs",
                 "manage": "Manage Working Time",
@@ -660,10 +664,6 @@
                     "DidNotAttend": "Did not attend",
                     "AttendanceNotChecked": "Attendance check failed",
                     "AttendanceChecked": "Attendance check passed"
-                },
-                "filterGroup": {
-                    "progress": "Progress",
-                    "attendance": "Attendance"
                 },
                 "menu": {
                     "manageStudents": "Students",
@@ -808,6 +808,7 @@
                     "examDetails": "Fill out all exam details",
                     "conductExam": "Conduct the exam",
                     "assessAllSubmissions": "Assess all submissions",
+                    "plagiarismCases": "Handle the plagiarism cases",
                     "publishResults": "Publish the exam results",
                     "examReview": "Plan the exam review",
                     "resolveComplaints": "Resolve all complaints",
@@ -825,6 +826,7 @@
                     "examDetails": "Before conducting an exam, please make sure to have filled out all exam details. (Start text, dates, etc.)",
                     "conductExam": "On the student exam page you can see which students have already submitted their exam.",
                     "assessAllSubmissions": "The number of correction rounds per exercise depends on the exam's number of correction rounds.",
+                    "plagiarismCases": "Review the plagiarism cases of the exam, inform the affected students and decide on a verdict for each case.",
                     "publishResults": "Publishing the results makes them available to students. Student exams are published on the publishing date for results within the exam.",
                     "examReview": "Make sure to have all dates specified correctly.",
                     "resolveComplaints": "Complaints can be resolved from the Assessment Dashboard.",

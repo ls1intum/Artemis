@@ -183,7 +183,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
                 TEST_PREFIX + "student1");
         attachConfig(heldCourse, now.minusDays(40), null);
         heldCourse.getCourseConfiguration().setDataRetentionHold(true);
-        courseRepository.save(heldCourse);
+        courseUtilService.saveWithConfigurations(heldCourse);
 
         // The count preview and the actual selection must agree (both derive from findCoursesDueForReset).
         List<Course> dueForReset = courseDataRetentionService.findCoursesDueForReset();
@@ -343,7 +343,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         configuration.setCourse(course);
         configuration.setGradeRelevant(false);
         course.setCourseConfiguration(configuration);
-        course = courseRepository.save(course);
+        course = courseUtilService.saveWithConfigurations(course);
         long courseId = course.getId();
         // so getInstructors() finds an eligible instructor: enrollment is a course role, not a group name
         userUtilService.enrollUserInCourse(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), course, CourseRole.INSTRUCTOR);
@@ -515,7 +515,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
             configuration.setResetWarningSentDate(warnedDate);
             course.setCourseConfiguration(configuration);
         }
-        return courseRepository.save(course);
+        return courseUtilService.saveWithConfigurations(course);
     }
 
     /**
@@ -535,7 +535,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         configuration.setStudentDataResetDate(resetDate);
         course.setCourseConfiguration(configuration);
         course.setEndDate(endDate);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
     }
 
     private User notEnrolledUser(String login, Instant lastLoginDate) {

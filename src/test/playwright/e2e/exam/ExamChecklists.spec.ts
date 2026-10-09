@@ -1,7 +1,7 @@
 import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne } from '../../support/users';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { generateUUID, prepareExam, startAssessing } from '../../support/utils';
+import { annotateRecovery, generateUUID, prepareExam, startAssessing } from '../../support/utils';
 import { SEED_COURSES } from '../../support/seedData';
 import dayjs from 'dayjs';
 import { ExamChecklistItem } from '../../support/pageobjects/exam/ExamDetailsPage';
@@ -18,19 +18,15 @@ const course = { id: SEED_COURSES.examManagement.id } as any;
 test.describe('Exam Checklists', async () => {
     let lastCreatedExam: Exam | undefined;
 
-    test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+    test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
         if (lastCreatedExam) {
+            await login(admin);
             await examAPIRequests.deleteExam(lastCreatedExam);
             lastCreatedExam = undefined;
         }
     });
 
     test.describe('Exercise group checks', { tag: '@fast' }, () => {
-        // Each test in this describe runs createExam + multiple navigateToExamDetailsPage +
-        // group additions; under multi-node CI load several have been observed right at or
-        // just over the 60s @fast budget. Lift the per-test timeout to 180s for the whole
-        // group so a few seconds of extra load do not flake the entire run.
-        test.describe.configure({ timeout: 180_000 });
         test('Instructor adds an exercise group and at least one exercise group check is marked', async ({
             page,
             login,
@@ -178,10 +174,6 @@ test.describe('Exam Checklists', async () => {
             examDetails,
             studentExamManagement,
         }) => {
-            // Three navigateToExamDetailsPage + checklist verifications + two generate/prepare
-            // server-side jobs (each can take 10-30s in CI). Exceeds the 60s @fast budget under
-            // multi-node load; lift to 180s via test.slow().
-            test.slow();
             await login(instructor);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.ALL_EXAMS_GENERATED);
@@ -228,7 +220,7 @@ test.describe('Exam Checklists', async () => {
         'Student makes a submission and missing assessment check is marked for instructor after assessment',
         { tag: '@slow' },
         async ({ page, login, examDetails, examManagement, courseAssessment, exerciseAssessment, textExerciseAssessment, examAPIRequests }) => {
-            const exam = await prepareExam(course, dayjs().add(1, 'day'), ExerciseType.TEXT, page);
+            const exam = (lastCreatedExam = await prepareExam(course, dayjs().add(1, 'day'), ExerciseType.TEXT, page));
             await login(instructor);
             await examAPIRequests.finishExam(exam);
             await navigateToExamDetailsPage(page, course, exam);
@@ -245,7 +237,7 @@ test.describe('Exam Checklists', async () => {
         'Student makes a quiz submission and unassessed quizzes check is marked for instructor after assessment',
         { tag: '@slow' },
         async ({ page, login, examDetails, examAPIRequests }) => {
-            const exam = await prepareExam(course, dayjs().add(1, 'day'), ExerciseType.QUIZ, page);
+            const exam = (lastCreatedExam = await prepareExam(course, dayjs().add(1, 'day'), ExerciseType.QUIZ, page));
             await login(instructor);
             await examAPIRequests.finishExam(exam);
             await navigateToExamDetailsPage(page, course, exam);
@@ -314,6 +306,7 @@ async function navigateToExamDetailsPage(page: Page, course: any, exam: Exam) {
             .then(() => true)
             .catch(() => false);
     if (!(await visibleWithin(30_000))) {
+        annotateRecovery(`navigateToExamDetailsPage: checklist not visible after 30s at ${page.url()}; reloading`);
         await page.reload();
         await page.waitForLoadState('load');
         await checklist.waitFor({ state: 'visible', timeout: 30_000 });

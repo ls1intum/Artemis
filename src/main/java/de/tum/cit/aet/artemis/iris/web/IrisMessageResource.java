@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.BadRequestException;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -113,7 +115,7 @@ public class IrisMessageResource {
         irisSessionService.checkIsIrisActivated(session);
         irisSessionService.checkHasAccessToIrisSession(session, null);
         var messages = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(sessionId);
-        return ResponseEntity.ok(messages.stream().map(IrisMessageResponseDTO::of).toList());
+        return ResponseEntity.ok(IrisMessageResponseDTO.ofDisplayed(messages));
     }
 
     /**
@@ -121,13 +123,15 @@ public class IrisMessageResource {
      *
      * @param sessionId  of the session
      * @param requestDTO containing message content, optional uncommitted files and optional pending context
+     * @param request    the HTTP request; its {@code User-Agent} is used to identify the originating Artemis app
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status
      *         {@code 404 (Not Found)} if the session could not be found.
      */
     @PostMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<IrisMessageResponseDTO> createMessage(@PathVariable Long sessionId, @Valid @RequestBody IrisMessageRequestDTO requestDTO) throws URISyntaxException {
+    public ResponseEntity<IrisMessageResponseDTO> createMessage(@PathVariable Long sessionId, @Valid @RequestBody IrisMessageRequestDTO requestDTO, HttpServletRequest request)
+            throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
@@ -143,15 +147,16 @@ public class IrisMessageResource {
         }
 
         IrisMessage message = new IrisMessage();
-        var contentList = requestDTO.content() != null ? requestDTO.content() : List.<IrisMessageContentDTO>of();
-        List<IrisMessageContent> contentEntities = contentList.stream().map(IrisMessageContentDTO::toEntity).toList();
+        List<IrisMessageContent> contentEntities = requestDTO.content().stream().map(IrisMessageContentDTO::toEntity).toList();
         message.setContent(contentEntities);
         message.setMessageDifferentiator(requestDTO.messageDifferentiator());
+        var clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
+        message.setSenderOrigin(clientEnvironment != null ? clientEnvironment.artemisApp() : null);
 
         IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
         irisSessionService.sendOverWebsocket(savedMessage, session);
-        var uncommittedFiles = requestDTO.uncommittedFiles() != null ? requestDTO.uncommittedFiles() : java.util.Map.<String, String>of();
+        var uncommittedFiles = requestDTO.uncommittedFiles();
         // Extract context information from request (not persisted, only passed to Pyris)
         List<IrisMessageContextDTO> context = requestDTO.context() != null ? requestDTO.context() : List.of();
         irisSessionService.requestMessageFromIris(session, uncommittedFiles, context, requestDTO.clientId());
@@ -187,6 +192,7 @@ public class IrisMessageResource {
      * @param sessionId of the session
      * @param messageId of the message
      * @param clientId  optional id of the browser tab initiating the resend
+     * @param request   the HTTP request; its {@code User-Agent} is used to identify the originating Artemis app
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the existing message, or with
      *         status {@code 404 (Not Found)} if the session or message could not be found.
      */
@@ -194,7 +200,7 @@ public class IrisMessageResource {
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisMessageResponseDTO> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId,
-            @RequestParam(required = false) @Size(max = 64) String clientId) {
+            @RequestParam(required = false) @Size(max = 64) String clientId, HttpServletRequest request) {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
@@ -202,12 +208,18 @@ public class IrisMessageResource {
         irisSessionService.checkRateLimit(session, user);
 
         var message = irisMessageRepository.findByIdElseThrow(messageId);
-        if (session.getMessages().lastIndexOf(message) != session.getMessages().size() - 1) {
+        // A stored conversation summary can follow the user message whose run failed. Clients do not show it, so it does not count as the last message.
+        var displayedMessages = session.getMessages().stream().filter(sessionMessage -> sessionMessage.getSender() != IrisMessageSender.SUMMARY).toList();
+        if (displayedMessages.isEmpty() || !displayedMessages.getLast().equals(message)) {
             throw new BadRequestException("Only the last message can be resent");
         }
         if (message.getSender() != IrisMessageSender.USER) {
             throw new BadRequestException("Only user messages can be resent");
         }
+        // Update the originating Artemis app of the resent message (from the User-Agent) so the Iris response reflects the client that triggered it.
+        var clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
+        message.setSenderOrigin(clientEnvironment != null ? clientEnvironment.artemisApp() : null);
+        irisMessageRepository.save(message);
         irisSessionService.requestMessageFromIris(session, Map.of(), List.of(), clientId);
 
         return ResponseEntity.ok(IrisMessageResponseDTO.of(message));

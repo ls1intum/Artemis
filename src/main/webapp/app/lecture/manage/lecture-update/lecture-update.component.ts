@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, ElementRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Component, DestroyRef, ElementRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Observable, Subscription, of } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -34,6 +34,7 @@ import {
     TumAetUiButtonGroupComponent,
     TumAetUiCheckboxComponent,
     TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationRequest,
     TumAetUiConfirmationService,
     TumAetUiMessageComponent,
     TumAetUiSelectButtonComponent,
@@ -107,6 +108,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     private readonly router = inject(Router);
     private readonly confirmationService = inject(TumAetUiConfirmationService);
     private readonly location = inject(Location);
+    private readonly destroyRef = inject(DestroyRef);
 
     /**
      * Read while the router creates the page: without zone.js, ngOnInit runs at the first change detection, after the navigation has ended.
@@ -155,6 +157,8 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     private sentLecture?: Lecture;
     /** Set when this editor replaced the creation page, which may have been the first page of the browser tab. */
     private openedAfterCreation = false;
+    /** The decision about leaving that Close or Cancel of the footer waits for; a newer attempt or leaving the page ends it. */
+    private leaveAttempt?: Subscription;
     shouldDisplayDismissWarning = true;
     createLectureOptions = computed(() => this.computeCreateLectureOptions());
     selectedCreateLectureOption = signal<LectureCreationMode>(LectureCreationMode.SINGLE);
@@ -162,6 +166,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     isTutorialLecture = signal(false);
 
     constructor() {
+        this.destroyRef.onDestroy(() => this.leaveAttempt?.unsubscribe());
         effect(() => {
             this.updateFormStatusBar();
         });
@@ -294,56 +299,107 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
 
     /**
      * Asks the browser to confirm a reload or closing the tab while something would be lost: unsaved lecture details, content that could
-     * not be saved, or a content save that still waits or runs. The unsaved changes guard covers navigation within Artemis.
+     * not be saved, or content that is still being saved. The unsaved changes guard covers navigation within Artemis.
      * @param event the beforeunload event
      */
     onBeforeUnload(event: BeforeUnloadEvent): void {
-        if (this.shouldDisplayDismissWarning && (this.hasUnsavedChanges() || !!this.unitSection()?.isSaving())) {
+        if (!this.shouldDisplayDismissWarning) {
+            return;
+        }
+        // Text typed just before, which the markdown editor still holds back, counts as content that is being saved.
+        this.unitSection()?.flushBufferedEdits();
+        if (this.hasUnsavedChanges() || !!this.unitSection()?.isSavingContent()) {
             event.preventDefault();
         }
+    }
+
+    /**
+     * Decides whether the editor can be left now. Text the content still holds back is sent first. Then the user is asked when leaving would
+     * discard changes, or while content is still being saved, which would be lost if its save fails after leaving.
+     * Emits once: true when the page may be left, false when the user keeps editing.
+     */
+    confirmLeave(): Observable<boolean> {
+        this.unitSection()?.flushBufferedEdits();
+        if (this.hasUnsavedChanges()) {
+            return this.confirmDiscardChanges();
+        }
+        if (this.unitSection()?.isSavingContent()) {
+            return this.confirmLeaveWhileSaving();
+        }
+        return of(true);
     }
 
     /**
      * Asks whether to discard the unsaved changes of the lecture details and content, naming the sections that hold them.
      * Emits once: true when the user discards the changes, false when they keep editing or close the dialog.
      */
-    confirmDiscardChanges(): Observable<boolean> {
+    private confirmDiscardChanges(): Observable<boolean> {
+        const sections = this.unsavedSections()
+            .map((section) => this.translateService.instant(section))
+            .join(', ');
+        let message = this.translateService.instant('artemisApp.lecture.dismissChangesModal.message', { sections });
+        if (this.unitSection()?.isSavingContent()) {
+            message += ' ' + this.translateService.instant('artemisApp.lecture.dismissChangesModal.stillSaving');
+        }
+        return this.decide({
+            header: this.translateService.instant('artemisApp.lecture.dismissChangesModal.title'),
+            message,
+            acceptLabel: this.translateService.instant('entity.action.discardChanges'),
+            acceptSeverity: 'danger',
+        });
+    }
+
+    /** Asks whether to leave while content is still being saved. Keeping the user on the page is the default, also when they close the dialog. */
+    private confirmLeaveWhileSaving(): Observable<boolean> {
+        return this.decide({
+            header: this.translateService.instant('artemisApp.lecture.leaveWhileSavingModal.title'),
+            message: this.translateService.instant('artemisApp.lecture.leaveWhileSavingModal.message'),
+            acceptLabel: this.translateService.instant('artemisApp.lecture.leaveWhileSavingModal.leave'),
+            acceptSeverity: 'secondary',
+            rejectSeverity: 'primary',
+        });
+    }
+
+    /**
+     * Shows a decision about leaving. Emits once: true when the user leaves, false when they keep editing, press Escape or close the dialog.
+     * @param request the texts and styles of the dialog; Keep editing is always the button that stays
+     */
+    private decide(request: Pick<TumAetUiConfirmationRequest, 'header' | 'message' | 'acceptLabel' | 'acceptSeverity' | 'rejectSeverity'>): Observable<boolean> {
         return new Observable<boolean>((subscriber) => {
-            // A navigation that is superseded before the user decides unsubscribes; the dialog must not stay open for it.
-            const teardown = () => this.confirmationService.close(undefined);
-            const decide = (discard: boolean) => {
-                subscriber.next(discard);
+            const decide = (leave: boolean) => {
+                subscriber.next(leave);
                 subscriber.complete();
             };
-            const sections = this.unsavedSections()
-                .map((section) => this.translateService.instant(section))
-                .join(', ');
-            this.confirmationService.confirm({
-                header: this.translateService.instant('artemisApp.lecture.dismissChangesModal.title'),
-                message: this.translateService.instant('artemisApp.lecture.dismissChangesModal.message', { sections }),
+            const ownRequest: TumAetUiConfirmationRequest = {
+                header: request.header,
+                message: request.message,
                 icon: faTriangleExclamation,
-                acceptLabel: this.translateService.instant('entity.action.discardChanges'),
-                acceptSeverity: 'danger',
+                acceptLabel: request.acceptLabel,
+                acceptSeverity: request.acceptSeverity,
                 rejectLabel: this.translateService.instant('artemisApp.lecture.dismissChangesModal.keepEditing'),
+                rejectSeverity: request.rejectSeverity,
                 accept: () => decide(true),
                 reject: () => decide(false),
-            });
-            return teardown;
+            };
+            this.confirmationService.confirm(ownRequest);
+            // A navigation that is superseded before the user decides unsubscribes; its dialog closes, but not a newer one that replaced it.
+            return () => {
+                if (this.confirmationService.request(undefined) === ownRequest) {
+                    this.confirmationService.close(undefined);
+                }
+            };
         });
     }
 
     /**
      * Leaves the editor, equivalent to pressing the back button of the browser: back to where the user came from, else to the lecture's detail page
-     * when it exists, else to the lecture list. Unsaved changes of the details or the content are not dropped silently; the user is asked first.
+     * when it exists, else to the lecture list. Unsaved changes and content that is still being saved are not dropped silently; the user is asked first.
      */
     previousState() {
-        if (!this.hasUnsavedChanges()) {
-            this.leave();
-            return;
-        }
         // Ask before navigating: a back navigation that the unsaved changes guard cancels would leave the editor in the history entry it left.
-        this.confirmDiscardChanges().subscribe((discard) => {
-            if (discard) {
+        this.leaveAttempt?.unsubscribe();
+        this.leaveAttempt = this.confirmLeave().subscribe((leave) => {
+            if (leave) {
                 this.shouldDisplayDismissWarning = false;
                 this.leave();
             }

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.api;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,6 +46,17 @@ public class IrisSettingsApi extends AbstractIrisApi {
 
     public boolean isIrisEnabledForCourse(long courseId) {
         return irisSettingsService.isEnabledForCourse(courseId);
+    }
+
+    /**
+     * Keeps only the course IDs whose Iris course settings are enabled. Resolved in a single query, so a caller asking
+     * about many courses does not turn into one lookup per course.
+     *
+     * @param courseIds the course IDs to filter
+     * @return the subset whose Iris settings are enabled, in the order of the input
+     */
+    public List<Long> filterCourseIdsWithIrisEnabled(Collection<Long> courseIds) {
+        return irisSettingsService.filterCourseIdsWithIrisEnabled(courseIds);
     }
 
     /**

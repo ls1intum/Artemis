@@ -562,11 +562,8 @@ public abstract class HyperionCodeGenerationService {
             if (model == null || model.isBlank()) {
                 return;
             }
-            Integer promptTokenCount = usage.getPromptTokens();
-            Integer completionTokenCount = usage.getCompletionTokens();
-            if (promptTokenCount == null && completionTokenCount == null) {
-                return;
-            }
+            int promptTokenCount = usage.getPromptTokens();
+            int completionTokenCount = usage.getCompletionTokens();
             Long exerciseId = exercise != null ? exercise.getId() : null;
             if (courseId == null) {
                 log.warn("Skipping token usage persistence for Hyperion code generation due to missing courseId (exerciseId={}, prompt={})", exerciseId, prompt);
@@ -588,15 +585,12 @@ public abstract class HyperionCodeGenerationService {
     }
 
     /**
-     * Normalizes nullable or negative token counts before persistence.
+     * Normalizes negative token counts before persistence.
      *
      * @param tokenCount token count reported by the model metadata
      * @return non-negative token count
      */
-    private static int sanitizeTokenCount(Integer tokenCount) {
-        if (tokenCount == null) {
-            return 0;
-        }
+    private static int sanitizeTokenCount(int tokenCount) {
         return Math.max(tokenCount, 0);
     }
 

@@ -17,7 +17,8 @@ Trace the failing check through its called workflow; job names are prefixed by t
 (for example, `Quality / Server Code Style`). Check the repository's required-check settings
 before claiming that an advisory failure blocks merging.
 
-PR and non-PR E2E jobs can use different topologies. Compare their definitions in
+PR and non-PR E2E jobs can use different topologies: a pull request runs one node, develop runs three
+nodes with Redis (Valkey) as distributed data provider. Compare their definitions in
 `.github/workflows/ci-e2e.yml` before treating a develop-only failure as flaky.
 
 ## Classify before changing code
@@ -35,6 +36,20 @@ is not evidence of flakiness; compare logs and execution conditions.
   "dropped event" entries in the reference file.
 - **A workflow file changed in the branch**: classic PATs need the `workflow` scope to push it.
   Check the triggering event and checked-out revision when identifying the workflow version.
+
+## Investigate Scorecard findings
+
+Read the published report at
+`https://api.securityscorecards.dev/projects/github.com/ls1intum/Artemis` and check its
+date and commit before comparing it with the working tree. Branch-protection findings
+cover release branches as well as `develop`; missing release signatures refer to release
+assets, not just GitHub's attestation store.
+
+Pin every external action, including `actions/*` and `github/*`, to a full commit SHA
+with a `# vX.Y.Z` comment. Resolve the upstream tag to its commit rather than guessing
+the hash. Renovate's `helpers:pinGitHubActionDigests` preset maintains these references.
+See `.github/workflows/README.md` for the workflow policy. Run `actionlint -shellcheck=`
+after editing workflows.
 
 ## Reproduce a defect
 

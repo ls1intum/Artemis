@@ -368,6 +368,7 @@ public class ExerciseMappingToolsService {
                         link.setCompetency(competency);
                         link.setExercise(exercise);
                         link.setWeight(mapping.getWeight());
+                        link.setGeneratedByAi(true);
                         linksToCreate.add(link);
                     }
                     else {
@@ -438,7 +439,7 @@ public class ExerciseMappingToolsService {
     private Exercise loadAndValidateExercise(Long exerciseId, Long courseId) {
         Exercise exercise = exerciseRepository.findWithCompetenciesById(exerciseId).orElseThrow(() -> new IllegalArgumentException("Exercise not found with ID: " + exerciseId));
 
-        if (!courseId.equals(exercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+        if (!courseId.equals(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId())) {
             throw new IllegalArgumentException("Exercise " + exerciseId + " does not belong to course " + courseId);
         }
 

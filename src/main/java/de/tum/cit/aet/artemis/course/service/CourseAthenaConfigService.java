@@ -41,15 +41,14 @@ public class CourseAthenaConfigService {
      * Returns the Athena configuration of the given course.
      *
      * @param courseId the id of the course to read the configuration of
-     * @return the course's Athena configuration, all flags disabled when the course has no configuration yet
+     * @return the course's Athena configuration; every course owns one, created with the course
      */
     public CourseAthenaConfigDTO getConfig(long courseId) {
         return courseAthenaConfigRepository.findConfigByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**
-     * Applies the requested changes to the course's Athena configuration, creating the configuration if the course does
-     * not have one yet, and republishes Athena scheduling when the grading feedback flag actually changed.
+     * Applies the requested changes to the course's Athena configuration, and republishes Athena scheduling when the grading feedback flag actually changed.
      * <p>
      * Each requested flag is written by its own conditional statement, so a request changes only the feature it names
      * and cannot carry a stale value for the other one back into the database. Whether the grading flag changed is
@@ -61,7 +60,7 @@ public class CourseAthenaConfigService {
      * @return the stored configuration
      */
     public CourseAthenaConfigDTO updateConfig(long courseId, CourseAthenaConfigUpdateDTO update) {
-        long configId = courseAthenaConfigRepository.ensureAthenaConfigExists(courseId);
+        long configId = courseAthenaConfigRepository.findAthenaConfigIdByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("CourseAthenaConfig", courseId));
 
         boolean gradingFeedbackChanged = update.gradingFeedbackEnabled() != null
                 && courseAthenaConfigRepository.updateGradingFeedbackEnabled(configId, update.gradingFeedbackEnabled()) > 0;
