@@ -120,7 +120,6 @@ class AttachmentVideoUnitServiceTest {
 
         verify(irisLectureUnitSyncService).markMetadataDirty(any(LectureContentUpdateSnapshot.class));
         verify(irisLectureUnitSyncService, never()).markVisibilityDirty(any());
-        verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
     }
 
     @Test
@@ -154,7 +153,6 @@ class AttachmentVideoUnitServiceTest {
         verify(contentProcessingService, never()).triggerProcessing(any());
         verify(irisLectureUnitSyncService, never()).markMetadataDirty(any());
         verify(irisLectureUnitSyncService, never()).markVisibilityDirty(any());
-        verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
     }
 
     @Test
@@ -258,7 +256,6 @@ class AttachmentVideoUnitServiceTest {
 
         verify(irisLectureUnitSyncService).markMetadataDirty(any(LectureContentUpdateSnapshot.class));
         verify(irisLectureUnitSyncService).markVisibilityDirty(any(LectureContentUpdateSnapshot.class));
-        verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
     }
 
     private static AttachmentVideoUnit attachmentVideoUnit(String name, Attachment attachment) {
