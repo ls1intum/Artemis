@@ -1,8 +1,8 @@
 <div class="w-full overflow-x-auto border-t border-surface">
     <table
         size="small"
-        class="min-w-[42rem] table-fixed xl:min-w-[64rem] [&_th.text-end_.tum-ui-sort-button]:justify-end"
-        tumUiTable
+        class="min-w-[42rem] table-fixed xl:min-w-[64rem] [&_th.text-end_.tumaet-ui-sort-button]:justify-end"
+        tumAetUiTable
         [striped]="true"
         [rowHover]="true"
         [sortField]="sortPredicate()"
@@ -12,53 +12,53 @@
         <thead>
             <tr>
                 <th class="w-12">#</th>
-                <th class="min-w-[12rem]" tumUiSortableColumn="name">
+                <th class="min-w-[12rem]" tumAetUiSortableColumn="name">
                     <span class="block min-w-0 shrink whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.name"></span>
                 </th>
-                <th class="w-24 min-w-20 !whitespace-normal text-end" tumUiSortableColumn="points">
+                <th class="w-24 min-w-20 !whitespace-normal text-end" tumAetUiSortableColumn="points">
                     <span class="block min-w-0 shrink whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.points"></span>
                 </th>
-                <th class="w-32 min-w-28 !whitespace-normal text-end" tumUiSortableColumn="numberOfAssessments">
+                <th class="w-32 min-w-28 !whitespace-normal text-end" tumAetUiSortableColumn="numberOfAssessments">
                     <span
                         class="block min-w-0 shrink whitespace-normal break-words leading-tight"
                         jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAssessments"
                     ></span>
                 </th>
-                <th class="w-32 min-w-28 !whitespace-normal text-end" tumUiSortableColumn="numberOfAcceptedComplaints">
+                <th class="w-32 min-w-28 !whitespace-normal text-end" tumAetUiSortableColumn="numberOfAcceptedComplaints">
                     <span
                         class="block min-w-0 shrink whitespace-normal break-words leading-tight"
                         jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAcceptedComplaints"
                     ></span>
                 </th>
                 @if (!isExamMode()) {
-                    <th class="w-28 min-w-24 !whitespace-normal text-end" tumUiSortableColumn="numberOfNotAnsweredMoreFeedbackRequests">
+                    <th class="w-28 min-w-24 !whitespace-normal text-end" tumAetUiSortableColumn="numberOfNotAnsweredMoreFeedbackRequests">
                         <span
                             class="block min-w-0 shrink whitespace-normal break-words leading-tight"
                             jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfNotAnsweredMoreFeedbackRequests"
                         ></span>
                     </th>
                 }
-                <th class="hidden w-32 min-w-28 !whitespace-normal text-end xl:table-cell" tumUiSortableColumn="numberOfComplaintResponses">
+                <th class="hidden w-32 min-w-28 !whitespace-normal text-end xl:table-cell" tumAetUiSortableColumn="numberOfComplaintResponses">
                     <span
                         class="block min-w-0 shrink whitespace-normal break-words leading-tight"
                         jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfComplaintResponses"
                     ></span>
                 </th>
                 @if (!isExamMode()) {
-                    <th class="hidden w-32 min-w-28 !whitespace-normal text-end xl:table-cell" tumUiSortableColumn="numberOfAnsweredMoreFeedbackRequests">
+                    <th class="hidden w-32 min-w-28 !whitespace-normal text-end xl:table-cell" tumAetUiSortableColumn="numberOfAnsweredMoreFeedbackRequests">
                         <span
                             class="block min-w-0 shrink whitespace-normal break-words leading-tight"
                             jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAnsweredMoreFeedbackRequests"
                         ></span>
                     </th>
                 }
-                <th class="hidden w-28 min-w-24 !whitespace-normal text-end xl:table-cell" tumUiSortableColumn="averageScore">
+                <th class="hidden w-28 min-w-24 !whitespace-normal text-end xl:table-cell" tumAetUiSortableColumn="averageScore">
                     <span
                         class="block min-w-0 shrink whitespace-normal break-words leading-tight"
                         jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.averageScore"
                     ></span>
                 </th>
-                <th class="hidden w-28 min-w-24 !whitespace-normal text-end xl:table-cell" tumUiSortableColumn="averageRating">
+                <th class="hidden w-28 min-w-24 !whitespace-normal text-end xl:table-cell" tumAetUiSortableColumn="averageRating">
                     <span
                         class="block min-w-0 shrink whitespace-normal break-words leading-tight"
                         jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.averageRating"
@@ -76,8 +76,8 @@
                             <fa-icon
                                 [icon]="faExclamationTriangle"
                                 class="text-state-warning"
-                                [tumUiTooltip]="'artemisApp.assessmentDashboard.tutorPerformanceIssues.tutor' | artemisTranslate: { tutorName: tutor.name }"
-                                tumUiTooltipPlacement="right"
+                                [tumAetUiTooltip]="'artemisApp.assessmentDashboard.tutorPerformanceIssues.tutor' | artemisTranslate: { tutorName: tutor.name }"
+                                tumAetUiTooltipPlacement="right"
                             />
                         }
                     </td>

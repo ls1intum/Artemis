@@ -1,7 +1,14 @@
 <ng-template #controls>
     <div class="d-flex row course-overview-controls text-end">
         <div class="col" aria-label="Filter Dropdown" ngbDropdown>
-            <button class="btn" [class.btn-secondary]="!numberOfAppliedFilters()" [class.btn-success]="!!numberOfAppliedFilters()" ngbDropdownToggle id="filter-dropdown-button">
+            <button
+                type="button"
+                class="btn"
+                [class.btn-secondary]="!numberOfAppliedFilters()"
+                [class.btn-success]="!!numberOfAppliedFilters()"
+                ngbDropdownToggle
+                id="filter-dropdown-button"
+            >
                 <fa-icon [icon]="faFilter" />
                 <span jhiTranslate="artemisApp.courseOverview.exerciseList.filter" [translateValues]="{ num: numberOfAppliedFilters() }"></span>
             </button>
@@ -70,11 +77,11 @@
                                 <h4 class="text-center">{{ overallPoints() }} / {{ reachablePoints() }} Pts</h4>
                             </div>
 
-                            <tum-ui-doughnut-chart
+                            <tumaet-ui-doughnut-chart
                                 class="h-[350px] w-[350px]"
                                 [labels]="doughnutData().labels"
                                 [series]="doughnutData().series"
-                                [config]="doughnutConfig()"
+                                [config]="doughnutConfig"
                                 [ariaLabel]="'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate"
                             />
                         </div>
@@ -222,7 +229,7 @@
                                 </div>
                                 <div class="col-12 col-md-8">
                                     <div [style.height.px]="exerciseGroup.value[0].height">
-                                        <tum-ui-bar-chart
+                                        <tumaet-ui-bar-chart
                                             [labels]="groupChartData().get(exerciseGroup.key)!.labels"
                                             [series]="groupChartData().get(exerciseGroup.key)!.series"
                                             [config]="groupChartConfigs().get(exerciseGroup.key)!"
@@ -283,7 +290,7 @@
                 </div>
             </div>
         } @else {
-            <tum-ui-empty-state class="mt-5" [icon]="faChartColumn" [title]="'artemisApp.courseOverview.statistics.noStatistics' | artemisTranslate" />
+            <tumaet-ui-empty-state class="mt-5" [icon]="faChartColumn" [title]="'artemisApp.courseOverview.statistics.noStatistics' | artemisTranslate" />
         }
     </div>
 }

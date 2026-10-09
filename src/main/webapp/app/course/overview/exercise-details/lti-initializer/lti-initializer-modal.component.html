@@ -30,7 +30,13 @@
         <a target="_blank" [routerLink]="this.passwordResetLocation" jhiTranslate="artemisApp.lti.initialization.body.passwordChange"></a>
     </p>
     <p>
-        <input type="checkbox" class="form-check-input" (change)="readAndUnderstood = !readAndUnderstood" [checked]="readAndUnderstood" />
+        <input
+            [attr.aria-label]="'artemisApp.lti.initialization.body.readAndUnderstood' | artemisTranslate"
+            type="checkbox"
+            class="form-check-input"
+            (change)="readAndUnderstood = !readAndUnderstood"
+            [checked]="readAndUnderstood"
+        />
         <strong jhiTranslate="artemisApp.lti.initialization.body.readAndUnderstood"></strong>
     </p>
     <button type="button" class="btn btn-primary" [disabled]="!readAndUnderstood" (click)="clear()" jhiTranslate="artemisApp.lti.initialization.body.confirm"></button>

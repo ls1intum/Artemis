@@ -14,7 +14,7 @@
         />
     }
 
-    <button id="add-phase-button" class="m-1" pButton [text]="true" size="small" severity="secondary" [hidden]="readonly()" (click)="addPhase()">
+    <button type="button" id="add-phase-button" class="m-1" pButton [text]="true" size="small" severity="secondary" [hidden]="readonly()" (click)="addPhase()">
         <fa-icon [icon]="faPlus" pButtonIcon />
         <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.addPhase"></span>
     </button>

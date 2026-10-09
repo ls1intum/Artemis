@@ -80,6 +80,7 @@
         <!-- Delete exercise -->
         @if (course() && exercise.isAtLeastInstructor) {
             <button
+                type="button"
                 jhiDeleteButton
                 [entityTitle]="exercise.title || ''"
                 deleteQuestion="artemisApp.exercise.delete.question"

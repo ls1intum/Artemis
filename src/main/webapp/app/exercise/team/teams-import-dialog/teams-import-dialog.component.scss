@@ -122,7 +122,7 @@
     .label-with-tooltip {
         margin-top: 3px;
 
-        label {
+        > span {
             color: var(--secondary);
         }
     }

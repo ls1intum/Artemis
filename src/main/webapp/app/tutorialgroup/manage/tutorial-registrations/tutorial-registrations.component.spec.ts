@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiConfirmDialogComponent, TumUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared-ui/export/export-constants';
 import * as writeUsersToCsv from 'app/shared-ui/user-import/util/write-users-to-csv';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
@@ -71,7 +71,7 @@ describe('TutorialRegistrationsComponent', () => {
         await TestBed.configureTestingModule({
             imports: [TutorialRegistrationsComponent],
             providers: [
-                { provide: TumUiConfirmationService, useValue: confirmationServiceMock },
+                { provide: TumAetUiConfirmationService, useValue: confirmationServiceMock },
                 { provide: TutorialGroupRegisteredStudentsService, useValue: tutorialGroupRegisteredStudentsServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -79,12 +79,12 @@ describe('TutorialRegistrationsComponent', () => {
             .overrideComponent(TutorialRegistrationsComponent, {
                 remove: {
                     imports: [
-                        TumUiConfirmDialogComponent,
+                        TumAetUiConfirmDialogComponent,
                         TutorialRegistrationsImportModalComponent,
                         TutorialRegistrationsRegisterModalComponent,
                         TutorialRegistrationsStudentsTableComponent,
                     ],
-                    providers: [TumUiConfirmationService],
+                    providers: [TumAetUiConfirmationService],
                 },
                 add: {
                     imports: [
@@ -93,7 +93,7 @@ describe('TutorialRegistrationsComponent', () => {
                         TutorialRegistrationsRegisterModalMockComponent,
                         TutorialRegistrationsStudentsTableMockComponent,
                     ],
-                    providers: [{ provide: TumUiConfirmationService, useValue: confirmationServiceMock }],
+                    providers: [{ provide: TumAetUiConfirmationService, useValue: confirmationServiceMock }],
                 },
             })
             .compileComponents();

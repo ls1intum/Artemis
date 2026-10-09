@@ -47,10 +47,10 @@ export interface CourseCompetencyFormData {
     template: '',
 })
 export abstract class CourseCompetencyFormComponent {
-    abstract formData: InputSignal<CourseCompetencyFormData>;
-
     private fb = inject(FormBuilder);
     private courseCompetencyService = inject(CourseCompetencyService);
+
+    abstract formData: InputSignal<CourseCompetencyFormData>;
 
     isEditMode = input<boolean>(false);
     isInConnectMode = input<boolean>(false);

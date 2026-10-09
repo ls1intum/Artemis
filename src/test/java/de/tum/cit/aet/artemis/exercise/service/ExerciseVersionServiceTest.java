@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -355,6 +355,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
             case FileUploadExercise fExercise -> fileUploadExerciseRepository.findForVersioningById(exercise.getId()).orElse(fExercise);
             default -> exercise;
         };
+        // like the versioning service, read the settings an exercise does not carry by itself
+        exerciseUtilService.attachTeamAssignmentConfig(fetched);
+        exerciseUtilService.attachPlagiarismDetectionConfig(fetched);
         var channel = channelRepository.findChannelByExerciseId(fetched.getId());
         if (channel != null) {
             fetched.setChannelName(channel.getName());
@@ -415,7 +418,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         exerciseVersionService.createExerciseVersion(exercise);
 
         // No synchronization should be broadcast for the initial version
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), any());
+        verify(websocketMessagingService, never()).sendMessage(topic("/topic/exercises/" + exercise.getId() + "/synchronization"), any());
     }
 
     /**
@@ -437,7 +440,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
         // Metadata synchronization should be broadcast when no commits have changed
         var captor = ArgumentCaptor.forClass(ExerciseNewVersionAlertDTO.class);
-        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
+        verify(websocketMessagingService, times(1)).sendMessage(topic("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
         var payload = captor.getValue();
         assertThat(payload.exerciseVersionId()).isNotNull();
         assertThat(payload.eventType()).isEqualTo(ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT);
@@ -467,7 +470,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         exerciseVersionService.createExerciseVersion(exercise);
 
         var captor = ArgumentCaptor.forClass(ExerciseNewVersionAlertDTO.class);
-        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
+        verify(websocketMessagingService, times(1)).sendMessage(topic("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
         var payload = captor.getValue();
         assertThat(payload.changedFields()).contains("channelName");
     }
@@ -491,7 +494,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         exerciseVersionService.createExerciseVersion(exercise);
 
         var captor = ArgumentCaptor.forClass(ExerciseNewVersionAlertDTO.class);
-        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
+        verify(websocketMessagingService, times(1)).sendMessage(topic("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
         var payload = captor.getValue();
         assertThat(payload.changedFields()).contains("programmingData.auxiliaryRepositories");
     }
@@ -526,7 +529,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         exerciseVersionService.createExerciseVersion(exercise);
 
         var captor = ArgumentCaptor.forClass(ExerciseReviewThreadUpdateDTO.class);
-        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
+        verify(websocketMessagingService, times(1)).sendMessage(topic("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
         var payload = captor.getValue();
 
         assertThat(payload.eventType()).isEqualTo(ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE);

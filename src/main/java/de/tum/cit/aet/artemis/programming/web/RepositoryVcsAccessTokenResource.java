@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -37,7 +38,7 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("access/vcs-access-tokens")
+@FeatureUsage(UserFeature.GIT_CREDENTIALS)
 @RestController
 @RequestMapping("api/programming/")
 public class RepositoryVcsAccessTokenResource {

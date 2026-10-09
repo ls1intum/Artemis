@@ -1,9 +1,9 @@
-<div class="exam-status-wrapper" [ngClass]="course()?.isAtLeastInstructor ? 'instructor-view' : 'tutor-view'">
+<div class="exam-status-wrapper" data-testid="exam-status" [attr.data-exam-id]="exam().id" [ngClass]="course()?.isAtLeastInstructor ? 'instructor-view' : 'tutor-view'">
     <!-- 1. Exam preparation -->
     @if (course()?.isAtLeastInstructor) {
         <div class="status-step">
             <!-- If all preparation tasks are finished, show a green check as header, show a red cross else -->
-            <div class="d-flex justify-content-center header-icon">
+            <div class="flex justify-center header-icon" data-testid="exam-status-preparation" [attr.data-state]="examPreparationFinished() ? 'finished' : 'open'">
                 @if (examPreparationFinished()) {
                     <fa-icon [icon]="faCheckCircle" class="check" />
                 }
@@ -11,10 +11,10 @@
                     <fa-icon [icon]="faTimesCircle" class="cross" />
                 }
             </div>
-            <div class="status-step-content">
+            <div class="status-step-content" data-testid="exam-status-preparation-details">
                 <h6 class="text-center" jhiTranslate="artemisApp.examStatus.preparation.{{ isTestExam() ? 'testExam.' : '' }}examPreparation"></h6>
                 <ol>
-                    <li class="d-flex align-items-center">
+                    <li class="flex items-center">
                         <span jhiTranslate="artemisApp.examStatus.preparation.configureExercises" [translateValues]="{ amount: exam().exerciseGroups?.length ?? 0 }"></span>
                         @if (configuredExercises()) {
                             <fa-icon [icon]="faCheckCircle" class="check" />
@@ -24,7 +24,7 @@
                         }
                     </li>
                     @if (isTestExam()) {
-                        <li class="d-flex align-items-center">
+                        <li class="flex items-center">
                             @if (maxPointExercises() === exam().examMaxPoints) {
                                 <span>{{ 'artemisApp.examStatus.preparation.testExam.maxPointsCorrect' | artemisTranslate }}{{ exam().examMaxPoints }}</span>
                                 <fa-icon [icon]="faCheckCircle" class="check" />
@@ -36,7 +36,7 @@
                         </li>
                     }
                     @if (!isTestExam()) {
-                        <li class="d-flex align-items-center">
+                        <li class="flex items-center">
                             <span jhiTranslate="artemisApp.examStatus.preparation.registerStudents" [translateValues]="{ registered: exam().numberOfExamUsers }"></span>
                             @if (registeredStudents()) {
                                 <fa-icon [icon]="faCheckCircle" class="check" />
@@ -47,7 +47,7 @@
                         </li>
                     }
                     @if (!isTestExam()) {
-                        <li class="d-flex align-items-center">
+                        <li class="flex items-center">
                             <span jhiTranslate="artemisApp.examStatus.preparation.generateStudentExams"></span>
                             <!-- If no students are registered yet, we do not want to display "0 of 0" -->
                             @if (!registeredStudents()) {
@@ -71,7 +71,7 @@
                         </li>
                     }
                     @if (!isTestExam()) {
-                        <li class="d-flex align-items-center">
+                        <li class="flex items-center">
                             <span jhiTranslate="artemisApp.examStatus.preparation.prepareExerciseStart"></span>
                             @if (preparedExerciseStart()) {
                                 <fa-icon [icon]="faCheckCircle" class="check" />
@@ -92,7 +92,7 @@
   If exam is currently conducted, show a yellow dot
   If the exam preparation and the conduction period are finished, show a green check
   If the test eam preparation is not yet finished, but the test eam has already started, show a warning-->
-        <div class="d-flex justify-content-center header-icon">
+        <div class="flex justify-center header-icon" data-testid="exam-status-conduction" [attr.data-state]="examConductionStateEnum[examConductionState()]">
             @switch (examConductionState()) {
                 @case (examConductionStateEnum.PLANNED) {
                     <fa-icon [icon]="faTimesCircle" class="cross" />
@@ -106,9 +106,10 @@
                 @case (examConductionStateEnum.ERROR) {
                     <fa-icon [icon]="faCircleExclamation" class="cross" />
                 }
+                @default {}
             }
         </div>
-        <div class="status-step-content">
+        <div class="status-step-content" data-testid="exam-status-conduction-details">
             <div class="text-center mb-1">
                 <h6 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExam() ? 'testExam.' : '' }}examConduction"></h6>
                 <b>{{ exam().startDate | artemisDate }} - {{ exam().endDate | artemisDate }}</b>
@@ -160,7 +161,7 @@
             <!-- If exam review phase is running or there are still open complaints, show a yellow dot,
     If exam review phase is finished and all complaints are resolved, show a green check
     Else, show a red cross -->
-            <div class="d-flex justify-content-center header-icon">
+            <div class="flex justify-center header-icon" data-testid="exam-status-correction" [attr.data-state]="examCorrectionState()">
                 @switch (examCorrectionState()) {
                     @case (examReviewStateEnum.RUNNING) {
                         <fa-icon [icon]="faDotCircle" class="running" />
@@ -178,30 +179,28 @@
                 @if (examChecklist(); as examChecklist) {
                     <ol>
                         @if (examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== null && numberOfSubmitted() !== 0) {
-                            <div>
-                                @for (
-                                    finishedByCorrectionRound of examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound;
-                                    track finishedByCorrectionRound;
-                                    let i = $index
-                                ) {
-                                    <li>
-                                        <span>
-                                            {{ 'artemisApp.examStatus.correction.correctionRoundProgress' | artemisTranslate: { index: i + 1 } }}
-                                            :
-                                            {{
-                                                Math.min(
-                                                    examChecklist.numberOfTotalParticipationsForAssessment > 0
-                                                        ? round((finishedByCorrectionRound * 100) / examChecklist.numberOfTotalParticipationsForAssessment, 1)
-                                                        : 0,
-                                                    100
-                                                )
-                                            }}%
-                                        </span>
-                                    </li>
-                                }
-                            </div>
+                            @for (
+                                finishedByCorrectionRound of examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound;
+                                track finishedByCorrectionRound;
+                                let i = $index
+                            ) {
+                                <li>
+                                    <span>
+                                        {{ 'artemisApp.examStatus.correction.correctionRoundProgress' | artemisTranslate: { index: i + 1 } }}
+                                        :
+                                        {{
+                                            Math.min(
+                                                examChecklist.numberOfTotalParticipationsForAssessment > 0
+                                                    ? round((finishedByCorrectionRound * 100) / examChecklist.numberOfTotalParticipationsForAssessment, 1)
+                                                    : 0,
+                                                100
+                                            )
+                                        }}%
+                                    </span>
+                                </li>
+                            }
                         }
-                        <li class="d-flex align-items-center">
+                        <li class="flex items-center">
                             <span>{{ 'artemisApp.examStatus.correction.publishResultDate' | artemisTranslate }}: </span>
                             @if (exam().publishResultsDate) {
                                 <b>

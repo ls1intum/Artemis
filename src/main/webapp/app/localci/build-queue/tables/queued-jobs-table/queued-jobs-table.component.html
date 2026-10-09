@@ -1,6 +1,6 @@
 <div class="build-jobs-section">
     @if (buildJobs()?.length) {
-        <table tumUiTable [size]="'small'" [striped]="true" style="width: max-content">
+        <table tumAetUiTable [size]="'small'" [striped]="true" style="width: max-content">
             <thead>
                 <tr>
                     <th class="build-jobs-column-tiny"></th>
@@ -34,7 +34,7 @@
                             </span>
                         </td>
                         <td class="build-jobs-column-strings">
-                            <span [tumUiTooltip]="buildJob.name ?? ''"> {{ buildJob.name ?? '' | slice: 0 : 30 }}{{ (buildJob.name ?? '').length > 30 ? '...' : '' }} </span>
+                            <span [tumAetUiTooltip]="buildJob.name ?? ''"> {{ buildJob.name ?? '' | slice: 0 : 30 }}{{ (buildJob.name ?? '').length > 30 ? '...' : '' }} </span>
                         </td>
                         <td class="build-jobs-column">
                             <span class="text-muted-color text-sm">{{ buildJob.jobTimingInfo?.submissionDate | artemisDate: 'short' : true }}</span>
@@ -51,15 +51,15 @@
                             {{ buildJob.priority }}
                         </td>
                         <td class="build-jobs-column-tiny">
-                            <tum-ui-button
+                            <tumaet-ui-button
                                 severity="danger"
                                 size="small"
                                 (clicked)="onCancelJob(buildJob.id!, $event)"
-                                [tumUiTooltip]="'artemisApp.buildQueue.cancel' | artemisTranslate"
+                                [tumAetUiTooltip]="'artemisApp.buildQueue.cancel' | artemisTranslate"
                                 [ariaLabel]="'artemisApp.buildQueue.cancel' | artemisTranslate"
                             >
                                 <fa-icon [icon]="faTimes" />
-                            </tum-ui-button>
+                            </tumaet-ui-button>
                         </td>
                     </tr>
                 }

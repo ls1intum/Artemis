@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismCaseScoreDTO;
 import de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismMapping;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
@@ -26,9 +27,26 @@ public class PlagiarismCaseApi extends AbstractPlagiarismApi {
 
     private final PlagiarismCaseService plagiarismCaseService;
 
-    public PlagiarismCaseApi(PlagiarismCaseRepository plagiarismCaseRepository, PlagiarismCaseService plagiarismCaseService) {
+    private final UserRepository userRepository;
+
+    public PlagiarismCaseApi(PlagiarismCaseRepository plagiarismCaseRepository, PlagiarismCaseService plagiarismCaseService, UserRepository userRepository) {
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.plagiarismCaseService = plagiarismCaseService;
+        this.userRepository = userRepository;
+    }
+
+    /**
+     * Whether the user takes part in the discussion of a plagiarism case: the student or a member of the team the case is about, or an instructor of its course.
+     *
+     * @param plagiarismCaseId the id of the plagiarism case
+     * @param login            the login of the user
+     * @return true if the case is about the user or the user's team, or the user is at least instructor in its course
+     */
+    public boolean isStudentOrInstructorOfPlagiarismCase(long plagiarismCaseId, String login) {
+        if (plagiarismCaseRepository.existsByIdAndStudentOrTeamMemberLogin(plagiarismCaseId, login)) {
+            return true;
+        }
+        return plagiarismCaseRepository.findCourseIdById(plagiarismCaseId).filter(courseId -> userRepository.isAtLeastInstructorInCourse(login, courseId)).isPresent();
     }
 
     public Optional<PlagiarismCaseInfoDTO> getPlagiarismCaseInfoForExerciseAndUser(long exerciseId, long userId) {

@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
@@ -33,7 +33,7 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { PROFILE_JENKINS } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
-import { TumUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
 
 // Mock Sentry before tests run to prevent actual error reporting
 vi.mock('@sentry/angular', async () => {
@@ -798,6 +798,128 @@ describe('UserManagementUpdateComponent', () => {
         });
     });
 
+    describe('course roles', () => {
+        beforeEach(() => {
+            vi.spyOn(adminUserService, 'authorities').mockReturnValue(of([]));
+            vi.spyOn(TestBed.inject(OrganizationManagementService), 'getOrganizationsByUser').mockReturnValue(of([]));
+            component.ngOnInit();
+        });
+
+        it('should identify the edited user by the login the server knows', () => {
+            component.editForm.get('login')?.setValue('typed-but-unsaved');
+
+            expect(component.persistedLogin()).toBe('user');
+        });
+
+        it('should add an authority the server granted because of a new course role and keep unsaved authority changes', () => {
+            component.editForm.get('authorities')?.setValue([Authority.STUDENT, Authority.ADMIN]);
+            const findUserSpy = vi
+                .spyOn(adminUserService, 'findUser')
+                .mockReturnValue(of(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT, Authority.INSTRUCTOR])));
+
+            component.onCourseRolesChanged();
+
+            expect(findUserSpy).toHaveBeenCalledWith('user');
+            expect(component.editForm.get('authorities')?.value).toEqual([Authority.STUDENT, Authority.ADMIN, Authority.INSTRUCTOR]);
+        });
+
+        it('should drop an authority the server revoked because the last course role was removed', () => {
+            vi.spyOn(adminUserService, 'findUser').mockReturnValueOnce(
+                of(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT, Authority.INSTRUCTOR])),
+            );
+            component.onCourseRolesChanged();
+            expect(component.editForm.get('authorities')?.value).toContain(Authority.INSTRUCTOR);
+
+            vi.spyOn(adminUserService, 'findUser').mockReturnValueOnce(of(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT])));
+            component.onCourseRolesChanged();
+
+            expect(component.editForm.get('authorities')?.value).toEqual([Authority.STUDENT]);
+        });
+
+        it('should block saving until the authorities were refreshed after a change of the course roles', async () => {
+            const reloaded = new Subject<User>();
+            vi.spyOn(adminUserService, 'findUser').mockReturnValue(reloaded);
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse<User>({ body: testUser })));
+
+            component.onCourseRolesChanged();
+            await component.save();
+
+            expect(component['saveBlockedByCourseRoles']()).toBe(true);
+            expect(updateSpy).not.toHaveBeenCalled();
+
+            reloaded.next(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT, Authority.INSTRUCTOR]));
+
+            expect(component['saveBlockedByCourseRoles']()).toBe(false);
+            expect(component.editForm.get('authorities')?.value).toContain(Authority.INSTRUCTOR);
+        });
+
+        it('should keep saving blocked when the refresh failed, and allow a retry', async () => {
+            const findUserSpy = vi.spyOn(adminUserService, 'findUser').mockReturnValueOnce(throwError(() => new Error('failed')));
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse<User>({ body: testUser })));
+
+            component.onCourseRolesChanged();
+            await component.save();
+
+            expect(component['authoritySync']()).toBe('failed');
+            expect(updateSpy).not.toHaveBeenCalled();
+
+            findUserSpy.mockReturnValueOnce(of(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT, Authority.INSTRUCTOR])));
+            component.onCourseRolesChanged();
+
+            expect(component['authoritySync']()).toBe('idle');
+            expect(component.editForm.get('authorities')?.value).toContain(Authority.INSTRUCTOR);
+        });
+
+        it('should drop the response of a refresh that a later refresh superseded', () => {
+            const first = new Subject<User>();
+            const second = new Subject<User>();
+            vi.spyOn(adminUserService, 'findUser').mockReturnValueOnce(first).mockReturnValueOnce(second);
+
+            component.onCourseRolesChanged();
+            component.onCourseRolesChanged();
+            second.next(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT, Authority.INSTRUCTOR]));
+            first.next(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT]));
+
+            expect(component['authoritySync']()).toBe('idle');
+            expect(component.editForm.get('authorities')?.value).toEqual([Authority.STUDENT, Authority.INSTRUCTOR]);
+        });
+
+        it('should block saving while a course role is being added or removed', async () => {
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse<User>({ body: testUser })));
+
+            component.onCourseRoleChangeInProgress(true);
+            await component.save();
+            expect(updateSpy).not.toHaveBeenCalled();
+
+            component.onCourseRoleChangeInProgress(false);
+            await component.save();
+            expect(updateSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should keep saving blocked until every overlapping change of the course roles ended', async () => {
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse<User>({ body: testUser })));
+
+            component.onCourseRoleChangeInProgress(true);
+            component.onCourseRoleChangeInProgress(true);
+            component.onCourseRoleChangeInProgress(false);
+            await component.save();
+            expect(updateSpy).not.toHaveBeenCalled();
+
+            component.onCourseRoleChangeInProgress(false);
+            await component.save();
+            expect(updateSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should leave the authorities untouched when the server changed none', () => {
+            component.editForm.get('authorities')?.setValue([Authority.STUDENT, Authority.EDITOR]);
+            vi.spyOn(adminUserService, 'findUser').mockReturnValue(of(new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT])));
+
+            component.onCourseRolesChanged();
+
+            expect(component.editForm.get('authorities')?.value).toEqual([Authority.STUDENT, Authority.EDITOR]);
+        });
+    });
+
     describe('authority management', () => {
         beforeEach(() => {
             component.user.set(new User(123));
@@ -910,6 +1032,7 @@ describe('UserManagementUpdateComponent credential revocation controls', () => {
         }).compileComponents();
 
         vi.spyOn(TestBed.inject(AdminUserService), 'authorities').mockReturnValue(of([]));
+        vi.spyOn(TestBed.inject(AdminUserService), 'getCourseRoles').mockReturnValue(of([]));
         vi.spyOn(TestBed.inject(OrganizationManagementService), 'getOrganizationsByUser').mockReturnValue(of([]));
     });
 
@@ -936,6 +1059,103 @@ describe('UserManagementUpdateComponent credential revocation controls', () => {
         const label = fixture.nativeElement.querySelector(`label[for="${controlId}"]`);
         expect(label).not.toBeNull();
         expect(fixture.nativeElement.querySelector(`#${controlId}`)).not.toBeNull();
+    });
+
+    it('shows the editable course roles of an existing user, identified by the login saved on the server', async () => {
+        await render(new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]));
+        component.editForm.get('login')?.setValue('typed-but-unsaved');
+        fixture.detectChanges();
+
+        const courseRoles = fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-roles');
+        expect(courseRoles).not.toBeNull();
+        expect(courseRoles.componentInstance.editable()).toBe(true);
+        expect(courseRoles.componentInstance.login()).toBe('test_user');
+    });
+
+    describe('after a change of the course roles', () => {
+        const existingUser = () => new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]);
+
+        beforeEach(() => {
+            vi.spyOn(TestBed.inject(AdminUserService), 'authorities').mockReturnValue(of([Authority.STUDENT, Authority.INSTRUCTOR]));
+        });
+
+        it('tells which global roles the change added or removed', async () => {
+            await render(existingUser());
+            vi.spyOn(TestBed.inject(AdminUserService), 'findUser').mockReturnValue(
+                of(new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.INSTRUCTOR])),
+            );
+
+            component.onCourseRolesChanged();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="authority-change-added"]')?.textContent).toContain('artemisApp.userManagement.roles.instructor');
+            expect(fixture.nativeElement.querySelector('[data-testid="authority-change-removed"]')?.textContent).toContain('artemisApp.userManagement.roles.user');
+        });
+
+        it('shows no notice when the change left the global roles alone', async () => {
+            await render(existingUser());
+            vi.spyOn(TestBed.inject(AdminUserService), 'findUser').mockReturnValue(of(existingUser()));
+
+            component.onCourseRolesChanged();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="authority-change"]')).toBeNull();
+        });
+
+        it('blocks the global role checkboxes and Save in the DOM while the authorities are refreshed', async () => {
+            await render(existingUser());
+            const reloaded = new Subject<User>();
+            vi.spyOn(TestBed.inject(AdminUserService), 'findUser').mockReturnValue(reloaded);
+            const checkboxInputs = () => Array.from<HTMLInputElement>(fixture.nativeElement.querySelectorAll('[data-testid="global-role-item"] input'));
+            const save = () => fixture.nativeElement.querySelector('[data-testid="save-user-button"]') as HTMLButtonElement;
+            expect(checkboxInputs().length).toBeGreaterThan(0);
+            expect(checkboxInputs().some((input) => input.disabled)).toBe(false);
+
+            component.onCourseRolesChanged();
+            fixture.detectChanges();
+
+            expect(checkboxInputs().every((input) => input.disabled)).toBe(true);
+            expect(save().disabled).toBe(true);
+
+            reloaded.next(existingUser());
+            fixture.detectChanges();
+
+            expect(checkboxInputs().some((input) => input.disabled)).toBe(false);
+            expect(save().disabled).toBe(false);
+        });
+
+        it('keeps Save blocked with a retry when the refresh failed, while the global roles stay editable', async () => {
+            await render(existingUser());
+            const findUser = vi.spyOn(TestBed.inject(AdminUserService), 'findUser').mockReturnValueOnce(throwError(() => new Error('failed')));
+
+            component.onCourseRolesChanged();
+            fixture.detectChanges();
+
+            expect((fixture.nativeElement.querySelector('[data-testid="save-user-button"]') as HTMLButtonElement).disabled).toBe(true);
+            expect(fixture.nativeElement.querySelector('[data-testid="authority-sync-failed"]')).not.toBeNull();
+
+            findUser.mockReturnValueOnce(of(existingUser()));
+            (fixture.nativeElement.querySelector('[data-testid="authority-sync-retry"] button') as HTMLButtonElement).click();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="authority-sync-failed"]')).toBeNull();
+            expect((fixture.nativeElement.querySelector('[data-testid="save-user-button"]') as HTMLButtonElement).disabled).toBe(false);
+        });
+
+        it('disables the course role controls while the user is being saved', async () => {
+            await render(existingUser());
+
+            component.isSaving.set(true);
+            fixture.detectChanges();
+
+            const courseRoles = fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-roles');
+            expect(courseRoles.componentInstance.disabled()).toBe(true);
+        });
+    });
+
+    it('does not offer course roles while a user is being created', async () => {
+        await render(new User(undefined, 'new_user', 'New', 'User', 'new@example.com', true, 'en', [Authority.STUDENT]));
+        expect(fixture.nativeElement.querySelector('jhi-user-course-roles')).toBeNull();
     });
 
     it('labels the password field, which previously only carried a placeholder', async () => {
@@ -975,7 +1195,7 @@ describe('UserManagementUpdateComponent credential revocation controls', () => {
     it('marks every required field with a marker hidden from assistive technology', async () => {
         await render(new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]));
 
-        const markers = Array.from(fixture.nativeElement.querySelectorAll('.tum-ui-form-field-required')) as HTMLElement[];
+        const markers = Array.from(fixture.nativeElement.querySelectorAll('.tumaet-ui-form-field-required')) as HTMLElement[];
 
         expect(markers.length).toBe(4);
         markers.forEach((marker) => expect(marker.getAttribute('aria-hidden')).toBe('true'));
@@ -991,7 +1211,7 @@ describe('UserManagementUpdateComponent credential revocation controls', () => {
 
         // The field carries a required marker and points aria-describedby at this region, so leaving it empty
         // would tell a screen reader that something is wrong without ever saying what.
-        const error = fixture.nativeElement.querySelector(`#${controlId}`).closest('tum-ui-form-field').querySelector('.tum-ui-form-field-error');
+        const error = fixture.nativeElement.querySelector(`#${controlId}`).closest('tumaet-ui-form-field').querySelector('.tumaet-ui-form-field-error');
         expect(error.hasAttribute('hidden')).toBe(false);
         expect(error.textContent.trim()).not.toBe('');
     });
@@ -1012,7 +1232,7 @@ describe('UserManagementUpdateComponent credential revocation controls', () => {
         fixture.detectChanges();
 
         const revokeHost = fixture.debugElement.query(By.css('[data-testid="revoke-credentials"]'));
-        const revokeCheckbox = revokeHost.componentInstance as TumUiCheckboxComponent;
+        const revokeCheckbox = revokeHost.componentInstance as TumAetUiCheckboxComponent;
         const revokeInput = checkboxInput('revokeCredentials')!;
         expect(component.useRandomPassword()).toBe(false);
         expect(keepPasswordCheckbox.checked).toBe(false);

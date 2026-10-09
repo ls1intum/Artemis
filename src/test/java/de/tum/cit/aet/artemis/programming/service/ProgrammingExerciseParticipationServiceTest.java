@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
@@ -467,4 +468,11 @@ class ProgrammingExerciseParticipationServiceTest {
         context.setAuthentication(new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(login, null, java.util.List.of()));
         org.springframework.security.core.context.SecurityContextHolder.setContext(context);
     }
+
+    @Test
+    void missingBuildPlanKey_doesNotQueryParticipations() {
+        assertThat(participationService.getParticipationWithResults(null)).isNull();
+        verifyNoInteractions(templateParticipationRepository, solutionParticipationRepository, studentParticipationRepository);
+    }
+
 }

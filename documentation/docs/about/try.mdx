@@ -25,8 +25,8 @@ cd Artemis
 # Linux with a native Docker daemon only: the build agent needs your host's docker group to reach the
 # Docker socket. Compose resolves this when it creates the container, so it has to be set beforehand.
 export ARTEMIS_DOCKER_GROUP_ID=$(getent group docker | cut -d: -f3)
-docker compose --env-file .env -f docker/artemis-dev-local-vc-local-ci-postgres.yml pull
-docker compose --env-file .env -f docker/artemis-dev-local-vc-local-ci-postgres.yml up
+docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml pull
+docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml up
 ```
 
 Then open **http://localhost:8080** and sign in as `artemis_admin` / `artemis_admin`.
@@ -37,14 +37,14 @@ can be skipped.
 <Callout variant={CalloutVariant.warning}>
     Run Compose **from the repository root** and keep `--env-file .env`. The Compose files read image
     versions from the `.env` file in the repository root, and Compose looks for that file next to the
-    first `-f` file, which is `docker/`, not the root. Without it the images resolve to blanks and the
+    first `-f` file, which is `deployment/docker/`, not the root. Without it the images resolve to blanks and the
     project either fails to start or fails to pull.
 </Callout>
 
 To stop, press `Ctrl+C`. To remove the containers and the database volume as well:
 
 ```bash
-docker compose --env-file .env -f docker/artemis-dev-local-vc-local-ci-postgres.yml down -v
+docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml down -v
 ```
 
 ## What you can do with it
@@ -95,7 +95,7 @@ If you do not need programming exercises, or you would rather not mount the Dock
 smaller and needs no group configuration:
 
 ```bash
-docker compose --env-file .env -f docker/artemis-dev-postgres.yml up
+docker compose --env-file .env -f deployment/docker/artemis-dev-postgres.yml up
 ```
 
 ## Ask for a hosted trial

@@ -92,6 +92,17 @@ describe('UnreferencedFeedbackComponent', () => {
         expect(comp.unreferencedFeedback[0].text).toBe(feedback.text);
     });
 
+    it('should update unreferenced feedback by id even when the emitted object is a different reference (e.g. long feedback hydration)', () => {
+        const feedback = { id: 42, text: 'NewFeedback', credits: 3 } as Feedback;
+        comp.unreferencedFeedback = [feedback];
+
+        const hydratedFeedback = { ...feedback, detailText: 'loaded long feedback text' } as Feedback;
+        comp.updateFeedback(hydratedFeedback);
+
+        expect(comp.unreferencedFeedback).toHaveLength(1);
+        expect(comp.unreferencedFeedback[0].detailText).toBe('loaded long feedback text');
+    });
+
     it('should delete unreferenced feedback', () => {
         const feedback = { text: 'NewFeedback', credits: 3 } as Feedback;
         comp.unreferencedFeedback = [feedback];
@@ -115,20 +126,6 @@ describe('UnreferencedFeedbackComponent', () => {
         expect(comp.unreferencedFeedback[0].credits).toBe(instruction.credits);
     });
 
-    it('should convert an accepted feedback suggestion to a marked manual feedback', () => {
-        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', type: FeedbackType.AUTOMATIC };
-        comp.feedbackSuggestions.set([suggestion]);
-        comp.acceptSuggestion(suggestion);
-        expect(comp.feedbackSuggestions()).toHaveLength(0);
-        expect(comp.unreferencedFeedback).toEqual([
-            {
-                text: 'FeedbackSuggestion:accepted:',
-                detailText: 'test',
-                type: FeedbackType.MANUAL_UNREFERENCED,
-            },
-        ]);
-    });
-
     it('should only replace feedback on drop, not add another one', () => {
         vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {});
         comp.createAssessmentOnDrop(new Event(''));
@@ -147,13 +144,6 @@ describe('UnreferencedFeedbackComponent', () => {
         expect(updateFeedbackOnDropStub).toHaveBeenCalledOnce();
         // do not propagate the event to the parent component
         expect(createAssessmentOnDropStub).not.toHaveBeenCalled();
-    });
-
-    it('should remove discarded suggestions', () => {
-        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', type: FeedbackType.AUTOMATIC };
-        comp.feedbackSuggestions.set([suggestion]);
-        comp.discardSuggestion(suggestion);
-        expect(comp.feedbackSuggestions()).toHaveLength(0);
     });
 
     describe('grading instruction selection', () => {

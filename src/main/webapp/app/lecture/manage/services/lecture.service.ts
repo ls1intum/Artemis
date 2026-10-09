@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -13,7 +13,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 type EntityResponseType = HttpResponse<Lecture>;
 type EntityArrayResponseType = HttpResponse<Lecture[]>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class LectureService {
     protected http = inject(HttpClient);
     private accountService = inject(AccountService);
@@ -34,7 +34,11 @@ export class LectureService {
 
     update(lecture: Lecture): Observable<EntityResponseType> {
         const dto = this.convertLectureToSimpleDTO(lecture);
-        return this.http.put<Lecture>(this.resourceUrl, dto, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
+        return this.http.put<Lecture>(this.resourceUrl, dto, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)),
+            // The editor stays open after saving, so the breadcrumb and the page title have to show a new title right away.
+            tap((res: EntityResponseType) => this.sendTitlesToEntityTitleService(res?.body)),
+        );
     }
 
     find(lectureId: number): Observable<EntityResponseType> {
@@ -140,21 +144,6 @@ export class LectureService {
         return this.http.delete<void>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' });
     }
 
-    protected convertLectureDatesFromClient(lecture: Lecture): Lecture {
-        const copy: Lecture = cloneWith(lecture, {
-            startDate: convertDateFromClient(lecture.startDate),
-            endDate: convertDateFromClient(lecture.endDate),
-        });
-        if (copy.lectureUnits) {
-            copy.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromClient(copy.lectureUnits);
-        }
-        if (copy.course) {
-            copy.course.exercises = undefined;
-            copy.course.lectures = undefined;
-        }
-        return copy;
-    }
-
     protected convertLectureResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.startDate = convertDateFromServer(res.body.startDate);
@@ -168,9 +157,7 @@ export class LectureService {
 
     protected convertLectureArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.map((lecture: Lecture) => {
-                return this.convertLectureDatesFromServer(lecture);
-            });
+            res.body.forEach((lecture: Lecture) => this.convertLectureDatesFromServer(lecture));
         }
         return res;
     }

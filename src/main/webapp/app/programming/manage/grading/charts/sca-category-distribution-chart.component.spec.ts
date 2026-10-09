@@ -7,7 +7,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { CategoryIssuesMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { TumUiChartSelectEvent } from '@tumaet/ui-angular';
+import { TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 
 describe('SCA category distribution chart', () => {
     let component: ScaCategoryDistributionChartComponent;
@@ -153,7 +153,7 @@ describe('SCA category distribution chart', () => {
     });
 
     describe('test chart interaction', () => {
-        let event: TumUiChartSelectEvent;
+        let event: TumAetUiChartSelectEvent;
         let emitStub: ReturnType<typeof vi.spyOn>;
         beforeEach(() => (emitStub = vi.spyOn(component.scaCategoryFilter, 'emit').mockImplementation(() => {})));
         afterEach(() => vi.restoreAllMocks());

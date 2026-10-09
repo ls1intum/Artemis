@@ -5,13 +5,9 @@ import java.net.URISyntaxException;
 import org.junit.jupiter.api.DynamicContainer;
 import org.junit.jupiter.api.TestFactory;
 
-import de.tum.in.test.api.AddTrustedPackage;
-import de.tum.in.test.api.BlacklistPath;
-import de.tum.in.test.api.PathType;
-import de.tum.in.test.api.StrictTimeout;
-import de.tum.in.test.api.WhitelistPath;
-import de.tum.in.test.api.jupiter.Public;
-import de.tum.in.test.api.structural.MethodTestProvider;
+import de.tum.cit.ase.ares.api.StrictTimeout;
+import de.tum.cit.ase.ares.api.jupiter.Public;
+import de.tum.cit.ase.ares.api.structural.MethodTestProvider;
 
 /**
  * @author Stephan Krusche
@@ -21,9 +17,8 @@ import de.tum.in.test.api.structural.MethodTestProvider;
  * and annotations, based on its definition in the structure oracle (test.json)
  */
 @Public
-@WhitelistPath("target") // mainly for Artemis
-@BlacklistPath("target/test-classes") // prevent access to test-related classes and resources
-@AddTrustedPackage("kotlin.**")
+// The fully qualified name is required, because the exercise itself contains a class named Policy
+@de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")
 class MethodTest extends MethodTestProvider {
 
     /**

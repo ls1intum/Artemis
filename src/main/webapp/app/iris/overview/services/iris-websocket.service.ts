@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { IrisChatWebsocketDTO } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 import { IrisCommand, IrisCommandAckDTO } from 'app/iris/shared/entities/iris-command.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -8,15 +8,15 @@ import { Observable, Subject, Subscription } from 'rxjs';
 type SubscribedChannel<T> = { wsSubscription: Subscription; subject: Subject<T> };
 
 /** STOMP destination the client publishes command acknowledgements to (handled server-side by IrisCommandWebsocketController). */
-const COMMAND_ACK_DESTINATION = '/topic/iris/command-ack';
+const COMMAND_ACK_DESTINATION = '/app/iris/command-ack';
 
-/** Suffix appended to the per-session Iris topic for command requests. Mirrors the server's IrisCommandService.COMMAND_TOPIC_SUFFIX. */
+/** Suffix appended to the per-session Iris topic for command requests. Mirrors the server's IrisWebsocketTopics.SESSION_COMMANDS. */
 const COMMAND_TOPIC_SUFFIX = '/commands';
 
 /**
  * The IrisWebsocketService handles the websocket communication for receiving messages in dedicated channels.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class IrisWebsocketService implements OnDestroy {
     protected websocketService = inject(WebsocketService);
 

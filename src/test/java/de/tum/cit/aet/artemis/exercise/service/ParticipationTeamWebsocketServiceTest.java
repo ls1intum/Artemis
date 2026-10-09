@@ -1,12 +1,13 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.RETURNS_MOCKS;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -21,8 +22,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -126,32 +130,52 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubscribeToParticipationTeamWebsocketTopic() {
-        participationTeamWebsocketService.subscribe(participation.getId(), getStompHeaderAccessorMock("fakeSessionId"));
-        verify(websocketMessagingService).sendMessage(websocketTopic(participation), List.of());
+        participationTeamWebsocketService.subscribe(participation.getId(), "fakeSessionId");
+        verify(websocketMessagingService).sendMessage(topic(websocketTopic(participation)), eq(List.of()));
         assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Session was added to destination tracker.").hasSize(1);
         assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Destination in tracker is correct.").containsValue(websocketTopic(participation));
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testIgnoresSubscriptionEventsThatWereNotAuthorized() {
+        var headers = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+        headers.setSessionId("rejected-session");
+        headers.setSubscriptionId("rejected-subscription");
+        headers.setDestination(websocketTopic(teamTextParticipation));
+        headers.setUser(getPrincipalMock("student2"));
+        var event = new SessionSubscribeEvent(this, MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders()), headers.getUser());
+
+        participationTeamWebsocketService.handleSubscribe(event);
+
+        assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).isEmpty();
+        verify(websocketMessagingService, never()).sendMessage(topic(websocketTopic(teamTextParticipation)), any(Object.class));
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTriggerSendOnlineTeamMembers() {
-        participationTeamWebsocketService.triggerSendOnlineTeamStudents(participation.getId());
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(websocketTopic(participation), List.of());
+        participationTeamWebsocketService.triggerSendOnlineTeamStudents(teamTextParticipation.getId(), getPrincipalMock("student1"));
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(topic(websocketTopic(teamTextParticipation)), eq(List.of()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testTriggerSendOnlineTeamMembersIgnoresNonMembers() {
+        participationTeamWebsocketService.triggerSendOnlineTeamStudents(teamTextParticipation.getId(), getPrincipalMock("student2"));
+        verify(websocketMessagingService, after(1000).never()).sendMessage(topic(websocketTopic(teamTextParticipation)), any(Object.class));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUnsubscribeFromParticipationTeamWebsocketTopic() {
-        StompHeaderAccessor stompHeaderAccessor1 = getStompHeaderAccessorMock("fakeSessionId1");
-        StompHeaderAccessor stompHeaderAccessor2 = getStompHeaderAccessorMock("fakeSessionId2");
+        participationTeamWebsocketService.subscribe(participation.getId(), "fakeSessionId1");
+        participationTeamWebsocketService.subscribe(participation.getId(), "fakeSessionId2");
+        participationTeamWebsocketService.unsubscribe("fakeSessionId1");
 
-        participationTeamWebsocketService.subscribe(participation.getId(), stompHeaderAccessor1);
-        participationTeamWebsocketService.subscribe(participation.getId(), stompHeaderAccessor2);
-        participationTeamWebsocketService.unsubscribe(stompHeaderAccessor1.getSessionId());
-
-        verify(websocketMessagingService, timeout(2000).times(3)).sendMessage(websocketTopic(participation), List.of());
+        verify(websocketMessagingService, timeout(2000).times(3)).sendMessage(topic(websocketTopic(participation)), eq(List.of()));
         assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Session was removed from destination tracker.").hasSize(1);
-        assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Correct session was removed.").containsKey(stompHeaderAccessor2.getSessionId());
+        assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Correct session was removed.").containsKey("fakeSessionId2");
     }
 
     @Test
@@ -162,7 +186,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         // when we submit a patch ...
         participationTeamWebsocketService.patchModelingSubmission(participation.getId(), patch, getPrincipalMock("student1"));
         // the patch should be broadcast.
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(websocketTopic(participation), List.of());
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(topic(websocketTopic(participation)), eq(List.of()));
     }
 
     @Test
@@ -173,7 +197,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         // when we submit a patch, but with the wrong user ...
         participationTeamWebsocketService.patchModelingSubmission(participation.getId(), patch, getPrincipalMock("student2"));
         // the patch should not be broadcast.
-        verify(websocketMessagingService, after(1000).never()).sendMessage(websocketTopic(participation), List.of());
+        verify(websocketMessagingService, after(1000).never()).sendMessage(topic(websocketTopic(participation)), eq(List.of()));
     }
 
     @Test
@@ -186,7 +210,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         // the submission should be handled by the service (i.e. saved), ...
         verify(modelingSubmissionService, timeout(2000).times(1)).handleModelingSubmission(any(), any(), any(), isNull());
         // but it should NOT be broadcast (sync is handled with patches only).
-        verify(websocketMessagingService, after(1000).never()).sendMessage(websocketTopic(teamModelingParticipation), List.of());
+        verify(websocketMessagingService, after(1000).never()).sendMessage(topic(websocketTopic(teamModelingParticipation)), eq(List.of()));
     }
 
     @Test
@@ -199,7 +223,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         // the submission is NOT saved ...
         verify(modelingSubmissionService, after(1000).never()).handleModelingSubmission(any(), any(), any(), isNull());
         // it is also not broadcast.
-        verify(websocketMessagingService, after(1000).never()).sendMessage(websocketTopic(teamModelingParticipation), List.of());
+        verify(websocketMessagingService, after(1000).never()).sendMessage(topic(websocketTopic(teamModelingParticipation)), eq(List.of()));
     }
 
     @Test
@@ -212,7 +236,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         // the submission should be handled by the service (i.e. saved), ...
         verify(textSubmissionService, timeout(2000).times(1)).handleTextSubmission(any(), any(), any(), isNull());
         // and it should be broadcast (unlike modeling exercises).
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(websocketTopic(teamTextParticipation), List.of());
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(topic(websocketTopic(teamTextParticipation)), eq(List.of()));
     }
 
     @Test
@@ -223,7 +247,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         participationTeamWebsocketService.updateTextSubmission(teamTextParticipation.getId(), update, getPrincipalMock("student1"));
 
         ArgumentCaptor<Object> payloadCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(websocketMessagingService, timeout(2000)).sendMessage(eq(websocketTopic(teamTextParticipation) + "/text-submissions"), payloadCaptor.capture());
+        verify(websocketMessagingService, timeout(2000)).sendMessage(topic(websocketTopic(teamTextParticipation) + "/text-submissions"), payloadCaptor.capture());
         assertThat(payloadCaptor.getValue()).isInstanceOf(SubmissionSyncPayloadDTO.class);
         SubmissionSyncPayloadDTO payload = (SubmissionSyncPayloadDTO) payloadCaptor.getValue();
 
@@ -244,7 +268,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
                 getPrincipalMock("student1"));
 
         ArgumentCaptor<Object> payloadCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(websocketMessagingService, timeout(2000)).sendMessage(eq(websocketTopic(teamTextParticipation) + "/text-submissions"), payloadCaptor.capture());
+        verify(websocketMessagingService, timeout(2000)).sendMessage(topic(websocketTopic(teamTextParticipation) + "/text-submissions"), payloadCaptor.capture());
         Long assessedSubmissionId = ((SubmissionSyncPayloadDTO) payloadCaptor.getValue()).submission().id();
         assertThat(assessedSubmissionId).isNotNull();
 
@@ -256,7 +280,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         TeamTextSubmissionUpdateDTO update = new TeamTextSubmissionUpdateDTO(assessedSubmissionId, "Second", Language.ENGLISH, true);
         participationTeamWebsocketService.updateTextSubmission(teamTextParticipation.getId(), update, getPrincipalMock("student1"));
 
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(eq(websocketTopic(teamTextParticipation) + "/text-submissions"), payloadCaptor.capture());
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(topic(websocketTopic(teamTextParticipation) + "/text-submissions"), payloadCaptor.capture());
         SubmissionSyncPayloadDTO payload = (SubmissionSyncPayloadDTO) payloadCaptor.getAllValues().getLast();
         assertThat(payload.submission().id()).as("A result-bearing submission is not overwritten").isNotEqualTo(assessedSubmissionId);
         assertThat(payload.submission().text()).isEqualTo("Second");
@@ -269,14 +293,15 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStartTyping() {
-        participationTeamWebsocketService.startTyping(participation.getId(), getPrincipalMock("student1"));
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(websocketTopic(participation), List.of());
+        participationTeamWebsocketService.startTyping(teamTextParticipation.getId(), getPrincipalMock("student1"));
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(topic(websocketTopic(teamTextParticipation)), eq(List.of()));
     }
 
-    private StompHeaderAccessor getStompHeaderAccessorMock(String fakeSessionId) {
-        StompHeaderAccessor stompHeaderAccessor = mock(StompHeaderAccessor.class, RETURNS_MOCKS);
-        when(stompHeaderAccessor.getSessionId()).thenReturn(fakeSessionId);
-        return stompHeaderAccessor;
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testStartTypingIgnoresNonMembers() {
+        participationTeamWebsocketService.startTyping(teamTextParticipation.getId(), getPrincipalMock("student2"));
+        verify(websocketMessagingService, after(1000).never()).sendMessage(topic(websocketTopic(teamTextParticipation)), any(Object.class));
     }
 
     private Principal getPrincipalMock(String username) {

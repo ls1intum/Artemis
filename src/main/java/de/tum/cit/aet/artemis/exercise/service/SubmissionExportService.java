@@ -175,7 +175,7 @@ public abstract class SubmissionExportService {
     private List<Path> exportSubmissionsFromParticipationsOptionallyZipped(Exercise exercise, List<StudentParticipation> participations, boolean enableFilterAfterDueDate,
             @Nullable ZonedDateTime lateSubmissionFilter, boolean zipSubmissions, @NonNull Path outputDir, List<String> exportErrors, List<ArchivalReportEntry> reportData) {
 
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
 
         // Create unique name for directory
         String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();

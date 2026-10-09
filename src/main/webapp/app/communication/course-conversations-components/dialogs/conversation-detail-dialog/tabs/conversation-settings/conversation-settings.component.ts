@@ -33,6 +33,11 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     imports: [TranslateDirective, DeleteButtonDirective, FaIconComponent],
 })
 export class ConversationSettingsComponent implements OnInit, OnDestroy {
+    private dialogService = inject(DialogService);
+    private channelService = inject(ChannelService);
+    private groupChatService = inject(GroupChatService);
+    private alertService = inject(AlertService);
+
     private ngUnsubscribe = new Subject<void>();
 
     activeConversation = input.required<ConversationDTO>();
@@ -57,11 +62,6 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     readonly canChangeChannelArchivalState = signal<boolean>(undefined!);
     readonly canChangeChannelPrivacyState = signal<boolean>(undefined!);
     readonly canDeleteChannel = signal<boolean>(undefined!);
-
-    private dialogService = inject(DialogService);
-    private channelService = inject(ChannelService);
-    private groupChatService = inject(GroupChatService);
-    private alertService = inject(AlertService);
 
     ngOnInit(): void {
         const conversation = this.activeConversation();

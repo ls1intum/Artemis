@@ -43,10 +43,13 @@
                 <div>
                     <!-- in case of existing result-->
                     <a
-                        [class.disabled]="busy()"
+                        [attr.aria-disabled]="busy()"
+                        [class.pointer-events-none]="busy()"
                         [queryParams]="{ testRun: this.isTestRun() }"
                         [routerLink]="getAssessmentLink(exercise(), submission(), result()!.id)"
-                        class="btn btn-primary btn-sm mb-1"
+                        tumAetUiButton
+                        size="small"
+                        class="mb-1"
                     >
                         <fa-icon [fixedWidth]="true" [icon]="faFolderOpen" />
                         <span jhiTranslate="artemisApp.studentExamDetail.openLatestAssessment"></span>
@@ -57,10 +60,13 @@
                 <div>
                     <!-- in case of new result-->
                     <a
-                        [class.disabled]="busy()"
+                        [attr.aria-disabled]="busy()"
+                        [class.pointer-events-none]="busy()"
                         [queryParams]="{ testRun: this.isTestRun() }"
                         [routerLink]="getAssessmentLink(exercise(), submission())"
-                        class="btn btn-primary btn-sm mb-1"
+                        tumAetUiButton
+                        size="small"
+                        class="mb-1"
                     >
                         <fa-icon [fixedWidth]="true" [icon]="faFolderOpen" />
                         {{ 'artemisApp.assessment.dashboard.actions.assess' | artemisTranslate }}
@@ -74,7 +80,14 @@
                     (exercise().assessmentType === AssessmentType.AUTOMATIC && exercise().allowComplaintsForAutomaticAssessments === true))
             ) {
                 <div>
-                    <a [class.disabled]="busy()" [routerLink]="getAssessmentLink(exercise(), submission())" class="btn btn-primary btn-sm mb-1">
+                    <a
+                        [attr.aria-disabled]="busy()"
+                        [class.pointer-events-none]="busy()"
+                        [routerLink]="getAssessmentLink(exercise(), submission())"
+                        tumAetUiButton
+                        size="small"
+                        class="mb-1"
+                    >
                         <fa-icon [fixedWidth]="true" [icon]="faFolderOpen" />
                         {{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}
                     </a>

@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { RangeSliderComponent } from 'app/shared-ui/range-slider/range-slider.component';
 
 describe('RangeSliderComponent', () => {
@@ -9,6 +11,7 @@ describe('RangeSliderComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [RangeSliderComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(RangeSliderComponent);
@@ -24,6 +27,17 @@ describe('RangeSliderComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('gives each range thumb a distinct translated accessible name', () => {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockImplementation((key) =>
+            key === 'accessibility.rangeMinimum' ? 'Minimum selected value' : 'Maximum selected value',
+        );
+        fixture.detectChanges();
+
+        const inputs: NodeListOf<HTMLInputElement> = fixture.nativeElement.querySelectorAll('input[type="range"]');
+        expect(inputs[0].getAttribute('aria-label')).toBe('Minimum selected value');
+        expect(inputs[1].getAttribute('aria-label')).toBe('Maximum selected value');
     });
 
     it('should emit the updated max value on (change)', () => {

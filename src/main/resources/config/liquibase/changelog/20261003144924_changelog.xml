@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Prompt-cache usage per LLM request. The cached and cache-write tokens are part of num_input_tokens and are
+         billed at their own rates, so the course cost needs them. Existing rows had no cache usage recorded: 0. -->
+    <changeSet id="20261003144924-01-add-llm-token-usage-request-cache-columns" author="bassner">
+        <addColumn tableName="llm_token_usage_request">
+            <column name="num_cached_input_tokens" type="int" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cost_per_million_cached_input_tokens" type="float(12)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="num_cache_write_input_tokens" type="int" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cost_per_million_cache_write_input_tokens" type="float(12)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Keep the LLM cost-per-course sum covered: the sum now also reads the four cache columns. The new index is created
+         before the old one is dropped, because trace_id stays the leftmost column and MySQL needs an index on it for the
+         FK_LLM_TOKEN_USAGE_REQUEST_ON_TRACE foreign key (see 20260728120000-09). -->
+    <changeSet id="20261003144924-02-create-idx-llm-token-usage-request-trace-cost-cache" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists indexName="idx_llm_token_usage_request_trace_cost_cache" tableName="llm_token_usage_request"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="idx_llm_token_usage_request_trace_cost_cache" tableName="llm_token_usage_request">
+            <column name="trace_id"/>
+            <column name="num_input_tokens"/>
+            <column name="cost_per_million_input_tokens"/>
+            <column name="num_output_tokens"/>
+            <column name="cost_per_million_output_tokens"/>
+            <column name="num_cached_input_tokens"/>
+            <column name="cost_per_million_cached_input_tokens"/>
+            <column name="num_cache_write_input_tokens"/>
+            <column name="cost_per_million_cache_write_input_tokens"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20261003144924-03-drop-idx-llm-token-usage-request-trace-cost" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <indexExists indexName="idx_llm_token_usage_request_trace_cost" tableName="llm_token_usage_request"/>
+        </preConditions>
+        <dropIndex indexName="idx_llm_token_usage_request_trace_cost" tableName="llm_token_usage_request"/>
+        <rollback>
+            <createIndex indexName="idx_llm_token_usage_request_trace_cost" tableName="llm_token_usage_request">
+                <column name="trace_id"/>
+                <column name="num_input_tokens"/>
+                <column name="cost_per_million_input_tokens"/>
+                <column name="num_output_tokens"/>
+                <column name="cost_per_million_output_tokens"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

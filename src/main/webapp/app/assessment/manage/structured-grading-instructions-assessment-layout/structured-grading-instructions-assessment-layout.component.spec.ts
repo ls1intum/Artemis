@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { computed, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
@@ -165,7 +165,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
 
         /** The kit checkbox renders a real, visually hidden input that covers it, so a click always lands there. */
         function checkboxInput(): HTMLInputElement {
-            return fixture.debugElement.query(By.directive(TumUiCheckboxComponent)).query(By.css('input[type="checkbox"]')).nativeElement;
+            return fixture.debugElement.query(By.directive(TumAetUiCheckboxComponent)).query(By.css('input[type="checkbox"]')).nativeElement;
         }
 
         function clickCheckbox(): void {
@@ -174,7 +174,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         }
 
         it('should render a checkbox instead of the usage count', () => {
-            expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).not.toBeNull();
+            expect(fixture.debugElement.query(By.directive(TumAetUiCheckboxComponent))).not.toBeNull();
             expect(fixture.debugElement.query(By.css('jhi-help-icon'))).toBeNull();
         });
 
@@ -225,7 +225,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
 
             expect(host.unapplyInstruction).not.toHaveBeenCalled();
             expect(checkboxInput().checked).toBe(true);
-            expect(fixture.debugElement.query(By.css('.tum-ui-checkbox-icon'))).not.toBeNull();
+            expect(fixture.debugElement.query(By.css('.tumaet-ui-checkbox-icon'))).not.toBeNull();
 
             // Clicking again must ask to un-apply once more instead of applying a duplicate feedback.
             clickCheckbox();
@@ -245,7 +245,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             fixture.detectChanges();
 
             expect(checkboxInput().checked).toBe(false);
-            expect(fixture.debugElement.query(By.css('.tum-ui-checkbox-icon'))).toBeNull();
+            expect(fixture.debugElement.query(By.css('.tumaet-ui-checkbox-icon'))).toBeNull();
         });
 
         /** The draggable attribute of the row that carries the instruction. */
@@ -321,7 +321,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         fixture.detectChanges();
 
         expect(comp.selectable()).toBe(false);
-        expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).toBeNull();
+        expect(fixture.debugElement.query(By.directive(TumAetUiCheckboxComponent))).toBeNull();
         expect(fixture.debugElement.query(By.css('jhi-help-icon'))).not.toBeNull();
     });
 });

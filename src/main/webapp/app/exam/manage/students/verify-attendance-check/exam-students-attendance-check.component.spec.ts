@@ -73,6 +73,22 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         expect(component.hasExamStarted()).toBe(true);
     });
 
+    it('should not load and not wait forever when the exam has not started', () => {
+        const startDate = examWithCourse.startDate;
+        examWithCourse.startDate = dayjs().add(1, 'hour');
+        try {
+            const examServiceSpy = vi.spyOn(examManagementService, 'verifyExamUserAttendance');
+
+            fixture.detectChanges();
+
+            expect(component.hasExamStarted()).toBe(false);
+            expect(examServiceSpy).not.toHaveBeenCalled();
+            expect(component.isLoading()).toBe(false);
+        } finally {
+            examWithCourse.startDate = startDate;
+        }
+    });
+
     it('should test on error', () => {
         component.onError('ErrorString');
         expect(component.isTransitioning()).toBe(false);

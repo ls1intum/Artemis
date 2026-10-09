@@ -37,7 +37,6 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
                 LEFT JOIN FETCH p.auxiliaryRepositories
                 LEFT JOIN FETCH p.tasks t
                 LEFT JOIN FETCH t.testCases
-                LEFT JOIN FETCH p.plagiarismDetectionConfig
                 LEFT JOIN FETCH p.gradingCriteria
             WHERE p.id = :exerciseId
             """)

@@ -135,7 +135,7 @@ describe('ActivateComponent', () => {
             templateFixture.detectChanges();
         });
 
-        const messages = () => [...templateFixture.nativeElement.querySelectorAll('tum-ui-message')] as HTMLElement[];
+        const messages = () => [...templateFixture.nativeElement.querySelectorAll('tumaet-ui-message')] as HTMLElement[];
 
         it('shows nothing until the activation call has answered', () => {
             expect(messages()).toHaveLength(0);

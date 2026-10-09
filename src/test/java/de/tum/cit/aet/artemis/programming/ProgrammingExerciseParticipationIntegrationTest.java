@@ -1121,7 +1121,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         course.setMaxPoints(120);
         course.setTimeZone(COURSE_TIME_ZONE);
         course.setCourseInformationSharingMessagingCodeOfConduct(COURSE_CODE_OF_CONDUCT);
-        return courseRepository.save(course);
+        return courseUtilService.saveWithConfigurations(course);
     }
 
     /**

@@ -4,14 +4,33 @@
         <div class="d-flex justify-content-between">
             @for (formStatusSection of formStatusSections(); track formStatusSection.title; let index = $index) {
                 <div class="d-flex flex-column align-items-center" id="status-bar-section-item-{{ index }}">
-                    <div class="form-status-circle border rounded-circle" (click)="scrollToHeadline(formStatusSection.title)">
+                    <div
+                        class="form-status-circle border rounded-circle"
+                        [attr.aria-label]="formStatusSection.title | artemisTranslate"
+                        (click)="scrollToHeadline(formStatusSection.title)"
+                        #keyboardAction7
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction7.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction7.click() : undefined"
+                    >
                         <jhi-checklist-check
                             [checkAttribute]="formStatusSection.valid"
                             [iconColor]="formStatusSection.empty && formStatusSection.valid ? 'var(--bs-gray)' : undefined"
                             class="fa-sm position-absolute top-50 start-50 translate-middle"
                         />
                     </div>
-                    <a (click)="scrollToHeadline(formStatusSection.title)" class="d-none d-sm-inline link-primary">
+                    <a
+                        (click)="scrollToHeadline(formStatusSection.title)"
+                        class="d-none d-sm-inline link-primary"
+                        #keyboardAction14
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction14.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction14.click() : undefined"
+                    >
                         {{ formStatusSection.title | artemisTranslate }}
                     </a>
                 </div>

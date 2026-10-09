@@ -75,7 +75,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
         var programmingExercise = programmingExerciseRepository.findAllByCourseId(course.getId()).getFirst();
         // Athena grading feedback is only offered for manually assessed programming exercises; automatically
         // assessed ones rely on unit-test feedback.
@@ -109,7 +109,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
         var programmingExercise = programmingExerciseRepository.findAllByCourseId(course.getId()).getFirst();
         // Athena grading feedback is only offered for manually assessed programming exercises; automatically
         // assessed ones rely on unit-test feedback.

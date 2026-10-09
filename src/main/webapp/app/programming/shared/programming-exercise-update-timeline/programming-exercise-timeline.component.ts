@@ -15,7 +15,6 @@ import { AutomaticAfterDueDatePreviewRequest, ProgrammingExerciseService } from 
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { NgStyle } from '@angular/common';
 import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
@@ -27,7 +26,7 @@ import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-da
 @Component({
     selector: 'jhi-programming-exercise-timeline',
     templateUrl: './programming-exercise-timeline.component.html',
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, TimelineComponent, ConfirmDialogModule, ExerciseGroupDateNoticeComponent],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, TimelineComponent, ConfirmDialogModule, ExerciseGroupDateNoticeComponent],
     providers: [ConfirmationService],
 })
 export class ProgrammingExerciseTimelineComponent implements OnInit {

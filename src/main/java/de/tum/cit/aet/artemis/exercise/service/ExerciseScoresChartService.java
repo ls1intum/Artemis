@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.assessment.domain.TeamScore;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresAggregatedInformation;
@@ -88,18 +89,20 @@ public class ExerciseScoresChartService {
             Map<Long, StudentScore> individualExerciseIdToStudentScore, Map<Long, TeamScore> teamExerciseIdToTeamScore, Exercise exercise) {
         ExerciseScoresAggregatedInformation aggregatedInformation = exerciseIdToAggregatedInformation.get(exercise.getId());
 
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
+
         double averageScoreAchieved = 0D;
         double maxScoreAchieved = 0D;
 
         if (aggregatedInformation != null && aggregatedInformation.averageScoreAchieved() != null && aggregatedInformation.maxScoreAchieved() != null) {
-            averageScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.averageScoreAchieved(), exercise.getCourseViaExerciseGroupOrCourseMember());
-            maxScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.maxScoreAchieved(), exercise.getCourseViaExerciseGroupOrCourseMember());
+            averageScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.averageScoreAchieved(), course);
+            maxScoreAchieved = roundScoreSpecifiedByCourseSettings(aggregatedInformation.maxScoreAchieved(), course);
         }
 
         ParticipantScore participantScore = exercise.getMode().equals(ExerciseMode.INDIVIDUAL) ? individualExerciseIdToStudentScore.get(exercise.getId())
                 : teamExerciseIdToTeamScore.get(exercise.getId());
         final double scoreOfStudent = participantScore == null || participantScore.getLastRatedScore() == null ? 0D
-                : roundScoreSpecifiedByCourseSettings(participantScore.getLastRatedScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
+                : roundScoreSpecifiedByCourseSettings(participantScore.getLastRatedScore(), course);
 
         return ExerciseScoresDTO.of(exercise, scoreOfStudent, averageScoreAchieved, maxScoreAchieved);
     }

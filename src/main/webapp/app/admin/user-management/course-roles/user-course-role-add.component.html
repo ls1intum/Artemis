@@ -1,0 +1,49 @@
+<div class="mt-4 border-t pt-4" role="group" aria-labelledby="user-course-role-add-heading" data-testid="user-course-role-add">
+    <h3 id="user-course-role-add-heading" class="mb-3! mt-0! text-base! font-semibold!" jhiTranslate="artemisApp.userManagement.courseRoles.add.title"></h3>
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_14rem_auto] md:items-end">
+        <tumaet-ui-form-field controlId="user-course-role-add-course">
+            <span tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.courseRoles.add.course"></span>
+            <!-- The enter key must not submit the surrounding user form. -->
+            <tumaet-ui-autocomplete
+                class="w-full"
+                optionLabel="label"
+                data-testid="user-course-role-add-course"
+                [placeholder]="'artemisApp.userManagement.courseRoles.add.coursePlaceholder' | artemisTranslate"
+                [emptyMessage]="'artemisApp.userManagement.courseRoles.add.noCourseFound' | artemisTranslate"
+                [minLength]="2"
+                [suggestions]="courseSuggestions()"
+                [disabled]="disabled() || isSaving()"
+                [ngModel]="courseInput()"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="onCourseChange($event)"
+                (searchRequested)="searchCourses($event)"
+                (keydown.enter)="$event.preventDefault()"
+            />
+        </tumaet-ui-form-field>
+        <tumaet-ui-form-field controlId="user-course-role-add-role">
+            <span tumAetUiFormFieldLabel jhiTranslate="artemisApp.userManagement.courseRoles.add.role"></span>
+            <tumaet-ui-select
+                class="w-full"
+                optionLabel="label"
+                optionValue="value"
+                data-testid="user-course-role-add-role"
+                [options]="roleOptions()"
+                [disabled]="disabled() || isSaving()"
+                [ngModel]="role()"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="onRoleChange($event)"
+            />
+        </tumaet-ui-form-field>
+        <tumaet-ui-button variant="outlined" [icon]="faPlus" [disabled]="!canAdd()" [loading]="isSaving()" data-testid="user-course-role-add-button" (clicked)="add()">
+            {{ 'entity.action.add' | artemisTranslate }}
+        </tumaet-ui-button>
+    </div>
+    @if (alreadyHasRole()) {
+        <p
+            class="mt-2 mb-0 text-sm text-muted-color"
+            role="status"
+            data-testid="user-course-role-add-duplicate"
+            jhiTranslate="artemisApp.userManagement.courseRoles.add.alreadyHasRole"
+        ></p>
+    }
+</div>

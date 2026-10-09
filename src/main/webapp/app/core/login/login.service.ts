@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
@@ -6,14 +6,14 @@ import { finalize } from 'rxjs/operators';
 import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
 import { AccountService } from 'app/core/auth/account.service';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class LoginService {
-    logoutWasForceful = false;
-
     private accountService = inject(AccountService);
     private authServerProvider = inject(AuthServerProvider);
     private router = inject(Router);
     private alertService = inject(AlertService);
+
+    logoutWasForceful = false;
 
     /**
      * Login the user with the given credentials.

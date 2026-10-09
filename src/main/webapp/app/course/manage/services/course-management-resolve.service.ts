@@ -1,11 +1,11 @@
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable, filter, map, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseManagementResolve implements Resolve<Course> {
     private courseManagementService = inject(CourseManagementService);
 

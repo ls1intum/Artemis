@@ -1,9 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class StaticContentService {
     private http = inject(HttpClient);
 

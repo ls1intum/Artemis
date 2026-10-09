@@ -2,7 +2,7 @@
     id="course-{{ courseId() }}-header"
     class="course-card-header text-white"
     [ngClass]="{ 'rounded-bottom-4': archiveMode(), 'archive-mode-card': archiveMode(), 'dual-zone-card': showArchiveManagementAction() }"
-    [ngStyle]="{ '--background-color-for-hover': color(), '--title-color': titleColor() }"
+    [style]="{ '--background-color-for-hover': color(), '--title-color': titleColor() }"
 >
     <ng-template #courseIdentity>
         <div class="position-relative">

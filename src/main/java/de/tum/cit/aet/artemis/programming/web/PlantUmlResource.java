@@ -19,15 +19,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.programming.service.PlantUmlService;
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("authoring/uml-rendering")
+@FeatureUsage(UserFeature.EXERCISE_DETAILS)
 @RestController
 @RequestMapping("api/programming/plantuml/")
 public class PlantUmlResource {
@@ -51,6 +54,7 @@ public class PlantUmlResource {
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the PNG
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("png")
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> generatePng(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
@@ -69,6 +73,7 @@ public class PlantUmlResource {
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the PNG
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("svg")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)

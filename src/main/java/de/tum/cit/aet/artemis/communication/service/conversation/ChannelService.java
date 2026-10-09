@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.errors.ChannelNameDuplicateException;
@@ -190,7 +190,7 @@ public class ChannelService {
             conversationParticipantOfRequestingUser = conversationParticipantRepository.save(conversationParticipantOfRequestingUser);
             savedChannel.getConversationParticipants().add(conversationParticipantOfRequestingUser);
             savedChannel = channelRepository.save(savedChannel);
-            conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, savedChannel, Set.of(creator.get()));
+            conversationService.broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.CREATE, savedChannel, Set.of(creator.get()));
         }
         syncChannelWithWeaviate(savedChannel);
         return savedChannel;
@@ -330,7 +330,7 @@ public class ChannelService {
         channelRepository.saveAll(channelsToCreate);
         conversationParticipantRepository.saveAll(conversationParticipants);
         channelsToCreate.forEach(channel -> {
-            conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, channel, Set.of(creator));
+            conversationService.broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.CREATE, channel, Set.of(creator));
             syncChannelWithWeaviate(channel);
         });
     }

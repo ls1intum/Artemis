@@ -25,9 +25,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatCreationDTO;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.auth.GroupChatA
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.AddedToChannelNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.RemovedFromChannelNotification;
@@ -43,7 +44,7 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("conversations/group-chats")
+@FeatureUsage(UserFeature.DIRECT_MESSAGES)
 @RestController
 @RequestMapping("api/communication/courses/")
 public class GroupChatResource extends ConversationManagementResource {
@@ -111,7 +112,7 @@ public class GroupChatResource extends ConversationManagementResource {
         courseNotificationService.sendCourseNotification(addedToChannelNotification,
                 chatMembers.stream().filter(user -> !Objects.equals(user.getId(), requestingUser.getId())).toList());
 
-        conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, groupChat, chatMembers);
+        conversationService.broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.CREATE, groupChat, chatMembers);
 
         return ResponseEntity.created(new URI("/api/group-chats/" + groupChat.getId())).body(conversationDTOService.convertGroupChatToDto(requestingUser, groupChat));
     }

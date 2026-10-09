@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
@@ -11,7 +11,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-external-user-password-reset-modal',
     templateUrl: './external-user-password-reset-modal.component.html',
-    imports: [TranslateDirective, TumUiButtonComponent, TumUiDialogComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, TumAetUiButtonComponent, TumAetUiDialogComponent, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExternalUserPasswordResetModalComponent {

@@ -11,12 +11,15 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TextareaCounterComponent } from 'app/shared-ui/textarea/textarea-counter.component';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-complaint-form',
     templateUrl: './complaints-form.component.html',
     styleUrls: ['../complaints.scss'],
-    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe, TextareaCounterComponent],
+    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe, TextareaCounterComponent, TumAetUiButtonDirective],
+    // A custom element is inline by default; its block child then splits it, so the width and margins of the card would not apply.
+    host: { class: 'block' },
 })
 export class ComplaintsFormComponent implements OnInit {
     private complaintService = inject(ComplaintService);
@@ -80,9 +83,11 @@ export class ComplaintsFormComponent implements OnInit {
 
     /**
      * Calculates and returns the length of the entered text.
+     *
+     * Reads the model rather than looking the text area up by id: the exam summary shows several complaint areas on one page, so the
+     * id is not unique, and the first text area in the document is not necessarily the one of this form.
      */
     complaintTextLength(): number {
-        const textArea: HTMLTextAreaElement = document.querySelector('#complainTextArea') as HTMLTextAreaElement;
-        return textArea.value.length;
+        return this.complaintText?.length ?? 0;
     }
 }

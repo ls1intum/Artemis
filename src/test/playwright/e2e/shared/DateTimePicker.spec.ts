@@ -14,8 +14,12 @@ import { admin } from '../../support/users';
  * invalid-input handling, validity recovery and clearing.
  */
 
-function pickerInput(page: Page, pickerId: string): Locator {
-    return page.locator(`jhi-date-time-picker#${pickerId} input#date-input-field`);
+/**
+ * The picker's text input. A form that labels its pickers gives each input an id of its own, as the course form does;
+ * otherwise the input keeps the picker's default id.
+ */
+function pickerInput(page: Page, pickerId: string, inputId = 'date-input-field'): Locator {
+    return page.locator(`jhi-date-time-picker#${pickerId} input#${inputId}`);
 }
 
 function pickerWrapper(page: Page, pickerId: string): Locator {
@@ -78,7 +82,7 @@ test.describe('Date-time picker', { tag: '@fast' }, () => {
         await login(admin, '/course-management/new');
 
         const pickerId = 'field_startDate';
-        const input = pickerInput(page, pickerId);
+        const input = pickerInput(page, pickerId, 'field_startDate_input');
         const wrapper = pickerWrapper(page, pickerId);
         const inputRow = pickerInputRow(page, pickerId);
         await expect(input).toBeVisible();

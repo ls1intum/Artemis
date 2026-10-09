@@ -1,51 +1,63 @@
-import {
-    Component,
-    InputSignal,
-    ModelSignal,
-    OnInit,
-    OutputEmitterRef,
-    Signal,
-    ViewEncapsulation,
-    WritableSignal,
-    computed,
-    effect,
-    inject,
-    input,
-    model,
-    output,
-    signal,
-} from '@angular/core';
+import { Subscription } from 'rxjs';
+import { Component, InputSignal, ModelSignal, OnInit, OutputEmitterRef, Signal, WritableSignal, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faBan, faThLarge } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { CapacityDisplayDTO, ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
+import {
+    TumAetUiAutoCompleteComponent,
+    type TumAetUiAutoCompleteOptionEvent,
+    TumAetUiButtonDirective,
+    TumAetUiDialogComponent,
+    TumAetUiInputNumberComponent,
+    TumAetUiMessageComponent,
+    TumAetUiTableDirective,
+    TumAetUiToggleSwitchComponent,
+} from '@tumaet/ui-angular';
 import { RouterLink } from '@angular/router';
+
+/** A room as listed by the search field; the field shows `label` and hands the suggestion back on selection. */
+export interface RoomSuggestion {
+    label: string;
+    room: RoomForDistributionDTO;
+}
 
 @Component({
     selector: 'jhi-students-room-distribution-dialog',
-    standalone: true,
     templateUrl: './students-room-distribution-dialog.component.html',
-    styleUrl: './students-room-distribution-dialog.component.scss',
-    encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, HelpIconComponent, DialogModule, ButtonModule, RouterLink],
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        HelpIconComponent,
+        RouterLink,
+        TumAetUiAutoCompleteComponent,
+        TumAetUiButtonDirective,
+        TumAetUiDialogComponent,
+        TumAetUiInputNumberComponent,
+        TumAetUiMessageComponent,
+        TumAetUiTableDirective,
+        TumAetUiToggleSwitchComponent,
+    ],
 })
 export class StudentsRoomDistributionDialogComponent implements OnInit {
+    private readonly studentsRoomDistributionService: StudentsRoomDistributionService = inject(StudentsRoomDistributionService);
+    private readonly examManagementService = inject(ExamManagementService);
+
     readonly RESERVE_FACTOR_DEFAULT_PERCENTAGE: number = 10;
 
     // Icons
     protected readonly faBan = faBan;
     protected readonly faThLarge = faThLarge;
 
-    private readonly studentsRoomDistributionService: StudentsRoomDistributionService = inject(StudentsRoomDistributionService);
     courseId: InputSignal<number> = input.required();
     exam: InputSignal<Exam> = input.required();
 
@@ -53,16 +65,27 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
     onSave: OutputEmitterRef<void> = output();
 
     // Configurable options
-    private reservePercentage: WritableSignal<number> = signal(this.RESERVE_FACTOR_DEFAULT_PERCENTAGE);
+    readonly reservePercentage: WritableSignal<number> = signal(this.RESERVE_FACTOR_DEFAULT_PERCENTAGE);
     private reserveFactor: Signal<number> = computed(() => this.reservePercentage() / 100);
     allowNarrowLayouts: WritableSignal<boolean> = signal(false);
 
     private availableRooms: Signal<RoomForDistributionDTO[]> = this.studentsRoomDistributionService.availableRooms;
     private selectedRoomsCapacity: Signal<ExamDistributionCapacityDTO> = this.studentsRoomDistributionService.capacityData;
     selectedRooms: WritableSignal<RoomForDistributionDTO[]> = signal([]);
+    /**
+     * The number of students registered for the exam. The exam of the route does not carry it, so it is loaded whenever the dialog opens.
+     * It is undefined while the request is pending and if it failed, so that no capacity check passes against an unknown number.
+     */
+    readonly registeredStudents: WritableSignal<number | undefined> = signal(undefined);
+    readonly registeredStudentsKnown: Signal<boolean> = computed(() => this.registeredStudents() !== undefined);
+    private registeredStudentsSubscription: Subscription | undefined;
+    /** Rooms offered by the search field, each with the text it is listed under. */
+    roomSuggestions: WritableSignal<RoomSuggestion[]> = signal([]);
+    /** Value of the search field. Reset after a pick so the field is empty again for the next room. */
+    roomSearchValue: WritableSignal<unknown> = signal(undefined);
     hasSelectedRooms: Signal<boolean> = computed(() => this.selectedRooms().length > 0);
     seatInfo: Signal<CapacityDisplayDTO> = computed(() => this.computeSeatInfo());
-    canSeatAllStudents: Signal<boolean> = computed(() => this.seatInfo().usableCapacity >= this.seatInfo().totalStudents);
+    canSeatAllStudents: Signal<boolean> = computed(() => this.registeredStudentsKnown() && this.seatInfo().usableCapacity >= this.seatInfo().totalStudents);
 
     constructor() {
         effect(() => {
@@ -76,7 +99,7 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
     }
 
     private computeSeatInfo(): CapacityDisplayDTO {
-        const totalStudents: number = this.exam().numberOfExamUsers ?? this.exam().examUsers?.length ?? 0;
+        const totalStudents: number = this.registeredStudents() ?? 0;
         let usableCapacity: number = this.allowNarrowLayouts() ? this.selectedRoomsCapacity().combinedMaximumCapacity : this.selectedRoomsCapacity().combinedDefaultCapacity;
         if (usableCapacity > totalStudents) {
             usableCapacity = totalStudents;
@@ -92,6 +115,17 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
 
     openDialog(): void {
         this.dialogVisible.set(true);
+
+        // A page of one student is enough: without a search term or filter, the total is the number of registered students.
+        // An opening that follows quickly on another one replaces the pending request, so an older response cannot overwrite the newer count.
+        this.registeredStudentsSubscription?.unsubscribe();
+        this.registeredStudents.set(undefined);
+        this.registeredStudentsSubscription = this.examManagementService
+            .findExamStudentsPaged(this.courseId(), this.exam().id!, { page: 0, pageSize: 1, sortingOrder: SortingOrder.ASCENDING, sortedColumn: 'login', searchTerm: '' })
+            .subscribe({
+                next: (result) => this.registeredStudents.set(result.totalElements),
+                error: () => this.registeredStudents.set(undefined),
+            });
 
         this.studentsRoomDistributionService.loadRoomsUsedInExam(this.courseId(), this.exam().id).subscribe({
             next: (usedRooms: RoomForDistributionDTO[]) => {
@@ -121,15 +155,13 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
     }
 
     /**
-     * Filters out all exam rooms that might fit the search text.
-     * This is not defined in the regular function way, because only this way does it keep the {@code this} reference,
-     * as this function is passed by reference to another component.
+     * Offers all exam rooms that might fit the search text, leaving out those that are already selected.
      *
-     * @param text$ An input text
+     * @param term The text typed into the search field
      */
-    search = (text$: Observable<string>): Observable<RoomForDistributionDTO[]> => {
-        return text$.pipe(debounceTime(200), distinctUntilChanged(), map(this.findAllMatchingRoomsForTerm));
-    };
+    searchRooms(term: string): void {
+        this.roomSuggestions.set(this.findAllMatchingRoomsForTerm(term).map((room) => ({ label: this.formatter(room), room })));
+    }
 
     private findAllMatchingRoomsForTerm = (term: string): RoomForDistributionDTO[] => {
         const trimmed = term.trim();
@@ -196,54 +228,22 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
         return `${namePart} – ${numberPart} - [${room.building}]`;
     }
 
-    emptyStringFormatter(_room: RoomForDistributionDTO): string {
-        return '';
+    onRoomSuggestionSelected(event: TumAetUiAutoCompleteOptionEvent): void {
+        this.pickSelectedRoom((event.value as RoomSuggestion).room);
     }
 
-    pickSelectedRoom(event: { item: RoomForDistributionDTO }): void {
-        const selectedRoom: RoomForDistributionDTO = event.item;
-
+    pickSelectedRoom(selectedRoom: RoomForDistributionDTO): void {
         if (this.selectedRooms().every((room) => room.id !== selectedRoom.id)) {
             this.selectedRooms.update((rooms) => [...rooms, selectedRoom]);
         }
+        this.roomSearchValue.set(undefined);
     }
 
     removeSelectedRoom(room: RoomForDistributionDTO): void {
         this.selectedRooms.update((selectedRooms) => selectedRooms.filter((selectedRoom) => room.id !== selectedRoom.id));
     }
 
-    handleReserveFactorInput(event: Event): void {
-        const input: HTMLInputElement = event.target as HTMLInputElement;
-
-        input.value = input.value.replaceAll(/\D/g, '');
-        const percentage: number = Number(input.value) || 0;
-        if (!Number.isInteger(percentage) || percentage < 0 || percentage > 100) {
-            this.resetReserveFactorText(event);
-            return;
-        }
-
-        this.reservePercentage.set(percentage);
-    }
-
-    /**
-     * Resets the reserve factor text to what is stored internally
-     *
-     * @param event an event with an input element
-     */
-    resetReserveFactorText(event: Event): void {
-        const input: HTMLInputElement = event.target as HTMLInputElement;
-        input.value = `${this.reservePercentage()}`;
-    }
-
-    selectAllTextAndOpenDropdown(focusEvent: FocusEvent): void {
-        const input = focusEvent.target as HTMLInputElement;
-        setTimeout(() => input.select(), 0);
-
-        const fakeInputEvent = new Event('input', { bubbles: true });
-        input.dispatchEvent(fakeInputEvent);
-    }
-
-    toggleNarrowLayouts(): void {
-        this.allowNarrowLayouts.update((oldValue) => !oldValue);
+    setReservePercentage(percentage: number | null): void {
+        this.reservePercentage.set(Math.min(100, Math.max(0, Math.round(percentage ?? 0))));
     }
 }

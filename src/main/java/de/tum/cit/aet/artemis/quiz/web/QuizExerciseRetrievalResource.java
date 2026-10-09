@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -54,7 +55,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("authoring/exercise-management")
+@FeatureUsage(UserFeature.QUIZ_AUTHORING)
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizExerciseRetrievalResource {
@@ -192,7 +193,9 @@ public class QuizExerciseRetrievalResource {
         setQuizBatches(user, quizExercise);
         boolean isEditable = quizExerciseService.isEditable(quizExercise);
         boolean effectiveQuizEnded = computeEffectiveQuizEnded(quizExercise);
-        QuizExerciseDetailsDTO quizExerciseDTO = QuizExerciseDetailsDTO.of(quizExercise, isEditable, effectiveQuizEnded);
+        // test exams have no common end and are evaluated when each attempt is handed in, so only real exams can be evaluated for all students at once
+        boolean canBeEvaluated = effectiveQuizEnded && !quizExercise.isTestExamExercise();
+        QuizExerciseDetailsDTO quizExerciseDTO = QuizExerciseDetailsDTO.of(quizExercise, isEditable, effectiveQuizEnded, canBeEvaluated);
         return ResponseEntity.ok(quizExerciseDTO);
     }
 
@@ -202,6 +205,7 @@ public class QuizExerciseRetrievalResource {
      * @param quizExerciseId the id of the quizExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.QUIZ_LIVE)
     @GetMapping("quiz-exercises/{quizExerciseId}/for-student")
     @EnforceAtLeastStudent
     public ResponseEntity<?> getQuizExerciseForStudent(@PathVariable long quizExerciseId) {

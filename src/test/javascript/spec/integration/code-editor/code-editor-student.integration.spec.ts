@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type MockInstance } from 'vitest';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { DebugElement } from '@angular/core';
+import { DebugElement, signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Params } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -45,7 +46,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockInstance as NgMockInstance, MockModule, MockPipe } from 'ng-mocks';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { mockCodeEditorMonacoViewChildren } from 'test/helpers/mocks/mock-instance.helper';
@@ -81,6 +82,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
     mockCodeEditorMonacoViewChildren();
+    NgMockInstance(CodeEditorGridComponent, () => ({ buildOutputIsCollapsed: signal(false) }));
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -211,6 +213,16 @@ describe('CodeEditorStudentIntegration', () => {
         expect(getElement(containerDebugElement, '.locked-container').innerHTML).toContain('fa-icon');
         expect(container.codeEditorContainer()!.fileBrowser()!.disableActions()).toBe(true);
         expect(container.codeEditorContainer()!.actions()!.disableActions()).toBe(true);
+
+        const grid = containerDebugElement.query(By.directive(CodeEditorGridComponent)).componentInstance as CodeEditorGridComponent;
+        const buildOutput = containerDebugElement.query(By.directive(CodeEditorBuildOutputComponent)).componentInstance as CodeEditorBuildOutputComponent;
+        expect(buildOutput.collapsed()).toBe(false);
+        grid.buildOutputIsCollapsed.set(true);
+        containerFixture.detectChanges();
+        expect(buildOutput.collapsed()).toBe(true);
+        grid.buildOutputIsCollapsed.set(false);
+        containerFixture.detectChanges();
+        expect(buildOutput.collapsed()).toBe(false);
     });
 
     it('should abort initialization and show error state if participation cannot be retrieved', () => {

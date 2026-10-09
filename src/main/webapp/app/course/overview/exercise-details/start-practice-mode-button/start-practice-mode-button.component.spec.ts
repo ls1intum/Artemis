@@ -136,4 +136,24 @@ describe('JhiStartPracticeModeButtonComponent', () => {
 
         fixture.destroy();
     });
+
+    it('should ignore a second start while starting the practice mode is in flight', () => {
+        const exercise = { id: 44, type: ExerciseType.PROGRAMMING, studentParticipations: [] as StudentParticipation[] } as ProgrammingExercise;
+        const participationSubject = new Subject<StudentParticipation>();
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('smallButtons', false);
+        startPracticeStub.mockReturnValue(participationSubject);
+
+        comp.startPractice(false);
+        comp.startPractice(true);
+
+        expect(startPracticeStub).toHaveBeenCalledOnce();
+        expect(comp.startingPracticeMode()).toBe(true);
+
+        participationSubject.error(new Error('failed'));
+        expect(comp.startingPracticeMode()).toBe(false);
+
+        comp.startPractice(true);
+        expect(startPracticeStub).toHaveBeenCalledTimes(2);
+    });
 });

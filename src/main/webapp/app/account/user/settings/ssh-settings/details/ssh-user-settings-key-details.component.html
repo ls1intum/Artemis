@@ -7,9 +7,9 @@
         <h2 jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></h2>
     }
 
-    <tum-ui-list [ariaLabel]="'artemisApp.userSettings.sshSettingsPage.sshKeyDetails' | artemisTranslate">
+    <tumaet-ui-list [ariaLabel]="'artemisApp.userSettings.sshSettingsPage.sshKeyDetails' | artemisTranslate">
         <!-- Viewing existing key and creating a new key -->
-        <li tumUiListItem>
+        <li tumAetUiListItem>
             <div class="flex flex-wrap">
                 <p>
                     <span class="large-text" jhiTranslate="artemisApp.userSettings.sshSettingsPage.whatToUseSSHForInfo"></span>
@@ -29,7 +29,7 @@
             }
             <div>
                 <textarea
-                    tumUiInput
+                    tumAetUiInput
                     id="sshKeyField"
                     class="w-full"
                     rows="10"
@@ -52,7 +52,7 @@
                 <div class="mb-4">
                     <label class="large-text" for="sshKeyLabelField" jhiTranslate="artemisApp.userSettings.sshSettingsPage.label"></label>
                     <textarea
-                        tumUiInput
+                        tumAetUiInput
                         id="sshKeyLabelField"
                         class="small-text-area w-full"
                         rows="1"
@@ -70,7 +70,7 @@
                     <legend class="large-text" jhiTranslate="artemisApp.userSettings.sshSettingsPage.expiry.title"></legend>
                     <p jhiTranslate="artemisApp.userSettings.sshSettingsPage.expiry.info"></p>
                     <div class="flex items-center gap-2">
-                        <tum-ui-radio-button
+                        <tumaet-ui-radio-button
                             inputId="doNotUseExpiration"
                             name="activationOption"
                             value="doNotUseExpiration"
@@ -80,7 +80,7 @@
                         <label for="doNotUseExpiration" jhiTranslate="artemisApp.userSettings.sshSettingsPage.expiry.doNotExpire"></label>
                     </div>
                     <div class="flex items-center gap-2">
-                        <tum-ui-radio-button
+                        <tumaet-ui-radio-button
                             inputId="useExpiration"
                             name="activationOption"
                             value="useExpiration"
@@ -136,7 +136,7 @@
             }
             <div class="mt-4 flex justify-end gap-2">
                 @if (isCreateMode()) {
-                    <tum-ui-button
+                    <tumaet-ui-button
                         [disabled]="
                             !(displayedSshKey && ((selectedOption === 'useExpiration' && displayedExpiryDate && isExpiryDateValid()) || selectedOption !== 'useExpiration'))
                         "
@@ -146,16 +146,16 @@
                         data-testid="saveSshKeyButton"
                     >
                         <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.saveSshKey"></span>
-                    </tum-ui-button>
+                    </tumaet-ui-button>
                 }
-                <tum-ui-button size="small" (clicked)="goBack()">
+                <tumaet-ui-button size="small" (clicked)="goBack()">
                     @if (isCreateMode()) {
                         <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.cancelSavingSshKey"></span>
                     } @else {
                         <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.back"></span>
                     }
-                </tum-ui-button>
+                </tumaet-ui-button>
             </div>
         </li>
-    </tum-ui-list>
+    </tumaet-ui-list>
 }

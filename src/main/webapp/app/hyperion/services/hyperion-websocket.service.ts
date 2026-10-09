@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Observable, Subject, Subscription } from 'rxjs';
 
@@ -21,7 +21,7 @@ export type HyperionEvent =
 
 type SubscribedJob = { wsSubscription: Subscription; subject: Subject<HyperionEvent> };
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class HyperionWebsocketService implements OnDestroy {
     protected websocketService = inject(WebsocketService);
     private subscribedJobs = new Map<string, SubscribedJob>();

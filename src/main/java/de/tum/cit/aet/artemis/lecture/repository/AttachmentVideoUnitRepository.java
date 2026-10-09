@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
@@ -17,6 +19,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
 
 /**
  * Spring Data JPA repository for the Attachment Unit entity.
@@ -162,4 +165,78 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
             ORDER BY avu.id
             """)
     List<AttachmentVideoUnit> findUnitsMissingIrisSyncStateFromActiveCourses(@Param("now") ZonedDateTime now, Pageable pageable);
+
+    /**
+     * Find the next non-test course ids, ordered by id, starting after the given cursor. Drives the ingestion reconciler's
+     * round-robin walk over all courses, including inactive and archived ones.
+     * <p>
+     * Deliberately not limited to courses that still hold attachment video units: the walk is also what garbage-collects a
+     * course's Iris rows through {@code deleteOrphanedIndexRows}, and a course whose last unit was deleted while Iris was
+     * unavailable still holds rows for it. Nor does it filter out tutorial lectures, whose rows are cleaned up the same way
+     * via {@link #findTutorialLectureUnitIdentities}; the per-unit reconcile loop excludes them from re-ingestion through
+     * {@link #findAllWithAttachmentByCourseId}.
+     *
+     * @param courseId the course id to continue after (exclusive); pass 0 to start from the beginning
+     * @param pageable pagination to limit the number of courses per walk
+     * @return the next course ids after the cursor
+     */
+    @Query("""
+            SELECT c.id FROM Course c
+            WHERE c.id > :courseId
+                AND c.testCourse = FALSE
+            ORDER BY c.id
+            """)
+    List<Long> findReconcileCourseIdsAfter(@Param("courseId") long courseId, Pageable pageable);
+
+    /**
+     * Find every attachment video unit of a course with its attachment, lecture, and course fetched.
+     * Used by the ingestion reconciler, which computes content fingerprints (attachment link, video source)
+     * for all units of the walked course.
+     *
+     * @param courseId the ID of the course
+     * @return all attachment video units of the course
+     */
+    @Query("""
+            SELECT avu FROM AttachmentVideoUnit avu
+                LEFT JOIN FETCH avu.attachment
+                JOIN FETCH avu.lecture l
+                JOIN FETCH l.course c
+            WHERE c.id = :courseId
+                AND l.isTutorialLecture = FALSE
+            ORDER BY avu.id
+            """)
+    List<AttachmentVideoUnit> findAllWithAttachmentByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * From the given ids, return those that still correspond to an existing attachment video unit.
+     * Used by the ingestion reconciler to batch its orphan check into a single query instead of one
+     * {@code existsById} per census row.
+     *
+     * @param ids candidate lecture unit ids
+     * @return the subset of ids that exist as attachment video units
+     */
+    @Query("""
+            SELECT avu.id FROM AttachmentVideoUnit avu
+            WHERE avu.id IN :ids
+            """)
+    Set<Long> findExistingIds(@Param("ids") Collection<Long> ids);
+
+    /**
+     * From the given ids, return the identities of those attachment video units whose lecture is a tutorial lecture.
+     * Used by the ingestion reconciler to delete the index rows of units whose lecture became a tutorial lecture after
+     * they were ingested: such a unit still exists, so the orphan check keeps it, and the per-unit loop excludes it.
+     * The identity comes from the database rather than the census, whose lecture id is missing when the index holds
+     * only chunks of the unit, and the deletion is scoped by lecture id.
+     *
+     * @param ids candidate lecture unit ids
+     * @return course, lecture, and unit ids of the given units that belong to a tutorial lecture
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO(l.course.id, l.id, avu.id)
+            FROM AttachmentVideoUnit avu
+                JOIN avu.lecture l
+            WHERE avu.id IN :ids
+                AND l.isTutorialLecture = TRUE
+            """)
+    List<IngestionJobIdentityDTO> findTutorialLectureUnitIdentities(@Param("ids") Collection<Long> ids);
 }

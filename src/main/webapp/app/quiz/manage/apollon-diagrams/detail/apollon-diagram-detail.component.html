@@ -1,5 +1,5 @@
 <div class="apollon-diagram-detail__header flex shrink-0 flex-wrap items-center gap-3 px-4 pt-4 pb-3">
-    <button type="button" tumUiButton severity="secondary" variant="text" size="small" data-testid="apollon-diagram-back" (click)="confirmExitDetailView(false)">
+    <button type="button" tumAetUiButton severity="secondary" variant="text" size="small" data-testid="apollon-diagram-back" (click)="confirmExitDetailView(false)">
         <fa-icon [icon]="faArrowLeft" />
         <span jhiTranslate="artemisApp.apollonDiagram.back"></span>
     </button>
@@ -11,11 +11,11 @@
             name="title"
             type="text"
             aria-required="true"
-            tumUiInput
-            tumUiInputSize="small"
+            tumAetUiInput
+            tumAetUiInputSize="small"
             class="min-w-0 grow"
             data-testid="apollon-diagram-title"
-            [tumUiInputInvalid]="!isTitleValid()"
+            [tumAetUiInputInvalid]="!isTitleValid()"
             [attr.aria-invalid]="!isTitleValid()"
             [ngModel]="title()"
             (ngModelChange)="title.set($event)"
@@ -25,15 +25,15 @@
     <!-- The title field caps its own width, so this group takes the leftover space and stays on the dialog edge. -->
     <div class="ms-auto flex shrink-0 items-center gap-2">
         @if (apollonDiagram()) {
-            <tum-ui-tag data-testid="apollon-diagram-save-state" [severity]="isSaved() ? 'success' : 'warn'">
+            <tumaet-ui-tag data-testid="apollon-diagram-save-state" [severity]="isSaved() ? 'success' : 'warn'">
                 <fa-icon [icon]="isSaved() ? faCheck : faPen" />
                 <span [jhiTranslate]="isSaved() ? 'artemisApp.modelingEditor.allSaved' : 'artemisApp.modelingEditor.unsavedChanges'"></span>
-            </tum-ui-tag>
+            </tumaet-ui-tag>
         }
 
         <button
             type="button"
-            tumUiButton
+            tumAetUiButton
             severity="secondary"
             variant="text"
             size="small"
@@ -69,7 +69,7 @@
             <span jhiTranslate="artemisApp.apollonDiagram.detail.crop"></span>
         </button>
         <!-- The button is disabled without a selection, so the hint has to live on a wrapper that still receives pointer events. -->
-        <span class="apollon-diagram-detail__action-hint" [tumUiTooltip]="downloadHint()" tumUiTooltipPlacement="left">
+        <span class="apollon-diagram-detail__action-hint" [tumAetUiTooltip]="downloadHint()" tumAetUiTooltipPlacement="left">
             <button
                 type="button"
                 class="artemis-apollon-chrome-action apollon-chrome-iconbtn"
@@ -86,12 +86,12 @@
 </div>
 
 <div class="apollon-diagram-detail__footer flex shrink-0 flex-wrap items-center justify-end gap-2 px-4 pt-3 pb-4">
-    <button type="button" tumUiButton severity="secondary" variant="outlined" size="small" data-testid="apollon-diagram-cancel" (click)="confirmExitDetailView(true)">
+    <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" data-testid="apollon-diagram-cancel" (click)="confirmExitDetailView(true)">
         <span jhiTranslate="entity.action.cancel"></span>
     </button>
     <button
         type="button"
-        tumUiButton
+        tumAetUiButton
         severity="secondary"
         variant="outlined"
         size="small"
@@ -102,8 +102,8 @@
         <fa-icon [icon]="faFloppyDisk" />
         <span jhiTranslate="artemisApp.apollonDiagram.detail.save"></span>
     </button>
-    <span [tumUiTooltip]="generateHint()">
-        <button data-testid="generate-quiz-exercise" type="button" tumUiButton severity="primary" size="small" [disabled]="!canGenerate()" (click)="generateExercise()">
+    <span [tumAetUiTooltip]="generateHint()">
+        <button data-testid="generate-quiz-exercise" type="button" tumAetUiButton severity="primary" size="small" [disabled]="!canGenerate()" (click)="generateExercise()">
             <span jhiTranslate="artemisApp.apollonDiagram.detail.createLabel"></span>
         </button>
     </span>

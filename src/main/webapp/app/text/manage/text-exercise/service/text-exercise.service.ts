@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -15,7 +15,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class TextExerciseService implements ExerciseServicable<TextExercise> {
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);

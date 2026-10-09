@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -11,7 +11,7 @@ import { DomainChange, DomainType } from 'app/programming/shared/code-editor/mod
 /**
  * Wrapper service for using the currently selected participation id in the code-editor for retrieving the submission state.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CodeEditorSubmissionService extends DomainDependentService implements OnDestroy {
     private submissionService = inject(ProgrammingSubmissionService);
     private alertService = inject(AlertService);

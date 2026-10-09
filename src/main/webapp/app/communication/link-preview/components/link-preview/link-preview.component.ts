@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -15,7 +15,7 @@ import { urlRegex } from 'app/communication/link-preview/services/linkify.servic
     imports: [ConfirmIconComponent, NgClass, ArtemisTranslatePipe],
 })
 export class LinkPreviewComponent implements OnInit {
-    private metisService = inject(MetisService);
+    private communicationService = inject(CommunicationService);
 
     readonly linkPreview = input<LinkPreview>();
     readonly posting = input<Posting>();
@@ -30,7 +30,7 @@ export class LinkPreviewComponent implements OnInit {
     faTimes = faTimes;
 
     ngOnInit() {
-        this.isAuthorOfOriginalPost.set(this.metisService.metisUserIsAuthorOfPosting(this.posting()!));
+        this.isAuthorOfOriginalPost.set(this.communicationService.currentUserIsAuthorOfPosting(this.posting()!));
     }
 
     /**
@@ -60,11 +60,11 @@ export class LinkPreviewComponent implements OnInit {
             posting.content = modifiedContent;
 
             if (this.isReply()) {
-                this.metisService.updateAnswerPost(posting).subscribe({
+                this.communicationService.updateAnswerPost(posting).subscribe({
                     next: () => {},
                 });
             } else {
-                this.metisService.updatePost(posting).subscribe({
+                this.communicationService.updatePost(posting).subscribe({
                     next: () => {},
                 });
             }

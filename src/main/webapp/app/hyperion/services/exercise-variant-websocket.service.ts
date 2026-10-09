@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Observable, Subject, Subscription } from 'rxjs';
 
@@ -30,7 +30,7 @@ type SubscribedJob = { wsSubscription: Subscription; subject: Subject<VariantGen
  * `HyperionWebsocketService.subscribeToJob`, kept separate because that service is bound to the
  * code-generation topic and is owned by another team.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseVariantWebsocketService implements OnDestroy {
     protected websocketService = inject(WebsocketService);
     private subscribedJobs = new Map<string, SubscribedJob>();

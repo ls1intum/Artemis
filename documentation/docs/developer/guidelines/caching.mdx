@@ -181,7 +181,7 @@ A new `@Cacheable` is justified only when *all three* of the following hold:
 3. **Has explicit eviction.** Either a Hibernate event listener (preferred for entity-column-derived caches) or a `@CacheEvict` annotation on every writer that affects the underlying state. Code review must reject `@Cacheable` without an accompanying eviction strategy.
 4. **Answers with a record of scalars, never an entity.** See [What a cached value may be](#what-a-cached-value-may-be). Enforced by `ArchitectureTest.testNoEntityAsCacheValue`.
 
-Multi-node correctness is not optional. If you cannot articulate, in code review, exactly how every write that could change the cached value invalidates the cache on every cluster node, the cache is not ready to merge. Reproduce the eviction in `./run-e2e-tests-local-multinode.sh` if the cache is non-trivial.
+Multi-node correctness is not optional. If you cannot articulate, in code review, exactly how every write that could change the cached value invalidates the cache on every cluster node, the cache is not ready to merge. Reproduce the eviction in `./supporting_scripts/e2e/run-e2e-tests-local-multinode.sh` if the cache is non-trivial.
 
 ## What is *not* covered by this rule
 
@@ -215,7 +215,7 @@ This means the disable-L2 change can be rolled out as a normal canary deploy wit
 Any change to caching — adding a `@Cacheable`, refactoring an eviction listener, modifying `HazelcastConfiguration` — must pass the multi-node E2E suite before merge:
 
 ```bash
-./run-e2e-tests-local-multinode.sh
+./supporting_scripts/e2e/run-e2e-tests-local-multinode.sh
 ```
 
 This boots the production-faithful stack (Postgres, JHipster Registry / Eureka, ActiveMQ, three Artemis nodes, nginx load balancer, containerised Playwright) and is the canonical reproduction surface for cache-coherence regressions. Issue #12574 was originally surfaced by this kind of multi-node exercise; do not skip it for cache-related changes.

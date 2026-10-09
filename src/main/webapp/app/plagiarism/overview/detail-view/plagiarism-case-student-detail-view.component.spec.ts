@@ -13,11 +13,11 @@ import dayjs from 'dayjs/esm';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 
 describe('Plagiarism Cases Student View Component', () => {
     let component: PlagiarismCaseStudentDetailViewComponent;
@@ -55,7 +55,7 @@ describe('Plagiarism Cases Student View Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -82,7 +82,7 @@ describe('Plagiarism Cases Student View Component', () => {
     });
 
     it('should set plagiarism case on initialization', async () => {
-        const setCourseSpy = vi.spyOn(fixture.debugElement.injector.get(MetisService), 'setCourse');
+        const setCourseSpy = vi.spyOn(fixture.debugElement.injector.get(CommunicationService), 'setCourse');
         component.ngOnInit();
         await Promise.resolve();
         expect(component.courseId).toBe(1);

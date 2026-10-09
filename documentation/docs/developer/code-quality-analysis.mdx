@@ -13,7 +13,7 @@ external services. The two are easy to confuse, and they carry very different we
 **The enforcing checks are the ones in this repository.** A pull request cannot merge until
 `ci-quality.yml` and `ci-test.yml` are green, and between them they run Spotless, Checkstyle,
 Modernizer, the ArchUnit architecture rules, the dependency-family guard, ESLint with the custom
-rules in `rules/`, Prettier, Stylelint, the TypeScript compiler, the Playwright lint and type-check,
+rules in `config/eslint/rules/`, Prettier, Stylelint, the TypeScript compiler, the Playwright lint and type-check,
 the large-class and complex-bean ceilings in `supporting_scripts/analyze_java_files.py`, the
 over-fetch detector in `supporting_scripts/find_slow_queries.py`, and the per-module coverage floors
 in `gradle/jacoco.gradle`. This is where a quality problem actually stops you.

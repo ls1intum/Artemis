@@ -23,13 +23,14 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentHistoryMessageDTO;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentService;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for Atlas Agent functionality.
  */
 @Conditional(AtlasLLMEnabled.class)
 @Lazy
-@FeatureUsage("ai/atlas-agent")
+@FeatureUsage(UserFeature.ATLAS_AGENT)
 @RestController
 @RequestMapping("api/atlas/agent/")
 public class AtlasAgentResource {

@@ -11,6 +11,7 @@ import java.util.stream.LongStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchAnswerWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchLectureRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
@@ -37,6 +39,9 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private AuthorizationCheckService authCheckService;
+
+    @Value("${server.url}")
+    private String artemisBaseUrl;
 
     @BeforeEach
     void setupUsers() {
@@ -76,6 +81,18 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
         List<PyrisLectureSearchResultDTO> response = request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
 
         assertThat(response).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_shouldForwardExactServerUrlAsInstanceIdentity() throws Exception {
+        AtomicReference<PyrisLectureSearchRequestDTO> sent = new AtomicReference<>();
+        irisRequestMockProvider.mockSearchLectures(List.of(), sent::set);
+
+        request.postListWithResponseBody("/api/iris/lecture-search", new GlobalSearchLectureRequestDTO("machine learning", 5, null, null), PyrisLectureSearchResultDTO.class,
+                HttpStatus.OK);
+
+        assertThat(sent.get().artemisBaseUrl()).isEqualTo(artemisBaseUrl);
     }
 
     /**
@@ -328,6 +345,17 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ask_shouldPreserveExactServerUrlInPipelineSettings() throws Exception {
+        AtomicReference<PyrisGlobalSearchAnswerRequestDTO> sent = new AtomicReference<>();
+        irisRequestMockProvider.mockGlobalSearchIrisAnswer(sent::set);
+
+        request.postWithoutResponseBody("/api/iris/search-answer", new GlobalSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID()), HttpStatus.ACCEPTED);
+
+        assertThat(sent.get().settings().artemisBaseUrl()).isEqualTo(artemisBaseUrl);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void ask_thinkingWebhook_shouldForwardThinkingToWebSocket() throws Exception {
         AtomicReference<String> jobIdRef = new AtomicReference<>();
         irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> jobIdRef.set(dto.settings().authenticationToken()));
@@ -387,6 +415,21 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     void ask_asUnauthenticated_shouldReturnUnauthorized() throws Exception {
         var requestDTO = new GlobalSearchAskRequestDTO("machine learning", 5, UUID.randomUUID());
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Both course lists are client-controlled, and the access filter performs a repository lookup and role check
+     * per included id. The endpoint refuses an oversized list instead, mirroring /lecture-search.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ask_withMoreCourseIdsThanAllowed_shouldReturnBadRequest() throws Exception {
+        var tooManyCourseIds = LongStream.rangeClosed(1, GlobalSearchLectureRequestDTO.MAX_COURSE_ID_FILTERS + 1).boxed().toList();
+
+        request.postWithoutResponseBody("/api/iris/search-answer", new GlobalSearchAskRequestDTO("machine learning", 5, UUID.randomUUID(), tooManyCourseIds, null),
+                HttpStatus.BAD_REQUEST);
+        request.postWithoutResponseBody("/api/iris/search-answer", new GlobalSearchAskRequestDTO("machine learning", 5, UUID.randomUUID(), null, tooManyCourseIds),
+                HttpStatus.BAD_REQUEST);
     }
 
     // ==================== access context consistency with Artemis roles ====================

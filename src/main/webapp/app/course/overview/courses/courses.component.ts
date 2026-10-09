@@ -22,7 +22,7 @@ import { CourseAccessStorageService } from 'app/course/shared/services/course-ac
 import { addPublicFilePrefix } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
 import { IS_AT_LEAST_INSTRUCTOR } from 'app/foundation/constants/authority.constants';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-overview',
@@ -38,22 +38,22 @@ import { TumUiButtonDirective } from '@tumaet/ui-angular';
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         SearchFilterPipe,
-        TumUiButtonDirective,
+        TumAetUiButtonDirective,
     ],
 })
 export class CoursesComponent implements OnInit {
+    private courseService = inject(CourseManagementService);
+    private teamService = inject(TeamService);
+    private router = inject(Router);
+    private courseAccessStorageService = inject(CourseAccessStorageService);
+    private accountService = inject(AccountService);
+
     protected readonly faPenAlt = faPenAlt;
     protected readonly faArrowDownAZ = faArrowDownAZ;
     protected readonly faArrowUpAZ = faArrowUpAZ;
     protected readonly faDoorOpen = faDoorOpen;
     protected readonly faBook = faBook;
     protected readonly faPlus = faPlus;
-
-    private courseService = inject(CourseManagementService);
-    private teamService = inject(TeamService);
-    private router = inject(Router);
-    private courseAccessStorageService = inject(CourseAccessStorageService);
-    private accountService = inject(AccountService);
 
     // All written inside the dashboard HTTP subscribe — must be signals under zoneless,
     // otherwise the course list silently never renders after the response arrives.
@@ -90,7 +90,11 @@ export class CoursesComponent implements OnInit {
     readonly coursesLoaded = signal(false);
     readonly isSortAscending = signal(true);
 
-    async ngOnInit() {
+    ngOnInit() {
+        void this.initializeCoursesComponent();
+    }
+
+    private async initializeCoursesComponent(): Promise<void> {
         this.loadAndFilterCourses();
         (await this.teamService.teamAssignmentUpdates).subscribe();
     }

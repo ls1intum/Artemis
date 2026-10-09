@@ -638,6 +638,30 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         assertThat(jobs).noneSatisfy(entry -> assertThat(entry.jobId()).isEqualTo(foreignJob.getJobId()));
     }
 
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldAcceptCancellationOfARunningJob() throws Exception {
+        // A freshly started job sits in a cancellable phase and no pipeline is executing it.
+        var initiator = userUtilService.getUserByLogin(EDITOR_LOGIN);
+        VariantJob ownJob = jobService.startJob(initiator, sourceQuiz, domainChangeRequest(standalonePlacement()));
+
+        request.delete("/api/hyperion/variant-jobs/" + ownJob.getJobId(), HttpStatus.NO_CONTENT);
+
+        assertThat(jobService.isCancelRequested(ownJob.getJobId())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldAcceptCancellationOfARunningJobOfTheInitiator() throws Exception {
+        // Created directly on the job map: no pipeline thread runs, so the job stays cancellable while the endpoint is called.
+        var initiator = userUtilService.getUserByLogin(EDITOR_LOGIN);
+        VariantJob job = jobService.startJob(initiator, sourceQuiz, domainChangeRequest(standalonePlacement()));
+
+        request.delete("/api/hyperion/variant-jobs/" + job.getJobId(), HttpStatus.NO_CONTENT);
+
+        assertThat(jobService.isCancelRequested(job.getJobId())).isTrue();
+    }
+
     // --- Placement (NEW_GROUP + exam group) ---------------------------------------------------------------
 
     @Test

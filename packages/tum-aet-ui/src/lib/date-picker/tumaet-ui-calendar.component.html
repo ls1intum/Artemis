@@ -1,0 +1,51 @@
+<div class="tumaet:w-72 tumaet:select-none">
+    <div class="tumaet:mb-2 tumaet:flex tumaet:items-center tumaet:justify-between">
+        <button
+            type="button"
+            class="tumaet:appearance-none tumaet:rounded tumaet:border-0 tumaet:bg-transparent tumaet:p-1 tumaet:text-text tumaet:hover:bg-hover-background"
+            (click)="previousMonth()"
+            [attr.aria-label]="previousMonthLabel()"
+        >
+            <fa-icon [icon]="previousMonthIcon()" />
+        </button>
+        <span class="tumaet:font-semibold tumaet:text-text" aria-live="polite">{{ monthLabel() }}</span>
+        <button
+            type="button"
+            class="tumaet:appearance-none tumaet:rounded tumaet:border-0 tumaet:bg-transparent tumaet:p-1 tumaet:text-text tumaet:hover:bg-hover-background"
+            (click)="nextMonth()"
+            [attr.aria-label]="nextMonthLabel()"
+        >
+            <fa-icon [icon]="nextMonthIcon()" />
+        </button>
+    </div>
+    <table role="grid" [attr.aria-label]="monthLabel()" class="tumaet:w-full tumaet:border-collapse tumaet:text-center tumaet:text-sm">
+        <thead>
+            <tr>
+                @for (label of weekdayLabels(); track $index) {
+                    <th scope="col" [attr.aria-label]="weekdayFullLabels()[$index]" class="tumaet:p-1 tumaet:font-medium tumaet:text-muted">{{ label }}</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @for (week of weeks(); track $index; let w = $index) {
+                <tr>
+                    @for (day of week; track day.valueOf(); let d = $index) {
+                        <td class="tumaet:p-0.5" role="gridcell" [attr.aria-selected]="isSelected(day) ? 'true' : null">
+                            <button
+                                #dayButton
+                                type="button"
+                                [class]="dayButtonClasses(day)"
+                                [attr.tabindex]="focusedIndex() === w * 7 + d ? 0 : -1"
+                                [attr.aria-label]="dayLabel(day)"
+                                (click)="selectDay(day)"
+                                (keydown)="onKeydown($event, w * 7 + d)"
+                            >
+                                {{ day.date() }}
+                            </button>
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

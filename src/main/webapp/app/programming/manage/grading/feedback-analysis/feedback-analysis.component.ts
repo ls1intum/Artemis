@@ -39,17 +39,17 @@ export interface FeedbackAnalysisState {
     providers: [FeedbackAnalysisService],
 })
 export class FeedbackAnalysisComponent {
-    exerciseTitle = input.required<string>();
-    exerciseId = input.required<number>();
-    exerciseDueDate = input<dayjs.Dayjs | undefined>();
-    courseId = input.required<number>();
-    isCommunicationEnabled = input.required<boolean>();
-
     private feedbackAnalysisService = inject(FeedbackAnalysisService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
     private localStorageService = inject(LocalStorageService);
     private router = inject(Router);
+
+    exerciseTitle = input.required<string>();
+    exerciseId = input.required<number>();
+    exerciseDueDate = input<dayjs.Dayjs | undefined>();
+    courseId = input.required<number>();
+    isCommunicationEnabled = input.required<boolean>();
 
     readonly page = signal<number>(1);
     readonly pageSize = signal<number>(25);

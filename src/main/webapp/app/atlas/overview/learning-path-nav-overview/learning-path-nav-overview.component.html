@@ -19,7 +19,7 @@
             @for (competency of competencies(); track competency.id) {
                 <div ngbAccordionItem [collapsed]="currentCompetencyId() !== competency.id">
                     <div ngbAccordionHeader>
-                        <button ngbAccordionButton class="row px-3 m-0">
+                        <button type="button" ngbAccordionButton class="row px-3 m-0">
                             <span class="col-md-auto p-0 fw-bold">{{ competency.title }}</span>
                             @if (competency.masteryProgress === 1) {
                                 <fa-icon [icon]="faCheckCircle" class="col-md-auto text-success" />

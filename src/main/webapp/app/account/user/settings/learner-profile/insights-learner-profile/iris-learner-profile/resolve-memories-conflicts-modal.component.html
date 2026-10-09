@@ -6,10 +6,10 @@
                 jhiTranslate="artemisApp.iris.memories.conflict.conflictCount"
                 [translateValues]="{ current: currentIndex() + 1, total: groups().length }"
             ></div>
-            <tum-ui-button-group>
+            <tumaet-ui-button-group>
                 <button
                     type="button"
-                    tumUiButton
+                    tumAetUiButton
                     severity="secondary"
                     variant="outlined"
                     size="small"
@@ -19,7 +19,7 @@
                 ></button>
                 <button
                     type="button"
-                    tumUiButton
+                    tumAetUiButton
                     severity="secondary"
                     variant="outlined"
                     size="small"
@@ -27,20 +27,20 @@
                     [disabled]="currentIndex() >= groups().length - 1"
                     jhiTranslate="artemisApp.iris.memories.conflict.next"
                 ></button>
-            </tum-ui-button-group>
+            </tumaet-ui-button-group>
         </div>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             @for (gid of currentGroup(); track gid) {
-                <tum-ui-card class="h-full">
+                <tumaet-ui-card class="h-full">
                     <div class="mb-2 flex items-center justify-between">
                         <span class="font-semibold">{{ details()[gid]?.title || gid }}</span>
                     </div>
                     <div class="mb-2 text-sm text-muted-color"><span jhiTranslate="artemisApp.iris.memories.conflict.memoryId"></span>: {{ gid }}</div>
                     <div class="mb-2 break-words">{{ details()[gid]?.content }}</div>
-                    <tum-ui-button severity="success" size="small" [disabled]="busy()" (clicked)="keep(currentIndex(), gid)">
+                    <tumaet-ui-button severity="success" size="small" [disabled]="busy()" (clicked)="keep(currentIndex(), gid)">
                         <span jhiTranslate="artemisApp.iris.memories.conflict.keepThis"></span>
-                    </tum-ui-button>
-                </tum-ui-card>
+                    </tumaet-ui-button>
+                </tumaet-ui-card>
             }
         </div>
     } @else {
@@ -48,7 +48,7 @@
     }
 </div>
 <div class="mt-4 flex justify-end">
-    <tum-ui-button severity="secondary" (clicked)="close()">
+    <tumaet-ui-button severity="secondary" (clicked)="close()">
         <span jhiTranslate="entity.action.close"></span>
-    </tum-ui-button>
+    </tumaet-ui-button>
 </div>

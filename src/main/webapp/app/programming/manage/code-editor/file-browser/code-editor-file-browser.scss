@@ -82,7 +82,8 @@ File browser tree
                 background-color: var(--code-editor-file-browser-tree-hover);
             }
 
-            .list-group-item:hover .file-icons {
+            .list-group-item:hover .file-icons,
+            .list-group-item:focus-within .file-icons {
                 opacity: 1;
             }
         }

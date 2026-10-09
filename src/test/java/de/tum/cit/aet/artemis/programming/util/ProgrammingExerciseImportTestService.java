@@ -10,6 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -72,6 +74,20 @@ public class ProgrammingExerciseImportTestService {
      * @throws Exception if the import fails
      */
     public ImportFileResult prepareExerciseImport(String resourcePath, ExerciseModifier<?> modifier, Course course) throws Exception {
+        return prepareExerciseImport(resourcePath, modifier, course, Set.of());
+    }
+
+    /**
+     * Prepares and imports a programming exercise from a zip file, marking the given competencies as selected through Hyperion's checklist
+     *
+     * @param resourcePath          Path to the resource zip file
+     * @param modifier              Function to modify the exercise before import
+     * @param course                Course to import the exercise into
+     * @param hyperionCompetencyIds IDs of the submitted links inferred through Hyperion's checklist
+     * @return ImportFileResult containing the resource, parsed exercise, imported exercise and any additional data
+     * @throws Exception if the import fails
+     */
+    public ImportFileResult prepareExerciseImport(String resourcePath, ExerciseModifier<?> modifier, Course course, Set<Long> hyperionCompetencyIds) throws Exception {
         var resource = new ClassPathResource(resourcePath);
         ZipInputStream zipInputStream = new ZipInputStream(resource.getInputStream());
         String detailsJsonString = null;
@@ -105,8 +121,10 @@ public class ProgrammingExerciseImportTestService {
 
         MockMultipartFile file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
 
-        ProgrammingExerciseResponseDTO importedExercise = request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file",
-                ImportProgrammingExerciseRequestDTO.of(parsedExercise, parsedBuildConfig), "programmingExercise", file, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+        String query = hyperionCompetencyIds.stream().map(id -> "hyperionCompetencyId=" + id).collect(Collectors.joining("&", "?", ""));
+        String path = "/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file" + (hyperionCompetencyIds.isEmpty() ? "" : query);
+        ProgrammingExerciseResponseDTO importedExercise = request.postWithMultipartFile(path, ImportProgrammingExerciseRequestDTO.of(parsedExercise, parsedBuildConfig),
+                "programmingExercise", file, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
 
         return new ImportFileResult(resource, parsedExercise, importedExercise, additionalData);
     }

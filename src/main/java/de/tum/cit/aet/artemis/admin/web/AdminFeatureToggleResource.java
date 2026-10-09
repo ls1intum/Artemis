@@ -18,11 +18,12 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("configuration/feature-toggles")
+@FeatureUsage(UserFeature.FEATURE_TOGGLES)
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping("api/admin/")

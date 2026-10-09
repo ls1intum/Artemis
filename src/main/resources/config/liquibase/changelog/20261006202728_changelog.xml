@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Lecture ingestion reliability: content fingerprints, stage reporting, worker leases, claim identities, revival and attempt limits,
+        and an index for job-token lookups. Every changeSet is guarded, because test servers already ran an earlier, unmerged version of
+        this change that added some of these columns under other changeSet ids.
+    -->
+    <!--
+        Confirmations recorded by an earlier version of this change may stem from an Iris that never stamped fingerprints into the
+        index, so they cannot be trusted. Only databases that already have the column ran that earlier version (test servers); they lose
+        their confirmations once, and reconciliation re-establishes them. Every other database gets the column below, empty.
+    -->
+    <changeSet id="20261006202728-01-reset-untrusted-confirmed-fingerprints" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="lecture_unit_processing_state" columnName="confirmed_fingerprint"/>
+        </preConditions>
+        <sql>UPDATE lecture_unit_processing_state SET confirmed_fingerprint = NULL</sql>
+        <rollback/>
+    </changeSet>
+
+    <!-- Fingerprint of the source content (PDF bytes and video source) sent with the current or last ingestion job; Iris stamps it into the index. -->
+    <changeSet id="20261006202728-02-add-content-fingerprint" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lecture_unit_processing_state" columnName="content_fingerprint"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="content_fingerprint" type="VARCHAR(80)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Fingerprint of the last run whose success callback arrived after the Iris end-of-run audit. -->
+    <changeSet id="20261006202728-03-add-confirmed-fingerprint" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lecture_unit_processing_state" columnName="confirmed_fingerprint"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="confirmed_fingerprint" type="VARCHAR(80)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Name of the pipeline stage the in-flight run reported last. -->
+    <changeSet id="20261006202728-04-add-current-stage" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lecture_unit_processing_state" columnName="current_stage"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="current_stage" type="VARCHAR(64)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- When the current stage started. -->
+    <changeSet id="20261006202728-05-add-stage-started-at" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lecture_unit_processing_state" columnName="stage_started_at"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="stage_started_at" type="timestamp(3)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Progress counter of the current stage. -->
+    <changeSet id="20261006202728-06-add-stage-progress" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lecture_unit_processing_state" columnName="stage_progress"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="stage_progress" type="INT"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Total work items of the current stage. -->
+    <changeSet id="20261006202728-07-add-stage-total" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lecture_unit_processing_state" columnName="stage_total"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="stage_total" type="INT"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- When the stage counter last advanced; stall detection compares heartbeats against it. -->
+    <changeSet id="20261006202728-08-add-last-progress-at" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lecture_unit_processing_state" columnName="last_progress_at"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="last_progress_at" type="timestamp(3)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Dispatch order: fresh uploads before backlog and reconcile work. -->
+    <changeSet id="20261006202728-09-add-dispatch-priority" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lecture_unit_processing_state" columnName="dispatch_priority"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="dispatch_priority" type="SMALLINT"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Set for quality and repair re-ingestions so Iris rewrites unchanged content. -->
+    <changeSet id="20261006202728-10-add-force-reingest" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lecture_unit_processing_state" columnName="force_reingest"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="force_reingest" type="BOOLEAN"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Pipeline version of the last quality re-ingestion, so a unit is requeued at most once per version. -->
+    <changeSet id="20261006202728-11-add-last-quality-pipeline-version" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lecture_unit_processing_state" columnName="last_quality_pipeline_version"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="last_quality_pipeline_version" type="INT"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Last lease renewal of a worker-claimed run; a lapsed lease is reclaimed. -->
+    <changeSet id="20261006202728-12-add-last-heartbeat-at" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lecture_unit_processing_state" columnName="last_heartbeat_at"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="last_heartbeat_at" type="timestamp(3)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Boot id of the worker holding the lease. -->
+    <changeSet id="20261006202728-13-add-locked-by" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lecture_unit_processing_state" columnName="locked_by"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="locked_by" type="VARCHAR(64)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Number of reconcile revivals of a FAILED unit since it was last DONE. -->
+    <changeSet id="20261006202728-14-add-revival-count" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lecture_unit_processing_state" columnName="revival_count"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="revival_count" type="integer" defaultValueNumeric="0"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Identity of the claim currently held on the row, matched by every write that commits that claim's outcome. -->
+    <changeSet id="20261006202728-15-add-claim-token" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lecture_unit_processing_state" columnName="claim_token"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="claim_token" type="VARCHAR(36)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Dispatch claims since the last outcome; at the limit the next claim is replaced by a charged failure. -->
+    <changeSet id="20261006202728-16-add-unsettled-attempts" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lecture_unit_processing_state" columnName="unsettled_attempts"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="unsettled_attempts" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Worker heartbeats and status callbacks look runs up by their job token. -->
+    <changeSet id="20261006202728-17-index-ingestion-job-token" author="bassner">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists indexName="idx_processing_state_ingestion_job_token" tableName="lecture_unit_processing_state"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="idx_processing_state_ingestion_job_token" tableName="lecture_unit_processing_state">
+            <column name="ingestion_job_token"/>
+        </createIndex>
+        <rollback>
+            <dropIndex indexName="idx_processing_state_ingestion_job_token" tableName="lecture_unit_processing_state"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

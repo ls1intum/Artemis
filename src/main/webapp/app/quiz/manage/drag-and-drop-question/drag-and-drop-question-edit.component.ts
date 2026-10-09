@@ -43,7 +43,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-scoring-info-modal.component';
-import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -89,7 +89,6 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         ImageComponent,
         NgClass,
         CdkDropList,
-        NgStyle,
         CdkDrag,
         CdkDragPreview,
         NgTemplateOutlet,
@@ -103,6 +102,10 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     ],
 })
 export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, QuizQuestionEdit, OnDestroy {
+    private translateService = inject(TranslateService);
+    private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
+    private fileService = inject(FileService);
+
     protected readonly faBan = faBan;
     protected readonly faPlus = faPlus;
     protected readonly faTrash = faTrash;
@@ -123,8 +126,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
 
     readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
 
-    private translateService = inject(TranslateService);
-    private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     readonly scoringTypeOptions = computed(() => {
@@ -135,7 +136,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
             { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_without_penalty'), value: ScoringType.PROPORTIONAL_WITHOUT_PENALTY },
         ];
     });
-    private fileService = inject(FileService);
 
     private readonly clickLayer = viewChild.required<ElementRef>('clickLayer');
     private readonly backgroundImage = viewChild.required<ImageComponent>('backgroundImage');

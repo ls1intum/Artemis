@@ -18,7 +18,7 @@
             "featureCloudThree": "Schnelle Antwortzeiten",
             "featureCloudFour": "DSGVO-konforme Verarbeitung auf Azure",
             "featureCloudFive": "Alle Daten auf universitären Servern gespeichert",
-            "featureLocalOne": "Neueste Open-Source-LLMs wie GPT-OSS",
+            "featureLocalOne": "Neueste Open-Source-LLMs wie Qwen",
             "featureLocalTwo": "Geringere Antwortqualität",
             "featureLocalThree": "Langsamere Antwortzeiten",
             "featureLocalFour": "Verarbeitung nur in universitären Rechenzentren",

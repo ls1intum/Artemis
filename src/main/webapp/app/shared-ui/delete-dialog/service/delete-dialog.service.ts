@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Service, inject, signal } from '@angular/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { DeleteDialogComponent } from 'app/shared-ui/delete-dialog/component/delete-dialog.component';
 import { DeleteDialogData } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class DeleteDialogService {
     private dialogService = inject(DialogService);
     private alertService = inject(AlertService);

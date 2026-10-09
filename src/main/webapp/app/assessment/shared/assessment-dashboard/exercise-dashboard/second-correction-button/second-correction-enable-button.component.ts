@@ -2,14 +2,14 @@ import { Component, input, output } from '@angular/core';
 import { faSpinner, faToggleOff, faToggleOn } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-second-correction-enable-button',
     templateUrl: './second-correction-enable-button.component.html',
     host: { class: 'inline-block align-middle' },
     styles: ['div { cursor: pointer; }'],
-    imports: [FaIconComponent, ArtemisTranslatePipe, TumUiButtonDirective],
+    imports: [FaIconComponent, ArtemisTranslatePipe, TumAetUiButtonDirective],
 })
 export class SecondCorrectionEnableButtonComponent {
     readonly secondCorrectionEnabled = input<boolean>();

@@ -62,6 +62,7 @@
     }
     @if (editMode()) {
         <button
+            type="button"
             id="save-instructions-button"
             [disabled]="savingInstructions() || !unsavedChangesValue()"
             (click)="saveInstructions($event)"

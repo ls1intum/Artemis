@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -50,7 +51,7 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionReposito
  */
 @Conditional(FileUploadEnabled.class)
 @Lazy
-@FeatureUsage("assessment/manual-assessment")
+@FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
 @RestController
 @RequestMapping("api/fileupload/")
 public class FileUploadAssessmentResource extends AssessmentResource {
@@ -77,6 +78,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the submission that should be sent to the client
      * @return the assessment of the given submission
      */
+    @FeatureUsage(UserFeature.EXERCISE_FEEDBACK)
     @GetMapping("file-upload-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
     public ResponseEntity<FileUploadResultDTO> getFileUploadAssessmentBySubmissionId(@PathVariable Long submissionId) {
@@ -99,7 +101,8 @@ public class FileUploadAssessmentResource extends AssessmentResource {
             @Valid @RequestBody FileUploadAssessmentInputDTO fileUploadAssessment) {
         Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
         // if a result exists, we want to override it, otherwise create a new one
-        var resultId = submission.getLatestResult() != null ? submission.getLatestResult().getId() : null;
+        var latestResult = submission.getLatestResult();
+        var resultId = latestResult != null ? latestResult.getId() : null;
         var response = super.saveAssessment(submission, submit, fileUploadAssessment.feedbackEntities(), resultId, fileUploadAssessment.assessmentNote());
         return toFileUploadResultResponse(response.getStatusCode(), response.getHeaders(), response.getBody());
     }

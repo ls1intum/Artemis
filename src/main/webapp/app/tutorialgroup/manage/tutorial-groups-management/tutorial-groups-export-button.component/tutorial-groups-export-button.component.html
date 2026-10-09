@@ -1,11 +1,11 @@
 <button
-    tumUiButton
+    tumAetUiButton
     size="small"
     severity="secondary"
     variant="outlined"
     type="button"
     id="exportDialogButton"
-    [tumUiTooltip]="'artemisApp.tutorialGroupExportDialog.buttonHeader' | artemisTranslate"
+    [tumAetUiTooltip]="'artemisApp.tutorialGroupExportDialog.buttonHeader' | artemisTranslate"
     (click)="openExportDialog($event)"
 >
     <fa-icon [icon]="faFileExport" />
@@ -46,15 +46,15 @@
             </div>
         }
     </form>
-    <!-- Label on a child element: jhiTranslate writes innerHTML and would overwrite tumUiButton's projection -->
+    <!-- Label on a child element: jhiTranslate writes innerHTML and would overwrite tumAetUiButton's projection -->
     <ng-template #footer>
-        <button tumUiButton size="small" severity="secondary" type="button" (click)="closeDialog()">
+        <button tumAetUiButton size="small" severity="secondary" type="button" (click)="closeDialog()">
             <span jhiTranslate="artemisApp.tutorialGroupExportDialog.cancel"></span>
         </button>
-        <button tumUiButton size="small" type="button" (click)="exportJSON()" [disabled]="selectedFields().length === 0">
+        <button tumAetUiButton size="small" type="button" (click)="exportJSON()" [disabled]="selectedFields().length === 0">
             <span jhiTranslate="artemisApp.tutorialGroupExportDialog.exportJSON"></span>
         </button>
-        <button tumUiButton size="small" type="button" (click)="exportCSV()" [disabled]="selectedFields().length === 0">
+        <button tumAetUiButton size="small" type="button" (click)="exportCSV()" [disabled]="selectedFields().length === 0">
             <span jhiTranslate="artemisApp.tutorialGroupExportDialog.exportCSV"></span>
         </button>
     </ng-template>

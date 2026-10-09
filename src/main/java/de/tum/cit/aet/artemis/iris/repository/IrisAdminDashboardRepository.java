@@ -138,8 +138,8 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
     long countSessionsWithThumbsDown(@Param("from") Instant from, @Param("to") Instant to);
 
     // hasAssistantResponse treats a later non-user message as a response, but excludes the system-generated marker
-    // senders CTXSWAP (context switch) and COMMAND (a client action Iris performed, e.g. a point-out): neither is an
-    // assistant answer. Without this exclusion a user message followed only by a marker would be miscounted as
+    // senders CTXSWAP (context switch), COMMAND (a client action Iris performed, e.g. a point-out) and SUMMARY (a
+    // stored summary of the earlier conversation): none is an assistant answer. Without this exclusion a user message followed only by a marker would be miscounted as
     // answered. The next-message lookup skips them for the same reason, so a user -> marker -> LLM sequence still
     // reports the LLM message as the response (and its latency). COMMAND markers matter here because, unlike CTXSWAP,
     // they are written *between* the user message and the answer, while the pipeline is still running.
@@ -148,14 +148,14 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
                 (SELECT m2.sender FROM iris_message m2
                  WHERE m2.session_id = u.session_id
                    AND (m2.sent_at > u.sent_at OR (m2.sent_at = u.sent_at AND m2.id > u.id))
-                   AND m2.sender NOT IN ('CTXSWAP', 'COMMAND')
+                   AND m2.sender NOT IN ('CTXSWAP', 'COMMAND', 'SUMMARY')
                    AND NOT (m2.sender = 'LLM' AND COALESCE(m2.intermediate, FALSE) = TRUE)
                  ORDER BY m2.sent_at, m2.id LIMIT 1
                 ) AS nextSender,
                 (SELECT m2.sent_at FROM iris_message m2
                  WHERE m2.session_id = u.session_id
                    AND (m2.sent_at > u.sent_at OR (m2.sent_at = u.sent_at AND m2.id > u.id))
-                   AND m2.sender NOT IN ('CTXSWAP', 'COMMAND')
+                   AND m2.sender NOT IN ('CTXSWAP', 'COMMAND', 'SUMMARY')
                    AND NOT (m2.sender = 'LLM' AND COALESCE(m2.intermediate, FALSE) = TRUE)
                  ORDER BY m2.sent_at, m2.id LIMIT 1
                 ) AS nextSentAt,
@@ -163,7 +163,7 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
                 CASE WHEN EXISTS (
                     SELECT 1 FROM iris_message m3
                     WHERE m3.session_id = u.session_id
-                      AND m3.sender NOT IN ('USER', 'CTXSWAP', 'COMMAND')
+                      AND m3.sender NOT IN ('USER', 'CTXSWAP', 'COMMAND', 'SUMMARY')
                       AND NOT (m3.sender = 'LLM' AND COALESCE(m3.intermediate, FALSE) = TRUE)
                       AND (m3.sent_at > u.sent_at OR (m3.sent_at = u.sent_at AND m3.id > u.id))
                 ) THEN 1 ELSE 0 END AS hasAssistantResponse
@@ -177,7 +177,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
 
     @Query(nativeQuery = true, value = """
             SELECT CASE WHEN t.iris_message_id IS NOT NULL THEN 1 ELSE 0 END AS chatAttributed,
-                   SUM(r.num_input_tokens * r.cost_per_million_input_tokens / 1000000.0
+                   SUM((r.num_input_tokens - r.num_cached_input_tokens - r.num_cache_write_input_tokens) * r.cost_per_million_input_tokens / 1000000.0
+                     + r.num_cached_input_tokens * r.cost_per_million_cached_input_tokens / 1000000.0
+                     + r.num_cache_write_input_tokens * r.cost_per_million_cache_write_input_tokens / 1000000.0
                      + r.num_output_tokens * r.cost_per_million_output_tokens / 1000000.0) AS totalCostEur
             FROM llm_token_usage_trace t
             JOIN llm_token_usage_request r ON r.trace_id = t.id
@@ -233,7 +235,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
     @Query(nativeQuery = true, value = """
             SELECT t.time AS traceTime,
                    CASE WHEN t.iris_message_id IS NOT NULL THEN 1 ELSE 0 END AS chatAttributed,
-                   SUM(r.num_input_tokens * r.cost_per_million_input_tokens / 1000000.0
+                   SUM((r.num_input_tokens - r.num_cached_input_tokens - r.num_cache_write_input_tokens) * r.cost_per_million_input_tokens / 1000000.0
+                     + r.num_cached_input_tokens * r.cost_per_million_cached_input_tokens / 1000000.0
+                     + r.num_cache_write_input_tokens * r.cost_per_million_cache_write_input_tokens / 1000000.0
                      + r.num_output_tokens * r.cost_per_million_output_tokens / 1000000.0) AS costEur
             FROM llm_token_usage_trace t
             JOIN llm_token_usage_request r ON r.trace_id = t.id
@@ -258,7 +262,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
     @Query(nativeQuery = true, value = """
             SELECT r.model,
                    SUM(r.num_input_tokens + r.num_output_tokens) AS totalTokens,
-                   SUM(r.num_input_tokens * r.cost_per_million_input_tokens / 1000000.0
+                   SUM((r.num_input_tokens - r.num_cached_input_tokens - r.num_cache_write_input_tokens) * r.cost_per_million_input_tokens / 1000000.0
+                     + r.num_cached_input_tokens * r.cost_per_million_cached_input_tokens / 1000000.0
+                     + r.num_cache_write_input_tokens * r.cost_per_million_cache_write_input_tokens / 1000000.0
                      + r.num_output_tokens * r.cost_per_million_output_tokens / 1000000.0) AS totalCostEur
             FROM llm_token_usage_trace t
             JOIN llm_token_usage_request r ON r.trace_id = t.id

@@ -1,0 +1,97 @@
+.checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 52rem;
+
+    // Centered in the page rather than pinned left, so the column does not float against a wide empty margin.
+    margin-inline: auto;
+    padding-block: 1rem;
+}
+
+// Section header in the onboarding style: a brand icon tile beside a short heading and the explanation.
+.checklist-hero {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--tumaet-ui-hover-background);
+}
+
+.checklist-hero-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 0.5rem;
+    font-size: 1.2rem;
+    color: var(--tumaet-ui-primary-contrast-color);
+    background: var(--tumaet-ui-primary-color);
+}
+
+.checklist-hero-title {
+    margin: 0 0 0.15rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.checklist-hero-desc {
+    margin: 0;
+    color: var(--secondary);
+    font-size: 0.875rem;
+}
+
+// Each prerequisite is its own card: the status, what it is, and the way to do it, on one line.
+.checklist-step {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+}
+
+.checklist-step-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.checklist-step-title {
+    margin: 0;
+    font-weight: 600;
+}
+
+.checklist-step-desc {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--secondary);
+}
+
+// On narrow screens the fixed-width status and non-wrapping action would squeeze the text column, so let
+// the action drop onto its own full-width row below the description instead.
+@media (max-width: 600px) {
+    .checklist-step {
+        flex-wrap: wrap;
+    }
+
+    .checklist-step > a,
+    .checklist-step > button {
+        flex-basis: 100%;
+        justify-content: center;
+    }
+}
+
+.checklist-actions {
+    display: flex;
+
+    // The continue button anchors the bottom-right of the column, as a wizard's next step does.
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+}

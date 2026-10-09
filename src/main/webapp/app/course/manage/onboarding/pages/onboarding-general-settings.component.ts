@@ -11,7 +11,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
-import { KeyValuePipe, NgStyle } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCog } from '@fortawesome/free-solid-svg-icons';
@@ -35,7 +35,6 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
         ColorSelectorComponent,
         FormDateTimePickerComponent,
         TranslateDirective,
-        NgStyle,
         KeyValuePipe,
         ArtemisTranslatePipe,
         FaIconComponent,
@@ -46,11 +45,12 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
     ],
 })
 export class OnboardingGeneralSettingsComponent implements OnInit {
-    protected readonly IrisLogoSize = IrisLogoSize;
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
     private alertService = inject(AlertService);
     private dialogService = inject(DialogService);
+
+    protected readonly IrisLogoSize = IrisLogoSize;
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
 
     readonly course = input.required<Course>();

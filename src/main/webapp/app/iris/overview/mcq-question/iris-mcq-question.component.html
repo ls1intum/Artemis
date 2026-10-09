@@ -3,6 +3,7 @@
     <div class="mcq-options" role="radiogroup" [attr.aria-labelledby]="questionLabelId">
         @for (option of mcqData().options; track $index) {
             <button
+                type="button"
                 class="mcq-option"
                 role="radio"
                 [attr.aria-checked]="selectedIndex() === $index"
@@ -19,7 +20,7 @@
         }
     </div>
     @if (!submitted()) {
-        <button class="mcq-submit" [disabled]="selectedIndex() === undefined" (click)="submit()" jhiTranslate="artemisApp.iris.mcq.submit"></button>
+        <button type="button" class="mcq-submit" [disabled]="selectedIndex() === undefined" (click)="submit()" jhiTranslate="artemisApp.iris.mcq.submit"></button>
     }
     @if (submitted()) {
         <div class="mcq-feedback" role="status" aria-live="polite" [class.mcq-feedback-correct]="isCorrectAnswer()" [class.mcq-feedback-incorrect]="!isCorrectAnswer()">

@@ -33,7 +33,7 @@ public class TextSubmissionExportService extends SubmissionExportService {
     protected void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException {
         if (((TextSubmission) submission).getText() == null) {
             if (!file.exists()) {
-                file.createNewFile(); // create empty file if submission is empty
+                Files.createFile(file.toPath()); // create empty file if submission is empty
             }
         }
         else {

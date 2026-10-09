@@ -63,11 +63,12 @@
                 />
                 <!-- repository select -->
                 <div ngbDropdown class="d-inline-block me-2">
-                    <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
+                    <button type="button" class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
                         {{ selectedRepository === RepositoryType.AUXILIARY ? selectedAuxiliaryRepositoryName : selectedRepository }}
                     </button>
                     <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                         <button
+                            type="button"
                             [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUri"
                             (click)="selectTemplateParticipation()"
                             ngbDropdownItem
@@ -76,6 +77,7 @@
                             <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo"></span>
                         </button>
                         <button
+                            type="button"
                             [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id || !exercise.solutionParticipation.repositoryUri"
                             (click)="selectSolutionParticipation()"
                             ngbDropdownItem
@@ -140,6 +142,7 @@
                             }
                         </div>
                         <button
+                            type="button"
                             [disabled]="!exercise"
                             (click)="selectTestRepository()"
                             ngbDropdownItem
@@ -149,6 +152,7 @@
                         @for (auxiliaryRepository of exercise.auxiliaryRepositories; track auxiliaryRepository.id ?? i; let i = $index) {
                             @if (auxiliaryRepository.id) {
                                 <button
+                                    type="button"
                                     [disabled]="!exercise"
                                     (click)="selectAuxiliaryRepository(auxiliaryRepository.id)"
                                     ngbDropdownItem
@@ -206,7 +210,7 @@
                                     <!-- AI Generation Actions -->
                                     @if (canGenerateCode()) {
                                         <div class="ai-menu-item-group">
-                                            <button class="ai-menu-item flex-grow-1" (click)="generateCode(); aiMenuPopover.hide()" [disabled]="isGeneratingCode()">
+                                            <button type="button" class="ai-menu-item flex-grow-1" (click)="generateCode(); aiMenuPopover.hide()" [disabled]="isGeneratingCode()">
                                                 <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
                                                 <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode">Generate Code</span>
                                             </button>
@@ -339,7 +343,12 @@
                                     }
                                     @if (exercise.isAtLeastEditor) {
                                         <!-- Problem Statement Refinement -->
-                                        <button class="ai-menu-item" (click)="toggleRefinementPopover($event, aiDropdownToggle); aiMenuPopover.hide()" [disabled]="isAiApplying()">
+                                        <button
+                                            type="button"
+                                            class="ai-menu-item"
+                                            (click)="toggleRefinementPopover($event, aiDropdownToggle); aiMenuPopover.hide()"
+                                            [disabled]="isAiApplying()"
+                                        >
                                             <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
                                             <span
                                                 [jhiTranslate]="
@@ -354,6 +363,7 @@
                                         @if (sortedIssues().length) {
                                             <div class="d-flex w-100">
                                                 <button
+                                                    type="button"
                                                     class="ai-menu-item flex-grow-1"
                                                     (click)="checkConsistencies(exercise); aiMenuPopover.hide()"
                                                     [disabled]="isCheckingConsistency()"
@@ -362,13 +372,22 @@
                                                     <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
                                                 </button>
                                                 <div class="vr my-1"></div>
-                                                <button class="ai-menu-item flex-shrink-1 w-auto px-3" (click)="toggleConsistencyIssuesToolbar(); aiMenuPopover.hide()">
+                                                <button
+                                                    type="button"
+                                                    class="ai-menu-item flex-shrink-1 w-auto px-3"
+                                                    (click)="toggleConsistencyIssuesToolbar(); aiMenuPopover.hide()"
+                                                >
                                                     <fa-icon [icon]="faTriangleExclamation" class="me-2 text-warning" />
                                                     <span jhiTranslate="artemisApp.hyperion.consistencyCheck.issues"></span>
                                                 </button>
                                             </div>
                                         } @else {
-                                            <button class="ai-menu-item" (click)="checkConsistencies(exercise); aiMenuPopover.hide()" [disabled]="isCheckingConsistency()">
+                                            <button
+                                                type="button"
+                                                class="ai-menu-item"
+                                                (click)="checkConsistencies(exercise); aiMenuPopover.hide()"
+                                                [disabled]="isCheckingConsistency()"
+                                            >
                                                 <fa-icon [icon]="faCheckDouble" class="me-2" />
                                                 <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
                                             </button>

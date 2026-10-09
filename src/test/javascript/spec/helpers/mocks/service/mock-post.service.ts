@@ -1,8 +1,8 @@
 import { Observable, of } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { DisplayPriority, PostContextFilter } from 'app/communication/metis.util';
-import { messagesBetweenUser1User2, metisCoursePosts, metisPostExerciseUser1, metisTags } from '../../sample/metis-sample-data';
+import { DisplayPriority, PostContextFilter } from 'app/communication/communication.util';
+import { messagesBetweenUser1User2, communicationCoursePosts, communicationPostExerciseUser1, communicationTags } from '../../sample/communication-sample-data';
 
 export class MockPostService {
     create(courseId: number, post: Post): Observable<HttpResponse<Post>> {
@@ -32,24 +32,24 @@ export class MockPostService {
             }) as Observable<HttpResponse<Post[]>>;
         } else {
             return of({
-                body: !postContextFilter.pageSize ? [...metisCoursePosts] : metisCoursePosts.slice(0, postContextFilter.pageSize),
+                body: !postContextFilter.pageSize ? [...communicationCoursePosts] : communicationCoursePosts.slice(0, postContextFilter.pageSize),
                 headers: new HttpHeaders({
-                    'X-Total-Count': metisCoursePosts.length.toString(),
+                    'X-Total-Count': communicationCoursePosts.length.toString(),
                 }),
             }) as Observable<HttpResponse<Post[]>>;
         }
     }
 
     getAllPostTagsByCourseId(courseId: number): Observable<HttpResponse<string[]>> {
-        return of({ body: metisTags }) as Observable<HttpResponse<string[]>>;
+        return of({ body: communicationTags }) as Observable<HttpResponse<string[]>>;
     }
 
     computeSimilarityScoresWithCoursePosts(post: Post, courseId: number): Observable<HttpResponse<Post[]>> {
-        return of({ body: [metisPostExerciseUser1] }) as Observable<HttpResponse<Post[]>>;
+        return of({ body: [communicationPostExerciseUser1] }) as Observable<HttpResponse<Post[]>>;
     }
 
     getSourcePostsByIds(courseId: number, postIds: number[]): Observable<Post[]> {
-        const sourcePosts = metisCoursePosts.filter((post) => postIds.includes(post.id!));
+        const sourcePosts = communicationCoursePosts.filter((post) => postIds.includes(post.id!));
         return of(sourcePosts);
     }
 }

@@ -8,6 +8,7 @@ import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 /**
@@ -24,7 +25,7 @@ import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.m
     selector: 'jhi-exam-navigation-bar',
     templateUrl: './exam-navigation-bar.component.html',
     styleUrls: ['./exam-navigation-bar.component.scss'],
-    imports: [TranslateDirective, NgClass, FaIconComponent],
+    imports: [TranslateDirective, NgClass, FaIconComponent, TumAetUiButtonDirective],
 })
 export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
     private layoutService = inject(LayoutService);

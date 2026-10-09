@@ -1,11 +1,11 @@
-import { Component, Injectable, inject } from '@angular/core';
+import { Component, Service, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
 import dayjs from 'dayjs/esm';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseUpdateWarningService {
     private modalService = inject(NgbModal);
 

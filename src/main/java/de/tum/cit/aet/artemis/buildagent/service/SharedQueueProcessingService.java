@@ -1064,10 +1064,8 @@ public class SharedQueueProcessingService {
     }
 
     private static boolean sameAttempt(BuildJobQueueItem current, BuildJobQueueItem buildJob) {
-        return current != null && current.retryCount() == buildJob.retryCount() && current.buildAgent() != null && buildJob.buildAgent() != null
-                && Objects.equals(current.buildAgent().name(), buildJob.buildAgent().name())
-                && Objects.equals(current.jobTimingInfo() != null ? current.jobTimingInfo().buildStartDate() : null,
-                        buildJob.jobTimingInfo() != null ? buildJob.jobTimingInfo().buildStartDate() : null);
+        return current != null && current.retryCount() == buildJob.retryCount() && Objects.equals(current.buildAgent().name(), buildJob.buildAgent().name())
+                && Objects.equals(current.jobTimingInfo().buildStartDate(), buildJob.jobTimingInfo().buildStartDate());
     }
 
     /**

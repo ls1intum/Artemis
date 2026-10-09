@@ -8,6 +8,9 @@ This script extracts audio from a video file, transcribes it using OpenAI's Whis
 - `ffmpeg` (must be installed and accessible via command line)
 - The dependencies listed in `requirements.txt`
 
+Install the hash-locked dependencies in a virtual environment with
+`python -m pip install --require-hashes -r requirements.txt`.
+
 ## Usage
 
 1. Update the `VIDEO_PATH` variable in `script.py` to point to your desired video file.

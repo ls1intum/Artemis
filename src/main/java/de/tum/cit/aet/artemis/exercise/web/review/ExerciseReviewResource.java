@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadGroup;
@@ -42,7 +43,7 @@ import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("management/review")
+@FeatureUsage(UserFeature.EXERCISE_REVIEW)
 @RestController
 @RequestMapping("api/exercise/")
 public class ExerciseReviewResource {

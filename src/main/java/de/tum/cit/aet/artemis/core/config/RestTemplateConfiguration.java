@@ -3,9 +3,11 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
+import java.time.Duration;
 import java.util.ArrayList;
 
 import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -85,6 +87,22 @@ public class RestTemplateConfiguration {
     @Conditional(IrisEnabled.class)
     public RestTemplate pyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, createShortTimeoutRestTemplate());
+    }
+
+    /**
+     * The Pyris ingestion census aggregates the index state of a whole course, which takes longer than the short timeout allows for large
+     * courses, so it gets its own read timeout.
+     *
+     * @param pyrisAuthorizationInterceptor adds the Pyris secret
+     * @param censusTimeout                 the read timeout for one census request
+     * @return the rest template for census requests
+     */
+    @Bean
+    @Conditional(IrisEnabled.class)
+    public RestTemplate censusPyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor,
+            @Value("${artemis.iris.ingestion.census-timeout:PT60S}") Duration censusTimeout) {
+        var requestFactory = getSimpleClientHttpRequestFactory((int) censusTimeout.toMillis(), SHORT_CONNECTION_TIMEOUT);
+        return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, new RestTemplate(requestFactory));
     }
 
     // Note: for certain requests, e.g. health(), we would like to have shorter timeouts, therefore we need additional rest templates, because

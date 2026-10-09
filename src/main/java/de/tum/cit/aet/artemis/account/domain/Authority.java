@@ -10,8 +10,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
-import org.jspecify.annotations.NonNull;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -42,7 +40,6 @@ public class Authority implements Serializable {
 
     public static final Authority USER_AUTHORITY = new Authority(Role.STUDENT.getAuthority());
 
-    @NonNull
     @Size(max = 50)
     @Id
     @Column(length = 50)

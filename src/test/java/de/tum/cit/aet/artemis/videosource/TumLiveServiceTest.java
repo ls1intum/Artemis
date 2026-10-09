@@ -57,6 +57,12 @@ class TumLiveServiceTest {
     }
 
     @Test
+    void getTumLivePlaylistLink_malformedUrl_returnsEmpty() {
+        Optional<String> result = tumLiveService.getTumLivePlaylistLink("https://live.rbg.tum.de/w/abc course/12345\nFORGED");
+        assertThat(result).isEmpty();
+    }
+
+    @Test
     void getTumLivePlaylistLink_invalidPath_returnsEmpty() {
         Optional<String> result = tumLiveService.getTumLivePlaylistLink("https://live.rbg.tum.de/invalid/path");
         assertThat(result).isEmpty();
@@ -77,6 +83,15 @@ class TumLiveServiceTest {
                 .thenThrow(new RestClientException("boom"));
 
         Optional<String> result = tumLiveService.getTumLivePlaylistLink("https://live.rbg.tum.de/w/abc-course/12345");
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getTumLivePlaylistLink_clientNotConfigured_returnsEmpty() {
+        TumLiveService unconfiguredService = new TumLiveService(restClientBuilder, " ");
+
+        Optional<String> result = unconfiguredService.getTumLivePlaylistLink("https://live.rbg.tum.de/w/abc-course/12345");
+
         assertThat(result).isEmpty();
     }
 }

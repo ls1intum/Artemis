@@ -8,8 +8,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
+import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 @Component({
     selector: 'jhi-lecture-unit-card',
@@ -21,11 +22,10 @@ export class LectureUnitComponent implements OnDestroy {
     private static readonly SCROLL_INTO_VIEW_DELAY_MS = 500;
 
     private router = inject(Router);
-    private route = inject(ActivatedRoute, { optional: true });
     private elementRef = inject(ElementRef);
     private injector = inject(Injector);
     private scrollTimeoutId: ReturnType<typeof setTimeout> | undefined;
-    private autoExpanded = false;
+    private scrollGeneration = 0;
 
     protected faDownload = faDownload;
     protected faCheckCircle = faCheckCircle;
@@ -41,7 +41,7 @@ export class LectureUnitComponent implements OnDestroy {
     viewIsolatedButtonLabel = input<string>('artemisApp.textUnit.isolated');
     viewIsolatedButtonIcon = input<IconDefinition>(faExternalLinkAlt);
     isPresentationMode = input.required<boolean>();
-    initiallyExpanded = input<boolean>(false);
+    readonly deepLink = input<LectureDeepLink | undefined>(undefined);
 
     readonly showOriginalVersionButton = input<boolean>(false);
     readonly onShowOriginalVersion = output<void>();
@@ -63,21 +63,24 @@ export class LectureUnitComponent implements OnDestroy {
     constructor() {
         effect(
             (onCleanup) => {
-                const shouldAutoExpand = this.initiallyExpanded();
-                if (shouldAutoExpand && !this.autoExpanded) {
-                    this.autoExpanded = true;
-                    if (untracked(() => this.isCollapsed())) {
+                const deepLink = this.deepLink();
+                if (!deepLink) {
+                    return;
+                }
+
+                const scrollGeneration = ++this.scrollGeneration;
+
+                untracked(() => {
+                    if (this.isCollapsed()) {
                         this.isCollapsed.set(false);
                         this.onCollapse.emit(false);
                     }
 
-                    this.scheduleScroll('start', LectureUnitComponent.SCROLL_INTO_VIEW_DELAY_MS, true);
-                }
-                if (!shouldAutoExpand) {
-                    this.autoExpanded = false;
-                }
+                    this.scheduleScroll('start', LectureUnitComponent.SCROLL_INTO_VIEW_DELAY_MS, deepLink, scrollGeneration);
+                });
 
                 onCleanup(() => {
+                    this.scrollGeneration++;
                     this.clearScrollTimeout();
                 });
             },
@@ -86,6 +89,7 @@ export class LectureUnitComponent implements OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.scrollGeneration++;
         this.clearScrollTimeout();
     }
 
@@ -119,13 +123,20 @@ export class LectureUnitComponent implements OnDestroy {
         this.onFullscreen.emit();
     }
 
-    private scheduleScroll(block: ScrollLogicalPosition, delayMs = 0, useDeeplinkTarget = false): void {
+    private scheduleScroll(block: ScrollLogicalPosition, delayMs = 0, deepLink?: LectureDeepLink, scrollGeneration?: number): void {
         afterNextRender(
             () => {
+                if (scrollGeneration !== undefined && scrollGeneration !== this.scrollGeneration) {
+                    return;
+                }
+
                 const doScroll = () => {
-                    const queryParams = useDeeplinkTarget ? this.route?.snapshot.queryParams : undefined;
-                    const timestamp = queryParams?.['timestamp'];
-                    const page = queryParams?.['page'];
+                    if (scrollGeneration !== undefined && scrollGeneration !== this.scrollGeneration) {
+                        return;
+                    }
+
+                    const timestamp = deepLink?.timestamp;
+                    const page = deepLink?.page;
 
                     // Scroll to video player if timestamp is provided (deeplinking)
                     if (timestamp !== undefined) {

@@ -11,9 +11,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import tools.jackson.core.JacksonException;
 
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
@@ -23,7 +26,7 @@ import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
  */
 @Conditional(LtiEnabled.class)
 @Lazy
-@FeatureUsage("lti/oauth2-keys")
+@FeatureUsage(UserFeature.LTI)
 @RestController
 public class PublicOAuth2JWKSResource {
 
@@ -40,6 +43,7 @@ public class PublicOAuth2JWKSResource {
      *
      * @return ResponseEntity containing the JWKS as a JSON string with status 200 (OK). If an error occurs, returns null.
      */
+    @UsageInteraction(FeatureInteraction.SYSTEM)
     @GetMapping(".well-known/jwks.json")
     @EnforceNothing
     @ManualConfig

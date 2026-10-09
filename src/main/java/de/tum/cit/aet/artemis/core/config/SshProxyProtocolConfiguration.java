@@ -29,13 +29,13 @@ public class SshProxyProtocolConfiguration {
      * whoever sends one would let anybody who can reach the SSH port claim an arbitrary client address and walk
      * straight through an origin check. A connection from a listed address must therefore begin with a valid header
      * and is rejected otherwise, while a connection from anywhere else is treated as ordinary SSH and keeps its socket
-     * peer as the client address.
+     * peer as the client address. A header such a connection sends anyway is removed and ignored, with a warning.
      * <p>
      * That is also what keeps this safe to enable by default for the setups this repository ships: direct connections
      * from developers, tests and build agents on the compose network are unaffected, because they do not come from a
      * listed address.
      * <p>
-     * An empty list disables PROXY protocol entirely.
+     * An empty list means no header is ever believed.
      */
     private List<String> trustedSources = List.of();
 

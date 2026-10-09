@@ -11,7 +11,7 @@ import { UserSettingsDirective } from 'app/account/user/settings/directive/user-
 import { ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
 import { ScienceSetting } from 'app/account/user/settings/science-settings/science-settings-structure';
 import { FormsModule } from '@angular/forms';
-import { TumUiListComponent, TumUiListItemDirective, TumUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { TumAetUiListComponent, TumAetUiListItemDirective, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-science-settings',
@@ -24,9 +24,9 @@ import { TumUiListComponent, TumUiListItemDirective, TumUiToggleSwitchComponent 
         HasAnyAuthorityDirective,
         ArtemisTranslatePipe,
         FormsModule,
-        TumUiListComponent,
-        TumUiListItemDirective,
-        TumUiToggleSwitchComponent,
+        TumAetUiListComponent,
+        TumAetUiListItemDirective,
+        TumAetUiToggleSwitchComponent,
     ],
 })
 export class ScienceSettingsComponent extends UserSettingsDirective implements OnInit, OnDestroy {

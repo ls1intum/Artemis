@@ -208,6 +208,52 @@ client does not read the configuration leaves it out instead of spending a query
 
 Writing follows the key as well: the parent is saved first, then the configuration that names it.
 
+`TutorialGroupsConfiguration` and `OnlineCourseConfiguration` follow the same shape: they hold the course's key, `Course`
+carries no association to either, and the course management endpoints read them through
+`TutorialGroupsConfigurationRepository.findByCourseId` and `OnlineCourseConfigurationRepository.findByCourseId`, reached
+from the course module through `TutorialGroupApi` and `LtiApi`. Because the configuration's `course` is lazy, a query that
+returns a configuration whose course the caller reads has to fetch it (`JOIN FETCH t.course`); with open-in-view disabled,
+an unfetched proxy fails with a `LazyInitializationException` rather than loading quietly.
+
+`TeamAssignmentConfig` has the same shape for `Exercise`: `Exercise` keeps a `@Transient` slot, nothing fills it by itself, and a flow that needs it reads it through `TeamAssignmentConfigRepository`, attaching a single exercise with `attachTo(Exercise)` or a list of them in one query with `attachTo(Collection)`. `ExerciseConfigurationLoadProfileTest` pins that reading an exercise never reads the table.
+
+`PlagiarismDetectionConfig` follows the same shape, through `PlagiarismDetectionConfigRepository`, and `ExercisePlagiarismDetectionConfigLoadProfileTest` pins it. Because the configuration is not part of the exercise, saving an exercise never stores it and a copy returned by a second save does not carry it: a flow that only reports the configuration attaches it first. The scheduled continuous plagiarism control filters on the configuration with a join from the configuration's side and attaches the configurations of all the exercises it found in one query.
+
+`CourseConfiguration` and `CourseAthenaConfig` have the same shape. `Course` keeps a `@Transient` slot for each so that code which already asks the course keeps working, but nothing ever fills the slot: a flow reads the configuration through `CourseConfigurationRepository` or `CourseAthenaConfigRepository` and attaches it with `attachTo`, and a flow that looks at many courses attaches them in one query with `CourseConfigurationRepository.attachTo(Collection)`. An empty slot reads as the defaults, so a flow that forgets to attach reports a course as grade-relevant with Athena switched off rather than failing; `CourseConfigurationLoadProfileTest` pins which statements a course read may and may not contain.
+
+#### Permanent configuration rows
+
+Course and exercise settings belong to the lifetime of their owner. Create default rows when the owner is created,
+including settings for optional modules that are disabled on that server. Backfill missing rows for existing owners in
+a migration, preserving their existing settings. Do not insert or delete configurations when enabling or disabling a
+feature: update its flag and keep its settings for the next time it is enabled.
+
+Create courses through `CourseRepository.saveWithDefaultConfigurations`. It stores the course and then inserts the
+default settings with plain statements, without a transaction around them, so no lock is held across the statements. A
+failure between two of them leaves the course without the settings not yet inserted, and the caller sees the exception.
+Every later save through `saveWithDefaultConfigurations` and every course update adds the missing rows
+(`CourseRepository.ensureDefaultConfigurations`), so the course repairs itself without being deleted. A row that
+already exists is never replaced, and a concurrent save that inserts the same row first is tolerated. Course edits and
+feature toggles do not use a course-row lock or a transaction spanning multiple settings operations. Online-course settings are active only while `Course.onlineCourse`
+is true. Tutorial-group settings remain inactive until both tutorial-period dates are configured; configure those defaults
+through the configuration repository's modifying query.
+
+Every exercise, whatever its type and whether or not it is a team exercise, owns one `TeamAssignmentConfig` and one
+`PlagiarismDetectionConfig` row. Both hold the key to the exercise, so they can only be inserted once the exercise is
+stored: every path that stores a new exercise (creation, every kind of import, copies) calls
+`ExerciseConfigurationService.initialize` right after the first save, which checks for each row with a plain read, inserts
+the missing one with a plain `INSERT ... VALUES` (never an `INSERT ... SELECT ... WHERE NOT EXISTS`, which locks an index
+range on MySQL) through the `insertDefaultsFor` statements of the two repositories, and then applies the settings the request carried with their `applyTo`. No callback
+and no lazy fill creates a row for a new exercise, so a new creation path has to call the service itself. No
+transaction spans these statements, so a failure between them leaves the exercise without the rows not yet inserted;
+the caller sees the exception, and the next save repairs it, because `applyTo` adds a missing default row
+(`ensureExistsFor`, a plain read and a plain insert that tolerates a concurrent insert of the same row) before it updates
+the row in place. Updates only change the stored
+row in place with a modifying query, so its id survives and nothing is inserted or deleted when a setting changes, and
+team settings are exposed only for team-mode exercises (`Exercise.getTeamAssignmentConfig`). Programming creation and
+import persist the build settings after the exercise exists through
+`ProgrammingExerciseBuildConfigRepository.saveForExercise`.
+
 #### Turning an existing association lazy
 
 `open-in-view` is disabled, so the persistence context is already closed when a response is serialized. An association the query did not fetch reads as **absent** - which surfaces either as a `LazyInitializationException` or, where the getter guards with `Hibernate.isInitialized`, as a silently wrong value.

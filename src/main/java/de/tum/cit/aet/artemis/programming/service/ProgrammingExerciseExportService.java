@@ -64,7 +64,9 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.SecureXmlFactory;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.localvc.service.GitRepositoryExportService;
@@ -149,9 +151,10 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             StudentParticipationRepository studentParticipationRepository, FileService fileService, GitService gitService, GitRepositoryExportService gitRepositoryExportService,
             RepositoryExportGitService repositoryExportGitService, ZipFileService zipFileService, JsonMapper objectMapper,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, BuildPlanRepository buildPlanRepository,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         // Programming exercises do not have a submission export service
-        super(objectMapper, null);
+        super(objectMapper, null, teamAssignmentConfigRepository, plagiarismDetectionConfigRepository);
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
@@ -163,6 +166,14 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         this.zipFileService = zipFileService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.buildPlanRepository = buildPlanRepository;
+    }
+
+    private static String getCourseShortName(ProgrammingExercise exercise) {
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new IllegalStateException("The course of programming exercise " + exercise.getId() + " could not be resolved");
+        }
+        return course.getShortName();
     }
 
     /**
@@ -278,8 +289,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         Path exportDir = exportProgrammingExerciseMaterialWithStudentReposOptional(exercise, exportErrors, false, true, Optional.empty(), new ArrayList<>(), pathsToBeZipped);
         // Setup path to store the zip file for the exported programming exercise
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
-        String exportedExerciseZipFileName = "Material-" + exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId()
-                + "-" + timestamp + ".zip";
+        String exportedExerciseZipFileName = "Material-" + getCourseShortName(exercise) + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
         String cleanFilename = FileUtil.sanitizeFilename(exportedExerciseZipFileName);
         Path pathToZippedExercise = exportDir.resolve(cleanFilename);
         // Create the zip folder of the exported programming exercise and return the path to the created folder
@@ -337,7 +347,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
         // Setup path to store the zip file for the exported repositories
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
-        String filename = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
+        String filename = getCourseShortName(exercise) + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
         String cleanFilename = FileUtil.sanitizeFilename(filename);
         Path pathToZippedExercise = Path.of(outputDir.toString(), cleanFilename);
 
@@ -643,8 +653,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         log.debug("Create zip file for {} repositorie(s) of programming exercise: {}", pathsToZippedRepos.size(), programmingExercise.getTitle());
-        String filename = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getShortName() + "-" + System.currentTimeMillis()
-                + ".zip";
+        String filename = getCourseShortName(programmingExercise) + "-" + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + ".zip";
 
         Path zipFilePath = Path.of(outputDir.toString(), filename);
         zipFileService.createZipFile(zipFilePath, pathsToZippedRepos);

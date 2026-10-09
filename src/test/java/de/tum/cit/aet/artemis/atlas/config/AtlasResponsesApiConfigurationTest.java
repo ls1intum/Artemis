@@ -43,6 +43,8 @@ class AtlasResponsesApiConfigurationTest {
             assertThat(properties.responsesApiEnabled()).isTrue();
             assertThat(properties.model()).isEqualTo("gpt-5.6-luna");
             assertThat(properties.reasoningEffort()).isEqualTo("xhigh");
+            assertThat(properties.workerModel()).isEqualTo("gpt-5.6-luna");
+            assertThat(properties.workerReasoningEffort()).isEqualTo("high");
         });
     }
 

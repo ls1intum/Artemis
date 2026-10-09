@@ -37,7 +37,7 @@ button.action-more {
 
 // The popover renders its panel in the overlay container, so this host shows nothing inline — but as a flex child it
 // would still claim a `gap-1` (4px) the overflow calculation doesn't account for, eating into the anti-clip margin.
-tum-ui-popover {
+tumaet-ui-popover {
     display: none;
 }
 

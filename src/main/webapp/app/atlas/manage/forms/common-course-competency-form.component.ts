@@ -25,7 +25,6 @@ import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco
         HelpIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
-        MarkdownEditorMonacoComponent,
     ],
 })
 export class CommonCourseCompetencyFormComponent {

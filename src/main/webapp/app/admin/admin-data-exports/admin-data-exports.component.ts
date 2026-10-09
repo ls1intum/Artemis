@@ -11,7 +11,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminDataExportCreateModalComponent } from 'app/admin/admin-data-exports/admin-data-export-create-modal.component';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiPaginatorComponent, TumUiTableDirective, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 /**
  * Admin component for managing user data exports in accordance with GDPR Art. 15.
@@ -38,12 +38,12 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
         ArtemisTranslatePipe,
         FormsModule,
         AdminDataExportCreateModalComponent,
-        TumUiPaginatorComponent,
+        TumAetUiPaginatorComponent,
         DeleteButtonDirective,
-        TumUiTableDirective,
-        TumUiTagComponent,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
+        TumAetUiTableDirective,
+        TumAetUiTagComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
     ],
 })
 export class AdminDataExportsComponent implements OnInit {

@@ -16,8 +16,7 @@ import { CourseNotificationViewingStatus } from 'app/notification/shared/entitie
 import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RouterLink } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
 import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
 import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
@@ -29,6 +28,9 @@ import { CourseNotificationPresetPickerComponent } from 'app/notification/course
  * Features a dropdown interface with category filtering, infinite scrolling,
  * and notification status management.
  */
+/** Marks the menu of the preset picker, which the picker renders in an overlay outside of the overview element. */
+const PRESET_MENU_SELECTOR = '[data-notification-preset-menu]';
+
 @Component({
     selector: 'jhi-course-notification-overview',
     imports: [
@@ -39,22 +41,22 @@ import { CourseNotificationPresetPickerComponent } from 'app/notification/course
         CourseNotificationComponent,
         ArtemisTranslatePipe,
         RouterLink,
-        ButtonModule,
-        TooltipModule,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
         CourseNotificationPresetPickerComponent,
     ],
     templateUrl: './course-notification-overview.component.html',
     styleUrls: ['./course-notification-overview.component.scss'],
 })
 export class CourseNotificationOverviewComponent implements AfterViewInit {
-    readonly courseId = input.required<number>();
-
     private elementRef = inject(ElementRef);
     private courseNotificationService = inject(CourseNotificationService);
     private accountService = inject(AccountService);
     private courseStorageService = inject(CourseStorageService);
     private courseNotificationSettingService = inject(CourseNotificationSettingService);
     private destroyRef = inject(DestroyRef);
+
+    readonly courseId = input.required<number>();
 
     // Icons
     protected readonly faBell = faBell;
@@ -304,7 +306,9 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
      */
     @HostListener('document:click', ['$event.target'])
     protected onClickOutside(target: EventTarget | null) {
-        const clickedInside = this.elementRef.nativeElement.contains(target);
+        // The preset menu of this panel is rendered in an overlay outside of this element, so a click on one of its entries is not a click outside.
+        // Only that menu counts: a click in any other menu is a click outside.
+        const clickedInside = this.elementRef.nativeElement.contains(target) || (target instanceof Element && target.closest(PRESET_MENU_SELECTOR) !== null);
         if (!clickedInside && this.isShown()) {
             this.isShown.set(false);
             this.updateCurrentCategoryNotificationsToSeenOnClient();
@@ -354,7 +358,11 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
      * both in the local state and on the server.
      */
     protected markAllAsReadClicked() {
-        this.updateCurrentCategoryNotificationsToSeenOnServer();
+        const visibleUnseenNotificationIds = this.getVisibleUnseenNotificationIds();
+        if (visibleUnseenNotificationIds.length > 0) {
+            // An explicit action of the user, so not the automatic update the overview sends when it displays notifications
+            this.courseNotificationService.setNotificationStatus(this.courseId(), visibleUnseenNotificationIds, CourseNotificationViewingStatus.SEEN);
+        }
         this.updateCurrentCategoryNotificationsToSeenOnClient();
     }
 
@@ -401,7 +409,7 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
             return;
         }
 
-        this.courseNotificationService.setNotificationStatus(this.courseId(), visibleUnseenNotificationIds, CourseNotificationViewingStatus.SEEN);
+        this.courseNotificationService.markDisplayedNotificationsAsSeen(this.courseId(), visibleUnseenNotificationIds);
     }
 
     /**

@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -91,7 +92,8 @@ class PyrisSubmittedRepositoryTest {
         // merge and the diff below it are the production ones.
         var repositoryService = mock(RepositoryService.class);
         when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class))).thenReturn(Map.of("src/Main.java", "COMMITTED"));
-        var service = new PyrisDTOService(repositoryService, mock(ProgrammingFeedbackSynthesizerService.class), mock(IrisProactiveProperties.class));
+        var service = new PyrisDTOService(repositoryService, mock(ProgrammingFeedbackSynthesizerService.class), mock(BuildLogEntryService.class),
+                mock(IrisProactiveProperties.class));
 
         var exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(JAVA);

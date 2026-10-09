@@ -1,11 +1,10 @@
 import { expect } from '@playwright/test';
-import dayjs, { Dayjs } from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { admin, instructor, studentOne, tutor } from '../../support/users';
 import { test } from '../../support/fixtures';
 import { SEED_COURSES } from '../../support/seedData';
 import { ExerciseType } from '../../support/constants';
-import { newBrowserPage, prepareExam, startAssessing, waitForExamEnd } from '../../support/utils';
+import { newBrowserPage, prepareEndedExam, startAssessing } from '../../support/utils';
 import { Commands } from '../../support/commands';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
@@ -16,12 +15,10 @@ const course = { id: SEED_COURSES.exerciseAssessment.id } as any;
 
 test.describe.serial('Exam modeling summary', { tag: '@slow' }, () => {
     let exam: Exam;
-    let examEnd: Dayjs;
 
     test.beforeAll('Prepare and submit an exam', async ({ browser }) => {
-        examEnd = dayjs().add(25, 'seconds');
         const page = await newBrowserPage(browser);
-        exam = await prepareExam(course, examEnd, ExerciseType.MODELING, page);
+        exam = await prepareEndedExam(course, ExerciseType.MODELING, page);
         await page.close();
     });
 
@@ -36,7 +33,6 @@ test.describe.serial('Exam modeling summary', { tag: '@slow' }, () => {
     }) => {
         await login(instructor);
         await examManagement.verifySubmitted(course.id!, exam.id!, studentOne.displayName!);
-        await waitForExamEnd(exam, page);
 
         await login(tutor);
         await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);

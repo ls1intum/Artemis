@@ -7,14 +7,14 @@ import { PlagiarismResultStatsDTO } from 'app/plagiarism/shared/entities/Plagiar
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { DatePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { PlagiarismAndTutorEffortDirective } from 'app/plagiarism/manage/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
 import { PlagiarismInspectorService } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
-import { TumUiBarChartComponent, TumUiBarChartConfig, TumUiChartSelectEvent } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 
 interface SimilarityRangeComparisonStateDTO {
     confirmed: number;
@@ -26,7 +26,7 @@ interface SimilarityRangeComparisonStateDTO {
     selector: 'jhi-plagiarism-run-details',
     styleUrls: ['./plagiarism-run-details.component.scss'],
     templateUrl: './plagiarism-run-details.component.html',
-    imports: [TranslateDirective, HelpIconComponent, TumUiBarChartComponent, DatePipe, ArtemisTranslatePipe, ArtemisDatePipe],
+    imports: [TranslateDirective, HelpIconComponent, TumAetUiBarChartComponent, DatePipe, ArtemisTranslatePipe, ArtemisDatePipe],
 })
 export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirective {
     private inspectorService = inject(PlagiarismInspectorService);
@@ -51,7 +51,7 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
     private readonly resolvedColors = computed(() => this.chartColors());
 
     readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.resolvedColors()));
-    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+    readonly chartConfig = computed<TumAetUiBarChartConfig>(() => ({
         yAxis: { max: this.yScaleMax, tickFormatter: this.yAxisTickFormatting },
         tooltip: {
             title: (items) => {
@@ -144,7 +144,7 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
      * Emits the selected range to {@link PlagiarismInspectorComponent#filterByChart} so that the comparisons shown in the sidebar can be filtered accordingly
      * @param event the event identifying the clicked bar
      */
-    onSelect(event: TumUiChartSelectEvent): void {
+    onSelect(event: TumAetUiChartSelectEvent): void {
         const interval = event.label;
         if (!interval) {
             return;

@@ -7,6 +7,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { By } from '@angular/platform-browser';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 
 describe('SearchResultItemComponent', () => {
     let component: SearchResultItemComponent;
@@ -99,14 +101,16 @@ describe('SearchResultItemComponent', () => {
         } as GlobalSearchResult);
         fixture.detectChanges();
 
-        const descriptionEl: HTMLElement = fixture.nativeElement.querySelector('.result-description');
-        expect(descriptionEl).toBeTruthy();
+        const markdownElement = fixture.debugElement.query(By.directive(MarkdownDirective));
+        expect(markdownElement).toBeTruthy();
+        const descriptionEl: HTMLElement = markdownElement.nativeElement;
 
-        // The link text should be visible (markdown is rendered asynchronously via the lazy [jhiMarkdown] directive).
-        await vi.waitFor(() => {
-            fixture.detectChanges();
-            expect(descriptionEl.textContent).toContain('docs');
+        // Await the real lazy conversion instead of imposing a separate polling deadline on chunk loading.
+        await new Promise<void>((resolve) => {
+            markdownElement.injector.get(MarkdownDirective).markdownRendered.subscribe(resolve);
         });
+        fixture.detectChanges();
+        expect(descriptionEl.textContent).toContain('docs');
 
         // But no <a> element should be present
         const anchor = descriptionEl.querySelector('a');

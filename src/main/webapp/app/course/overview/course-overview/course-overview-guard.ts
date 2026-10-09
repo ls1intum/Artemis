@@ -1,13 +1,11 @@
-import { Injectable, inject } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
+import { Service, inject } from '@angular/core';
+import { ActivatedRouteSnapshot, CanActivate, Router, UrlTree } from '@angular/router';
 import { Observable, catchError, map, of } from 'rxjs';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
 import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CourseOverviewGuard implements CanActivate {
     private courseAvailableTabsService = inject(CourseAvailableTabsService);
     private router = inject(Router);
@@ -21,9 +19,10 @@ export class CourseOverviewGuard implements CanActivate {
      * error (e.g. 403 for an unregistered user) activation is allowed; the container's loadCourse then handles it
      * (course registration redirect / alert).
      *
-     * @return true if the client is allowed to access the route, false otherwise
+     * @return true if the client is allowed to access the route, a redirect to the exercises tab if the tab is unavailable,
+     * and false if the route carries no course id or path
      */
-    canActivate(route: ActivatedRouteSnapshot): Observable<boolean> {
+    canActivate(route: ActivatedRouteSnapshot): Observable<boolean | UrlTree> {
         const courseIdString = route.parent?.paramMap.get('courseId');
         if (!courseIdString) {
             return of(false);
@@ -41,10 +40,10 @@ export class CourseOverviewGuard implements CanActivate {
     }
 
     /**
-     * Decides whether the given tab may be opened and redirects to the exercises tab otherwise.
+     * Decides whether the given tab may be opened, and returns a redirect to the exercises tab otherwise.
      * Kept as a single place so the rules are not duplicated.
      */
-    decideAccess(courseId: number, tabs: CourseAvailableTabs, type?: string): boolean {
+    decideAccess(courseId: number, tabs: CourseAvailableTabs, type?: string): true | UrlTree {
         let hasAccess: boolean;
         switch (type) {
             // Should always be accessible
@@ -82,9 +81,6 @@ export class CourseOverviewGuard implements CanActivate {
             default:
                 hasAccess = false;
         }
-        if (!hasAccess) {
-            void this.router.navigate([`/courses/${courseId}/exercises`]);
-        }
-        return hasAccess;
+        return hasAccess || this.router.createUrlTree([`/courses/${courseId}/exercises`]);
     }
 }

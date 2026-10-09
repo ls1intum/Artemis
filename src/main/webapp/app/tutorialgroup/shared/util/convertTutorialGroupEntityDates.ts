@@ -37,7 +37,7 @@ export function convertTutorialGroupDatesFromServer(tutorialGroup: TutorialGroup
         tutorialGroup.tutorialGroupSchedule.validToInclusive = convertDateFromServer(tutorialGroup.tutorialGroupSchedule.validToInclusive);
     }
     if (tutorialGroup.tutorialGroupSessions) {
-        tutorialGroup.tutorialGroupSessions.map((tutorialGroupSession: LegacyTutorialGroupSession) => convertTutorialGroupSessionDatesFromServer(tutorialGroupSession));
+        tutorialGroup.tutorialGroupSessions.forEach((tutorialGroupSession: LegacyTutorialGroupSession) => convertTutorialGroupSessionDatesFromServer(tutorialGroupSession));
     }
     if (tutorialGroup.nextSession) {
         tutorialGroup.nextSession = convertTutorialGroupSessionDatesFromServer(tutorialGroup.nextSession);

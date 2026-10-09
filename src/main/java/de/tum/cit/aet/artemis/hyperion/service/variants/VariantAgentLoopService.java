@@ -175,8 +175,8 @@ public class VariantAgentLoopService {
         if (chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {
             return 0;
         }
-        Integer totalTokens = chatResponse.getMetadata().getUsage().getTotalTokens();
-        return totalTokens != null ? totalTokens : 0;
+        // Usage#getTotalTokens never returns null: it falls back to prompt + completion tokens, each defaulting to 0.
+        return chatResponse.getMetadata().getUsage().getTotalTokens();
     }
 
     private String renderPlanContract(ChangePlan plan) {

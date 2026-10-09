@@ -231,6 +231,16 @@ describe('CodeEditorContainerIntegration', () => {
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
     });
 
+    it('should expose the toolbar above the editor, so that a page can move it out of the bar that holds it', () => {
+        cleanInitialize();
+
+        const navbar = container.navbar()!.nativeElement;
+
+        expect(navbar.hasAttribute('editorNavbar')).toBe(true);
+        expect(navbar.parentElement!.classList).toContain('editor-statusbar');
+        expect(navbar.querySelector('jhi-code-editor-actions')).not.toBeNull();
+    });
+
     it('should not load files and render other components correctly if the repository status cannot be retrieved', async () => {
         const exercise = { id: 1, problemStatement, course: { id: 2 } };
         const participation = { id: 2, exercise, submissions: [{ results: [result] }] } as StudentParticipation;
@@ -557,14 +567,14 @@ describe('CodeEditorContainerIntegration', () => {
         const participation = { id: 1 } as Participation;
         containerFixture.componentRef.setInput('participation', participation);
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
-        containerFixture.componentRef.setInput('feedbackSuggestions', [
-            { reference: 'file:src/Test1.java_line:2' },
-            { reference: 'file:src/Test2.java_line:2' },
-            { reference: 'file:src/Test2.java_line:4' },
-            { reference: 'file:src/Test3.java_line:4' },
-            { reference: 'file:src/Test3.java_line:10' },
-            { reference: 'file:src/Test3.java_line:11' },
-        ]);
+        containerFixture.componentRef.setInput('referencedFeedback', [
+            { reference: 'file:src/Test1.java_line:2', text: 'FeedbackSuggestion:' },
+            { reference: 'file:src/Test2.java_line:2', text: 'FeedbackSuggestion:' },
+            { reference: 'file:src/Test2.java_line:4', text: 'FeedbackSuggestion:' },
+            { reference: 'file:src/Test3.java_line:4', text: 'FeedbackSuggestion:' },
+            { reference: 'file:src/Test3.java_line:10', text: 'FeedbackSuggestion:' },
+            { reference: 'file:src/Test3.java_line:11', text: 'FeedbackSuggestion:' },
+        ] as Feedback[]);
         containerFixture.detectChanges();
         container.updateFileBadges();
         expect(container.fileBadges()).toEqual({

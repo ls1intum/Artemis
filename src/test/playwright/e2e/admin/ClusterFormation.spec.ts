@@ -19,7 +19,7 @@ import { expect } from '@playwright/test';
  * Buildagent-only nodes are visible via /api/admin/build-agents instead.
  *
  * Tagged @multi-node so the single-node fast pipeline skips it; only the multi-node runners
- * (run-e2e-tests-local-multinode.sh / run-e2e-tests-local-multinode-fast.sh / their CI counterpart) execute this file.
+ * (supporting_scripts/e2e/run-e2e-tests-local-multinode.sh / supporting_scripts/e2e/run-e2e-tests-local-multinode-fast.sh / their CI counterpart) execute this file.
  */
 
 const EXPECTED_NODE_COUNT = parseInt(process.env.EXPECTED_CLUSTER_NODE_COUNT ?? '2', 10);

@@ -18,12 +18,12 @@ import { ExerciseVariantAiWizard } from '../../support/pageobjects/exercises/Exe
  * `MOCK_VARIANT_TITLE`, so the test can assert the exact exercise surfaces in the course list.
  *
  * These tests require Hyperion to be enabled on the server. Run them with:
- *     RUN_HYPERION=true ./run-e2e-tests-local-fast.sh --filter "Variant"
+ *     RUN_HYPERION=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --filter "Variant"
  * When Hyperion is NOT enabled (the default), the suite skips itself, so it is a no-op in normal CI runs.
  *
  * Note: one manual multi-node sanity run before the PR (the job map is Hazelcast-backed and the WebSocket
  * event must reach the user regardless of which node runs the job):
- *     RUN_HYPERION=true ./run-e2e-tests-local-multinode-fast.sh --filter "Variant"
+ *     RUN_HYPERION=true ./supporting_scripts/e2e/run-e2e-tests-local-multinode-fast.sh --filter "Variant"
  */
 
 const course = { id: SEED_COURSES.exerciseManagement.id } as any;

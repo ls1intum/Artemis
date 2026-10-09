@@ -41,7 +41,7 @@
 </div>
 @if (isInputLengthDisplayed() || (content()?.length ?? 0) > maxContentLength()!) {
     <div class="col mt-1 text-end">
-        <p class="small my-0 ms-2" [ngStyle]="{ color: content()?.length! > maxContentLength()! || content()?.length! === 0 ? 'red' : 'inherit' }">
+        <p class="small my-0 ms-2" [style.color]="content()?.length! > maxContentLength()! || content()?.length! === 0 ? 'red' : 'inherit'">
             {{ content()?.length ?? 0 }} / {{ maxContentLength() }}
         </p>
     </div>

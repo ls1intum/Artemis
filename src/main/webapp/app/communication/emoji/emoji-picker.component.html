@@ -6,7 +6,10 @@
     [showPreview]="false"
     [color]="'var(--primary)'"
     [recent]="recent()"
-    [i18n]="{ search: 'artemisApp.metis.searchEmoji' | artemisTranslate, categories: { recent: 'artemisApp.metis.courseEmojiSelectionCategory' | artemisTranslate } }"
+    [i18n]="{
+        search: 'artemisApp.communication.searchEmoji' | artemisTranslate,
+        categories: { recent: 'artemisApp.communication.courseEmojiSelectionCategory' | artemisTranslate },
+    }"
     [darkMode]="dark()"
     [imageUrlFn]="singleImageFunction()"
     [backgroundImageFn]="utils.EMOJI_SHEET_URL"

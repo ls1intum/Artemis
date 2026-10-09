@@ -920,30 +920,6 @@ describe('CodeEditorMonacoComponent', () => {
         expect(updateFeedbackCallbackStub).toHaveBeenCalledExactlyOnceWith(expectedFeedbacks);
     });
 
-    it('should correctly accept a feedback suggestion and notify', () => {
-        const updateFeedbackStub = vi.spyOn(comp, 'updateFeedback').mockImplementation(() => {});
-        const acceptSuggestionCallbackStub = vi.fn();
-        const suggestionToAccept: Feedback = exampleFeedbacks[0];
-        fixture.componentRef.setInput('feedbackSuggestions', [suggestionToAccept]);
-        comp.onAcceptSuggestion.subscribe(acceptSuggestionCallbackStub);
-        fixture.changeDetectorRef.detectChanges();
-        comp.acceptSuggestion(suggestionToAccept);
-        expect(comp.feedbackSuggestionsInternal()).toHaveLength(0);
-        expect(updateFeedbackStub).toHaveBeenCalledExactlyOnceWith(suggestionToAccept);
-        expect(acceptSuggestionCallbackStub).toHaveBeenCalledExactlyOnceWith(suggestionToAccept);
-    });
-
-    it('should correctly discard a suggestion and notify', () => {
-        const discardSuggestionCallbackStub = vi.fn();
-        const suggestionToDiscard = exampleFeedbacks[0];
-        fixture.componentRef.setInput('feedbackSuggestions', [suggestionToDiscard]);
-        comp.onDiscardSuggestion.subscribe(discardSuggestionCallbackStub);
-        fixture.changeDetectorRef.detectChanges();
-        comp.discardSuggestion(suggestionToDiscard);
-        expect(comp.feedbackSuggestionsInternal()).toHaveLength(0);
-        expect(discardSuggestionCallbackStub).toHaveBeenCalledExactlyOnceWith(suggestionToDiscard);
-    });
-
     it('should update file session when a file is renamed', async () => {
         const oldFileName = 'old-file-name';
         const newFileName = 'new-file-name';

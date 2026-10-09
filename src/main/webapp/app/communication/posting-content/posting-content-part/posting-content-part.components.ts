@@ -1,5 +1,5 @@
 import { Component, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { PostingContentPart, ReferenceType } from '../../metis.util';
+import { PostingContentPart, ReferenceType } from '../../communication.util';
 import {
     faAt,
     faBan,
@@ -29,7 +29,7 @@ import { FileService } from 'app/foundation/service/file.service';
 @Component({
     selector: 'jhi-posting-content-part',
     templateUrl: './posting-content-part.component.html',
-    styleUrls: ['../../metis.component.scss'],
+    styleUrls: ['../../communication.component.scss'],
     imports: [RouterLink, FaIconComponent, MarkdownDirective, TranslateDirective],
     providers: [DialogService],
 })
@@ -148,9 +148,9 @@ export class PostingContentPartComponent implements OnInit {
     enlargeImage(slideToReference: string, imageAlt?: string) {
         this.dialogService.open(EnlargeSlideImageComponent, {
             // A translated header gives the dialog an accessible name and renders PrimeNG's themed close button, so the preview can always be dismissed.
-            header: this.translateService.instant('artemisApp.metis.imagePreviewTitle'),
+            header: this.translateService.instant('artemisApp.communication.imagePreviewTitle'),
             // Prefer the image's own description (markdown alt text) so assistive technologies can announce the preview; fall back to a generic localized label.
-            data: { slideToReference, imageAlt: imageAlt || this.translateService.instant('artemisApp.metis.imagePreviewAlt') },
+            data: { slideToReference, imageAlt: imageAlt || this.translateService.instant('artemisApp.communication.imagePreviewAlt') },
             modal: true,
             // Without closable the DynamicDialog header renders no close button (PrimeNG defaults it to undefined), which left the preview stuck open.
             closable: true,
@@ -189,13 +189,17 @@ export class PostingContentPartComponent implements OnInit {
         }
     }
 
+    protected canActivateUserReference(referenceUserLogin: string | undefined): boolean {
+        return !this.hasClickedUserReference && !!referenceUserLogin && referenceUserLogin !== this.accountService.userIdentity()?.login;
+    }
+
     /**
      * Emit an event if the clicked user reference is different from the current user
      *
      * @param referenceUserLogin login of the referenced user
      */
     onClickUserReference(referenceUserLogin: string | undefined) {
-        if (!this.hasClickedUserReference && referenceUserLogin && referenceUserLogin !== this.accountService.userIdentity()?.login) {
+        if (referenceUserLogin && this.canActivateUserReference(referenceUserLogin)) {
             this.hasClickedUserReference = true;
             this.userReferenceClicked.emit(referenceUserLogin);
         }

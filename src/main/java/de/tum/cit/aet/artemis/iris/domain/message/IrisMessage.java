@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Parent;
+import de.tum.cit.aet.artemis.core.util.ArtemisApp;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
@@ -58,6 +59,15 @@ public class IrisMessage extends DomainObject {
     @Column(name = "sender")
     @Enumerated(EnumType.STRING)
     private IrisMessageSender sender;
+
+    /**
+     * The Artemis app a user message was sent from (iOS/Android), resolved from the request {@code User-Agent}.
+     * {@code null} for messages sent from a web browser, from an unrecognized client, or for non-user messages.
+     */
+    @Nullable
+    @Column(name = "sender_origin")
+    @Enumerated(EnumType.STRING)
+    private ArtemisApp senderOrigin;
 
     @Nullable
     @Enumerated(EnumType.STRING)
@@ -146,6 +156,15 @@ public class IrisMessage extends DomainObject {
 
     public void setSender(IrisMessageSender sender) {
         this.sender = sender;
+    }
+
+    @Nullable
+    public ArtemisApp getSenderOrigin() {
+        return senderOrigin;
+    }
+
+    public void setSenderOrigin(@Nullable ArtemisApp senderOrigin) {
+        this.senderOrigin = senderOrigin;
     }
 
     @Nullable

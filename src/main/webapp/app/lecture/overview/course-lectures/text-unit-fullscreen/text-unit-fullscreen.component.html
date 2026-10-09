@@ -1,0 +1,50 @@
+<div class="flex h-full flex-col" data-testid="text-unit-fullscreen">
+    <!-- page-top-bar holds the bar to the height of the shell's title bars. -->
+    <div class="page-top-bar text-unit-fullscreen-header mb-2 flex shrink-0 items-center gap-2">
+        @if (courseId() && lectureId()) {
+            <a
+                tumAetUiButton
+                severity="secondary"
+                variant="outlined"
+                size="small"
+                data-testid="text-unit-fullscreen-back-button"
+                [routerLink]="backLink()"
+                [queryParams]="{ unit: textUnit()?.id }"
+            >
+                <fa-icon [icon]="faArrowLeft" />
+                <span jhiTranslate="artemisApp.textUnit.backToLecture"></span>
+            </a>
+        }
+        @if (textUnit(); as unit) {
+            <div class="flex min-w-0 items-baseline gap-2">
+                <h5 class="truncate" data-testid="text-unit-fullscreen-title">
+                    <fa-icon class="me-2" [icon]="faScroll" />
+                    {{ unit.name }}
+                </h5>
+                @if (lectureTitle()) {
+                    <small class="hidden truncate text-muted-color md:inline">{{ lectureTitle() }}</small>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Only the text scrolls, so the header with the way back stays in view on a long text. -->
+    <div class="min-h-0 flex-1 overflow-auto">
+        @if (isLoading()) {
+            <div class="flex justify-center" role="status">
+                <fa-icon [icon]="faSpinner" animation="spin" size="lg" />
+                <span class="sr-only" jhiTranslate="loading"></span>
+            </div>
+        } @else if (textUnit()) {
+            @if (formattedContent()) {
+                <div
+                    class="markdown-preview text-unit-fullscreen-content mx-auto w-full max-w-4xl"
+                    data-testid="text-unit-fullscreen-content"
+                    [innerHtml]="formattedContent()"
+                ></div>
+            }
+        } @else {
+            <p class="text-muted-color" data-testid="text-unit-fullscreen-not-found" jhiTranslate="artemisApp.textUnit.notFound"></p>
+        }
+    </div>
+</div>

@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
+import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { toHolidays } from 'app/tutorialgroup/manage/holidays/holiday.model';
@@ -39,7 +39,7 @@ describe('HolidayListComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [HolidayListComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideArtemisTumUiTranslator()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideArtemisTumAetUiTranslator()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(HolidayListComponent);
@@ -203,11 +203,16 @@ describe('HolidayListComponent', () => {
         expect(emitted).toBe('all');
     });
 
-    it('should mark the active filter, so which one applies is visible and announced', () => {
-        const upcoming = fixture.debugElement.query(By.css('[data-filter="upcoming"]')).nativeElement as HTMLButtonElement;
-        const all = fixture.debugElement.query(By.css('[data-filter="all"]')).nativeElement as HTMLButtonElement;
+    it('should mark the active filter, so which one applies is visible and announced', async () => {
+        // ngModel writes the select button's value on a microtask, so let it settle before reading the state.
+        await fixture.whenStable();
+        fixture.detectChanges();
 
-        expect(upcoming.getAttribute('aria-pressed')).toBe('true');
-        expect(all.getAttribute('aria-pressed')).toBe('false');
+        // The select button carries aria-pressed on the option button; the data-filter hook sits on its label.
+        const upcoming = (fixture.debugElement.query(By.css('[data-filter="upcoming"]')).nativeElement as HTMLElement).closest('button');
+        const all = (fixture.debugElement.query(By.css('[data-filter="all"]')).nativeElement as HTMLElement).closest('button');
+
+        expect(upcoming?.getAttribute('aria-pressed')).toBe('true');
+        expect(all?.getAttribute('aria-pressed')).toBe('false');
     });
 });

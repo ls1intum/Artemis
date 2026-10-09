@@ -32,6 +32,7 @@ import { User } from 'app/account/user/user.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import dayjs from 'dayjs/esm';
+import { Subject } from 'rxjs';
 
 describe('ExerciseHeaderActionsComponent', () => {
     let fixture: ComponentFixture<ExerciseHeaderActionsComponent>;
@@ -98,6 +99,29 @@ describe('ExerciseHeaderActionsComponent', () => {
         fixture.detectChanges();
         return fixture;
     }
+
+    describe('start exercise', () => {
+        it('should send only one start request while the request is pending', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = 7;
+            exercise.studentParticipations = [];
+            createComponent(exercise);
+            const participationSubject = new Subject<StudentParticipation>();
+            const startExerciseStub = vi.spyOn(TestBed.inject(CourseExerciseService), 'startExercise').mockReturnValue(participationSubject);
+
+            fixture.componentInstance.startExercise();
+            fixture.componentInstance.startExercise();
+
+            expect(startExerciseStub).toHaveBeenCalledOnce();
+            expect(fixture.componentInstance.isLoading()).toBe(true);
+
+            participationSubject.error(new Error('failed'));
+            expect(fixture.componentInstance.isLoading()).toBe(false);
+
+            fixture.componentInstance.startExercise();
+            expect(startExerciseStub).toHaveBeenCalledTimes(2);
+        });
+    });
 
     describe('feedback button participation', () => {
         // Lives here rather than in the header spec, which mocks the button away.

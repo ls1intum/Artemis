@@ -38,7 +38,7 @@
          * A select button has nothing left to give: squeezed below the width of its options, it clips them instead of
          * getting narrower. Hold it at its size and let the title, which truncates cleanly, absorb the shrinking.
          */
-        tum-ui-select-button {
+        tumaet-ui-select-button {
             flex: 0 0 auto;
         }
     }

@@ -32,7 +32,7 @@ The generated report is copied to the clipboard and pasted into a pull request o
 
 2. Install the required packages:
     ```shell
-    pip install -r requirements.txt
+    python -m pip install --require-hashes -r requirements.txt
     ```
 
 3. Configure environment variables by copying the `env.example` file to `.env` (use with caution, security risk!):

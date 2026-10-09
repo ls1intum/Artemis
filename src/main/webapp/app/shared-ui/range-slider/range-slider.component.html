@@ -9,6 +9,7 @@
         >
 
         <input
+            [attr.aria-label]="'accessibility.rangeMinimum' | artemisTranslate"
             type="range"
             [min]="generalMinValue()"
             [max]="generalMaxValue()"
@@ -20,6 +21,7 @@
             (change)="onSelectedMinValueChanged($event)"
         />
         <input
+            [attr.aria-label]="'accessibility.rangeMaximum' | artemisTranslate"
             type="range"
             [min]="generalMinValue()"
             [max]="generalMaxValue()"

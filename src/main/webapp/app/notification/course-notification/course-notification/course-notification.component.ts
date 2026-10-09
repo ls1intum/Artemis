@@ -5,6 +5,7 @@ import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CommonModule } from '@angular/common';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -18,7 +19,7 @@ import { RouterLink } from '@angular/router';
  */
 @Component({
     selector: 'jhi-course-notification',
-    imports: [FaIconComponent, ProfilePictureComponent, TranslateDirective, CommonModule, RouterLink],
+    imports: [FaIconComponent, ProfilePictureComponent, TranslateDirective, ArtemisTranslatePipe, CommonModule, RouterLink],
     templateUrl: './course-notification.component.html',
     styleUrls: ['./course-notification.component.scss'],
     // Mirror the `fluid` input onto the host so the (inline by default) host and its inline-block

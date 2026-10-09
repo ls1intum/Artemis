@@ -6,9 +6,9 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { Course } from 'app/course/shared/entities/course.model';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { MetisService } from 'app/communication/service/metis.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/communication.util';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { NgClass } from '@angular/common';
@@ -29,6 +29,11 @@ import { UserPublicInfoDTO } from 'app/account/user/user.model';
     imports: [NgClass, TranslateDirective, FaIconComponent, FormsModule, ReactiveFormsModule, NgbTooltip, InfiniteScrollDirective, PostingThreadComponent, ArtemisTranslatePipe],
 })
 export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestroy {
+    private courseSidebarService = inject(CourseSidebarService);
+    private communicationService = inject(CommunicationService);
+    private courseConversationsService = inject(CourseConversationsService);
+    private formBuilder = inject(FormBuilder);
+
     courseWideSearchConfig = input.required<CourseWideSearchConfig>();
 
     readonly messages = viewChildren<ElementRef>('postingThread');
@@ -68,16 +73,11 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     getAsChannel = getAsChannelDTO;
 
-    private courseSidebarService = inject(CourseSidebarService);
-    private metisService = inject(MetisService);
-    private metisConversationService = inject(MetisConversationService);
-    private formBuilder = inject(FormBuilder);
-
     ngOnInit() {
-        this.subscribeToMetis();
-        this.isAtLeastTutor.set(this.metisService.metisUserIsAtLeastTutorInCourse());
+        this.subscribeToPosts();
+        this.isAtLeastTutor.set(this.communicationService.currentUserIsAtLeastTutorInCourse());
         this.resetFormGroup();
-        this.commandMetisToFetchPosts(true);
+        this.fetchPosts(true);
     }
 
     ngAfterViewInit() {
@@ -93,15 +93,15 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         this.courseSidebarService.openSidebar();
     }
 
-    private subscribeToMetis() {
-        this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
+    private subscribeToPosts() {
+        this.communicationService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
             this.setPosts(posts);
             this.isFetchingPosts.set(false);
         });
-        this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
+        this.communicationService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
             this.totalNumberOfPosts = totalNumberOfPosts;
         });
-        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
+        this.courseConversationsService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
             this.allConversationIds = conversations.map((conversation) => conversation.id!);
         });
     }
@@ -131,21 +131,21 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         const morePostsAvailable = this.posts().length < this.totalNumberOfPosts;
         if (morePostsAvailable) {
             this.page += 1;
-            this.commandMetisToFetchPosts();
+            this.fetchPosts();
         }
         if (!this.content()) return;
         this.content()!.nativeElement.scrollTop = this.content()!.nativeElement.scrollTop + 50;
     }
 
-    public commandMetisToFetchPosts(forceUpdate = false) {
-        this.refreshMetisConversationPostContextFilter();
+    public fetchPosts(forceUpdate = false) {
+        this.refreshConversationPostContextFilter();
         if (this.currentPostContextFilter) {
             this.isFetchingPosts.set(true); // will be set to false in subscription
-            this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate);
+            this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate);
         }
     }
 
-    private refreshMetisConversationPostContextFilter(): void {
+    private refreshConversationPostContextFilter(): void {
         const searchConfig = this.courseWideSearchConfig();
 
         if (!searchConfig) return;
@@ -179,7 +179,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     onSearch() {
-        this.commandMetisToFetchPosts(true);
+        this.fetchPosts(true);
     }
 
     /**
@@ -227,7 +227,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         searchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
         searchConfig.filterToUnverifiedIris = this.isAtLeastTutor() && this.formGroup.get('filterToUnverifiedIris')?.value;
         searchConfig.sortingOrder = this.sortingOrder();
-        this.commandMetisToFetchPosts(true);
+        this.fetchPosts(true);
     }
 
     protected onTriggerNavigateToPost(post: Posting) {

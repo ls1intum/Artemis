@@ -35,7 +35,7 @@ test.describe('Login page tests', { tag: '@fast' }, () => {
 
         await page.waitForURL('/sign-in');
 
-        const alertElement = await page.waitForSelector('tum-ui-message');
+        const alertElement = await page.waitForSelector('tumaet-ui-message');
         expect(await alertElement.isVisible()).toBeTruthy();
         const alertText = await alertElement.textContent();
         expect(alertText).toContain('Failed to sign in! Please check your login and password and try again.');

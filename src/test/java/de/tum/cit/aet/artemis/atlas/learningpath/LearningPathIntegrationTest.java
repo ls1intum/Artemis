@@ -554,6 +554,23 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         assertThat(result.progress()).isEqualTo(20);
     }
 
+    @Test
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
+    void testGetLearningPathNavigationWithGradedAndPracticeParticipation() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userTestRepository.getUserWithAuthorities(STUDENT1_OF_COURSE);
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+
+        participationUtilService.createAndSaveParticipationForExercise(textExercise, STUDENT1_OF_COURSE);
+        participationUtilService.createAndSavePracticeParticipationForExercise(textExercise, STUDENT1_OF_COURSE);
+
+        competencyProgressService.updateProgressByLearningObjectSync(textUnit, Set.of(student));
+
+        final var result = request.get("/api/atlas/learning-paths/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
+
+        verifyNavigationResult(result, textUnit, textExercise, null);
+    }
+
     /**
      * Provides all possible preferences for the course learner profile that can influence the navigation
      *

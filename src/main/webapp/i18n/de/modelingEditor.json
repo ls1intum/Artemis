@@ -284,7 +284,6 @@
                     "sfcJump": "Sprung"
                 }
             },
-            "autoSubmit": "Die Übung ist zu Ende. Du kannst dein Diagramm nun nicht mehr bearbeiten.",
             "newAssessment": "Eine neue Bewertung für deine Abgabe wurde eingereicht.",
             "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
             "assessment": {

@@ -1,8 +1,8 @@
 <div *titleBarTitle class="flex items-center">
-    <h5 class="mb-0" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title"></h5>
+    <h5 class="mb-0!" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title"></h5>
 </div>
 @for (suspiciousSessionsSet of suspiciousSessions(); track suspiciousSessionsSet; let i = $index) {
-    <p class="mb-0">
+    <p class="mb-0!">
         {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.case' | artemisTranslate }}
         <span class="bold">{{ i + 1 }}</span>
     </p>
@@ -16,8 +16,8 @@
             }
         }
     </p>
-    <div style="overflow-x: auto" class="table-responsive">
-        <table class="table">
+    <div class="overflow-x-auto mb-4">
+        <table tumAetUiTable class="table-fixed">
             <thead>
                 <tr>
                     <th scope="col" jhiTranslate="artemisApp.examSession.id"></th>

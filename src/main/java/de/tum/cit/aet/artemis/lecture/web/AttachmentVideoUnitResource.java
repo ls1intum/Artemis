@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -73,7 +74,7 @@ import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 
 @Conditional(LectureEnabled.class)
 @Lazy
-@FeatureUsage("units/attachment-video-units")
+@FeatureUsage(UserFeature.LECTURE_AUTHORING)
 @RestController
 @RequestMapping("api/lecture/")
 public class AttachmentVideoUnitResource {
@@ -191,6 +192,9 @@ public class AttachmentVideoUnitResource {
         Set<Long> originalCompetencyIds = existingAttachmentVideoUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(c -> c.getId())
                 .collect(Collectors.toSet());
 
+        // The update service mutates the managed unit in place, so snapshot the content-bearing field first.
+        String previousDescription = existingAttachmentVideoUnit.getDescription();
+
         // Update competency links using the proper mechanism
         lectureUnitService.updateCompetencyLinks(attachmentVideoUnitDTO, existingAttachmentVideoUnit);
 
@@ -198,6 +202,10 @@ public class AttachmentVideoUnitResource {
         Attachment attachmentUpdate = toTransientAttachment(attachment);
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnitDTO, attachmentUpdate,
                 file, keepFilename, hiddenPages, pageOrder, originalCompetencyIds);
+
+        if (!Objects.equals(previousDescription, savedAttachmentVideoUnit.getDescription())) {
+            lectureUnitService.publishContentChangedEvent(savedAttachmentVideoUnit);
+        }
 
         if (notificationText != null && attachment != null) {
             // The unit lecture is already loaded with its course, which is what the notification resolves the recipients from.
@@ -303,6 +311,11 @@ public class AttachmentVideoUnitResource {
         attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
+        // A newly created attachment/video unit with a non-blank description carries learning-relevant text; notify the pipeline.
+        if (persistedUnit.getDescription() != null && !persistedUnit.getDescription().isBlank()) {
+            lectureUnitService.publishContentChangedEvent(persistedUnit);
+        }
+
         searchableEntityWeaviateService.ifPresent(service -> {
             if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {
                 service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(persistedUnit));
@@ -322,6 +335,7 @@ public class AttachmentVideoUnitResource {
      * @param lectureId the id of the lecture to which the attachment video units will be added
      * @return the ResponseEntity with status 200 (ok) and with body filename of the uploaded file
      */
+    @FeatureUsage(UserFeature.LECTURE_SLIDE_PROCESSING)
     @PostMapping("lectures/{lectureId}/attachment-video-units/upload")
     @EnforceAtLeastEditor
     public ResponseEntity<String> uploadSlidesForProcessing(@PathVariable Long lectureId, @RequestPart("file") MultipartFile file) {
@@ -352,6 +366,7 @@ public class AttachmentVideoUnitResource {
      * @param filename                       the name of the lecture file, located in the temp folder
      * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment video units
      */
+    @FeatureUsage(UserFeature.LECTURE_SLIDE_PROCESSING)
     @PostMapping("lectures/{lectureId}/attachment-video-units/split/{filename}")
     @EnforceAtLeastEditorInLecture
     public ResponseEntity<List<AttachmentVideoUnitDTO>> createAttachmentVideoUnits(@PathVariable Long lectureId,
@@ -391,6 +406,7 @@ public class AttachmentVideoUnitResource {
      * @param filename  the name of the lecture file to be split, located in the temp folder
      * @return the ResponseEntity with status 200 (ok) and with body attachmentVideoUnitsData
      */
+    @FeatureUsage(UserFeature.LECTURE_SLIDE_PROCESSING)
     @GetMapping("lectures/{lectureId}/attachment-video-units/data/{filename}")
     @EnforceAtLeastEditor
     public ResponseEntity<LectureUnitSplitInformationDTO> getAttachmentVideoUnitsData(@PathVariable Long lectureId, @PathVariable String filename) {
@@ -419,6 +435,7 @@ public class AttachmentVideoUnitResource {
      * @param commaSeparatedKeyPhrases the comma seperated keyphrases to be removed
      * @return the ResponseEntity with status 200 (OK) and with body the list of slides to be removed
      */
+    @FeatureUsage(UserFeature.LECTURE_SLIDE_PROCESSING)
     @GetMapping("lectures/{lectureId}/attachment-video-units/slides-to-remove/{filename}")
     @EnforceAtLeastEditor
     public ResponseEntity<List<Integer>> getSlidesToRemove(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam String commaSeparatedKeyPhrases) {
@@ -446,6 +463,7 @@ public class AttachmentVideoUnitResource {
      * @param studentVersionFile    the file containing the student version of the attachment
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
      */
+    @FeatureUsage(UserFeature.LECTURE_SLIDE_PROCESSING)
     @PutMapping("lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}/student-version")
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
     public ResponseEntity<AttachmentVideoUnitDTO> updateAttachmentVideoUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,

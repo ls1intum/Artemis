@@ -1,6 +1,7 @@
 <ng-container>
     @if (participations()?.length && participations()?.length === 1) {
         <button
+            type="button"
             jhi-exercise-action-button
             [id]="'open-exercise-' + exercise().id!"
             [buttonIcon]="faFolderOpen"
@@ -15,6 +16,7 @@
     }
     @if (participations()?.length && participations().length! > 1) {
         <button
+            type="button"
             jhi-exercise-action-button
             [buttonIcon]="faFolderOpen"
             class="open-code-editor"
@@ -36,6 +38,7 @@
             </div>
         }
         <button
+            type="button"
             jhi-exercise-action-button
             [id]="'open-exercise-popover-' + exercise().id!"
             [buttonIcon]="faFolderOpen"

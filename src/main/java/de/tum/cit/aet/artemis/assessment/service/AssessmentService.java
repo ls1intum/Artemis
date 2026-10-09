@@ -132,7 +132,10 @@ public class AssessmentService {
      * @return the updated Result
      */
     public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdateBaseDTO assessmentUpdate) {
-        resultService.validateGradingInstructions(assessmentUpdate.feedbacks(), exercise.getId());
+        // a complaint update may retain the existing feedback, in which case there is nothing new to validate
+        if (assessmentUpdate.feedbacks() != null) {
+            resultService.validateGradingInstructions(assessmentUpdate.feedbacks(), exercise.getId());
+        }
         if (assessmentUpdate.complaintResponse() == null) {
             throw new BadRequestAlertException("Complaint response must not be null.", "AssessmentUpdate", "notnull");
         }
@@ -323,7 +326,10 @@ public class AssessmentService {
         if (result != null && (result.getSubmission() == null || !result.getSubmission().getId().equals(submission.getId()))) {
             throw new BadRequestAlertException("The result does not belong to the assessed submission.", "result", "resultSubmissionMismatch");
         }
-        resultService.validateGradingInstructions(feedbackList, exerciseId);
+        // an assessment may be saved without any feedback, in which case there is nothing to validate
+        if (feedbackList != null) {
+            resultService.validateGradingInstructions(feedbackList, exerciseId);
+        }
 
         // run before a missing result is created, since saveNewEmptyResult commits the empty result on its own and a request refused afterwards would leave it behind
         checkFeedbackBelongsToResultElseThrow(feedbackList, result);

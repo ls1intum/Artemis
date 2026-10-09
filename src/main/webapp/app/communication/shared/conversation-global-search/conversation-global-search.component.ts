@@ -57,14 +57,14 @@ enum UserSearchStatus {
     imports: [FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent, FaIconComponent, NgbTooltip, CourseSidebarToggleButtonComponent],
 })
 export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
+    private courseManagementService = inject(CourseManagementService);
+    private accountService = inject(AccountService);
+
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
     readonly SearchMode = SearchMode;
     readonly UserSearchStatus = UserSearchStatus;
     readonly CONVERSATION_FILTER = CONVERSATION_FILTER;
     readonly USER_FILTER = USER_FILTER;
-
-    private courseManagementService = inject(CourseManagementService);
-    private accountService = inject(AccountService);
 
     conversations = input<ConversationDTO[]>([]);
     courseId = input<number | undefined>(undefined);
@@ -284,9 +284,7 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
 
     focusInput(): void {
         setTimeout(() => {
-            if (this.searchElement) {
-                this.searchElement()!.nativeElement.focus();
-            }
+            this.searchElement()?.nativeElement.focus();
         }, 0);
     }
 
@@ -372,7 +370,8 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     @HostListener('document:click', ['$event'])
     onClickOutside(event: Event): void {
         // Close dropdown when clicking outside
-        if (this.searchElement && !this.searchElement()!.nativeElement.contains(event.target)) {
+        const searchElement = this.searchElement();
+        if (searchElement && !searchElement.nativeElement.contains(event.target)) {
             this.closeDropdown();
             this.isSearchActive.set(false);
         }

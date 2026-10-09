@@ -165,44 +165,53 @@ describe('StudentsReseatingDialogComponent', () => {
         expect(formatted).toBe('A (Alt) – 101 (102) - [B]');
     });
 
-    it('should find correct rooms', () => {
-        vi.useFakeTimers();
+    it('should suggest the rooms matching the search text', () => {
         vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
         fixture.detectChanges();
-        vi.advanceTimersByTime(0);
 
-        let searchResult: RoomForDistributionDTO[] = [];
-        component['roomSearch'](of('t')).subscribe((rooms) => {
-            searchResult = rooms;
-        });
+        component['searchRooms']('t');
 
-        vi.advanceTimersByTime(200);
-
-        expect(searchResult).toHaveLength(2);
-        expect(searchResult).toContainEqual(rooms[1]);
-        expect(searchResult).toContainEqual(rooms[2]);
+        expect(component['roomSuggestions']().map((suggestion) => suggestion.room)).toEqual([rooms[1], rooms[2]]);
     });
 
-    it('should find correct seats', () => {
-        vi.useFakeTimers();
+    it('should suggest all used rooms for an empty search text', () => {
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        fixture.detectChanges();
+
+        component['searchRooms']('  ');
+
+        expect(component['roomSuggestions']()).toHaveLength(rooms.length);
+    });
+
+    it('should suggest the seats matching the search text', () => {
         vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
         vi.spyOn(service, 'loadSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'B1', 'B2', '1, 2', '1, 3'] }));
 
         component.openDialog(examUser);
         fixture.detectChanges();
-        vi.advanceTimersByTime(0);
 
-        let searchResult: string[] = [];
-        component['examSeatSearch'](of('2')).subscribe((rooms) => {
-            searchResult = rooms;
-        });
+        component['searchSeats']('2');
 
-        vi.advanceTimersByTime(200);
+        expect(component['seatSuggestions']()).toEqual(['A2', 'B2', '1, 2']);
+    });
 
-        expect(searchResult).toHaveLength(3);
-        expect(searchResult).toContainEqual('A2');
-        expect(searchResult).toContainEqual('B2');
-        expect(searchResult).toContainEqual('1, 2');
+    it('should take the room number of a picked room suggestion and keep typed text as it is', () => {
+        component['onRoomChange']({ label: 'one', room: rooms[0] });
+        expect(component.selectedRoomNumber()).toBe(rooms[0].roomNumber);
+
+        component['onRoomChange']('4.2');
+        expect(component.selectedRoomNumber()).toBe('4.2');
+
+        component['onRoomChange'](null);
+        expect(component.selectedRoomNumber()).toBe('');
+    });
+
+    it('should keep the seat the user picked or typed', () => {
+        component['onSeatChange']('A3');
+        expect(component.selectedSeat()).toBe('A3');
+
+        component['onSeatChange'](undefined);
+        expect(component.selectedSeat()).toBe('');
     });
 
     it('should close the dialog on pressing the close button', () => {

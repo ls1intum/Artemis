@@ -3,7 +3,7 @@
     id="page-wrapper"
     class="page-wrapper"
     [ngClass]="{ 'no-padding': isShownViaLti() }"
-    [ngStyle]="{ 'overflow-y': !isTestRunExam() && isExamStarted() ? 'hidden' : 'auto' }"
+    [style.overflow-y]="!isTestRunExam() && isExamStarted() ? 'hidden' : 'auto'"
     cdkScrollable
 >
     @if (showPageRibbon()) {

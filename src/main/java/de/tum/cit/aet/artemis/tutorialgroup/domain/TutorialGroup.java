@@ -400,10 +400,10 @@ public class TutorialGroup extends DomainObject {
     public static TutorialGroup preventCircularJsonConversion(TutorialGroup tutorialGroup) {
 
         // prevent circular to json conversion
-        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSchedule") && tutorialGroup.getTutorialGroupSchedule() != null) {
+        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.TUTORIAL_GROUP_SCHEDULE) && tutorialGroup.getTutorialGroupSchedule() != null) {
             tutorialGroup.getTutorialGroupSchedule().setTutorialGroup(null);
         }
-        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
+        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.TUTORIAL_GROUP_SESSIONS) && tutorialGroup.getTutorialGroupSessions() != null) {
             tutorialGroup.getTutorialGroupSessions().forEach(tutorialGroupSession -> {
                 tutorialGroupSession.setTutorialGroup(null);
                 if (tutorialGroupSession.getTutorialGroupSchedule() != null) {

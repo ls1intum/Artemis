@@ -246,7 +246,7 @@
                         <fa-icon class="ms-1" [hidden]="!isImporting()" animation="spin" [icon]="faCircleNotch" />
                     </button>
                 } @else {
-                    <button pButton severity="success" size="small" id="finish-button" (click)="onFinish()">
+                    <button type="button" pButton severity="success" size="small" id="finish-button" (click)="onFinish()">
                         <fa-icon [icon]="faCheck" class="me-2" />
                         <span jhiTranslate="entity.action.finish"></span>
                     </button>

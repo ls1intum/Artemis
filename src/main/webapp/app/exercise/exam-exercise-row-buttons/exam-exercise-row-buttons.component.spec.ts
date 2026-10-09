@@ -18,6 +18,7 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockProvider } from 'ng-mocks';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
@@ -162,6 +163,20 @@ describe('ExamExerciseRowButtonsComponent', () => {
             expect(idsFor(programmingExercise, { editor: true })).toEqual(expect.arrayContaining(['grading', 'edit-in-editor']));
             expect(idsFor(programmingExercise, { editor: false })).not.toEqual(expect.arrayContaining(['grading', 'edit-in-editor']));
             expect(idsFor(textExercise, { editor: true })).not.toEqual(expect.arrayContaining(['grading', 'edit-in-editor']));
+        });
+
+        it('offers the AI variant action for programming exercises only when Hyperion is enabled', () => {
+            expect(idsFor(programmingExercise, { editor: true })).not.toContain('create-variant-ai');
+
+            vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockImplementation((feature) => feature === MODULE_FEATURE_HYPERION);
+            fixture = TestBed.createComponent(ExamExerciseRowButtonsComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('exam', exam);
+            fixture.componentRef.setInput('exerciseGroupId', 5);
+            expect(idsFor(programmingExercise, { editor: true })).toContain('create-variant-ai');
+            component.mainActions().find((action) => action.id === 'create-variant-ai')!.onClick!();
+            expect(component.aiVariantModalVisible()).toBe(true);
+            expect(idsFor(programmingExercise, { editor: false })).not.toContain('create-variant-ai');
         });
 
         it('adds example submissions for text and modeling but not for quiz, programming or file upload', () => {

@@ -69,19 +69,7 @@ public final class Constants {
      */
     public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 1;
 
-    public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";
-
-    public static final String NEW_RESULT_TOPIC = "/topic/newResults";
-
     public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/programming/public/programming-exercises/new-result";
-
-    public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
-
-    public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
-
-    public static final String SUBMISSION_PROCESSING = "/submissionProcessing";
-
-    public static final String SUBMISSION_PROCESSING_TOPIC = "/topic" + SUBMISSION_PROCESSING;
 
     public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/athena/internal/programming-exercises/";
 
@@ -154,10 +142,10 @@ public final class Constants {
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
 
     // Note: The values in input.constants.ts (client) need to be the same
-    public static final long MAX_FILE_SIZE_COMMUNICATION = 5 * 1024 * 1024; // 5 MB
+    public static final long MAX_FILE_SIZE_COMMUNICATION = 5L * 1024 * 1024; // 5 MB
 
     // Note: The values in input.constants.ts (client) need to be the same
-    public static final long MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024; // 8 MB
+    public static final long MAX_SUBMISSION_FILE_SIZE = 8L * 1024 * 1024; // 8 MB
 
     // Note: The values in input.constants.ts (client) need to be the same
     public static final int MAX_SUBMISSION_TEXT_LENGTH = 30_000; // 30.000 characters
@@ -559,6 +547,12 @@ public final class Constants {
     public static final String MODULE_FEATURE_SAML2 = "saml2";
 
     /**
+     * The name of the module feature used for the global search (Weaviate) integration. It is published to the client
+     * when {@link #WEAVIATE_ENABLED_PROPERTY_NAME} is enabled, so the client can gate global-search admin surfaces.
+     */
+    public static final String MODULE_FEATURE_GLOBAL_SEARCH = "globalsearch";
+
+    /**
      * The YAML property prefix consumed by {@code SAML2Properties} when SAML2 is enabled.
      */
     public static final String SAML2_PROPERTIES_PREFIX = "saml2";
@@ -750,7 +744,7 @@ public final class Constants {
 
     public static final String ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH = "${studentWorkingDirectoryNoSlash}";
 
-    public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
+    public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]++(?:/[\\w-]++)*+$");
 
     public static final String JWT_COOKIE_NAME = "jwt";
 

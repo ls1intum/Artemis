@@ -2,17 +2,28 @@ package de.tum.cit.aet.artemis.globalsearch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.testcontainers.weaviate.WeaviateContainer;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityAccessFilterService;
 import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 import io.weaviate.client6.v1.api.WeaviateClient;
+import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.Property;
 import io.weaviate.client6.v1.api.collections.VectorConfig;
 import io.weaviate.client6.v1.api.collections.query.Filter;
@@ -53,6 +64,60 @@ class TypeTokenizationWeaviateIntegrationTest {
     @Test
     void wordTokenizationLeaksAnswerPostIntoPostFilterAndNotEqualGuardClosesIt() throws Exception {
         assertLeakAndGuard("post", "answer_post", "TokenizationLeakDemoPost");
+    }
+
+    /**
+     * The guard has to reach every path that filters by type, not only the per-role disjuncts: an admin without a
+     * course scope gets a bare type filter, with or without excluded courses, and asking for lectures there must not
+     * return lecture units.
+     */
+    @Test
+    void adminTypeFiltersReturnOnlyTheRequestedLectureType() throws Exception {
+        AuthorizationCheckService authCheckService = mock(AuthorizationCheckService.class);
+        CourseRepository courseRepository = mock(CourseRepository.class);
+        when(authCheckService.isCurrentUserAdminAccessEnabled()).thenReturn(true);
+        Course firstCourse = new Course();
+        firstCourse.setId(1L);
+        Course secondCourse = new Course();
+        secondCourse.setId(2L);
+        when(courseRepository.findAll()).thenReturn(List.of(firstCourse, secondCourse));
+        var filterService = new SearchableEntityAccessFilterService(authCheckService, courseRepository, Optional.empty());
+        User admin = new User();
+        admin.setId(1L);
+        Set<String> lectureOnly = Set.of(SearchableEntitySchema.TypeValues.LECTURE);
+
+        Filter unscoped = filterService.buildSearchableItemFilter(admin, null, List.of(), lectureOnly, Set.of(), false).filter();
+        Filter withExclusion = filterService.buildSearchableItemFilter(admin, null, List.of(2L), lectureOnly, Set.of(), false).filter();
+
+        String collectionName = "TokenizationAdminTypeFilter";
+        String host = weaviate.getHost();
+        try (WeaviateClient client = WeaviateClient.connectToLocal(config -> config.host(host).port(weaviate.getMappedPort(8080)).grpcPort(weaviate.getMappedPort(50051)))) {
+            if (client.collections.exists(collectionName)) {
+                client.collections.delete(collectionName);
+            }
+            client.collections.create(collectionName, collection -> {
+                collection.vectorConfig(VectorConfig.selfProvided());
+                collection.properties(Property.text(SearchableEntitySchema.Properties.TYPE, property -> property.indexSearchable(false).indexFilterable(true)),
+                        Property.integer(SearchableEntitySchema.Properties.COURSE_ID, property -> property.indexFilterable(true)));
+                return collection;
+            });
+            var collection = client.collections.use(collectionName);
+            collection.data.insert(Map.of(SearchableEntitySchema.Properties.TYPE, "lecture", SearchableEntitySchema.Properties.COURSE_ID, 1L));
+            collection.data.insert(Map.of(SearchableEntitySchema.Properties.TYPE, "lecture_unit", SearchableEntitySchema.Properties.COURSE_ID, 1L));
+            collection.data.insert(Map.of(SearchableEntitySchema.Properties.TYPE, "lecture", SearchableEntitySchema.Properties.COURSE_ID, 2L));
+
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(rows(collection, unscoped)).containsExactlyInAnyOrder("lecture@1", "lecture@2"));
+            assertThat(rows(collection, withExclusion)).containsExactly("lecture@1");
+
+            client.collections.delete(collectionName);
+        }
+    }
+
+    private static List<String> rows(CollectionHandle<Map<String, Object>> collection, Filter filter) {
+        return collection.query.fetchObjects(query -> query.filters(filter).limit(10)).objects().stream()
+                .map(object -> object.properties().get(SearchableEntitySchema.Properties.TYPE) + "@"
+                        + ((Number) object.properties().get(SearchableEntitySchema.Properties.COURSE_ID)).longValue())
+                .toList();
     }
 
     /**

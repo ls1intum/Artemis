@@ -164,6 +164,10 @@ Follow these tips to write performant tests:
 * Avoid database access as much as possible. It is very time-consuming, especially when running tests against MySQL or Postgres.
 * Avoid unnecessary mocked requests by directly setting up the data and saving it in the database.
 * Use the [Awaitility](https://github.com/awaitility) library for asserting async code.
+  Await the exact condition the following assertion depends on.
+  A wait that another test's data can also satisfy, such as a keyword search over a title prefix shared by the whole class, returns before the entity under test is indexed and makes the test flaky under load.
+  The global search index is written asynchronously through an outbox, so wait for the entity's own document (for example with `assertExamExistsInWeaviate` from `WeaviateTestUtil`) before searching for it.
+  Wrap any other wait for that dispatcher in `WeaviateTestUtil.awaitIndexing`, which uses `INDEXING_TIMEOUT` (150 seconds, the dispatcher's worst case recovery after a hung Weaviate write) and reports what the dispatcher was doing when it times out, instead of hard coding 30 seconds.
 * Limit object creation in tests and the test setup.
 
 After a server test run, Artemis prints a `Test Bucket Timing Summary` for the integration-test buckets.

@@ -187,7 +187,7 @@ public class QuizBatchService {
         if (quizExercise.getDueDate() == null || targetTime == null) {
             return targetTime;
         }
-        var lastStart = quizExercise.getDueDate().minusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
+        var lastStart = quizExercise.getDueDate().minusSeconds((long) quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
         if (lastStart.isBefore(targetTime)) {
             return lastStart;
         }

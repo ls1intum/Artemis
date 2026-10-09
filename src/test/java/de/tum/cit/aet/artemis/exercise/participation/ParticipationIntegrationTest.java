@@ -884,7 +884,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        this.courseRepository.save(course);
+        this.courseUtilService.saveWithConfigurations(course);
 
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
@@ -926,7 +926,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
@@ -955,7 +955,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        this.courseRepository.save(course);
+        this.courseUtilService.saveWithConfigurations(course);
 
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
@@ -1026,7 +1026,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         textAthenaConfig.setCourse(textCourse);
         textAthenaConfig.setFormativeFeedbackEnabled(true);
         textCourse.setAthenaConfig(textAthenaConfig);
-        this.courseRepository.save(textCourse);
+        this.courseUtilService.saveWithConfigurations(textCourse);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
 
@@ -1075,7 +1075,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         teamAthenaConfig.setCourse(teamCourse);
         teamAthenaConfig.setFormativeFeedbackEnabled(true);
         teamCourse.setAthenaConfig(teamAthenaConfig);
-        courseRepository.save(teamCourse);
+        courseUtilService.saveWithConfigurations(teamCourse);
 
         teamExercise = exerciseRepository.save(teamExercise);
 
@@ -1122,7 +1122,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         teamAthenaConfig.setCourse(teamCourse);
         teamAthenaConfig.setFormativeFeedbackEnabled(true);
         teamCourse.setAthenaConfig(teamAthenaConfig);
-        courseRepository.save(teamCourse);
+        courseUtilService.saveWithConfigurations(teamCourse);
 
         teamExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, teamExercise);
@@ -1167,7 +1167,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         modelingAthenaConfig.setCourse(modelingCourse);
         modelingAthenaConfig.setFormativeFeedbackEnabled(true);
         modelingCourse.setAthenaConfig(modelingAthenaConfig);
-        this.courseRepository.save(modelingCourse);
+        this.courseUtilService.saveWithConfigurations(modelingCourse);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
 
@@ -1214,7 +1214,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         teamAthenaConfig.setCourse(teamCourse);
         teamAthenaConfig.setFormativeFeedbackEnabled(true);
         teamCourse.setAthenaConfig(teamAthenaConfig);
-        courseRepository.save(teamCourse);
+        courseUtilService.saveWithConfigurations(teamCourse);
 
         teamExercise = exerciseRepository.save(teamExercise);
 
@@ -1255,7 +1255,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        this.courseRepository.save(course);
+        this.courseUtilService.saveWithConfigurations(course);
 
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
@@ -1294,7 +1294,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         textAthenaConfig.setCourse(textCourse);
         textAthenaConfig.setFormativeFeedbackEnabled(true);
         textCourse.setAthenaConfig(textAthenaConfig);
-        this.courseRepository.save(textCourse);
+        this.courseUtilService.saveWithConfigurations(textCourse);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("text");
 
@@ -1332,7 +1332,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         modelingAthenaConfig.setCourse(modelingCourse);
         modelingAthenaConfig.setFormativeFeedbackEnabled(true);
         modelingCourse.setAthenaConfig(modelingAthenaConfig);
-        this.courseRepository.save(modelingCourse);
+        this.courseUtilService.saveWithConfigurations(modelingCourse);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("modeling");
 
@@ -2009,7 +2009,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(100));
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -2150,7 +2150,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         exerciseRepository.save(textExercise);
@@ -2230,7 +2230,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exerciseAthenaConfig.setCourse(exerciseCourse);
         exerciseAthenaConfig.setFormativeFeedbackEnabled(true);
         exerciseCourse.setAthenaConfig(exerciseAthenaConfig);
-        courseRepository.save(exerciseCourse);
+        courseUtilService.saveWithConfigurations(exerciseCourse);
     }
 
     @Test

@@ -5,12 +5,11 @@ import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CommitsInfoGroupComponent } from './commits-info-group/commits-info-group.component';
-import { NgStyle } from '@angular/common';
 
 @Component({
     selector: 'jhi-commits-info',
     templateUrl: './commits-info.component.html',
-    imports: [TranslateDirective, CommitsInfoGroupComponent, NgStyle],
+    imports: [TranslateDirective, CommitsInfoGroupComponent],
 })
 export class CommitsInfoComponent implements OnInit, OnDestroy {
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);

@@ -1,19 +1,17 @@
 <ng-container>
-    <div>
-        <div class="row gx-5">
-            <div class="col-md-4">
-                <div class="mb-4">
+    <div class="@container">
+        <div class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @4xl:grid-cols-3">
+            <div class="min-w-0 @4xl:col-span-1">
+                <div class="mb-6! flex flex-col items-start gap-2">
                     @if (submission()) {
-                        <h5 jhiTranslate="artemisApp.exam.examSummary.yourSubmission"></h5>
+                        <h5 class="m-0! text-base! font-semibold!" jhiTranslate="artemisApp.exam.examSummary.yourSubmission"></h5>
                     }
-                    <h1>Programming exam summary</h1>
                     <jhi-code-button
                         [smallButtons]="true"
                         [participations]="[participation()]"
                         [repositoryUri]="participation()?.userIndependentRepositoryUri ?? ''"
                         [routerLinkForRepositoryView]="routerLinkForRepositoryView"
                     />
-                    <br />
                     <span>
                         @if (submission()) {
                             <span jhiTranslate="artemisApp.exam.examSummary.submissionLinkedToCommit"></span>
@@ -23,7 +21,7 @@
                 </div>
                 @if (isAfterResultsArePublished()) {
                     @if (submission()) {
-                        <h5 jhiTranslate="artemisApp.exam.examSummary.assessment"></h5>
+                        <h5 class="text-base! font-semibold!" jhiTranslate="artemisApp.exam.examSummary.assessment"></h5>
                     }
                     @if (feedbackComponentParameters() && feedbackComponentParameters().result) {
                         <jhi-result-detail
@@ -40,17 +38,19 @@
                     }
                 }
             </div>
-            <div class="col-md-8">
-                <h5 jhiTranslate="artemisApp.exam.examSummary.problemStatement"></h5>
+            <div class="min-w-0 @4xl:col-span-2">
+                <h5 class="text-base! font-semibold!" jhiTranslate="artemisApp.exam.examSummary.problemStatement"></h5>
                 @if (exercise().problemStatement) {
-                    <jhi-programming-exercise-instructions [exercise]="exercise()" [participation]="participation()" [personalParticipation]="!instructorView()" />
+                    <div class="[&_.instructions\_\_content\_\_markdown]:px-0!">
+                        <jhi-programming-exercise-instructions [exercise]="exercise()" [participation]="participation()" [personalParticipation]="!instructorView()" />
+                    </div>
                 }
             </div>
         </div>
     </div>
     @if ((exercise().assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise().allowComplaintsForAutomaticAssessments) && submission() && isAfterStudentReviewStart()) {
         <jhi-complaint-student-view
-            class="mb-2 mt-2 ms-3"
+            class="block [&:not(:empty)]:pt-3"
             [exercise]="exercise()"
             [participation]="participation()"
             [result]="submission()?.results?.[0]"

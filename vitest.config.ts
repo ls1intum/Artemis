@@ -6,7 +6,7 @@
  * The entire Angular client runs on Vitest, so the spec/coverage globs are broad (all of
  * src/main/webapp/app) rather than an explicit per-module allowlist. The only exceptions:
  *   - the Monaco editor *integration* specs run against the real Monaco package and therefore live
- *     in a separate project (see vitest.monaco.config.ts); they are excluded here.
+ *     in a separate project (see config/testing/vitest.monaco.config.ts); they are excluded here.
  *   - generated code (openapi) and non-testable config/model/route files are excluded from coverage.
  */
 import { defineConfig } from 'vitest/config';
@@ -26,7 +26,7 @@ export default defineConfig({
             src: path.resolve(__dirname, 'src'),
             // Mirrors the tsconfig `paths` entry: the package's own `exports` map only exposes
             // `./styles.css`, so the bare specifier resolves through the built library instead.
-            '@tumaet/ui-angular': path.resolve(__dirname, 'packages/tum-ui/dist'),
+            '@tumaet/ui-angular': path.resolve(__dirname, 'packages/tum-aet-ui/dist'),
         },
     },
     css: {
@@ -53,7 +53,7 @@ export default defineConfig({
             'src/main/webapp/app/**/*.spec.ts', // entire Angular client runs on Vitest
             'src/test/javascript/spec/integration/code-editor/**/*.spec.ts', // code-editor integration specs (mock Monaco)
         ],
-        // The Monaco editor integration specs need the real Monaco package; they run in vitest.monaco.config.ts.
+        // The Monaco editor integration specs need the real Monaco package; they run in config/testing/vitest.monaco.config.ts.
         exclude: ['**/node_modules/**', '**/build/**', '**/integration/monaco-editor/**'],
         testTimeout: 10000,
         reporters: ['default', 'junit'],

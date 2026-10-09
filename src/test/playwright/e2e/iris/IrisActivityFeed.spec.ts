@@ -7,6 +7,7 @@ import { instructor, studentTwo } from '../../support/users';
 import { SEED_COURSES } from '../../support/seedData';
 import { Commands } from '../../support/commands';
 import { IrisChat } from '../../support/pageobjects/iris/IrisChat';
+import { enableIrisForCourse } from '../../support/irisSetup';
 
 // Course 9022 (lectureManagement); studentTwo (artemis_test_user_2) is enrolled.
 //
@@ -25,7 +26,7 @@ const course = { id: SEED_COURSES.lectureManagement.id, title: SEED_COURSES.lect
  * fake: LangChain tool hooks -> ActivityTracker -> activity snapshots -> Artemis
  * relay -> websocket -> activity feed component.
  *
- * Run with: RUN_IRIS=true ./run-e2e-tests-local-fast.sh --skip-db --filter "Iris"
+ * Run with: RUN_IRIS=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --skip-db --filter "Iris"
  * Skips itself when the Iris module feature is not active.
  *
  * Tagged `@slow`, not `@fast`: this test waits out a full two-round Pyris agent run (tool call plus
@@ -49,7 +50,7 @@ test.describe('Iris activity visibility (real Pyris)', { tag: '@slow' }, () => {
         // as the student right after. See IrisLectureChat.spec.ts for why the discarded `/` bootstrap
         // this used to do was the nightly's timeout hot spot (issue #13383).
         await Commands.login(page, instructor);
-        await page.request.put(`api/iris/courses/${course.id}/iris-settings`, { data: { enabled: true, variant: 'default' } });
+        await enableIrisForCourse(page.request, course.id!);
         lecture = await courseManagementAPIRequests.createLecture(course);
         expect(lecture.id, 'lecture should be created with an id').toBeDefined();
     });

@@ -1,26 +1,25 @@
 ---
 name: e2e-pr-check
-description: Run the Artemis Playwright E2E tests that this branch's changes actually affect, and interpret the result correctly. Use when asked to E2E test a branch or pull request, to check a change end to end before pushing, or to investigate a failing Playwright spec. Covers selecting the affected specs, choosing between the single-node and multi-node runner, and the failure modes that look like real bugs but are not.
+description: Select, run, or debug Artemis Playwright tests for a branch or pull request, or write a layout contract that measures element sizes and alignment.
 ---
 
 # Run the E2E tests this change affects
 
-The full Playwright suite is over 400 tests across roughly 90 spec files, and takes tens of
-minutes. Almost no change needs all of them. This skill selects the specs the change actually affects, runs them, and then reads
-the result with the failure patterns of this suite in mind.
+Select affected specs before running Playwright. Use the result and the runner's topology to
+classify failures.
 
 ## Step 1: work out which specs are affected
 
-Do not guess and do not hand-read `.ci/E2E-tests/e2e-test-mapping.json`. Run the same resolver CI
-uses, so local selection and CI selection can never disagree:
+Use the CI resolver instead of selecting specs by inspection. Its output depends on the base
+revision and committed diff:
 
 ```bash
-./.ci/E2E-tests/determine-relevant-tests.sh origin/develop
+./supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh origin/develop
 ```
 
 It prints five `OUTPUT:` lines. The ones that matter:
 
-- `RUN_ALL_TESTS=true` means the change hit `runAllTestsPatterns` (Spring config, `docker/`,
+- `RUN_ALL_TESTS=true` means the change hit `runAllTestsPatterns` (Spring config, `deployment/docker/`,
   `build.gradle`, `angular.json`) or touched Playwright infrastructure outside `e2e/`. Say so
   explicitly rather than quietly running a subset. Then either run the full suite or agree with the
   user on a narrower scope, but do not present a subset as sufficient coverage.
@@ -32,28 +31,25 @@ It prints five `OUTPUT:` lines. The ones that matter:
 
 Two things about the input:
 
-- **It diffs commits, not the working tree.** The script runs `git diff --name-only <base>...HEAD`,
-  so uncommitted changes are invisible to it. **Commit before resolving.** With nothing committed at
-  all it says "No changed files detected. Running all tests.", which is loud and harmless. The
-  dangerous case is quieter: committed work plus uncommitted edits touching a further module gives
-  a selection based only on the committed files, so the specs covering your newest edits are the
-  ones left out.
-- **Pass a different base for a stacked branch.** The base is the first argument. A stacked pull
-  request is not cut from develop, so diffing against develop selects its parent's changes too.
+- **It diffs commits, not the working tree.** The script runs `git diff --name-only <base>...HEAD`.
+  Uncommitted changes are invisible; identify their affected specs separately. Do not commit only
+  to make the selector work. If there are no committed changes, the resolver selects all tests.
+- **Use the pull request's actual base.** The base is the first argument. `origin/develop` is only
+  correct for a pull request that targets `develop`.
 
 ## Step 2: choose the runner
 
 Default to the single-node runner. It is faster and it is what most changes need.
 
 ```bash
-./run-e2e-tests-local-fast.sh --specs "<RELEVANT_TESTS from step 1>"
+./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --specs "<RELEVANT_TESTS from step 1>"
 ```
 
 Use the multi-node runner instead when the diff touches cluster-sensitive code, because a single
 node cannot reproduce cross-node failures at all:
 
 ```bash
-./run-e2e-tests-local-multinode-fast.sh --specs "<RELEVANT_TESTS from step 1>"
+./supporting_scripts/e2e/run-e2e-tests-local-multinode-fast.sh --specs "<RELEVANT_TESTS from step 1>"
 ```
 
 Treat a change as cluster-sensitive when it touches any of:
@@ -69,7 +65,7 @@ providers. Redis has to pass the same tests as Hazelcast, and with `--middleware
 instance is created at all, which is what makes it a genuine test of the abstraction:
 
 ```bash
-./run-e2e-tests-local-multinode-fast.sh --middleware redis --specs "<paths>"
+./supporting_scripts/e2e/run-e2e-tests-local-multinode-fast.sh --middleware redis --specs "<paths>"
 ```
 
 ## Step 3: re-runs
@@ -77,13 +73,13 @@ instance is created at all, which is what makes it a genuine test of the abstrac
 The runners keep services alive between runs. After the first run, reuse them:
 
 ```bash
-./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --specs "<paths>"
+./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --specs "<paths>"
 ```
 
 For the multi-node runner the equivalent is `--skip-build --skip-up`.
 
-Tear down with `--stop` when finished. Leaving services running is fine and normal during
-iteration, but see the wrong-client trap below.
+The runners can stop services they did not start. Use `--stop` only after you have identified
+the services and confirmed that the runner owns them. It also tears down its database.
 
 ## Step 4: interpret the result
 
@@ -111,6 +107,30 @@ actually waiting for.
 makes Playwright print `Error: No tests found.` and exit non-zero, which the runner reports as a
 failed run. So a red run with no test output at all is a path problem, not a test problem. Check
 the executed count against what step 1 selected before reading anything else.
+
+## Writing a layout contract
+
+To pin how big an element is, how elements line up or that a page does not scroll sideways,
+measure in the browser. Never compare screenshots, and never find an element by a styling class.
+
+1. State the rule as a number or as a relation between elements.
+2. Find the elements by `data-testid`; add one to the template when it is missing.
+3. Assert inside `forEachViewport` from `src/test/playwright/support/layout.ts` with
+   `expectHeight`, `expectAligned`, `expectFillsParent`, `expectInside` (with a `margin` for air),
+   `expectInset` (name the scroll containers as `scrollers`, so that their scrollbars are not
+   counted as inset), `expectGap` (the divider between two panels), `expectBelow`, `expectNoOverlap`,
+   `expectInsideOrBelow` (a layout that depends on the room), `expectWithinViewport`,
+   `expectNoHorizontalOverflow`, `expectNoHorizontalScrollAround` or `expectSameComputedStyle`, and
+   give each element a `name`. A page in a card that scrolls on its own needs both sideways-scroll
+   helpers, because the document keeps the width of the window. A click that must not move the page
+   runs inside `expectScrollPositionKept`. A divider that is dragged keeps the width it was given in
+   px, which a smaller window does not undo, so drag it after the viewport matrix.
+4. For a new or changed helper, add a case that holds and one that must fail to
+   `src/test/playwright/e2e/shared/LayoutHelpers.spec.ts`.
+
+A change under `src/test/playwright/support/` makes the resolver in step 1 report
+`RUN_ALL_TESTS=true`. The helpers, the viewport matrix and the exam example are in the section
+"Layout contract tests" of `documentation/docs/developer/e2e-testing-playwright.mdx`.
 
 ## Reporting back
 

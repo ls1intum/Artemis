@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
@@ -41,7 +42,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
  */
 @Conditional(ExamEnabled.class)
 @Lazy
-@FeatureUsage("rooms/room-management")
+@FeatureUsage(UserFeature.EXAM_ROOMS)
 @RestController
 @RequestMapping("api/exam/rooms/")
 public class ExamRoomManagementResource {

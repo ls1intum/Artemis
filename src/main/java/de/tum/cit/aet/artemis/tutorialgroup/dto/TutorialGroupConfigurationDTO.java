@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.tutorialgroup.dto;
 
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -80,30 +78,6 @@ public record TutorialGroupConfigurationDTO(Long id, @NotBlank String tutorialPe
         public static TutorialGroupFreePeriodDTO of(@NonNull TutorialGroupFreePeriod freePeriod) {
             return new TutorialGroupFreePeriodDTO(freePeriod.getId(), freePeriod.getStart().toString(), freePeriod.getEnd().toString(), freePeriod.getReason());
         }
-
-        /**
-         * Creates a {@link TutorialGroupFreePeriod} entity from the given DTO.
-         *
-         * @param dto the DTO to convert
-         * @return a new entity populated with the values from the DTO
-         * @throws BadRequestAlertException if the DTO contains invalid date values
-         */
-        public static TutorialGroupFreePeriod from(@NonNull TutorialGroupFreePeriodDTO dto) {
-
-            TutorialGroupFreePeriod freePeriod = new TutorialGroupFreePeriod();
-            try {
-                ZonedDateTime start = ZonedDateTime.parse(dto.start());
-                ZonedDateTime end = ZonedDateTime.parse(dto.end());
-                freePeriod.setStart(start);
-                freePeriod.setEnd(end);
-            }
-            catch (DateTimeParseException ex) {
-                throw new BadRequestAlertException("Tutorial group free period start date and end date must be valid ISO 8601 date strings.", TUTORIAL_FREE_PERIOD_ENTITY_NAME,
-                        "tutorialFreePeriodInvalidFormat");
-            }
-            freePeriod.setReason(dto.reason());
-            return freePeriod;
-        }
     }
 
     /**
@@ -121,24 +95,5 @@ public record TutorialGroupConfigurationDTO(Long id, @NotBlank String tutorialPe
         }
         return new TutorialGroupConfigurationDTO(config.getId(), config.getTutorialPeriodStartInclusive(), config.getTutorialPeriodEndInclusive(),
                 config.getUseTutorialGroupChannels(), config.getUsePublicTutorialGroupChannels(), freePeriodDTOs);
-    }
-
-    /**
-     * Creates a {@link TutorialGroupsConfiguration} entity from the given {@link TutorialGroupConfigurationDTO}.
-     *
-     * @param dto the tutorial group configuration DTO
-     * @return a new {@link TutorialGroupsConfiguration} populated with the values from the DTO
-     */
-    public static TutorialGroupsConfiguration from(@NonNull TutorialGroupConfigurationDTO dto) {
-
-        TutorialGroupsConfiguration configuration = new TutorialGroupsConfiguration();
-        configuration.setTutorialPeriodStartInclusive(dto.tutorialPeriodStartInclusive());
-        configuration.setTutorialPeriodEndInclusive(dto.tutorialPeriodEndInclusive());
-        configuration.setUseTutorialGroupChannels(dto.useTutorialGroupChannels());
-        configuration.setUsePublicTutorialGroupChannels(dto.usePublicTutorialGroupChannels());
-        Set<TutorialGroupFreePeriod> freePeriods = dto.tutorialGroupFreePeriods().stream().map(TutorialGroupFreePeriodDTO::from).collect(Collectors.toSet());
-        freePeriods.forEach(fp -> fp.setTutorialGroupsConfiguration(configuration));
-        configuration.setTutorialGroupFreePeriods(freePeriods);
-        return configuration;
     }
 }

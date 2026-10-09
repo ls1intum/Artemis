@@ -4,7 +4,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiPanelComponent } from '@tumaet/ui-angular';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular';
 
 export class AssessmentDashboardInformationEntry {
     constructor(
@@ -32,7 +32,7 @@ export class AssessmentDashboardInformationEntry {
 @Component({
     selector: 'jhi-assessment-dashboard-information',
     templateUrl: './assessment-dashboard-information.component.html',
-    imports: [TranslateDirective, RouterLink, ArtemisTranslatePipe, TumUiPanelComponent],
+    imports: [TranslateDirective, RouterLink, ArtemisTranslatePipe, TumAetUiPanelComponent],
 })
 export class AssessmentDashboardInformationComponent {
     readonly isExamMode = input.required<boolean>();

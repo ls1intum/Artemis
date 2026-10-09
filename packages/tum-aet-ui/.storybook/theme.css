@@ -1,0 +1,61 @@
+html,
+body,
+#storybook-root {
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+    background: var(--tumaet-ui-content-background);
+    color: var(--tumaet-ui-text-color);
+    font-family: var(--tumaet-ui-font-family);
+}
+
+.tumaet-ui-story-form {
+    display: grid;
+    width: min(20rem, calc(100vw - 2rem));
+    max-width: 100%;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+}
+
+.tumaet-ui-story-form > label,
+.tumaet-ui-story-form legend,
+.tumaet-ui-story-label {
+    color: var(--tumaet-ui-text-color);
+    font-weight: 600;
+}
+
+.tumaet-ui-story-error {
+    color: var(--tumaet-ui-state-danger);
+    font-size: 0.875rem;
+}
+
+.tumaet-ui-story-form > input,
+.tumaet-ui-story-form > textarea,
+.tumaet-ui-story-form > tumaet-ui-autocomplete,
+.tumaet-ui-story-form > tumaet-ui-date-picker,
+.tumaet-ui-story-form > tumaet-ui-icon-field,
+.tumaet-ui-story-form > tumaet-ui-input-group,
+.tumaet-ui-story-form > tumaet-ui-select {
+    width: 100%;
+}
+
+.tumaet-ui-story-form fieldset {
+    display: grid;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.tumaet-ui-story-form legend {
+    margin-block-end: calc(var(--tumaet-ui-spacing) * 2);
+}
+
+.tumaet-ui-story-form fieldset label,
+.tumaet-ui-story-inline-control,
+.tumaet-ui-story-inline-control > label {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+}

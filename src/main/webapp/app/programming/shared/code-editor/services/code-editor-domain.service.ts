@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { DomainAuxiliaryRepositoryChange, DomainChange, DomainParticipationChange, DomainTestRepositoryChange } from 'app/programming/shared/code-editor/model/code-editor.model';
 
@@ -6,7 +6,7 @@ import { DomainAuxiliaryRepositoryChange, DomainChange, DomainParticipationChang
  * This service provides subscribing services with the most recently selected domain (participation vs repository).
  * This is used to make components independent of the domains, as they can just call the method of an injected service without passing the domain.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class DomainService {
     protected domain!: DomainChange; // set in setDomain() before any read
     private subject = new BehaviorSubject<DomainParticipationChange | DomainTestRepositoryChange | DomainAuxiliaryRepositoryChange | undefined>(undefined);

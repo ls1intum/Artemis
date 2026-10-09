@@ -22,11 +22,8 @@
                 (resizeEnd)="onPanelResized(ResizeType.SIDEBAR_LEFT)"
             >
                 <ng-content select="[editorSidebarLeft]" />
-                <!-- Required for resizing; don't remove empty span -->
                 @if (!fileBrowserIsCollapsed()) {
-                    <fa-icon [icon]="faGripLinesVertical" data-testid="draggableIconForFileBrowser" class="rg-sidebar-left">
-                        <span></span>
-                    </fa-icon>
+                    <div class="rg-sidebar-left" data-testid="draggableIconForFileBrowser"></div>
                 }
                 @if (fileBrowserIsCollapsed()) {
                     <span class="separator"></span>
@@ -48,9 +45,7 @@
                 (resizeEnd)="onPanelResized(ResizeType.SIDEBAR_RIGHT)"
             >
                 @if (!rightPanelIsCollapsed()) {
-                    <fa-icon [icon]="faGripLinesVertical" data-testid="draggableIconForInstructions" class="rg-sidebar-right">
-                        <span></span>
-                    </fa-icon>
+                    <div class="rg-sidebar-right" data-testid="draggableIconForInstructions"></div>
                 }
                 @if (rightPanelIsCollapsed()) {
                     <span class="separator"></span>
@@ -58,8 +53,7 @@
                 <ng-content select="[editorSidebarRight]" />
             </div>
         </div>
-        <!-- Required for resizing; don't remove empty span -->
-        <fa-icon [icon]="faGripLines" class="rg-main-bottom"><span></span></fa-icon>
+        <div class="rg-main-bottom" data-testid="draggableIconForMain"></div>
     </div>
     <!-- Build Output -->
     <div
@@ -72,13 +66,12 @@
         (resizeEnd)="onPanelResized(ResizeType.BOTTOM)"
     >
         <ng-content select="[editorBottomArea]" class="editor-bottom-resizable" />
-        <!-- Required for resizing; don't remove empty span -->
         @if (!buildOutputIsCollapsed()) {
-            <fa-icon [icon]="faGripLines" data-testid="draggableIconForBuildOutput" class="rg-bottom-bottom"><span></span></fa-icon>
+            <div class="rg-bottom-bottom" data-testid="draggableIconForBuildOutput"></div>
         }
     </div>
     @if (isTutorAssessment()) {
-        <div>
+        <div class="editor-assessment-bottom">
             <ng-content select="[editorBottom]" />
         </div>
     }

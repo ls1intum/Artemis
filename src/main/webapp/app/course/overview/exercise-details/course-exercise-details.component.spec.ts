@@ -71,8 +71,8 @@ import { ScienceService } from 'app/foundation/science/science.service';
 
 import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -197,7 +197,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(AlertService),
                 MockProvider(IrisSettingsService),
                 MockProvider(DialogService),
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
             ],
         });
         await TestBed.compileComponents();
@@ -635,7 +635,7 @@ describe('CourseExerciseDetailsComponent', () => {
         // communication tab has to be selected before its content exists.
         const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent));
         const labels = panels.componentInstance.rightPanels().map((panel: PanelDirective) => panel.label());
-        panels.componentInstance.setActiveRight(labels.indexOf('artemisApp.metis.communication.label'));
+        panels.componentInstance.setActiveRight(labels.indexOf('artemisApp.communication.label'));
         fixture.detectChanges();
         await vi.advanceTimersByTimeAsync(500);
 

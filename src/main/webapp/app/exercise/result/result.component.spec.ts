@@ -139,6 +139,37 @@ describe('ResultComponent', () => {
         (global as any).URL.revokeObjectURL = vi.fn();
     });
 
+    it.each([false, true])('only exposes result details when actionable (missing: %s)', (missing) => {
+        fixture.componentRef.setInput('exercise', mockExercise);
+        fixture.componentRef.setInput('participation', mockParticipation);
+        fixture.componentRef.setInput('result', mockResult);
+        if (missing) {
+            fixture.componentRef.setInput('missingResultInfo', MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE);
+        }
+        fixture.componentRef.setInput('isInSidebarCard', true);
+        fixture.detectChanges();
+        const result = fixture.nativeElement.querySelector(missing ? '[jhiTranslate="artemisApp.result.missing.viewPrevious"]' : '#result-score') as HTMLElement;
+        const showDetails = vi.spyOn(comp, 'showDetails').mockImplementation(() => {});
+        expect(result.hasAttribute('role')).toBe(false);
+        expect(result.tabIndex).toBe(-1);
+        for (const [type, key] of [
+            ['keydown', 'Enter'],
+            ['keydown', ' '],
+            ['keyup', ' '],
+        ]) {
+            const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+            result.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(false);
+        }
+        expect(showDetails).not.toHaveBeenCalled();
+        fixture.componentRef.setInput('isInSidebarCard', false);
+        fixture.detectChanges();
+        expect(result.getAttribute('role')).toBe('button');
+        expect(result.tabIndex).toBe(0);
+        result.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        expect(showDetails).toHaveBeenCalledOnce();
+    });
+
     it('should set the template status to IS_BUILDING when isBuilding is true, regardless of participation/result', () => {
         fixture.componentRef.setInput('participation', { type: ParticipationType.STUDENT, submissions: [] } as any as StudentParticipation);
         expect(comp.templateStatus()).toEqual(ResultTemplateStatus.NO_RESULT);

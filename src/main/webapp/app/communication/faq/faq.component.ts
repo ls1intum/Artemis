@@ -28,7 +28,7 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiEmptyStateComponent } from '@tumaet/ui-angular';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-faq',
     templateUrl: './faq.component.html',
@@ -47,10 +47,18 @@ import { TumUiEmptyStateComponent } from '@tumaet/ui-angular';
         CommonModule,
         CourseTitleBarActionsDirective,
         ArtemisTranslatePipe,
-        TumUiEmptyStateComponent,
+        TumAetUiEmptyStateComponent,
     ],
 })
 export class FaqComponent implements OnInit, OnDestroy {
+    private faqService = inject(FaqService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private sortService = inject(SortService);
+    private accountService = inject(AccountService);
+    private profileService = inject(ProfileService);
+    private irisSettingsService = inject(IrisSettingsService);
+
     protected readonly FaqState = FaqState;
     faqs?: Faq[]; // undefined until loaded; code distinguishes "not loaded / load failed" from an empty result
     course!: Course; // set in ngOnInit() from the route data resolver
@@ -83,14 +91,6 @@ export class FaqComponent implements OnInit, OnDestroy {
     protected readonly faCheck = faCheck;
     protected readonly faFileExport = faFileExport;
     protected readonly faQuestion = faQuestion;
-
-    private faqService = inject(FaqService);
-    private route = inject(ActivatedRoute);
-    private alertService = inject(AlertService);
-    private sortService = inject(SortService);
-    private accountService = inject(AccountService);
-    private profileService = inject(ProfileService);
-    private irisSettingsService = inject(IrisSettingsService);
 
     private profileInfoSubscription?: Subscription;
 

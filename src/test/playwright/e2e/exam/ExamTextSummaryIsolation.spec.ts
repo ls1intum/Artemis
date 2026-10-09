@@ -3,9 +3,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { expect } from '@playwright/test';
 import { admin, studentTwo } from '../../support/users';
 import { generateUUID, getExercise } from '../../support/utils';
-import dayjs from 'dayjs';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { SEED_COURSES } from '../../support/seedData';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 
@@ -50,11 +48,7 @@ test.describe('Exam free-text summary isolation', { tag: '@slow' }, () => {
     test.beforeEach('Create exam with 3 text exercises', async ({ login, examAPIRequests, exerciseAPIRequests }) => {
         await login(admin);
 
-        exam = await createExam(course, examAPIRequests, {
-            title: 'Text Summary Isolation ' + generateUUID(),
-            examMaxPoints: 30,
-            numberOfExercisesInExam: 3,
-        });
+        exam = await examAPIRequests.createRunningExam({ course, title: 'Text Summary Isolation ' + generateUUID(), examMaxPoints: 30, numberOfExercisesInExam: 3 });
 
         // Create 3 exercise groups with text exercises, each with a DISTINCT problem statement.
         groupTitleA = 'Group Alpha ' + generateUUID();
@@ -121,16 +115,3 @@ test.describe('Exam free-text summary isolation', { tag: '@slow' }, () => {
         await examAPIRequests.deleteExam(exam);
     });
 });
-
-async function createExam(course: any, examAPIRequests: ExamAPIRequests, customExamConfig?: any) {
-    const defaultExamConfig = {
-        course,
-        title: 'exam' + generateUUID(),
-        visibleDate: dayjs().subtract(3, 'minutes'),
-        startDate: dayjs().subtract(2, 'minutes'),
-        endDate: dayjs().add(1, 'hour'),
-        examMaxPoints: 10,
-        numberOfExercisesInExam: 1,
-    };
-    return await examAPIRequests.createExam({ ...defaultExamConfig, ...customExamConfig });
-}

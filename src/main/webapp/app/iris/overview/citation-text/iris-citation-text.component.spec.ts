@@ -1,11 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Router, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { IrisCitationTextComponent } from './iris-citation-text.component';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { Subject, of, throwError } from 'rxjs';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { IrisMaterialVersionService } from 'app/iris/overview/services/iris-material-version.service';
 import { escapeHtml, formatCitationLabel, parseCitation, removeCitationBlocks, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 describe('IrisCitationTextComponent', () => {
     let fixture: ComponentFixture<IrisCitationTextComponent>;
@@ -70,7 +75,7 @@ describe('IrisCitationTextComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [IrisCitationTextComponent],
-            providers: [provideHttpClient(), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [provideHttpClient(), provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }],
         });
 
         fixture = TestBed.createComponent(IrisCitationTextComponent);
@@ -149,6 +154,71 @@ describe('IrisCitationTextComponent', () => {
 
         navButtons[0].click();
         expect(bubbleText.textContent?.trim()).toBe(initialText);
+    });
+
+    describe('navigating to a citation', () => {
+        const clickCitation = (marker = '[cite:L:7:3:::Key:]') => {
+            const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'L', lectureUnitTitle: '', lectureId: 1, courseId: 1 }];
+            const el = render(marker, citationInfo);
+            const citation = el.querySelector('.iris-citation--clickable') as HTMLElement;
+            expect(citation).toBeTruthy();
+            citation.click();
+        };
+
+        it('navigates to the citation target with lecture query parameters', () => {
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+            clickCitation();
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], { queryParams: { unit: 7, page: 3 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+        });
+
+        it('opens the lecture without query parameters when the cited unit id cannot be used', () => {
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+            const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 0, lectureTitle: 'L', lectureUnitTitle: '', lectureId: 1, courseId: 1 }];
+
+            (render('[cite:L:0:3:::Key:]', citationInfo).querySelector('.iris-citation--clickable') as HTMLElement).click();
+
+            expect(navigate).toHaveBeenCalledExactlyOnceWith(['/courses', '1', 'lectures', '1']);
+        });
+
+        it('drops a page a citation cannot be honoured with, as a URL carrying the same value would be', () => {
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+            clickCitation('[cite:L:7:0:::Key:]');
+
+            expect(navigate).toHaveBeenCalledWith(
+                ['/courses', '1', 'lectures', '1'],
+                expect.objectContaining({
+                    queryParams: { unit: 7 },
+                }),
+            );
+        });
+
+        it.each(['', ' ', '\t'])('ignores a blank citation timestamp (%j)', (timestamp) => {
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+            const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'L', lectureUnitTitle: '', lectureId: 1, courseId: 1 }];
+            const el = render('[cite:L:7:3:::Key:]', citationInfo);
+            const citation = el.querySelector('.iris-citation--clickable') as HTMLElement;
+            citation.setAttribute('data-timestamp', timestamp);
+            citation.click();
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], {
+                queryParams: { unit: 7, page: 3 },
+                state: LECTURE_DEEP_LINK_NAVIGATION_STATE,
+            });
+        });
+
+        it('preserves a citation timestamp of zero', () => {
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+            clickCitation('[cite:L:7::0::Key:]');
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], {
+                queryParams: { unit: 7, timestamp: 0 },
+                state: LECTURE_DEEP_LINK_NAVIGATION_STATE,
+            });
+        });
     });
 
     it('adjusts tooltip shift based on overflow', () => {
@@ -274,6 +344,195 @@ describe('IrisCitationTextComponent', () => {
             expect(summary.classList.contains('iris-citation__summary--flipped')).toBe(false);
         });
     });
+
+    describe('Citation click', () => {
+        const meta = (): IrisCitationMetaDTO => ({
+            entityId: 42,
+            lectureTitle: 'Lecture',
+            lectureUnitTitle: 'Unit',
+            lectureId: 5,
+            courseId: 9,
+        });
+
+        let navigate: ReturnType<typeof vi.spyOn>;
+        let warning: ReturnType<typeof vi.spyOn>;
+        let error: ReturnType<typeof vi.spyOn>;
+        let getMaterialVersions: ReturnType<typeof vi.spyOn>;
+
+        beforeEach(() => {
+            navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+            warning = vi.spyOn(TestBed.inject(AlertService), 'warning').mockImplementation(() => undefined as any);
+            error = vi.spyOn(TestBed.inject(AlertService), 'error').mockImplementation(() => undefined as any);
+            getMaterialVersions = vi.spyOn(TestBed.inject(IrisMaterialVersionService), 'getMaterialVersions');
+        });
+
+        /** Every citation navigation carries this, so the lecture page knows a specific unit was asked for and can say so when it cannot find it. */
+        const unitOnly = { unit: 42 };
+
+        const clickCitation = (text: string, citationInfo: IrisCitationMetaDTO[]) => {
+            const el = render(text, citationInfo);
+            const citation = el.querySelector('.iris-citation') as HTMLElement;
+            expect(citation).toBeTruthy();
+            citation.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            return citation;
+        };
+
+        it('treats an unknown launch revision as unverified without using its coordinates', () => {
+            clickCitation('[cite:L:42:7:::Key:Summary:va0]', [meta()]);
+            expect(getMaterialVersions).not.toHaveBeenCalled();
+            expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.unverified');
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+        });
+
+        it('cancels an earlier citation check when another citation is clicked', () => {
+            const first = new Subject<{ attachmentVersion: number }>();
+            getMaterialVersions.mockReturnValueOnce(first).mockReturnValueOnce(of({ attachmentVersion: 3 }));
+            // Click twice on the same component so the second target supersedes its pending first request.
+            const el = render('[cite:L:42:7:::One:Summary:va3] separate text [cite:L:42:8:::Two:Summary:va3]', [meta()]);
+            const citations = el.querySelectorAll('.iris-citation');
+            citations[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            citations[1].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            first.next({ attachmentVersion: 3 });
+            expect(navigate).toHaveBeenCalledTimes(1);
+            expect(navigate).toHaveBeenLastCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: 42, page: 8 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+        });
+
+        it('does not let a delayed citation in another message replace the latest navigation', () => {
+            const pending = new Subject<{ attachmentVersion: number }>();
+            getMaterialVersions.mockReturnValueOnce(pending).mockReturnValueOnce(of({ attachmentVersion: 3 }));
+            clickCitation('[cite:L:42:7:::First:Summary:va3]', [meta()]);
+            const second = TestBed.createComponent(IrisCitationTextComponent);
+            second.componentRef.setInput('text', '[cite:L:42:8:::Second:Summary:va3]');
+            second.componentRef.setInput('citationInfo', [meta()]);
+            second.detectChanges();
+            second.nativeElement.querySelector('.iris-citation').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            pending.next({ attachmentVersion: 3 });
+            expect(navigate).toHaveBeenCalledExactlyOnceWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: 42, page: 8 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+            second.destroy();
+        });
+
+        it('jumps to the exact page when the slides still have the pinned version', () => {
+            getMaterialVersions.mockReturnValue(of({ attachmentVersion: 3 }));
+
+            clickCitation('[cite:L:42:7:::Key:Summary:va3]', [meta()]);
+
+            expect(getMaterialVersions).toHaveBeenCalledWith(42);
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, page: 7 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+            expect(warning).not.toHaveBeenCalled();
+        });
+
+        it('opens the unit only and warns when the slides changed', () => {
+            getMaterialVersions.mockReturnValue(of({ attachmentVersion: 4 }));
+
+            clickCitation('[cite:L:42:7:::Key:Summary:va3]', [meta()]);
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+            expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.stale');
+        });
+
+        it('jumps to the timestamp when the transcription still has the pinned version', () => {
+            getMaterialVersions.mockReturnValue(of({ videoVersion: 2, hasVideo: true }));
+
+            clickCitation('[cite:L:42::120:180:Key:Summary:vt2]', [meta()]);
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, timestamp: 120 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+            expect(warning).not.toHaveBeenCalled();
+        });
+
+        // A transcript segment carries the slide it was spoken over, but only the transcription was checked: the PDF may have changed on its own, so that page would be
+        // an unverified slide presented as the cited one.
+        it('leaves out the companion slide of a video citation', () => {
+            getMaterialVersions.mockReturnValue(of({ videoVersion: 2, hasVideo: true, attachmentVersion: 5 }));
+
+            clickCitation('[cite:L:42:7:120:180:Key:Summary:vt2]', [meta()]);
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, timestamp: 120 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+            expect(warning).not.toHaveBeenCalled();
+        });
+
+        it('compares a video citation against the transcription, not against the slides', () => {
+            // The slides happen to sit at exactly the pinned number, which must not make the citation look unchanged
+            getMaterialVersions.mockReturnValue(of({ attachmentVersion: 2 }));
+
+            clickCitation('[cite:L:42:7:120:180:Key:Summary:vt2]', [meta()]);
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+            expect(error).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.gone');
+        });
+
+        // A citation with only an end time is linked to the page, so it must also be compared against the slides. The marker says so,
+        // which is what keeps this in step with the server rather than depending on both sides reading the timestamps alike.
+        it('compares a citation carrying only an end time against the slides', () => {
+            getMaterialVersions.mockReturnValue(of({ attachmentVersion: 3, videoVersion: 9 }));
+
+            clickCitation('[cite:L:42:7::180:Key:Summary:va3]', [meta()]);
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, page: 7 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+            expect(warning).not.toHaveBeenCalled();
+        });
+
+        it('opens the unit only and reports an error when the material is gone', () => {
+            getMaterialVersions.mockReturnValue(of({}));
+
+            clickCitation('[cite:L:42:7:::Key:Summary:va3]', [meta()]);
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+            expect(error).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.gone');
+        });
+
+        // While a video is being re-transcribed its transcription row is gone but the video plays as always, so calling it gone would be plainly false to anyone looking
+        // at the page. There is simply nothing left to compare the cited timestamp against.
+        it('reports an unverifiable citation rather than a gone one when the video outlived its transcription', () => {
+            getMaterialVersions.mockReturnValue(of({ hasVideo: true }));
+
+            clickCitation('[cite:L:42::120:180:Key:Summary:vt2]', [meta()]);
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+            expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.unverified');
+            expect(error).not.toHaveBeenCalled();
+        });
+
+        it('does not ask the server for a citation written before versions existed', () => {
+            clickCitation('[cite:L:42:7:::Key:Summary]', [meta()]);
+
+            expect(getMaterialVersions).not.toHaveBeenCalled();
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, page: 7 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+            expect(warning).not.toHaveBeenCalled();
+        });
+
+        it('withholds the exact position when the check could not be made', () => {
+            getMaterialVersions.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            clickCitation('[cite:L:42:7:::Key:Summary:va3]', [meta()]);
+
+            // An unverified page number may well be the wrong one, so the link is kept while the jump is not
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+            expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.unverified');
+        });
+
+        // An unreachable unit is an answer, not a failed check: the lecture page words it better once it knows which units it has, so the click stays quiet.
+        it.each([403, 404])('says nothing itself when the unit is unreachable (%i)', (status) => {
+            getMaterialVersions.mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+
+            clickCitation('[cite:L:42:7:::Key:Summary:va3]', [meta()]);
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+            expect(warning).not.toHaveBeenCalled();
+            expect(error).not.toHaveBeenCalled();
+        });
+
+        it('does not navigate when the lecture unit is gone', () => {
+            clickCitation('[cite:L:42:7:::Key:Summary:va3]', []);
+
+            expect(navigate).not.toHaveBeenCalled();
+        });
+
+        it('does not navigate for FAQ citations', () => {
+            clickCitation('[cite:F:9::::Key:Summary]', []);
+
+            expect(navigate).not.toHaveBeenCalled();
+        });
+    });
 });
 
 describe('Iris citation util', () => {
@@ -359,5 +618,63 @@ describe('Iris citation util', () => {
 
     it('escapes HTML in raw text', () => {
         expect(escapeHtml('<span>"&"</span>')).toBe('&lt;span&gt;&quot;&amp;&quot;&lt;/span&gt;');
+    });
+
+    describe('Citation revisions', () => {
+        it('parses the pinned attachment version of a slide citation', () => {
+            expect(parseCitation('[cite:L:42:7:::Key:Summary:va3]')).toEqual({
+                type: 'L',
+                entityId: '42',
+                page: '7',
+                start: '',
+                end: '',
+                keyword: 'Key',
+                summary: 'Summary',
+                pinnedVersion: { kind: 'attachment', version: '3' },
+            });
+        });
+
+        it('parses the pinned transcription version of a video citation', () => {
+            expect(parseCitation('[cite:L:42:7:120:180:Key:Summary:vt2]')?.pinnedVersion).toEqual({ kind: 'video', version: '2' });
+        });
+
+        it('keeps a summary containing colons intact in front of the version field', () => {
+            const parsed = parseCitation('[cite:L:42:7:::Key:Summary:with:colon:va3]');
+
+            expect(parsed?.keyword).toBe('Key');
+            expect(parsed?.summary).toBe('Summary:with:colon');
+            expect(parsed?.pinnedVersion).toEqual({ kind: 'attachment', version: '3' });
+        });
+
+        it('treats a trailing untagged field as part of the summary', () => {
+            const parsed = parseCitation('[cite:L:42:7:::Key:Summary:with:colon]');
+
+            expect(parsed?.pinnedVersion).toBeUndefined();
+            expect(parsed?.summary).toBe('Summary:with:colon');
+        });
+
+        it('does not read empty trailing fields as a version field', () => {
+            const parsed = parseCitation('[cite:L:42:7:::Key:Summary:with:colon::]');
+
+            expect(parsed?.pinnedVersion).toBeUndefined();
+            expect(parsed?.summary).toBe('Summary:with:colon::');
+        });
+
+        // The tag is what a summary cannot accidentally produce. A trailing number alone used to be read as a version, which let a
+        // citation of changed slides pass as current whenever the unrelated number happened to match.
+        it.each(['[cite:L:42:7:::Key:Ratios:3:1]', '[cite:L:42:7:::Key:Chapter 3:1]'])('leaves a colon-numeric summary entirely in the summary (%s)', (raw) => {
+            const parsed = parseCitation(raw);
+
+            expect(parsed?.pinnedVersion).toBeUndefined();
+            expect(parsed?.summary).toBe(raw.slice('[cite:L:42:7:::Key:'.length, -1));
+        });
+
+        // A stamped citation whose summary happens to contain colons is still read correctly: only the tagged last field is taken off.
+        it('reads the version off a stamped citation whose summary contains colons and numbers', () => {
+            const parsed = parseCitation('[cite:L:42:7:::Key:Ratios:3:vt1]');
+
+            expect(parsed?.pinnedVersion).toEqual({ kind: 'video', version: '1' });
+            expect(parsed?.summary).toBe('Ratios:3');
+        });
     });
 });

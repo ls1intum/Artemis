@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -16,12 +17,18 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
@@ -54,6 +61,8 @@ class ProgrammingVariantAdapterServiceProvisionCleanupTest {
 
     private ProgrammingExercise source;
 
+    private ProgrammingExercise original;
+
     private VariantJob job;
 
     private VariantGenerationRequestDTO request;
@@ -71,16 +80,16 @@ class ProgrammingVariantAdapterServiceProvisionCleanupTest {
                 programmingExerciseValidationService, programmingExerciseRepository, programmingExerciseTaskRepository, programmingExerciseTaskService,
                 mock(ProgrammingExerciseTestCaseRepository.class), mock(UserRepository.class), mock(ProgrammingVariantToolsetService.class),
                 mock(VariantBuildVerificationService.class), mock(HyperionConsistencyCheckService.class), mock(VariantPlacementService.class),
-                mock(ExerciseVariantJobService.class), exerciseDeletionService);
+                mock(ExerciseVariantJobService.class), exerciseDeletionService, mock(TeamAssignmentConfigRepository.class), mock(PlagiarismDetectionConfigRepository.class));
 
-        ProgrammingExercise original = mock(ProgrammingExercise.class);
+        original = mock(ProgrammingExercise.class);
         when(original.getId()).thenReturn(1L);
         when(original.getCategories()).thenReturn(Set.of());
         when(original.getTestCases()).thenReturn(Set.of());
         when(programmingExerciseRepository.findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndGradingCriteria(1L))
                 .thenReturn(Optional.of(original));
         when(programmingExerciseTaskRepository.findByExerciseIdWithTestCases(1L)).thenReturn(Set.of());
-        when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(1L)).thenReturn(Optional.empty());
+        when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(1L)).thenReturn(Optional.empty());
         when(programmingExerciseValidationService.preCheckProjectExistsOnVCSOrCI(any(), any())).thenReturn(false);
 
         imported = mock(ProgrammingExercise.class);
@@ -119,6 +128,38 @@ class ProgrammingVariantAdapterServiceProvisionCleanupTest {
         assertThatThrownBy(() -> adapters.provision(source, request, job)).isInstanceOf(RuntimeException.class).hasMessageContaining("Importing the variant clone failed");
 
         verify(exerciseDeletionService).delete(99L, true);
+    }
+
+    /** A variant of a team exercise is a team exercise with the source's team and plagiarism settings, not a failed import. */
+    @Test
+    void shouldGiveTheVariantSkeletonCopiesOfTheSourcesTeamAndPlagiarismSettings() {
+        var team = new TeamAssignmentConfig();
+        team.setId(7L);
+        team.setMinTeamSize(2);
+        team.setMaxTeamSize(5);
+        var plagiarism = PlagiarismDetectionConfig.createDefault();
+        plagiarism.setSimilarityThreshold(42);
+        when(original.getMode()).thenReturn(ExerciseMode.TEAM);
+        when(original.getStoredTeamAssignmentConfig()).thenReturn(team);
+        when(original.getPlagiarismDetectionConfig()).thenReturn(plagiarism);
+
+        when(programmingExerciseRepository.save(any())).thenReturn(imported);
+        // what happens to the clone after the import is not under test here
+        try {
+            adapters.provision(source, request, job);
+        }
+        catch (RuntimeException ignored) {
+            // the mocked clone has no repositories to set up
+        }
+
+        var skeleton = ArgumentCaptor.forClass(ProgrammingExercise.class);
+        verify(programmingExerciseImportService).importProgrammingExercise(any(), skeleton.capture(), anyBoolean(), anyBoolean());
+        assertThat(skeleton.getValue().getMode()).isEqualTo(ExerciseMode.TEAM);
+        assertThat(skeleton.getValue().getStoredTeamAssignmentConfig()).isNotSameAs(team);
+        assertThat(skeleton.getValue().getStoredTeamAssignmentConfig().getMinTeamSize()).isEqualTo(2);
+        assertThat(skeleton.getValue().getStoredTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(5);
+        assertThat(skeleton.getValue().getPlagiarismDetectionConfig()).isNotSameAs(plagiarism);
+        assertThat(skeleton.getValue().getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(42);
     }
 
     /** Nothing was persisted yet, so there is nothing to delete — and never the source. */

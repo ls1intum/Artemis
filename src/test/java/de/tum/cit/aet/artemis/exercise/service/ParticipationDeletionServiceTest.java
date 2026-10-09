@@ -20,6 +20,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
@@ -27,9 +28,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.repository.BuildLogEntryRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
@@ -38,17 +37,14 @@ class ParticipationDeletionServiceTest extends AbstractSpringIntegrationJenkinsL
 
     private static final String TEST_PREFIX = "participationdeletionservice";
 
+    /** Fixed so the stored log line does not depend on when the test runs; nothing here reads the value back. */
+    private static final ZonedDateTime BUILD_LOG_TIME = ZonedDateTime.parse("2026-01-15T10:00:00Z");
+
     @Autowired
     private ParticipationDeletionService participationDeletionService;
 
     @Autowired
     private BuildLogEntryService buildLogEntryService;
-
-    @Autowired
-    private BuildLogEntryRepository buildLogEntryRepository;
-
-    @Autowired
-    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -85,40 +81,34 @@ class ParticipationDeletionServiceTest extends AbstractSpringIntegrationJenkinsL
         var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         var programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
-        // Setup: Create participation, submission and build log entries for template, solution and student
+        // Setup: create a participation and a submission with the build logs of a failed build for template, solution and student
         var templateParticipation = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
         var templateSubmission = programmingExerciseUtilService.createProgrammingSubmission(templateParticipation, true);
-        BuildLogEntry buildLogEntryTemplate = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
-        var templateSavedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntryTemplate), templateSubmission);
-        templateSubmission.setBuildLogEntries(new java.util.LinkedHashSet<>(templateSavedBuildLogs));
-        programmingSubmissionRepository.save(templateSubmission);
+        participationUtilService.addResultToSubmission(templateSubmission, AssessmentType.AUTOMATIC, programmingExercise.getId());
+        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(BUILD_LOG_TIME, "Some sample build log")), templateSubmission, templateSubmission.getLatestResult());
 
         var solutionParticipation = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
         var solutionSubmission = programmingExerciseUtilService.createProgrammingSubmission(solutionParticipation, true);
-        BuildLogEntry buildLogEntrySolution = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
-        var solutionSavedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntrySolution), solutionSubmission);
-        solutionSubmission.setBuildLogEntries(new java.util.LinkedHashSet<>(solutionSavedBuildLogs));
-        programmingSubmissionRepository.save(solutionSubmission);
+        participationUtilService.addResultToSubmission(solutionSubmission, AssessmentType.AUTOMATIC, programmingExercise.getId());
+        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(BUILD_LOG_TIME, "Some sample build log")), solutionSubmission, solutionSubmission.getLatestResult());
 
         var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         var studentSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, true);
-        BuildLogEntry buildLogEntryStudent = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
-        var studentSavedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntryStudent), studentSubmission);
-        studentSubmission.setBuildLogEntries(new java.util.LinkedHashSet<>(studentSavedBuildLogs));
-        programmingSubmissionRepository.save(studentSubmission);
+        participationUtilService.addResultToSubmission(studentSubmission, AssessmentType.AUTOMATIC, programmingExercise.getId());
+        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(BUILD_LOG_TIME, "Some sample build log")), studentSubmission, studentSubmission.getLatestResult());
 
-        // Delete and assert removal
-        assertThat(buildLogEntryRepository.findById(templateSavedBuildLogs.getFirst().getId())).isPresent();
+        // Delete and assert removal. The logs live on disk now, so the service is what says whether they are still there.
+        assertThat(buildLogEntryService.getLatestBuildLogs(templateSubmission)).isNotEmpty();
         participationDeletionService.deleteResultsAndSubmissionsOfParticipation(templateParticipation.getId(), true);
-        assertThat(buildLogEntryRepository.findById(templateSavedBuildLogs.getFirst().getId())).isEmpty();
+        assertThat(buildLogEntryService.getLatestBuildLogs(templateSubmission)).isEmpty();
 
-        assertThat(buildLogEntryRepository.findById(solutionSavedBuildLogs.getFirst().getId())).isPresent();
+        assertThat(buildLogEntryService.getLatestBuildLogs(solutionSubmission)).isNotEmpty();
         participationDeletionService.deleteResultsAndSubmissionsOfParticipation(solutionParticipation.getId(), true);
-        assertThat(buildLogEntryRepository.findById(solutionSavedBuildLogs.getFirst().getId())).isEmpty();
+        assertThat(buildLogEntryService.getLatestBuildLogs(solutionSubmission)).isEmpty();
 
-        assertThat(buildLogEntryRepository.findById(studentSavedBuildLogs.getFirst().getId())).isPresent();
+        assertThat(buildLogEntryService.getLatestBuildLogs(studentSubmission)).isNotEmpty();
         participationDeletionService.deleteResultsAndSubmissionsOfParticipation(studentParticipation.getId(), true);
-        assertThat(buildLogEntryRepository.findById(studentSavedBuildLogs.getFirst().getId())).isEmpty();
+        assertThat(buildLogEntryService.getLatestBuildLogs(studentSubmission)).isEmpty();
     }
 
     @Test

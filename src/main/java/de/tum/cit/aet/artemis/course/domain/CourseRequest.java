@@ -43,6 +43,9 @@ public class CourseRequest extends DomainObject {
     @Column(name = "test_course", nullable = false)
     private boolean testCourse = false;
 
+    @Column(name = "grade_relevant", nullable = false)
+    private boolean gradeRelevant = true;
+
     @Column(name = "reason", nullable = false, columnDefinition = "TEXT")
     private String reason;
 
@@ -118,6 +121,14 @@ public class CourseRequest extends DomainObject {
 
     public void setTestCourse(boolean testCourse) {
         this.testCourse = testCourse;
+    }
+
+    public boolean isGradeRelevant() {
+        return gradeRelevant;
+    }
+
+    public void setGradeRelevant(boolean gradeRelevant) {
+        this.gradeRelevant = gradeRelevant;
     }
 
     public String getReason() {

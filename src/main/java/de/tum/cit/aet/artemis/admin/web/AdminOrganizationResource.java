@@ -38,11 +38,14 @@ import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.OrganizationService;
 import de.tum.cit.aet.artemis.admin.dto.LoginListDTO;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -53,7 +56,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("organizations/organization-administration")
+@FeatureUsage(UserFeature.ORGANIZATIONS)
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping("api/admin/")
@@ -319,6 +322,7 @@ public class AdminOrganizationResource {
      * @param organizationId the id of the organization
      * @return the title of the organization wrapped in an ResponseEntity or 404 Not Found if no organization with that id exists
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("organizations/{organizationId}/title")
     public ResponseEntity<String> getOrganizationTitle(@PathVariable Long organizationId) {
         final var title = organizationRepository.getOrganizationTitle(organizationId);

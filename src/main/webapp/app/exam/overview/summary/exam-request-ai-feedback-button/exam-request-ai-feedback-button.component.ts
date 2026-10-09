@@ -3,6 +3,7 @@ import { Component, DestroyRef, computed, effect, inject, input, signal, untrack
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription, filter, skip } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { faRobot, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -28,7 +29,7 @@ const FEEDBACK_REQUESTED_LOCAL_STORAGE_PREFIX = 'artemis_exam_ai_feedback_reques
 @Component({
     selector: 'jhi-exam-request-ai-feedback-button',
     templateUrl: './exam-request-ai-feedback-button.component.html',
-    imports: [FaIconComponent, TranslateDirective],
+    imports: [FaIconComponent, TranslateDirective, TumAetUiButtonDirective],
 })
 export class ExamRequestAiFeedbackButtonComponent {
     private readonly examParticipationService = inject(ExamParticipationService);

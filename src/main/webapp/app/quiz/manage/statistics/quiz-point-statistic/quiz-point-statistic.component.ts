@@ -20,14 +20,14 @@ import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-st
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { EMPTY, filter, merge, startWith, switchMap } from 'rxjs';
 import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
-import { TumUiBarChartComponent, TumUiChartDatumContext } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent, TumAetUiChartDatumContext } from '@tumaet/ui-angular';
 import { QuizPointStatisticsResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
     styleUrls: ['./quiz-point-statistic.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, TumUiBarChartComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TranslateDirective, TumAetUiBarChartComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
 export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
@@ -202,7 +202,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         this.setAxisLabels('artemisApp.showStatistic.quizPointStatistic.xAxes', 'artemisApp.showStatistic.quizPointStatistic.yAxes');
     }
 
-    protected override formatTooltipLabel(item: TumUiChartDatumContext): string {
+    protected override formatTooltipLabel(item: TumAetUiChartDatumContext): string {
         return this.tooltipLine('artemisApp.showStatistic.tooltip.pointRange', item.value);
     }
 

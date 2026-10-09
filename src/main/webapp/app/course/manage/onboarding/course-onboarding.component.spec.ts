@@ -106,6 +106,43 @@ describe('CourseOnboardingComponent', () => {
         }
     }
 
+    it('temporarily disables step activation while saving without suppressing scrolling', () => {
+        fixture.detectChanges();
+        comp.isSaving.set(true);
+        fixture.detectChanges();
+        const step = fixture.nativeElement.querySelector('[data-testid="onboarding-step"]') as HTMLElement;
+        const navigate = vi.spyOn(comp, 'goToStep');
+        expect(step.getAttribute('aria-disabled')).toBe('true');
+        expect(step.tabIndex).toBe(-1);
+        for (const [type, key] of [
+            ['keydown', 'Enter'],
+            ['keydown', ' '],
+            ['keyup', ' '],
+        ]) {
+            const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+            step.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(false);
+        }
+        expect(navigate).not.toHaveBeenCalled();
+        comp.isSaving.set(false);
+        fixture.detectChanges();
+        expect(step.getAttribute('aria-disabled')).toBe('false');
+        expect(step.tabIndex).toBe(0);
+    });
+
+    it('announces the current step after keyboard navigation', () => {
+        vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+        fixture.detectChanges();
+        const steps = Array.from(fixture.nativeElement.querySelectorAll('[data-testid="onboarding-step"]')) as HTMLElement[];
+        expect(steps[0].getAttribute('aria-current')).toBe('step');
+        expect(steps[1].getAttribute('aria-current')).toBeNull();
+        steps[1].dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        fixture.detectChanges();
+        expect(comp.activeStep()).toBe(1);
+        expect(steps[0].getAttribute('aria-current')).toBeNull();
+        expect(steps[1].getAttribute('aria-current')).toBe('step');
+    });
+
     describe('ngOnInit', () => {
         it('should load course from route data', () => {
             comp.ngOnInit();

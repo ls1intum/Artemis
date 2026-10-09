@@ -52,7 +52,7 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             // would leave the page somewhere the message cannot be; restoreRouteIfDrifted returns to it.
             // No retry beyond that: the conversation used to fail to re-activate from the conversationId query
             // parameter, since the route emits it while the request that loads the conversations is still in flight
-            // and the activation was dropped rather than deferred. MetisConversationService now remembers it and
+            // and the activation was dropped rather than deferred. CourseConversationsService now remembers it and
             // applies it when the list arrives, so one reload has to be enough.
             const conversationUrl = page.url();
             await Commands.reloadAndRestoreRoute(page, conversationUrl);

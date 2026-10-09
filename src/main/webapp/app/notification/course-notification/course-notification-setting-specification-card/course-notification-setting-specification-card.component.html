@@ -3,21 +3,20 @@
         <strong [jhiTranslate]="titleLangKey()"></strong>
     </div>
 
-    <div class="mt-3">
+    <div class="mt-4">
         <jhi-course-notification [courseNotification]="mockNotification()" />
     </div>
 
-    <div class="course-notification-setting-specification-card-options mt-3">
+    <div class="course-notification-setting-specification-card-options mt-4">
         @for (option of possibleChannels; track option) {
-            <div class="form-check form-switch d-flex flex-column align-items-center">
+            <div class="flex flex-col items-center">
                 <div class="mb-1">
                     <strong [jhiTranslate]="'artemisApp.courseNotification.channel.' + option.toLowerCase()"></strong>
                 </div>
-                <input
+                <tumaet-ui-toggle-switch
+                    data-testid="course-notification-channel-switch"
+                    [ariaLabel]="'artemisApp.courseNotification.channel.' + option.toLowerCase() | artemisTranslate"
                     [disabled]="isDisabled(option, mockNotification().notificationType!)"
-                    class="form-check-input m-0"
-                    type="checkbox"
-                    role="switch"
                     [(ngModel)]="channels[option]"
                     (ngModelChange)="optionChanged()"
                 />

@@ -16,6 +16,7 @@ import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-qu
 export abstract class QuizExerciseValidationDirective {
     protected dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
     protected shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
+    protected readonly translateService = inject(TranslateService);
 
     // Make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
@@ -38,7 +39,6 @@ export abstract class QuizExerciseValidationDirective {
     readonly invalidReasons = signal<ValidationReason[]>([]);
     readonly invalidWarnings = signal<ValidationReason[]>([]);
 
-    protected readonly translateService = inject(TranslateService);
     protected readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     /** The reasons as plain strings, for the save button's tooltip. */

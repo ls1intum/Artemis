@@ -11,7 +11,9 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -286,5 +288,57 @@ class ProgrammingExerciseTaskServiceTest {
         taskService.replaceTestNamesWithIds(exercise);
 
         assertThat(exercise.getProblemStatement()).isEqualTo("[task][Not wired up yet]()");
+    }
+
+    /**
+     * Runs the task on a thread with a 1 MB stack, which is what a regex that recurses per test case overflows on.
+     */
+    private List<String> findUnresolvedOnSmallStack(String problemStatement) throws InterruptedException {
+        withTestCases();
+        when(exercise.getProblemStatement()).thenReturn(problemStatement);
+        var result = new AtomicReference<List<String>>();
+        var failure = new AtomicReference<Throwable>();
+        Thread thread = new Thread(null, () -> {
+            try {
+                result.set(taskService.findUnresolvedTaskTestReferences(exercise));
+            }
+            catch (Throwable t) {
+                failure.set(t);
+            }
+        }, "task-pattern-small-stack", 1 << 20);
+        thread.start();
+        thread.join();
+        assertThat(failure.get()).isNull();
+        return result.get();
+    }
+
+    @Test
+    void findUnresolvedTaskTestReferences_withManyReferencesCarryingParameters_doesNotOverflowTheStack() throws InterruptedException {
+        int references = 2000;
+        String tests = IntStream.range(0, references).mapToObj(i -> "testMethod" + i + "(" + i + ")").collect(Collectors.joining(","));
+
+        var unresolved = findUnresolvedOnSmallStack("[task][Many tests](" + tests + ")");
+
+        assertThat(unresolved).hasSize(references).startsWith("testMethod0(0)").endsWith("testMethod1999(1999)");
+    }
+
+    @Test
+    void findUnresolvedTaskTestReferences_withManyPlainReferences_doesNotOverflowTheStack() throws InterruptedException {
+        int references = 5000;
+        String tests = IntStream.range(0, references).mapToObj(i -> "testMethod" + i).collect(Collectors.joining(", "));
+
+        var unresolved = findUnresolvedOnSmallStack("[task][Many tests](" + tests + ")");
+
+        assertThat(unresolved).hasSize(references);
+    }
+
+    @Test
+    void findUnresolvedTaskTestReferences_withMixedReferences_matchesExactlyTheWellFormedLists() throws InterruptedException {
+        String problemStatement = String.join("\n", "[task][Valid](a, b(1)x, c,d(2,3))", "[task][EmptyEntry](a,,b)", "[task][LeadingComma](,a)", "[task][TrailingComma](a,)",
+                "[task][TwoBracketsInOneEntry](a(1)b(2))", "[task][NoName](a,(1))", "[task][Empty]()");
+
+        var unresolved = findUnresolvedOnSmallStack(problemStatement);
+
+        assertThat(unresolved).containsExactly("a", "b(1)x", "c", "d(2,3)");
     }
 }

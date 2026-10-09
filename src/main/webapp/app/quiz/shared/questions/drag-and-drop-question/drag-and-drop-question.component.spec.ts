@@ -222,6 +222,22 @@ describe('DragAndDropQuestionComponent', () => {
         expect(comp.loadingState()).toBe('loading');
     });
 
+    it('should not hard-code the color of the invalid hint icon, so it stays readable in the dark theme', () => {
+        const { dropLocation } = getDropLocationMappingAndItem();
+        dropLocation.invalid = true;
+        dropLocation.posX = 0;
+        dropLocation.posY = 0;
+        dropLocation.width = 10;
+        dropLocation.height = 10;
+        comp.dragAndDropQuestion().dropLocations = [dropLocation];
+        fixture.componentRef.setInput('showResult', true);
+        fixture.changeDetectorRef.detectChanges();
+
+        const icon: HTMLElement | null = fixture.nativeElement.querySelector('.drop-location.results .invalid fa-icon');
+        expect(icon).toBeTruthy();
+        expect(icon!.getAttribute('style') ?? '').not.toContain('color');
+    });
+
     it('should set drop allowed to true when dragged', () => {
         comp.dropAllowed.set(false);
         comp.drag();

@@ -21,9 +21,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotificationParameter;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
@@ -138,7 +140,8 @@ public class CourseNotificationService {
     }
 
     private void recordChannelUsage(String feature, boolean failed, long durationMs) {
-        featureUsageCollector.recordUsage(FeatureKind.BACKGROUND, NOTIFICATION_MODULE, feature, Role.ANONYMOUS, failed, durationMs);
+        featureUsageCollector.recordUsage(FeatureKind.BACKGROUND, NOTIFICATION_MODULE, feature, UserFeature.NOTIFICATION_DELIVERY, FeatureInteraction.ACTION, Role.ANONYMOUS,
+                failed, durationMs);
     }
 
     private static long elapsedMillis(long startNanos) {

@@ -132,7 +132,7 @@ class AtlasAgentDelegationServiceTest {
 
     @Test
     void responsesAvailabilityDoesNotDependOnSharedClient() {
-        var properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", true, 300, 10, 30000L, 10);
+        var properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", true, 300, 10, 30000L, 10);
         var missing = new AtlasAgentDelegationService(ChatClient.create(chatModel), templateService, chatMemory, CHAT_PROPERTIES, properties, null);
         assertThat(missing.isOrchestratorAvailable()).isFalse();
         var isolated = new AtlasAgentDelegationService(null, templateService, chatMemory, CHAT_PROPERTIES, properties, new AtlasResponsesChatClient(ChatClient.create(chatModel)));
@@ -145,7 +145,7 @@ class AtlasAgentDelegationServiceTest {
         when(responsesModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatResponse orchestratorResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("orchestrator"))));
         when(responsesModel.call(any(Prompt.class))).thenReturn(orchestratorResponse);
-        AtlasOrchestratorProperties orchestratorProperties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", true, 300, 10, 30000L, 10);
+        AtlasOrchestratorProperties orchestratorProperties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", true, 300, 10, 30000L, 10);
         AtlasAgentDelegationService service = new AtlasAgentDelegationService(ChatClient.create(chatModel), templateService, chatMemory, CHAT_PROPERTIES, orchestratorProperties,
                 new AtlasResponsesChatClient(ChatClient.create(responsesModel)));
 

@@ -163,7 +163,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
     }
 
     private TextExercise addTextExerciseToExam(Exam exam) {

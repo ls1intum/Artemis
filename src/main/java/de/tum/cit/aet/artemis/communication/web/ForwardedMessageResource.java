@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 /**
@@ -40,7 +41,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("posts/forwarding")
+@FeatureUsage(UserFeature.MESSAGE_INTERACTIONS)
 @RestController
 @RequestMapping(value = "api/communication/")
 public class ForwardedMessageResource {

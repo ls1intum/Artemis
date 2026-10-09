@@ -1,15 +1,13 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUserAttendanceCheckDTO } from 'app/exam/shared/entities/exam-users-attendance-check-dto.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Subject, Subscription } from 'rxjs';
 import { ActivatedRoute, Data } from '@angular/router';
-import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faCheck, faInfoCircle, faPlus, faSort, faTimes, faUpload, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faSort, faXmark } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -17,12 +15,23 @@ import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { TumAetUiProgressSpinnerComponent, TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-students-attendance-check',
     templateUrl: './exam-students-attendance-check.component.html',
-    encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective, CourseTitleBarTitleDirective],
+    imports: [
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FaIconComponent,
+        SortDirective,
+        SortByDirective,
+        CourseTitleBarTitleDirective,
+        TumAetUiProgressSpinnerComponent,
+        TumAetUiTableDirective,
+        TumAetUiTagComponent,
+    ],
 })
 export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
@@ -30,9 +39,6 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     private examManagementService = inject(ExamManagementService);
     private sortService = inject(SortService);
 
-    readonly ButtonType = ButtonType;
-    readonly ButtonSize = ButtonSize;
-    readonly ActionType = ActionType;
     readonly MISSING_IMAGE = '/content/images/missing_image.png';
 
     courseId!: number;
@@ -57,11 +63,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     rowClass?: string;
 
     // Icons
-    faPlus = faPlus;
-    faInfoCircle = faInfoCircle;
-    faUpload = faUpload;
     faCheck = faCheck;
-    faTimes = faTimes;
     faXmark = faXmark;
     faSort = faSort;
 
@@ -75,15 +77,18 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
             this.hasExamEnded.set(exam.endDate?.isBefore(dayjs()) || false);
             this.isTestExam = this.exam.testExam!;
         });
-        if (this.hasExamStarted()) {
-            this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!).subscribe({
-                next: (res: HttpResponse<ExamUserAttendanceCheckDTO[]>) => {
-                    this.allExamUsersAttendanceCheck.set(res.body!);
-                    this.isLoading.set(false);
-                },
-                error: (error: HttpErrorResponse) => this.onError(error.message),
-            });
+        if (!this.hasExamStarted()) {
+            // Nothing can be verified before the start, and the page has to say so instead of loading forever.
+            this.isLoading.set(false);
+            return;
         }
+        this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!).subscribe({
+            next: (res: HttpResponse<ExamUserAttendanceCheckDTO[]>) => {
+                this.allExamUsersAttendanceCheck.set(res.body!);
+                this.isLoading.set(false);
+            },
+            error: (error: HttpErrorResponse) => this.onError(error.message),
+        });
     }
 
     ngOnDestroy() {

@@ -18,13 +18,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.model.ToolContext;
+import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -67,6 +70,8 @@ class CreatorToolsServiceTest {
 
     private AppliedActionsBuffer appliedActionsBuffer;
 
+    private AtomicLong workerToolSequence;
+
     @BeforeEach
     void setUp() {
         service = new CreatorToolsService(new JsonMapper(), courseRepository, competencyService, competencyValidator, atlasMLNotificationService);
@@ -75,6 +80,9 @@ class CreatorToolsServiceTest {
         Map<String, Object> ctx = new HashMap<>();
         ctx.put(OrchestratorToolContextKeys.COURSE_ID_KEY, COURSE_ID);
         ctx.put(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY, appliedActionsBuffer);
+        workerToolSequence = new AtomicLong();
+        ctx.put(OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY, workerToolSequence);
+        ctx.put(OrchestratorToolContextKeys.WORKER_COMPLETION_SEQUENCE_KEY, new AtomicLong());
         toolContext = new ToolContext(ctx);
     }
 
@@ -91,6 +99,10 @@ class CreatorToolsServiceTest {
         String result = service.createCompetency("Sorting Algorithms", "Understand sorting basics.", "UNDERSTAND", JUSTIFICATION, toolContext);
 
         assertThat(result).contains("\"id\":101").contains("Sorting Algorithms").contains("UNDERSTAND");
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Competency>> competencyCaptor = ArgumentCaptor.forClass(List.class);
+        verify(competencyService).createCompetencies(competencyCaptor.capture(), eq(course));
+        assertThat(competencyCaptor.getValue()).singleElement().satisfies(competency -> assertThat(competency.isGeneratedByAi()).isTrue());
         assertThat(appliedActions).singleElement().satisfies(action -> {
             assertThat(action.type()).isEqualTo(AppliedActionDTO.ActionType.CREATE);
             assertThat(action.competencyId()).isEqualTo(101L);
@@ -102,10 +114,19 @@ class CreatorToolsServiceTest {
     }
 
     @Test
+    void createCompetency_toolDescriptionMatchesCreatorToolSurface() {
+        var provider = MethodToolCallbackProvider.builder().toolObjects(service).build();
+
+        assertThat(provider.getToolCallbacks()).singleElement().satisfies(callback -> assertThat(callback.getToolDefinition().description()).doesNotContain("listCompetencyIndex")
+                .contains("returned competency id", "main orchestrator refreshes the competency index"));
+    }
+
+    @Test
     void createCompetency_missingJustification_returnsError() {
         String result = service.createCompetency("Title", "Desc", "APPLY", "   ", toolContext);
 
         assertThat(result).contains("justification is required");
+        assertThat(workerToolSequence).hasValue(1L);
         verify(competencyService, never()).createCompetencies(any(), any());
         assertThat(appliedActions).isEmpty();
     }

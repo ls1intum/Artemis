@@ -14,7 +14,7 @@ import { AdminStandardizedCompetencyService } from 'app/admin/standardized-compe
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject, forkJoin, map } from 'rxjs';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiDialogComponent, TumUiProgressSpinnerComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiProgressSpinnerComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { getIcon } from 'app/atlas/shared/entities/competency.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
@@ -52,16 +52,16 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         FaIconComponent,
         StandardizedCompetencyFilterComponent,
         KnowledgeAreaTreeComponent,
-        TumUiTooltipDirective,
+        TumAetUiTooltipDirective,
         StandardizedCompetencyEditComponent,
         KnowledgeAreaEditComponent,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        TumUiDialogComponent,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiProgressSpinnerComponent,
+        TumAetUiDialogComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiProgressSpinnerComponent,
         ResizableDirective,
     ],
 })

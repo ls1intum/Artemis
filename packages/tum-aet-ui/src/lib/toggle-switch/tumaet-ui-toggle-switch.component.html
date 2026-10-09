@@ -1,0 +1,13 @@
+<input
+    type="checkbox"
+    role="switch"
+    class="tumaet-ui-toggle-switch-input"
+    [id]="inputId()"
+    [checked]="checked()"
+    [disabled]="effectiveDisabled()"
+    [attr.aria-label]="effectiveAriaLabel()"
+    [attr.aria-labelledby]="effectiveAriaLabelledBy()"
+    (change)="onInputChange($event)"
+    (blur)="onInputBlur()"
+/>
+<span class="tumaet-ui-toggle-switch-handle tumaet:bg-content-background" aria-hidden="true"></span>

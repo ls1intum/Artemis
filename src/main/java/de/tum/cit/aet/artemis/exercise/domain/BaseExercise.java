@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
+
 import java.time.ZonedDateTime;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import jakarta.persistence.Column;
@@ -14,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
 
 @MappedSuperclass
@@ -79,6 +83,23 @@ public abstract class BaseExercise extends DomainObject {
      */
     public void setTitle(String title) {
         this.title = title != null ? WHITESPACE_RUN.matcher(title.strip()).replaceAll(" ") : null;
+    }
+
+    /**
+     * Validate the exercise title.
+     * 1. Check presence and length of exercise title
+     * 2. Find forbidden patterns in exercise title
+     */
+    public void validateTitle() {
+        // Check if exercise title is set
+        if (getTitle() == null || getTitle().isBlank() || getTitle().length() < 3) {
+            throw new BadRequestAlertException("The title is not set or is too short.", "Exercise", "titleLengthInvalid");
+        }
+        // Check if the exercise title matches regex
+        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(getTitle());
+        if (!titleMatcher.matches()) {
+            throw new BadRequestAlertException("The title is invalid.", "Exercise", "titlePatternInvalid");
+        }
     }
 
     public String getShortName() {

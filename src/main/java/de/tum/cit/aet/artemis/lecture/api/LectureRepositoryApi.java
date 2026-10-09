@@ -7,8 +7,10 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -26,6 +28,27 @@ public class LectureRepositoryApi extends AbstractLectureApi {
 
     public LectureRepositoryApi(LectureRepository lectureRepository) {
         this.lectureRepository = lectureRepository;
+    }
+
+    /**
+     * Checks which of the given ids exists, for the pass that removes index rows with no backing entity.
+     *
+     * @param entityIds the ids to check
+     * @return the subset that exists
+     */
+    public Set<Long> findExistingLectureIds(Collection<Long> entityIds) {
+        return lectureRepository.findExistingLectureIds(entityIds);
+    }
+
+    /**
+     * Walks the ids expected to be indexed, one page at a time, for the reconcile passes.
+     *
+     * @param afterId the id the previous page stopped at
+     * @param limit   the page size
+     * @return the next lecture ids in ascending order
+     */
+    public List<Long> findLectureIdsAfter(long afterId, int limit) {
+        return lectureRepository.findLectureIdsAfter(afterId, PageRequest.ofSize(limit));
     }
 
     public Optional<Lecture> findById(Long lectureId) {
@@ -70,5 +93,9 @@ public class LectureRepositoryApi extends AbstractLectureApi {
 
     public Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnits(long courseId) {
         return lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
+    }
+
+    public List<CourseEntityIdDTO> findLectureIdCourseIdPairsForCourses(Collection<Long> courseIds) {
+        return lectureRepository.findLectureIdCourseIdPairsForCourses(courseIds);
     }
 }

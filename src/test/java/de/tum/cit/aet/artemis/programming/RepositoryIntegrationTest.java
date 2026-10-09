@@ -1044,24 +1044,45 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsWithManualResult() throws Exception {
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
-        var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
-        submission.setBuildLogEntries(new java.util.LinkedHashSet<>(buildLogEntries));
         participationUtilService.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC);
+        var storedLogs = buildLogEntryService.saveBuildLogs(logs, submission, submission.getLatestResult());
         var receivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
-        assertLogsContent(receivedLogs);
+        assertLogsContent(receivedLogs, storedLogs);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogs() throws Exception {
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
-        var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
-        submission.setBuildLogEntries(new java.util.LinkedHashSet<>(buildLogEntries));
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
+        var storedLogs = buildLogEntryService.saveBuildLogs(logs, submission, submission.getLatestResult());
         var receivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
-        assertLogsContent(receivedLogs);
+        assertLogsContent(receivedLogs, storedLogs);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testBuildLogsForMultipleResultsOfOneSubmission() throws Exception {
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
+        var firstResult = submission.getLatestResult();
+        var firstLogs = List.of(new BuildLogEntry(ZonedDateTime.now(), "first failed result"));
+        buildLogEntryService.saveBuildLogs(firstLogs, submission, firstResult);
+
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
+        var secondResult = submission.getLatestResult();
+        var secondLogs = List.of(new BuildLogEntry(ZonedDateTime.now().plusSeconds(1), "second failed result"));
+        buildLogEntryService.saveBuildLogs(secondLogs, submission, secondResult);
+
+        var firstReceivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs?resultId=" + firstResult.getId(), HttpStatus.OK, BuildLogEntry.class);
+        var secondReceivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs?resultId=" + secondResult.getId(), HttpStatus.OK, BuildLogEntry.class);
+        var latestReceivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
+
+        assertThat(firstReceivedLogs).extracting(BuildLogEntry::getLog).containsExactly("first failed result");
+        assertThat(secondReceivedLogs).extracting(BuildLogEntry::getLog).containsExactly("second failed result");
+        assertThat(latestReceivedLogs).extracting(BuildLogEntry::getLog).containsExactly("second failed result");
     }
 
     /**
@@ -1073,8 +1094,8 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogs_keepsTheScorpioKeySet() throws Exception {
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
-        submission.setBuildLogEntries(new java.util.LinkedHashSet<>(buildLogEntryService.saveBuildLogs(logs, submission)));
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
+        buildLogEntryService.saveBuildLogs(logs, submission, submission.getLatestResult());
 
         String response = request.get(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, String.class);
         List<Map<String, Object>> body = objectMapper.readValue(response, new TypeReference<>() {
@@ -1091,12 +1112,16 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, BuildLogEntry.class);
     }
 
-    private void assertLogsContent(List<BuildLogEntry> receivedLogs) {
+    /**
+     * Asserts against what the store actually wrote rather than against the fixtures: a stored entry is truncated, and a multi-line one is written as several entries, so the
+     * fixtures are no longer what a read returns.
+     */
+    private void assertLogsContent(List<BuildLogEntry> receivedLogs, List<BuildLogEntry> expectedLogs) {
         for (int i = 0; i < receivedLogs.size(); i++) {
-            assertThat(receivedLogs.get(i).getLog()).isEqualTo(logs.get(i).getLog());
+            assertThat(receivedLogs.get(i).getLog()).isEqualTo(expectedLogs.get(i).getLog());
             // When serializing and deserializing the logs, the time of each BuildLogEntry is converted to UTC.
             // Convert the time in the logs set up above to UTC and round it to milliseconds for comparison.
-            ZonedDateTime expectedTime = ZonedDateTime.ofInstant(logs.get(i).getTime().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC"));
+            ZonedDateTime expectedTime = ZonedDateTime.ofInstant(expectedLogs.get(i).getTime().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC"));
             ZonedDateTime actualTime = receivedLogs.get(i).getTime().truncatedTo(ChronoUnit.MILLIS);
             assertThat(actualTime).isCloseTo(expectedTime, within(1, ChronoUnit.MILLIS));
         }

@@ -343,9 +343,9 @@ public class StudentExam extends AbstractAuditingEntity {
             if (startedDate == null) {
                 return null;
             }
-            return startedDate.plusSeconds(workingTime + gracePeriodInSeconds);
+            return startedDate.plusSeconds((long) workingTime + gracePeriodInSeconds);
         }
-        return examStartDate.plusSeconds(workingTime + gracePeriodInSeconds);
+        return examStartDate.plusSeconds((long) workingTime + gracePeriodInSeconds);
     }
 
     /**

@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
-import { TumUiButtonComponent, TumUiFormFieldComponent, TumUiInputDirective, TumUiMessageComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { MODULE_FEATURE_SAML2 } from 'app/app.constants';
 
 /**
@@ -33,11 +33,11 @@ interface SettingsForm {
         FormsModule,
         ReactiveFormsModule,
         ArtemisTranslatePipe,
-        TumUiButtonComponent,
-        TumUiFormFieldComponent,
-        TumUiInputDirective,
-        TumUiMessageComponent,
-        TumUiSelectComponent,
+        TumAetUiButtonComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiSelectComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

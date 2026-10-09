@@ -3,13 +3,13 @@ import { CacheMetrics } from 'app/admin/metrics/metrics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DecimalPipe, KeyValuePipe } from '@angular/common';
 import { filterNaN } from 'app/admin/metrics/filterNaN-util';
-import { TumUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-metrics-cache',
     templateUrl: './metrics-cache.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, TumUiTableDirective, DecimalPipe, KeyValuePipe],
+    imports: [TranslateDirective, TumAetUiTableDirective, DecimalPipe, KeyValuePipe],
 })
 export class MetricsCacheComponent {
     /**

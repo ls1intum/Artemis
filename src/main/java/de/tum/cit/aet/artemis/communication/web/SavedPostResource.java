@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 /**
@@ -48,7 +49,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("posts/saved-posts")
+@FeatureUsage(UserFeature.MESSAGE_INTERACTIONS)
 @RestController
 @RequestMapping("api/communication/")
 public class SavedPostResource {

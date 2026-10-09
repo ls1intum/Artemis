@@ -76,6 +76,22 @@ describe('TeamUpdateDialogComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('associates the owner and student labels with their search inputs', async () => {
+        await setupComponent(mockEmptyTeam);
+        fixture.detectChanges(false);
+        await fixture.whenStable();
+
+        const root = fixture.nativeElement as HTMLElement;
+        for (const id of ['teamOwnerInput', 'teamStudentsInput']) {
+            const label = root.querySelector(`label[for="${id}"]`) as HTMLLabelElement;
+            const input = root.querySelector(`input#${id}`);
+            expect(input).not.toBeNull();
+            expect(label.control).toBe(input);
+        }
+
+        fixture.destroy();
+    });
+
     it('Team Update Dialog can be canceled via cancel button', async () => {
         await setupComponent(mockEmptyTeam);
         fixture.detectChanges(false);

@@ -6,7 +6,8 @@ import { Signal } from '@angular/core';
  * of the concrete component class — keeping each exercise type in its own lazy chunk.
  */
 export interface ExerciseSubmission {
-    submitExercise(): void;
+    /** Implementations handle submission errors locally and may finish asynchronously. */
+    submitExercise(): void | Promise<void>;
 
     /**
      * Whether the surface can be submitted right now. Implemented only by components that can go read-only — an

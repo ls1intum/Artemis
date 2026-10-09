@@ -1,12 +1,12 @@
 <div>
     <h5 *adminTitleBarTitle id="user-management-page-heading" class="mb-0" jhiTranslate="artemisApp.userManagement.home.title"></h5>
     <div *adminTitleBarActions class="flex items-center gap-2">
-        <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="importDialog.open()" data-testid="import-users-button">
+        <tumaet-ui-button size="small" severity="secondary" variant="outlined" (clicked)="importDialog.open()" data-testid="import-users-button">
             <fa-icon [icon]="faFileImport" />
             <span class="hidden md:inline" jhiTranslate="artemisApp.importUsers.buttonLabel"></span>
-        </tum-ui-button>
+        </tumaet-ui-button>
         <jhi-users-import-dialog #importDialog [adminUserMode]="true" />
-        <a tumUiButton size="small" [routerLink]="['./new']" data-testid="create-user-button">
+        <a tumAetUiButton size="small" [routerLink]="['./new']" data-testid="create-user-button">
             <fa-icon [icon]="faPlus" />
             <span jhiTranslate="artemisApp.userManagement.home.createLabel"></span>
         </a>
@@ -16,12 +16,12 @@
             <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div class="flex flex-wrap items-center gap-3">
                     <label for="field_searchTerm" class="mb-0" jhiTranslate="artemisApp.userManagement.searchForUser"></label>
-                    <input tumUiInput type="text" name="searchTerm" id="field_searchTerm" formControlName="searchControl" (blur)="loadAll()" (keydown)="onKeydown($event)" />
-                    <tum-ui-button size="small" (clicked)="loadAll()" data-testid="search-button">{{ 'artemisApp.userManagement.search' | artemisTranslate }}</tum-ui-button>
+                    <input tumAetUiInput type="text" name="searchTerm" id="field_searchTerm" formControlName="searchControl" (blur)="loadAll()" (keydown)="onKeydown($event)" />
+                    <tumaet-ui-button size="small" (clicked)="loadAll()" data-testid="search-button">{{ 'artemisApp.userManagement.search' | artemisTranslate }}</tumaet-ui-button>
                     @if (searchInvalid()) {
-                        <tum-ui-message severity="error" data-testid="search-error">
+                        <tumaet-ui-message severity="error" data-testid="search-error">
                             <span jhiTranslate="artemisApp.userManagement.searchError"></span>
-                        </tum-ui-message>
+                        </tumaet-ui-message>
                     }
                     @if (loadingSearchResult()) {
                         <span jhiTranslate="artemisApp.userManagement.loading"></span>
@@ -30,7 +30,7 @@
                 <div class="flex items-center justify-center gap-2 md:justify-end">
                     <jhi-delete-users-button (deletionRequested)="openPermanentDeletionDialog($event)" />
                     <button
-                        tumUiButton
+                        tumAetUiButton
                         type="button"
                         severity="danger"
                         size="small"
@@ -40,7 +40,7 @@
                     >
                         <fa-icon [icon]="faTrash" />
                     </button>
-                    <tum-ui-button
+                    <tumaet-ui-button
                         size="small"
                         [severity]="filters().numberOfAppliedFilters ? 'success' : 'secondary'"
                         (clicked)="openFilterModal()"
@@ -52,13 +52,13 @@
                             jhiTranslate="artemisApp.userManagement.filter.modal.open"
                             [translateValues]="{ num: filters().numberOfAppliedFilters }"
                         ></span>
-                    </tum-ui-button>
+                    </tumaet-ui-button>
                 </div>
             </div>
         </form>
         <div class="mt-3 overflow-x-auto">
             <table
-                tumUiTable
+                tumAetUiTable
                 size="small"
                 [sortField]="predicate()"
                 [sortOrder]="ascending() ? 1 : -1"
@@ -70,44 +70,44 @@
                     <tr class="whitespace-nowrap">
                         <th class="min-w-[70px]">
                             <span class="pe-1" jhiTranslate="artemisApp.userManagement.batch.all"></span>
-                            <tum-ui-checkbox
+                            <tumaet-ui-checkbox
                                 [ngModel]="selectedUsers().length === usersWithoutCurrentUser.length"
                                 (changed)="toggleAllUserSelection()"
                                 data-testid="select-all-checkbox"
                             />
                         </th>
-                        <th [tumUiSortableColumn]="'id'">
+                        <th [tumAetUiSortableColumn]="'id'">
                             <span jhiTranslate="global.field.id"></span>
                         </th>
                         <th>
                             <span jhiTranslate="artemisApp.userManagement.profilePicture"></span>
                         </th>
-                        <th [tumUiSortableColumn]="'login'">
+                        <th [tumAetUiSortableColumn]="'login'">
                             <span jhiTranslate="artemisApp.userManagement.login"></span>
                         </th>
-                        <th [tumUiSortableColumn]="'email'">
+                        <th [tumAetUiSortableColumn]="'email'">
                             <span jhiTranslate="artemisApp.userManagement.email"></span>
                         </th>
-                        <th [tumUiSortableColumn]="'registrationNumber'">
+                        <th [tumAetUiSortableColumn]="'registrationNumber'">
                             <span jhiTranslate="artemisApp.userManagement.registrationNumber"></span>
                         </th>
-                        <th [tumUiSortableColumn]="'lastName'">
+                        <th [tumAetUiSortableColumn]="'lastName'">
                             <span jhiTranslate="artemisApp.userManagement.name"></span>
                         </th>
                         <th></th>
-                        <th [tumUiSortableColumn]="'langKey'">
+                        <th [tumAetUiSortableColumn]="'langKey'">
                             <span jhiTranslate="artemisApp.userManagement.langKey"></span>
                         </th>
-                        <th [tumUiSortableColumn]="'internal'">
+                        <th [tumAetUiSortableColumn]="'internal'">
                             <span jhiTranslate="artemisApp.userManagement.internal"></span>
                         </th>
-                        <th [tumUiSortableColumn]="'createdDate'">
+                        <th [tumAetUiSortableColumn]="'createdDate'">
                             <span jhiTranslate="artemisApp.userManagement.createdDate"></span>
                         </th>
-                        <th [tumUiSortableColumn]="'lastModifiedBy'">
+                        <th [tumAetUiSortableColumn]="'lastModifiedBy'">
                             <span jhiTranslate="artemisApp.userManagement.lastModifiedBy"></span>
                         </th>
-                        <th [tumUiSortableColumn]="'lastModifiedDate'">
+                        <th [tumAetUiSortableColumn]="'lastModifiedDate'">
                             <span jhiTranslate="artemisApp.userManagement.lastModifiedDate"></span>
                         </th>
                         <th></th>
@@ -117,7 +117,7 @@
                     @for (user of userList; track trackIdentity($index, user)) {
                         <tr data-testid="user-row">
                             <td>
-                                <tum-ui-checkbox
+                                <tumaet-ui-checkbox
                                     [disabled]="!currentAccount() || currentAccount()?.login === user.login"
                                     [ngModel]="selectedUsers().includes(user)"
                                     (changed)="toggleUser(user)"
@@ -151,18 +151,18 @@
                             </td>
                             <td>
                                 @if (user.activated) {
-                                    <tum-ui-button
+                                    <tumaet-ui-button
                                         size="small"
                                         severity="success"
                                         (clicked)="setActive(user, false)"
                                         [disabled]="!currentAccount() || currentAccount()?.login === user.login"
                                     >
                                         {{ 'artemisApp.userManagement.activated' | artemisTranslate }}
-                                    </tum-ui-button>
+                                    </tumaet-ui-button>
                                 } @else {
-                                    <tum-ui-button size="small" severity="danger" (clicked)="setActive(user, true)">
+                                    <tumaet-ui-button size="small" severity="danger" (clicked)="setActive(user, true)">
                                         {{ 'artemisApp.userManagement.deactivated' | artemisTranslate }}
-                                    </tum-ui-button>
+                                    </tumaet-ui-button>
                                 }
                             </td>
                             <td>{{ user.langKey }}</td>
@@ -174,48 +174,48 @@
                                 <div class="flex items-center justify-end gap-1">
                                     <a
                                         [routerLink]="['./', user.login]"
-                                        tumUiButton
+                                        tumAetUiButton
                                         size="small"
                                         severity="info"
                                         variant="outlined"
-                                        [tumUiTooltip]="'entity.action.view' | artemisTranslate"
+                                        [tumAetUiTooltip]="'entity.action.view' | artemisTranslate"
                                     >
                                         <fa-icon [icon]="faEye" />
                                     </a>
                                     <a
                                         [routerLink]="['./', user.login, 'edit']"
                                         queryParamsHandling="merge"
-                                        tumUiButton
+                                        tumAetUiButton
                                         size="small"
                                         severity="warn"
                                         variant="outlined"
-                                        [tumUiTooltip]="'entity.action.edit' | artemisTranslate"
+                                        [tumAetUiTooltip]="'entity.action.edit' | artemisTranslate"
                                     >
                                         <fa-icon [icon]="faPencil" />
                                     </a>
                                     @if (isLdapEnabled() && !user.internal) {
                                         <button
-                                            tumUiButton
+                                            tumAetUiButton
                                             size="small"
                                             severity="success"
                                             type="button"
                                             variant="outlined"
                                             (click)="ldapSync(user.id!)"
                                             data-testid="ldap-sync-button"
-                                            [tumUiTooltip]="'entity.action.ldap' | artemisTranslate"
+                                            [tumAetUiTooltip]="'entity.action.ldap' | artemisTranslate"
                                         >
                                             <fa-icon [icon]="faSync" />
                                         </button>
                                     }
                                     <button
-                                        tumUiButton
+                                        tumAetUiButton
                                         type="button"
                                         severity="danger"
                                         size="small"
                                         variant="outlined"
                                         (click)="deleteUser(user.login!)"
                                         [disabled]="!currentAccount() || currentAccount()?.login === user.login"
-                                        [tumUiTooltip]="'entity.action.delete' | artemisTranslate"
+                                        [tumAetUiTooltip]="'entity.action.delete' | artemisTranslate"
                                         data-testid="delete-user"
                                     >
                                         <fa-icon [icon]="faTrash" />
@@ -234,7 +234,7 @@
                 <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
             </div>
             <div class="flex justify-center">
-                <tum-ui-paginator
+                <tumaet-ui-paginator
                     [page]="page() - 1"
                     [pageSize]="itemsPerPage"
                     [totalRecords]="totalItems()"
@@ -246,7 +246,7 @@
         </div>
     }
 </div>
-<tum-ui-dialog [(visible)]="filterModalVisible" size="medium" header="{{ 'artemisApp.userManagement.filter.modal.title' | artemisTranslate }}">
+<tumaet-ui-dialog [(visible)]="filterModalVisible" size="medium" header="{{ 'artemisApp.userManagement.filter.modal.title' | artemisTranslate }}">
     <div class="flex flex-col">
         <div class="flex items-center border-b-2 border-[var(--overview-blue-border-color)] pb-1">
             <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.authority.title" [translateValues]="{ num: filters().authorityFilter.size }"></h5>
@@ -255,7 +255,7 @@
         <div class="border-b bg-[var(--user-management-background-color)] pt-2">
             <div class="mb-2 flex w-4/5 items-center justify-around">
                 <div class="flex items-center gap-1">
-                    <tum-ui-radio-button
+                    <tumaet-ui-radio-button
                         inputId="authorityFilter"
                         name="authorityFilterGroup"
                         [value]="'all'"
@@ -265,7 +265,7 @@
                     <label for="authorityFilter" jhiTranslate="artemisApp.userManagement.filter.all"></label>
                 </div>
                 <div class="flex items-center gap-1">
-                    <tum-ui-radio-button
+                    <tumaet-ui-radio-button
                         inputId="emptyRoles"
                         name="authorityFilterGroup"
                         [value]="'empty'"
@@ -276,7 +276,7 @@
                     <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.authority.withoutTooltip" />
                 </div>
                 <div class="flex items-center gap-1">
-                    <tum-ui-radio-button
+                    <tumaet-ui-radio-button
                         inputId="deselectAll"
                         name="authorityFilterGroup"
                         [value]="'none'"
@@ -292,7 +292,7 @@
                 @for (authority of authorityFilters; track authority) {
                     <li>
                         <label class="flex items-center gap-2">
-                            <tum-ui-checkbox [ngModel]="filters().authorityFilter.has(authority)" (changed)="toggleAuthorityFilter(filters().authorityFilter, authority)" />
+                            <tumaet-ui-checkbox [ngModel]="filters().authorityFilter.has(authority)" (changed)="toggleAuthorityFilter(filters().authorityFilter, authority)" />
                             <span>{{ 'artemisApp.userManagement.filter.authority.' + authority.toString().toLowerCase() | artemisTranslate }}</span>
                         </label>
                     </li>
@@ -308,7 +308,7 @@
                 @for (origin of originFilters; track origin) {
                     <li>
                         <label class="flex items-center gap-1">
-                            <tum-ui-radio-button
+                            <tumaet-ui-radio-button
                                 name="originFilterGroup"
                                 [value]="origin"
                                 [ngModel]="filters().originFilter.has(origin) ? origin : undefined"
@@ -319,7 +319,7 @@
                     </li>
                 }
                 <li class="flex items-center gap-1">
-                    <tum-ui-radio-button
+                    <tumaet-ui-radio-button
                         inputId="toggleOriginFilter"
                         name="originFilterGroup"
                         [value]="'none'"
@@ -339,7 +339,7 @@
                 @for (registrationNumber of registrationNumberFilters; track registrationNumber) {
                     <li>
                         <label class="flex items-center gap-1">
-                            <tum-ui-radio-button
+                            <tumaet-ui-radio-button
                                 name="registrationFilterGroup"
                                 [value]="registrationNumber"
                                 [ngModel]="filters().registrationNumberFilter.has(registrationNumber) ? registrationNumber : undefined"
@@ -350,7 +350,7 @@
                     </li>
                 }
                 <li class="flex items-center gap-1">
-                    <tum-ui-radio-button
+                    <tumaet-ui-radio-button
                         inputId="toggleRegistrationNumberFilter"
                         name="registrationFilterGroup"
                         [value]="'none'"
@@ -370,7 +370,7 @@
                 @for (status of statusFilters; track status) {
                     <li>
                         <label class="flex items-center gap-1">
-                            <tum-ui-radio-button
+                            <tumaet-ui-radio-button
                                 name="statusFilterGroup"
                                 [value]="status"
                                 [ngModel]="filters().statusFilter.has(status) ? status : undefined"
@@ -381,7 +381,7 @@
                     </li>
                 }
                 <li class="flex items-center gap-1">
-                    <tum-ui-radio-button
+                    <tumaet-ui-radio-button
                         inputId="toggleStatusFilter"
                         name="statusFilterGroup"
                         [value]="'none'"
@@ -394,13 +394,15 @@
         </div>
     </div>
     <ng-template #footer>
-        <tum-ui-button size="small" severity="secondary" (clicked)="filterModalVisible.set(false)">{{
+        <tumaet-ui-button size="small" severity="secondary" (clicked)="filterModalVisible.set(false)">{{
             'artemisApp.userManagement.filter.modal.close' | artemisTranslate
-        }}</tum-ui-button>
-        <tum-ui-button size="small" (clicked)="applyFilter()" data-testid="apply-filter-button">{{ 'artemisApp.userManagement.filter.apply' | artemisTranslate }}</tum-ui-button>
+        }}</tumaet-ui-button>
+        <tumaet-ui-button size="small" (clicked)="applyFilter()" data-testid="apply-filter-button">{{
+            'artemisApp.userManagement.filter.apply' | artemisTranslate
+        }}</tumaet-ui-button>
     </ng-template>
-</tum-ui-dialog>
-<tum-ui-dialog
+</tumaet-ui-dialog>
+<tumaet-ui-dialog
     [(visible)]="deletionDialogVisible"
     size="large"
     [header]="'artemisApp.userManagement.permanentDeletion.title' | artemisTranslate"
@@ -408,13 +410,13 @@
 >
     @if (deletionImpact(); as impact) {
         <div class="flex flex-col gap-4">
-            <tum-ui-message severity="error">
+            <tumaet-ui-message severity="error">
                 <span jhiTranslate="artemisApp.userManagement.permanentDeletion.irreversible"></span>
-            </tum-ui-message>
+            </tumaet-ui-message>
             @if (deletionOverridesRetention()) {
-                <tum-ui-message severity="warn">
+                <tumaet-ui-message severity="warn">
                     <span jhiTranslate="artemisApp.userManagement.permanentDeletion.retentionOverride"></span>
-                </tum-ui-message>
+                </tumaet-ui-message>
             }
             <p jhiTranslate="artemisApp.userManagement.permanentDeletion.summary" [translateValues]="{ users: impact.users.length, objects: impact.totalAffectedObjects }"></p>
             <div class="flex flex-col gap-1">
@@ -455,17 +457,17 @@
             <label for="permanent-deletion-confirmation">
                 {{ 'artemisApp.userManagement.permanentDeletion.confirmation' | artemisTranslate: { confirmation: permanentDeletionConfirmationExpected() } }}
             </label>
-            <input tumUiInput id="permanent-deletion-confirmation" [ngModel]="deletionConfirmation()" (ngModelChange)="deletionConfirmation.set($event)" autocomplete="off" />
+            <input tumAetUiInput id="permanent-deletion-confirmation" [ngModel]="deletionConfirmation()" (ngModelChange)="deletionConfirmation.set($event)" autocomplete="off" />
         </div>
     }
     <ng-template #footer>
-        <tum-ui-button size="small" severity="secondary" (clicked)="closePermanentDeletionDialog()">
+        <tumaet-ui-button size="small" severity="secondary" (clicked)="closePermanentDeletionDialog()">
             {{ 'entity.action.cancel' | artemisTranslate }}
-        </tum-ui-button>
-        <tum-ui-button size="small" severity="warn" [disabled]="deletionLoading()" (clicked)="deactivateInstead()" data-testid="deactivate-users">
+        </tumaet-ui-button>
+        <tumaet-ui-button size="small" severity="warn" [disabled]="deletionLoading()" (clicked)="deactivateInstead()" data-testid="deactivate-users">
             {{ 'artemisApp.userManagement.permanentDeletion.deactivateInstead' | artemisTranslate }}
-        </tum-ui-button>
-        <tum-ui-button
+        </tumaet-ui-button>
+        <tumaet-ui-button
             size="small"
             severity="danger"
             [disabled]="!permanentDeletionConfirmed() || deletionLoading()"
@@ -473,6 +475,6 @@
             data-testid="confirm-delete-users"
         >
             {{ 'artemisApp.userManagement.permanentDeletion.confirm' | artemisTranslate }}
-        </tum-ui-button>
+        </tumaet-ui-button>
     </ng-template>
-</tum-ui-dialog>
+</tumaet-ui-dialog>

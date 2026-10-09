@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -56,7 +57,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("grading/bonus")
+@FeatureUsage(UserFeature.BONUS)
 @RestController
 @RequestMapping("api/assessment/")
 public class BonusResource {

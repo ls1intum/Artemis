@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Where each reconcile pass has got to, and what it has found in the cycle it is working through.
+
+        Each pass gets a bounded slice of work per tick, so it has to be able to stop anywhere and resume there.
+        That makes progress persistent state rather than something held in memory: a restart, a deployment or a
+        failed tick must not send a pass back to the start of a corpus it is days into.
+
+        The position columns are per pass, because the passes traverse different things. MISSING walks database
+        ids type by type and remembers both. ORPHAN walks the index and remembers an opaque cursor. DRIFT needs
+        no position: it always takes the least recently verified rows, and verifying them is what advances it.
+
+        The counters describe the current cycle only, and reset when a pass wraps around.
+    -->
+    <changeSet id="20260826001047-1" author="nayerkotry">
+        <createTable tableName="searchable_entity_reconcile_state">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="pass" type="varchar(32)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uc_searchable_entity_reconcile_state_pass"/>
+            </column>
+            <column name="position_entity_type" type="varchar(64)"/>
+            <column name="position_entity_id" type="bigint"/>
+            <column name="position_cursor" type="varchar(255)"/>
+            <column name="cycle_started_at" type="datetime"/>
+            <column name="last_run_at" type="datetime"/>
+            <column defaultValueNumeric="0" name="entities_checked" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="repairs_enqueued" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="rows_removed" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

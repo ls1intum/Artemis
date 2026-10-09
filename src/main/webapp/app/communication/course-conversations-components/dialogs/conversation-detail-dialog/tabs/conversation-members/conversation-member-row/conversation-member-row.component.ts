@@ -52,6 +52,13 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     ],
 })
 export class ConversationMemberRowComponent implements OnInit, OnDestroy {
+    private accountService = inject(AccountService);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
+    private channelService = inject(ChannelService);
+    private groupChatService = inject(GroupChatService);
+    private alertService = inject(AlertService);
+
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     private ngUnsubscribe = new Subject<void>();
@@ -90,13 +97,6 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     canGrantChannelModeratorRole = canGrantChannelModeratorRole;
     canRevokeChannelModeratorRole = canRevokeChannelModeratorRole;
     canRemoveUsersFromConversation = canRemoveUsersFromConversation;
-
-    private accountService = inject(AccountService);
-    private dialogService = inject(DialogService);
-    private translateService = inject(TranslateService);
-    private channelService = inject(ChannelService);
-    private groupChatService = inject(GroupChatService);
-    private alertService = inject(AlertService);
 
     ngOnInit(): void {
         if (this.conversationMember() && this.activeConversation()) {
@@ -303,7 +303,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     }
 
     setUserAuthorityIconAndTooltip(): void {
-        const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
+        const toolTipTranslationPath = 'artemisApp.communication.userAuthorityTooltips.';
         // highest authority is displayed
         if (this.conversationMember()?.isInstructor) {
             this.userIcon.set(faUserGraduate);

@@ -1,4 +1,4 @@
-import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiDialogComponent, TumUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiDialogComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -19,7 +19,7 @@ const MAX_TITLE_LENGTH = 255;
 @Component({
     selector: 'jhi-exam-exercise-group-edit-modal',
     templateUrl: './exam-exercise-group-edit-modal.component.html',
-    imports: [FormsModule, TumUiDialogComponent, TumUiInputDirective, TumUiButtonComponent, TumUiCheckboxComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [FormsModule, TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiButtonComponent, TumAetUiCheckboxComponent, ArtemisTranslatePipe, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExamExerciseGroupEditModalComponent {

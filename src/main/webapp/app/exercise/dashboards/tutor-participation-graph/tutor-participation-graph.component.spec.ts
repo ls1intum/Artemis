@@ -40,6 +40,27 @@ describe('TutorParticipationGraphComponent', () => {
         fixture.componentRef.setInput('tutorParticipation', { ...participation, status });
     }
 
+    it.each([false, true])('names graph actions and only enables valid destinations (available: %s)', (available) => {
+        fixture.componentRef.setInput('exercise', { id: 1 });
+        fixture.componentRef.setInput('tutorParticipation', {
+            trainedExampleSubmissions: available ? [{ exercise: { id: 1, course: { id: 3 } } }] : [],
+        });
+        fixture.detectChanges();
+        const actions = Array.from(fixture.nativeElement.querySelectorAll('li')).slice(1, 3) as HTMLElement[];
+        const keys = ['readGradingInstructions', 'trainOnExampleSubmissions'];
+        const navigate = vi.spyOn(comp, 'navigate');
+        actions.forEach((action, index) => {
+            expect(action.getAttribute('aria-label')).toBe(`artemisApp.assessmentDashboard.${keys[index]}`);
+            expect(action.getAttribute('role')).toBe(available ? 'button' : null);
+            expect(action.tabIndex).toBe(available ? 0 : -1);
+            const keydown = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+            action.dispatchEvent(keydown);
+            expect(keydown.defaultPrevented).toBe(available);
+            action.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        });
+        expect(navigate).toHaveBeenCalledTimes(available ? 2 : 0);
+    });
+
     describe('Participation Status Method', () => {
         const baseExercise = { id: 1, exampleSubmissions: [{ id: 1, usedForTutorial: true }] } as Exercise;
         const baseParticipation = { id: 1, trainedExampleSubmissions: [{ id: 1, usedForTutorial: true }] } as TutorParticipation;

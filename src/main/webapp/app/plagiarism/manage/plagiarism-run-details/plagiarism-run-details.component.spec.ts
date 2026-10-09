@@ -10,7 +10,7 @@ import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { DatePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiChartSelectEvent, TumUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { TumAetUiChartSelectEvent, TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
 
 describe('Plagiarism Run Details', () => {
     let comp: PlagiarismRunDetailsComponent;
@@ -83,7 +83,7 @@ describe('Plagiarism Run Details', () => {
         const maximumBorder = minimumBorder + 10;
 
         comp.updateChartDataSet(plagiarismResult.similarityDistribution);
-        const event: TumUiChartSelectEvent = { seriesIndex: 0, index: minimumBorder / 10, label: `[${minimumBorder}%-${maximumBorder}%)` };
+        const event: TumAetUiChartSelectEvent = { seriesIndex: 0, index: minimumBorder / 10, label: `[${minimumBorder}%-${maximumBorder}%)` };
 
         comp.onSelect(event);
 
@@ -172,7 +172,7 @@ describe('Plagiarism Run Details', () => {
         fixture.componentRef.setInput('plagiarismResult', plagiarismResult);
         fixture.detectChanges();
 
-        const tooltip = comp.chartConfig().tooltip as TumUiChartTooltipConfig;
+        const tooltip = comp.chartConfig().tooltip as TumAetUiChartTooltipConfig;
 
         // title(): empty string when nothing is hovered, otherwise a (translated) string.
         expect(tooltip.title!([])).toBe('');
@@ -193,7 +193,7 @@ describe('Plagiarism Run Details', () => {
         fixture.componentRef.setInput('plagiarismResult', { duration: 0, similarityDistribution: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] } as any);
         fixture.detectChanges();
 
-        const tooltip = comp.chartConfig().tooltip as TumUiChartTooltipConfig;
+        const tooltip = comp.chartConfig().tooltip as TumAetUiChartTooltipConfig;
         const lines = tooltip.label!({ seriesIndex: 0, index: 0, label: '[0%-10%)', value: 0 });
 
         expect(lines).toHaveLength(5);

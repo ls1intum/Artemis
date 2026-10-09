@@ -95,6 +95,7 @@ const MOCK_PROFILE_INFO = {
     },
     compatibleVersions: { ios: { min: '0', recommended: '0' }, android: { min: '0', recommended: '0' } },
     operatorName: 'Local',
+    universityName: 'Local University',
     operatorAdminName: 'Local Admin',
     programmingLanguageFeatures: [],
     registrationEnabled: false,

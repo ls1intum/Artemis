@@ -1,78 +1,42 @@
-.btn-circle {
-    width: 30px !important;
-    height: 30px !important;
-    text-align: center;
-    padding: 6px 0;
-    font-size: 12px;
-    line-height: 1.4286;
-    border-radius: 15px;
-}
+// Layout is Tailwind in the template; the border, highlight and muted text roles have no Tailwind utility in the application.
+.lecture-unit-row {
+    border: 1px solid var(--border-color);
+    transition: background-color 0.15s ease;
 
-.component-container {
-    max-width: 960px;
-    margin: 0 auto;
-}
-
-.lecture-unit-container {
-    cursor: grab;
-    margin-top: 10px;
-    margin-bottom: 10px;
-    display: flex;
-    gap: 5px;
-    flex-wrap: nowrap;
-    align-items: center;
-
-    .custom-handle {
-        align-items: center;
-        padding: 0 5px;
-        color: var(--secondary);
-
-        svg {
-            height: 30px;
-        }
+    &:hover {
+        background-color: color-mix(in srgb, var(--primary) 4%, transparent);
     }
 
-    .lecture-unit-type-container {
-        position: relative;
-        flex: 1 0 0;
-        margin: 0 20px;
-
-        .unit-badges {
-            position: absolute;
-            left: -0.75rem;
-            top: -10px;
-        }
+    &.cdk-drag-preview {
+        background-color: var(--module-bg);
+        box-shadow: 0 4px 12px color-mix(in srgb, var(--body-color) 18%, transparent);
     }
 
-    &.attachment {
-        // margin-top is set dynamically via getContainerMarginTop() based on badge count
+    &.cdk-drag-placeholder {
+        opacity: 0.4;
+    }
 
-        .lecture-unit-type-container .unit-badges {
-            > div {
-                width: min-content;
-            }
+    // The item that is edited in place stands out, and its form reads as part of it.
+    &.lecture-unit-row-editing {
+        border: 2px solid var(--primary);
+        background-color: color-mix(in srgb, var(--primary) 3%, transparent);
+
+        &:hover {
+            background-color: color-mix(in srgb, var(--primary) 3%, transparent);
         }
     }
 }
 
-.cdk-drop-list-dragging .lecture-unit-container:not(.cdk-drag-placeholder) {
-    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+.lecture-unit-editor {
+    border-top: 1px solid var(--border-color);
 }
 
-.cdk-drag-placeholder {
-    opacity: 0;
+.lecture-unit-grip,
+.lecture-unit-type,
+.lecture-unit-empty {
+    color: var(--text-body-secondary);
 }
 
-.cdk-drag-animating {
-    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
-}
-
-.creation-card-wrapper {
-    flex: 1;
-}
-
-// Fixed width action buttons column
-.action-buttons {
-    width: 80px;
-    flex-shrink: 0;
+.lecture-unit-type-icon {
+    color: var(--primary);
 }

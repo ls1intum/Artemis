@@ -69,10 +69,7 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
     /**
      * Post-process a ProblemDetail to add the request path and a default message key if not already present.
      */
-    private ProblemDetail postProcess(@Nullable ProblemDetail detail, @NonNull NativeWebRequest request) {
-        if (detail == null) {
-            return null;
-        }
+    private ProblemDetail postProcess(@NonNull ProblemDetail detail, @NonNull NativeWebRequest request) {
         HttpServletRequest servletRequest = request.getNativeRequest(HttpServletRequest.class);
         if (servletRequest != null) {
             detail.setProperty(PATH_KEY, servletRequest.getRequestURI());

@@ -30,14 +30,14 @@ ready-made `artemis-oidc` realm with 21 test accounts.
 Keycloak on its own needs no variables, because the compose file pins its version inline:
 
 ```bash
-docker compose -f docker/oidc-test.yml up -d
+docker compose -f deployment/docker/oidc-test.yml up -d
 ```
 
 Together with a database, pass `--env-file .env`, since those compose files take their image versions from it and
 have no fallbacks:
 
 ```bash
-docker compose --env-file .env -f docker/artemis-dev-mysql.yml -f docker/oidc-test.yml up -d
+docker compose --env-file .env -f deployment/docker/artemis-dev-mysql.yml -f deployment/docker/oidc-test.yml up -d
 ```
 
 You now have:
@@ -48,12 +48,12 @@ You now have:
 | Realm | `artemis-oidc` |
 | Discovery document | `http://localhost:9080/realms/artemis-oidc/.well-known/openid-configuration` |
 
-The realm is imported from `docker/oidc-test/artemis-oidc-realm.json` on every start, so anything you change in the
+The realm is imported from `deployment/docker/oidc-test/artemis-oidc-realm.json` on every start, so anything you change in the
 admin console is gone when you recreate the container. Edit that file instead if you need a change to stick.
 
 ## Point Artemis at it
 
-Copy `docker/oidc-test/application-oidc-test.yml` into your `src/main/resources/config/application-local.yml`. That
+Copy `deployment/docker/oidc-test/application-oidc-test.yml` into your `src/main/resources/config/application-local.yml`. That
 file holds everything needed: the `artemis.user-management.oidc.enabled` flag, the claim mappings, and the client and
 provider blocks aimed at `localhost:9080`.
 
@@ -80,7 +80,7 @@ local and the real provider often.
 ## Check the client proxy
 
 If you run the client through the Angular dev server on port 9000, the login redirects have to reach the server
-through the proxy. `proxy.conf.mjs` already forwards them:
+through the proxy. `config/client/proxy.conf.mjs` already forwards them:
 
 ```javascript
 context: [
@@ -143,7 +143,7 @@ exactly that state, and the log names the offending part of the JSON.
 
 **My admin-console change disappeared.**
 The realm is re-imported on every container start. Put the change in
-`docker/oidc-test/artemis-oidc-realm.json` and recreate the container.
+`deployment/docker/oidc-test/artemis-oidc-realm.json` and recreate the container.
 
 ## Related pages
 

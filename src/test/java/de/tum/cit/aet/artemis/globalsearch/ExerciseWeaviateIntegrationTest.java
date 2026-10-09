@@ -2,12 +2,11 @@ package de.tum.cit.aet.artemis.globalsearch;
 
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.countRowsForEntity;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryExerciseProperties;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -80,7 +79,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         void testInsertExercise_storesMetadataInWeaviate() throws Exception {
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
 
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
+            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
             var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
             assertThat(properties.get(SearchableEntitySchema.Properties.PROGRAMMING_LANGUAGE)).isEqualTo(programmingExercise.getProgrammingLanguage().name());
@@ -93,17 +92,19 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         void testUpdateExercise_updatesMetadataInWeaviate() throws Exception {
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
 
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
+            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
             // Modify exercise properties
             String updatedTitle = "Updated Weaviate Test Title";
             double updatedMaxPoints = 42.0;
             programmingExercise.setTitle(updatedTitle);
             programmingExercise.setMaxPoints(updatedMaxPoints);
+            // Persist the change, since the dispatcher re-derives the entity from the database at dispatch time
+            programmingExerciseRepository.save(programmingExercise);
 
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
 
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
                 assertThat(properties).isNotNull();
                 assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(updatedTitle);
@@ -117,11 +118,25 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         void testDeleteExercise_removesMetadataFromWeaviate() throws Exception {
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
 
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
+            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
             searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXERCISE, programmingExercise.getId());
 
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExerciseNotInWeaviate(weaviateService, programmingExercise.getId()));
+            assertExerciseNotInWeaviate(weaviateService, programmingExercise.getId());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testSearchEntityCandidatesForAnswer_recallsIndexedExercise() throws Exception {
+            // A bounded top-ten query must not compete with other fixtures sharing the generic exercise title.
+            programmingExercise.setTitle("AnswerCandidateExercise" + programmingExercise.getId());
+            programmingExercise = programmingExerciseRepository.save(programmingExercise);
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
+            awaitIndexing(() -> {
+                var candidates = searchableEntityWeaviateService.searchEntityCandidatesForAnswer(programmingExercise.getTitle(), null, 10);
+                assertThat(candidates).anySatisfy(
+                        candidate -> assertThat(((Number) candidate.get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue()).isEqualTo(programmingExercise.getId()));
+            });
         }
 
         @Test
@@ -154,7 +169,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             executor.shutdown();
 
             // Wait for all upserts to complete in Weaviate, then verify exactly one row exists
-            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 int rowCount = countRowsForEntity(weaviateService, SearchableEntitySchema.TypeValues.EXERCISE, programmingExercise.getId());
                 assertThat(rowCount).as("Concurrent upserts for the same exercise must not create duplicate rows").isEqualTo(1);
             });
@@ -169,7 +184,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         void testUpdateProblemStatement_updatesWeaviate() throws Exception {
             // Insert exercise into Weaviate first
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
+            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
             // Update problem statement via endpoint
             final var newProblem = "updated problem statement for weaviate test";
@@ -177,7 +192,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             request.patchWithResponseBody(endpoint, newProblem, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
 
             // Wait for async update from the endpoint to complete and verify Weaviate has the updated problem statement
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
                 assertThat(properties).isNotNull();
                 assertThat(properties.get(SearchableEntitySchema.Properties.DESCRIPTION)).isEqualTo(newProblem);
@@ -189,7 +204,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         void testUpdateTimeline_updatesWeaviate() throws Exception {
             // Insert exercise into Weaviate first
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
-            await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, programmingExercise));
+            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
             // Update timeline via endpoint
             var exerciseForUpdate = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
@@ -200,7 +215,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             request.putWithResponseBody(endpoint, exerciseForUpdate, ProgrammingExercise.class, HttpStatus.OK);
 
             // Wait for async update from the endpoint to complete and verify Weaviate has the updated due date
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
                 assertThat(properties).isNotNull();
                 assertThat(properties.get(SearchableEntitySchema.Properties.DUE_DATE)).isNotNull();

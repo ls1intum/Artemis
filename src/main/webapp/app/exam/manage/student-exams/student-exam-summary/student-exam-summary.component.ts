@@ -4,7 +4,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamResultSummaryComponent } from '../../../overview/summary/exam-result-summary.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -12,18 +12,31 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-student-exam-summary',
     template: `
-        <div *titleBarTitle class="flex items-center">
+        <div *titleBarTitle class="flex items-center gap-2">
             <h5 class="mb-0" jhiTranslate="artemisApp.exam.examSummary.examResults"></h5>
+            @if (studentExam()?.testRun) {
+                <tumaet-ui-tag id="testRunRibbon" severity="danger" class="shrink-0">
+                    <span jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
+                </tumaet-ui-tag>
+            }
         </div>
         <ng-template titleBarActions>
-            <button tumUiButton size="small" severity="primary" (click)="printPDF()">
+            <button tumAetUiButton size="small" severity="primary" (click)="printPDF()">
                 <fa-icon [icon]="faPrint" />
                 <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
             </button>
         </ng-template>
         <jhi-exam-participation-summary #summary [studentExam]="studentExam()!" [instructorView]="true" />
     `,
-    imports: [ExamResultSummaryComponent, CourseTitleBarTitleDirective, CourseTitleBarActionsDirective, TumUiButtonDirective, FaIconComponent, TranslateDirective],
+    imports: [
+        ExamResultSummaryComponent,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
+        TumAetUiButtonDirective,
+        TumAetUiTagComponent,
+        FaIconComponent,
+        TranslateDirective,
+    ],
 })
 export class StudentExamSummaryComponent implements OnInit {
     private route = inject(ActivatedRoute);

@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -13,6 +13,11 @@ export interface AutoOrchestrationSummary {
     exerciseCount: number;
     successCount: number;
     failureCount: number;
+    /**
+     * Batch-level outcome; `NO_CHANGES` means the run completed and verified that nothing needed to change,
+     * `PARTIAL` means some changes were committed before the run stopped.
+     */
+    outcome?: 'SUCCESS' | 'NO_CHANGES' | 'PARTIAL' | 'FAILED';
     completedAt: string;
 }
 
@@ -22,7 +27,7 @@ export interface AutoOrchestrationSummary {
  * subscription is short-lived: callers (the course dashboard component) call `subscribeToCourse`
  * on init and `unsubscribeFromCourse` on destroy so we never accumulate orphan subscriptions.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AutoOrchestrationNotificationService implements OnDestroy {
     private readonly websocketService = inject(WebsocketService);
     private readonly alertService = inject(AlertService);
@@ -33,7 +38,11 @@ export class AutoOrchestrationNotificationService implements OnDestroy {
             return;
         }
         const topic = `/topic/atlas/orchestrator/${courseId}`;
-        const sub = this.websocketService.subscribe<AutoOrchestrationSummary>(topic).subscribe((summary) => this.handleSummary(summary));
+        const sub = this.websocketService.subscribe<AutoOrchestrationSummary>(topic).subscribe((summary) => {
+            if (summary && summary.courseId === courseId) {
+                this.handleSummary(summary);
+            }
+        });
         this.subscriptions.set(courseId, sub);
     }
 
@@ -51,11 +60,12 @@ export class AutoOrchestrationNotificationService implements OnDestroy {
     }
 
     private handleSummary(summary: AutoOrchestrationSummary): void {
-        if (!summary) {
-            return;
-        }
         const params = { count: summary.exerciseCount, success: summary.successCount, failure: summary.failureCount };
-        if (summary.failureCount === 0) {
+        if (summary.outcome === 'NO_CHANGES') {
+            this.alertService.info('artemisApp.atlasOrchestrator.autoToast.noChanges', params);
+        } else if (summary.outcome === 'PARTIAL') {
+            this.alertService.warning('artemisApp.atlasOrchestrator.autoToast.incomplete', params);
+        } else if (summary.failureCount === 0) {
             this.alertService.success('artemisApp.atlasOrchestrator.autoToast.success', params);
         } else if (summary.successCount === 0) {
             this.alertService.error('artemisApp.atlasOrchestrator.autoToast.failure', params);

@@ -169,7 +169,7 @@ describe('ExampleTextSubmissionComponent', () => {
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
@@ -205,7 +205,7 @@ describe('ExampleTextSubmissionComponent', () => {
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
         await fixture.whenStable();
 
         // THEN
@@ -235,7 +235,7 @@ describe('ExampleTextSubmissionComponent', () => {
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(null));
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         // THEN
         expect(comp.result()).not.toBeNull();
@@ -251,7 +251,7 @@ describe('ExampleTextSubmissionComponent', () => {
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
@@ -270,7 +270,7 @@ describe('ExampleTextSubmissionComponent', () => {
             exerciseId: EXERCISE_ID,
             exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
         };
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         comp.exercise = exercise;
         comp.exercise!.isAtLeastInstructor = true;
@@ -291,7 +291,7 @@ describe('ExampleTextSubmissionComponent', () => {
             exerciseId: EXERCISE_ID,
             exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
         };
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         comp.exercise = exercise;
         comp.exercise!.isAtLeastEditor = true;
@@ -395,7 +395,7 @@ describe('ExampleTextSubmissionComponent', () => {
         submission.text = '123456789';
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         comp.textBlockRefs[0].initFeedback();
         comp.textBlockRefs[0].feedback!.credits = 2;
@@ -453,7 +453,7 @@ describe('ExampleTextSubmissionComponent', () => {
         vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(throwError(() => errorResponse));
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
         await fixture.whenStable();
 
         comp.checkAssessment();
@@ -537,7 +537,7 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.exercise = examExercise;
 
         // WHEN
-        await comp.ngOnInit();
+        await comp['initializeExampleTextSubmissionComponent']();
 
         comp.toComplete.set(true);
 

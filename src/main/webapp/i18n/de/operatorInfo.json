@@ -2,6 +2,7 @@
     "artemisApp": {
         "operatorInfo": {
             "title": "Betreiber",
+            "university": "Hochschule / Institution",
             "name": "Name",
             "admin": "Administrator:in",
             "adminEmail": "Kontakt-E-Mail"

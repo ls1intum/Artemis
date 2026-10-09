@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
@@ -10,7 +10,7 @@ import { createQuizSubmissionFromStudentDTO } from 'app/quiz/shared/entities/qui
 export type EntityResponseType = HttpResponse<QuizSubmission>;
 export type ResultResponseType = HttpResponse<Result>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class QuizParticipationService {
     private http = inject(HttpClient);
     private submissionService = inject(SubmissionService);

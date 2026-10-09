@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record PyrisHealthStatusDTO(boolean isHealthy, Map<String, ModuleStatusDTO> modules) {
+public record PyrisHealthStatusDTO(boolean isHealthy, Map<String, ModuleStatusDTO> modules, String bootId) {
 
     public enum ServiceStatus {
         UP, WARN, DEGRADED, DOWN

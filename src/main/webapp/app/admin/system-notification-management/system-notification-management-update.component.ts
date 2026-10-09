@@ -11,7 +11,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
-import { TumUiButtonDirective, TumUiCheckboxComponent, TumUiInputDirective, TumUiMessageComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 /**
  * Form structure for system notification editing.
  * Note: FormControl values can be null when initialized with undefined.
@@ -40,11 +40,11 @@ interface SystemNotificationForm {
         FaIconComponent,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
-        TumUiCheckboxComponent,
-        TumUiInputDirective,
-        TumUiSelectComponent,
-        TumUiButtonDirective,
-        TumUiMessageComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiSelectComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

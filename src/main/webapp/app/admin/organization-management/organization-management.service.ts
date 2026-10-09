@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 
@@ -9,7 +9,7 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
 import { PageableResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class OrganizationManagementService {
     private http = inject(HttpClient);
     private entityTitleService = inject(EntityTitleService);

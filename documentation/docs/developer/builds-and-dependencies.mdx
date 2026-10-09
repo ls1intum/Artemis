@@ -7,6 +7,58 @@ sidebar_label: Builds and Dependency Management
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 
+## GitHub Actions dependencies
+
+Every external action in workflows and composite actions is pinned to a full commit SHA,
+including actions maintained by GitHub. A trailing `# vX.Y.Z` comment records the release
+version. Resolve the upstream release tag to its commit when adding an action; a major-version
+tag alone is mutable and does not provide the same guarantee.
+
+Renovate uses `helpers:pinGitHubActionDigests` to propose hash updates and pin new references.
+Review those pull requests so actions continue receiving security fixes. Local actions and
+reusable workflows use relative paths. The
+[workflow reference](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/README.md#action-pinning-policy)
+describes the policy, and the [Scorecard report](https://scorecard.dev/viewer/?uri=github.com/ls1intum/Artemis)
+shows dependency-pinning findings alongside other repository security checks.
+
+## Installer, container and Python dependencies
+
+The Ubuntu LocalCI installer downloads k3s and Helm installer scripts from immutable upstream commits,
+checks their committed SHA-256 hashes before invoking `sudo`, and selects explicit release versions.
+When updating an installer, update the version, commit URL and checksum together in
+`deployment/kubernetes/install-localci-kubernetes-ubuntu.sh`. Download the script from the reviewed upstream release commit
+and compute its hash locally; the installer must never download its expected hash alongside the script.
+The upstream installers also verify their release binary checksums.
+
+Docker base images use a tag and a digest. Use the multi-platform manifest digest so the helper image
+still builds on both amd64 and arm64. Renovate's `docker:pinDigests` preset keeps these references pinned
+when proposing updates.
+
+Python tools keep their direct requirements in `requirements.in` and a generated, complete lock with
+SHA-256 hashes in `requirements.txt`. Install into a virtual environment using:
+
+```bash
+python -m pip install --require-hashes -r requirements.txt
+```
+
+Edit the input file, then regenerate the locks with uv 0.12.23 or newer from the repository root:
+
+```bash
+supporting_scripts/update_python_dependency_locks.sh
+# To update transitive dependencies as well:
+supporting_scripts/update_python_dependency_locks.sh --upgrade
+```
+
+Renovate's `pip-compile` manager reads the generated uv command and updates inputs and hashes together;
+standalone `pip_requirements` updates are disabled to avoid editing a lock without regenerating hashes.
+Review and commit the inputs and generated locks together. Universal resolution retains Python and
+platform markers instead of locking only the maintainer's machine. Tool locks resolve for Python 3.10
+and newer; individual tools can require a newer version, as described in their READMEs. The deployment
+lock in `.github/python-dependencies` targets the workflow's Python 3.14 environment. It records the
+Artemis-Ansible requirements snapshot it was based on; update it when changing that environment.
+Source distributions such as Whisper still use pip's build isolation, whose build dependencies are
+outside pip's requirements hash checking.
+
 ## General Structure of Programming Exercise Execution
 
 Artemis uses docker containers to run programming exercises. This ensures that the students' code does not have
@@ -37,7 +89,7 @@ contact Stephan Krusche.
    - Go to the "Builds" tab of that repository
 3. Wait for a successful build of "latest"
 4. Click "Configure Automated Builds" and create a new build rule for a new tag, following the naming scheme:
-   `<programming language><Version of programming language>-<Upwards counting number>`, for example `java17-25`
+   `<programming language><Version of programming language>-<Upwards counting number>`, for example `java25-1`
    - The "Sourcetype" should be "Tag"
    - This tag should be used as "Source Tag" and "Docker Tag"
 

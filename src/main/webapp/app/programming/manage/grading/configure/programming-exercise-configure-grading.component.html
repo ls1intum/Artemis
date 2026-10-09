@@ -1,5 +1,16 @@
 <ng-template #tabTemplate let-type="type" let-translation="translation">
-    <div class="tab-item" (click)="selectTab(type)" [ngClass]="activeTab() === type ? 'active' : ''">
+    <div
+        class="tab-item"
+        (click)="selectTab(type)"
+        [ngClass]="activeTab() === type ? 'active' : ''"
+        [attr.aria-pressed]="activeTab() === type"
+        #keyboardAction2
+        role="button"
+        tabindex="0"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+    >
         <b [jhiTranslate]="translation"></b>
     </div>
 </ng-template>

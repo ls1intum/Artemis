@@ -8,13 +8,12 @@ import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockComponent } from 'ng-mocks';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
-import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 describe('LectureUnitComponent', () => {
     let component: LectureUnitComponent;
     let fixture: ComponentFixture<LectureUnitComponent>;
-    let mockActivatedRoute: { snapshot: { queryParams: Record<string, any> } };
     let mockProfileService: { profileInfo: any; isModuleFeatureActive: ReturnType<typeof vi.fn> };
 
     const lectureUnit: LectureUnit = {
@@ -24,13 +23,9 @@ describe('LectureUnitComponent', () => {
         visibleToStudents: true,
     };
 
-    beforeEach(async () => {
-        mockActivatedRoute = {
-            snapshot: {
-                queryParams: {},
-            },
-        };
+    const deepLinkTo = (target: { timestamp?: number; page?: number }): LectureDeepLink => ({ unitId: lectureUnit.id!, timestamp: target.timestamp, page: target.page });
 
+    beforeEach(async () => {
         mockProfileService = {
             profileInfo: { activeModuleFeatures: [] },
             isModuleFeatureActive: vi.fn().mockReturnValue(false),
@@ -42,10 +37,6 @@ describe('LectureUnitComponent', () => {
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,
-                },
-                {
-                    provide: ActivatedRoute,
-                    useValue: mockActivatedRoute,
                 },
                 {
                     provide: ProfileService,
@@ -77,6 +68,36 @@ describe('LectureUnitComponent', () => {
 
     it('should initialize', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('should keep the collapse button separate from the lecture toolbar', () => {
+        fixture.componentRef.setInput('showOriginalVersionButton', true);
+        fixture.componentRef.setInput('showFullscreenButton', true);
+        fixture.detectChanges();
+        const toggle = fixture.nativeElement.querySelector('#lecture-unit-toggle-button') as HTMLButtonElement;
+        const collapsed = vi.spyOn(component.onCollapse, 'emit');
+        const fullscreen = vi.spyOn(component.onFullscreen, 'emit');
+        const isolated = vi.spyOn(component.onShowIsolated, 'emit');
+        const original = vi.spyOn(component.onShowOriginalVersion, 'emit');
+        expect(toggle.tagName).toBe('BUTTON');
+        expect(toggle.type).toBe('button');
+        expect(toggle.closest('h5')).not.toBeNull();
+        expect(toggle.querySelector('button, input, a, [role="button"]')).toBeNull();
+        expect(toggle.getAttribute('aria-expanded')).toBe('false');
+
+        for (const id of ['fullscreen-button', 'view-isolated-button', 'view-original-version-button']) {
+            const action = fixture.nativeElement.querySelector('#' + id) as HTMLButtonElement;
+            expect(action.parentElement!.closest('button, [role="button"]')).toBeNull();
+            action.click();
+        }
+        expect(fullscreen).toHaveBeenCalledOnce();
+        expect(isolated).toHaveBeenCalledOnce();
+        expect(original).toHaveBeenCalledOnce();
+        expect(collapsed).not.toHaveBeenCalled();
+        toggle.click();
+        expect(collapsed).toHaveBeenCalledExactlyOnceWith(false);
+        fixture.detectChanges();
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
     });
 
     it('should handle isolated view', async () => {
@@ -151,9 +172,8 @@ describe('LectureUnitComponent', () => {
             Element.prototype.scrollIntoView = vi.fn();
         });
 
-        it('should scroll to video player when timestamp parameter is present', async () => {
-            mockActivatedRoute.snapshot.queryParams = { timestamp: '30' };
-            fixture.componentRef.setInput('initiallyExpanded', true);
+        it('should scroll to video player when the deep link carries a timestamp', async () => {
+            fixture.componentRef.setInput('deepLink', deepLinkTo({ timestamp: 30 }));
 
             const mockVideoPlayer = document.createElement('div');
             mockVideoPlayer.scrollIntoView = vi.fn();
@@ -168,9 +188,8 @@ describe('LectureUnitComponent', () => {
             });
         });
 
-        it('should scroll to PDF viewer when page parameter is present', async () => {
-            mockActivatedRoute.snapshot.queryParams = { page: '5' };
-            fixture.componentRef.setInput('initiallyExpanded', true);
+        it('should scroll to PDF viewer when the deep link carries a page', async () => {
+            fixture.componentRef.setInput('deepLink', deepLinkTo({ page: 5 }));
 
             const mockPdfViewer = document.createElement('div');
             mockPdfViewer.scrollIntoView = vi.fn();
@@ -185,9 +204,8 @@ describe('LectureUnitComponent', () => {
             });
         });
 
-        it('should not scroll to PDF viewer when only timestamp parameter is present', async () => {
-            mockActivatedRoute.snapshot.queryParams = { timestamp: '30' };
-            fixture.componentRef.setInput('initiallyExpanded', true);
+        it('should not scroll to PDF viewer when the deep link carries only a timestamp', async () => {
+            fixture.componentRef.setInput('deepLink', deepLinkTo({ timestamp: 30 }));
 
             const mockVideoPlayer = document.createElement('div');
             mockVideoPlayer.scrollIntoView = vi.fn();
@@ -206,16 +224,13 @@ describe('LectureUnitComponent', () => {
             fixture.detectChanges();
 
             await vi.waitFor(() => {
-                // Video player should be scrolled (timestamp takes priority)
                 expect(videoScrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
-                // PDF viewer should not be scrolled (early return after video player)
                 expect(pdfScrollSpy).not.toHaveBeenCalled();
             });
         });
 
         it('should scroll to YouTube player when no video player is present', async () => {
-            mockActivatedRoute.snapshot.queryParams = { timestamp: '30' };
-            fixture.componentRef.setInput('initiallyExpanded', true);
+            fixture.componentRef.setInput('deepLink', deepLinkTo({ timestamp: 30 }));
 
             const mockYoutubePlayer = document.createElement('div');
             mockYoutubePlayer.scrollIntoView = vi.fn();
@@ -234,9 +249,37 @@ describe('LectureUnitComponent', () => {
             });
         });
 
-        it('should ignore deeplink parameters when manually expanding (toggle)', async () => {
-            mockActivatedRoute.snapshot.queryParams = { timestamp: '30', page: '5' };
-            fixture.componentRef.setInput('initiallyExpanded', false);
+        it('should ignore a deep link superseded before its render callback schedules the scroll timeout', async () => {
+            vi.useFakeTimers();
+
+            const mockVideoPlayer = document.createElement('div');
+            mockVideoPlayer.scrollIntoView = vi.fn();
+            const videoScrollSpy = mockVideoPlayer.scrollIntoView as ReturnType<typeof vi.fn>;
+
+            const mockPdfViewer = document.createElement('div');
+            mockPdfViewer.scrollIntoView = vi.fn();
+            const pdfScrollSpy = mockPdfViewer.scrollIntoView as ReturnType<typeof vi.fn>;
+
+            vi.spyOn(fixture.nativeElement, 'querySelector').mockImplementation((selector) => {
+                if (selector === 'jhi-video-player') return mockVideoPlayer;
+                if (selector === 'jhi-pdf-viewer') return mockPdfViewer;
+                return null;
+            });
+
+            fixture.componentRef.setInput('deepLink', deepLinkTo({ timestamp: 30 }));
+            fixture.detectChanges();
+            fixture.componentRef.setInput('deepLink', deepLinkTo({ page: 5 }));
+            fixture.detectChanges();
+
+            await fixture.whenStable();
+            await vi.advanceTimersByTimeAsync(500);
+
+            expect(videoScrollSpy).not.toHaveBeenCalled();
+            expect(pdfScrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+        });
+
+        it('should ignore deeplink targets when manually expanding (toggle)', async () => {
+            fixture.componentRef.setInput('deepLink', undefined);
 
             const mockVideoPlayer = document.createElement('div');
             mockVideoPlayer.scrollIntoView = vi.fn();
@@ -256,17 +299,40 @@ describe('LectureUnitComponent', () => {
 
             fixture.detectChanges();
 
-            // Manually toggle collapse to expand
             const collapseButton = fixture.debugElement.query(By.css('#lecture-unit-toggle-button'));
             collapseButton.nativeElement.click();
 
             await vi.waitFor(() => {
-                // Deeplink targets should not be scrolled (manual expand ignores deeplinks)
                 expect(videoScrollSpy).not.toHaveBeenCalled();
                 expect(pdfScrollSpy).not.toHaveBeenCalled();
-                // Unit card itself should be scrolled with 'nearest'
                 expect(unitCardScrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest' });
             });
+        });
+
+        it('should expand and scroll again when the same place is requested a second time', async () => {
+            const mockVideoPlayer = document.createElement('div');
+            mockVideoPlayer.scrollIntoView = vi.fn();
+            const videoScrollSpy = mockVideoPlayer.scrollIntoView as ReturnType<typeof vi.fn>;
+            vi.spyOn(fixture.nativeElement, 'querySelector').mockReturnValue(mockVideoPlayer);
+
+            fixture.componentRef.setInput('deepLink', deepLinkTo({ timestamp: 30 }));
+            fixture.detectChanges();
+
+            await vi.waitFor(() => {
+                expect(videoScrollSpy).toHaveBeenCalledTimes(1);
+            });
+
+            component.toggleCollapse();
+            fixture.detectChanges();
+            expect(component.isCollapsed()).toBe(true);
+
+            fixture.componentRef.setInput('deepLink', deepLinkTo({ timestamp: 30 }));
+            fixture.detectChanges();
+
+            await vi.waitFor(() => {
+                expect(videoScrollSpy).toHaveBeenCalledTimes(2);
+            });
+            expect(component.isCollapsed()).toBe(false);
         });
     });
 });

@@ -19,7 +19,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { HttpClient } from '@angular/common/http';
 import { LoginOptionsDTO } from '../auth/login-options.model';
-import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { NgTemplateOutlet } from '@angular/common';
 
 // Keep aligned with Constants.SIMPLE_EMAIL_REGEX, used by SecurityUtils.isEmail on the server.
@@ -35,18 +35,14 @@ const SIMPLE_EMAIL_REGEX = '^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$';
         RouterLink,
         FaIconComponent,
         Saml2LoginComponent,
-        TumUiButtonComponent,
-        TumUiInputDirective,
-        TumUiCheckboxComponent,
-        TumUiMessageComponent,
+        TumAetUiButtonComponent,
+        TumAetUiInputDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiMessageComponent,
         NgTemplateOutlet,
     ],
 })
 export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
-    protected readonly faCircleNotch = faCircleNotch;
-    protected readonly faKey = faKey;
-    protected readonly faArrowLeft = faArrowLeft;
-
     private readonly router = inject(Router);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly accountService = inject(AccountService);
@@ -60,6 +56,10 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     private readonly webauthnService = inject(WebauthnService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly http = inject(HttpClient);
+
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faKey = faKey;
+    protected readonly faArrowLeft = faArrowLeft;
 
     readonly usernameInput = viewChild<ElementRef<HTMLInputElement>>('usernameInput');
     readonly passwordInput = viewChild<ElementRef<HTMLInputElement>>('passwordInput');

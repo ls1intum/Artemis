@@ -6,8 +6,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { getColor } from 'app/programming/manage/grading/charts/programming-grading-charts.utils';
 import { ProgrammingGradingChartsDirective } from 'app/programming/manage/grading/charts/programming-grading-charts.directive';
 import { ChartMultiSeriesEntry, ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { normalizedStackedBarChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
-import { TumUiBarChartComponent, TumUiBarChartConfig, TumUiChartSelectEvent } from '@tumaet/ui-angular';
+import { normalizedStackedBarChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -33,7 +33,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
                 <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.description' | artemisTranslate"></p>
             </div>
             <div class="chart bg-light">
-                <tum-ui-bar-chart
+                <tumaet-ui-bar-chart
                     [labels]="chartData().labels"
                     [series]="chartData().series"
                     [config]="chartConfig()"
@@ -44,7 +44,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
             </div>
         </div>
     `,
-    imports: [TranslateDirective, TumUiBarChartComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class ScaCategoryDistributionChartComponent extends ProgrammingGradingChartsDirective {
     private translateService = inject(TranslateService);
@@ -60,7 +60,7 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
     readonly entries = signal<ChartMultiSeriesEntry[]>([]);
 
     readonly chartData = computed(() => normalizedStackedBarChart(this.entries(), this.chartColors()));
-    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+    readonly chartConfig = computed<TumAetUiBarChartConfig>(() => ({
         horizontal: true,
         stacked: true,
         percentScale: true,
@@ -171,7 +171,7 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
      * If the user clicks a category within one of the other two bars, the corresponding table is filtered in order to show this category
      * @param event the event delegated by ngx-charts after the user clicked a part of the chart
      */
-    onSelect(event: TumUiChartSelectEvent): void {
+    onSelect(event: TumAetUiChartSelectEvent): void {
         const meta = event.meta as ChartSeriesEntry | undefined;
         if (!meta?.['isPenalty']) {
             const exercise = this.exercise();

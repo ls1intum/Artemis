@@ -8,7 +8,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { RouterLink } from '@angular/router';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiTableDirective, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 /**
@@ -23,11 +23,11 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
         RouterLink,
         ArtemisDatePipe,
         FaIconComponent,
-        TumUiTooltipDirective,
+        TumAetUiTooltipDirective,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
-        TumUiTableDirective,
-        TumUiTagComponent,
+        TumAetUiTableDirective,
+        TumAetUiTagComponent,
     ],
 })
 export class UpcomingExamsAndExercisesComponent implements OnInit {

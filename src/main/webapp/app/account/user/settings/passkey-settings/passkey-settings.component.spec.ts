@@ -20,7 +20,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { User } from 'app/account/user/user.model';
-import { TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 
 describe('PasskeySettingsComponent', () => {
     let component: PasskeySettingsComponent;
@@ -256,7 +256,7 @@ describe('PasskeySettingsComponent', () => {
         fixture.detectChanges();
 
         // The approval state is carried by the tag's severity, which is a component input rather than a class.
-        const tag = fixture.debugElement.query(By.directive(TumUiTagComponent));
+        const tag = fixture.debugElement.query(By.directive(TumAetUiTagComponent));
         expect(tag).not.toBeNull();
         expect(tag.componentInstance.severity()).toBe('success');
     });
@@ -278,7 +278,7 @@ describe('PasskeySettingsComponent', () => {
         component.currentUser.set(adminUser);
         fixture.detectChanges();
 
-        const tag = fixture.debugElement.query(By.directive(TumUiTagComponent));
+        const tag = fixture.debugElement.query(By.directive(TumAetUiTagComponent));
         expect(tag).not.toBeNull();
         expect(tag.componentInstance.severity()).toBe('danger');
     });
@@ -301,6 +301,6 @@ describe('PasskeySettingsComponent', () => {
         fixture.detectChanges();
 
         // Check that the approval tag does not exist
-        expect(fixture.debugElement.query(By.directive(TumUiTagComponent))).toBeNull();
+        expect(fixture.debugElement.query(By.directive(TumAetUiTagComponent))).toBeNull();
     });
 });

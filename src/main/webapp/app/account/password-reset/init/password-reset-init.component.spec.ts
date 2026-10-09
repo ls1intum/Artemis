@@ -42,6 +42,18 @@ describe('PasswordResetInitComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('associates the accessible name with the visible form-field label', () => {
+        fixture.detectChanges();
+
+        const input: HTMLInputElement = fixture.nativeElement.querySelector('#emailUsername');
+        const labelId = input.getAttribute('aria-labelledby');
+        const labelText: HTMLElement = fixture.nativeElement.querySelector(`#${labelId}`);
+        expect(labelId).toBeTruthy();
+        expect(labelText).toBeTruthy();
+        expect(labelText.closest('label')?.htmlFor).toBe(input.id);
+        expect(labelText.textContent?.trim()).toBeTruthy();
+    });
+
     it('sets focus after the view has been initialized', () => {
         fixture.detectChanges();
 

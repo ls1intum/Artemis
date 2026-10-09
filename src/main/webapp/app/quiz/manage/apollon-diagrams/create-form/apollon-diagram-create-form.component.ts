@@ -10,7 +10,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { TumUiButtonDirective, TumUiInputDirective, TumUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 
 /** The diagram types Artemis offers for Apollon drag-and-drop quiz questions. */
 const DIAGRAM_TYPES: readonly UMLDiagramType[] = [
@@ -32,7 +32,7 @@ const DIAGRAM_TYPES: readonly UMLDiagramType[] = [
     templateUrl: './apollon-diagram-create-form.component.html',
     styleUrls: ['./apollon-diagram-create-form.component.scss'],
     providers: [ApollonDiagramService],
-    imports: [FormsModule, TranslateDirective, FaIconComponent, TumUiButtonDirective, TumUiInputDirective, TumUiSelectComponent],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiSelectComponent],
 })
 export class ApollonDiagramCreateFormComponent implements OnInit, AfterViewInit {
     private dialogRef = inject(DynamicDialogRef);

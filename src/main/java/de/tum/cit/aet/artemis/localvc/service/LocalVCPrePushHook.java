@@ -38,7 +38,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
         this.user = user;
     }
 
-    private static final long MAX_BLOB_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+    private static final long MAX_BLOB_SIZE_BYTES = 10L * 1024 * 1024; // 10MB
 
     /**
      * Called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was successful).

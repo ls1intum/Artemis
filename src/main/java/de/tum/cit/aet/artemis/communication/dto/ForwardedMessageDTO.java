@@ -41,23 +41,18 @@ public record ForwardedMessageDTO(Long id, Long sourceId, PostingType sourceType
             throw new BadRequestAlertException("A forwarded message must have exactly one destination, either a destination post or a destination answer post", "forwardedMessage",
                     "forwardedMessageNeedsExactlyOneDestination");
         }
-        ForwardedMessage message = new ForwardedMessage();
-        message.setId(this.id);
-        message.setSourceId(this.sourceId);
-        message.setSourceType(this.sourceType);
-
+        Post post = null;
+        AnswerPost answerPost = null;
         if (this.destinationPostId != null) {
-            Post post = new Post();
+            post = new Post();
             post.setId(this.destinationPostId);
-            message.setDestinationPost(post);
         }
-
-        if (this.destinationAnswerPostId != null) {
-            AnswerPost answerPost = new AnswerPost();
+        else {
+            answerPost = new AnswerPost();
             answerPost.setId(this.destinationAnswerPostId);
-            message.setDestinationAnswerPost(answerPost);
         }
-
+        ForwardedMessage message = new ForwardedMessage(this.sourceId, this.sourceType, post, answerPost);
+        message.setId(this.id);
         return message;
     }
 }

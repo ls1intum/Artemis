@@ -20,8 +20,8 @@
                             (confirmEvent)="removeLinkPreview(lp)"
                             [ngClass]="'faTimes clickable icon'"
                             [initialIcon]="faTimes"
-                            [initialTooltip]="'artemisApp.metis.removeLinkPreview' | artemisTranslate"
-                            [confirmTooltip]="'artemisApp.metis.confirmRemoveLinkPreview' | artemisTranslate"
+                            [initialTooltip]="'artemisApp.communication.removeLinkPreview' | artemisTranslate"
+                            [confirmTooltip]="'artemisApp.communication.confirmRemoveLinkPreview' | artemisTranslate"
                         />
                     }
                     <div class="left-border">
@@ -31,7 +31,7 @@
                         </div>
                         @if (lp.image && !multiple()) {
                             <div class="preview-image">
-                                <img [src]="lp.image" alt="Preview Image" />
+                                <img [src]="lp.image" alt="Preview Image" loading="lazy" decoding="async" />
                             </div>
                         }
                     </div>

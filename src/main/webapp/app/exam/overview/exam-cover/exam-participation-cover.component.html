@@ -1,135 +1,138 @@
 <!-- Since the design of welcome page is changed, we use different alignments for startView and endView
      However, it includes some duplicated code and ids and should be refactored with e.g. ngTemplates
       -->
-<div class="px-3 pb-3 overflow-auto" [ngClass]="{ 'scrollable-content-exam-cover': !testRunStartTime() && startView() }">
+<div class="overflow-auto px-3! pb-3!" data-testid="exam-cover" [class.scrollable-content-exam-cover]="!testRunStartTime() && startView()">
     @if (startView()) {
-        <div class="d-flex justify-content-between">
-            <div class="d-flex align-items-center gap-2 mt-3 mb-2">
+        <!-- The same 40px title row with the rule below it as the header of every exercise page (see jhi-exam-exercise-header). -->
+        <div
+            class="mt-3! mb-3! flex h-10 shrink-0 items-center justify-between gap-4! border-b border-(--border-color) [&_.tumaet-ui-btn]:py-1! [&_.tumaet-ui-btn]:leading-5!"
+            data-testid="exam-start-header"
+        >
+            <div class="flex min-w-0 items-center gap-2">
                 @if (isSidebarCollapsed()) {
                     <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
                 }
-                <h3 class="my-0">
+                <h3 class="m-0! min-w-0 truncate text-lg! leading-tight! font-semibold!" data-testid="exam-start-title">
                     {{ exam().title }}
                 </h3>
             </div>
-            <div class="mt-3">
-                <jhi-exam-live-events-button [examStartDate]="exam().startDate!" />
-            </div>
+            <jhi-exam-live-events-button [examStartDate]="exam().startDate!" />
         </div>
-        <hr class="my-0" />
-        <div class="mt-3">
+        <div>
             <jhi-exam-start-information [exam]="exam()" [studentExam]="studentExam()" [formattedStartText]="formattedGeneralInformation()" />
         </div>
-        <div class="d-inline-flex align-items-center my-3">
-            <div class="ps-1">
-                <input
-                    [(ngModel)]="confirmed"
-                    type="checkbox"
-                    id="confirmBox"
-                    (click)="updateConfirmation()"
-                    class="form-check-input me-2"
-                    [class.ms-0]="!this.exam().confirmationStartText"
-                    [required]="inserted"
+        <div class="my-6! inline-flex items-center">
+            <div class="flex items-start gap-2 pl-1">
+                <tumaet-ui-checkbox
+                    class="mt-px"
+                    inputId="confirmBox"
+                    name="confirmBox"
+                    [ngModel]="confirmed"
+                    (ngModelChange)="confirmed = $event; updateConfirmation()"
                     [disabled]="waitingForExamStart()"
                 />
-                <label for="confirmBox" id="formatted-confirmation-text" class="form-check-label" [innerHTML]="formattedConfirmationText()"></label>
+                <label for="confirmBox" id="formatted-confirmation-text" class="cursor-pointer [&_p]:my-0!" [innerHTML]="formattedConfirmationText()"></label>
             </div>
             @if (!formattedConfirmationText()) {
-                <div class="login-form">
-                    <label class="font-weight-bold" for="confirmBox" jhiTranslate="{{ 'artemisApp.exam.startCheckBoxText' }}"></label>
+                <div>
+                    <label for="confirmBox" jhiTranslate="{{ 'artemisApp.exam.startCheckBoxText' }}"></label>
                 </div>
             }
         </div>
 
-        <div class="mb-4 fw-bold" jhiTranslate="artemisApp.exam.startConsentText"></div>
-        <div class="login-form mb-4">
-            <div class="row pb-0 mb-0">
-                <div class="form-group pb-0 mb-0" style="width: unset">
-                    <input
-                        size="40"
-                        type="text"
-                        class="form-control"
-                        name="fullname"
-                        id="fullname"
-                        [placeholder]="'artemisApp.examParticipation.namePlaceholder' | artemisTranslate"
-                        [(ngModel)]="enteredName"
-                        [ngModelOptions]="{ updateOn: 'change' }"
-                        [disabled]="waitingForExamStart()"
-                    />
-                </div>
+        <div class="mb-6 font-bold" jhiTranslate="artemisApp.exam.startConsentText"></div>
+        <div class="mb-8">
+            <div class="w-fit">
+                <input
+                    [attr.aria-label]="'accessibility.fullName' | artemisTranslate"
+                    tumAetUiInput
+                    size="40"
+                    type="text"
+                    name="fullname"
+                    id="fullname"
+                    [placeholder]="'artemisApp.examParticipation.namePlaceholder' | artemisTranslate"
+                    [(ngModel)]="enteredName"
+                    [ngModelOptions]="{ updateOn: 'change' }"
+                    [disabled]="waitingForExamStart()"
+                />
             </div>
-            <div class="row">
-                <div id="your-name" class="md-6 fw-lighter">
-                    <span jhiTranslate="artemisApp.examParticipation.nameDisplay" [translateValues]="{ fullName: accountName() }"></span>
-                </div>
+            <div id="your-name" class="mt-2 font-light">
+                <span jhiTranslate="artemisApp.examParticipation.nameDisplay" [translateValues]="{ fullName: accountName() }"></span>
             </div>
-            <div class="row">
-                <div class="form-group" style="width: 60%">
-                    @if (inserted) {
-                        @if (!confirmed) {
-                            <div class="alert alert-danger mt-1">
-                                <span jhiTranslate="artemisApp.exam.notConfirmed"></span>
-                            </div>
-                        }
-                        @if (!nameIsCorrect) {
-                            <div class="alert alert-danger mt-1">
-                                <span jhiTranslate="artemisApp.exam.falseName"></span>
-                            </div>
-                        }
+            <div class="w-3/5">
+                @if (inserted) {
+                    @if (!confirmed) {
+                        <tumaet-ui-message severity="error" class="mt-2">
+                            <span jhiTranslate="artemisApp.exam.notConfirmed"></span>
+                        </tumaet-ui-message>
                     }
-                </div>
+                    @if (!nameIsCorrect) {
+                        <tumaet-ui-message severity="error" class="mt-2">
+                            <span jhiTranslate="artemisApp.exam.falseName"></span>
+                        </tumaet-ui-message>
+                    }
+                }
             </div>
         </div>
         <ng-container #startButton>
-            <button data-testid="start-exam" [disabled]="!startButtonEnabled || waitingForExamStart() || isFetching()" type="submit" (click)="startExam()" class="btn btn-primary">
+            <button
+                tumAetUiButton
+                size="small"
+                data-testid="start-exam"
+                [disabled]="!startButtonEnabled || waitingForExamStart() || isFetching()"
+                type="submit"
+                (click)="startExam()"
+            >
                 <span jhiTranslate="artemisApp.exam.startExam"></span>
             </button>
             @if (!startButtonEnabled) {
-                <div class="mt-2 mb-2" style="font-weight: lighter">
+                <div class="my-2 font-light">
                     <span jhiTranslate="artemisApp.exam.startExamToolTip"></span>
                 </div>
             }
         </ng-container>
         @if (waitingForExamStart()) {
-            <div class="exam-waiting-for-start-overlay alert alert-info">
-                <span jhiTranslate="artemisApp.examParticipation.waitForStart" [translateValues]="{ title: exam().title }"></span>
-                @if (exam().startDate) {
-                    <div>
-                        <hr />
-                        <span jhiTranslate="artemisApp.examParticipation.timeUntilPlannedStart"></span>
-                        <span class="text-bold">{{ timeUntilStart() }}</span>
-                        <br />
-                        <span>({{ exam().startDate | artemisDate: 'time' }})</span>
-                    </div>
-                }
+            <div class="exam-waiting-for-start-overlay fixed top-1/2 left-1/2 z-8 -translate-x-1/2 -translate-y-1/2 text-center font-bold shadow-(--tumaet-ui-shadow-lg)">
+                <tumaet-ui-message severity="info">
+                    <span jhiTranslate="artemisApp.examParticipation.waitForStart" [translateValues]="{ title: exam().title }"></span>
+                    @if (exam().startDate) {
+                        <div>
+                            <hr />
+                            <span jhiTranslate="artemisApp.examParticipation.timeUntilPlannedStart"></span>
+                            <span>{{ timeUntilStart() }}</span>
+                            <br />
+                            <span>({{ exam().startDate | artemisDate: 'time' }})</span>
+                        </div>
+                    }
+                </tumaet-ui-message>
             </div>
         }
     } @else {
-        <div class="d-flex justify-content-between">
-            <h4 data-testid="exam-finished-title">
+        <!-- The same 40px title row with the rule below it as the header of every exercise page (see jhi-exam-exercise-header). -->
+        <div class="mb-3! flex h-10 shrink-0 items-center border-b border-(--border-color)" data-testid="exam-finished-header">
+            <h3 class="m-0! min-w-0 flex-1 truncate text-lg! leading-tight! font-semibold!" data-testid="exam-finished-title">
                 <span
                     jhiTranslate="artemisApp.examParticipation.finish"
                     [translateValues]="{
                         title: exam().title,
                     }"
                 ></span>
-            </h4>
+            </h3>
         </div>
-        <hr class="mt-2" />
         <div [innerHTML]="formattedGeneralInformation()"></div>
         <br />
         <div class="mb-1">
-            <span class="fw-bold" jhiTranslate="artemisApp.examParticipation.submitFinalExam"></span>
+            <span class="font-bold" jhiTranslate="artemisApp.examParticipation.submitFinalExam"></span>
         </div>
         @if (handInEarly()) {
-            <div class="mb-3">
-                <div class="mb-1 mt-3 fw-bold text-danger">
+            <div class="mb-6!">
+                <div class="mt-6! mb-1 font-bold text-state-danger">
                     <fa-icon [icon]="faCircleExclamation" />
                     <span jhiTranslate="artemisApp.examParticipation.handInEarly"> </span>
                 </div>
                 <span jhiTranslate="artemisApp.examParticipation.handInEarlyNotice"></span>
                 @if (!isAttendanceChecked()) {
-                    <div class="mb-1 mt-3 fw-bold text-danger">
+                    <div class="mt-6! mb-1 font-bold text-state-danger">
                         <fa-icon [icon]="faCircleExclamation" />
                         <span jhiTranslate="artemisApp.examParticipation.attendanceCheck"></span>
                     </div>
@@ -137,81 +140,68 @@
                 }
             </div>
         }
-        <div class="d-inline-flex align-items-center my-3">
-            <div>
-                <input
-                    [(ngModel)]="confirmed"
-                    type="checkbox"
-                    id="confirmBox"
-                    (click)="updateConfirmation()"
-                    class="form-check-input me-2"
-                    [class.ms-0]="!this.exam().confirmationEndText"
-                    [required]="inserted"
-                />
-                <label for="confirmBox" id="formatted-confirmation-text" class="form-check-label" [innerHTML]="formattedConfirmationText()"></label>
+        <div class="my-6! inline-flex items-center">
+            <div class="flex items-start gap-2">
+                <tumaet-ui-checkbox class="mt-px" inputId="confirmBox" name="confirmBox" [ngModel]="confirmed" (ngModelChange)="confirmed = $event; updateConfirmation()" />
+                <label for="confirmBox" id="formatted-confirmation-text" class="cursor-pointer [&_p]:my-0!" [innerHTML]="formattedConfirmationText()"></label>
             </div>
             @if (!formattedConfirmationText()) {
-                <div class="login-form">
-                    <label class="font-weight-bold" for="confirmBox" jhiTranslate="{{ 'artemisApp.exam.endCheckBoxText' }}"></label>
+                <div>
+                    <label for="confirmBox" jhiTranslate="{{ 'artemisApp.exam.endCheckBoxText' }}"></label>
                 </div>
             }
         </div>
-        <div class="mb-4 fw-bold" jhiTranslate="artemisApp.exam.endConsentText"></div>
-        <div class="login-form mb-4">
-            <div class="row pb-0 mb-0">
-                <div class="form-group pb-0 mb-0" style="width: unset">
-                    <input
-                        size="40"
-                        type="text"
-                        class="form-control"
-                        name="fullname"
-                        id="fullname"
-                        [placeholder]="'artemisApp.examParticipation.namePlaceholder' | artemisTranslate"
-                        [(ngModel)]="enteredName"
-                        [ngModelOptions]="{ updateOn: 'change' }"
-                        [disabled]="waitingForExamStart()"
-                    />
-                </div>
+        <div class="mb-6 font-bold" jhiTranslate="artemisApp.exam.endConsentText"></div>
+        <div class="mb-8">
+            <div class="w-fit">
+                <input
+                    [attr.aria-label]="'accessibility.fullName' | artemisTranslate"
+                    tumAetUiInput
+                    size="40"
+                    type="text"
+                    name="fullname"
+                    id="fullname"
+                    [placeholder]="'artemisApp.examParticipation.namePlaceholder' | artemisTranslate"
+                    [(ngModel)]="enteredName"
+                    [ngModelOptions]="{ updateOn: 'change' }"
+                    [disabled]="waitingForExamStart()"
+                />
             </div>
-            <div class="row">
-                <div id="your-name" class="md-6 fw-lighter">
-                    <span jhiTranslate="artemisApp.examParticipation.nameDisplay" [translateValues]="{ fullName: accountName() }"></span>
-                </div>
+            <div id="your-name" class="mt-2 font-light">
+                <span jhiTranslate="artemisApp.examParticipation.nameDisplay" [translateValues]="{ fullName: accountName() }"></span>
             </div>
-            <div class="row">
-                <div class="form-group" style="width: 60%">
-                    @if (inserted) {
-                        @if (!confirmed) {
-                            <div class="alert alert-danger mt-1">
-                                <span jhiTranslate="artemisApp.exam.notConfirmed"></span>
-                            </div>
-                        }
-                        @if (!nameIsCorrect) {
-                            <div class="alert alert-danger mt-1">
-                                <span jhiTranslate="artemisApp.exam.falseName"></span>
-                            </div>
-                        }
+            <div class="w-3/5">
+                @if (inserted) {
+                    @if (!confirmed) {
+                        <tumaet-ui-message severity="error" class="mt-2">
+                            <span jhiTranslate="artemisApp.exam.notConfirmed"></span>
+                        </tumaet-ui-message>
                     }
-                </div>
+                    @if (!nameIsCorrect) {
+                        <tumaet-ui-message severity="error" class="mt-2">
+                            <span jhiTranslate="artemisApp.exam.falseName"></span>
+                        </tumaet-ui-message>
+                    }
+                }
             </div>
         </div>
         @if (handInEarly()) {
-            <div class="mt-3">
-                <div class="mb-2 font-weight-bold text-secondary" jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarlyDescription"></div>
+            <div class="mt-6!">
+                <div class="mb-2 font-bold text-(--text-body-secondary)" jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarlyDescription"></div>
             </div>
         }
-        <div class="d-flex justify-content-end gap-3">
+        <div class="flex justify-end gap-6!">
             @if (handInEarly()) {
-                <button [disabled]="submitInProgress()" id="continue" class="btn btn-secondary" (click)="continueAfterHandInEarly()">
+                <button type="button" tumAetUiButton size="small" severity="secondary" [disabled]="submitInProgress()" id="continue" (click)="continueAfterHandInEarly()">
                     <fa-icon [icon]="faArrowLeft" />
                     <span jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarly"></span>
                 </button>
             }
-            <button data-testid="end-exam" [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()" class="btn btn-primary">
+            <button tumAetUiButton size="small" data-testid="end-exam" [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()">
                 @if (submitInProgress()) {
-                    <fa-icon class="me-1" [icon]="faSpinner" animation="spin" />
+                    <fa-icon class="mr-1" [icon]="faSpinner" animation="spin" />
                 } @else {
-                    <fa-icon class="me-1" [icon]="faDoorClosed" />
+                    <fa-icon class="mr-1" [icon]="faDoorClosed" />
                 }
                 <span jhiTranslate="artemisApp.exam.endExam"></span>
             </button>

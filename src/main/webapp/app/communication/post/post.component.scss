@@ -1,9 +1,9 @@
-@import '../metis.component';
+@import '../communication.component';
 
 .linked-context-information,
 .context-information {
     font-weight: 600;
-    color: var(--metis-blue);
+    color: var(--communication-blue);
 }
 
 .post-title {
@@ -13,7 +13,7 @@
 }
 
 .announcement-icon {
-    color: var(--metis-blue);
+    color: var(--communication-blue);
 }
 
 .reference-hash {
@@ -31,10 +31,10 @@
     transition:
         opacity 0.2s ease-in-out,
         visibility 0.2s ease-in-out;
-    background: var(--metis-selection-option-background);
+    background: var(--communication-selection-option-background);
     padding: 5px;
     border-radius: 5px;
-    border: 0.01rem solid var(--metis-gray);
+    border: 0.01rem solid var(--communication-gray);
 }
 
 .hover-container {
@@ -46,7 +46,7 @@
 }
 
 .hover-container:hover {
-    background: var(--metis-selection-option-hover-background);
+    background: var(--communication-selection-option-hover-background);
     transition: background-color 0.2s ease-in-out;
 }
 
@@ -102,7 +102,7 @@
         visibility 0.2s ease-in-out,
         opacity 0.2s ease-in-out;
     font-size: 0.75rem;
-    color: var(--metis-gray-dark);
+    color: var(--communication-gray-dark);
 }
 
 .hover-container:hover .post-time {

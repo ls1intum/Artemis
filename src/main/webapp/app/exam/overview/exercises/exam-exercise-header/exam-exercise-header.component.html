@@ -1,0 +1,30 @@
+<!-- Exactly 40px (border included) on every page, with or without an action and however long the title is, so the pages do not jump when switching between them. -->
+<div #row class="mb-3! flex h-10 shrink-0 items-center justify-between gap-4! border-b border-(--border-color)" data-testid="exam-exercise-header">
+    <div #titleGroup class="flex min-w-0 flex-1 items-center gap-2">
+        <ng-content select="[headerLeading]" />
+        <h3 class="m-0! min-w-0 truncate text-lg! leading-tight! font-semibold!" data-testid="exam-exercise-title">
+            @if (exercise(); as exercise) {
+                <span>{{ exercise.exerciseGroup?.title }}</span>
+                <span
+                    class="font-normal"
+                    [jhiTranslate]="exercise.bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
+                    [translateValues]="{ points: exercise.maxPoints, bonusPoints: exercise.bonusPoints }"
+                ></span>
+                @if (exercise.includedInOverallScore && exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                    <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
+                }
+            } @else if (titleKey(); as key) {
+                <span [jhiTranslate]="key"></span>
+            }
+        </h3>
+        <ng-content select="[headerTitleSuffix]" />
+    </div>
+    <!-- Every button of the slot is 30px high (4px padding, a 20px line and the border), which leaves 4.5px above and below it in the 40px row. The important spelling beats the padding of the kit and of the legacy Bootstrap button alike. -->
+    <div
+        class="flex shrink-0 items-center gap-2 [&_.btn]:py-1! [&_.btn]:leading-5! [&_.tumaet-ui-btn]:py-1! [&_.tumaet-ui-btn]:leading-5! [&>*]:flex-nowrap!"
+        data-testid="exam-exercise-header-actions"
+    >
+        <ng-content />
+        <ng-template cdkPortalOutlet />
+    </div>
+</div>

@@ -9,11 +9,16 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowUpFromBracket, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 import { CalendarOverviewComponent } from 'app/calendar/shared/calendar-overview/calendar-overview-component.directive';
-import { PopoverModule } from 'primeng/popover';
-import { CheckboxModule } from 'primeng/checkbox';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
+    TumAetUiProgressSpinnerComponent,
+} from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-calendar-mobile-overview',
@@ -23,10 +28,13 @@ import { ButtonModule } from 'primeng/button';
         TranslateDirective,
         FaIconComponent,
         CalendarSubscriptionPopoverComponent,
-        PopoverModule,
-        CheckboxModule,
         FormsModule,
-        ButtonModule,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiProgressSpinnerComponent,
+        ArtemisTranslatePipe,
     ],
     templateUrl: './calendar-mobile-overview.component.html',
     styleUrl: './calendar-mobile-overview.component.scss',

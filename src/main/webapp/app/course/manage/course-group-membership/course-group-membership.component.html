@@ -1,24 +1,9 @@
 @if (course() && courseRoleSlug()) {
-    <jhi-course-group
-        [allGroupUsers]="allCourseGroupUsers()"
-        [courseRoleSlug]="courseRoleSlug()!"
-        [isLoadingAllGroupUsers]="isLoading()"
-        [isAdmin]="isAdmin()"
-        [course]="course()!"
-        [addUserToGroup]="addToRole"
-        [removeUserFromGroup]="removeFromRole"
-        [handleUsersSizeChange]="handleUsersSizeChange"
-        [exportFileName]="exportFilename()"
-        [userSearch]="userSearch"
-        (importFinish)="loadAll()"
-    >
-        <span>
-            <span>{{ course()!.title }} - </span>
-            @if (filteredUsersSize() < allCourseGroupUsers().length) {
-                <span>{{ filteredUsersSize() }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"></span> </span>
-            }
-            {{ allCourseGroupUsers().length }}
-            <span [jhiTranslate]="'artemisApp.course.' + courseGroupEntityName()">{{ capitalize(courseGroupEntityName()) }}</span>
-        </span>
-    </jhi-course-group>
+    <div *titleBarTitle>
+        <h5 class="mb-0">
+            {{ 'artemisApp.course.' + courseRoleSlug() | artemisTranslate }}
+        </h5>
+    </div>
+
+    <jhi-course-group [courseRoleSlug]="courseRoleSlug()!" [isAdmin]="isAdmin()" [course]="course()!" [removeUserFromGroup]="removeFromRole" />
 }

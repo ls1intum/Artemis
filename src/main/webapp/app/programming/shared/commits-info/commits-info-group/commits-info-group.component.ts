@@ -1,12 +1,11 @@
 import { Component, input, linkedSignal } from '@angular/core';
 import type { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
 import { CommitsInfoRowComponent } from './commits-info-row/commits-info-row.component';
-import { NgStyle } from '@angular/common';
 
 @Component({
     selector: 'jhi-commits-info-group',
     templateUrl: './commits-info-group.component.html',
-    imports: [CommitsInfoRowComponent, NgStyle],
+    imports: [CommitsInfoRowComponent],
 })
 export class CommitsInfoGroupComponent {
     readonly commits = input.required<CommitInfo[]>();

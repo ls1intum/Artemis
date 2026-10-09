@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
+import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
 
 describe('SearchFilterComponent', () => {
     let component: SearchFilterComponent;
@@ -13,7 +13,7 @@ describe('SearchFilterComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [SearchFilterComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideArtemisTumUiTranslator()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideArtemisTumAetUiTranslator()],
         }).compileComponents();
         fixture = TestBed.createComponent(SearchFilterComponent);
         component = fixture.componentInstance;

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -11,7 +11,7 @@ import { toImportModelingExerciseDTO, toUpdateModelingExerciseDTO } from 'app/mo
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ModelingExerciseService implements ExerciseServicable<ModelingExercise> {
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);

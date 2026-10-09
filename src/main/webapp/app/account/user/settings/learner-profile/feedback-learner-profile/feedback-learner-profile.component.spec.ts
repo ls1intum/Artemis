@@ -155,7 +155,7 @@ describe('FeedbackLearnerProfileComponent', () => {
             vi.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockRejectedValue(httpError);
 
             // Act
-            await component.ngOnInit();
+            await component['initializeFeedbackLearnerProfileComponent']();
             await fixture.whenStable();
 
             // Assert
@@ -174,7 +174,7 @@ describe('FeedbackLearnerProfileComponent', () => {
             vi.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockRejectedValue(genericError);
 
             // Act
-            await component.ngOnInit();
+            await component['initializeFeedbackLearnerProfileComponent']();
             await fixture.whenStable();
 
             // Assert
@@ -224,7 +224,7 @@ describe('FeedbackLearnerProfileComponent', () => {
         vi.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(newProfile);
 
         // Act
-        await component.ngOnInit();
+        await component['initializeFeedbackLearnerProfileComponent']();
         await fixture.whenStable();
 
         // Assert
@@ -243,7 +243,7 @@ describe('FeedbackLearnerProfileComponent', () => {
         vi.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(profileWithUndefinedValues);
 
         // Act
-        await component.ngOnInit();
+        await component['initializeFeedbackLearnerProfileComponent']();
         await fixture.whenStable();
 
         // Assert - Should set default values since DTO constructor converts undefined to DEFAULT_VALUE
@@ -296,7 +296,7 @@ describe('FeedbackLearnerProfileComponent', () => {
             vi.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(profile);
 
             // Act
-            await component.ngOnInit();
+            await component['initializeFeedbackLearnerProfileComponent']();
             await fixture.whenStable();
 
             // Assert
@@ -352,7 +352,7 @@ describe('FeedbackLearnerProfileComponent', () => {
             fixture.detectChanges();
 
             // Covers the template's (changed) binding, which a direct handler call cannot.
-            const options = fixture.nativeElement.querySelectorAll('tum-ui-select-button button');
+            const options = fixture.nativeElement.querySelectorAll('tumaet-ui-select-button button');
             expect(options.length).toBeGreaterThan(1);
             (options[2] as HTMLButtonElement).click();
 

@@ -9,7 +9,6 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
     // this is intended and an attribute selector because otherwise the rendered table breaks
     selector: '[jhi-suspicious-sessions]',
     templateUrl: './suspicious-sessions.component.html',
-    styleUrls: ['./suspicious-sessions.component.scss'],
     imports: [ArtemisDatePipe, RouterModule, CommonModule],
 })
 export class SuspiciousSessionsComponent implements OnInit {

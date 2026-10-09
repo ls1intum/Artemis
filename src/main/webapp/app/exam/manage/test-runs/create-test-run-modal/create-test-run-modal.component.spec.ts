@@ -5,108 +5,139 @@ import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-te
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { By } from '@angular/platform-browser';
 import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Create Test Run Modal Component', () => {
     let comp: CreateTestRunModalComponent;
     let fixture: ComponentFixture<CreateTestRunModalComponent>;
-    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
-    let dialogRef: DynamicDialogRef;
 
     const course = { id: 1 } as Course;
     const exercise = { id: 1, title: 'exampleExercise', type: ExerciseType.TEXT } as Exercise;
     const exerciseGroup1 = { id: 1, exercises: [exercise], title: 'exampleExerciseGroup' } as ExerciseGroup;
-    const exam = { id: 1, course, started: true, startDate: dayjs(), endDate: dayjs().add(20, 'seconds'), exerciseGroups: [exerciseGroup1] } as Exam;
     const exerciseGroup2 = { id: 2 } as ExerciseGroup;
+    let exam: Exam;
 
-    beforeEach(() => {
-        dialogRefCloseSpy = vi.fn();
-        dialogRef = {
-            close: dialogRefCloseSpy,
-            onClose: new Subject<any>(),
-        } as unknown as DynamicDialogRef;
-
-        TestBed.configureTestingModule({
-            providers: [
-                { provide: DynamicDialogRef, useValue: dialogRef },
-                { provide: DynamicDialogConfig, useValue: { data: { exam } } },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
-        }).compileComponents();
-
+    function createComponent() {
         fixture = TestBed.createComponent(CreateTestRunModalComponent);
         comp = fixture.componentInstance;
+        fixture.componentRef.setInput('exam', exam);
+    }
+
+    beforeEach(() => {
+        exam = { id: 1, course, started: true, startDate: dayjs(), endDate: dayjs().add(20, 'seconds'), exerciseGroups: [exerciseGroup1] } as Exam;
+        TestBed.configureTestingModule({
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
+        createComponent();
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
+        document.querySelectorAll('.cdk-overlay-container').forEach((container) => container.replaceChildren());
     });
 
     describe('onInit', () => {
-        it('should initialise the working time form', async () => {
-            // WHEN
+        it('should initialise the working time form', () => {
             comp.ngOnInit();
-            // THEN
-            expect(!!comp.workingTimeForm).not.toBeNull();
+            expect(comp.workingTimeForm).toBeDefined();
             expect(comp.exam()).toEqual(exam);
         });
     });
 
     describe('creating test run workflow', () => {
-        it('should create a new test run and close the modal', () => {
+        it('should create a new test run, emit it and close the dialog', () => {
+            const emitted: CreateTestRunDTO[] = [];
+            comp.testRunCreate.subscribe((testRun) => emitted.push(testRun));
             fixture.detectChanges();
             comp.workingTimeForm.controls['minutes'].setValue(30);
             comp.workingTimeForm.controls['seconds'].setValue(0);
-            const exerciseRow = fixture.debugElement.query(By.css('#exercise-1')).nativeElement;
+
+            const exerciseRow = document.querySelector<HTMLElement>('#exercise-1');
             expect(exerciseRow).not.toBeNull();
-            exerciseRow.click();
+            exerciseRow!.click();
             fixture.detectChanges();
-            expect(comp.testRunConfiguration[1]).toEqual(exercise);
-            expect(comp.exam()!.exerciseGroups!).toHaveLength(1);
-            expect(comp.testRunConfigured).toBe(true);
-            const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton')).nativeElement;
-            createTestRunButton.click();
-            expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
-            const testRun = dialogRefCloseSpy.mock.calls[0][0] as CreateTestRunDTO;
-            expect(testRun).not.toBeNull();
-            expect(testRun.examId).toBe(exam.id);
-            expect(testRun.exerciseIds).toEqual([exercise.id]);
-            expect(testRun.workingTime).toBe(1800);
+            expect(comp.testRunConfiguration().get(1)).toEqual(exercise);
+            expect(comp.exerciseGroups()).toHaveLength(1);
+            expect(comp.testRunConfigured()).toBe(true);
+
+            const createTestRunButton = document.querySelector<HTMLButtonElement>('#createTestRunButton');
+            expect(createTestRunButton).not.toBeNull();
+            createTestRunButton!.click();
+
+            expect(emitted).toHaveLength(1);
+            expect(emitted[0].examId).toBe(exam.id);
+            expect(emitted[0].exerciseIds).toEqual([exercise.id]);
+            expect(emitted[0].workingTime).toBe(1800);
+            expect(comp.visible()).toBe(false);
+        });
+
+        it('should close the dialog without emitting when cancelled', () => {
+            const emitted: CreateTestRunDTO[] = [];
+            comp.testRunCreate.subscribe((testRun) => emitted.push(testRun));
+            fixture.detectChanges();
+
+            comp.cancel();
+
+            expect(comp.visible()).toBe(false);
+            expect(emitted).toHaveLength(0);
         });
     });
 
     describe('Ignore Exercise groups', () => {
         it('should ignore exercise groups with no exercises', () => {
-            // Re-set exam with two exercise groups, one without exercises
             exam.exerciseGroups = [exerciseGroup1, exerciseGroup2];
+            createComponent();
             fixture.detectChanges();
-            expect(comp.exam()!.exerciseGroups!).toHaveLength(1);
+            expect(comp.exerciseGroups()).toHaveLength(1);
+            expect(comp.exerciseGroups()[0]).toBe(exerciseGroup1);
         });
     });
 
     describe('Exercise Selection', () => {
-        it('should highlight the exercise when pressed', async () => {
+        it('should select the only exercise of a group automatically', () => {
             fixture.detectChanges();
-            // WHEN
-            // @ts-ignore
-            comp.onSelectExercise(exercise, comp.exam()!.exerciseGroups[0]!);
-            // THEN
-            expect(Object.values(comp.testRunConfiguration).length).toBeGreaterThan(0);
+            expect(comp.isSelected(exercise, exerciseGroup1)).toBe(true);
+            expect(comp.testRunConfigured()).toBe(true);
         });
-        it('should allow submit when an exercise has been selected for every exercise group', async () => {
+
+        it('should highlight the exercise when pressed', () => {
+            const other = { id: 2, title: 'other', type: ExerciseType.TEXT } as Exercise;
+            const group = { id: 3, exercises: [exercise, other], title: 'two exercises' } as ExerciseGroup;
+            exam.exerciseGroups = [group];
+            createComponent();
             fixture.detectChanges();
-            // WHEN
-            // @ts-ignore
-            comp.onSelectExercise(exercise, comp.exam()!.exerciseGroups[0]!);
-            // THEN
-            expect(comp.testRunConfigured).not.toBeNull();
+            expect(comp.testRunConfigured()).toBe(false);
+
+            comp.onSelectExercise(other, group);
+
+            expect(comp.isSelected(other, group)).toBe(true);
+            expect(comp.isSelected(exercise, group)).toBe(false);
+            expect(comp.testRunConfigured()).toBe(true);
         });
+    });
+    it('should select exercises through a native button and announce the selected state', async () => {
+        const other = { id: 2, title: 'other', type: ExerciseType.TEXT } as Exercise;
+        const group = { id: 3, exercises: [exercise, other], title: 'two exercises' } as ExerciseGroup;
+        fixture.destroy();
+        exam.exerciseGroups = [group];
+        createComponent();
+        comp.visible.set(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const button = document.querySelector<HTMLButtonElement>('[data-testid="test-run-select-exercise-2"]')!;
+        expect(button.tagName).toBe('BUTTON');
+        expect(button.type).toBe('button');
+        expect(button.getAttribute('aria-pressed')).toBe('false');
+        button.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(comp.isSelected(other, group)).toBe(true);
+        expect(button.getAttribute('aria-pressed')).toBe('true');
     });
 });

@@ -1,5 +1,11 @@
 package de.tum.cit.aet.artemis.localci.service;
 
+import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.ADMIN_BUILD_AGENTS;
+import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.ADMIN_QUEUED_JOBS;
+import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.ADMIN_RUNNING_JOBS;
+import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.COURSE_QUEUED_JOBS;
+import static de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics.COURSE_RUNNING_JOBS;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -23,6 +29,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
 
 /**
  * This service is responsible for sending build job queue information over websockets.
@@ -122,8 +129,8 @@ public class LocalCIQueueWebsocketService {
             return;
         }
         Set<Long> courseIds = drain(coursesWithQueuedJobChanges);
-        boolean admin = hasSubscribers(LocalCIWebsocketMessagingService.ADMIN_QUEUED_JOBS_TOPIC);
-        Set<Long> watched = watchedCourses(courseIds, LocalCIWebsocketMessagingService::queuedJobsTopicForCourse);
+        boolean admin = hasSubscribers(ADMIN_QUEUED_JOBS.at());
+        Set<Long> watched = watchedCourses(courseIds, COURSE_QUEUED_JOBS::at);
         if (!admin && watched.isEmpty()) {
             return;
         }
@@ -149,8 +156,8 @@ public class LocalCIQueueWebsocketService {
             return;
         }
         Set<Long> courseIds = drain(coursesWithProcessingJobChanges);
-        boolean admin = hasSubscribers(LocalCIWebsocketMessagingService.ADMIN_RUNNING_JOBS_TOPIC);
-        Set<Long> watched = watchedCourses(courseIds, LocalCIWebsocketMessagingService::runningJobsTopicForCourse);
+        boolean admin = hasSubscribers(ADMIN_RUNNING_JOBS.at());
+        Set<Long> watched = watchedCourses(courseIds, COURSE_RUNNING_JOBS::at);
         if (!admin && watched.isEmpty()) {
             return;
         }
@@ -172,7 +179,7 @@ public class LocalCIQueueWebsocketService {
     }
 
     private void broadcastBuildAgentSummary() {
-        if (!buildAgentSummaryNeedsBroadcast.getAndSet(false) || !hasSubscribers(LocalCIWebsocketMessagingService.ADMIN_BUILD_AGENTS_TOPIC)) {
+        if (!buildAgentSummaryNeedsBroadcast.getAndSet(false) || !hasSubscribers(ADMIN_BUILD_AGENTS.at())) {
             return;
         }
         try {
@@ -190,8 +197,8 @@ public class LocalCIQueueWebsocketService {
      * @param destination the topic to check
      * @return true if at least one session is subscribed to it
      */
-    private boolean hasSubscribers(String destination) {
-        return !simpUserRegistry.findSubscriptions(subscription -> destination.equals(subscription.getDestination())).isEmpty();
+    private boolean hasSubscribers(WebsocketDestination destination) {
+        return !simpUserRegistry.findSubscriptions(subscription -> destination.value().equals(subscription.getDestination())).isEmpty();
     }
 
     /**
@@ -201,7 +208,7 @@ public class LocalCIQueueWebsocketService {
      * @param topic     how to build the destination for a course
      * @return the subset that is worth sending
      */
-    private Set<Long> watchedCourses(Set<Long> courseIds, LongFunction<String> topic) {
+    private Set<Long> watchedCourses(Set<Long> courseIds, LongFunction<WebsocketDestination> topic) {
         return courseIds.stream().filter(courseId -> hasSubscribers(topic.apply(courseId))).collect(Collectors.toSet());
     }
 

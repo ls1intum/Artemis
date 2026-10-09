@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.course.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,11 +32,14 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.DateUtil;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -48,14 +53,17 @@ import de.tum.cit.aet.artemis.course.service.CourseValidator;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
+import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 
 /**
  * REST controller for updating a course.
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("management/course-management")
+@FeatureUsage(UserFeature.COURSE_SETTINGS)
 @RestController
 @RequestMapping("api/course/")
 public class CourseUpdateResource {
@@ -73,6 +81,8 @@ public class CourseUpdateResource {
     private final Optional<LtiApi> ltiApi;
 
     private final Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi;
+
+    private final Optional<TutorialGroupApi> tutorialGroupApi;
 
     private final Optional<LearnerProfileApi> learnerProfileApi;
 
@@ -94,8 +104,9 @@ public class CourseUpdateResource {
             Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, Optional<LearningPathApi> learningPathApi,
             ConductAgreementService conductAgreementService, Optional<LearnerProfileApi> learnerProfileApi, Optional<CourseAutoOrchestrationApi> autoOrchestrationApi,
             CourseRepository courseRepository, CourseConfigurationRepository courseConfigurationRepository, CourseAthenaConfigRepository courseAthenaConfigRepository,
-            UserRepository userRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            UserRepository userRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService, Optional<TutorialGroupApi> tutorialGroupApi) {
         this.ltiApi = ltiApi;
+        this.tutorialGroupApi = tutorialGroupApi;
         this.authCheckService = authCheckService;
         this.fileService = fileService;
         this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
@@ -133,24 +144,28 @@ public class CourseUpdateResource {
         // this is important, otherwise someone could put themselves into the instructor group of the updated course
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
-        // Saving the course writes back the Athena configuration it was loaded with, so a course that predates the
-        // configuration would detach one that a concurrent first Athena switch attached in between, and that switch would
-        // silently be lost. Give such a course its configuration and load it again, only once the user may change it.
-        if (existingCourse.getAthenaConfig() == null) {
-            courseAthenaConfigRepository.ensureAthenaConfigExists(courseId);
-            existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
+        // A creation that failed half-way left the course without some settings rows; every later save adds the missing ones. This
+        // runs right after the authorization and before the mandatory configuration lookup below, so such a course stays editable.
+        int repairedSettings = courseRepository.ensureDefaultConfigurations(courseId);
+        if (repairedSettings > 0) {
+            log.warn("Course {} was missing {} default settings row(s) from an incomplete creation; added them", courseId, repairedSettings);
         }
 
-        // Attach the (lazily-stored) course configuration so applyTo updates it in place instead of creating a duplicate,
+        // Attach the (lazily-stored) course configuration so applyTo can update its permanent row,
         // and so the admin-only auto-orchestration change detection below compares against the persisted values. Fetched
         // via its own repository to keep the course update entity graph small.
-        existingCourse.setCourseConfiguration(courseConfigurationRepository.findByCourseId(courseId).orElse(null));
+        existingCourse
+                .setCourseConfiguration(courseConfigurationRepository.findByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("CourseConfiguration", courseId)));
 
         if (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");
         }
 
         var timeZoneChanged = (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() != null && !existingCourse.getTimeZone().equals(courseUpdateDTO.timeZone()));
+        // Only a new or changed time zone is checked, so a course stored with one the server no longer knows stays editable.
+        if (!Objects.equals(existingCourse.getTimeZone(), courseUpdateDTO.timeZone())) {
+            CourseValidator.validateTimeZone(courseUpdateDTO.timeZone());
+        }
 
         if (!Objects.equals(existingCourse.getShortName(), courseUpdateDTO.shortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
@@ -206,21 +221,23 @@ public class CourseUpdateResource {
             fileService.schedulePathForDeletion(new FileSystemLocation.CourseIcon(existingCourseIcon).path(), 0);
         }
 
-        boolean wasOnlineCourse = existingCourse.getOnlineCourseConfiguration() != null;
-        if (courseUpdateDTO.onlineCourse() != null && courseUpdateDTO.onlineCourse() != wasOnlineCourse) {
-            if (courseUpdateDTO.onlineCourse() && ltiApi.isPresent()) {
-                ltiApi.get().createOnlineCourseConfiguration(existingCourse);
-            }
-            else {
-                existingCourse.setOnlineCourseConfiguration(null);
-            }
-        }
-
         if (!Objects.equals(courseUpdateDTO.courseInformationSharingMessagingCodeOfConduct(), oldCodeOfConduct)) {
             conductAgreementService.resetUsersAgreeToCodeOfConductInCourse(existingCourse);
         }
 
+        // Configurations live for the lifetime of the course. Toggling online mode only changes the course flag.
         Course result = courseRepository.save(existingCourse);
+
+        // The course configuration holds the key to its course, so saving the course does not cascade to it. Only the settings of
+        // this form are written, in place, so the retention bookkeeping a cleanup run wrote meanwhile is not overwritten with the
+        // values read at the start. An omitted retention hold is left as it is.
+        var requestedConfiguration = existingCourse.getCourseConfiguration();
+        courseConfigurationRepository.updateEditableSettings(courseId, requestedConfiguration.isGradeRelevant(), requestedConfiguration.isAutoOrchestratorEnabled(),
+                requestedConfiguration.getDebounceWindowSecondsOverride(), requestedConfiguration.getMaxDailyOrchestrationOverride());
+        if (courseUpdateDTO.dataRetentionHold() != null) {
+            courseConfigurationRepository.updateDataRetentionHold(courseId, courseUpdateDTO.dataRetentionHold());
+        }
+        courseConfigurationRepository.attachTo(result);
 
         // If auto-orchestration was just disabled, drop any buffered content changes so a stale batch cannot fire
         // (e.g. on re-enable within the debounce window or a scheduler tick before the change propagates).
@@ -242,9 +259,24 @@ public class CourseUpdateResource {
             tutorialGroupChannelManagementApi.get().onTimeZoneUpdate(result);
         }
 
-        // The Athena configuration is lazy and not part of the update, so attach it for the response to report the stored
-        // flags; otherwise the client would cache a course that claims Athena is off.
+        // The Athena configuration is not part of the update and the course carries no mapped association to it, so attach it
+        // for the response to report the stored flags; otherwise the client would cache a course that claims Athena is off.
         courseAthenaConfigRepository.attachTo(result);
-        return ResponseEntity.ok(CourseManagementDTO.of(result));
+        OnlineCourseConfiguration onlineConfiguration = ltiApi.flatMap(api -> api.findOnlineCourseConfiguration(courseId)).orElse(null);
+        TutorialGroupsConfiguration tutorialConfiguration = tutorialGroupApi.flatMap(api -> api.findConfigurationByCourseId(courseId)).orElse(null);
+        return ResponseEntity.ok(CourseManagementDTO.of(result, onlineConfiguration, tutorialConfiguration));
+    }
+
+    /**
+     * GET /time-zones : The time zones a course may use, which the course form offers and validates against. Browsers
+     * know different lists, some without names such as {@code UTC} or {@code Europe/Kyiv}, so the server, which
+     * interprets the course's time zone, provides its own.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the sorted time zone names
+     */
+    @GetMapping("time-zones")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<String>> getSupportedTimeZones() {
+        return ResponseEntity.ok(DateUtil.SUPPORTED_TIME_ZONES);
     }
 }

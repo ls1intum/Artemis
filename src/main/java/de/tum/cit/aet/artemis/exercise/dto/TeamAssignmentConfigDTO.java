@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.exercise.dto;
 import java.io.Serializable;
 import java.util.Optional;
 
+import org.hibernate.Hibernate;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
@@ -17,11 +19,12 @@ public record TeamAssignmentConfigDTO(Long id, Integer minTeamSize, Integer maxT
     /**
      * Creates a {@link TeamAssignmentConfigDTO} from the given {@link TeamAssignmentConfig}.
      *
-     * @param teamAssignmentConfig the entity to convert (may be {@code null})
-     * @return the corresponding DTO, or {@code null} if the input was {@code null}
+     * @param teamAssignmentConfig the entity to convert (may be {@code null} or a proxy that was not loaded)
+     * @return the corresponding DTO, or {@code null} if the input was {@code null} or not loaded
      */
     public static TeamAssignmentConfigDTO of(TeamAssignmentConfig teamAssignmentConfig) {
-        return Optional.ofNullable(teamAssignmentConfig).map(config -> new TeamAssignmentConfigDTO(config.getId(), config.getMinTeamSize(), config.getMaxTeamSize())).orElse(null);
+        return Optional.ofNullable(teamAssignmentConfig).filter(Hibernate::isInitialized)
+                .map(config -> new TeamAssignmentConfigDTO(config.getId(), config.getMinTeamSize(), config.getMaxTeamSize())).orElse(null);
     }
 
     /**

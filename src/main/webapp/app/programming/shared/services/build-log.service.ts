@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BuildLogEntry } from 'app/localci/shared/entities/build-log.model';
@@ -7,7 +7,7 @@ export interface IBuildLogService {
     getBuildLogs: (participationId: number, resultId?: number) => Observable<BuildLogEntry[]>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class BuildLogService implements IBuildLogService {
     private http = inject(HttpClient);
 

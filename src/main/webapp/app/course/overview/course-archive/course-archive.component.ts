@@ -26,10 +26,10 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 })
 export class CourseArchiveComponent implements OnInit, OnDestroy {
     private static readonly TEST_COURSES_GROUP_ID = 'testCourses';
-
-    private archiveCourseSubscription?: Subscription;
     private courseService = inject(CourseManagementService);
     private alertService = inject(AlertService);
+
+    private archiveCourseSubscription?: Subscription;
 
     readonly courses = signal<CourseForArchiveDTO[]>([]);
     readonly testCourses = signal<CourseForArchiveDTO[]>([]);

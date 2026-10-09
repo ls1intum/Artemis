@@ -23,6 +23,15 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Repository
 public interface CompetencyRelationRepository extends ArtemisJpaRepository<CompetencyRelation, Long> {
 
+    /**
+     * Counts the relations whose head or tail references a competency, i.e. the relations that deleting it removes.
+     *
+     * @param headCompetencyId competency identifier to match at the head
+     * @param tailCompetencyId competency identifier to match at the tail
+     * @return number of relations referencing either identifier
+     */
+    long countByHeadCompetencyIdOrTailCompetencyId(long headCompetencyId, long tailCompetencyId);
+
     @Transactional // ok because of delete
     @Modifying
     @Query("""

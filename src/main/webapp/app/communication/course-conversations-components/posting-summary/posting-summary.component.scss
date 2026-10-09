@@ -9,7 +9,8 @@
     transition: background-color 0.2s ease-in-out;
 }
 
-.posting-summary:hover {
+.posting-summary:hover,
+.posting-summary:focus-within {
     background-color: rgba($primary, 0.1);
 
     & .posting-summary-saved-post-options {

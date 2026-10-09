@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -25,7 +25,7 @@ import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<FileUploadSubmissionDTO>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FileUploadSubmissionService {
     private http = inject(HttpClient);
     private submissionService = inject(SubmissionService);

@@ -18,7 +18,7 @@
             "featureCloudThree": "Fast response times",
             "featureCloudFour": "GDPR-compliant processing on Azure",
             "featureCloudFive": "All data stored on university datacenters",
-            "featureLocalOne": "Latest open-source LLMs like GPT-OSS",
+            "featureLocalOne": "Latest open-source LLMs like Qwen",
             "featureLocalTwo": "Lower response quality",
             "featureLocalThree": "Slower response times",
             "featureLocalFour": "Processing only in university datacenters",

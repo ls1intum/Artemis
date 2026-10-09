@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { Range } from 'app/foundation/util/utils';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class PlagiarismInspectorService {
     /**
      * Filters the given comparisons and returns only those that have a similarity within the range [minimumSimilarity, maximumSimilarity)

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, viewChild, viewChildren } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
 import {
     faBook,
@@ -28,6 +28,7 @@ import { Router } from '@angular/router';
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 @Component({
     selector: 'jhi-global-search-navigation-view',
@@ -41,6 +42,8 @@ import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/c
 export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private readonly profileService = inject(ProfileService);
     private readonly accountService = inject(AccountService);
+    private readonly router = inject(Router);
+    private readonly overlay = inject(SearchOverlayService);
 
     readonly searchQuery = input.required<string>();
     readonly selectedIndex = input<number>(-1);
@@ -49,6 +52,10 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly showResults = input<boolean>(false);
     readonly isLoading = input<boolean>(false);
     readonly searchError = input<string | undefined>(undefined);
+    /** Active course include/exclude filters, forwarded to the Iris answer so it scopes its retrieval
+     * the same way the visible results are already scoped. */
+    readonly courseIds = input<number[]>([]);
+    readonly excludeCourseIds = input<number[]>([]);
     /** True while the slides and videos filter is the active one, which searches content instead of metadata. */
     readonly contentSearchActive = input<boolean>(false);
 
@@ -73,9 +80,6 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     // Skeleton placeholder array for loading animation
     protected readonly skeletonItems = Array(5);
 
-    private readonly router = inject(Router);
-    private readonly overlay = inject(SearchOverlayService);
-
     // Query all selectable items for auto-scroll functionality
     private readonly selectableItems = viewChildren<ElementRef<HTMLElement>>('selectableItem');
 
@@ -87,6 +91,14 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const usage = this.accountService.userIdentity()?.selectedLLMUsage;
         return usage === LLMSelectionDecision.LOCAL_AI || usage === LLMSelectionDecision.CLOUD_AI;
     });
+    private readonly irisAnswerComponent = viewChild(GlobalSearchIrisAnswerComponent);
+    /**
+     * Whether the results list needs its own top margin. `irisEnabled` alone says the feature exists,
+     * not whether the card is currently showing anything — conditioning the margin on that instead
+     * would leave it reserved even after a dismissed "nothing relevant" card has collapsed to nothing,
+     * defeating the point of collapsing it.
+     */
+    protected readonly irisOccupiesSpace = computed(() => this.irisAnswerComponent()?.occupiesSpace() ?? false);
     /** True when the slides and videos filter is active without a search term, which content search cannot run without. */
     protected readonly isContentSearchPrompt = computed(() => this.contentSearchActive() && this.searchQuery().trim().length === 0);
 
@@ -162,7 +174,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             const link = result.metadata?.['link'];
             const queryParams = result.metadata?.['queryParams'];
             if (link) {
-                void this.router.navigate([link], { queryParams });
+                void this.router.navigate([link], { queryParams, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
             }
             this.overlay.close();
             return;
@@ -289,7 +301,9 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
     @HostListener('window:keydown', ['$event'])
     handleKeydown(event: KeyboardEvent): void {
-        if (event.key !== 'Enter') return;
+        if (event.key !== 'Enter' || event.defaultPrevented || (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))) {
+            return;
+        }
         const idx = this.selectedIndex();
         if (idx < 0) return;
 

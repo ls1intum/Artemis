@@ -2,14 +2,14 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, comp
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe, JsonPipe } from '@angular/common';
 import {
-    TumUiButtonComponent,
-    TumUiMessageComponent,
-    TumUiPanelComponent,
-    TumUiSelectComponent,
-    TumUiTabComponent,
-    TumUiTabListComponent,
-    TumUiTableDirective,
-    TumUiTabsComponent,
+    TumAetUiButtonComponent,
+    TumAetUiMessageComponent,
+    TumAetUiPanelComponent,
+    TumAetUiSelectComponent,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTableDirective,
+    TumAetUiTabsComponent,
 } from '@tumaet/ui-angular';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -32,14 +32,14 @@ type TimeSpanOption = { label: string; value: IrisDashboardTimeSpan; days: numbe
     imports: [
         DecimalPipe,
         JsonPipe,
-        TumUiTableDirective,
-        TumUiTabsComponent,
-        TumUiTabListComponent,
-        TumUiTabComponent,
-        TumUiPanelComponent,
-        TumUiSelectComponent,
-        TumUiButtonComponent,
-        TumUiMessageComponent,
+        TumAetUiTableDirective,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
+        TumAetUiPanelComponent,
+        TumAetUiSelectComponent,
+        TumAetUiButtonComponent,
+        TumAetUiMessageComponent,
         FormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -64,6 +64,12 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
     readonly loading = signal(true);
     readonly error = signal(false);
     readonly activeBreakdownTab = signal(0);
+
+    onBreakdownTabChange(value: number | string | undefined): void {
+        if (typeof value === 'number') {
+            this.activeBreakdownTab.set(value);
+        }
+    }
 
     readonly chatModeBreakdown = signal<IrisDashboardBreakdownEntry[]>([]);
     readonly courseBreakdown = signal<IrisDashboardBreakdownEntry[]>([]);

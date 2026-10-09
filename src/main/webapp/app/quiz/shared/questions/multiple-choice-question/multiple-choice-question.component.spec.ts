@@ -100,6 +100,25 @@ describe('MultipleChoiceQuestionComponent', () => {
         return '';
     }
 
+    it('should not hard-code the color of the invalid hint icon, so it stays readable in the dark theme', () => {
+        const question: MultipleChoiceQuestion = {
+            id: 1,
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions: [{ id: 1, text: 'answer-text', invalid: true }],
+        };
+
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('showResult', true);
+        fixture.changeDetectorRef.detectChanges();
+
+        const icon: HTMLElement | null = fixture.nativeElement.querySelector('.answer-options-result td.solution fa-icon');
+        expect(icon).toBeTruthy();
+        expect(icon!.getAttribute('style') ?? '').not.toContain('color');
+    });
+
     it('should return true is if the answer option was selected', () => {
         const answerOptions: AnswerOption[] = [
             { id: 1, invalid: false },

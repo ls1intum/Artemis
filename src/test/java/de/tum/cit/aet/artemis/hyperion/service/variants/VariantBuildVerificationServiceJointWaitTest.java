@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
@@ -72,7 +73,7 @@ class VariantBuildVerificationServiceJointWaitTest {
         when(solutionRepository.findByProgrammingExerciseId(42L)).thenReturn(Optional.of(solutionParticipation));
         when(templateRepository.findByProgrammingExerciseId(42L)).thenReturn(Optional.of(templateParticipation));
 
-        service = new VariantBuildVerificationService(templateRepository, solutionRepository, submissionRepository, resultRepository, mock(GitService.class),
+        service = new VariantBuildVerificationService(templateRepository, solutionRepository, mock(BuildLogEntryService.class), resultRepository, mock(GitService.class),
                 mock(ContinuousIntegrationTriggerService.class), mock(ProgrammingExerciseParticipationService.class), mock(ProgrammingFeedbackSynthesizerService.class));
     }
 
@@ -127,9 +128,8 @@ class VariantBuildVerificationServiceJointWaitTest {
         when(emptySolutionRepository.findByProgrammingExerciseId(42L)).thenReturn(Optional.empty());
         stubResult(TEMPLATE_PARTICIPATION_ID, freshResult(0.0, 5));
 
-        service = new VariantBuildVerificationService(templateRepository, emptySolutionRepository, mock(ProgrammingSubmissionRepository.class), resultRepository,
-                mock(GitService.class), mock(ContinuousIntegrationTriggerService.class), mock(ProgrammingExerciseParticipationService.class),
-                mock(ProgrammingFeedbackSynthesizerService.class));
+        service = new VariantBuildVerificationService(templateRepository, emptySolutionRepository, mock(BuildLogEntryService.class), resultRepository, mock(GitService.class),
+                mock(ContinuousIntegrationTriggerService.class), mock(ProgrammingExerciseParticipationService.class), mock(ProgrammingFeedbackSynthesizerService.class));
 
         Map<RepositoryType, BuildResultOutcome> outcomes = service.waitForBuildResults(exercise, pending());
 
@@ -146,7 +146,7 @@ class VariantBuildVerificationServiceJointWaitTest {
     void shouldStillReturnTheFreshResultWhenFeedbackSynthesisThrows() throws Exception {
         ProgrammingFeedbackSynthesizerService throwingSynthesizer = mock(ProgrammingFeedbackSynthesizerService.class);
         doThrow(new IllegalStateException("synthesis blew up")).when(throwingSynthesizer).attachSynthesizedFeedback(any(), any(), anyBoolean());
-        service = new VariantBuildVerificationService(templateRepository, solutionRepository, mock(ProgrammingSubmissionRepository.class), resultRepository, mock(GitService.class),
+        service = new VariantBuildVerificationService(templateRepository, solutionRepository, mock(BuildLogEntryService.class), resultRepository, mock(GitService.class),
                 mock(ContinuousIntegrationTriggerService.class), mock(ProgrammingExerciseParticipationService.class), throwingSynthesizer);
         stubResult(SOLUTION_PARTICIPATION_ID, freshResult(100.0, 5));
         stubResult(TEMPLATE_PARTICIPATION_ID, freshResult(0.0, 5));

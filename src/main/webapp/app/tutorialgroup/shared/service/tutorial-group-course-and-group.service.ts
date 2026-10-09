@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Service, inject, signal } from '@angular/core';
 import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { map } from 'rxjs/operators';
@@ -8,9 +8,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class TutorialGroupCourseAndGroupService {
     private tutorialGroupApiService = inject(TutorialGroupApi);
     private courseManagementService = inject(CourseManagementService);

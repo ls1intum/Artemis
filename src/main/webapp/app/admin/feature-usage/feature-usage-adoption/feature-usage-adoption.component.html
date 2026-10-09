@@ -1,0 +1,38 @@
+<div class="overflow-x-auto">
+    <table tumAetUiTable size="small" style="min-width: 100%" aria-describedby="feature-usage-page-heading" data-testid="adoption-table">
+        <thead>
+            <tr>
+                <th scope="col" jhiTranslate="artemisApp.featureUsage.column.area"></th>
+                <th scope="col" jhiTranslate="artemisApp.featureUsage.column.feature"></th>
+                <th scope="col" jhiTranslate="artemisApp.featureUsage.column.setting"></th>
+                <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.enabledOn"></th>
+                <th scope="col" style="min-width: 10rem" jhiTranslate="artemisApp.featureUsage.column.share"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (row of rows(); track row.entry.module + '/' + row.entry.key) {
+                <tr [attr.data-testid]="'adoption-row-' + row.entry.module + '-' + row.entry.key">
+                    <td class="text-muted-color">{{ row.area ? (areaTranslationKey(row.area) | artemisTranslate) : '-' }}</td>
+                    <td>{{ row.entry.feature ? (featureTranslationKey(row.entry.feature, 'name') | artemisTranslate) : '-' }}</td>
+                    <td class="font-mono text-xs">{{ row.entry.module }}/{{ row.entry.key }}</td>
+                    <td class="text-end">{{ row.entry.count }} / {{ row.entry.total }}</td>
+                    <td>
+                        <tumaet-ui-progress-bar
+                            [value]="row.sharePercent"
+                            size="small"
+                            [showValue]="false"
+                            [ariaLabel]="(row.sharePercent | number: '1.0-1') + '%'"
+                            class="inline-block align-middle"
+                            style="width: 6rem"
+                        />
+                        <span class="ms-2 text-sm">{{ row.sharePercent | number: '1.0-1' }}%</span>
+                    </td>
+                </tr>
+            } @empty {
+                <tr>
+                    <td colspan="5" class="text-muted-color" jhiTranslate="artemisApp.featureUsage.noAdoptionData"></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

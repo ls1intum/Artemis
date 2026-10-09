@@ -1,9 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ExamRoomDeletionSummaryDTO, ExamRoomOverviewDTO, ExamRoomUploadInformationDTO } from 'app/exam/manage/students/room-distribution/exam-rooms.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExamRoomsService {
     private http = inject(HttpClient);
 

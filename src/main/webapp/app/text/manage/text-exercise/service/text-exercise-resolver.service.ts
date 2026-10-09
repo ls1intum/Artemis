@@ -1,7 +1,7 @@
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { of } from 'rxjs';
@@ -11,7 +11,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class TextExerciseResolver implements Resolve<TextExercise> {
     private textExerciseService = inject(TextExerciseService);
     private courseService = inject(CourseManagementService);

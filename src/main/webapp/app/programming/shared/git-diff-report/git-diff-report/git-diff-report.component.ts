@@ -29,6 +29,8 @@ import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.uti
     ],
 })
 export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
+    private readonly hostElementRef = inject<ElementRef<HTMLElement>>(ElementRef);
+
     protected readonly faSpinner = faSpinner;
     protected readonly faTableColumns = faTableColumns;
     protected readonly faAngleUp = faAngleUp;
@@ -89,8 +91,6 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
     readonly removedLineCount = computed(() => this.repositoryDiffInformation().totalLineChange.removedLineCount);
 
     readonly diffPanelContainers = viewChildren<ElementRef<HTMLElement>>('diffPanelContainer');
-
-    private readonly hostElementRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
     constructor() {
         effect(() => {

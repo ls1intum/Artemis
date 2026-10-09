@@ -5,14 +5,14 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
-    TumUiButtonComponent,
-    TumUiButtonDirective,
-    TumUiListComponent,
-    TumUiListItemDirective,
-    TumUiMenuComponent,
-    TumUiMenuItemDirective,
-    TumUiMenuTriggerDirective,
-    TumUiSelectButtonComponent,
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiListComponent,
+    TumAetUiListItemDirective,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiSelectButtonComponent,
 } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -32,14 +32,14 @@ import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
         NgTemplateOutlet,
         FaIconComponent,
         FormsModule,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiListComponent,
-        TumUiListItemDirective,
-        TumUiMenuComponent,
-        TumUiMenuItemDirective,
-        TumUiMenuTriggerDirective,
-        TumUiSelectButtonComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiListComponent,
+        TumAetUiListItemDirective,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiSelectButtonComponent,
         ArtemisTranslatePipe,
     ],
 })
@@ -61,7 +61,11 @@ export class IdeSettingsComponent implements OnInit {
     // languages that have no IDE assigned yet
     readonly remainingProgrammingLanguages = signal<ProgrammingLanguage[]>(Object.values(ProgrammingLanguage).filter((x) => x !== ProgrammingLanguage.EMPTY));
 
-    async ngOnInit() {
+    ngOnInit() {
+        void this.initializeIdeSettingsComponent();
+    }
+
+    private async initializeIdeSettingsComponent(): Promise<void> {
         try {
             // Load the predefined IDEs and the saved preferences together and only then render, so the
             // selection is shown correctly from the start instead of flashing on the VS Code default.

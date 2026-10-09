@@ -14,8 +14,10 @@
     <div class="step-body">
         <div class="row mb-3 g-3">
             <div class="col-md-6">
-                <label class="form-label" jhiTranslate="artemisApp.course.maxPoints.title"></label>
+                <label for="onboarding-maxPoints" class="form-label" jhiTranslate="artemisApp.course.maxPoints.title"></label>
                 <input
+                    id="onboarding-maxPoints"
+                    [attr.aria-label]="'artemisApp.course.maxPoints.title' | artemisTranslate"
                     type="number"
                     class="form-control"
                     [ngModel]="course().maxPoints"
@@ -37,8 +39,17 @@
                 }
             </div>
             <div class="col-md-6">
-                <label class="form-label" jhiTranslate="artemisApp.course.accuracyOfScores.title"></label>
-                <input type="number" class="form-control" [ngModel]="course().accuracyOfScores" (ngModelChange)="updateField('accuracyOfScores', $event)" min="0" max="5" />
+                <label for="onboarding-accuracyOfScores" class="form-label" jhiTranslate="artemisApp.course.accuracyOfScores.title"></label>
+                <input
+                    id="onboarding-accuracyOfScores"
+                    [attr.aria-label]="'artemisApp.course.accuracyOfScores.title' | artemisTranslate"
+                    type="number"
+                    class="form-control"
+                    [ngModel]="course().accuracyOfScores"
+                    (ngModelChange)="updateField('accuracyOfScores', $event)"
+                    min="0"
+                    max="5"
+                />
             </div>
         </div>
 
@@ -78,16 +89,40 @@
             <div class="ms-4 mb-3">
                 <div class="row g-3 mb-2 align-items-end">
                     <div class="col-md-4">
-                        <label class="form-label" jhiTranslate="artemisApp.course.maxComplaints.title"></label>
-                        <input type="number" class="form-control" [ngModel]="course().maxComplaints" (ngModelChange)="updateField('maxComplaints', $event)" min="0" />
+                        <label for="onboarding-maxComplaints" class="form-label" jhiTranslate="artemisApp.course.maxComplaints.title"></label>
+                        <input
+                            id="onboarding-maxComplaints"
+                            [attr.aria-label]="'artemisApp.course.maxComplaints.title' | artemisTranslate"
+                            type="number"
+                            class="form-control"
+                            [ngModel]="course().maxComplaints"
+                            (ngModelChange)="updateField('maxComplaints', $event)"
+                            min="0"
+                        />
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label" jhiTranslate="artemisApp.course.maxTeamComplaints.title"></label>
-                        <input type="number" class="form-control" [ngModel]="course().maxTeamComplaints" (ngModelChange)="updateField('maxTeamComplaints', $event)" min="0" />
+                        <label for="onboarding-maxTeamComplaints" class="form-label" jhiTranslate="artemisApp.course.maxTeamComplaints.title"></label>
+                        <input
+                            id="onboarding-maxTeamComplaints"
+                            [attr.aria-label]="'artemisApp.course.maxTeamComplaints.title' | artemisTranslate"
+                            type="number"
+                            class="form-control"
+                            [ngModel]="course().maxTeamComplaints"
+                            (ngModelChange)="updateField('maxTeamComplaints', $event)"
+                            min="0"
+                        />
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label" jhiTranslate="artemisApp.course.maxComplaintTimeDays.title"></label>
-                        <input type="number" class="form-control" [ngModel]="course().maxComplaintTimeDays" (ngModelChange)="updateField('maxComplaintTimeDays', $event)" min="0" />
+                        <label for="onboarding-maxComplaintTimeDays" class="form-label" jhiTranslate="artemisApp.course.maxComplaintTimeDays.title"></label>
+                        <input
+                            id="onboarding-maxComplaintTimeDays"
+                            [attr.aria-label]="'artemisApp.course.maxComplaintTimeDays.title' | artemisTranslate"
+                            type="number"
+                            class="form-control"
+                            [ngModel]="course().maxComplaintTimeDays"
+                            (ngModelChange)="updateField('maxComplaintTimeDays', $event)"
+                            min="0"
+                        />
                     </div>
                 </div>
             </div>
@@ -126,8 +161,10 @@
 
         @if (requestMoreFeedbackToggled()) {
             <div class="ms-4 mb-3">
-                <label class="form-label" jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title"></label>
+                <label for="onboarding-maxRequestMoreFeedbackTimeDays" class="form-label" jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title"></label>
                 <input
+                    id="onboarding-maxRequestMoreFeedbackTimeDays"
+                    [attr.aria-label]="'artemisApp.course.maxRequestMoreFeedbackTimeDays.title' | artemisTranslate"
                     type="number"
                     class="form-control"
                     [ngModel]="course().maxRequestMoreFeedbackTimeDays"

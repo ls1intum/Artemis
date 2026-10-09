@@ -13,8 +13,9 @@
 .layout-container {
     display: flex;
 
+    /* The exam region starts below the navbar, so it is the viewport minus the navbar, not the whole viewport. */
     &.exam-wrapper {
-        height: 100vh !important;
+        height: calc(100vh - var(--navbar-height)) !important;
     }
 
     .sidebar {
@@ -68,7 +69,7 @@
         }
 
         &.exam-wrapper {
-            height: 100vh !important;
+            height: calc(100vh - var(--navbar-height)) !important;
         }
     }
 

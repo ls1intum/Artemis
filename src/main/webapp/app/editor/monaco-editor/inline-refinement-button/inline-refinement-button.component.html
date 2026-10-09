@@ -18,6 +18,7 @@
         <!-- Expanded: Input field with submit -->
         <div class="d-flex align-items-center gap-1 bg-body border rounded-pill shadow py-1 px-2">
             <input
+                [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.placeholder' | artemisTranslate"
                 #instructionInput
                 type="text"
                 class="refinement-input fs-small py-1 px-2 w-100"

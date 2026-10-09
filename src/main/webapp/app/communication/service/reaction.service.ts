@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -7,7 +7,7 @@ import { Reaction, ReactionDTO } from 'app/communication/shared/entities/reactio
 
 type EntityResponseType = HttpResponse<Reaction>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ReactionService {
     private http = inject(HttpClient);
 

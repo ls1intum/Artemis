@@ -7,7 +7,7 @@ import {
     TutorialRegistrationsStudentsTableRemoveActionColumnInfo,
 } from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
@@ -17,8 +17,8 @@ import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
 @Component({
     selector: 'jhi-tutorial-registrations-register-modal',
     imports: [
-        TumUiDialogComponent,
-        TumUiButtonComponent,
+        TumAetUiDialogComponent,
+        TumAetUiButtonComponent,
         TutorialRegistrationsRegisterSearchBarComponent,
         TutorialRegistrationsStudentsTableComponent,
         TranslateDirective,

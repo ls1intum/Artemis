@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { BehaviorSubject, Observable, Subscription, of, pipe } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -85,7 +85,7 @@ export interface IParticipationWebsocketService {
     notifyAllResultSubscribers: (result: Result) => void;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ParticipationWebsocketService implements IParticipationWebsocketService, OnDestroy {
     private websocketService = inject(WebsocketService);
     private participationService = inject(ParticipationService);

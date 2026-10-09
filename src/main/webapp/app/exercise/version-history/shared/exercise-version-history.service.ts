@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ParseLinks } from 'app/admin/system-notification-management/parse-links.service';
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
@@ -20,7 +20,7 @@ interface ExerciseVersionMetadataResponse {
  * Provides paginated version metadata and full snapshot retrieval for the
  * exercise version history view.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseVersionHistoryService {
     private readonly http = inject(HttpClient);
     private readonly parseLinks = inject(ParseLinks);

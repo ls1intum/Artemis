@@ -1,29 +1,31 @@
-<div>
-    <p class="mt-4">
-        {{
-            complaint().complaintType === ComplaintType.COMPLAINT
-                ? ('artemisApp.complaint.alreadySubmittedSubmissionAuthor' | artemisTranslate)
-                : ('artemisApp.moreFeedback.alreadySubmittedSubmissionAuthor' | artemisTranslate)
-        }}
-        <span [ngbTooltip]="complaint().submittedTime | artemisDate">{{ complaint().submittedTime | artemisTimeAgo }}</span>
+<div class="row-span-2 grid grid-rows-subgrid gap-y-2 rounded-lg border border-(--border-color) bg-(--module-bg) p-4!" data-testid="complaint-request-card">
+    <div class="flex flex-wrap content-start items-center gap-x-3! gap-y-1 text-sm">
+        <p class="m-0!">
+            {{
+                complaint().complaintType === ComplaintType.COMPLAINT
+                    ? ('artemisApp.complaint.alreadySubmittedSubmissionAuthor' | artemisTranslate)
+                    : ('artemisApp.moreFeedback.alreadySubmittedSubmissionAuthor' | artemisTranslate)
+            }}
+            <span [ngbTooltip]="complaint().submittedTime | artemisDate">{{ complaint().submittedTime | artemisTimeAgo }}</span>
+        </p>
         @if (complaint().accepted === true) {
-            <span
-                class="badge bg-success"
-                data-testid="complaint-status-badge"
-                [jhiTranslate]="complaint().complaintType === ComplaintType.COMPLAINT ? 'artemisApp.complaint.acceptedLong' : 'artemisApp.moreFeedback.acceptedLong'"
-            ></span>
+            <tumaet-ui-tag severity="success" data-testid="complaint-status-badge">
+                <span [jhiTranslate]="complaint().complaintType === ComplaintType.COMPLAINT ? 'artemisApp.complaint.acceptedLong' : 'artemisApp.moreFeedback.acceptedLong'"></span>
+            </tumaet-ui-tag>
         }
         @if (complaint().accepted === false) {
-            <span class="badge bg-danger" data-testid="complaint-status-badge" jhiTranslate="artemisApp.complaint.rejectedLong"></span>
+            <tumaet-ui-tag severity="danger" data-testid="complaint-status-badge">
+                <span jhiTranslate="artemisApp.complaint.rejectedLong"></span>
+            </tumaet-ui-tag>
         }
-    </p>
+    </div>
     <textarea
+        [attr.aria-label]="'artemisApp.complaint.title' | artemisTranslate"
         id="complainTextArea"
-        class="col-12 px-1"
+        class="h-full w-full resize-none! overflow-auto border-0 bg-transparent! p-0 text-(color:--body-color)! focus-visible:outline-offset-4"
         rows="4"
         [maxLength]="maxComplaintTextLimit()"
-        [(ngModel)]="complaint().complaintText"
+        [value]="complaint().complaintText ?? ''"
         [readOnly]="true"
-        [disabled]="true"
     ></textarea>
 </div>

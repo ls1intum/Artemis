@@ -13,7 +13,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
  * These tests protect against PlantUML diagram cross-contamination in exam mode.
  *
  * Context:
- * - The PlantUML extension is a root-level singleton (providedIn: 'root')
+ * - The PlantUML extension is a root-level singleton (@Service())
  * - In exam mode, multiple ProgrammingExerciseInstructionComponent instances coexist
  *   in the DOM simultaneously (hidden via [hidden], NOT destroyed)
  * - Each component shares the SAME singleton extension instance

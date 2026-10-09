@@ -9,12 +9,12 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiTableDirective, TumUiTableSortEvent, TumUiTableSortableColumnComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-tutor-leaderboard',
     templateUrl: './tutor-leaderboard.component.html',
-    imports: [TumUiTableDirective, TumUiTableSortableColumnComponent, TumUiTooltipDirective, TranslateDirective, FaIconComponent, RouterLink, ArtemisTranslatePipe],
+    imports: [TumAetUiTableDirective, TumAetUiTableSortableColumnComponent, TumAetUiTooltipDirective, TranslateDirective, FaIconComponent, RouterLink, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorLeaderboardComponent {
@@ -49,7 +49,7 @@ export class TutorLeaderboardComponent {
 
     readonly faExclamationTriangle = faExclamationTriangle;
 
-    onSortChange(event: TumUiTableSortEvent): void {
+    onSortChange(event: TumAetUiTableSortEvent): void {
         this.sortPredicate.set(event.field);
         this.reverseOrder.set(event.order > 0);
     }

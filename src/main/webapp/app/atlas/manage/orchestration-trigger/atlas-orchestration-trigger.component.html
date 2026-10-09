@@ -5,10 +5,13 @@
         (click)="triggerAtlasOrchestrator()"
         [disabled]="orchestrationRunning()"
         pTooltip="{{ 'artemisApp.atlasOrchestrator.tooltip' | artemisTranslate }}"
+        [attr.aria-label]="'artemisApp.atlasOrchestrator.button' | artemisTranslate"
         [class]="buttonClass()"
     >
         <fa-icon [icon]="faWandMagicSparkles" />
-        <span jhiTranslate="artemisApp.atlasOrchestrator.button"></span>
+        @if (showLabel()) {
+            <span jhiTranslate="artemisApp.atlasOrchestrator.button"></span>
+        }
     </button>
     <jhi-orchestration-result-dialog [(visible)]="orchestrationDialogVisible" [summaryMessage]="orchestrationDialogMessage()" [appliedActions]="orchestrationDialogActions()" />
 }

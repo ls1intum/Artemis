@@ -18,8 +18,8 @@ class AppleAppSiteAssociationResourceTest extends AbstractSpringIntegrationIndep
         AppleAppSiteAssociationResource.AppleAppSiteAssociation appleAppSiteAssociation = appleAppSiteAssociationResource.getAppleAppSiteAssociation().getBody();
 
         assertThat(appleAppSiteAssociation.applinks().details()).hasSize(1);
-        assertThat(appleAppSiteAssociation.applinks().details()[0].appID()).isEqualTo("2J3C6P6X3N.de.tum.cit.artemis");
-        assertThat(appleAppSiteAssociation.applinks().details()[0].paths()).hasSize(1);
-        assertThat(appleAppSiteAssociation.webcredentials().apps()[0]).isEqualTo("2J3C6P6X3N.de.tum.cit.artemis");
+        assertThat(appleAppSiteAssociation.applinks().details().getFirst().appID()).isEqualTo("2J3C6P6X3N.de.tum.cit.artemis");
+        assertThat(appleAppSiteAssociation.applinks().details().getFirst().paths()).hasSize(1);
+        assertThat(appleAppSiteAssociation.webcredentials().apps().getFirst()).isEqualTo("2J3C6P6X3N.de.tum.cit.artemis");
     }
 }

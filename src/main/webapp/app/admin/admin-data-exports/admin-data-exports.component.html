@@ -1,10 +1,10 @@
 <div>
     <h5 *adminTitleBarTitle id="admin-data-exports-page-heading" class="mb-0" jhiTranslate="artemisApp.dataExport.admin.title"></h5>
     <div *adminTitleBarActions>
-        <tum-ui-button size="small" (clicked)="openCreateModal()" data-testid="create-export-btn">
+        <tumaet-ui-button size="small" (clicked)="openCreateModal()" data-testid="create-export-btn">
             <fa-icon [icon]="faPlus" class="me-1" />
             <span jhiTranslate="artemisApp.dataExport.admin.createExport"></span>
-        </tum-ui-button>
+        </tumaet-ui-button>
     </div>
 
     @if (loading()) {
@@ -12,7 +12,7 @@
             <fa-icon [icon]="faSpinner" animation="spin" size="2x" />
         </div>
     } @else {
-        <table tumUiTable data-testid="data-exports-table">
+        <table tumAetUiTable data-testid="data-exports-table">
             <thead>
                 <tr>
                     <th scope="col"><span jhiTranslate="global.field.id"></span></th>
@@ -33,15 +33,15 @@
                         <td>{{ dataExport.createdDate | artemisDate }}</td>
                         <td>{{ dataExport.creationFinishedDate ? (dataExport.creationFinishedDate | artemisDate) : '-' }}</td>
                         <td>
-                            <tum-ui-tag [severity]="getStateSeverity(dataExport.dataExportState)" [rounded]="true" data-testid="state-tag">
+                            <tumaet-ui-tag [severity]="getStateSeverity(dataExport.dataExportState)" [rounded]="true" data-testid="state-tag">
                                 <fa-icon [icon]="getStateIcon(dataExport.dataExportState)" class="me-1" />
                                 {{ 'artemisApp.dataExport.admin.state.' + dataExport.dataExportState | artemisTranslate }}
-                            </tum-ui-tag>
+                            </tumaet-ui-tag>
                         </td>
                         <td>
                             <div class="flex items-center justify-end gap-2">
                                 @if (dataExport.downloadable) {
-                                    <tum-ui-button
+                                    <tumaet-ui-button
                                         severity="success"
                                         size="small"
                                         (clicked)="downloadExport(dataExport)"
@@ -50,11 +50,12 @@
                                     >
                                         <fa-icon [icon]="faDownload" class="me-1" />
                                         <span class="hidden md:inline" jhiTranslate="entity.action.download"></span>
-                                    </tum-ui-button>
+                                    </tumaet-ui-button>
                                 }
                                 @if (canCancel(dataExport)) {
                                     <button
-                                        tumUiButton
+                                        type="button"
+                                        tumAetUiButton
                                         severity="danger"
                                         size="small"
                                         [renderButtonStyle]="false"
@@ -81,7 +82,7 @@
 
         @if (totalRecords() > 0) {
             <div class="flex justify-center mt-3">
-                <tum-ui-paginator
+                <tumaet-ui-paginator
                     [page]="first() / rows()"
                     [pageSize]="rows()"
                     [totalRecords]="totalRecords()"

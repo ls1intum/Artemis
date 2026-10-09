@@ -157,7 +157,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         if (lecture1.getLectureUnits().getFirst() instanceof AttachmentVideoUnit unit) {
-            String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit);
+            String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit, "v1:test-fingerprint", false);
             PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", PyrisRunState.FINISHED, null,
                     lecture1.getLectureUnits().getFirst().getId(), null);
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
@@ -185,7 +185,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         if (lecture1.getLectureUnits().getFirst() instanceof AttachmentVideoUnit unit) {
-            String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit);
+            String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit, "v1:test-fingerprint", false);
             PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", PyrisRunState.RUNNING, null,
                     lecture1.getLectureUnits().getFirst().getId(), null);
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
@@ -227,7 +227,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         if (lecture1.getLectureUnits().getFirst() instanceof AttachmentVideoUnit unit) {
-            String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit);
+            String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit, "v1:test-fingerprint", false);
             PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", PyrisRunState.FAILED, null,
                     lecture1.getLectureUnits().getFirst().getId(), null);
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
@@ -290,7 +290,32 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
             assertThat(lectureUnitLink).isEqualTo(expectedUrl);
         });
 
-        pyrisWebhookService.addLectureUnitToPyrisDB(testUnit);
+        pyrisWebhookService.addLectureUnitToPyrisDB(testUnit, "v1:test-fingerprint", false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testVideoUnitWithAttachmentWithoutStoredFileIsSentAsVideoOnly() {
+        activateIrisFor(lecture1.getCourse());
+        AttachmentVideoUnit videoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        videoUnit.setLecture(lecture1);
+        videoUnit.setVideoSource("https://example.com/video.mp4");
+        lecture1.addLectureUnit(videoUnit);
+        lecture1 = lectureRepository.save(lecture1);
+        videoUnit = attachmentVideoUnitTestRepository.save(videoUnit);
+        // An attachment row whose file reference is gone, as left behind by imported units
+        Attachment danglingAttachment = videoUnit.getAttachment();
+        danglingAttachment.setLink(null);
+        attachmentRepository.save(danglingAttachment);
+
+        // The DTO omits empty values, so "no PDF" and "no link" arrive as absent fields, exactly as for a unit without an attachment
+        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+            assertThat(dto.pyrisLectureUnit().pdfFile()).isNullOrEmpty();
+            assertThat(dto.pyrisLectureUnit().lectureUnitLink()).isNullOrEmpty();
+        });
+
+        String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(videoUnit, "v1:test-fingerprint", false);
+        assertThat(jobToken).isNotNull();
     }
 
     @Test
@@ -309,7 +334,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
 
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
 
-        String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unitWithTranscription);
+        String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unitWithTranscription, "v1:test-fingerprint", false);
         assertThat(jobToken).isNotNull();
     }
 
@@ -376,7 +401,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         unit = attachmentVideoUnitTestRepository.save(unit);
 
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
-        String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit);
+        String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unit, "v1:test-fingerprint", false);
         assertThat(jobToken).isNotNull();
 
         LectureUnitProcessingState processingState = new LectureUnitProcessingState(unit);

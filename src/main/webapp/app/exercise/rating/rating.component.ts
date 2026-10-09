@@ -24,11 +24,11 @@ export class RatingComponent {
     readonly result = input<Result>();
     participation = input.required<StudentParticipation>();
     readonly isOwnerOfParticipation = input<boolean>();
-    readonly starSize = input('24');
+    readonly starSize = input('18');
     /**
-     * `stacked` is the page-level callout used by the exercise result pages.
+     * `stacked` puts the prompt above the stars, as the exercise result pages show it.
      * `inline` puts the prompt and the stars on one row for hosts with a column
-     * to spare — a side panel, an editor's chrome — and wraps when there is not.
+     * to spare (a side panel, an editor's chrome) and wraps when there is not.
      */
     readonly layout = input<'stacked' | 'inline'>('stacked');
 

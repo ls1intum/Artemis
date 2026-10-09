@@ -71,6 +71,9 @@ class BuildLogEntryFileStorageTest {
     @Mock
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
+    @Mock
+    private FailedBuildLogService failedBuildLogService;
+
     @TempDir
     Path buildLogsPath;
 
@@ -78,8 +81,8 @@ class BuildLogEntryFileStorageTest {
 
     @BeforeEach
     void setUp() {
-        buildLogEntryService = new BuildLogEntryService(buildLogEntryRepository, programmingSubmissionRepository, profileService, buildJobRepository,
-                programmingExerciseRepository);
+        buildLogEntryService = new BuildLogEntryService(buildLogEntryRepository, programmingSubmissionRepository, profileService, buildJobRepository, programmingExerciseRepository,
+                failedBuildLogService);
         ReflectionTestUtils.setField(buildLogEntryService, "buildLogsPath", buildLogsPath);
         ReflectionTestUtils.setField(buildLogEntryService, "expiryDays", EXPIRY_DAYS);
     }

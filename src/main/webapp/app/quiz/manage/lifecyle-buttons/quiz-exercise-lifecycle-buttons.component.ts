@@ -10,7 +10,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonDirective, TumUiPopoverComponent, TumUiPopoverTriggerDirective, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.model';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -27,11 +27,11 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         TranslateDirective,
         DeleteButtonDirective,
         ArtemisTranslatePipe,
-        TumUiButtonDirective,
-        TumUiTagComponent,
-        TumUiTooltipDirective,
-        TumUiPopoverComponent,
-        TumUiPopoverTriggerDirective,
+        TumAetUiButtonDirective,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
     ],
 })
 export class QuizExerciseLifecycleButtonsComponent {

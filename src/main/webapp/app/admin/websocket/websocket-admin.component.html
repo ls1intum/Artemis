@@ -17,15 +17,15 @@
     </p>
 
     <div class="flex items-center gap-2 mb-3" data-testid="action-buttons">
-        <tum-ui-button size="small" variant="outlined" (clicked)="loadNodes()" [disabled]="loading()" data-testid="refresh-button">
+        <tumaet-ui-button size="small" variant="outlined" (clicked)="loadNodes()" [disabled]="loading()" data-testid="refresh-button">
             <fa-icon [icon]="faSync" />
             <span class="ms-2" jhiTranslate="artemisApp.websocketAdmin.refreshNodes"></span>
-        </tum-ui-button>
-        <tum-ui-button size="small" (clicked)="reconnect()" [disabled]="reconnecting() || loading() || coreNodes().length === 0" data-testid="reconnect-all-button">
+        </tumaet-ui-button>
+        <tumaet-ui-button size="small" (clicked)="reconnect()" [disabled]="reconnecting() || loading() || coreNodes().length === 0" data-testid="reconnect-all-button">
             <fa-icon [icon]="faPlug" />
             <span class="ms-2" jhiTranslate="artemisApp.websocketAdmin.reconnectAll"></span>
-        </tum-ui-button>
-        <tum-ui-button
+        </tumaet-ui-button>
+        <tumaet-ui-button
             size="small"
             severity="danger"
             variant="outlined"
@@ -35,11 +35,11 @@
         >
             <fa-icon [icon]="faPowerOff" />
             <span class="ms-2" jhiTranslate="artemisApp.websocketAdmin.disconnectAll"></span>
-        </tum-ui-button>
+        </tumaet-ui-button>
     </div>
 
     @if (nodes().length > 0) {
-        <table tumUiTable data-testid="nodes-table">
+        <table tumAetUiTable data-testid="nodes-table">
             <thead>
                 <tr>
                     <th scope="col" jhiTranslate="artemisApp.websocketAdmin.name"></th>
@@ -67,10 +67,15 @@
                             }
                         </td>
                         <td>
-                            <tum-ui-tag class="whitespace-nowrap" severity="info" [value]="'artemisApp.websocketAdmin.coreNode' | artemisTranslate" data-testid="node-type-tag" />
+                            <tumaet-ui-tag
+                                class="whitespace-nowrap"
+                                severity="info"
+                                [value]="'artemisApp.websocketAdmin.coreNode' | artemisTranslate"
+                                data-testid="node-type-tag"
+                            />
                         </td>
                         <td>
-                            <tum-ui-tag
+                            <tumaet-ui-tag
                                 class="whitespace-nowrap"
                                 [severity]="node.brokerConnected ? 'success' : 'warn'"
                                 [value]="(node.brokerConnected ? 'artemisApp.websocketAdmin.connected' : 'artemisApp.websocketAdmin.disconnected') | artemisTranslate"
@@ -79,7 +84,7 @@
                         </td>
                         <td>
                             @if (node.local) {
-                                <tum-ui-tag
+                                <tumaet-ui-tag
                                     class="whitespace-nowrap"
                                     severity="success"
                                     [value]="'artemisApp.websocketAdmin.thisNode' | artemisTranslate"
@@ -88,8 +93,8 @@
                             }
                         </td>
                         <td>
-                            <tum-ui-button-group data-testid="node-actions">
-                                <tum-ui-button
+                            <tumaet-ui-button-group data-testid="node-actions">
+                                <tumaet-ui-button
                                     size="small"
                                     severity="danger"
                                     variant="outlined"
@@ -99,8 +104,8 @@
                                 >
                                     <fa-icon [icon]="faPowerOff" />
                                     <span class="ms-1" jhiTranslate="artemisApp.websocketAdmin.disconnect"></span>
-                                </tum-ui-button>
-                                <tum-ui-button
+                                </tumaet-ui-button>
+                                <tumaet-ui-button
                                     size="small"
                                     variant="outlined"
                                     (clicked)="connect(node.memberId)"
@@ -109,16 +114,16 @@
                                 >
                                     <fa-icon [icon]="faPlug" />
                                     <span class="ms-1" jhiTranslate="artemisApp.websocketAdmin.connect"></span>
-                                </tum-ui-button>
-                            </tum-ui-button-group>
+                                </tumaet-ui-button>
+                            </tumaet-ui-button-group>
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
     } @else {
-        <tum-ui-message severity="info" data-testid="no-nodes-message">
+        <tumaet-ui-message severity="info" data-testid="no-nodes-message">
             <span jhiTranslate="artemisApp.websocketAdmin.noNodes"></span>
-        </tum-ui-message>
+        </tumaet-ui-message>
     }
 </div>

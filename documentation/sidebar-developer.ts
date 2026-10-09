@@ -22,11 +22,11 @@ const sidebars: SidebarsConfig = {
                         'guidelines/client-development',
                         'guidelines/client-theming',
                         'guidelines/client-tests',
-                        'guidelines/tum-ui-kit',
+                        'guidelines/tum-aet-ui-kit',
                         {
                             type: 'doc',
-                            label: 'TUM UI component reference',
-                            id: 'tum-ui',
+                            label: 'TUM AET UI component reference',
+                            id: 'tum-aet-ui',
                         },
                     ],
                 },
@@ -36,6 +36,7 @@ const sidebars: SidebarsConfig = {
                     items: [
                         'guidelines/server-development',
                         'guidelines/rest-api',
+                        'guidelines/websocket',
                         'guidelines/server-tests',
                         'guidelines/database',
                         'guidelines/entity-ownership',

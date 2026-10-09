@@ -150,7 +150,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
         var programmingExSCAEnabled = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage, TEST_PREFIX);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExSCAEnabled);
         programmingExSCAEnabled = programmingExerciseRepository.save(programmingExSCAEnabled);
-        programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExSCAEnabled.getId()).orElseThrow();
+        programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExSCAEnabled.getId()).orElseThrow();
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExSCAEnabled);
         // Change the first category
         var categoryIterator = programmingExSCAEnabled.getStaticCodeAnalysisCategories().iterator();
@@ -196,8 +196,8 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     void testResetCategories(ProgrammingLanguage programmingLanguage) throws Exception {
         // Create a programming exercise with real categories
         var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(true, programmingLanguage, TEST_PREFIX);
-        ProgrammingExercise exercise = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(course.getExercises().iterator().next().getId()).orElseThrow();
+        ProgrammingExercise exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(course.getExercises().iterator().next().getId())
+                .orElseThrow();
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, exercise);
         exercise = programmingExerciseRepository.save(exercise);
         staticCodeAnalysisService.createDefaultCategories(exercise);
@@ -341,7 +341,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
 
         staticCodeAnalysisCategoryRepository.saveAll(categories);
 
-        programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseSCAEnabled.getId()).orElseThrow();
+        programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseSCAEnabled.getId()).orElseThrow();
 
         var oldTargetCategoryIds = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExerciseSCAEnabled.getId()).stream().map(StaticCodeAnalysisCategory::getId)
                 .toList();

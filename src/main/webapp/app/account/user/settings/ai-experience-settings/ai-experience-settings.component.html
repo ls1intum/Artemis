@@ -6,7 +6,7 @@
 
 <h5 jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.yourAiMode"></h5>
 
-<tum-ui-card class="mt-3 block">
+<tumaet-ui-card class="mt-3 block">
     @if (currentSelection() === LLMSelectionDecision.CLOUD_AI) {
         <h6 class="font-bold" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.cloudTitle"></h6>
         <p jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.cloudDescription"></p>
@@ -32,17 +32,17 @@
 
     <div class="mt-3 flex items-center gap-3">
         @if (currentSelection()) {
-            <tum-ui-button (clicked)="openSelectionModal()">
+            <tumaet-ui-button (clicked)="openSelectionModal()">
                 <span jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.changeSelection"></span>
-            </tum-ui-button>
+            </tumaet-ui-button>
         } @else {
-            <tum-ui-button (clicked)="openSelectionModal()">
+            <tumaet-ui-button (clicked)="openSelectionModal()">
                 <span jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.chooseNow"></span>
-            </tum-ui-button>
+            </tumaet-ui-button>
         }
         <a routerLink="/ai-experience-info" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.learnMore"></a>
     </div>
-</tum-ui-card>
+</tumaet-ui-card>
 
 <hr />
 
@@ -61,7 +61,7 @@
     <div class="mt-2">
         <button
             type="button"
-            tumUiButton
+            tumAetUiButton
             severity="danger"
             size="small"
             jhiDeleteButton

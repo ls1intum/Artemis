@@ -32,12 +32,13 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseAtlasService;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
-@FeatureUsage("learner-profile/learner-profile")
+@FeatureUsage(UserFeature.LEARNER_PROFILE)
 @RestController
 @RequestMapping("api/atlas/")
 public class CourseLearnerProfileResource {

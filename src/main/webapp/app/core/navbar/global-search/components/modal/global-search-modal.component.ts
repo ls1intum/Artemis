@@ -52,12 +52,12 @@ export class GlobalSearchModalComponent implements OnDestroy {
     // Owns the filter composition (tokens, value menu, guided picker, chip edit). The component keeps the search
     // pipeline, keyboard navigation, results, view, and overlay; it wires the two side-effects the store needs.
     protected readonly filter = inject(GlobalSearchFilterService);
+    private readonly availability = inject(IrisSearchAvailabilityService);
+    private readonly lectureSearchService = inject(LectureSearchService);
 
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowDown = faArrowDown;
     protected readonly searchInputComponent = viewChild<SearchInputComponent>(SearchInputComponent);
-    private readonly availability = inject(IrisSearchAvailabilityService);
-    private readonly lectureSearchService = inject(LectureSearchService);
 
     // Filter composition state + derived views, owned by GlobalSearchFilterService and re-exposed by reference so the
     // template and existing tests address them on the component unchanged while the logic lives in the store.
@@ -610,6 +610,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 break;
             case 'Enter':
                 // Enter on a keyboard-selected chip re-picks it, the same as clicking it.
+                if (event.defaultPrevented || (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))) {
+                    break;
+                }
                 if (this.selectedChip() >= 0) {
                     event.preventDefault();
                     this.onChipSelected(this.selectedChip());

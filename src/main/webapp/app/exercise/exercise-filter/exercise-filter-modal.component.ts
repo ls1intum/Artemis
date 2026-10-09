@@ -42,9 +42,9 @@ import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
     ],
 })
 export class ExerciseFilterModalComponent implements OnInit {
-    protected readonly faFilter = faFilter;
-
     private activeModal = inject(NgbActiveModal);
+
+    protected readonly faFilter = faFilter;
 
     readonly filterApplied = output<ExerciseFilterResults>();
 

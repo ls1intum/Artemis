@@ -1,11 +1,11 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User } from 'app/account/user/user.model';
 import { UpdateLLMSelectionDecisionDto } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class UserService {
     private http = inject(HttpClient);
 

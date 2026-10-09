@@ -6,7 +6,7 @@ import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures
 import { onError } from 'app/foundation/util/global.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
@@ -16,9 +16,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class LectureUnitService {
     private httpClient = inject(HttpClient);
     private attachmentService = inject(AttachmentService);
@@ -76,15 +74,6 @@ export class LectureUnitService {
         return cloneWith(lectureUnit, {
             releaseDate: convertDateFromClient(lectureUnit.releaseDate),
         });
-    }
-
-    convertLectureUnitArrayDatesFromClient<T extends LectureUnit>(lectureUnits: T[]): T[] {
-        if (lectureUnits?.length) {
-            for (let _i = 0; _i < lectureUnits.length; _i++) {
-                lectureUnits[_i] = this.convertLectureUnitDatesFromClient(lectureUnits[_i]);
-            }
-        }
-        return lectureUnits;
     }
 
     convertLectureUnitResponseDatesFromServer<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
@@ -192,6 +181,8 @@ export class LectureUnitService {
 
 /**
  * DTO representing the processing status of a lecture unit.
+ * The stage fields carry the live stage ledger Iris reports with its heartbeats,
+ * so the status badge can render progress like "Indexing · 41/142".
  */
 export interface LectureUnitProcessingStatus {
     lectureUnitId: number;
@@ -199,6 +190,18 @@ export interface LectureUnitProcessingStatus {
     retryCount: number;
     startedAt?: string;
     errorKey?: string;
+    stageName?: string;
+    stageProgress?: number;
+    stageTotal?: number;
+    /** Server time of the worker's last lease renewal; absent for runs without a worker lease. */
+    lastHeartbeatAt?: string;
+    /**
+     * Client clock when this status was received. Liveness staleness is computed against this rather
+     * than against the server timestamp, so clock skew between browser and server cannot fake or
+     * hide a lost run: lease renewals arrive as updates every few seconds, and their receipt time is
+     * measured on the same clock the badge ticks with.
+     */
+    receivedAt?: number;
 }
 
 /**
@@ -210,6 +213,7 @@ export enum ProcessingPhase {
     INGESTING = 'INGESTING',
     DONE = 'DONE',
     FAILED = 'FAILED',
+    SKIPPED = 'SKIPPED',
 }
 
 /**
@@ -223,4 +227,27 @@ export interface LectureUnitCombinedStatus {
     startedAt?: string;
     processingErrorKey?: string;
     transcriptionStatus?: TranscriptionStatus;
+    stageName?: string;
+    stageProgress?: number;
+    stageTotal?: number;
+    lastHeartbeatAt?: string;
+}
+
+/**
+ * Map a combined status (REST or websocket payload) to the processing status the UI keeps per unit.
+ * The single place new observability fields have to be threaded through when the wire format grows.
+ */
+export function toProcessingStatus(status: LectureUnitCombinedStatus): LectureUnitProcessingStatus {
+    return {
+        lectureUnitId: status.lectureUnitId,
+        phase: status.processingPhase,
+        retryCount: status.retryCount,
+        startedAt: status.startedAt,
+        errorKey: status.processingErrorKey,
+        stageName: status.stageName,
+        stageProgress: status.stageProgress,
+        stageTotal: status.stageTotal,
+        lastHeartbeatAt: status.lastHeartbeatAt,
+        receivedAt: Date.now(),
+    };
 }

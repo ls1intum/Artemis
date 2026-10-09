@@ -1,12 +1,11 @@
 import { Component, computed, input, output, signal } from '@angular/core';
-import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faBell, faBellSlash, faBullhorn, faSliders } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faBellSlash, faBullhorn, faChevronDown, faSliders } from '@fortawesome/free-solid-svg-icons';
 import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
-import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonModule } from 'primeng/button';
+import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Component for selecting notification setting presets.
@@ -14,9 +13,8 @@ import { ButtonModule } from 'primeng/button';
  */
 @Component({
     selector: 'jhi-course-notification-preset-picker',
-    imports: [TranslateDirective, FaIconComponent, NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgClass, ButtonModule],
+    imports: [TranslateDirective, FaIconComponent, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective],
     templateUrl: './course-notification-preset-picker.component.html',
-    styleUrls: ['./course-notification-preset-picker.component.scss'],
 })
 export class CourseNotificationPresetPickerComponent {
     readonly availableCourseSettingPresets = input.required<CourseNotificationSettingPreset[]>();
@@ -24,6 +22,8 @@ export class CourseNotificationPresetPickerComponent {
     readonly isSmallButton = input<boolean>(false);
 
     readonly onPresetSelected = output<number>();
+
+    protected readonly faChevronDown = faChevronDown;
 
     // Custom preset (no `identifier`) falls back to the sliders icon; unknown identifiers use the default bell.
     private static readonly presetIcons: Record<string, IconDefinition> = {

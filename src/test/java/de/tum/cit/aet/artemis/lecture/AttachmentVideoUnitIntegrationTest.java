@@ -47,6 +47,8 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -67,6 +69,7 @@ import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEvent;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentDTO;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
@@ -78,6 +81,7 @@ import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
+@RecordApplicationEvents
 class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "attachmentunit"; // only lower case is supported
@@ -85,6 +89,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     private static final int SLIDE_COUNT = 3;
+
+    @Autowired
+    private ApplicationEvents applicationEvents;
 
     @Autowired
     private AttachmentRepository attachmentRepository;
@@ -398,6 +405,35 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_withDescription_publishesContentChangedEvent() throws Exception {
+        // The unit carries a non-blank description ("Lorem Ipsum" from setUp), so a content-changed event must fire.
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated());
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_changedDescription_publishesContentChangedEvent() throws Exception {
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(unit));
+        unit.setDescription("Genuinely changed description");
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(unit, unit.getAttachment(), null)).andExpect(status().isOk());
+        // The resource snapshots the pre-update description before the service applies the DTO, so a real edit publishes exactly once.
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_unchangedDescription_doesNotPublishEvent() throws Exception {
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(unit));
+        // PUT the unit back with its description unchanged — no content-bearing field changed, so no event fires.
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(unit, unit.getAttachment(), null)).andExpect(status().isOk());
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachmentVideoUnit_withUnitId_shouldReturnBadRequest() throws Exception {
         attachmentVideoUnit.setId(99L);
         request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isBadRequest());
@@ -468,6 +504,42 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(persistedAttachment.getAttachmentVideoUnit()).isEqualTo(attachmentVideoUnit2);
         assertThat(attachmentVideoUnit1.competencyLinks()).anyMatch(link -> Objects.equals(link.competency().id(), competency.getId()));
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of(competency.getId())), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnitWithoutAttachmentPart_shouldKeepTheAttachmentInStepWithTheUnit() throws Exception {
+        ZonedDateTime nextWeek = ZonedDateTime.now().plusWeeks(1);
+        attachmentVideoUnit.setReleaseDate(nextWeek);
+        attachment.setReleaseDate(nextWeek);
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var created = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+        // The student version leaves out the hidden slides, so a change of the details must keep it.
+        Attachment storedAttachment = attachmentRepository.findById(created.attachment().id()).orElseThrow();
+        storedAttachment.setStudentVersion("student-version.pdf");
+        attachmentRepository.save(storedAttachment);
+        String studentVersion = attachmentRepository.findById(created.attachment().id()).orElseThrow().getStudentVersion();
+        assertThat(studentVersion).endsWith("student-version.pdf");
+
+        // The automatic save of an item edited in place sends the details of the unit only: renamed, and visible at once.
+        var details = new AttachmentVideoUnit();
+        details.setId(created.id());
+        details.setName("Renamed slides");
+        details.setDescription(created.description());
+        details.setVideoSource(created.videoSource());
+        details.setReleaseDate(null);
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + created.id())
+                .file(createAttachmentVideoUnitPart(details, AttachmentUpdateIntent.NO_FILE_CHANGE)).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        request.performMvcRequest(builder).andExpect(status().isOk());
+
+        Attachment updatedAttachment = attachmentRepository.findById(created.attachment().id()).orElseThrow();
+        assertThat(updatedAttachment.getName()).isEqualTo("Renamed slides");
+        assertThat(updatedAttachment.getReleaseDate()).isNull();
+        assertThat(updatedAttachment.isVisibleToStudents()).isTrue();
+        assertThat(updatedAttachment.getStudentVersion()).isEqualTo(studentVersion);
+        assertThat(updatedAttachment.getLink()).isEqualTo(created.attachment().link());
+        assertThat(updatedAttachment.getVersion()).isEqualTo(created.attachment().version());
+        assertThat(attachmentVideoUnitRepository.findById(created.id()).orElseThrow().resolveReleaseDate()).isNull();
     }
 
     @Test

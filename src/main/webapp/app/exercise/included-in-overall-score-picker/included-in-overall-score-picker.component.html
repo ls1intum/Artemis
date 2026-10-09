@@ -1,5 +1,6 @@
 <div class="btn-group">
-    <div
+    <button
+        type="button"
         data-testid="picker-option"
         class="btn"
         [ngClass]="{
@@ -7,9 +8,11 @@
             'btn-default': includedInOverallScore() !== IncludedInOverallScore.INCLUDED_COMPLETELY,
         }"
         (click)="change(IncludedInOverallScore.INCLUDED_COMPLETELY)"
+        [attr.aria-pressed]="includedInOverallScore() === IncludedInOverallScore.INCLUDED_COMPLETELY"
         jhiTranslate="artemisApp.exercise.yes"
-    ></div>
-    <div
+    ></button>
+    <button
+        type="button"
         data-testid="picker-option"
         class="btn btn-default"
         [ngClass]="{
@@ -17,10 +20,12 @@
             'btn-default': includedInOverallScore() !== IncludedInOverallScore.INCLUDED_AS_BONUS,
         }"
         (click)="change(IncludedInOverallScore.INCLUDED_AS_BONUS)"
+        [attr.aria-pressed]="includedInOverallScore() === IncludedInOverallScore.INCLUDED_AS_BONUS"
         jhiTranslate="artemisApp.exercise.bonus"
-    ></div>
+    ></button>
     @if (allowNotIncluded()) {
-        <div
+        <button
+            type="button"
             data-testid="picker-option"
             class="btn btn-default"
             [ngClass]="{
@@ -28,7 +33,8 @@
                 'btn-default': includedInOverallScore() !== IncludedInOverallScore.NOT_INCLUDED,
             }"
             (click)="change(IncludedInOverallScore.NOT_INCLUDED)"
+            [attr.aria-pressed]="includedInOverallScore() === IncludedInOverallScore.NOT_INCLUDED"
             jhiTranslate="artemisApp.exercise.no"
-        ></div>
+        ></button>
     }
 </div>

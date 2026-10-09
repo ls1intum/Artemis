@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Observable, of } from 'rxjs';
@@ -43,7 +43,7 @@ function routeDataForError(error: HttpErrorResponse, correctionRound: number): O
     return of({ assessmentNotPossibleYet: getAssessmentNotPossibleYetState(error), correctionRound });
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class NewStudentParticipationResolver implements Resolve<TextAssessmentRouteData> {
     private textSubmissionService = inject(TextSubmissionService);
 
@@ -66,7 +66,7 @@ export class NewStudentParticipationResolver implements Resolve<TextAssessmentRo
     }
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class StudentParticipationResolver implements Resolve<TextAssessmentRouteData> {
     private textAssessmentService = inject(TextAssessmentService);
 

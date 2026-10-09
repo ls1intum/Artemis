@@ -6,7 +6,7 @@ import { faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-i
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { Router, RouterModule } from '@angular/router';
 import { BuildAgent } from 'app/localci/shared/entities/build-agent.model';
-import { TumUiButtonComponent, TumUiTableDirective, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { BuildAgentPauseAllModalComponent } from 'app/localci/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
 import { BuildAgentClearDistributedDataComponent } from 'app/localci/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
@@ -36,9 +36,9 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
         ArtemisTranslatePipe,
-        TumUiButtonComponent,
-        TumUiTableDirective,
-        TumUiTagComponent,
+        TumAetUiButtonComponent,
+        TumAetUiTableDirective,
+        TumAetUiTagComponent,
         BuildAgentPauseAllModalComponent,
         BuildAgentClearDistributedDataComponent,
     ],

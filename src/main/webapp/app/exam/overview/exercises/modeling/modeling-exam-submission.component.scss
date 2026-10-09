@@ -2,6 +2,7 @@
    canvas sits below a title row, a save button and a rule, so it can only ever overflow the card. */
 :host {
     display: flex;
+    flex: 1 1 auto;
     height: 100%;
     min-height: 0;
     flex-direction: column;

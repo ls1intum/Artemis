@@ -4,6 +4,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { admin, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { SEED_COURSES } from '../../../support/seedData';
+import { measure } from '../../../support/layout';
 
 const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
 
@@ -59,8 +60,10 @@ test.describe('Responsive modeling editor tile', { tag: '@fast' }, () => {
         await expect(explanationLabel).toContainText('Explanation');
         await expect(explanationResizer).toHaveAttribute('role', 'separator');
         await expect(explanationResizer).toHaveAttribute('aria-orientation', 'horizontal');
+        // The frame is already wider than 640px before the panel collapses, so the wait is for it to grow and not for an absolute width.
+        const frameWidthBeforeCollapse = (await frame.boundingBox())!.width;
         await page.getByRole('button', { name: 'Collapse panel' }).click();
-        await expect.poll(async () => (await frame.boundingBox())?.width ?? 0).toBeGreaterThan(640);
+        await expect.poll(async () => (await frame.boundingBox())?.width ?? 0).toBeGreaterThan(frameWidthBeforeCollapse + 100);
         const [textareaBox, explanationSurfaceBox, paletteBox, zoomBox, minimapBox] = await Promise.all([
             textarea.boundingBox(),
             explanationSurface.boundingBox(),
@@ -130,11 +133,16 @@ test.describe('Responsive modeling editor tile', { tag: '@fast' }, () => {
         await expect(explanationSurface).toBeVisible();
         await expect(textarea).toBeVisible();
         await expect(palette).toBeVisible();
+        // The editor lays itself out after the resize, so the boxes are read once they have settled and not on the frame of the resize.
+        const settledBox = async (locator: typeof frame) => {
+            const { left, top, width, height } = await measure(locator);
+            return { x: left, y: top, width, height };
+        };
         const [compactFrameBox, compactSurfaceBox, compactTextareaBox, compactPaletteBox] = await Promise.all([
-            frame.boundingBox(),
-            explanationSurface.boundingBox(),
-            textarea.boundingBox(),
-            palette.boundingBox(),
+            settledBox(frame),
+            settledBox(explanationSurface),
+            settledBox(textarea),
+            settledBox(palette),
         ]);
         expect(compactFrameBox).not.toBeNull();
         expect(compactSurfaceBox).not.toBeNull();

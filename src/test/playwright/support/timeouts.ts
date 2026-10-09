@@ -3,7 +3,7 @@
  * Values can be overridden via environment variables for different environments (CI vs local).
  *
  * CI uses longer timeouts (default values), local uses shorter ones for faster feedback.
- * Set environment variables in run-e2e-tests-local.sh or docker-compose for different values.
+ * Set environment variables in supporting_scripts/e2e/run-e2e-tests-local.sh or docker-compose for different values.
  */
 
 // Default timeouts (CI values — generous to handle parallel test load)

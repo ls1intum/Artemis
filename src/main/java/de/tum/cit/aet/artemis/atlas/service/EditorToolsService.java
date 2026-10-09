@@ -5,9 +5,11 @@ import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.MAX_T
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.appendAction;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.belongsToCourse;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.courseIdFromContext;
-import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.errorJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.isBlank;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markWorkerToolActivity;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missingCourseContextError;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.mutationErrorJson;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.mutationNoOpJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.parseTaxonomyOrThrow;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.tryReserveWriteSlot;
@@ -37,6 +39,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyAtlasMLNotificationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidationService;
@@ -46,8 +49,8 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * Write orchestrator tools that mutate or remove an existing competency in the current course:
- * {@code editCompetency} updates scalar fields and {@code deleteCompetency} removes the competency
- * and its links. Split from the former monolithic orchestrator tools service so the edit/delete
+ * {@code editCompetency} updates scalar fields and {@code deleteCompetency} removes an unlinked
+ * competency together with its competency relations. Split from the former monolithic orchestrator tools service so the edit/delete
  * surface is registered as its own {@link org.springframework.ai.tool.ToolCallbackProvider} bean.
  * <p>
  * Both tools are course-scoped through the Spring AI {@link ToolContext}, share the per-run write
@@ -65,6 +68,8 @@ public class EditorToolsService {
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
+    private final CompetencyRelationRepository competencyRelationRepository;
+
     private final CourseCompetencyService courseCompetencyService;
 
     private final CompetencyValidationService competencyValidator;
@@ -74,16 +79,19 @@ public class EditorToolsService {
     /**
      * Creates the editor tools service.
      *
-     * @param objectMapper               JSON serialiser for tool responses
-     * @param courseCompetencyRepository repository for competency lookups and scalar updates
-     * @param courseCompetencyService    service performing the cascading delete
-     * @param competencyValidator        validator enforcing competency update invariants
-     * @param atlasMLNotificationService notifies the AtlasML service of competency changes
+     * @param objectMapper                 JSON serialiser for tool responses
+     * @param courseCompetencyRepository   repository for competency lookups and scalar updates
+     * @param courseCompetencyService      service performing the cascading delete
+     * @param competencyValidator          validator enforcing competency update invariants
+     * @param competencyRelationRepository counts the relations removed together with a deleted competency
+     * @param atlasMLNotificationService   notifies the AtlasML service of competency changes
      */
     public EditorToolsService(JsonMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, CourseCompetencyService courseCompetencyService,
-            CompetencyValidationService competencyValidator, CompetencyAtlasMLNotificationService atlasMLNotificationService) {
+            CompetencyValidationService competencyValidator, CompetencyAtlasMLNotificationService atlasMLNotificationService,
+            CompetencyRelationRepository competencyRelationRepository) {
         this.objectMapper = objectMapper;
         this.courseCompetencyRepository = courseCompetencyRepository;
+        this.competencyRelationRepository = competencyRelationRepository;
         this.courseCompetencyService = courseCompetencyService;
         this.competencyValidator = competencyValidator;
         this.atlasMLNotificationService = atlasMLNotificationService;
@@ -108,23 +116,24 @@ public class EditorToolsService {
             @ToolParam(description = "new Bloom taxonomy level (null to keep current)", required = false) String taxonomy,
             @ToolParam(description = "one-sentence reason this edit is necessary and why it still fits every currently-linked exercise/lecture unit") String justification,
             ToolContext toolContext) {
+        markWorkerToolActivity(toolContext);
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
-            return missingCourseContextError(objectMapper);
+            return missingCourseContextError(objectMapper, toolContext);
         }
         if (!tryReserveWriteSlot(toolContext)) {
-            return writeQuotaError(objectMapper);
+            return writeQuotaError(objectMapper, toolContext);
         }
         if (competencyId == null) {
-            return errorJson(objectMapper, "competencyId is required.");
+            return mutationErrorJson(objectMapper, "competencyId is required.", toolContext);
         }
         if (title != null && title.length() > MAX_TITLE_LENGTH) {
-            return errorJson(objectMapper, "title must be at most " + MAX_TITLE_LENGTH + " characters.");
+            return mutationErrorJson(objectMapper, "title must be at most " + MAX_TITLE_LENGTH + " characters.", toolContext);
         }
         if (description != null && description.length() > MAX_DESCRIPTION_LENGTH) {
-            return errorJson(objectMapper, "description must be at most " + MAX_DESCRIPTION_LENGTH + " characters.");
+            return mutationErrorJson(objectMapper, "description must be at most " + MAX_DESCRIPTION_LENGTH + " characters.", toolContext);
         }
-        String justificationError = validateJustification(objectMapper, justification);
+        String justificationError = validateJustification(objectMapper, justification, toolContext);
         if (justificationError != null) {
             return justificationError;
         }
@@ -135,11 +144,11 @@ public class EditorToolsService {
         // touched (see deleteCompetency).
         Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findById(competencyId);
         if (competencyOpt.isEmpty()) {
-            return errorJson(objectMapper, "Competency not found: " + competencyId);
+            return mutationErrorJson(objectMapper, "Competency not found: " + competencyId, toolContext);
         }
         CourseCompetency existing = competencyOpt.get();
         if (!belongsToCourse(existing, courseId)) {
-            return errorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.");
+            return mutationErrorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.", toolContext);
         }
         List<String> changes = new ArrayList<>();
         if (!isBlank(title) && !title.trim().equals(existing.getTitle())) {
@@ -159,7 +168,7 @@ public class EditorToolsService {
                 parsedTaxonomy = parseTaxonomyOrThrow(taxonomy);
             }
             catch (IllegalArgumentException ex) {
-                return errorJson(objectMapper, ex.getMessage());
+                return mutationErrorJson(objectMapper, ex.getMessage(), toolContext);
             }
             if (parsedTaxonomy != existing.getTaxonomy()) {
                 existing.setTaxonomy(parsedTaxonomy);
@@ -167,13 +176,13 @@ public class EditorToolsService {
             }
         }
         if (changes.isEmpty()) {
-            return toJson(objectMapper, Map.of("status", "noop", "message", "No fields changed for competency " + competencyId + "."));
+            return mutationNoOpJson(objectMapper, "No fields changed for competency " + competencyId + ".", toolContext);
         }
         try {
             competencyValidator.checkForUpdate(existing);
         }
         catch (BadRequestAlertException ex) {
-            return errorJson(objectMapper, ex.getMessage());
+            return mutationErrorJson(objectMapper, ex.getMessage(), toolContext);
         }
         CourseCompetency saved;
         // Direct repository.save instead of CourseCompetencyService.updateCourseCompetency on
@@ -186,7 +195,7 @@ public class EditorToolsService {
         }
         catch (DataAccessException ex) {
             log.warn("editCompetency failed for competency {}: {}", competencyId, ex.getMessage());
-            return errorJson(objectMapper, "Failed to update competency.");
+            return mutationErrorJson(objectMapper, "Failed to update competency.", toolContext);
         }
         String detail = "Updated " + String.join(", ", changes) + " for competency " + saved.getTitle() + ".";
         appendAction(toolContext, AppliedActionDTO.edit(saved.getId(), saved.getTitle(), detail, justification.trim()));
@@ -198,40 +207,50 @@ public class EditorToolsService {
 
     /**
      * LLM tool: deletes a competency from the current course and appends a DELETE action.
+     * Refuses while exercise or lecture-unit links remain, because those links carry the evidence the
+     * orchestrator must re-home first. Incoming and outgoing competency relations are removed with the
+     * competency, since no agent tool can remove them beforehand.
      *
      * @param competencyId  id of the competency to delete
      * @param justification one-sentence reason this competency is obsolete (shown to the instructor in the audit log)
      * @param toolContext   Spring AI tool context
-     * @return JSON status on success, or a JSON error
+     * @return JSON status with the number of removed relations on success, or a JSON error
      */
-    @Tool(description = "Delete a competency from the current course. Cascades to competency relations, progress records, and exercise/lecture-unit links. "
-            + "Use only when the competency is no longer needed after the current exercise change.")
+    @Tool(description = "Delete an unlinked competency from the current course. Refuses deletion while exercise links or lecture-unit links remain. "
+            + "Also removes the competency's incoming and outgoing competency relations. Use only when the competency is no longer needed after the current exercise change.")
     public String deleteCompetency(@ToolParam(description = "id of the competency to delete") Long competencyId,
             @ToolParam(description = "one-sentence reason this competency is obsolete — typically that its only linked exercise was deleted or moved") String justification,
             ToolContext toolContext) {
+        markWorkerToolActivity(toolContext);
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
-            return missingCourseContextError(objectMapper);
+            return missingCourseContextError(objectMapper, toolContext);
         }
         if (!tryReserveWriteSlot(toolContext)) {
-            return writeQuotaError(objectMapper);
+            return writeQuotaError(objectMapper, toolContext);
         }
         if (competencyId == null) {
-            return errorJson(objectMapper, "competencyId is required.");
+            return mutationErrorJson(objectMapper, "competencyId is required.", toolContext);
         }
-        String justificationError = validateJustification(objectMapper, justification);
+        String justificationError = validateJustification(objectMapper, justification, toolContext);
         if (justificationError != null) {
             return justificationError;
         }
         Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(competencyId);
         if (competencyOpt.isEmpty()) {
-            return errorJson(objectMapper, "Competency not found: " + competencyId);
+            return mutationErrorJson(objectMapper, "Competency not found: " + competencyId, toolContext);
         }
         CourseCompetency competency = competencyOpt.get();
         if (!belongsToCourse(competency, courseId)) {
-            return errorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.");
+            return mutationErrorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.", toolContext);
         }
 
+        if (!competency.getExerciseLinks().isEmpty() || !competency.getLectureUnitLinks().isEmpty()) {
+            return mutationErrorJson(objectMapper, "Competency " + competencyId + " still has linked learning objects. Reassign or remove every link before deletion.",
+                    toolContext);
+        }
+        // Counted before the delete so the audit entry reports which relations went with the competency.
+        long removedRelationCount = competencyRelationRepository.countByHeadCompetencyIdOrTailCompetencyId(competencyId, competencyId);
         String title = competency.getTitle();
         Course course = competency.getCourse();
         // Snapshot the entity for Atlas ML before the cascade wipes it; notification is sent only after the delete commits.
@@ -248,15 +267,19 @@ public class EditorToolsService {
         }
         catch (DataAccessException ex) {
             log.warn("deleteCompetency failed for competency {}: {}", competencyId, ex.getMessage());
-            return errorJson(objectMapper, "Failed to delete competency.");
+            return mutationErrorJson(objectMapper, "Failed to delete competency.", toolContext);
         }
         // Append before the external Atlas ML notification — consistent with the other write
         // tools and ensures the audit DTO is in the buffer even if the downstream notify call
         // throws (the DB delete has already committed).
-        appendAction(toolContext, AppliedActionDTO.delete(competencyId, title, "Deleted competency " + title + ".", justification.trim()));
+        String detail = "Deleted competency " + title + ".";
+        if (removedRelationCount > 0) {
+            detail += " Removed " + removedRelationCount + (removedRelationCount == 1 ? " competency relation." : " competency relations.");
+        }
+        appendAction(toolContext, AppliedActionDTO.delete(competencyId, title, detail, justification.trim()));
         if (competencyForAtlasMl != null) {
             atlasMLNotificationService.notifyAtlasML(List.of(competencyForAtlasMl), OperationTypeDTO.DELETE, "orchestrator competency deletion");
         }
-        return toJson(objectMapper, Map.of("status", "ok", "deletedId", competencyId));
+        return toJson(objectMapper, Map.of("status", "ok", "deletedId", competencyId, "removedRelationCount", removedRelationCount));
     }
 }

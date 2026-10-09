@@ -3,8 +3,8 @@ import { round } from 'app/foundation/util/utils';
 import { QuizStatistic } from 'app/quiz/shared/entities/quiz-statistic.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
-import { TumUiBarChartConfig, TumUiChartDatumContext } from '@tumaet/ui-angular';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
+import { TumAetUiBarChartConfig, TumAetUiChartDatumContext } from '@tumaet/ui-angular';
 
 @Component({
     template: '',
@@ -29,7 +29,7 @@ export abstract class AbstractQuizStatisticComponent {
     protected yAxisLabel = signal('');
 
     readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.chartColors()));
-    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+    readonly chartConfig = computed<TumAetUiBarChartConfig>(() => ({
         xAxis: { label: this.xAxisLabel() },
         yAxis: { label: this.yAxisLabel(), max: this.maxScale() },
         tooltip: { label: (item) => this.formatTooltipLabel(item) },
@@ -99,7 +99,7 @@ export abstract class AbstractQuizStatisticComponent {
      * (e.g. correct answers, point ranges).
      * @param item the hovered bar
      */
-    protected formatTooltipLabel(item: TumUiChartDatumContext): string {
+    protected formatTooltipLabel(item: TumAetUiChartDatumContext): string {
         return this.tooltipLine('artemisApp.showStatistic.tooltip.participantShare', item.value);
     }
 

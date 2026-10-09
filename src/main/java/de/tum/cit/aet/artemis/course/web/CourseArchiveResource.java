@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
@@ -55,7 +56,7 @@ import de.tum.cit.aet.artemis.course.service.CourseOperationProgressService;
  * REST controller for archiving and cleaning course.
  */
 @Profile(PROFILE_CORE)
-@FeatureUsage("management/archive")
+@FeatureUsage(UserFeature.COURSE_ARCHIVE)
 @RestController
 @RequestMapping("api/course/")
 @Lazy
@@ -188,6 +189,7 @@ public class CourseArchiveResource {
      * @return the ResponseEntity with status 200 (OK) and with body containing
      *         a set of DTOs, which contain the courses with id, title, semester, color, icon
      */
+    @FeatureUsage(UserFeature.COURSE_DASHBOARD)
     @GetMapping("courses/for-archive")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)

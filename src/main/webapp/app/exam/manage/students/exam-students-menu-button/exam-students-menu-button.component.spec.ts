@@ -1,18 +1,27 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExamStudentsMenuButtonComponent } from './exam-students-menu-button.component';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MenuItem } from 'primeng/api';
+import { faPlus, faUser } from '@fortawesome/free-solid-svg-icons';
 import { By } from '@angular/platform-browser';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ExamStudentsMenuButtonComponent, ExamStudentsMenuItem } from './exam-students-menu-button.component';
 
 describe('ExamStudentsMenuButtonComponent', () => {
     let component: ExamStudentsMenuButtonComponent;
     let fixture: ComponentFixture<ExamStudentsMenuButtonComponent>;
+    let firstCommand: Mock<() => void>;
+    let dangerCommand: Mock<() => void>;
 
-    const items: MenuItem[] = [{ label: 'Item 1', icon: 'pi pi-plus' }];
+    const menuEntries = () => Array.from(document.body.querySelectorAll<HTMLElement>('[data-testid="exam-students-menu-entry"]'));
 
     beforeEach(async () => {
+        firstCommand = vi.fn();
+        dangerCommand = vi.fn();
+        const items: ExamStudentsMenuItem[] = [
+            { label: 'Item 1', icon: faPlus, command: firstCommand },
+            { label: 'Item 2', disabled: true, tooltip: 'Hint', command: vi.fn() },
+            { label: 'Item 3', danger: true, command: dangerCommand },
+        ];
         await TestBed.configureTestingModule({
             imports: [ExamStudentsMenuButtonComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
@@ -22,7 +31,8 @@ describe('ExamStudentsMenuButtonComponent', () => {
         component = fixture.componentInstance;
         fixture.componentRef.setInput('model', items);
         fixture.componentRef.setInput('label', 'Menu Label');
-        fixture.componentRef.setInput('buttonIconClass', 'fa fa-user');
+        fixture.componentRef.setInput('buttonIcon', faUser);
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -30,34 +40,53 @@ describe('ExamStudentsMenuButtonComponent', () => {
     });
 
     it('should create and initialize inputs', () => {
-        fixture.detectChanges();
         expect(component).toBeTruthy();
-        expect(component.model()).toEqual(items);
+        expect(component.model()).toHaveLength(3);
         expect(component.label()).toBe('Menu Label');
-        expect(component.buttonIconClass()).toBe('fa fa-user');
     });
 
-    it('should trigger toggleMenu when button is clicked in template', () => {
-        fixture.detectChanges();
-        const toggleSpy = vi.spyOn(component, 'toggleMenu');
-        const button = fixture.debugElement.query(By.css('button'));
-        expect(button).not.toBeNull();
-
-        button.nativeElement.click();
-
-        expect(toggleSpy).toHaveBeenCalledOnce();
+    it('should render no entries until the trigger is clicked', () => {
+        expect(menuEntries()).toHaveLength(0);
     });
 
-    it('should toggle menu on toggleMenu', () => {
+    it('should list every entry when the trigger is clicked and run the command of a clicked entry', () => {
+        fixture.debugElement.query(By.css('button')).nativeElement.click();
         fixture.detectChanges();
-        const menu = component.menu();
-        expect(menu).not.toBeNull();
-        const toggleSpy = vi.spyOn(menu!, 'toggle');
 
-        const mockEvent = new MouseEvent('click');
-        component.toggleMenu(mockEvent);
+        const entries = menuEntries();
+        expect(entries).toHaveLength(3);
 
-        expect(toggleSpy).toHaveBeenCalledOnce();
-        expect(toggleSpy).toHaveBeenCalledWith(mockEvent);
+        entries[0].click();
+
+        expect(firstCommand).toHaveBeenCalledOnce();
+    });
+
+    it('should mark a disabled entry as disabled and not run its command', () => {
+        fixture.debugElement.query(By.css('button')).nativeElement.click();
+        fixture.detectChanges();
+
+        const disabledEntry = menuEntries()[1];
+        expect(disabledEntry.getAttribute('aria-disabled')).toBe('true');
+
+        disabledEntry.click();
+
+        expect(component.model()[1].command).not.toHaveBeenCalled();
+    });
+
+    it('should render a destructive entry in the danger colour', () => {
+        fixture.debugElement.query(By.css('button')).nativeElement.click();
+        fixture.detectChanges();
+
+        expect(menuEntries()[2].classList).toContain('text-state-danger');
+    });
+
+    it('should not open the menu when the trigger is disabled', () => {
+        fixture.componentRef.setInput('disabled', true);
+        fixture.detectChanges();
+
+        fixture.debugElement.query(By.css('button')).nativeElement.click();
+        fixture.detectChanges();
+
+        expect(menuEntries()).toHaveLength(0);
     });
 });

@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismAnswerPostUpdateRequestDT
 @Service
 public class PlagiarismAnswerPostService extends PostingService {
 
-    private static final String METIS_ANSWER_POST_ENTITY_NAME = "metis.answerPost";
+    private static final String ANSWER_POST_ENTITY_NAME = "messages.answerPost";
 
     private final AnswerPostRepository answerPostRepository;
 
@@ -180,7 +180,7 @@ public class PlagiarismAnswerPostService extends PostingService {
         // delete
         answerPostRepository.deleteById(answerPostId);
         preparePostForBroadcast(post);
-        broadcastForPost(post, MetisCrudAction.UPDATE, course.getId(), null);
+        broadcastForPost(post, CommunicationCrudAction.UPDATE, course.getId(), null);
     }
 
     /**
@@ -188,7 +188,7 @@ public class PlagiarismAnswerPostService extends PostingService {
      */
     @Override
     public String getEntityName() {
-        return METIS_ANSWER_POST_ENTITY_NAME;
+        return ANSWER_POST_ENTITY_NAME;
     }
 
     /**

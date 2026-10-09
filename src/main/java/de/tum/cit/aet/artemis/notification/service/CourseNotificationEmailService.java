@@ -82,7 +82,7 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
     private static final String NOTIFICATION_URL_KEY = "notificationUrl";
 
     // In case a parameter includes markdown, add the key here to make sure the system renders it properly.
-    private static final List<String> MARKDOWN_PARAMETERS = List.of("postMarkdownContent");
+    private static final List<String> MARKDOWN_PARAMETERS = List.of("postMarkdownContent", "changesMarkdown");
 
     public CourseNotificationEmailService(MessageSource messageSource, SpringTemplateEngine templateEngine, MailSendingService mailSendingService,
             MarkdownCustomLinkRendererService markdownCustomLinkRendererService, MarkdownCustomReferenceRendererService markdownCustomReferenceRendererService) {

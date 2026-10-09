@@ -33,6 +33,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 
 import de.tum.cit.aet.artemis.core.config.FeatureUsageProperties;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.domain.TrackedFeature;
 import de.tum.cit.aet.artemis.core.repository.TrackedFeatureRepository;
@@ -77,6 +78,8 @@ public class FeatureUsageRegistry {
     private static final int MAX_IDENTIFIER_LENGTH = 255;
 
     private static final int MAX_LABEL_LENGTH = 128;
+
+    private static final int MAX_RESOURCE_LENGTH = 128;
 
     /** Ids per statement when stamping the inventory as still registered. */
     private static final int REGISTRATION_BATCH_SIZE = 500;
@@ -215,8 +218,9 @@ public class FeatureUsageRegistry {
             }
             idsByIdentifier.put(descriptor.identifier(), existing.getId());
             stillRegistered.add(existing.getId());
-            if (!Objects.equals(existing.getFeatureLabel(), descriptor.label())) {
-                trackedFeatureRepository.updateFeatureLabel(existing.getId(), descriptor.label());
+            if (!Objects.equals(existing.getFeatureLabel(), descriptor.label()) || existing.getInteraction() != descriptor.interaction()
+                    || !Objects.equals(existing.getResource(), descriptor.resource())) {
+                trackedFeatureRepository.updateClassification(existing.getId(), descriptor.label(), descriptor.interaction(), descriptor.resource());
             }
         }
         markStillRegistered(stillRegistered, now);
@@ -267,15 +271,20 @@ public class FeatureUsageRegistry {
     /**
      * Returns the feature id of a git or background feature, registering it on first sighting.
      * <p>
-     * Only the first call per feature and node touches the database; everything after that is a map lookup.
+     * Only the first call per feature and node touches the database; everything after that is a map lookup. That first
+     * call also brings an existing row in line with the feature and interaction the caller reports now, the counterpart of
+     * what the startup pass does for endpoints: a row written by an earlier version keeps its history but regroups under
+     * the current classification.
      *
      * @param featureKind the namespace, {@link FeatureKind#GIT} or {@link FeatureKind#BACKGROUND}
      * @param module      the Artemis module the feature belongs to
      * @param identifier  the canonical identifier within the namespace
+     * @param feature     the user-facing feature the operation belongs to
+     * @param interaction how the operation counts
      * @return the id of the matching inventory row, or {@code null} if it could not be registered
      */
     @Nullable
-    public Long featureId(FeatureKind featureKind, String module, String identifier) {
+    public Long featureId(FeatureKind featureKind, String module, String identifier, UserFeature feature, FeatureInteraction interaction) {
         String truncatedIdentifier = truncate(identifier, MAX_IDENTIFIER_LENGTH);
         String cacheKey = featureKind.name() + ' ' + truncatedIdentifier;
         Long cached = lazyFeatureIds.get(cacheKey);
@@ -293,8 +302,11 @@ public class FeatureUsageRegistry {
             if (created != null) {
                 return created;
             }
-            Long featureId = trackedFeatureRepository.findByFeatureKindAndIdentifier(featureKind, truncatedIdentifier).map(DomainObject::getId)
-                    .orElseGet(() -> persistOrRead(new TrackedFeature(featureKind, truncate(module, MAX_MODULE_LENGTH), truncatedIdentifier, null, Instant.now())));
+            Optional<TrackedFeature> existing = trackedFeatureRepository.findByFeatureKindAndIdentifier(featureKind, truncatedIdentifier);
+            existing.filter(row -> !feature.name().equals(row.getFeatureLabel()) || row.getInteraction() != interaction)
+                    .ifPresent(row -> trackedFeatureRepository.updateClassification(row.getId(), feature.name(), interaction, row.getResource()));
+            Long featureId = existing.map(DomainObject::getId).orElseGet(() -> persistOrRead(
+                    new TrackedFeature(featureKind, truncate(module, MAX_MODULE_LENGTH), truncatedIdentifier, feature.name(), interaction, null, Instant.now())));
             if (featureId != null) {
                 lazyFeatureIds.put(cacheKey, featureId);
             }
@@ -316,7 +328,7 @@ public class FeatureUsageRegistry {
     }
 
     private static TrackedFeature toEntity(EndpointDescriptor descriptor, Instant firstSeenAt) {
-        return new TrackedFeature(FeatureKind.REST, descriptor.module(), descriptor.identifier(), descriptor.label(), firstSeenAt);
+        return new TrackedFeature(FeatureKind.REST, descriptor.module(), descriptor.identifier(), descriptor.label(), descriptor.interaction(), descriptor.resource(), firstSeenAt);
     }
 
     /**
@@ -336,8 +348,11 @@ public class FeatureUsageRegistry {
         if (patterns.isEmpty()) {
             return null;
         }
-        String identifier = truncate(httpVerb(mappingInfo) + ' ' + canonicalPath(patterns, handlerMethod), MAX_IDENTIFIER_LENGTH);
-        return new EndpointDescriptor(identifier, moduleOf(handlerMethod), labelOf(handlerMethod));
+        Set<RequestMethod> verbs = mappingInfo.getMethodsCondition().getMethods();
+        String identifier = truncate(httpVerb(verbs) + ' ' + canonicalPath(patterns, handlerMethod), MAX_IDENTIFIER_LENGTH);
+        FeatureInteraction interaction = FeatureUsageClassification.interactionOf(handlerMethod.getMethod(), handlerMethod.getBeanType(), verbs);
+        return new EndpointDescriptor(identifier, moduleOf(handlerMethod), labelOf(handlerMethod), interaction,
+                truncate(handlerMethod.getBeanType().getSimpleName(), MAX_RESOURCE_LENGTH));
     }
 
     /**
@@ -360,12 +375,11 @@ public class FeatureUsageRegistry {
         return withoutLeadingSlash(patterns.stream().min(Comparator.naturalOrder()).orElseThrow());
     }
 
-    private static String httpVerb(RequestMappingInfo mappingInfo) {
-        Set<RequestMethod> methods = mappingInfo.getMethodsCondition().getMethods();
-        if (methods.isEmpty()) {
+    private static String httpVerb(Set<RequestMethod> verbs) {
+        if (verbs.isEmpty()) {
             return ANY_VERB;
         }
-        return methods.stream().map(RequestMethod::name).sorted().collect(Collectors.joining(","));
+        return verbs.stream().map(RequestMethod::name).sorted().collect(Collectors.joining(","));
     }
 
     /**
@@ -379,24 +393,15 @@ public class FeatureUsageRegistry {
     }
 
     /**
-     * Resolves the {@code area/feature} label of an endpoint.
+     * Resolves the feature label of an endpoint: the name of its {@link UserFeature}.
      * <p>
-     * A method level {@code @FeatureUsage} wins over the controller's own, so a controller that genuinely serves two
-     * features can split them. Every controller is required to carry one, enforced by
-     * {@code FeatureUsageAnnotationTest}, so an unlabelled endpoint means a controller was added without deciding which
-     * feature it belongs to.
+     * Every controller is required to carry a {@code @FeatureUsage}, enforced by {@code FeatureUsageAnnotationTest}, so
+     * an unlabelled endpoint means a controller was added without deciding which feature it belongs to.
      */
     @Nullable
     private static String labelOf(HandlerMethod handlerMethod) {
-        FeatureUsage annotation = handlerMethod.getMethod().getAnnotation(FeatureUsage.class);
-        if (annotation == null) {
-            annotation = handlerMethod.getBeanType().getAnnotation(FeatureUsage.class);
-        }
-        if (annotation == null) {
-            return null;
-        }
-        String label = annotation.value().strip();
-        return label.isEmpty() ? null : truncate(label, MAX_LABEL_LENGTH);
+        UserFeature feature = FeatureUsageClassification.featureOf(handlerMethod.getMethod(), handlerMethod.getBeanType());
+        return feature == null ? null : truncate(feature.name(), MAX_LABEL_LENGTH);
     }
 
     private static String withLeadingSlash(String path) {
@@ -414,10 +419,12 @@ public class FeatureUsageRegistry {
     /**
      * What one endpoint contributes to the inventory.
      *
-     * @param identifier the canonical verb and path, unique within {@link FeatureKind#REST}
-     * @param module     the Artemis module the endpoint belongs to
-     * @param label      the {@code @FeatureUsage} label, or {@code null} when the endpoint is unlabelled
+     * @param identifier  the canonical verb and path, unique within {@link FeatureKind#REST}
+     * @param module      the Artemis module the endpoint belongs to
+     * @param label       the name of the endpoint's {@link UserFeature}, or {@code null} when the endpoint is unlabelled
+     * @param interaction how calls to the endpoint count
+     * @param resource    the simple name of the controller serving the endpoint
      */
-    record EndpointDescriptor(String identifier, String module, @Nullable String label) {
+    record EndpointDescriptor(String identifier, String module, @Nullable String label, FeatureInteraction interaction, String resource) {
     }
 }

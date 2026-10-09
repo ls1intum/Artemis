@@ -8,9 +8,9 @@ export default function StorybookRedirect() {
     const { siteConfig } = useDocusaurusContext();
     const { colorMode } = useColorMode();
     const { hash } = useLocation();
-    const storybookIncluded = siteConfig.customFields?.tumUiStorybookIncluded === true;
+    const storybookIncluded = siteConfig.customFields?.tumAetUiStorybookIncluded === true;
     const story = storybookStoryFromHash(hash);
-    const storybookUrl = `/developer/tum-ui/?path=/docs/${story}&globals=theme:${colorMode}`;
+    const storybookUrl = `/developer/tum-aet-ui/?path=/docs/${story}&globals=theme:${colorMode}`;
 
     useEffect(() => {
         if (storybookIncluded) {
@@ -24,7 +24,7 @@ export default function StorybookRedirect() {
 
     return (
         <p>
-            Opening the TUM UI component reference… <a href={storybookUrl}>Continue to the reference</a>
+            Opening the TUM AET UI component reference… <a href={storybookUrl}>Continue to the reference</a>
         </p>
     );
 }

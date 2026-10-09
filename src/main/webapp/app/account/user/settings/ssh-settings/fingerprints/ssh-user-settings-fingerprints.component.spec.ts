@@ -44,7 +44,7 @@ describe('SshUserSettingsFingerprintsComponent', () => {
     });
 
     it('should display fingerprints', async () => {
-        await comp.ngOnInit();
+        await comp['initializeSshUserSettingsFingerprintsComponent']();
         await fixture.whenStable();
 
         expect(fingerPintsServiceMock.getSshFingerprints).toHaveBeenCalled();

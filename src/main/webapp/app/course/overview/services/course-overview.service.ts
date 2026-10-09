@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faBarsProgress, faBoxArchive, faBullhorn, faGraduationCap, faHashtag, faLayerGroup, faLock, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -83,9 +83,7 @@ export type SidebarLecture = Pick<Lecture, 'id' | 'title' | 'startDate' | 'endDa
 /** The exam fields the sidebar renders; see {@link SidebarLecture}. */
 export type SidebarExam = Pick<Exam, 'id' | 'title' | 'moduleNumber' | 'startDate' | 'workingTime' | 'examMaxPoints' | 'testExam'>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CourseOverviewService {
     private participationService = inject(ParticipationService);
     private translate = inject(TranslateService);
@@ -112,26 +110,26 @@ export class CourseOverviewService {
             const earliestStart = earliest.nextSession?.start;
             const currentStart = current.nextSession?.start;
             return currentStart?.isBefore(earliestStart) ? current : earliest;
-        });
+        }, futureGroups[0]);
     }
 
     getUpcomingLecture(lectures: Lecture[] | undefined): Lecture | undefined {
         if (lectures && lectures.length) {
-            return lectures?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
+            return lectures.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b), lectures[0]);
         }
         return undefined;
     }
 
     getUpcomingExam(exams: Exam[] | undefined): Exam | undefined {
         if (exams && exams.length) {
-            return exams?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
+            return exams.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b), exams[0]);
         }
         return undefined;
     }
 
     getUpcomingExercise(exercises: Exercise[] | undefined): Exercise | undefined {
         if (exercises && exercises.length) {
-            return exercises?.reduce((a, b) => ((a?.dueDate?.valueOf() ?? 0) > (b?.dueDate?.valueOf() ?? 0) ? a : b));
+            return exercises.reduce((a, b) => ((a?.dueDate?.valueOf() ?? 0) > (b?.dueDate?.valueOf() ?? 0) ? a : b), exercises[0]);
         }
         return undefined;
     }

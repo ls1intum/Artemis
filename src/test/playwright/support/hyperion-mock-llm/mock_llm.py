@@ -29,7 +29,7 @@ exercise surfaces in the course list.
 The mock only needs the blocking Chat Completions path (Spring AI `.call()` is
 non-streaming), but it also reshapes into SSE when `stream: true` is requested, so it
 stays a drop-in OpenAI server. Python 3 standard library only — runs as a bare
-process (see run-e2e-tests-local-fast.sh, RUN_HYPERION).
+process (see supporting_scripts/e2e/run-e2e-tests-local-fast.sh, RUN_HYPERION).
 
 Config via environment variables (all optional):
     MOCK_LLM_HOST          bind host        (default 127.0.0.1)

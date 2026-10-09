@@ -8,7 +8,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { EMPTY, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { InformationBox, InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
@@ -100,7 +100,7 @@ describe('CourseExerciseGroupDetailComponent', () => {
                         RouterLink,
                         ExerciseHeadersInformationComponent,
                         InformationBoxComponent,
-                        TumUiTooltipDirective,
+                        TumAetUiTooltipDirective,
                         TranslateDirective,
                         ArtemisDatePipe,
                         ArtemisTimeAgoPipe,
@@ -112,7 +112,7 @@ describe('CourseExerciseGroupDetailComponent', () => {
                         MockDirective(RouterLink),
                         MockComponent(ExerciseHeadersInformationComponent),
                         MockComponent(InformationBoxComponent),
-                        MockDirective(TumUiTooltipDirective),
+                        MockDirective(TumAetUiTooltipDirective),
                         MockDirective(TranslateDirective),
                         MockPipe(ArtemisDatePipe),
                         MockPipe(ArtemisTimeAgoPipe),
@@ -137,7 +137,7 @@ describe('CourseExerciseGroupDetailComponent', () => {
         effectiveGroupMaxPoints: () => number;
         capReducesMaxPoints: () => boolean;
         variantsInfoBoxData: () => InformationBox;
-        pointsInfoBoxData: () => InformationBox;
+        pointsInfoBoxData: InformationBox;
         groupDateInfoBoxes: () => InformationBox[];
         exerciseParticipation: (exercise: Exercise) => StudentParticipation | undefined;
         exerciseLink: (exercise: Exercise) => string;
@@ -226,7 +226,7 @@ describe('CourseExerciseGroupDetailComponent', () => {
             ).toEqual([1, 2]);
             expect(comp().exerciseSumMaxPoints()).toBe(20);
             expect(comp().variantsInfoBoxData().content.value).toBe(2);
-            expect(comp().pointsInfoBoxData().isContentComponent).toBe(true);
+            expect(comp().pointsInfoBoxData.isContentComponent).toBe(true);
         });
 
         it('resolves no group when the course has no exercises of that group', async () => {

@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_COMMUNICATION } from 'app/foundation/constants/input.constants';
 import { lastValueFrom } from 'rxjs';
 import { UPLOAD_MARKDOWN_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
@@ -8,7 +8,7 @@ export interface FileUploadResponse {
     path?: string;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FileUploaderService {
     private readonly http = inject(HttpClient);
     readonly acceptedMarkdownFileExtensions = UPLOAD_MARKDOWN_FILE_EXTENSIONS;
@@ -23,13 +23,13 @@ export class FileUploaderService {
     }
 
     /**
-     * Uploads a file for the markdown editor in the current Metis conversation.
+     * Uploads a file for the markdown editor in the current conversation.
      * @param file The file to upload
      * @param courseId The course ID
      * @param conversationId The conversation ID
      * @return A promise with the response from the server or an error
      */
-    uploadMarkdownFileInCurrentMetisConversation(file: File, courseId: number | undefined, conversationId: number | undefined): Promise<FileUploadResponse> {
+    uploadMarkdownFileInCurrentConversation(file: File, courseId: number | undefined, conversationId: number | undefined): Promise<FileUploadResponse> {
         if (!courseId || !conversationId) {
             return Promise.reject(new Error('No course or conversation available for the file upload.'));
         }

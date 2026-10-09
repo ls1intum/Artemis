@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.quiz.web.QuizWebsocketTopics.QUIZ_PARTICIPATION;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -253,7 +254,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
         var user = participation.getParticipantIdentifier();
         StudentQuizParticipationWithSolutionsDTO participationDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
-        websocketMessagingService.sendMessageToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participationDTO);
+        websocketMessagingService.sendMessageToUser(user, QUIZ_PARTICIPATION.at(quizExerciseId), participationDTO);
     }
 
     /**
@@ -309,7 +310,8 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // make sure the participation is not overridden wrongly
         var participation = participationService.findOneByExerciseAndStudentAnyState(quizExercise, student).orElseThrow();
         quizSubmission.setParticipation(participation);
-        quizSubmission = quizSubmissionRepository.save(quizSubmission);
+        // The requests of one student run one after the other: a save and a submit that arrive together must not both insert their answers
+        quizSubmission = quizSubmissionRepository.replaceAnswersOfUnsubmittedSubmission(quizSubmission);
         quizSubmission.filterForStudentsDuringQuiz();
         log.info("{} Saved quiz submission for user {} in quiz {} after {} ", logText, userLogin, exerciseId, TimeLogUtil.formatDurationFrom(start));
 
@@ -421,7 +423,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             throw new AccessForbiddenException();
         }
         quizSubmission.setParticipation(participation);
-        var savedQuizSubmission = quizSubmissionRepository.save(quizSubmission);
+        QuizSubmission savedQuizSubmission = quizSubmissionRepository.saveUpdatingStoredAnswers(quizSubmission, null);
         savedQuizSubmission.filterForStudentsDuringQuiz();
         return savedQuizSubmission;
     }

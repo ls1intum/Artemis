@@ -1,4 +1,4 @@
-import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiDialogComponent, TumUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiDialogComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
@@ -22,7 +22,17 @@ describe('ExamExerciseGroupEditModalComponent', () => {
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .overrideComponent(ExamExerciseGroupEditModalComponent, {
-                set: { imports: [FormsModule, TumUiDialogComponent, TumUiInputDirective, TumUiButtonComponent, TumUiCheckboxComponent, ArtemisTranslatePipe, TranslateDirective] },
+                set: {
+                    imports: [
+                        FormsModule,
+                        TumAetUiDialogComponent,
+                        TumAetUiInputDirective,
+                        TumAetUiButtonComponent,
+                        TumAetUiCheckboxComponent,
+                        ArtemisTranslatePipe,
+                        TranslateDirective,
+                    ],
+                },
             })
             .compileComponents();
 

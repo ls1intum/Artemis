@@ -118,7 +118,7 @@ describe('SidebarCardMediumComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
-        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
+        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium a');
         itemElement.click();
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
@@ -134,7 +134,7 @@ describe('SidebarCardMediumComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
-        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
+        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium a');
         itemElement.click();
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();

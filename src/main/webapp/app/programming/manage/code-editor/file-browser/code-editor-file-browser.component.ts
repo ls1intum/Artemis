@@ -20,7 +20,6 @@ import {
     faPlus,
 } from '@fortawesome/free-solid-svg-icons';
 import { TEXT_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
-import { NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CodeEditorFileBrowserCreateNodeComponent } from './create-node/code-editor-file-browser-create-node.component';
@@ -69,7 +68,6 @@ export interface FileTreeItem extends TreeItem<string> {
     styleUrls: ['./code-editor-file-browser.scss'],
     providers: [NgbModal],
     imports: [
-        NgStyle,
         FaIconComponent,
         TranslateDirective,
         CodeEditorFileBrowserCreateNodeComponent,

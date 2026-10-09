@@ -168,7 +168,8 @@ public class StatisticsService {
             return new CourseManagementStatisticsDTO(0.0, List.of());
         }
 
-        Course course = exercises.stream().findFirst().orElseThrow().getCourseViaExerciseGroupOrCourseMember();
+        // the query selects exercises by their course id, hence every exercise has a course
+        Course course = exercises.stream().findFirst().orElseThrow().getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
         double averageScoreForCourse = Objects.requireNonNullElse(participantScoreRepository.findAvgRatedScore(includedExercises), 0.0);
@@ -202,7 +203,7 @@ public class StatisticsService {
      * @return a custom ExerciseManagementStatisticsDTO, which contains the relevant data
      */
     public ExerciseManagementStatisticsDTO getExerciseStatistics(Exercise exercise) throws EntityNotFoundException {
-        var course = courseRepository.findByIdElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        var course = courseRepository.findByIdElseThrow(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
 
         // number of students or teams and number of participations of students or teams
         long numberOfParticipationsOfStudentsOrTeams;

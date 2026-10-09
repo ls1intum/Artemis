@@ -5,6 +5,8 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective } from 'ng-mocks';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ThemeSwitchComponent', () => {
     let component: ThemeSwitchComponent;
@@ -19,6 +21,7 @@ describe('ThemeSwitchComponent', () => {
             imports: [ThemeSwitchComponent, MockDirective(NgbPopover)],
             declarations: [],
             providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: ThemeService,
                     useClass: MockThemeService,

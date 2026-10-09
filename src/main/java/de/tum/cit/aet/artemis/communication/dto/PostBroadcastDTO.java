@@ -16,16 +16,16 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
  * @param action which CRUD action this broadcast describes
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PostBroadcastDTO(PostResponseDTO post, MetisCrudAction action) {
+public record PostBroadcastDTO(PostResponseDTO post, CommunicationCrudAction action) {
 
     /**
-     * Build a {@link PostBroadcastDTO} from a {@link Post} entity and a {@link MetisCrudAction}.
+     * Build a {@link PostBroadcastDTO} from a {@link Post} entity and a {@link CommunicationCrudAction}.
      *
      * @param post   the post entity to project
      * @param action which CRUD action this broadcast describes
      * @return the broadcast-shaped payload
      */
-    public static PostBroadcastDTO from(Post post, MetisCrudAction action) {
+    public static PostBroadcastDTO from(Post post, CommunicationCrudAction action) {
         return new PostBroadcastDTO(PostResponseDTO.from(post), action);
     }
 }

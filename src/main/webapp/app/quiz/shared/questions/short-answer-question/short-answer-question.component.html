@@ -56,6 +56,7 @@
                                     [ngbTooltip]="classifyInputField(element) === 'invalid' ? ('artemisApp.shortAnswerSpot.invalidSpot' | artemisTranslate) : undefined"
                                 >
                                     <input
+                                        [attr.aria-label]="'accessibility.shortAnswer' | artemisTranslate: { number: shortAnswerQuestionUtil.getSpotNr(element) }"
                                         class="short-answer-question-container__input {{ classifyInputField(element) }}"
                                         type="text"
                                         disabled
@@ -119,10 +120,10 @@
     @if (showResult() && !forceSampleSolution()) {
         <div>
             @if (!showingSampleSolution()) {
-                <div class="btn btn-outline-primary" (click)="showSampleSolution()" jhiTranslate="artemisApp.quizQuestion.showSampleSolution"></div>
+                <button type="button" class="btn btn-outline-primary" (click)="showSampleSolution()" jhiTranslate="artemisApp.quizQuestion.showSampleSolution"></button>
             }
             @if (showingSampleSolution()) {
-                <div class="btn btn-outline-primary" (click)="hideSampleSolution()" jhiTranslate="artemisApp.quizQuestion.hideSampleSolution"></div>
+                <button type="button" class="btn btn-outline-primary" (click)="hideSampleSolution()" jhiTranslate="artemisApp.quizQuestion.hideSampleSolution"></button>
             }
         </div>
     }

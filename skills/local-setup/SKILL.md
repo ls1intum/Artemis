@@ -1,6 +1,6 @@
 ---
 name: local-setup
-description: Get a local Artemis development environment running from a fresh clone, or fix one that has stopped working. Use when setting up the project for the first time, when the server or client will not start, when Gradle or pnpm complain about versions, or when unsure which command to run for server-only versus full-stack development. Covers prerequisites, the two run modes, test users, and mail capture.
+description: Set up or troubleshoot a local Artemis server and client development environment.
 ---
 
 # Get Artemis running locally
@@ -11,11 +11,18 @@ description: Get a local Artemis development environment running from a fresh cl
 | ------ | ---------------- | --------------------------------------------------------------------- |
 | JDK    | 25               | Pinned by the Gradle toolchain                                        |
 | Node   | 24.20.0 or newer | Pinned in `gradle.properties` and `package.json`                      |
-| pnpm   | 12.5.1           | Pinned by the `packageManager` field; activate with `corepack enable` |
+| pnpm   | 12.8.1           | Pinned by the `packageManager` field; activate with `corepack enable` |
 | Docker | current          | Required for the database and for server tests                        |
 
 Run `corepack enable` once. It activates the exact pnpm version the repository pins, which avoids a
 whole category of lockfile arguments.
+
+Python helper tools install with `python -m pip install --require-hashes -r requirements.txt` in a
+virtual environment. Change `requirements.in` and regenerate locks with
+`supporting_scripts/update_python_dependency_locks.sh`; see
+`documentation/docs/developer/builds-and-dependencies.mdx` for updates and supported Python versions.
+The Ubuntu LocalCI k3s and Helm installer URLs, SHA-256 hashes and release versions must be updated
+together. Never replace the verified download with a download piped into a shell.
 
 On macOS, Homebrew's `openjdk@25` is keg-only, so nothing finds it after installation. Register it
 with the system once, rather than exporting `JAVA_HOME` in every shell:
@@ -99,6 +106,13 @@ alongside the server and point the mail configuration at it. See
 
 ## When it will not start
 
+**"Configure meaningful values for info.operatorName ...".** A core node under the `prod`
+profile refuses to start without `info.operatorName`, `info.operatorAdminName` and
+`info.universityName`, even with telemetry off, unless `info.testServer` is `true`. Development
+profiles never hit it; locally it comes from the **Artemis (Server, Prod, LocalCI)** run
+configuration or a prod Docker setup. Set all three in `application-local.yml` (empty and template
+values such as `Admin`, `Your University` or `<name>` are rejected), or set `info.testServer: true`.
+
 **"Unable to determine Dialect".** The Spring profile set does not include a database profile, or
 an `autoconfigure.exclude` is replacing rather than merging the expected exclusions.
 
@@ -110,7 +124,7 @@ train. Both are pinned in `gradle.properties`.
 readiness and liveness endpoints and look for "Started ArtemisApp" in the log; a single unconfigured
 optional integration pulls the aggregate down.
 
-**Port already in use.** `./run-e2e-tests-local-fast.sh --stop` frees 8080 and 9000 by killing the
+**Port already in use.** `./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --stop` frees 8080 and 9000 by killing the
 server and client. The LocalVC SSH listener on 7921 lives inside the server JVM, so it goes with it.
 
 ## Running things
@@ -118,7 +132,7 @@ server and client. The LocalVC SSH listener on 7921 lives inside the server JVM,
 ```bash
 ./gradlew test -x webapp        # server tests, needs Docker
 pnpm run vitest                 # client tests, watch mode
-./run-e2e-tests-local-fast.sh   # E2E, brings up everything it needs
+./supporting_scripts/e2e/run-e2e-tests-local-fast.sh   # E2E, brings up everything it needs
 pnpm run lint                   # client lint
 ./gradlew spotlessApply         # fix Java formatting
 ```

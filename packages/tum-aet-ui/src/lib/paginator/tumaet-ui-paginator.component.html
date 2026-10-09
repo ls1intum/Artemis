@@ -1,0 +1,58 @@
+<nav
+    [attr.aria-label]="ariaLabel() ?? ('tumAetUi.paginator.ariaLabel' | tumAetUiTranslate)"
+    class="tumaet:flex tumaet:flex-wrap tumaet:items-center tumaet:justify-center tumaet:gap-1 tumaet:border-t tumaet:border-border tumaet:pt-2 tumaet:text-sm tumaet:text-muted"
+>
+    @if (showCurrentPageReport()) {
+        <span class="tumaet:px-2" aria-live="polite">
+            {{ 'tumAetUi.paginator.currentPageReport' | tumAetUiTranslate: { first: rangeBegin(), second: rangeEnd(), total: totalRecords() } }}
+        </span>
+    }
+
+    <button type="button" [class]="navButtonClasses" [disabled]="disabled() || isFirst()" (click)="goToFirst()" [attr.aria-label]="'tumAetUi.paginator.first' | tumAetUiTranslate">
+        <fa-icon [icon]="firstPageIcon()" />
+    </button>
+    <button
+        type="button"
+        [class]="navButtonClasses"
+        [disabled]="disabled() || isFirst()"
+        (click)="goToPrevious()"
+        [attr.aria-label]="'tumAetUi.paginator.previous' | tumAetUiTranslate"
+    >
+        <fa-icon [icon]="previousPageIcon()" />
+    </button>
+
+    @for (p of visiblePages(); track p) {
+        <button
+            type="button"
+            [class]="p === clampedPage() ? selectedPageClasses : navButtonClasses"
+            [disabled]="disabled()"
+            (click)="goToPage(p)"
+            [attr.aria-current]="p === clampedPage() ? 'page' : null"
+        >
+            {{ p + 1 }}
+        </button>
+    }
+
+    <button type="button" [class]="navButtonClasses" [disabled]="disabled() || isLast()" (click)="goToNext()" [attr.aria-label]="'tumAetUi.paginator.next' | tumAetUiTranslate">
+        <fa-icon [icon]="nextPageIcon()" />
+    </button>
+    <button type="button" [class]="navButtonClasses" [disabled]="disabled() || isLast()" (click)="goToLast()" [attr.aria-label]="'tumAetUi.paginator.last' | tumAetUiTranslate">
+        <fa-icon [icon]="lastPageIcon()" />
+    </button>
+
+    @if (showRowsPerPage()) {
+        <label class="tumaet:ms-2 tumaet:flex tumaet:items-center tumaet:gap-2 tumaet:whitespace-nowrap">
+            <span>{{ 'tumAetUi.paginator.rowsPerPage' | tumAetUiTranslate }}</span>
+            <select
+                class="tumaet:box-border tumaet:h-9 tumaet:cursor-pointer tumaet:rounded-md tumaet:border tumaet:border-control-border tumaet:bg-control-background tumaet:px-2.5 tumaet:text-sm tumaet:text-text tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus tumaet:focus-visible:outline-offset-2"
+                [ngModel]="pageSize()"
+                [disabled]="disabled()"
+                (ngModelChange)="onPageSizeChange($event)"
+            >
+                @for (option of pageSizeOptions(); track option) {
+                    <option [ngValue]="option">{{ option }}</option>
+                }
+            </select>
+        </label>
+    }
+</nav>

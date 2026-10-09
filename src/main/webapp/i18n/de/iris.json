@@ -254,7 +254,12 @@
             },
             "citation": {
                 "unitLabel": "Einheit:",
-                "lectureLabel": "Vorlesung:"
+                "lectureLabel": "Vorlesung:",
+                "outdated": {
+                    "stale": "Das zitierte Material wurde seit dieser Antwort geändert, daher wird die genaue Seite bzw. der Zeitstempel nicht angesprungen.",
+                    "gone": "Das zitierte Material existiert nicht mehr, daher kann die genaue Seite bzw. der Zeitstempel nicht angesprungen werden.",
+                    "unverified": "Das zitierte Material lässt sich gerade nicht überprüfen, daher wird die genaue Seite bzw. der Zeitstempel vorsichtshalber nicht angesprungen."
+                }
             },
             "tutorSuggestion": {
                 "loading": "Lade Vorschläge...",
@@ -320,6 +325,11 @@
                 "tooltip": "Aktiviere oder deaktiviere Iris für deinen Kurs. Um benutzerdefinierte Anweisungen zu konfigurieren, klicke auf die Schaltfläche 'Konfigurieren'."
             },
             "pointOut": {
+                "outdated": {
+                    "stale": "Das Material, auf das Iris verwiesen hat, wurde geändert. Daher wird die genaue Seite bzw. der Zeitstempel nicht geöffnet.",
+                    "gone": "Das Material, auf das Iris verwiesen hat, existiert nicht mehr. Daher kann die genaue Seite bzw. der Zeitstempel nicht geöffnet werden.",
+                    "unverified": "Das Material, auf das Iris verwiesen hat, lässt sich gerade nicht überprüfen. Daher wird die genaue Seite bzw. der Zeitstempel vorsichtshalber nicht geöffnet."
+                },
                 "label": "Zu {{target}} in Lerneinheit {{unit}} gesprungen",
                 "labelNoUnit": "Zu {{target}} gesprungen",
                 "page": "Seite {{page}}",

@@ -41,6 +41,9 @@ public final class AtlasToolCallBudget {
     /** Tool-context key carrying the budget object through parent and worker rounds. */
     public static final String CONTEXT_KEY = "atlasToolCallBudget";
 
+    /** Context marker distinguishing worker callbacks in the shared audit trail. */
+    public static final String WORKER_CONTEXT_KEY = "atlasBudgetWorker";
+
     /** Maximum number of autonomous tool callbacks in one top-level run. */
     public static final int LIMIT = 256;
 
@@ -142,7 +145,8 @@ public final class AtlasToolCallBudget {
     }
 
     private static boolean readOnly(String name) {
-        return name.equals("getCompetencyDetails") || name.equals("getExerciseContent") || name.equals("listCompetencyIndex") || name.equals("searchLectureContent");
+        return name.equals("getCompetencyDetails") || name.equals("getExerciseContent") || name.equals("getLectureUnitContent") || name.equals("listCompetencyIndex")
+                || name.equals("searchLectureContent");
     }
 
     private static boolean terminal(String name) {
@@ -160,6 +164,37 @@ public final class AtlasToolCallBudget {
     public static ExtractedContentDTO content(ToolContext context, String key, Supplier<ExtractedContentDTO> extract) {
         AtlasToolCallBudget budget = context == null ? null : existingBudget(context.getContext());
         return budget == null ? extract.get() : budget.contentSnapshots.computeIfAbsent(key, ignored -> extract.get());
+    }
+
+    /**
+     * Seeds the invocation cache with content that initial preparation already extracted, so the first
+     * detail read of a changed learning object reuses it instead of extracting and flavor-stripping it
+     * again. Existing entries are kept.
+     *
+     * @param prepared extracted content keyed by {@link #exerciseContentKey} or {@link #lectureUnitContentKey}
+     */
+    public void seedContent(Map<String, ExtractedContentDTO> prepared) {
+        prepared.forEach(contentSnapshots::putIfAbsent);
+    }
+
+    /**
+     * Cache key under which the exercise detail read stores extracted content.
+     *
+     * @param exerciseId the exercise id
+     * @return the invocation cache key
+     */
+    static String exerciseContentKey(long exerciseId) {
+        return "exercise:" + exerciseId;
+    }
+
+    /**
+     * Cache key under which the lecture-unit detail read stores extracted content.
+     *
+     * @param lectureUnitId the lecture unit id
+     * @return the invocation cache key
+     */
+    static String lectureUnitContentKey(long lectureUnitId) {
+        return "lectureUnit:" + lectureUnitId;
     }
 
     private static String argumentHash(String arguments) {
@@ -368,7 +403,7 @@ public final class AtlasToolCallBudget {
             finally {
                 budget.finish(work, version, verifiedIndex);
                 budget.activity.add(Map.of("tool", toolName, "argumentsSha256", argumentHash(arguments), "outcome", outcome, "role",
-                        context != null && Boolean.TRUE.equals(context.getContext().get("atlasBudgetWorker")) ? "worker" : "orchestrator"));
+                        context != null && Boolean.TRUE.equals(context.getContext().get(WORKER_CONTEXT_KEY)) ? "worker" : "orchestrator"));
             }
         }
     }

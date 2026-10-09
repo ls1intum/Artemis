@@ -15,10 +15,12 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SNIHostName;
@@ -364,6 +366,21 @@ final class LinkPreviewHttpClient {
         String firstHeader(String name) {
             List<String> values = headers.get(name.toLowerCase(Locale.ROOT));
             return values == null || values.isEmpty() ? null : values.getFirst();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || other instanceof Response that && statusCode == that.statusCode && Objects.equals(headers, that.headers) && Arrays.equals(body, that.body);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * Objects.hash(statusCode, headers) + Arrays.hashCode(body);
+        }
+
+        @Override
+        public String toString() {
+            return "Response[statusCode=" + statusCode + ", headers=" + headers + ", body=" + Arrays.toString(body) + "]";
         }
     }
 

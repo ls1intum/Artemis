@@ -1,0 +1,111 @@
+// Section header in the onboarding style: a brand icon tile beside a title and one-line description.
+.config-hero {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    max-width: 40rem;
+    margin-block: 1.5rem 1rem;
+
+    // Centered in the page, matching the checklist, so the hero and form share the page's middle.
+    margin-inline: auto;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--tumaet-ui-hover-background);
+}
+
+.config-hero-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 0.5rem;
+    font-size: 1.2rem;
+    color: var(--tumaet-ui-primary-contrast-color);
+    background: var(--tumaet-ui-primary-color);
+}
+
+.config-hero-title {
+    margin: 0 0 0.15rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.config-hero-desc {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--secondary);
+}
+
+.config-form {
+    display: flex;
+    flex-direction: column;
+
+    // Generous spacing between the sections, so the form reads as distinct rows rather than a squished block.
+    gap: 2rem;
+
+    // Not the full page width: the fields are short, so the form stays a readable column, centered in the page.
+    max-width: 40rem;
+    margin-inline: auto;
+    padding-block: 1.5rem;
+}
+
+.config-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.config-field-label {
+    margin: 0;
+    font-weight: 600;
+}
+
+// A shorter date field: the range picker no longer spreads across the whole form.
+.config-period {
+    width: min(24rem, 100%);
+}
+
+// The range picker is the last PrimeNG control here. The global invalid rule paints a 5px red "stick" down
+// the left of non-TUM-UI controls; suppress it so the invalid state is just the rounded red border and the
+// message, matching the TUM UI fields. Specificity there beats the shared suppression, so this one wins with
+// !important as the shared rule already does for the same picker.
+.config-period p-datepicker.ng-invalid {
+    border-left-width: 0 !important;
+}
+
+.config-field-hint {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--secondary);
+}
+
+.config-field-error {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--danger);
+}
+
+.config-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    label {
+        margin: 0;
+    }
+}
+
+.config-subfield {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.config-form-actions {
+    display: flex;
+    justify-content: flex-end;
+}

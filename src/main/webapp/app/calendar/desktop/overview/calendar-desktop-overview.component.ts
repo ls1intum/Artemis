@@ -9,11 +9,15 @@ import { CalendarDesktopMonthPresentationComponent } from 'app/calendar/desktop/
 import { CalendarDesktopWeekPresentationComponent } from 'app/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
 import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 import { CalendarOverviewComponent } from 'app/calendar/shared/calendar-overview/calendar-overview-component.directive';
-import { SelectButtonModule } from 'primeng/selectbutton';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
-import { ButtonGroupModule } from 'primeng/buttongroup';
-import { MultiSelectModule } from 'primeng/multiselect';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiButtonGroupComponent,
+    TumAetUiMultiSelectComponent,
+    TumAetUiProgressSpinnerComponent,
+    TumAetUiSelectButtonComponent,
+} from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
@@ -37,11 +41,13 @@ interface FilterOptionAndMetadata {
         FaIconComponent,
         TranslateDirective,
         CalendarSubscriptionPopoverComponent,
-        SelectButtonModule,
         FormsModule,
-        ButtonModule,
-        ButtonGroupModule,
-        MultiSelectModule,
+        TumAetUiButtonDirective,
+        TumAetUiButtonGroupComponent,
+        TumAetUiMultiSelectComponent,
+        TumAetUiProgressSpinnerComponent,
+        TumAetUiSelectButtonComponent,
+        ArtemisTranslatePipe,
     ],
     templateUrl: './calendar-desktop-overview.component.html',
     styleUrl: './calendar-desktop-overview.component.scss',
@@ -74,6 +80,7 @@ export class CalendarDesktopOverviewComponent extends CalendarOverviewComponent 
     presentationOptions = computed<{ label: string; value: Presentation }[]>(() => this.computePresentationOptions());
     filterComponentPlaceholder = computed<string>(() => this.computeFilterComponentPlaceholder());
     selectedFilterOptions = computed<FilterOptionAndMetadata[]>(() => this.computeSelectedFilterOptions(this.calendarService.includedEventFilterOptions()));
+    selectedFilterValues = computed<CalendarEventFilterOption[]>(() => this.calendarService.includedEventFilterOptions());
     filterOptions = computed<FilterOptionAndMetadata[]>(() => this.computeFilterOptions());
 
     goToPrevious(): void {
@@ -112,9 +119,8 @@ export class CalendarDesktopOverviewComponent extends CalendarOverviewComponent 
         this.loadEventsForCurrentMonth();
     }
 
-    onSelectedFilterOptionsChange(newSelectedOptionsAndMetadata: FilterOptionAndMetadata[]): void {
-        const options = newSelectedOptionsAndMetadata.map((optionAndMetadata) => optionAndMetadata.option);
-        this.calendarService.includedEventFilterOptions.set(options);
+    onSelectedFilterOptionsChange(newSelectedOptions: CalendarEventFilterOption[]): void {
+        this.calendarService.includedEventFilterOptions.set(newSelectedOptions);
     }
 
     removeFilterOption(option: CalendarEventFilterOption): void {

@@ -9,11 +9,13 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
 @Component({
     selector: 'jhi-posting-thread',
     templateUrl: './posting-thread.component.html',
-    styleUrls: ['../metis.component.scss'],
+    styleUrls: ['../communication.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [PostComponent],
 })
 export class PostingThreadComponent {
+    elementRef = inject(ElementRef);
+
     readonly lastReadDate = input<dayjs.Dayjs>();
     readonly readOnlyMode = input(false);
     readonly post = input.required<Post>();
@@ -28,8 +30,6 @@ export class PostingThreadComponent {
     forwardedAnswerPosts = input<(AnswerPost | undefined)[]>([]);
 
     readonly onNavigateToPost = output<Posting>();
-
-    elementRef = inject(ElementRef);
 
     onTriggerNavigateToPost(post: Posting) {
         this.onNavigateToPost.emit(post);

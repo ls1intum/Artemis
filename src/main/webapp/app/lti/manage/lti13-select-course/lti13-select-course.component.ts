@@ -18,7 +18,7 @@ export class LtiCoursesComponent implements OnInit {
 
     public readonly courses = signal<OnlineCourseDtoModel[]>([]);
 
-    async ngOnInit() {
+    ngOnInit() {
         this.loadAndFilterCourses();
     }
 

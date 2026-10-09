@@ -7,10 +7,10 @@ import { getColor } from 'app/programming/manage/grading/charts/programming-grad
 import { ProgrammingGradingChartsDirective } from 'app/programming/manage/grading/charts/programming-grading-charts.directive';
 import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { ChartMultiSeriesEntry, ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { normalizedStackedBarChart, stackedBarChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { normalizedStackedBarChart, stackedBarChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumUiBarChartComponent, TumUiBarChartConfig, TumUiChartSelectEvent } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export type TestCaseColors = {
@@ -21,7 +21,7 @@ export type TestCaseColors = {
     selector: 'jhi-test-case-distribution-chart',
     styleUrls: ['./sca-category-distribution-chart.scss'],
     templateUrl: './test-case-distribution-chart.component.html',
-    imports: [TranslateDirective, TumUiBarChartComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class TestCaseDistributionChartComponent extends ProgrammingGradingChartsDirective {
     private translateService = inject(TranslateService);
@@ -54,7 +54,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
     readonly weightChartData = computed(() => normalizedStackedBarChart(this.weightData(), this.chartColors()));
     readonly pointsChartData = computed(() => stackedBarChart(this.pointsData(), this.chartColors()));
 
-    readonly weightChartConfig = computed<TumUiBarChartConfig>(() => ({
+    readonly weightChartConfig = computed<TumAetUiBarChartConfig>(() => ({
         horizontal: true,
         stacked: true,
         percentScale: true,
@@ -79,7 +79,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
             },
         },
     }));
-    readonly pointsChartConfig = computed<TumUiBarChartConfig>(() => ({
+    readonly pointsChartConfig = computed<TumAetUiBarChartConfig>(() => ({
         horizontal: true,
         stacked: true,
         xAxis: { max: 100, tickFormatter: (value) => this.xAxisFormatting(String(value)) },
@@ -220,7 +220,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
      * Filters the table left to the charts in order to display only the test case that is clicked
      * @param event identifies the clicked segment
      */
-    onSelectWeight(event: TumUiChartSelectEvent): void {
+    onSelectWeight(event: TumAetUiChartSelectEvent): void {
         const testCaseId = (event.meta as ChartSeriesEntry | undefined)?.['id'];
         if (testCaseId === undefined) {
             return;

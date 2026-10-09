@@ -6,6 +6,7 @@ import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { NavigationEnd, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CloseCircleComponent } from '../close-circle/close-circle.component';
 import { NgClass } from '@angular/common';
 
@@ -13,7 +14,7 @@ import { NgClass } from '@angular/common';
     selector: 'jhi-connection-warning',
     templateUrl: './connection-warning.component.html',
     styleUrls: ['./connection-warning.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, CloseCircleComponent, NgClass, NgbPopover],
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, CloseCircleComponent, NgClass, NgbPopover],
 })
 export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
     private websocketService = inject(WebsocketService);

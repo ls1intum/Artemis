@@ -13,6 +13,7 @@ import jakarta.persistence.PostRemove;
 import jakarta.persistence.Transient;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,7 +89,7 @@ public class DragAndDropQuestion extends QuizQuestion {
      * @return the stored filename of the background image
      */
     @JsonIgnore
-    public String getBackgroundFilePath() {
+    public @Nullable String getBackgroundFilePath() {
         return backgroundFilePath;
     }
 

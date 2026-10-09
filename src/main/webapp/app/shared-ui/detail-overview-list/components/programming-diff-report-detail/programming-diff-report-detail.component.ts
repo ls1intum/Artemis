@@ -18,6 +18,9 @@ import { TranslateService } from '@ngx-translate/core';
     imports: [GitDiffLineStatComponent, ArtemisTranslatePipe, NgbTooltipModule, ButtonComponent, TranslateDirective, FaIconComponent],
 })
 export class ProgrammingDiffReportDetailComponent implements OnDestroy {
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
+
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonSize = ButtonSize;
     protected readonly TooltipPlacement = TooltipPlacement;
@@ -26,8 +29,6 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
     protected readonly faCodeCompare = faCodeCompare;
     protected readonly faSpinner = faSpinner;
 
-    private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
     private dialogRef?: DynamicDialogRef;
 
     detail = input.required<ProgrammingDiffReportDetail>();

@@ -4,7 +4,7 @@ import { ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entit
 import { ExerciseGroupVariantColumn } from 'app/exam/shared/entities/exercise-group-variant-column.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -12,8 +12,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-exam-checklist-exercisegroup-table',
     templateUrl: './exam-checklist-exercisegroup-table.component.html',
-    styleUrls: ['./exam-checklist-exercisegroup-table.component.scss'],
-    imports: [TranslateDirective, NgbTooltip, FaIconComponent, NoDataComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, TumAetUiTableDirective, TumAetUiTooltipDirective, FaIconComponent, NoDataComponent, ArtemisTranslatePipe],
 })
 export class ExamChecklistExerciseGroupTableComponent {
     quizExamMaxPoints = input.required<number>();

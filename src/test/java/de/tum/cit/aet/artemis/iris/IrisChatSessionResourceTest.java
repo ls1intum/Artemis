@@ -31,7 +31,9 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
@@ -42,6 +44,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionCountDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -178,6 +181,23 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
 
         assertThat(response.id()).isEqualTo(session.getId());
         verify(irisCitationService).resolveCitationInfoFromMessages(any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getSessionById_leavesOutConversationSummaries() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        IrisChatSession session = IrisChatSessionFactory.createCourseChatSessionForUser(course, user);
+        addMessage(session, IrisMessageSender.USER, new IrisTextMessageContent("What is a hash table?"));
+        addMessage(session, IrisMessageSender.LLM, new IrisTextMessageContent("A hash table maps keys to values."));
+        var summary = new IrisJsonMessageContent();
+        summary.setJsonContent("{\"summary\":\"The student asked what a hash table is.\",\"coversThroughMessageId\":1}");
+        addMessage(session, IrisMessageSender.SUMMARY, summary);
+        saveChatSessionWithMessages(session);
+
+        IrisChatSessionResponseDTO response = request.get(sessionUrl(session.getId()), HttpStatus.OK, IrisChatSessionResponseDTO.class);
+
+        assertThat(response.messages()).extracting(IrisMessageResponseDTO::sender).containsExactly(IrisMessageSender.USER, IrisMessageSender.LLM);
     }
 
     @Test
@@ -430,6 +450,14 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
 
     private String createUrl(long courseId) {
         return "/api/iris/chat/sessions?courseId=" + courseId;
+    }
+
+    private static void addMessage(IrisSession session, IrisMessageSender sender, IrisMessageContent content) {
+        var message = new IrisMessage();
+        message.addContent(content);
+        message.setSender(sender);
+        message.setSession(session);
+        session.getMessages().add(message);
     }
 
     private void saveChatSessionWithMessages(IrisSession session) {

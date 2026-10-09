@@ -96,10 +96,6 @@ export class DragAndDropQuiz {
         return exercise.id;
     }
 
-    async waitForQuizExerciseToBeGenerated() {
-        await this.page.locator('[data-testid="jhi-text-exercise-heading-edit"]').waitFor({ state: 'visible' });
-    }
-
     async previewQuiz() {
         await this.page.locator('[data-testid="preview-quiz"]').first().click();
     }

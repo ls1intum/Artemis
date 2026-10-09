@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { CompetencyImportResponseDTO, CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyImportOptionsDTO } from 'app/atlas/shared/entities/competency.model';
@@ -18,9 +18,7 @@ type EntityArrayResponseType = HttpResponse<Prerequisite[]>;
 type EntityResponseDTOType = HttpResponse<CourseCompetencyResponseDTO>;
 type EntityArrayResponseDTOType = HttpResponse<CourseCompetencyResponseDTO[]>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class PrerequisiteService extends CourseCompetencyService {
     override getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.get<CourseCompetencyResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' }).pipe(

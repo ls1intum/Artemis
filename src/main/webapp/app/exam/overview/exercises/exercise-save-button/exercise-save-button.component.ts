@@ -3,6 +3,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { facSaveSuccess } from 'app/foundation/icons/icons';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 
@@ -10,13 +11,13 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
     selector: 'jhi-exercise-save-button',
     templateUrl: './exercise-save-button.component.html',
     styleUrls: ['./exercise-save-button.component.scss'],
-    imports: [FaIconComponent, TranslateDirective],
+    imports: [FaIconComponent, TranslateDirective, TumAetUiButtonDirective],
 })
 export class ExerciseSaveButtonComponent {
+    private readonly examParticipationService = inject(ExamParticipationService);
+
     protected readonly faFloppyDisk = faFloppyDisk;
     protected readonly facSaveSuccess = facSaveSuccess;
-
-    private readonly examParticipationService = inject(ExamParticipationService);
 
     submission = input<Submission>();
     save = output<void>();

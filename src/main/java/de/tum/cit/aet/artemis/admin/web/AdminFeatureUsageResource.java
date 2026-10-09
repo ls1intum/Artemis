@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for the built-in feature usage analysis.
@@ -34,7 +35,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("monitoring/feature-usage")
+@FeatureUsage(UserFeature.FEATURE_USAGE)
 @RestController
 @RequestMapping("api/admin/")
 public class AdminFeatureUsageResource {
@@ -49,7 +50,7 @@ public class AdminFeatureUsageResource {
      */
     private static final List<Integer> ALLOWED_WINDOWS_IN_DAYS = List.of(7, 30, 90, 180);
 
-    /** Bounds the {@code IN} clause of the trend query. The largest labelled feature covers a few dozen endpoints. */
+    /** Bounds the {@code IN} clause of the trend query. The largest feature covers a few dozen endpoints. */
     private static final int MAX_TREND_FEATURE_IDS = 200;
 
     private final FeatureUsageQueryService featureUsageQueryService;
@@ -75,26 +76,38 @@ public class AdminFeatureUsageResource {
     }
 
     /**
-     * GET admin/feature-usage/trend : the daily usage of one feature, for the trend chart.
+     * GET admin/feature-usage/trend : the daily calls of one feature or of individual endpoints, per interaction, for the
+     * trend chart.
      * <p>
-     * Takes a list of ids rather than one, because a feature is usually served by several endpoints and the chart has to
-     * cover all of them. Repeated as {@code featureIds=1&featureIds=2}.
+     * Exactly one of the two selectors is expected. {@code feature} charts a catalogue feature over every endpoint that
+     * serves it; {@code featureIds} charts individual inventory rows, repeated as {@code featureIds=1&featureIds=2}.
      *
-     * @param featureIds the inventory rows behind the feature, at most {@value #MAX_TREND_FEATURE_IDS}
+     * @param feature    the catalogue feature to chart
+     * @param featureIds the inventory rows to chart, at most {@value #MAX_TREND_FEATURE_IDS}
      * @param days       the length of the window, one of 7, 30, 90 or 180
      * @param callerRole optional filter, restricting the totals to callers whose highest global role is this one. Passed
      *                       through from the overview, so that charting a role-filtered row keeps the same filter.
-     * @return the ResponseEntity with status 200 (OK) and the daily totals in the body
+     * @return the ResponseEntity with status 200 (OK) and the daily totals per interaction in the body
      */
     @GetMapping("feature-usage/trend")
-    public ResponseEntity<List<FeatureUsageTrendPointDTO>> getFeatureUsageTrend(@RequestParam List<Long> featureIds, @RequestParam(defaultValue = "30") int days,
+    public ResponseEntity<List<FeatureUsageTrendPointDTO>> getFeatureUsageTrend(@RequestParam(required = false) @Nullable UserFeature feature,
+            @RequestParam(required = false) @Nullable List<Long> featureIds, @RequestParam(defaultValue = "30") int days,
             @RequestParam(required = false) @Nullable Role callerRole) {
-        log.debug("REST request to get the usage trend of {} features over the last {} days for role {}", featureIds.size(), days, callerRole);
-        if (featureIds.size() > MAX_TREND_FEATURE_IDS) {
-            // the largest labelled feature covers a few dozen endpoints, so anything beyond this is not a real chart request
-            throw new BadRequestAlertException("At most " + MAX_TREND_FEATURE_IDS + " features can be charted at once", ENTITY_NAME, "tooManyFeatures");
+        boolean hasFeatureIds = featureIds != null && !featureIds.isEmpty();
+        if ((feature == null) == !hasFeatureIds) {
+            throw new BadRequestAlertException("Chart either a feature or a list of endpoints", ENTITY_NAME, "invalidTrendSelector");
         }
-        return ResponseEntity.ok(featureUsageQueryService.getTrend(featureIds, validateWindow(days), callerRole));
+        int window = validateWindow(days);
+        if (feature != null) {
+            log.debug("REST request to get the usage trend of {} over the last {} days for role {}", feature, days, callerRole);
+            return ResponseEntity.ok(featureUsageQueryService.getFeatureTrend(feature, window, callerRole));
+        }
+        log.debug("REST request to get the usage trend of {} endpoints over the last {} days for role {}", featureIds.size(), days, callerRole);
+        if (featureIds.size() > MAX_TREND_FEATURE_IDS) {
+            // a feature covers a few dozen endpoints at most, so anything beyond this is not a real chart request
+            throw new BadRequestAlertException("At most " + MAX_TREND_FEATURE_IDS + " endpoints can be charted at once", ENTITY_NAME, "tooManyFeatures");
+        }
+        return ResponseEntity.ok(featureUsageQueryService.getTrend(featureIds, window, callerRole));
     }
 
     /**

@@ -16,8 +16,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -37,6 +39,9 @@ class QuizExerciseWithSubmissionsExportServiceTest extends AbstractSpringIntegra
 
     @Autowired
     private QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService;
+
+    @Autowired
+    private QuizExerciseTestRepository quizExerciseRepository;
 
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
@@ -63,5 +68,23 @@ class QuizExerciseWithSubmissionsExportServiceTest extends AbstractSpringIntegra
         assertThat(details).as("the questions of every type are exported with their solutions").contains("\"type\":\"multiple-choice\"").contains("\"type\":\"drag-and-drop\"")
                 .contains("\"type\":\"short-answer\"").contains("\"isCorrect\":true");
         assertThat(details).as("no student data and no entity back references are written").doesNotContain("studentParticipations").doesNotContain("\"exercises\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void exportExerciseWithSubmissions_withBackgroundImage_reportsMissingBackgroundFile() {
+        Course course = courseUtilService.createCourse();
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, RELEASE_DATE, RELEASE_DATE.plusHours(3), RELEASE_DATE.plusHours(4),
+                QuizMode.SYNCHRONIZED);
+        QuizExercise loaded = quizExerciseRepository.findByIdWithQuestionsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quizExercise.getId());
+        DragAndDropQuestion dndQuestion = loaded.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).map(DragAndDropQuestion.class::cast).findFirst()
+                .orElseThrow();
+        dndQuestion.setBackgroundFilePath("missing-background.png");
+        quizExerciseRepository.save(loaded);
+        List<String> exportErrors = new ArrayList<>();
+
+        quizExerciseWithSubmissionsExportService.exportExerciseWithSubmissions(quizExercise, exportDir, exportErrors, new ArrayList<ArchivalReportEntry>());
+
+        assertThat(exportErrors).as("the missing background file is reported, the export carries on").anyMatch(error -> error.contains("missing-background.png"));
     }
 }

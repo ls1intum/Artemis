@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
@@ -7,7 +7,7 @@ import { map } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<AnswerPost>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AnswerPostService extends PostingService<AnswerPost> {
     protected http = inject(HttpClient);
 

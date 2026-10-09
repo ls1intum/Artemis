@@ -11,10 +11,10 @@
         <p-table [value]="appliedActions()" styleClass="p-datatable-sm" [scrollable]="true" scrollHeight="360px">
             <ng-template #header>
                 <tr>
-                    <th jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.action"></th>
-                    <th jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.competency"></th>
-                    <th jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.detail"></th>
-                    <th jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.reason"></th>
+                    <th scope="col" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.action"></th>
+                    <th scope="col" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.competency"></th>
+                    <th scope="col" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.detail"></th>
+                    <th scope="col" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.reason"></th>
                 </tr>
             </ng-template>
             <ng-template #body let-action>

@@ -16,6 +16,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -24,6 +25,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration;
@@ -32,8 +36,15 @@ import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO.EditDTO;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
@@ -53,13 +64,15 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 /**
  * Extracts learning-relevant content from {@link LearningObject}s (exercises and lecture units)
  * into {@link ExtractedContentDTO}s for downstream LLM consumption. Supports all exercise types
- * (programming, text, modeling, file upload, quiz); lecture unit types are not yet supported.
+ * (programming, text, modeling, file upload, quiz) and the orchestratable lecture-unit types
+ * ({@link TextUnit}, {@link OnlineUnit}, {@link AttachmentVideoUnit}); {@link ExerciseUnit} is
+ * rejected because it is never orchestrated on its own — its exercise is orchestrated directly.
  * <p>
  * Text, modeling and file-upload exercises carry a prose problem statement (flavor-stripped) plus
  * their example/sample solution; quizzes have no problem statement, so their content is assembled
  * from the questions, answer options, and correct solutions. All extracted content is server-side
  * only; both the batch orchestration path and the on-demand {@code OrchestratorReadToolsService.getExerciseContent}
- * read tool sanitize it (fence-neutralized, truncated) via {@code CompetencyOrchestrationService.sanitizeForPrompt}
+ * read tool sanitize it (fence-neutralized, truncated) via {@code OrchestratorPromptRenderer.sanitizeForPrompt}
  * before it reaches the prompt.
  * <p>
  * To add a new learning object type:
@@ -88,6 +101,8 @@ public class ContentExtractionService {
 
     private static final String FLAVOR_STRIP_PROMPT_PATH = "/prompts/atlas/flavor_text_strip_prompt.st";
 
+    private static final String FLAVOR_STRIP_PIPELINE_ID = "ATLAS_FLAVOR_STRIP";
+
     private final ChatClient chatClient;
 
     private final AtlasPromptTemplateService templateService;
@@ -100,24 +115,47 @@ public class ContentExtractionService {
 
     private final double flavorStripTemperature;
 
+    @Nullable
+    private final LLMTokenUsageService llmTokenUsageService;
+
+    @Nullable
+    private final UserRepository userRepository;
+
     @Autowired
     public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, QuizExerciseRepository quizExerciseRepository,
             @Value("${artemis.atlas.flavor-strip-model:gpt-5.6-luna}") String flavorStripModel,
             @Value("${artemis.atlas.flavor-strip-reasoning-effort:high}") String flavorStripReasoningEffort,
             @Value("${artemis.atlas.flavor-strip-temperature:1.0}") double flavorStripTemperature, AtlasOrchestratorProperties orchestratorProperties,
+            @Qualifier(AtlasResponsesApiConfiguration.ATLAS_RESPONSES_CHAT_CLIENT) @Nullable AtlasResponsesChatClient responsesClient, LLMTokenUsageService llmTokenUsageService,
+            UserRepository userRepository) {
+        this(orchestratorProperties.responsesApiEnabled() ? (responsesClient == null ? null : responsesClient.chatClient()) : chatClient, templateService, quizExerciseRepository,
+                flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature, llmTokenUsageService, userRepository);
+    }
+
+    public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, QuizExerciseRepository quizExerciseRepository,
+            String flavorStripModel, String flavorStripReasoningEffort, double flavorStripTemperature, AtlasOrchestratorProperties orchestratorProperties,
             @Qualifier(AtlasResponsesApiConfiguration.ATLAS_RESPONSES_CHAT_CLIENT) @Nullable AtlasResponsesChatClient responsesClient) {
         this(orchestratorProperties.responsesApiEnabled() ? (responsesClient == null ? null : responsesClient.chatClient()) : chatClient, templateService, quizExerciseRepository,
-                flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature);
+                flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature, (LLMTokenUsageService) null, (UserRepository) null);
     }
 
     public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, QuizExerciseRepository quizExerciseRepository,
             String flavorStripModel, String flavorStripReasoningEffort, double flavorStripTemperature) {
+        this(chatClient, templateService, quizExerciseRepository, flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature, (LLMTokenUsageService) null,
+                (UserRepository) null);
+    }
+
+    public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, QuizExerciseRepository quizExerciseRepository,
+            String flavorStripModel, String flavorStripReasoningEffort, double flavorStripTemperature, @Nullable LLMTokenUsageService llmTokenUsageService,
+            @Nullable UserRepository userRepository) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.flavorStripModel = flavorStripModel;
         this.flavorStripReasoningEffort = flavorStripReasoningEffort;
         this.flavorStripTemperature = flavorStripTemperature;
+        this.llmTokenUsageService = llmTokenUsageService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -148,8 +186,58 @@ public class ContentExtractionService {
             case ModelingExercise modelingExercise -> extractFromModelingExercise(modelingExercise, stripFlavorText);
             case FileUploadExercise fileUploadExercise -> extractFromFileUploadExercise(fileUploadExercise, stripFlavorText);
             case QuizExercise quizExercise -> extractFromQuizExercise(quizExercise);
+            case TextUnit textUnit -> extractFromTextUnit(textUnit, stripFlavorText);
+            case OnlineUnit onlineUnit -> extractFromOnlineUnit(onlineUnit);
+            case AttachmentVideoUnit attachmentVideoUnit -> extractFromAttachmentVideoUnit(attachmentVideoUnit);
+            // An ExerciseUnit is a thin pointer to an exercise that is orchestrated directly; it carries no
+            // learning text of its own and CourseCompetency.prePersistOrUpdate silently strips any link to it.
+            case ExerciseUnit ignored -> throw new IllegalArgumentException("ExerciseUnit is never orchestrated");
             default -> throw new IllegalArgumentException("Unsupported learning object type: " + learningObject.getClass().getSimpleName());
         };
+    }
+
+    /**
+     * Whether Atlas can inspect and mutate competency links for the given lecture unit.
+     * Text units require nonblank prose content, and attachment/video units require
+     * instructor-authored descriptive text because Atlas does not inspect attachments, videos, or
+     * transcripts. Both would otherwise extract to an empty learning text that batch orchestration
+     * drops, so accepting them here would let a blank unit stay queued, consume an automatic run, and
+     * be offered for a manual run that can only end as a no-op.
+     * <p>
+     * The lecture-unit management client mirrors this rule in {@code isOrchestrationAvailable}.
+     *
+     * @param lectureUnit the lecture unit to validate
+     * @return whether the unit has a supported, learning-relevant representation
+     */
+    public static boolean isLectureUnitEligibleForOrchestration(LectureUnit lectureUnit) {
+        return switch (lectureUnit) {
+            case TextUnit textUnit -> hasText(textUnit.getContent());
+            case OnlineUnit ignored -> true;
+            case AttachmentVideoUnit attachmentVideoUnit -> hasText(attachmentVideoUnit.getDescription());
+            default -> false;
+        };
+    }
+
+    /**
+     * Whether a persisted lecture unit may stay queued for automatic orchestration of the given
+     * course: it must belong to that course and satisfy
+     * {@link #isLectureUnitEligibleForOrchestration(LectureUnit)}. The accumulator applies this
+     * single rule both when a content-change event refreshes a buffered id and when a claimed batch
+     * is requeued, so neither path can keep a unit that batch resolution would drop.
+     *
+     * @param lectureUnit the current persisted lecture unit with its lecture loaded, or {@code null} when it no longer exists
+     * @param courseId    the course whose queue is being updated
+     * @return whether the unit exists, belongs to the course, and is eligible for orchestration
+     */
+    public static boolean isCourseLectureUnitEligibleForOrchestration(@Nullable LectureUnit lectureUnit, long courseId) {
+        if (lectureUnit == null || lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
+            return false;
+        }
+        return Long.valueOf(courseId).equals(lectureUnit.getLecture().getCourse().getId()) && isLectureUnitEligibleForOrchestration(lectureUnit);
+    }
+
+    private static boolean hasText(@Nullable String value) {
+        return value != null && !value.isBlank();
     }
 
     /**
@@ -168,6 +256,19 @@ public class ContentExtractionService {
      * @return the cleaned text, or the original text if stripping is disabled or fails
      */
     public String stripFlavorText(String rawText) {
+        return stripFlavorText(rawText, null, null);
+    }
+
+    private String stripFlavorText(String rawText, @Nullable Exercise exercise) {
+        Course course = exercise != null ? exercise.getCourseViaExerciseGroupOrCourseMember() : null;
+        return stripFlavorText(rawText, course != null ? course.getId() : null, exercise != null ? exercise.getId() : null);
+    }
+
+    /**
+     * Strips flavor text and attributes the provider usage to the given course and exercise. Lecture units
+     * pass their lecture's course, so course statistics include flavor stripping of text units.
+     */
+    private String stripFlavorText(String rawText, @Nullable Long courseId, @Nullable Long exerciseId) {
         if (rawText == null || rawText.isBlank()) {
             return "";
         }
@@ -179,19 +280,34 @@ public class ContentExtractionService {
             // the user message; no need to inject them via the prompt template.
             String systemPrompt = templateService.render(FLAVOR_STRIP_PROMPT_PATH, Map.of());
             OpenAiChatOptions.Builder options = buildChatOptions(flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature);
-            FlavorStripEditsDTO parsedEdits = chatClient.prompt().system(systemPrompt).user(rawText).options(options).call().entity(FlavorStripEditsDTO.class);
+            var responseEntity = chatClient.prompt().system(systemPrompt).user(rawText).options(options).call().responseEntity(FlavorStripEditsDTO.class);
+            trackFlavorStripUsage(responseEntity.response(), courseId, exerciseId);
+            FlavorStripEditsDTO parsedEdits = responseEntity.entity();
             if (parsedEdits == null || parsedEdits.edits() == null || parsedEdits.edits().isEmpty()) {
                 return rawText;
             }
             String edited = applyEdits(rawText, parsedEdits.edits());
             // If no edit span actually matched, the text is unchanged: return it byte-identical rather than
             // running whitespace normalization over content the model never targeted.
-            return edited.equals(rawText) ? rawText : normalizeWhitespace(edited);
+            if (edited.equals(rawText)) {
+                return rawText;
+            }
+            String normalized = normalizeWhitespace(edited);
+            return normalized.isBlank() ? rawText : normalized;
         }
         catch (Exception e) {
             log.warn("Flavor-text stripping failed; falling back to raw text", e);
             return rawText;
         }
+    }
+
+    private void trackFlavorStripUsage(@Nullable ChatResponse response, @Nullable Long courseId, @Nullable Long exerciseId) {
+        if (llmTokenUsageService == null) {
+            return;
+        }
+        Long userId = userRepository == null ? null : SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
+        llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.ATLAS, FLAVOR_STRIP_PIPELINE_ID,
+                builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
     }
 
     /**
@@ -211,10 +327,10 @@ public class ContentExtractionService {
     }
 
     /**
-     * Apply the given SEARCH/REPLACE edits to {@code rawText} in order. For each edit, the first
+     * Apply the given SEARCH/REPLACE edits to {@code rawText} in order. For each edit, the unique
      * occurrence of {@code edit.search()} is replaced with {@code edit.replace()} via
-     * {@link #findSpan(String, String)} (exact match, then a whitespace-tolerant fallback). Edits
-     * whose {@code search} cannot be located are skipped (logged at DEBUG) so a single off-target
+     * {@link #findSpan(String, String)} (unique whitespace-equivalent match). Edits
+     * whose {@code search} cannot be uniquely located are skipped (logged at DEBUG) so a single off-target
      * span does not poison the whole strip.
      * <p>
      * The prompt contract only permits {@code replace} to be empty (pure deletion) or a single
@@ -244,28 +360,16 @@ public class ContentExtractionService {
     }
 
     /**
-     * Locate the {@code search} span in {@code working}. First tries an exact literal match; if that
-     * fails, falls back to a whitespace-tolerant match that ignores leading/trailing whitespace and
-     * treats any internal whitespace run as equivalent, while still requiring every non-whitespace
-     * character to match exactly. This lets weaker models — whose search spans often differ from the
-     * source only in whitespace (extra indentation, single vs. double spaces) — still land their
-     * deletions, without ever matching a span whose visible content differs (e.g. a paraphrased word),
-     * so kept content stays byte-identical.
+     * Locate a unique whitespace-equivalent span, rejecting repeated or overlapping matches even
+     * when an exact match exists. Exact offsets preserve surrounding whitespace.
      *
-     * @return the {@code [start, end)} offsets of the matched span, or {@code null} if not found
+     * @return the {@code [start, end)} offsets, or {@code null} if absent or ambiguous
      */
     private static int[] findSpan(String working, String search) {
-        int exact = working.indexOf(search);
-        if (exact >= 0) {
-            return new int[] { exact, exact + search.length() };
-        }
         String trimmed = search.strip();
         if (trimmed.isEmpty()) {
             return null;
         }
-        // Build a pattern matching each whitespace-delimited token literally, joined by \s+ for any
-        // internal whitespace run. Leading/trailing whitespace is dropped by strip(), so only the
-        // non-whitespace skeleton must match; the actual source whitespace inside the span is consumed.
         String[] tokens = trimmed.split("\\s+");
         StringBuilder regex = new StringBuilder();
         for (int i = 0; i < tokens.length; i++) {
@@ -275,7 +379,17 @@ public class ContentExtractionService {
             regex.append(Pattern.quote(tokens[i]));
         }
         Matcher matcher = Pattern.compile(regex.toString()).matcher(working);
-        return matcher.find() ? new int[] { matcher.start(), matcher.end() } : null;
+        if (!matcher.find()) {
+            return null;
+        }
+        int start = matcher.start();
+        int end = matcher.end();
+        // Search from the next character so overlapping occurrences are ambiguous too.
+        if (matcher.find(start + 1)) {
+            return null;
+        }
+        int exact = working.indexOf(search);
+        return exact >= 0 ? new int[] { exact, exact + search.length() } : new int[] { start, end };
     }
 
     /**
@@ -294,13 +408,13 @@ public class ContentExtractionService {
     private ExtractedContentDTO extractFromProgrammingExercise(ProgrammingExercise exercise, boolean applyFlavorStrip) {
         String title = Objects.requireNonNullElse(exercise.getTitle(), "");
         String raw = Objects.requireNonNullElse(exercise.getProblemStatement(), "");
-        String learningText = applyFlavorStrip ? stripFlavorText(raw) : raw;
+        String learningText = applyFlavorStrip ? stripFlavorText(raw, exercise) : raw;
         return new ExtractedContentDTO(title, learningText, baseMetadata(exercise));
     }
 
     private ExtractedContentDTO extractFromTextExercise(TextExercise exercise, boolean applyFlavorStrip) {
         String title = Objects.requireNonNullElse(exercise.getTitle(), "");
-        String learningText = statementWithSolution(exercise.getProblemStatement(), exercise.getExampleSolution(), applyFlavorStrip);
+        String learningText = statementWithSolution(exercise.getProblemStatement(), exercise.getExampleSolution(), applyFlavorStrip, exercise);
         return new ExtractedContentDTO(title, learningText, baseMetadata(exercise));
     }
 
@@ -308,7 +422,7 @@ public class ContentExtractionService {
         String title = Objects.requireNonNullElse(exercise.getTitle(), "");
         // The example-solution *explanation* is prose; the example-solution *model* is serialized Apollon
         // JSON and is deliberately excluded — it is noise for competency reasoning, not learning content.
-        String learningText = statementWithSolution(exercise.getProblemStatement(), exercise.getExampleSolutionExplanation(), applyFlavorStrip);
+        String learningText = statementWithSolution(exercise.getProblemStatement(), exercise.getExampleSolutionExplanation(), applyFlavorStrip, exercise);
         Map<String, String> metadata = baseMetadata(exercise);
         if (exercise.getDiagramType() != null) {
             metadata.put("diagramType", exercise.getDiagramType().name().toLowerCase(Locale.ROOT));
@@ -318,7 +432,7 @@ public class ContentExtractionService {
 
     private ExtractedContentDTO extractFromFileUploadExercise(FileUploadExercise exercise, boolean applyFlavorStrip) {
         String title = Objects.requireNonNullElse(exercise.getTitle(), "");
-        String learningText = statementWithSolution(exercise.getProblemStatement(), exercise.getExampleSolution(), applyFlavorStrip);
+        String learningText = statementWithSolution(exercise.getProblemStatement(), exercise.getExampleSolution(), applyFlavorStrip, exercise);
         Map<String, String> metadata = baseMetadata(exercise);
         if (exercise.getFilePattern() != null && !exercise.getFilePattern().isBlank()) {
             metadata.put("filePattern", exercise.getFilePattern().strip());
@@ -349,6 +463,66 @@ public class ContentExtractionService {
     }
 
     /**
+     * Extracts a {@link TextUnit}: the unit name is the title and its prose {@code content} is the learning
+     * text, flavor-stripped like a programming problem statement (it is narrative markdown, the one lecture-unit
+     * body the strip pass targets). A null/blank content collapses to an empty learning text.
+     */
+    private ExtractedContentDTO extractFromTextUnit(TextUnit unit, boolean applyFlavorStrip) {
+        String title = Objects.requireNonNullElse(unit.getName(), "");
+        String raw = Objects.requireNonNullElse(unit.getContent(), "");
+        Course course = unit.getLecture() != null ? unit.getLecture().getCourse() : null;
+        String learningText = applyFlavorStrip ? stripFlavorText(raw, course != null ? course.getId() : null, null) : raw;
+        return new ExtractedContentDTO(title, learningText, lectureUnitMetadata(unit));
+    }
+
+    /**
+     * Extracts an {@link OnlineUnit}: the unit name is the title and its {@code description} is the learning
+     * text. The description is a short instructor blurb, not narrative prose, so it is NOT flavor-stripped
+     * (that would spend an LLM round for no benefit). The external {@code source} URL is recorded in metadata
+     * so the orchestrator can see what the unit links to.
+     */
+    private ExtractedContentDTO extractFromOnlineUnit(OnlineUnit unit) {
+        String title = Objects.requireNonNullElse(unit.getName(), "");
+        String learningText = Objects.requireNonNullElse(unit.getDescription(), "");
+        Map<String, String> metadata = lectureUnitMetadata(unit);
+        if (unit.getSource() != null && !unit.getSource().isBlank()) {
+            metadata.put("source", unit.getSource().strip());
+        }
+        return new ExtractedContentDTO(title, learningText, metadata);
+    }
+
+    /**
+     * Extracts an {@link AttachmentVideoUnit}: the unit name is the title and its {@code description} is the
+     * learning text (not flavor-stripped — it is a short blurb, and the real content lives in the attached
+     * file/video which is not text-extractable here). The video source and attachment link are exposed only as
+     * metadata; this service never fetches either. A blank description yields an empty learning text, so the
+     * orchestrator skips the unit instead of processing files, video, or transcripts.
+     */
+    private ExtractedContentDTO extractFromAttachmentVideoUnit(AttachmentVideoUnit unit) {
+        String title = Objects.requireNonNullElse(unit.getName(), "");
+        String learningText = Objects.requireNonNullElse(unit.getDescription(), "");
+        Map<String, String> metadata = lectureUnitMetadata(unit);
+        if (unit.getVideoSource() != null && !unit.getVideoSource().isBlank()) {
+            metadata.put("videoSource", unit.getVideoSource().strip());
+        }
+        if (unit.getAttachment() != null && unit.getAttachment().getLink() != null && !unit.getAttachment().getLink().isBlank()) {
+            metadata.put("attachmentLink", unit.getAttachment().getLink().strip());
+        }
+        return new ExtractedContentDTO(title, learningText, metadata);
+    }
+
+    /**
+     * Base metadata every lecture unit carries: the stable {@code lectureUnitType} discriminator (from
+     * {@link LectureUnit#getType()}) so downstream consumers can distinguish unit kinds without leaking Java
+     * class names. A {@link LinkedHashMap} preserves insertion order for deterministic JSON serialization.
+     */
+    private static Map<String, String> lectureUnitMetadata(LectureUnit unit) {
+        Map<String, String> metadata = new LinkedHashMap<>();
+        metadata.put("lectureUnitType", unit.getType());
+        return metadata;
+    }
+
+    /**
      * Builds the base metadata every exercise carries. A {@link LinkedHashMap} preserves insertion order
      * for deterministic JSON serialization. {@code exerciseType} is derived from the concrete type so it
      * stays correct for every subtype; {@code difficulty} / {@code maxPoints} are added when present.
@@ -371,9 +545,9 @@ public class ContentExtractionService {
      * narrative scaffolding. Returns just the statement when no solution is present, and just the labeled
      * solution when the statement is blank.
      */
-    private String statementWithSolution(@Nullable String problemStatement, @Nullable String exampleSolution, boolean applyFlavorStrip) {
+    private String statementWithSolution(@Nullable String problemStatement, @Nullable String exampleSolution, boolean applyFlavorStrip, Exercise exercise) {
         String raw = Objects.requireNonNullElse(problemStatement, "");
-        String statement = applyFlavorStrip ? stripFlavorText(raw) : raw;
+        String statement = applyFlavorStrip ? stripFlavorText(raw, exercise) : raw;
         if (exampleSolution == null || exampleSolution.isBlank()) {
             return statement;
         }

@@ -1,13 +1,13 @@
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faRotateLeft, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { TumUiButtonSeverity } from '@tumaet/ui-angular';
+import { TumAetUiButtonSeverity } from '@tumaet/ui-angular';
 import { CleanupAction } from 'app/admin/cleanup-service/cleanup-operation.model';
 
 /** How the confirmation button of a cleanup action presents itself. */
 export interface CleanupActionPresentation {
     icon: IconDefinition;
     labelKey: string;
-    severity: TumUiButtonSeverity;
+    severity: TumAetUiButtonSeverity;
 }
 
 /**

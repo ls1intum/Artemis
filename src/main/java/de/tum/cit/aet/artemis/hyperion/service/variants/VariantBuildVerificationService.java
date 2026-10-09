@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -33,9 +32,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
@@ -81,7 +80,7 @@ public class VariantBuildVerificationService {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
-    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private final BuildLogEntryService buildLogEntryService;
 
     private final ResultRepository resultRepository;
 
@@ -106,12 +105,12 @@ public class VariantBuildVerificationService {
     private final Map<Long, Instant> abandonedBuildWaits = new ConcurrentHashMap<>();
 
     public VariantBuildVerificationService(TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, BuildLogEntryService buildLogEntryService,
             ResultRepository resultRepository, GitService gitService, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
-        this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.buildLogEntryService = buildLogEntryService;
         this.resultRepository = resultRepository;
         this.gitService = gitService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
@@ -497,11 +496,9 @@ public class VariantBuildVerificationService {
         if (!(result.getSubmission() instanceof ProgrammingSubmission programmingSubmission)) {
             return "(no build logs available)";
         }
-        // The result is fetched without build logs, so the lazy association is detached here. Re-load the submission
-        // with an eager build-log graph; otherwise a compile failure (the most common repair trigger) is invisible.
+        // The build logs of a failed build live on disk, keyed by submission; a build that failed before that store existed is still served from the table.
         try {
-            Set<BuildLogEntry> buildLogEntries = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId())
-                    .map(ProgrammingSubmission::getBuildLogEntries).orElse(Set.of());
+            List<BuildLogEntry> buildLogEntries = buildLogEntryService.getLatestBuildLogs(programmingSubmission);
             if (!buildLogEntries.isEmpty()) {
                 String logs = buildLogEntries.stream().map(BuildLogEntry::getLog).collect(Collectors.joining("\n"));
                 return logs.length() > MAX_BUILD_LOG_LENGTH ? logs.substring(logs.length() - MAX_BUILD_LOG_LENGTH) : logs;

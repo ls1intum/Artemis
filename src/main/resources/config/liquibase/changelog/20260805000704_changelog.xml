@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Persisted per-course projection of search-index coverage. A plain read model (NOT a cache): written only by the
+         coverage recompute, read by the ingestion-observability dashboard. The denormalized course sort/display fields
+         and the precomputed coverage_gap_score let the matrix sort and filter across all courses as a single-table indexed read
+         with no join to the course table. -->
+    <changeSet id="20260805000704-01-create-ingestion-coverage" author="nayerkotry">
+        <createTable tableName="ingestion_coverage">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="course_id" type="bigint">
+                <constraints nullable="false" unique="true" uniqueConstraintName="ux_ingestion_coverage_course_id"/>
+            </column>
+            <column name="type_counts" type="json">
+                <constraints nullable="false"/>
+            </column>
+            <column name="coverage_gap_score" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(31)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="course_title" type="varchar(255)"/>
+            <column name="release_date" type="datetime(3)"/>
+            <column defaultValueBoolean="false" name="active" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="semester" type="varchar(31)"/>
+            <column name="computed_at" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_ingested_at" type="datetime(3)"/>
+        </createTable>
+        <createIndex indexName="idx_ingestion_coverage_gap_score" tableName="ingestion_coverage">
+            <column name="coverage_gap_score"/>
+        </createIndex>
+        <createIndex indexName="idx_ingestion_coverage_release_date" tableName="ingestion_coverage">
+            <column name="release_date"/>
+        </createIndex>
+        <createIndex indexName="idx_ingestion_coverage_last_ingested_at" tableName="ingestion_coverage">
+            <column name="last_ingested_at"/>
+        </createIndex>
+        <createIndex indexName="idx_ingestion_coverage_status" tableName="ingestion_coverage">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

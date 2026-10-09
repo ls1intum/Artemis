@@ -8,7 +8,7 @@ import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar
 import { faTable, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 describe('ExerciseActionBarComponent', () => {
     let fixture: ComponentFixture<ExerciseActionBarComponent>;
@@ -91,7 +91,7 @@ describe('ExerciseActionBarComponent', () => {
 
     describe('disabled tooltip', () => {
         const tooltipTextOf = (): string | readonly string[] =>
-            fixture.debugElement.query(By.css('a[data-testid="exercise-action-a"]')).injector.get(TumUiTooltipDirective).content();
+            fixture.debugElement.query(By.css('a[data-testid="exercise-action-a"]')).injector.get(TumAetUiTooltipDirective).content();
 
         it('shows the disabled tooltip only while the action is disabled', () => {
             const action: ActionItem = { ...buildActions(['a'])[0], disabledTooltip: 'tooltip.key' };

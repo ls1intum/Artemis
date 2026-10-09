@@ -44,15 +44,11 @@ test.describe('Exam archive', { tag: '@slow' }, () => {
         test.setTimeout(600_000);
 
         await login(admin);
-        const endDate = dayjs().add(15, 'seconds');
-        exam = await examAPIRequests.createExam({ course, startDate: dayjs().subtract(1, 'minute'), endDate, gracePeriod: 0 });
+        exam = await examAPIRequests.createExam({ course, startDate: dayjs().subtract(1, 'minute'), endDate: dayjs().add(30, 'minutes'), gracePeriod: 0 });
         await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { programmingLanguage: ProgrammingLanguage.C });
 
-        // Archiving is refused while the exam is still running.
-        const remaining = endDate.diff(dayjs());
-        if (remaining > 0) {
-            await page.waitForTimeout(remaining + 2000);
-        }
+        // Archiving is refused while the exam is still running, so end it now and wait until the server agrees that it is over.
+        await examAPIRequests.finishExam(exam);
 
         await login(instructor, `/course-management/${course.id}/exams/${exam.id}`);
         await page.locator('[data-testid="archiveButton"][data-mode="Exam"]').click();

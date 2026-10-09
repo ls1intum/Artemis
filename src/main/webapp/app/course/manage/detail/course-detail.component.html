@@ -11,7 +11,7 @@
                         <p jhiTranslate="artemisApp.course.quickActions.description"></p>
                     </div>
                     @if (course()!.isAtLeastInstructor) {
-                        <button class="section-header-action" (click)="quickActions.openImportDialog()">
+                        <button type="button" class="section-header-action" (click)="quickActions.openImportDialog()">
                             <fa-icon [icon]="faFileImport" class="me-1" />
                             <span jhiTranslate="artemisApp.course.import.button"></span>
                         </button>

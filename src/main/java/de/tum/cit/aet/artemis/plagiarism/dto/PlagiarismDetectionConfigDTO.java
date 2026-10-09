@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.plagiarism.dto;
 import java.io.Serializable;
 import java.util.Optional;
 
+import org.hibernate.Hibernate;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
@@ -18,11 +20,11 @@ public record PlagiarismDetectionConfigDTO(Long id, boolean continuousPlagiarism
     /**
      * Creates a {@link PlagiarismDetectionConfigDTO} from the given {@link PlagiarismDetectionConfig}.
      *
-     * @param config the entity to convert (may be {@code null})
-     * @return the corresponding DTO, or {@code null} if the input was {@code null}
+     * @param config the entity to convert (may be {@code null} or a proxy that was not loaded)
+     * @return the corresponding DTO, or {@code null} if the input was {@code null} or not loaded
      */
     public static PlagiarismDetectionConfigDTO of(PlagiarismDetectionConfig config) {
-        return Optional.ofNullable(config)
+        return Optional.ofNullable(config).filter(Hibernate::isInitialized)
                 .map(c -> new PlagiarismDetectionConfigDTO(c.getId(), c.isContinuousPlagiarismControlEnabled(), c.isContinuousPlagiarismControlPostDueDateChecksEnabled(),
                         c.getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(), c.getSimilarityThreshold(), c.getMinimumScore(), c.getMinimumSize()))
                 .orElse(null);

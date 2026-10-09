@@ -1,0 +1,50 @@
+<input
+    #inputEl
+    tumAetUiInput
+    type="text"
+    [attr.inputmode]="maxFractionDigits() > 0 ? 'decimal' : 'numeric'"
+    class="tumaet-ui-input-number-input"
+    role="spinbutton"
+    [value]="displayText()"
+    [tumAetUiInputId]="inputId()"
+    [attr.name]="name()"
+    [attr.placeholder]="placeholder()"
+    [attr.aria-label]="ariaLabel()"
+    [attr.aria-labelledby]="ariaLabelledBy()"
+    [tumAetUiInputDescribedBy]="ariaDescribedBy()"
+    [attr.aria-valuenow]="ariaValueNow()"
+    [attr.aria-valuemin]="min() ?? null"
+    [attr.aria-valuemax]="max() ?? null"
+    [attr.aria-valuetext]="ariaValueText()"
+    [disabled]="isDisabled()"
+    [tumAetUiInputInvalid]="invalid()"
+    (input)="onInput($event)"
+    (blur)="onBlurHandler()"
+    (keydown)="onKeydown($event)"
+/>
+@if (showButtons()) {
+    <span class="tumaet-ui-input-number-button-group">
+        <button
+            type="button"
+            tabindex="-1"
+            aria-hidden="true"
+            class="tumaet-ui-input-number-button tumaet-ui-input-number-increment tumaet:text-muted tumaet:hover:bg-hover-background tumaet:hover:text-text-hover"
+            [disabled]="isDisabled()"
+            (mousedown)="$event.preventDefault()"
+            (click)="onStep(step())"
+        >
+            <fa-icon [icon]="faChevronUp" />
+        </button>
+        <button
+            type="button"
+            tabindex="-1"
+            aria-hidden="true"
+            class="tumaet-ui-input-number-button tumaet-ui-input-number-decrement tumaet:text-muted tumaet:hover:bg-hover-background tumaet:hover:text-text-hover"
+            [disabled]="isDisabled()"
+            (mousedown)="$event.preventDefault()"
+            (click)="onStep(-step())"
+        >
+            <fa-icon [icon]="faChevronDown" />
+        </button>
+    </span>
+}

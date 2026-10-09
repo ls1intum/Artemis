@@ -101,7 +101,7 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
 
     /**
      * Pinned to the same tag the rest of the repo uses via {@code .env}'s {@code MOODLE_VERSION} (consumed by
-     * {@code docker/moodle/moodle.yml}). The {@code bitnamilegacy/} namespace was created on 28 Aug 2025 as the
+     * {@code deployment/docker/moodle/moodle.yml}). The {@code bitnamilegacy/} namespace was created on 28 Aug 2025 as the
      * frozen archive of free Bitnami images and receives no new versions or security patches; if it disappears the
      * nightly job needs to switch to a self-built image or pin to a digest. Tracked as a follow-up.
      */
@@ -335,9 +335,10 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
         onlineCourseConfiguration.setUserPrefix(userPrefix);
         onlineCourseConfiguration.setRequireExistingUser(false);
         onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfigurationRepository.findByRegistrationId(registrationId).orElseThrow());
-        onlineCourseConfiguration.setCourse(initialCourse);
-        initialCourse.setOnlineCourseConfiguration(onlineCourseConfiguration);
         final Course course = courseRepository.save(initialCourse);
+        onlineCourseConfiguration.setCourse(course);
+        onlineCourseConfiguration.setId(onlineCourseConfigurationRepository.findStoredByCourseId(course.getId()).orElseThrow().getId());
+        onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
         createdCourseId = course.getId();
         var textExercise = textExerciseUtilService.createSampleTextExercise(course);
 

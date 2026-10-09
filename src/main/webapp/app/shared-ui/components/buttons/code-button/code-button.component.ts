@@ -216,7 +216,11 @@ export class CodeButtonComponent implements OnInit {
         });
     }
 
-    async ngOnInit() {
+    ngOnInit() {
+        void this.initializeCodeButtonComponent();
+    }
+
+    private async initializeCodeButtonComponent(): Promise<void> {
         // Populate the tooltip strings first. They only depend on window.location.origin and the loaded
         // translations, not on the awaits below. The clone popover renders (and can be opened by the user)
         // before ngOnInit's async work finishes; if the SSH-key-missing alert appears while these strings

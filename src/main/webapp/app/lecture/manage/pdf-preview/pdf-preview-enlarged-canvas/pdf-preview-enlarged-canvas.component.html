@@ -1,3 +1,4 @@
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- Pointer clicks outside the canvas close the overlay; the close button is keyboard focusable. -->
 <div #enlargedContainer class="enlarged-container" (click)="closeIfOutside($event)">
     @if (isEnlargedCanvasLoading()) {
         <div class="d-flex justify-content-center position-absolute">
@@ -7,12 +8,12 @@
         </div>
     }
     <canvas #enlargedCanvas></canvas>
-    <button class="btn btn-close" (click)="closeEnlargedView($event)"></button>
+    <button type="button" class="btn btn-close" (click)="closeEnlargedView($event)"></button>
     @if (currentPage() !== 1) {
-        <button class="btn btn-secondary nav-button left" (click)="handleNavigation('prev', $event)" aria-label="Previous page">←</button>
+        <button type="button" class="btn btn-secondary nav-button left" (click)="handleNavigation('prev', $event)" aria-label="Previous page">←</button>
     }
     @if (currentPage() !== totalPages()) {
-        <button class="btn btn-secondary nav-button right" (click)="handleNavigation('next', $event)" aria-label="Next page">→</button>
+        <button type="button" class="btn btn-secondary nav-button right" (click)="handleNavigation('next', $event)" aria-label="Next page">→</button>
     }
     <div class="page-number-display">{{ currentPage() }}</div>
 </div>

@@ -16,14 +16,15 @@ import { CourseSidebarService } from 'app/course/overview/services/course-sideba
     imports: [TranslateDirective, FaIconComponent, PostingSummaryComponent],
 })
 export class SavedPostsComponent implements OnDestroy {
+    private readonly savedPostService = inject(SavedPostService);
+    private readonly alertService = inject(AlertService);
+    private readonly courseSidebarService = inject(CourseSidebarService);
+
     savedPostStatus = input.required<SavedPostStatus>();
     courseId = input.required<number>();
 
     readonly onNavigateToPost = output<Posting>();
 
-    private readonly savedPostService = inject(SavedPostService);
-    private readonly alertService = inject(AlertService);
-    private readonly courseSidebarService = inject(CourseSidebarService);
     private fetchSubscription?: Subscription;
 
     protected readonly posts = signal<Posting[]>([]);
@@ -78,7 +79,7 @@ export class SavedPostsComponent implements OnDestroy {
             .pipe(take(1))
             .subscribe({
                 next: () => this.hiddenPosts.update((hiddenPosts) => [...hiddenPosts, post.id!]),
-                error: () => this.alertService.error('artemisApp.metis.post.changeSavedStatusError'),
+                error: () => this.alertService.error('artemisApp.communication.post.changeSavedStatusError'),
             });
     }
 
@@ -88,7 +89,7 @@ export class SavedPostsComponent implements OnDestroy {
             .pipe(take(1))
             .subscribe({
                 next: () => this.hiddenPosts.update((hiddenPosts) => [...hiddenPosts, post.id!]),
-                error: () => this.alertService.error('artemisApp.metis.post.removeBookmarkError'),
+                error: () => this.alertService.error('artemisApp.communication.post.removeBookmarkError'),
             });
     }
 

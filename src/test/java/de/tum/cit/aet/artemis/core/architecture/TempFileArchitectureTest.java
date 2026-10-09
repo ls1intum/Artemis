@@ -72,8 +72,14 @@ class TempFileArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoDirectCreateTempFile() {
-        // Only TempFileUtilService is allowed to use Files.createTempFile
-        var classesToCheck = allClasses.that(not(simpleName("TempFileUtilService")));
+        // Only TempFileUtilService is allowed to use Files.createTempFile.
+        //
+        // FailedBuildLogService is the one exception. It publishes a log file by writing a temporary one and renaming
+        // it into place, and a rename is only atomic within a single file store. Its temporary file therefore has to be
+        // a sibling of the target. TempFileUtilService deliberately places everything under artemis.temp-path, which is
+        // a different store in the documented shared-folder deployment, so routing this through it would silently turn
+        // the publish into a copy and reintroduce the half-written file the temporary name exists to prevent.
+        var classesToCheck = allClasses.that(not(simpleName("TempFileUtilService")).and(not(simpleName("FailedBuildLogService"))));
 
         ArchRule rule = noClasses().should().callMethodWhere(callsCreateTempFile())
                 .because("All code must use TempFileUtilService.createTempFile() instead of Files.createTempFile(). "

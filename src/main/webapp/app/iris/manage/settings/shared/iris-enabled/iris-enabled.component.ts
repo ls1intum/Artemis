@@ -60,9 +60,10 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     ],
 })
 export class IrisEnabledComponent implements OnInit {
-    protected readonly faArrowRight = faArrowRight;
     private irisSettingsService = inject(IrisSettingsService);
     private alertService = inject(AlertService);
+
+    protected readonly faArrowRight = faArrowRight;
 
     course = input.required<Course>();
 

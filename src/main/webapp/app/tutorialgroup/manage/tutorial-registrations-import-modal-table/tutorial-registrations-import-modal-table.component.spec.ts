@@ -18,6 +18,16 @@ describe('TutorialRegistrationsImportModalTableComponent', () => {
         component = fixture.componentInstance;
     });
 
+    it('should associate column headers and data rows in the same table', () => {
+        fixture.componentRef.setInput('rows', [{ login: 'ada', registrationNumber: 'R001', markFilledCells: false }]);
+        fixture.detectChanges();
+
+        const tables = fixture.nativeElement.querySelectorAll('table');
+        expect(tables).toHaveLength(1);
+        expect(tables[0].querySelectorAll('thead th[scope="col"]')).toHaveLength(2);
+        expect(tables[0].querySelectorAll('tbody tr')).toHaveLength(1);
+    });
+
     it('should render one body row per input row with login and registration number values', () => {
         const rows: TutorialRegistrationsImportModalTableRow[] = [
             { login: 'ada', registrationNumber: 'R001', markFilledCells: false },

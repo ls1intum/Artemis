@@ -58,7 +58,11 @@
                 "textPlaceholder": "Text ...",
                 "questionTitle": "Question",
                 "answersTitle": "Answer Options",
-                "newAnswerTitle": "Add New Answer Option"
+                "newAnswerTitle": "Add New Answer Option",
+                "correctnessOfAnswer": "Correctness of answer option {{ number }}",
+                "deleteAnswer": "Delete answer option {{ number }}",
+                "invalidateAnswer": "Mark answer option {{ number }} as invalid",
+                "resetAnswer": "Reset answer option {{ number }}"
             }
         }
     }

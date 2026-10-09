@@ -1,4 +1,8 @@
-tbody tr:hover {
-    background-color: var(--lecture-unit-create-row-hover-background);
-    cursor: pointer;
+// Layout is Tailwind in the template; the highlight and muted text roles have no Tailwind utility in the application.
+.create-exercise-unit-selected {
+    background-color: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.create-exercise-unit-hint {
+    color: var(--text-body-secondary);
 }

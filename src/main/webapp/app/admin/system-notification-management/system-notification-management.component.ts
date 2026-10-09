@@ -15,7 +15,14 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
-import { TumUiButtonDirective, TumUiPaginatorComponent, TumUiTableDirective, TumUiTableSortEvent, TumUiTableSortableColumnComponent, TumUiTagComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiPaginatorComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTagComponent,
+} from '@tumaet/ui-angular';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
@@ -45,11 +52,11 @@ enum NotificationState {
         FaIconComponent,
         DeleteButtonDirective,
         ItemCountComponent,
-        TumUiPaginatorComponent,
-        TumUiTableDirective,
-        TumUiTableSortableColumnComponent,
-        TumUiButtonDirective,
-        TumUiTagComponent,
+        TumAetUiPaginatorComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTagComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
@@ -228,7 +235,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     }
 
     /** Applies the sort event; server-side sorting is triggered via the resulting route transition. */
-    onTableSort(event: TumUiTableSortEvent): void {
+    onTableSort(event: TumAetUiTableSortEvent): void {
         if (!event.field) {
             return;
         }

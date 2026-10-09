@@ -1,8 +1,7 @@
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, Subscription } from 'rxjs';
-import { DialogModule } from 'primeng/dialog';
-import { ProgressBarModule } from 'primeng/progressbar';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiProgressBarComponent } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle, faExclamationTriangle, faInfoCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -14,7 +13,7 @@ import { ExamImportResultDTO, ExerciseGroupImportResultDTO } from 'app/exam/shar
  * A modal that shows live progress of an exam (or exercise-group) import and a persistent, must-dismiss summary of the
  * outcome (success, or which exercises were skipped / left incomplete).
  * <p>
- * Modelled on {@code CourseOperationProgressComponent}: a PrimeNG dialog with a progress bar that is only closable once the
+ * Modelled on {@code CourseOperationProgressComponent}: a dialog with a progress bar that is only closable once the
  * operation finished. Unlike a transient toast, the instructor has to acknowledge the result, so skipped/incomplete
  * exercises cannot be overlooked.
  * <p>
@@ -24,7 +23,7 @@ import { ExamImportResultDTO, ExerciseGroupImportResultDTO } from 'app/exam/shar
  */
 @Component({
     selector: 'jhi-exam-import-progress-dialog',
-    imports: [DialogModule, ProgressBarModule, FaIconComponent, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiProgressBarComponent, FaIconComponent, ArtemisTranslatePipe],
     templateUrl: './exam-import-progress-dialog.component.html',
 })
 export class ExamImportProgressDialogComponent implements OnDestroy {
@@ -95,6 +94,15 @@ export class ExamImportProgressDialogComponent implements OnDestroy {
                 },
             });
         });
+    }
+
+    /**
+     * Handles the dialog reporting that the user closed it, which it only allows once the import finished.
+     */
+    onVisibleChange(visible: boolean): void {
+        if (!visible) {
+            this.onDismiss();
+        }
     }
 
     /**

@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable, OnDestroy, inject, signal } from '@angular/core';
+import { OnDestroy, Service, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { EMPTY, Observable, Subscription, catchError, finalize, of, shareReplay, tap } from 'rxjs';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
@@ -27,7 +27,7 @@ import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.mo
  * twice costs one request while the next selection — including re-selecting the tab you are on, which is how a student
  * refreshes — always asks the server again.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseOverviewExercisesService implements OnDestroy {
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly courseStorageService = inject(CourseStorageService);

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.dto.UpcomingExerciseDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 
@@ -24,7 +25,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("management/exercise-management")
+@FeatureUsage(UserFeature.UPCOMING_EXAMS_AND_EXERCISES)
 @RestController
 @RequestMapping("api/exercise/admin/")
 public class AdminExerciseResource {

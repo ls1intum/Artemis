@@ -36,6 +36,11 @@ interface SearchQuery {
     imports: [FaIconComponent, TranslateDirective, FormsModule, ConversationMemberRowComponent, ItemCountComponent, PaginatorModule, ArtemisTranslatePipe, SelectModule],
 })
 export class ConversationMembersComponent implements OnInit, OnDestroy {
+    public conversationService = inject(ConversationService);
+    private alertService = inject(AlertService);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
+
     private ngUnsubscribe = new Subject<void>();
 
     private readonly search$ = new Subject<SearchQuery>();
@@ -71,11 +76,6 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     TUTOR_FILTER_OPTION = ConversationMemberSearchFilter.TUTOR;
     STUDENT_FILTER_OPTION = ConversationMemberSearchFilter.STUDENT;
     CHANNEL_MODERATOR_FILTER_OPTION = ConversationMemberSearchFilter.CHANNEL_MODERATOR;
-
-    public conversationService = inject(ConversationService);
-    private alertService = inject(AlertService);
-    private dialogService = inject(DialogService);
-    private translateService = inject(TranslateService);
 
     filterOptions = computed(() => {
         const options = [
@@ -220,7 +220,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
 
     private onSuccess(members: ConversationUserDTO[] | null, headers: HttpHeaders): void {
         this.totalItems.set(Number(headers.get('X-Total-Count')));
-        if (this.activeConversation) {
+        if (this.activeConversation()) {
             // might have changed because of user deletion or addition
             this.activeConversation.update((current) => {
                 if (current) {

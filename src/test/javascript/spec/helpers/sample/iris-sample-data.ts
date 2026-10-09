@@ -19,7 +19,7 @@ export const mockMessageContent = {
     textContent: 'Hello, world!',
 } as IrisTextMessageContent;
 
-export const irisExercise = { id: 1, title: 'Metis  Exercise', type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
+export const irisExercise = { id: 1, title: 'Iris Exercise', type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
 
 export const mockServerMessage = {
     sender: IrisSender.LLM,

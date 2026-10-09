@@ -68,6 +68,10 @@ export class ResetRepoButtonComponent {
     }
 
     resetRepository(gradedParticipationId?: number) {
+        // Ignore further clicks (or an Enter in the form) while a reset is already running
+        if (this._isLoading()) {
+            return;
+        }
         this._isLoading.set(true);
         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const participationId = this._practiceParticipation()?.id ?? this._gradedParticipation()?.id!;

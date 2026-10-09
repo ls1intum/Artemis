@@ -17,7 +17,7 @@ $notification-padding-x: 1.2rem;
     height: 6.5rem;
     width: 20rem;
     background-color: var(--module-bg);
-    border: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color);
+    border: 1px solid var(--tumaet-ui-border-color);
 }
 
 // Fluid variant used inside the notification overview overlay: the card fills the available
@@ -87,7 +87,7 @@ $notification-padding-x: 1.2rem;
 }
 
 .course-notification-icon {
-    background-color: var(--bs-dark);
+    background-color: var(--dark);
     border-radius: 0.3rem;
     width: 2.5rem;
     height: 2.5rem;
@@ -95,7 +95,7 @@ $notification-padding-x: 1.2rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--tumaet-ui-shadow-sm);
 }
 
 .course-notification-icon-wrap {

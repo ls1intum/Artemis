@@ -1,5 +1,5 @@
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
+import { Service, inject } from '@angular/core';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { Observable } from 'rxjs';
@@ -8,9 +8,7 @@ import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resou
 
 type EntityResponseType = HttpResponse<OnlineUnit>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class OnlineUnitService {
     private httpClient = inject(HttpClient);
     private lectureUnitService = inject(LectureUnitService);
@@ -29,9 +27,9 @@ export class OnlineUnitService {
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
-    update(onlineUnit: OnlineUnit, lectureId: number): Observable<EntityResponseType> {
+    update(onlineUnit: OnlineUnit, lectureId: number, context?: HttpContext): Observable<EntityResponseType> {
         return this.httpClient
-            .put<OnlineUnit>(`${this.resourceURL}/lectures/${lectureId}/online-units`, onlineUnit, { observe: 'response' })
+            .put<OnlineUnit>(`${this.resourceURL}/lectures/${lectureId}/online-units`, onlineUnit, { observe: 'response', context })
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 

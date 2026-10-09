@@ -1,7 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { IconDefinition, faGraduationCap, faListAlt, faPersonChalkboard, faSchool, faUser } from '@fortawesome/free-solid-svg-icons';
-import { TumUiButtonDirective, TumUiMenuComponent, TumUiMenuItemDirective, TumUiMenuTriggerDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -16,7 +16,16 @@ export interface UserAddAction {
 @Component({
     selector: 'jhi-user-management-dropdown',
     templateUrl: './user-management-dropdown.component.html',
-    imports: [TumUiButtonDirective, TumUiMenuComponent, TumUiMenuItemDirective, TumUiMenuTriggerDirective, ArtemisTranslatePipe, TranslateDirective, RouterLink, FaIconComponent],
+    imports: [
+        TumAetUiButtonDirective,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+        RouterLink,
+        FaIconComponent,
+    ],
 })
 export class UserManagementDropdownComponent {
     protected readonly faUser = faUser;

@@ -525,4 +525,12 @@ public class Feedback extends DomainObject {
     public int hashCode() {
         return Feedback.class.hashCode();
     }
+
+    /**
+     * Id-based equality as inherited from {@link DomainObject}; declared here so that it is visibly paired with the constant {@link #hashCode()}.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
 }

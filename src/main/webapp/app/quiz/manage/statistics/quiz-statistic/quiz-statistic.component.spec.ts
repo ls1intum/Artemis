@@ -19,7 +19,7 @@ import { QuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statisti
 import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
-import { TumUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 const question = { id: 1 } as QuizQuestion;
@@ -356,7 +356,7 @@ describe('QuizStatisticComponent', () => {
         comp = fixture.componentInstance;
         // two question bars plus the trailing average bar
         comp.data = [10, 20, 15];
-        const tooltip = comp.chartConfig().tooltip as TumUiChartTooltipConfig;
+        const tooltip = comp.chartConfig().tooltip as TumAetUiChartTooltipConfig;
 
         expect(tooltip.label!({ seriesIndex: 0, index: 0, label: '', value: 10 })).toContain('tooltip.correctSolutions');
         expect(tooltip.label!({ seriesIndex: 0, index: 2, label: '', value: 15 })).toContain('tooltip.average');

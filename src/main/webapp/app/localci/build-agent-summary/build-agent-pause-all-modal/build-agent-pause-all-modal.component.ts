@@ -3,7 +3,7 @@ import { faPause, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 /**
  * Modal component for confirming the action to pause all build agents.
  * Provides a simple confirmation dialog with cancel and confirm buttons.
@@ -12,7 +12,7 @@ import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
  */
 @Component({
     selector: 'jhi-build-agent-pause-all-modal',
-    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiDialogComponent, TumUiButtonComponent],
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiDialogComponent, TumAetUiButtonComponent],
     templateUrl: './build-agent-pause-all-modal.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

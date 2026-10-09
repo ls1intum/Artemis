@@ -53,7 +53,7 @@ describe('checkViteOverride', () => {
     });
 
     it('passes against this repository, so a bad override fails the test suite too', () => {
-        // No `resolveFrom`: this exercises the default resolution used by prebuild.mjs and asserts
+        // No `resolveFrom`: this exercises the default resolution used by supporting_scripts/client/prebuild.mjs and asserts
         // the committed lockfile really does give @angular/build the vite version it depends on.
         expect(checkViteOverride()).toEqual({ checked: true });
     });
@@ -100,7 +100,7 @@ describe('checkViteOverride', () => {
     it('skips when vite does not expose its package.json instead of aborting the build', () => {
         const root = createTree({ angularBuildVite: '8.1.5', installedVite: '8.1.5', hideVitePackageJson: true });
 
-        // prebuild.mjs prints only the message, so letting ERR_PACKAGE_PATH_NOT_EXPORTED escape would
+        // supporting_scripts/client/prebuild.mjs prints only the message, so letting ERR_PACKAGE_PATH_NOT_EXPORTED escape would
         // break every client build with no hint about the cause.
         expect(checkViteOverride({ resolveFrom: root })).toEqual({ checked: false, reason: 'vite could not be resolved from @angular/build' });
     });
@@ -137,7 +137,7 @@ describe('runViteOverrideCheck', () => {
         const root = createTree({ angularBuildVite: '8.1.5', installedVite: '7.3.6' });
         const log = vi.spyOn(console, 'log').mockImplementation(() => {});
         const error = vi.spyOn(console, 'error').mockImplementation(() => {});
-        // prebuild.mjs relies on this exit; without the mock the test worker would be torn down.
+        // supporting_scripts/client/prebuild.mjs relies on this exit; without the mock the test worker would be torn down.
         const exit = vi.spyOn(process, 'exit').mockImplementation(() => {});
 
         runViteOverrideCheck({ resolveFrom: root });

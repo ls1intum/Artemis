@@ -3,12 +3,14 @@ package de.tum.cit.aet.artemis.atlas.dto;
 import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyExerciseLinkDTO(@NotNull CourseCompetencyDTO courseCompetencyDTO, Double weight, Long courseId) {
+public record CompetencyExerciseLinkDTO(@NotNull CourseCompetencyDTO courseCompetencyDTO, Double weight, Long courseId,
+        @JsonProperty(access = JsonProperty.Access.READ_ONLY) boolean generatedByAi) {
 
     /**
      * Creates a DTO from a CompetencyExerciseLink entity.
@@ -27,6 +29,6 @@ public record CompetencyExerciseLinkDTO(@NotNull CourseCompetencyDTO courseCompe
             throw new BadRequestAlertException("The competency referenced by this link is not associated with a course.", "CompetencyExerciseLink", "courseMissing");
         }
         return new CompetencyExerciseLinkDTO(CourseCompetencyDTO.of(competencyExerciseLink.getCompetency()), competencyExerciseLink.getWeight(),
-                competencyExerciseLink.getCompetency().getCourse().getId());
+                competencyExerciseLink.getCompetency().getCourse().getId(), competencyExerciseLink.isGeneratedByAi());
     }
 }

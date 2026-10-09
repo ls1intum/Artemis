@@ -4,7 +4,7 @@ set -e
 
 artemis_path="$(cd "$(dirname "$0")/../.." && pwd -P)"
 
-cd "$artemis_path/docker"
+cd "$artemis_path/deployment/docker"
 
 echo "Updating docker group ID in the docker compose file"
 # The compose file uses 999 as a placeholder GID. We replace it with the host's docker group ID

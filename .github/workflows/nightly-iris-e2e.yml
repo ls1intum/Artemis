@@ -39,7 +39,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout Artemis
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - name: Pull the published Pyris image (edutelligence main)
         # edutelligence's own CI (iris_build-and-push-docker.yml) publishes
@@ -55,7 +55,7 @@ jobs:
         # Only needed for a non-main ref requested via manual dispatch (e.g. to validate an
         # in-progress edutelligence branch/PR before merge) — no published image exists for those.
         if: github.event.inputs.edutelligence_ref != '' && github.event.inputs.edutelligence_ref != 'main'
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           repository: ls1intum/edutelligence
           ref: ${{ github.event.inputs.edutelligence_ref }}
@@ -67,7 +67,7 @@ jobs:
         run: docker build -f edutelligence/iris/Dockerfile -t pyris-e2e:local edutelligence
 
       - name: Set up Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: '25'
@@ -76,7 +76,7 @@ jobs:
         uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
 
@@ -94,14 +94,40 @@ jobs:
         working-directory: src/test/playwright
         run: pnpm exec playwright install --with-deps chromium
 
+      - name: Pre-build the Artemis server
+        # The runner starts the server with `./gradlew bootRun`. On a fresh runner that first starts a Gradle daemon,
+        # resolves the dependencies and compiles the whole server, while `pnpm start` builds the client on the same
+        # four cores, and all of it has to fit in the runner's server-ready budget together with the Spring Boot start
+        # (120-225s on the 37 nights that passed it). It did not on 3 of the 40 nights up to 2026-10-03, and the run
+        # failed before a single test started: on two of them Gradle printed nothing after "Starting a Gradle Daemon"
+        # for the whole budget, on the third the server compiled but was still starting its beans when the budget ran
+        # out. Doing the Gradle work here, retried and with a timeout of its own, leaves only the Spring Boot start
+        # inside the budget, and a stalled build now shows in this step's log. The daemon this starts is reused by the
+        # runner's own `./gradlew`.
+        timeout-minutes: 30
+        run: |
+          for attempt in 1 2 3; do
+            if timeout 8m ./gradlew classes resolveMainClassName -x webapp; then
+              exit 0
+            fi
+            echo "::warning::Pre-building the server failed (attempt ${attempt} of 3)"
+            sleep 20
+          done
+          exit 1
+
       - name: Run the Iris e2e against real Pyris
         # RUN_IRIS=true makes the runner bring up the Pyris stack (real Pyris + Weaviate + mock LLM),
         # wait for Pyris health, enable Iris on the server, and run the Iris-filtered suite.
-        run: RUN_IRIS=true ./run-e2e-tests-local-fast.sh --filter "Iris"
+        env:
+          # The server is pre-built above, so this only has to cover the Spring Boot start, which took 70-100s on a
+          # good night and about 3 minutes on the slowest. Twice the runner's default keeps a slow start on a shared
+          # runner from failing the run; a healthy one still returns as soon as the readiness probe is green.
+          SERVER_READY_TIMEOUT: '600'
+        run: RUN_IRIS=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --filter "Iris"
 
       - name: Upload Playwright report + service logs
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: nightly-iris-playwright-report
           path: |

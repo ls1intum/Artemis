@@ -1,10 +1,10 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, signal, untracked, viewChild, viewChildren } from '@angular/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { DisplayPriority, PageType, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
+import { DisplayPriority, PageType, PostSortCriterion, SortDirection } from 'app/communication/communication.util';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Subject, combineLatest, map, takeUntil } from 'rxjs';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { User } from 'app/account/user/user.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
@@ -45,7 +45,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         SearchFilterComponent,
         ResizableDirective,
     ],
-    providers: [MetisService],
+    providers: [CommunicationService],
 })
 export class DiscussionSectionComponent extends CourseDiscussionDirective implements AfterViewInit, OnDestroy {
     private channelService = inject(ChannelService);
@@ -110,8 +110,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             if (courseId) {
                 this.course.set(this.courseStorageService.getCourse(courseId));
             }
-            this.metisService.setCourse(this.course());
-            this.metisService.setPageType(this.PAGE_TYPE);
+            this.communicationService.setCourse(this.course());
+            this.communicationService.setPageType(this.PAGE_TYPE);
             if (routeParams.params.courseId) {
                 this.setChannel(routeParams.params.courseId);
             } else if (this.course()?.id) {
@@ -120,7 +120,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             this.createEmptyPost();
             this.resetFormGroup();
         });
-        this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
+        this.postsSubscription = this.communicationService.posts.subscribe((posts: Post[]) => {
             if (this.viewChildrenInitialized && this.content()) {
                 this.previousScrollDistanceFromTop = this.content()!.nativeElement.scrollHeight - this.content()!.nativeElement.scrollTop;
             }
@@ -146,7 +146,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         void this.accountService.identity().then((user: User | undefined) => {
             this.currentUser = user!;
         });
-        this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
+        this.communicationService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
             this.totalNumberOfPosts = totalNumberOfPosts;
         });
     }
@@ -160,7 +160,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     }
 
     /**
-     * on changing the sort direction via icon, the metis service is invoked to deliver the posts for the currently set context,
+     * on changing the sort direction via icon, the communication service is invoked to deliver the posts for the currently set context,
      * sorted on the server
      */
     onChangeSortDir(): void {
@@ -186,7 +186,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                         return;
                     }
 
-                    this.metisService.getFilteredPosts(this.currentPostContextFilter, true, this.channel());
+                    this.communicationService.getFilteredPosts(this.currentPostContextFilter, true, this.channel());
 
                     this.createEmptyPost();
                     this.resetFormGroup();
@@ -210,16 +210,16 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     }
 
     /**
-     * invoke metis service to create an empty default post that is needed on initialization of a modal to create a post,
+     * invoke communication service to create an empty default post that is needed on initialization of a modal to create a post,
      * this empty post has either exercise or lecture set as context, depending on if this component holds an exercise or a lecture reference
      */
     createEmptyPost(): void {
         if (this.channel()) {
             const conversation = this.channel() as Channel;
             this.shouldSendMessage.set(false);
-            this.createdPost.set(this.metisService.createEmptyPostForContext(conversation));
+            this.createdPost.set(this.communicationService.createEmptyPostForContext(conversation));
         } else {
-            this.createdPost.set(this.metisService.createEmptyPostForContext());
+            this.createdPost.set(this.communicationService.createEmptyPostForContext());
         }
     }
 
@@ -247,17 +247,17 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         const morePostsAvailable = this.posts().length < this.totalNumberOfPosts;
         if (morePostsAvailable) {
             this.page += 1;
-            this.commandMetisToFetchPosts();
+            this.fetchPosts();
         }
         if (this.content()?.nativeElement) {
             this.content()!.nativeElement.scrollTop = this.content()!.nativeElement.scrollTop + this.PAGE_SIZE;
         }
     }
 
-    public commandMetisToFetchPosts(forceUpdate = false) {
+    public fetchPosts(forceUpdate = false) {
         if (this.currentPostContextFilter) {
             this.currentPostContextFilter = cloneWith(this.currentPostContextFilter, { page: this.page - 1 });
-            this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this.channel());
+            this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this.channel());
         }
     }
 

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ArtemisTextReplacementPlugin } from 'app/foundation/util/ArtemisTextReplacementPlugin';
 import { escapeStringForUseInRegex } from 'app/foundation/util/string-pure.utils';
@@ -16,7 +16,7 @@ const testsColorRegex = /testsColor\((\s*[^()\s]+(\([^()]*\))?)\)/g;
  * Singleton service that handles rendering of PlantUML diagrams embedded in programming exercise problem statements.
  *
  * IMPORTANT - SINGLETON HAZARD IN EXAM MODE:
- * This service is providedIn: 'root', meaning there is ONE shared instance across the entire application.
+ * This service is a root @Service(), meaning there is ONE shared instance across the entire application.
  * In exam mode, multiple ProgrammingExerciseInstructionComponent instances coexist simultaneously
  * in the DOM (hidden via [hidden], NOT destroyed). They ALL share this SAME singleton.
  *
@@ -43,7 +43,7 @@ const testsColorRegex = /testsColor\((\s*[^()\s]+(\([^()]*\))?)\)/g;
  * The fix removed the mutable counter entirely and uses the array index instead.
  * See programming-exercise-plant-uml.extension.spec.ts for regression tests.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextReplacementPlugin {
     private programmingExerciseInstructionService = inject(ProgrammingExerciseInstructionService);
     private plantUmlService = inject(ProgrammingExercisePlantUmlService);

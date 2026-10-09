@@ -71,6 +71,7 @@
             <div class="d-flex flex-wrap gap-1">
                 @if (isTeamAvailable()) {
                     <button
+                        type="button"
                         class="view-team"
                         jhi-exercise-action-button
                         [buttonIcon]="faUsers"
@@ -83,6 +84,7 @@
                 @if (isStartExerciseAvailable()) {
                     <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
                         <button
+                            type="button"
                             [id]="'start-exercise-' + exercise().id"
                             class="start-exercise"
                             jhi-exercise-action-button
@@ -152,6 +154,7 @@
                     isResumeExerciseAvailable(gradedParticipation())
                 ) {
                     <button
+                        type="button"
                         [id]="'resume-exercise-' + exercise().id"
                         jhi-exercise-action-button
                         [buttonIcon]="faPlayCircle"
@@ -169,6 +172,7 @@
                     isResumeExerciseAvailable(practiceParticipation())
                 ) {
                     <button
+                        type="button"
                         [id]="'resume-practice-exercise-' + exercise().id"
                         jhi-exercise-action-button
                         [buttonIcon]="faPlayCircle"
@@ -188,6 +192,7 @@
             <div class="btn-group gap-1">
                 @if (isTeamAvailable()) {
                     <button
+                        type="button"
                         class="view-team"
                         jhi-exercise-action-button
                         [buttonIcon]="faUsers"
@@ -200,6 +205,7 @@
                 <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
                     @if (!gradedParticipation() && isStartExerciseAvailable()) {
                         <button
+                            type="button"
                             [id]="'start-exercise-' + exercise().id"
                             class="start-exercise"
                             jhi-exercise-action-button
@@ -215,6 +221,7 @@
                 </span>
                 @if (allowEditing) {
                     <button
+                        type="button"
                         [id]="'open-exercise-' + exercise().id"
                         class="open-exercise"
                         jhi-exercise-action-button
@@ -255,6 +262,7 @@
 
 <ng-template #quizActionButton let-button>
     <button
+        type="button"
         jhi-exercise-action-button
         [id]="button.id"
         [buttonIcon]="button.icon"

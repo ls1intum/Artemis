@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.notification.service;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -66,7 +68,7 @@ class SystemNotificationServiceTest {
         systemNotificationService.distributeActiveAndFutureNotificationsToClients();
 
         List<SystemNotificationDTO> expectedNotifications = List.of(SystemNotificationDTO.from(notification));
-        verify(websocketMessagingService).sendMessage(SystemNotificationService.SYSTEM_NOTIFICATION_TOPIC, expectedNotifications);
+        verify(websocketMessagingService).sendMessage(topic("/topic/notification/system-notification"), eq(expectedNotifications));
         // The retired /topic/system-notification mirror must not come back: one send, not two.
         verifyNoMoreInteractions(websocketMessagingService);
     }

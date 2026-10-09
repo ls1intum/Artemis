@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -245,13 +244,9 @@ public class ExamDateService {
      * If no student exams are available, an empty set returned.
      *
      * @param exam the exam
-     * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
+     * @return a set of all end dates. May return an empty set, if student exams cannot be found.
      */
-    @Nullable
     public Set<ZonedDateTime> getAllIndividualExamEndDates(Exam exam) {
-        if (exam.getStartDate() == null) {
-            return null;
-        }
         var workingTimes = studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId());
         return workingTimes.stream().map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).collect(Collectors.toSet());
     }

@@ -4,7 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
@@ -26,6 +25,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Result_;
 import de.tum.cit.aet.artemis.core.domain.DomainObject_;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.util.StringUtil;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Submission_;
@@ -122,7 +122,7 @@ public class StudentParticipationSpecs {
         if (teamMode) {
             return (root, query, cb) -> {
                 List<Predicate> tokenPredicates = tokens.stream().map(token -> {
-                    String pattern = likePattern(token);
+                    String pattern = "%" + StringUtil.escapeForLikeLowerCase(token) + "%";
                     Predicate teamNameMatch = cb.or(cb.like(cb.lower(root.get(StudentParticipation_.TEAM).get(Team_.NAME)), pattern, '\\'),
                             cb.like(cb.lower(root.get(StudentParticipation_.TEAM).get(Team_.SHORT_NAME)), pattern, '\\'));
 
@@ -140,7 +140,7 @@ public class StudentParticipationSpecs {
         }
         return (root, query, cb) -> {
             List<Predicate> tokenPredicates = tokens.stream().map(token -> {
-                String pattern = likePattern(token);
+                String pattern = "%" + StringUtil.escapeForLikeLowerCase(token) + "%";
                 return cb.or(cb.like(cb.lower(root.get(StudentParticipation_.STUDENT).get(User_.LOGIN)), pattern, '\\'),
                         cb.like(cb.lower(fullName(cb, root.get(StudentParticipation_.STUDENT))), pattern, '\\'));
             }).toList();
@@ -154,14 +154,6 @@ public class StudentParticipationSpecs {
      */
     private static Expression<String> fullName(CriteriaBuilder cb, Path<User> userPath) {
         return cb.concat(cb.concat(cb.coalesce(userPath.get(User_.FIRST_NAME), ""), " "), cb.coalesce(userPath.get(User_.LAST_NAME), ""));
-    }
-
-    /**
-     * Escapes SQL LIKE special characters in {@code token} and wraps it with {@code %} wildcards.
-     * The escape character is {@code \}.
-     */
-    private static String likePattern(String token) {
-        return "%" + token.toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
     }
 
     // --------------------------------------------------

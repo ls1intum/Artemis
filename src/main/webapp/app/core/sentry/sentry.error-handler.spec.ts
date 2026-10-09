@@ -109,6 +109,28 @@ describe('SentryErrorHandler', () => {
             expect(callArgs.environment).toBe('local');
         });
 
+        it('should keep the restrictive Sentry data collection baseline', async () => {
+            const profileInfo = createProfileInfo({ testServer: false });
+
+            await service.initSentry(profileInfo);
+
+            // Sentry 11 collects far more when `dataCollection` is unset, so every category has to stay switched off or filtered.
+            const deniedPatterns = ['authorization', 'forwarded', '-ip', 'remote-', 'via', '-user'];
+            const callArgs = (Sentry.init as ReturnType<typeof vi.fn>).mock.calls[0][0];
+            expect(callArgs.dataCollection).toEqual({
+                userInfo: false,
+                cookies: false,
+                httpHeaders: { request: { deny: deniedPatterns }, response: { deny: deniedPatterns } },
+                httpBodies: [],
+                urlQueryParams: { deny: deniedPatterns },
+                genAI: { inputs: false, outputs: false },
+                databaseQueryData: false,
+                queues: false,
+                graphQL: { document: false, variables: false },
+            });
+            expect(callArgs).not.toHaveProperty('sendDefaultPii');
+        });
+
         it('should configure tracesSampler correctly', async () => {
             const profileInfo = createProfileInfo({ testServer: false });
 

@@ -10,6 +10,7 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.ConcreteProxy;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -28,7 +29,7 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
  * A SubmittedAnswer.
  */
 @Entity
-@Table(name = "submitted_answer")
+@Table(name = "submitted_answer", uniqueConstraints = @UniqueConstraint(columnNames = { "submission_id", "quiz_question_id" }))
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "S")

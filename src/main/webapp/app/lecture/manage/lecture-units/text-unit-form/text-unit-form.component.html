@@ -1,62 +1,55 @@
-<form class="row">
-    <div class="col-12">
-        @if (form) {
-            <form [formGroup]="form" (ngSubmit)="submitForm()">
-                <div class="form-group">
-                    <label class="required" for="name">{{ 'artemisApp.textUnit.createTextUnit.name' | artemisTranslate }}*</label>
-                    <input
-                        type="text"
-                        class="form-control"
-                        id="name"
-                        formControlName="name"
-                        [placeholder]="'artemisApp.textUnit.createTextUnit.namePlaceHolder' | artemisTranslate"
-                    />
-                    @if (nameControl?.invalid && (nameControl?.dirty || nameControl?.touched)) {
-                        <div class="alert alert-danger">
-                            @if (nameControl?.errors?.required) {
-                                <div jhiTranslate="artemisApp.textUnit.createTextUnit.nameRequiredValidationError"></div>
-                            }
-                            @if (nameControl?.errors?.maxlength) {
-                                <div jhiTranslate="artemisApp.textUnit.createTextUnit.nameMaxLengthValidationError"></div>
-                            }
-                        </div>
-                    }
-                </div>
-                <div class="form-group">
-                    <jhi-date-time-picker id="pick-releaseDate" [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate" />
-                </div>
-                <div class="form-group">
-                    <jhi-competency-selection
-                        id="competencies"
-                        [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
-                        [labelTooltip]="'artemisApp.competency.link.lectureUnit' | artemisTranslate"
-                        formControlName="competencyLinks"
-                    />
-                </div>
-                <div class="form-group">
-                    <label class="d-block" for="content" jhiTranslate="artemisApp.textUnit.createTextUnit.content"></label>
-                    <!-- not included in reactive form -->
-                    <jhi-markdown-editor-monaco
-                        aria-describedby="contentHelp"
-                        id="content"
-                        class="markdown-editor"
-                        [(markdown)]="content"
-                        (markdownChange)="onMarkdownChange($event)"
-                    />
-                </div>
-                <div class="row">
-                    <div class="col-12">
-                        <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isFormValid()">
-                            <span jhiTranslate="entity.action.submit"></span>
-                        </button>
-                        @if (hasCancelButton()) {
-                            <button type="button" (click)="cancelForm()" class="btn btn-secondary">
-                                <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-                            </button>
-                        }
-                    </div>
-                </div>
-            </form>
+@if (form) {
+    <form class="flex flex-col gap-6" [formGroup]="form" (ngSubmit)="submitForm()">
+        @let nameInvalid = !!nameControl?.invalid && (!!nameControl?.dirty || !!nameControl?.touched);
+        <tumaet-ui-form-field controlId="name" [label]="'artemisApp.textUnit.createTextUnit.name' | artemisTranslate" required [invalid]="nameInvalid">
+            <input
+                tumAetUiInput
+                id="name"
+                [attr.aria-label]="'artemisApp.textUnit.createTextUnit.name' | artemisTranslate"
+                type="text"
+                formControlName="name"
+                required
+                [placeholder]="'artemisApp.textUnit.createTextUnit.namePlaceHolder' | artemisTranslate"
+            />
+            <ng-container tumAetUiFormFieldError>
+                @if (nameControl?.errors?.required) {
+                    <span jhiTranslate="artemisApp.textUnit.createTextUnit.nameRequiredValidationError"></span>
+                }
+                @if (nameControl?.errors?.maxlength) {
+                    <span jhiTranslate="artemisApp.textUnit.createTextUnit.nameMaxLengthValidationError"></span>
+                }
+            </ng-container>
+        </tumaet-ui-form-field>
+        <tumaet-ui-date-picker
+            inputId="pick-releaseDate"
+            labelName="artemisApp.lectureUnit.releaseDate"
+            [value]="releaseDateControl?.value ?? undefined"
+            (valueChange)="onReleaseDateChange($event)"
+            (inputValidityChange)="onReleaseDateTextValidityChange($event)"
+        />
+        <jhi-competency-selection
+            id="competencies"
+            [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+            [labelTooltip]="'artemisApp.competency.link.lectureUnit' | artemisTranslate"
+            formControlName="competencyLinks"
+        />
+        <div class="flex flex-col gap-1">
+            <span id="content-label" class="text-sm font-medium" jhiTranslate="artemisApp.textUnit.createTextUnit.content"></span>
+            <!-- not included in reactive form -->
+            <jhi-markdown-editor-monaco id="content" class="markdown-editor" aria-labelledby="content-label" [(markdown)]="content" (markdownChange)="onMarkdownChange($event)" />
+        </div>
+        @if (!autosave()) {
+            <div class="flex flex-wrap gap-2">
+                <button tumAetUiButton id="submitButton" type="submit" [disabled]="!isFormValid()">
+                    <span jhiTranslate="entity.action.submit"></span>
+                </button>
+                @if (hasCancelButton()) {
+                    <button tumAetUiButton type="button" severity="secondary" (click)="cancelForm()">
+                        <fa-icon [icon]="faTimes" />
+                        <span jhiTranslate="entity.action.cancel"></span>
+                    </button>
+                }
+            </div>
         }
-    </div>
-</form>
+    </form>
+}

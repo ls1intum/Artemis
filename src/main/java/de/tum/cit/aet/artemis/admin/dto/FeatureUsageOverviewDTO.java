@@ -12,28 +12,37 @@ import de.tum.cit.aet.artemis.core.security.Role;
 
 /**
  * The whole feature usage report for one window.
+ * <p>
+ * All headline counts are per user-facing feature, the unit the page leads with. The endpoints behind them are reported
+ * as well, for the drill-down and for the technical view, but never counted in the headline.
  *
  * @param days                 the length of the window in days
  * @param from                 the first day included
  * @param callerRole           the role the report was filtered to, absent when it covers every caller
- * @param trackedFeatures      how many features exist in the inventory
- * @param unusedFeatures       how many features still offered by this version saw no use in the window, the number the
- *                                 page is really about; features that no longer exist are not counted here
- * @param retiredFeatures      how many inventory entries this version no longer offers at all
- * @param totalCalls           calls across all features in the window
+ * @param availableFeatures    catalogue features this deployment offers
+ * @param usedFeatures         of those, the ones with at least one action or view
+ * @param onlyAutomatic        of those, the ones that received automatic or system calls only
+ * @param unusedFeatures       of those, the ones without any call, the number a decision starts from
+ * @param notAvailable         catalogue features this deployment does not offer, usually because their module is disabled
+ * @param noActions            available features that act, were viewed and never acted on
+ * @param retiredEndpoints     inventory entries this version no longer offers at all
+ * @param actionCount          actions across all catalogue features in the window. Endpoints that belong to no feature,
+ *                                 which only an earlier version offered, are listed but not counted, like in the email.
+ * @param viewCount            views across all catalogue features in the window
+ * @param automaticCount       automatic calls across all catalogue features in the window
+ * @param systemCount          calls by other systems across all catalogue features in the window
  * @param inventoryRefreshedAt the most recent time any node reported its endpoints; an entry whose
  *                                 {@code lastRegisteredAt} is clearly older than this no longer exists
  * @param recordingSince       when this deployment started recording. Without it the report would imply more evidence
  *                                 than it has: "unused over 180 days" reads very differently on an instance that has only
  *                                 been recording for a week.
- * @param features             one entry per feature, including the unused ones
- * @param roleDistribution     calls per caller role over the whole window, never filtered, so it stays comparable
- * @param activeDaysPerFeature the exact distinct-day count per logical feature. The table groups endpoints into one row
- *                                 per label, and neither summing nor maxing the per-endpoint counts gives the right
- *                                 answer, so the grouped count is computed in the database and looked up by row key.
+ * @param features             one entry per catalogue feature, in catalogue order, including the unused and unavailable ones
+ * @param endpoints            one entry per inventory row, busiest first, including the retired ones
+ * @param roleDistribution     actions and views per caller role over the whole window, never filtered, so it stays
+ *                                 comparable
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FeatureUsageOverviewDTO(int days, LocalDate from, @Nullable Role callerRole, long trackedFeatures, long unusedFeatures, long retiredFeatures, long totalCalls,
-        Instant inventoryRefreshedAt, @Nullable Instant recordingSince, List<FeatureUsageEntryDTO> features, List<FeatureUsageRoleShareDTO> roleDistribution,
-        List<FeatureUsageActiveDaysDTO> activeDaysPerFeature) {
+public record FeatureUsageOverviewDTO(int days, LocalDate from, @Nullable Role callerRole, long availableFeatures, long usedFeatures, long onlyAutomatic, long unusedFeatures,
+        long notAvailable, long noActions, long retiredEndpoints, long actionCount, long viewCount, long automaticCount, long systemCount, Instant inventoryRefreshedAt,
+        @Nullable Instant recordingSince, List<UserFeatureUsageDTO> features, List<FeatureUsageEntryDTO> endpoints, List<FeatureUsageRoleShareDTO> roleDistribution) {
 }

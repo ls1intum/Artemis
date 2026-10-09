@@ -121,7 +121,7 @@ artemis:
         build-runner: kubernetes
         kubernetes:
             namespace: artemis-builds                       # Namespace the build Jobs are created in
-            helper-image: artemis-localci-helper:local      # Trusted sidecar image, see docker/localci-kubernetes-helper
+            helper-image: artemis-localci-helper:local      # Trusted sidecar image, see deployment/docker/localci-kubernetes-helper
             image-pull-policy: IfNotPresent
             workload-service-account: artemis-localci-workload
             pod-start-timeout-seconds: 120                  # Budget for scheduling and image pulls, excluded from the build timeout
@@ -184,26 +184,26 @@ exercise-visible difference. Three operational settings have no Kubernetes equiv
 
 ### Deploying
 
-The repository contains a Helm chart, `helm/artemis`, that deploys Artemis with the Kubernetes runner: one or more
+The repository contains a Helm chart, `deployment/helm/artemis`, that deploys Artemis with the Kubernetes runner: one or more
 Artemis core nodes, one or more build-agent controllers, the service registry, the message broker, PostgreSQL, and the
-namespaced RBAC the runner needs. `helm/artemis/README.md` describes the chart and `helm/artemis/CLUSTER-SETUP.md` the
+namespaced RBAC the runner needs. `deployment/helm/artemis/README.md` describes the chart and `deployment/helm/artemis/CLUSTER-SETUP.md` the
 lifecycle and verification commands.
 
 There are three ways in, in decreasing order of how much cluster you need to bring:
 
 | | Use it for | Start from |
 |---|---|---|
-| [An existing cluster](#on-an-existing-cluster) | A real deployment on a cluster you already run, such as Rancher | `helm/artemis/values-cluster-example.yaml` |
-| [A single Ubuntu machine](#on-a-single-ubuntu-machine) | Evaluating the runner, or a small self-contained installation | `./install-localci-kubernetes-ubuntu.sh` |
-| [Docker Desktop](#on-docker-desktop) | Reproducing the multi-node acceptance test while developing | `./run-localci-kubernetes.sh all` |
+| [An existing cluster](#on-an-existing-cluster) | A real deployment on a cluster you already run, such as Rancher | `deployment/helm/artemis/values-cluster-example.yaml` |
+| [A single Ubuntu machine](#on-a-single-ubuntu-machine) | Evaluating the runner, or a small self-contained installation | `./deployment/kubernetes/install-localci-kubernetes-ubuntu.sh` |
+| [Docker Desktop](#on-docker-desktop) | Reproducing the multi-node acceptance test while developing | `./deployment/kubernetes/run-localci-kubernetes.sh all` |
 
 #### On an existing cluster
 
 The chart is not tied to any distribution; a Rancher-managed cluster is an ordinary target. Copy
-`helm/artemis/values-cluster-example.yaml`, work through the values marked `CHANGE ME`, and install:
+`deployment/helm/artemis/values-cluster-example.yaml`, work through the values marked `CHANGE ME`, and install:
 
 ```bash
-helm upgrade --install artemis ./helm/artemis \
+helm upgrade --install artemis ./deployment/helm/artemis \
   --namespace artemis --create-namespace \
   --values my-values.yaml --wait --timeout 25m
 ```
@@ -218,9 +218,9 @@ Five things need a decision before that command:
    ```bash
    ./gradlew -Pprod -Pwar clean bootWar
    docker build --build-arg WAR_FILE_STAGE=external_builder \
-     -f docker/artemis/Dockerfile -t <registry>/artemis:<tag> .
-   docker build -f docker/localci-kubernetes-helper/Dockerfile \
-     -t <registry>/artemis-localci-helper:<tag> docker/localci-kubernetes-helper
+     -f deployment/docker/artemis/Dockerfile -t <registry>/artemis:<tag> .
+   docker build -f deployment/docker/localci-kubernetes-helper/Dockerfile \
+     -t <registry>/artemis-localci-helper:<tag> deployment/docker/localci-kubernetes-helper
    ```
 
 2. **Shared storage.** Every core node mounts `/opt/artemis/data`, which holds the LocalVC repositories, uploads,
@@ -262,7 +262,7 @@ kubectl auth can-i list secrets \
 
 #### On a single Ubuntu machine
 
-`install-localci-kubernetes-ubuntu.sh` sets up a complete single-node installation on Ubuntu 24.04 — a VM, a cloud
+`deployment/kubernetes/install-localci-kubernetes-ubuntu.sh` sets up a complete single-node installation on Ubuntu 24.04 — a VM, a cloud
 instance, or bare metal. It installs k3s and Helm if they are missing, loads the two images, generates every secret,
 and installs the chart with a single-node profile: one core node, one build agent, local-path storage, the bundled
 PostgreSQL, and Artemis served on a `NodePort` instead of a Gateway.
@@ -282,7 +282,7 @@ scp artemis-app.tar artemis-helper.tar <machine>:~/artemis-images/
 Then, from a checkout of this repository on that machine:
 
 ```bash
-./install-localci-kubernetes-ubuntu.sh install --image-archive-dir ~/artemis-images
+./deployment/kubernetes/install-localci-kubernetes-ubuntu.sh install --image-archive-dir ~/artemis-images
 ```
 
 With the images in a registry, drop `--image-archive-dir` and pass `--image` and `--helper-image` instead. The script
@@ -300,12 +300,12 @@ the credentials under `~/.artemis-localci-kubernetes`. `status`, `logs` and `uni
 
 #### On Docker Desktop
 
-`./run-localci-kubernetes.sh all` builds the application and helper images, installs the chart into Docker Desktop's
+`./deployment/kubernetes/run-localci-kubernetes.sh all` builds the application and helper images, installs the chart into Docker Desktop's
 managed Kubernetes cluster, and runs a Playwright acceptance test that submits, queues, builds, and cancels programming
 exercise builds across two build workers. It refuses to touch any kubectl context other than `docker-desktop`.
 
 It expects Docker Desktop 4.51 or newer with the `kind` provisioner, exactly three nodes, the containerd image store,
-and at least 8 CPUs and 24 GiB assigned. `helm/artemis/CLUSTER-SETUP.md` documents the individual commands
+and at least 8 CPUs and 24 GiB assigned. `deployment/helm/artemis/CLUSTER-SETUP.md` documents the individual commands
 (`build`, `up`, `status`, `test`, `logs`, `down`) and the diagnostics.
 
 ### Troubleshooting

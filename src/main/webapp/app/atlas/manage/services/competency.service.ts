@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import {
@@ -35,9 +35,7 @@ type EntityArrayResponseType = HttpResponse<Competency[]>;
 type EntityResponseDTOType = HttpResponse<CourseCompetencyResponseDTO>;
 type EntityArrayResponseDTOType = HttpResponse<CourseCompetencyResponseDTO[]>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CompetencyService extends CourseCompetencyService {
     /**
      * Get competency suggestions from AtlasML API
@@ -83,10 +81,25 @@ export class CompetencyService extends CourseCompetencyService {
             .pipe(map((res: EntityResponseDTOType) => this.mapCompetencyResponse(res)));
     }
 
+    /** Creates a competency through the server-owned Hyperion checklist provenance route. */
+    createFromHyperionChecklist(competency: Competency, courseId: number): Observable<EntityResponseType> {
+        const request: CourseCompetencyRequestDTO = toCourseCompetencyRequestDTO(competency);
+        return this.httpClient
+            .post<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/generated-from-hyperion-checklist`, request, { observe: 'response' })
+            .pipe(map((res: EntityResponseDTOType) => this.mapCompetencyResponse(res)));
+    }
+
     createBulk(competencies: Competency[], courseId: number) {
         const request = competencies.map((competency) => toCourseCompetencyRequestDTO(competency));
         return this.httpClient
             .post<CourseCompetencyResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/competencies/bulk`, request, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseDTOType) => this.mapCompetencyArrayResponse(res)));
+    }
+
+    createBulkFromCourseDescription(competencies: Competency[], courseId: number) {
+        const request = competencies.map((competency) => toCourseCompetencyRequestDTO(competency));
+        return this.httpClient
+            .post<CourseCompetencyResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/competencies/bulk/generated-from-description`, request, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseDTOType) => this.mapCompetencyArrayResponse(res)));
     }
 

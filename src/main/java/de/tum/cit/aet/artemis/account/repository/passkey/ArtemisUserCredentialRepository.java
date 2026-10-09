@@ -80,13 +80,11 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
                 .ifPresent(user -> {
                     passkeyCredentialsRepository
                             .findByCredentialId(credentialRecord.getCredentialId().toBase64UrlString())
-                            .map(existingCredential ->
-                                    passkeyCredentialsRepository.save(
+                            .ifPresentOrElse(
+                                    existingCredential -> passkeyCredentialsRepository.save(
                                             toPasskeyCredential(existingCredential, credentialRecord, user)
-                                    )
-                            )
-                            .orElseGet(() ->
-                                    passkeyCredentialsRepository.save(
+                                    ),
+                                    () -> passkeyCredentialsRepository.save(
                                             toPasskeyCredential(credentialRecord, user)
                                     )
                             );

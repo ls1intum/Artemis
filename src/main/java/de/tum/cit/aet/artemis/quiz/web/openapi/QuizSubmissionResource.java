@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -34,6 +35,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -57,7 +60,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("conduction/submissions")
+@FeatureUsage(UserFeature.QUIZ_LIVE)
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizSubmissionResource {
@@ -132,6 +135,7 @@ public class QuizSubmissionResource {
      * @param quizSubmission the quizSubmission to submit
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
+    @FeatureUsage(UserFeature.QUIZ_PRACTICE)
     @PostMapping("exercises/{exerciseId}/submissions/practice")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<ResultAfterEvaluationWithSubmissionDTO> submitForPractice(@PathVariable Long exerciseId,
@@ -187,6 +191,8 @@ public class QuizSubmissionResource {
      * @param quizSubmission the quizSubmission to submit
      * @return the ResponseEntity with status 200 and body the result or the appropriate error code.
      */
+    @FeatureUsage(UserFeature.QUIZ_AUTHORING)
+    @UsageInteraction(FeatureInteraction.VIEW)
     @PostMapping("exercises/{exerciseId}/submissions/preview")
     @EnforceAtLeastTutorInExercise
     public ResponseEntity<ResultAfterEvaluationWithSubmissionDTO> submitForPreview(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmissionFromStudentDTO quizSubmission) {
@@ -228,6 +234,7 @@ public class QuizSubmissionResource {
     // anything. This endpoint then loads the user again, with its course roles, for the checks further down. The
     // exercise-scoped check is therefore made explicitly below, against the user that is loaded anyway, where it costs
     // nothing. It runs before any state is read or written, and covers admins the same way the annotation did.
+    @FeatureUsage(UserFeature.EXAM_TAKE)
     @PutMapping("exercises/{exerciseId}/submissions/exam")
     @EnforceAtLeastStudent
     public ResponseEntity<QuizSubmissionBeforeEvaluationDTO> submitQuizForExam(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmissionFromLiveClientDTO submissionDTO) {

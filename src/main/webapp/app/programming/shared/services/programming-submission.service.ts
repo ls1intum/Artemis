@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, EMPTY, Observable, Subject, Subscription, from, merge, of, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
@@ -73,7 +73,7 @@ export interface IProgrammingSubmissionService {
     unsubscribeForLatestSubmissionOfParticipation: (participationId: number) => void;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingSubmissionService implements IProgrammingSubmissionService, OnDestroy {
     private websocketService = inject(WebsocketService);
     private http = inject(HttpClient);
@@ -692,7 +692,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             })
             .forEach((exercise) => {
                 const participation = exercise.studentParticipations![0] as ProgrammingExerciseStudentParticipation;
-                const latestSubmission = participation.submissions!.reduce((current, next) => (current.id! > next.id! ? current : next)) as ProgrammingSubmission;
+                const latestSubmission = participation.submissions!.reduce(
+                    (current, next) => (current.id! > next.id! ? current : next),
+                    participation.submissions![0],
+                ) as ProgrammingSubmission;
                 const latestResult = findLatestResult(getAllResultsOfAllSubmissions(participation.submissions));
                 const isPendingSubmission = !!latestSubmission && (!latestResult || (latestResult.submission && latestResult.submission.id !== latestSubmission.id));
 

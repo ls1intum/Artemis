@@ -21,7 +21,7 @@ import { parseJson } from 'app/foundation/util/json.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { createApollonLabels } from 'app/modeling/shared/modeling-editor/apollon-labels';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TumUiButtonDirective, TumUiInputDirective, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor };
 
@@ -30,7 +30,16 @@ type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor 
     templateUrl: './apollon-diagram-detail.component.html',
     styleUrls: ['./apollon-diagram-detail.component.scss'],
     providers: [ApollonDiagramService],
-    imports: [TranslateDirective, FaIconComponent, FormsModule, ArtemisTranslatePipe, TumUiButtonDirective, TumUiInputDirective, TumUiTagComponent, TumUiTooltipDirective],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        FormsModule,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
+    ],
 })
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     private apollonDiagramService = inject(ApollonDiagramService);

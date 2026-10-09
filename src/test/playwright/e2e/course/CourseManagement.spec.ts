@@ -159,10 +159,13 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await courseCreation.setTitle(courseData.title);
             await courseCreation.setShortName(courseData.shortName);
             await courseCreation.setDescription(courseData.description);
-            await courseCreation.setTestCourse(courseData.testCourse);
+            // The dates are typed before the semester is picked, which must keep them: a semester only fills dates
+            // that were not set by hand, so the stored dates below prove both. Typing over dates the semester already
+            // filled in would instead race the date picker, which drops a keystroke sent right after clearing it.
             await courseCreation.setStartDate(courseData.startDate);
             await courseCreation.setEndDate(courseData.endDate);
             await courseCreation.setSemester(courseData.semester);
+            await courseCreation.setTestCourse(courseData.testCourse);
             await courseCreation.setCourseMaxPoints(courseData.maxPoints);
             await courseCreation.setProgrammingLanguage(courseData.programmingLanguage);
             await courseCreation.setEnableComplaints(courseData.enableComplaints);

@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    course_configuration: every course receives exactly one settings row. The temporary owner key associates the generated ids with their
+    owners without touching existing settings. DDL commits implicitly on MySQL, so each step is its own changeset and can
+    be repeated after an interruption: the column and index steps check for themselves, the insert skips owners that
+    already have a generated row, and the update only fills pointers that are still empty.
+    -->
+    <changeSet id="20261004204445-01-a-add-backfill-owner-to-course-configuration" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="course_configuration" columnName="backfill_owner_id"/></not>
+        </preConditions>
+        <addColumn tableName="course_configuration">
+            <column name="backfill_owner_id" type="BIGINT"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20261004204445-01-b-index-backfill-owner-of-course-configuration" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="course_configuration" indexName="idx_tmp_course_configuration_owner"/></not>
+        </preConditions>
+        <comment>Temporary index: without it every owner would scan the whole settings table for its generated row.</comment>
+        <createIndex tableName="course_configuration" indexName="idx_tmp_course_configuration_owner">
+            <column name="backfill_owner_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20261004204445-01-c-create-default-course-configuration" author="krusche">
+        <comment>Create defaults only for owners without settings.</comment>
+        <sql>INSERT INTO course_configuration (backfill_owner_id, grade_relevant, data_retention_hold, auto_orchestrator_enabled)
+            SELECT id, TRUE, FALSE, FALSE FROM course WHERE course_configuration_id IS NULL
+            AND NOT EXISTS (SELECT 1 FROM course_configuration existing WHERE existing.backfill_owner_id = course.id);
+            UPDATE course SET course_configuration_id =
+                (SELECT config.id FROM course_configuration config WHERE config.backfill_owner_id = course.id)
+            WHERE course_configuration_id IS NULL;</sql>
+        <rollback><comment>Keep the new default rows: deleting them on rollback would discard settings modified since deployment.</comment></rollback>
+    </changeSet>
+
+    <changeSet id="20261004204445-01-d-drop-backfill-owner-of-course-configuration" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="course_configuration" columnName="backfill_owner_id"/>
+        </preConditions>
+        <comment>Dropping the column also drops its single-column temporary index on PostgreSQL and MySQL.</comment>
+        <dropColumn tableName="course_configuration" columnName="backfill_owner_id"/>
+        <rollback/>
+    </changeSet>
+
+    <!--
+    course_athena_config: every course receives exactly one settings row. The temporary owner key associates the generated ids with their
+    owners without touching existing settings. DDL commits implicitly on MySQL, so each step is its own changeset and can
+    be repeated after an interruption: the column and index steps check for themselves, the insert skips owners that
+    already have a generated row, and the update only fills pointers that are still empty.
+    -->
+    <changeSet id="20261004204445-02-a-add-backfill-owner-to-course-athena-config" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="course_athena_config" columnName="backfill_owner_id"/></not>
+        </preConditions>
+        <addColumn tableName="course_athena_config">
+            <column name="backfill_owner_id" type="BIGINT"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20261004204445-02-b-index-backfill-owner-of-course-athena-config" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="course_athena_config" indexName="idx_tmp_course_athena_config_owner"/></not>
+        </preConditions>
+        <comment>Temporary index: without it every owner would scan the whole settings table for its generated row.</comment>
+        <createIndex tableName="course_athena_config" indexName="idx_tmp_course_athena_config_owner">
+            <column name="backfill_owner_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20261004204445-02-c-create-default-course-athena-config" author="krusche">
+        <comment>Create defaults only for owners without settings.</comment>
+        <sql>INSERT INTO course_athena_config (backfill_owner_id, grading_feedback_enabled, formative_feedback_enabled)
+            SELECT id, FALSE, FALSE FROM course WHERE athena_config_id IS NULL
+            AND NOT EXISTS (SELECT 1 FROM course_athena_config existing WHERE existing.backfill_owner_id = course.id);
+            UPDATE course SET athena_config_id =
+                (SELECT config.id FROM course_athena_config config WHERE config.backfill_owner_id = course.id)
+            WHERE athena_config_id IS NULL;</sql>
+        <rollback><comment>Keep the new default rows: deleting them on rollback would discard settings modified since deployment.</comment></rollback>
+    </changeSet>
+
+    <changeSet id="20261004204445-02-d-drop-backfill-owner-of-course-athena-config" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="course_athena_config" columnName="backfill_owner_id"/>
+        </preConditions>
+        <comment>Dropping the column also drops its single-column temporary index on PostgreSQL and MySQL.</comment>
+        <dropColumn tableName="course_athena_config" columnName="backfill_owner_id"/>
+        <rollback/>
+    </changeSet>
+
+    <!--
+    team_assignment_config: every exercise receives exactly one settings row. The temporary owner key associates the generated ids with their
+    owners without touching existing settings. DDL commits implicitly on MySQL, so each step is its own changeset and can
+    be repeated after an interruption: the column and index steps check for themselves, the insert skips owners that
+    already have a generated row, and the update only fills pointers that are still empty.
+    -->
+    <changeSet id="20261004204445-03-a-add-backfill-owner-to-team-assignment-config" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="team_assignment_config" columnName="backfill_owner_id"/></not>
+        </preConditions>
+        <addColumn tableName="team_assignment_config">
+            <column name="backfill_owner_id" type="BIGINT"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20261004204445-03-b-index-backfill-owner-of-team-assignment-config" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="team_assignment_config" indexName="idx_tmp_team_assignment_config_owner"/></not>
+        </preConditions>
+        <comment>Temporary index: without it every owner would scan the whole settings table for its generated row.</comment>
+        <createIndex tableName="team_assignment_config" indexName="idx_tmp_team_assignment_config_owner">
+            <column name="backfill_owner_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20261004204445-03-c-create-default-team-assignment-config" author="krusche">
+        <comment>Create defaults only for owners without settings.</comment>
+        <sql>INSERT INTO team_assignment_config (backfill_owner_id, min_team_size, max_team_size)
+            SELECT id, 1, 1 FROM exercise WHERE team_assignment_config_id IS NULL
+            AND NOT EXISTS (SELECT 1 FROM team_assignment_config existing WHERE existing.backfill_owner_id = exercise.id);
+            UPDATE exercise SET team_assignment_config_id =
+                (SELECT config.id FROM team_assignment_config config WHERE config.backfill_owner_id = exercise.id)
+            WHERE team_assignment_config_id IS NULL;</sql>
+        <rollback><comment>Keep the new default rows: deleting them on rollback would discard settings modified since deployment.</comment></rollback>
+    </changeSet>
+
+    <changeSet id="20261004204445-03-d-drop-backfill-owner-of-team-assignment-config" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="team_assignment_config" columnName="backfill_owner_id"/>
+        </preConditions>
+        <comment>Dropping the column also drops its single-column temporary index on PostgreSQL and MySQL.</comment>
+        <dropColumn tableName="team_assignment_config" columnName="backfill_owner_id"/>
+        <rollback/>
+    </changeSet>
+
+    <!--
+    plagiarism_detection_config: every exercise receives exactly one settings row. The temporary owner key associates the generated ids with their
+    owners without touching existing settings. DDL commits implicitly on MySQL, so each step is its own changeset and can
+    be repeated after an interruption: the column and index steps check for themselves, the insert skips owners that
+    already have a generated row, and the update only fills pointers that are still empty.
+    -->
+    <changeSet id="20261004204445-04-a-add-backfill-owner-to-plagiarism-detection-config" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="plagiarism_detection_config" columnName="backfill_owner_id"/></not>
+        </preConditions>
+        <addColumn tableName="plagiarism_detection_config">
+            <column name="backfill_owner_id" type="BIGINT"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20261004204445-04-b-index-backfill-owner-of-plagiarism-detection-config" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="plagiarism_detection_config" indexName="idx_tmp_plagiarism_detection_config_owner"/></not>
+        </preConditions>
+        <comment>Temporary index: without it every owner would scan the whole settings table for its generated row.</comment>
+        <createIndex tableName="plagiarism_detection_config" indexName="idx_tmp_plagiarism_detection_config_owner">
+            <column name="backfill_owner_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20261004204445-04-c-create-default-plagiarism-detection-config" author="krusche">
+        <comment>Create defaults only for owners without settings.</comment>
+        <sql>INSERT INTO plagiarism_detection_config (backfill_owner_id, continuous_plagiarism_control_enabled, continuous_plagiarism_control_post_due_date_checks_enabled, continuous_plagiarism_control_case_student_response_period, similarity_threshold, minimum_score, minimum_size)
+            SELECT id, FALSE, FALSE, 7, 90, 0, 50 FROM exercise WHERE plagiarism_detection_config_id IS NULL
+            AND NOT EXISTS (SELECT 1 FROM plagiarism_detection_config existing WHERE existing.backfill_owner_id = exercise.id);
+            UPDATE exercise SET plagiarism_detection_config_id =
+                (SELECT config.id FROM plagiarism_detection_config config WHERE config.backfill_owner_id = exercise.id)
+            WHERE plagiarism_detection_config_id IS NULL;</sql>
+        <rollback><comment>Keep the new default rows: deleting them on rollback would discard settings modified since deployment.</comment></rollback>
+    </changeSet>
+
+    <changeSet id="20261004204445-04-d-drop-backfill-owner-of-plagiarism-detection-config" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="plagiarism_detection_config" columnName="backfill_owner_id"/>
+        </preConditions>
+        <comment>Dropping the column also drops its single-column temporary index on PostgreSQL and MySQL.</comment>
+        <dropColumn tableName="plagiarism_detection_config" columnName="backfill_owner_id"/>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20261004204445-05-backfill-dependent-settings" author="krusche">
+        <comment>Every course and programming exercise receives permanent defaults. Missing tutorial dates leave tutorial groups inactive; online mode is controlled by the course flag.</comment>
+        <sql>INSERT INTO online_course_configuration (course_id, user_prefix, require_existing_user)
+            SELECT course.id, COALESCE(course.short_name, CONCAT('course', course.id)), FALSE FROM course
+            WHERE NOT EXISTS (SELECT 1 FROM online_course_configuration config WHERE config.course_id = course.id);
+            INSERT INTO tutorial_groups_configuration (course_id, use_tutorial_group_channels, use_public_tutorial_group_channels)
+            SELECT course.id, FALSE, FALSE FROM course
+            WHERE NOT EXISTS (SELECT 1 FROM tutorial_groups_configuration config WHERE config.course_id = course.id);
+            INSERT INTO course_iris_settings (course_id, settings)
+            SELECT course.id, '{"enabled":true,"variant":"default","supportLevel":"moderate"}' FROM course
+            WHERE NOT EXISTS (SELECT 1 FROM course_iris_settings config WHERE config.course_id = course.id);
+            INSERT INTO programming_exercise_build_config (exercise_id, timeout_seconds, allow_branching, branch_regex, checkout_solution_repository)
+            SELECT exercise.id, 0, FALSE, '.*', FALSE FROM exercise WHERE exercise.discriminator = 'P'
+            AND NOT EXISTS (SELECT 1 FROM programming_exercise_build_config config WHERE config.exercise_id = exercise.id);</sql>
+        <rollback>
+            <comment>The previous code treats the existence of a row as "configured", so the rows that only hold defaults go; modified settings stay.</comment>
+            <sql>DELETE FROM tutorial_groups_configuration
+                WHERE tutorial_period_start_inclusive IS NULL AND tutorial_period_end_inclusive IS NULL
+                AND NOT EXISTS (SELECT 1 FROM tutorial_group_free_period period WHERE period.tutorial_groups_configuration_id = tutorial_groups_configuration.id);
+                DELETE FROM online_course_configuration
+                WHERE lti_platform_id IS NULL AND require_existing_user = FALSE
+                AND course_id IN (SELECT id FROM course WHERE online_course IS NULL OR online_course = FALSE);</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

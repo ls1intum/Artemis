@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { DataExport } from 'app/admin/admin-data-exports/data-export.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class DataExportService {
     private http = inject(HttpClient);
 

@@ -16,7 +16,7 @@
             <fa-icon [icon]="item.icon" />
             <span class="ms-1 title-bar-collapsible-label" [jhiTranslate]="item.labelKey"></span>
         </ng-template>
-        <tum-ui-select-button
+        <tumaet-ui-select-button
             size="small"
             [options]="viewOptions"
             [ngModel]="view()"
@@ -29,18 +29,18 @@
         <!-- These all route to editor-only workflows, so they stay hidden from tutors. -->
         @if (course()?.isAtLeastEditor) {
             <!-- Both of these are tabs of the "+" dialog as well, so a narrow bar can drop them. -->
-            <tum-ui-button class="title-bar-optional-control" size="small" severity="secondary" [attr.data-testid]="'import-exercise-button'" (clicked)="openImportModal()">
+            <tumaet-ui-button class="title-bar-optional-control" size="small" severity="secondary" [attr.data-testid]="'import-exercise-button'" (clicked)="openImportModal()">
                 <fa-icon [icon]="faFileImport" />
                 <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.exerciseManagement.action.import"></span>
-            </tum-ui-button>
-            <tum-ui-button class="title-bar-optional-control" size="small" severity="secondary" [attr.data-testid]="'export-exercise-button'" (clicked)="openQuizExportDialog()">
+            </tumaet-ui-button>
+            <tumaet-ui-button class="title-bar-optional-control" size="small" severity="secondary" [attr.data-testid]="'export-exercise-button'" (clicked)="openQuizExportDialog()">
                 <fa-icon [icon]="faFileExport" />
                 <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.exerciseManagement.action.export"></span>
-            </tum-ui-button>
-            <tum-ui-button size="small" [attr.data-testid]="'create-exercise-button'" (clicked)="openCreateModal()">
+            </tumaet-ui-button>
+            <tumaet-ui-button size="small" [attr.data-testid]="'create-exercise-button'" (clicked)="openCreateModal()">
                 <fa-icon [icon]="faPlus" />
                 <span class="ms-1 title-bar-collapsible-label" jhiTranslate="global.generic.create"></span>
-            </tum-ui-button>
+            </tumaet-ui-button>
         }
     </ng-template>
 
@@ -55,7 +55,7 @@
                 <div class="d-flex align-items-center flex-wrap gap-3 mt-2 pt-2 border-top">
                     <div class="d-flex align-items-center gap-2">
                         <span class="text-muted-color small" jhiTranslate="artemisApp.exerciseManagement.selection.count" [translateValues]="{ count: selectedCount() }"></span>
-                        <button tumUiButton type="button" severity="secondary" variant="outlined" size="small" (click)="clearSelection()">
+                        <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" (click)="clearSelection()">
                             <span jhiTranslate="artemisApp.exerciseManagement.selection.deselectAll"></span>
                         </button>
                     </div>
@@ -65,14 +65,14 @@
                             @if (allSelectedAreProgramming()) {
                                 @if (selectionHasGroupMember()) {
                                     <!-- Editing a group member's timeline here would desync it, so only this action is disabled. -->
-                                    <span [tumUiTooltip]="'artemisApp.exerciseManagement.selection.editSelectedGroupLocked' | artemisTranslate" tumUiTooltipPlacement="top">
-                                        <button tumUiButton type="button" severity="warn" size="small" [disabled]="true">
+                                    <span [tumAetUiTooltip]="'artemisApp.exerciseManagement.selection.editSelectedGroupLocked' | artemisTranslate" tumAetUiTooltipPlacement="top">
+                                        <button tumAetUiButton type="button" severity="warn" size="small" [disabled]="true">
                                             <fa-icon [icon]="faWrench" />
                                             <span jhiTranslate="entity.action.editSelected"></span>
                                         </button>
                                     </span>
                                 } @else {
-                                    <button tumUiButton type="button" severity="warn" size="small" (click)="editSelectedExercises()">
+                                    <button tumAetUiButton type="button" severity="warn" size="small" (click)="editSelectedExercises()">
                                         <fa-icon [icon]="faWrench" />
                                         <span jhiTranslate="entity.action.editSelected"></span>
                                     </button>
@@ -81,14 +81,14 @@
                                 @if (course()?.isAtLeastInstructor) {
                                     <jhi-exercise-scores-export-button [exercises]="selectedProgrammingExercises()" />
                                 }
-                                <button tumUiButton type="button" severity="primary" variant="outlined" size="small" (click)="consistencyCheckSelected()">
+                                <button tumAetUiButton type="button" severity="primary" variant="outlined" size="small" (click)="consistencyCheckSelected()">
                                     <fa-icon [icon]="faCheckDouble" />
                                     <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
                                 </button>
                             }
                             @if (course()?.isAtLeastInstructor) {
                                 <button
-                                    tumUiButton
+                                    tumAetUiButton
                                     type="button"
                                     severity="danger"
                                     size="small"
@@ -124,7 +124,7 @@
     }
 
     @if (loaded() && cards().length === 0) {
-        <tum-ui-empty-state
+        <tumaet-ui-empty-state
             class="mt-5"
             [icon]="search() ? faMagnifyingGlass : faCode"
             [title]="
@@ -134,17 +134,17 @@
             "
             [description]="search() ? undefined : ('artemisApp.exerciseManagement.empty.description' | artemisTranslate)"
         >
-            <ng-container tumUiEmptyStateActions>
+            <ng-container tumAetUiEmptyStateActions>
                 @if (!search() && course()?.isAtLeastEditor) {
-                    <tum-ui-button [icon]="faPlus" (clicked)="openCreateModal()">
+                    <tumaet-ui-button [icon]="faPlus" (clicked)="openCreateModal()">
                         <span jhiTranslate="artemisApp.exerciseManagement.empty.create"></span>
-                    </tum-ui-button>
-                    <tum-ui-button [icon]="faFileImport" variant="outlined" (clicked)="openImportModal()">
+                    </tumaet-ui-button>
+                    <tumaet-ui-button [icon]="faFileImport" variant="outlined" (clicked)="openImportModal()">
                         <span jhiTranslate="artemisApp.exerciseManagement.empty.import"></span>
-                    </tum-ui-button>
+                    </tumaet-ui-button>
                 }
             </ng-container>
-            <ng-container tumUiEmptyStateDocumentation>
+            <ng-container tumAetUiEmptyStateDocumentation>
                 @if (!search()) {
                     <a
                         href="https://docs.artemis.tum.de/instructor/exercises/intro"
@@ -154,13 +154,13 @@
                     ></a>
                 }
             </ng-container>
-        </tum-ui-empty-state>
+        </tumaet-ui-empty-state>
     }
     <div class="d-flex flex-column gap-3">
         @for (card of cards(); track card.id) {
             <div class="exercise-card-host">
-                <tum-ui-panel [toggleable]="true" [toggleAriaLabel]="card.title">
-                    <div tumUiPanelHeader class="d-flex align-items-center gap-2 w-100">
+                <tumaet-ui-panel [toggleable]="true" [toggleAriaLabel]="card.title">
+                    <div tumAetUiPanelHeader class="d-flex align-items-center gap-2 w-100">
                         @if (isGroup() && card.group) {
                             <fa-icon [icon]="faLayerGroup" [fixedWidth]="true" />
                         } @else if (card.icon) {
@@ -236,26 +236,26 @@
                                     }
                                     <fa-icon
                                         [icon]="faCircleInfo"
-                                        [tumUiTooltip]="'artemisApp.exerciseManagement.groupMeta.maxPointsTooltip' | artemisTranslate"
-                                        tumUiTooltipPlacement="top"
+                                        [tumAetUiTooltip]="'artemisApp.exerciseManagement.groupMeta.maxPointsTooltip' | artemisTranslate"
+                                        tumAetUiTooltipPlacement="top"
                                     />
                                 </span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <tum-ui-button severity="warn" variant="outlined" size="small" (clicked)="openGroupEditModal(card.group.id!)">
+                                <tumaet-ui-button severity="warn" variant="outlined" size="small" (clicked)="openGroupEditModal(card.group.id!)">
                                     <fa-icon [icon]="faPen" />
                                     <span class="ms-1" jhiTranslate="artemisApp.exerciseVariantGroup.edit"></span>
-                                </tum-ui-button>
+                                </tumaet-ui-button>
                                 @if (canDeleteGroups()) {
-                                    <tum-ui-button severity="danger" variant="outlined" size="small" (clicked)="confirmDeleteGroup(card.group)">
+                                    <tumaet-ui-button severity="danger" variant="outlined" size="small" (clicked)="confirmDeleteGroup(card.group)">
                                         <fa-icon [icon]="faTrash" />
                                         <span class="ms-1" jhiTranslate="artemisApp.exerciseVariantGroup.delete"></span>
-                                    </tum-ui-button>
+                                    </tumaet-ui-button>
                                 }
                             </div>
                         </div>
                     }
-                </tum-ui-panel>
+                </tumaet-ui-panel>
             </div>
         }
     </div>

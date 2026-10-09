@@ -20,7 +20,7 @@ import { onError } from 'app/foundation/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CompetencyTaxonomy, getIcon } from 'app/atlas/shared/entities/competency.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonComponent, TumUiMessageComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
@@ -45,18 +45,24 @@ interface ImportCount {
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FontAwesomeModule,
-        TumUiTooltipDirective,
+        TumAetUiTooltipDirective,
         ArtemisTranslatePipe,
         TranslateDirective,
         MarkdownDirective,
         StandardizedCompetencyDetailComponent,
         KnowledgeAreaTreeComponent,
         AdminTitleBarTitleDirective,
-        TumUiMessageComponent,
-        TumUiButtonComponent,
+        TumAetUiMessageComponent,
+        TumAetUiButtonComponent,
     ],
 })
 export class AdminImportStandardizedCompetenciesComponent {
+    private alertService = inject(AlertService);
+    private adminStandardizedCompetencyService = inject(AdminStandardizedCompetencyService);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private translateService = inject(TranslateService);
+
     /** Whether import is loading */
     protected readonly isLoading = signal(false);
     /** Whether the help section is collapsed */
@@ -107,12 +113,6 @@ export class AdminImportStandardizedCompetenciesComponent {
     }]
 }
 \`\`\``;
-
-    private alertService = inject(AlertService);
-    private adminStandardizedCompetencyService = inject(AdminStandardizedCompetencyService);
-    private activatedRoute = inject(ActivatedRoute);
-    private router = inject(Router);
-    private translateService = inject(TranslateService);
 
     /**
      * Verifies the file (only .json, smaller than 20 MB) and then tries to read the importData from it

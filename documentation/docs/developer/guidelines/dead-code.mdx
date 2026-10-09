@@ -155,7 +155,7 @@ tempting shortcut and it defeats the check: `admin.routes.ts` is reached through
 `app.routes.ts`, and rooting it directly means deleting that last caller leaves the gate green. The
 same holds for specs — a component whose only importer is its own spec has no application path.
 
-The TUM UI package is gated the same way, and for the same reason: its single entry is
+The TUM AET UI package is gated the same way, and for the same reason: its single entry is
 `src/public-api.ts`, with specs and stories out of the project graph and the vitest and Storybook plugins
 off. A component that has lost its last export from the public API but is still rendered by its own story
 is unreachable from the library, and rooting the stories would have called it alive.

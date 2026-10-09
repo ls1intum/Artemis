@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, effect, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -32,6 +32,9 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     // Optional injections for PrimeNG dialog support - components may be opened via DialogService or embedded in other components
     protected dialogRef = inject(DynamicDialogRef, { optional: true });
     protected dialogConfig = inject(DynamicDialogConfig, { optional: true });
+
+    /** Emits the item the user selected for the import, for hosts that embed the component without a PrimeNG dialog reference. */
+    readonly selected = output<T>();
 
     readonly loading = signal(false);
     readonly content = signal<SearchResult<T>>({ resultsOnPage: [], numberOfPages: 0 });
@@ -156,6 +159,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
      * @param item The item which was selected by the user for the import.
      */
     selectImport(item: T) {
+        this.selected.emit(item);
         this.dialogRef?.close(item);
     }
 

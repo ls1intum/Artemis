@@ -21,10 +21,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("monitoring/metrics")
+@FeatureUsage(UserFeature.MONITORING)
 @RestController
 @EnforceAdmin
 @SuppressWarnings("deprecation")

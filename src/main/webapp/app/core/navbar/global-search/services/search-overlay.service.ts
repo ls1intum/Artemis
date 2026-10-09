@@ -1,8 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { Service, signal } from '@angular/core';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class SearchOverlayService {
     // Private writable signal for the modal state
     private readonly _isOpen = signal(false);

@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -56,7 +57,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("authoring/exercise-management")
+@FeatureUsage(UserFeature.QUIZ_AUTHORING)
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizExerciseCreationUpdateResource {
@@ -116,7 +117,7 @@ public class QuizExerciseCreationUpdateResource {
     @EnforceAtLeastEditor
     public ResponseEntity<QuizExerciseDetailsDTO> createExamQuizExercise(@PathVariable Long exerciseGroupId, @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException, URISyntaxException {
-        log.info("REST request to create QuizExercise : {} in exam exercise group {}", quizExerciseDTO, exerciseGroupId);
+        log.info("REST request to create QuizExercise in exam exercise group {}", exerciseGroupId);
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
         // Competency links are passed separately for proper two-phase persistence
         quizExercise.setCompetencyLinks(new HashSet<>());
@@ -158,7 +159,7 @@ public class QuizExerciseCreationUpdateResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<QuizExerciseDetailsDTO> createCourseQuizExercise(@PathVariable Long courseId, @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException, URISyntaxException {
-        log.info("REST request to create QuizExercise : {} in course {}", quizExerciseDTO, courseId);
+        log.info("REST request to create QuizExercise in course {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
         quizExercise.setCourse(course);

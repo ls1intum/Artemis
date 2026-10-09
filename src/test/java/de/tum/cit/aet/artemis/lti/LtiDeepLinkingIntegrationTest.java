@@ -91,7 +91,6 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deepLinkingFailsForNonOnlineCourse() throws Exception {
         course.setOnlineCourse(false);
-        course.setOnlineCourseConfiguration(null);
         courseRepository.save(course);
 
         var params = getDeepLinkingRequestParamsForExercise();

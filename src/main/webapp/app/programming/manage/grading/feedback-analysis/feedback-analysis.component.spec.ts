@@ -302,6 +302,22 @@ describe('FeedbackAnalysisComponent', () => {
         });
     });
 
+    it('should expose sorting as native buttons and announce the active sort direction', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        const header: HTMLTableCellElement = fixture.nativeElement.querySelector('thead th');
+        const sortButton = header.querySelector('button');
+        expect(sortButton?.type).toBe('button');
+        expect(header.getAttribute('aria-sort')).toBe('descending');
+        expect(fixture.nativeElement.querySelectorAll('thead th[scope="col"]')).toHaveLength(6);
+
+        sortButton!.click();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(header.getAttribute('aria-sort')).toBe('ascending');
+    });
+
     describe('setSortedColumn', () => {
         it('should update sortedColumn and sortingOrder, and reload data', async () => {
             const loadDataSpy = vi.spyOn(internals(component), 'loadData');

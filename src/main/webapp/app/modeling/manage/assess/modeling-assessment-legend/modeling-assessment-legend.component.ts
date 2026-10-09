@@ -4,7 +4,7 @@ import { faCheck, faCircleInfo, faExclamationTriangle, faTimes } from '@fortawes
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 export interface ModelingAssessmentLegendHighlight {
     color: string;
@@ -16,7 +16,7 @@ export interface ModelingAssessmentLegendHighlight {
     selector: 'jhi-modeling-assessment-legend',
     templateUrl: './modeling-assessment-legend.component.html',
     styleUrls: ['./modeling-assessment-legend.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiTooltipDirective],
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiTooltipDirective],
     host: { class: 'assessment-legend apollon-glass' },
 })
 export class ModelingAssessmentLegendComponent {

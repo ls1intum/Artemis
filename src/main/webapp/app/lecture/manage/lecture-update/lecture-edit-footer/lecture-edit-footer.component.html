@@ -1,0 +1,56 @@
+<!-- As high as the title bar, so the page keeps as much room for its content as it can, also on small screens. -->
+<div class="lecture-edit-footer-bar mx-auto flex w-full max-w-4xl items-center gap-2 px-3.5 sm:px-6">
+    <div class="flex min-w-0 grow items-center gap-x-3 text-sm" aria-live="polite">
+        @if (isSaving()) {
+            <span class="min-w-0 truncate font-semibold" jhiTranslate="artemisApp.lecture.editFooter.saving" data-testid="lecture-edit-footer-status"></span>
+        } @else if (hasChanges() || hasUnsavedContent()) {
+            <span class="lecture-edit-footer-unsaved flex min-w-0 items-center gap-2 font-semibold" data-testid="lecture-edit-footer-status">
+                <span aria-hidden="true" class="lecture-edit-footer-unsaved-dot size-2 shrink-0 rounded-full"></span>
+                <span class="min-w-0 truncate"
+                    >{{ 'artemisApp.lecture.editFooter.unsavedChanges' | artemisTranslate }}
+                    @for (section of changedSections(); track section; let last = $last) {
+                        {{ section | artemisTranslate }}{{ last ? '' : ', ' }}
+                    }
+                </span>
+            </span>
+        } @else if (isSavingContent()) {
+            <span class="min-w-0 truncate font-semibold" jhiTranslate="artemisApp.lecture.editFooter.savingContent" data-testid="lecture-edit-footer-status"></span>
+        } @else if (savedAt(); as saved) {
+            <span class="lecture-edit-footer-saved flex min-w-0 items-center gap-2 font-semibold" data-testid="lecture-edit-footer-status">
+                <fa-icon [icon]="faCheck" />
+                <span class="min-w-0 truncate">{{ 'artemisApp.lecture.editFooter.saved' | artemisTranslate: { time: (saved | artemisDate: 'time') } }}</span>
+            </span>
+        } @else {
+            <span class="min-w-0 truncate font-semibold" jhiTranslate="artemisApp.lecture.editFooter.noChanges" data-testid="lecture-edit-footer-status"></span>
+        }
+        <span
+            class="lecture-edit-footer-hint hidden min-w-0 truncate lg:block"
+            [jhiTranslate]="isEditMode() ? 'artemisApp.lecture.editFooter.contentHint' : 'artemisApp.lecture.editFooter.createHint'"
+        ></span>
+    </div>
+    <button tumAetUiButton type="button" id="cancel-save" data-testid="lecture-edit-leave" severity="secondary" size="small" [disabled]="isSaving()" (click)="leave.emit()">
+        <span [jhiTranslate]="leaveLabel()"></span>
+    </button>
+    @let blockedReason = saveBlockedReason();
+    <!-- aria-disabled rather than disabled, so the button stays focusable and its tooltip can say why it cannot be used yet. -->
+    <button
+        tumAetUiButton
+        type="button"
+        id="save-entity"
+        data-testid="lecture-edit-save"
+        size="small"
+        class="aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+        [attr.aria-disabled]="isSaveBlocked()"
+        [tumAetUiTooltip]="blockedReason ? (blockedReason | artemisTranslate) : ''"
+        (click)="onSave()"
+    >
+        @if (isSaving()) {
+            <fa-icon [icon]="faSpinner" animation="spin" />
+            <span jhiTranslate="entity.action.saving"></span>
+        } @else {
+            <!-- On a phone the status needs the room more than the button needs its icon. -->
+            <fa-icon [icon]="faSave" class="hidden sm:inline" />
+            <span jhiTranslate="entity.action.save"></span>
+        }
+    </button>
+</div>

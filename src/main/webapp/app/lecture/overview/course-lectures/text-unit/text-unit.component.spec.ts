@@ -14,14 +14,14 @@ import { CompetencyContributionComponent } from 'app/atlas/shared/competency-con
 import { CompetencyContributionCardDTO } from 'app/atlas/shared/entities/competency.model';
 import { of } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
 
 describe('TextUnitComponent', () => {
-    let scienceService: ScienceService;
+    let router: Router;
+    let routeStub: { snapshot: { paramMap: ParamMap } };
 
     let component: TextUnitComponent;
     let fixture: ComponentFixture<TextUnitComponent>;
-
-    let openStub: ReturnType<typeof vi.spyOn>;
 
     const textUnit: TextUnit = {
         id: 1,
@@ -33,35 +33,8 @@ describe('TextUnitComponent', () => {
 
     const exampleHtml = '<h1>Sample Markdown</h1>';
 
-    // minimal fake window & document for the isolated view
-    function makeStubWindow() {
-        const created: any[] = [];
-        const head = { children: [] as any[], appendChild: (n: any) => head.children.push(n) };
-        const body = { className: '', innerHTML: '' };
-        const doc = {
-            title: '',
-            head,
-            body,
-            readyState: 'complete', // ensures immediate run (no load listener needed)
-            createElement: (tag: string) => {
-                const el: any = { tagName: tag.toUpperCase() };
-                // minimal link support
-                el.rel = '';
-                el.href = '';
-                created.push(el);
-                return el;
-            },
-            addEventListener: vi.fn(), // not used when readyState === 'complete'
-        };
-
-        return {
-            document: doc as unknown as Document,
-            focus: vi.fn(),
-            __created: created, // for assertions if needed
-        } as unknown as Window;
-    }
-
     beforeEach(async () => {
+        routeStub = { snapshot: { paramMap: convertToParamMap({ lectureId: '5' }) } };
         await TestBed.configureTestingModule({
             imports: [TextUnitComponent, MockComponent(CompetencyContributionComponent)],
             providers: [
@@ -71,6 +44,7 @@ describe('TextUnitComponent', () => {
                     useClass: MockTranslateService,
                 },
                 { provide: ScienceService, useClass: MockScienceService },
+                { provide: ActivatedRoute, useFactory: () => routeStub },
                 MockProvider(CourseCompetencyService),
                 MockProvider(ProfileService),
             ],
@@ -79,9 +53,7 @@ describe('TextUnitComponent', () => {
         const competencyService = TestBed.inject(CourseCompetencyService);
         vi.spyOn(competencyService, 'getCompetencyContributionsForLectureUnit').mockReturnValue(of({} as HttpResponse<CompetencyContributionCardDTO[]>));
 
-        scienceService = TestBed.inject(ScienceService);
-
-        openStub = vi.spyOn(window, 'open').mockReturnValue(window);
+        router = TestBed.inject(Router);
 
         fixture = TestBed.createComponent(TextUnitComponent);
         component = fixture.componentInstance;
@@ -110,37 +82,37 @@ describe('TextUnitComponent', () => {
         expect(markdown.nativeElement.innerHTML).toEqual(exampleHtml);
     });
 
-    it('should display html in a new window on isolated view click', () => {
-        const fakeWin = makeStubWindow();
-        openStub = vi.spyOn(window, 'open').mockReturnValue(fakeWin);
+    it('should open the text unit on its own page on isolated view click', () => {
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
         fixture.detectChanges();
 
         const isolatedViewButton = fixture.debugElement.query(By.css('#view-isolated-button'));
         isolatedViewButton.nativeElement.click();
 
-        // assertions against the stub window (not the real document)
-        expect(openStub).toHaveBeenCalledWith('', '_blank');
-        expect((fakeWin as any).focus).toHaveBeenCalledTimes(1);
-        expect(fakeWin.document.title).toBe(textUnit.name);
-        expect(fakeWin.document.body.className).toBe('markdown-body');
-        expect(fakeWin.document.body.innerHTML).toBe(exampleHtml);
-
-        // optional: verify stylesheet link was appended
-        const links = (fakeWin.document.head as any).children.filter((n: any) => n.tagName === 'LINK');
-        expect(links).toHaveLength(1);
-        expect(links[0].rel).toBe('stylesheet');
-        expect(links[0].href).toContain('public/content/github-markdown.css');
+        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledWith(['/courses', 1, 'lectures', 5, 'text-units', textUnit.id]);
     });
 
-    it('should log event on isolated view', () => {
-        const logEventSpy = vi.spyOn(scienceService, 'logEvent');
-        // use a fresh stub window so handleIsolatedView() can run without touching real window
-        const fakeWin = makeStubWindow();
-        vi.spyOn(window, 'open').mockReturnValue(fakeWin);
+    it('should prefer the lecture of the unit over the one of the route', () => {
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        // e.g. on the competency page, whose route says nothing about the lecture of the unit
+        fixture.componentRef.setInput('lectureUnit', { ...textUnit, lecture: { id: 9 } });
+        fixture.detectChanges();
 
         component.handleIsolatedView();
 
-        expect(logEventSpy).toHaveBeenCalledTimes(1);
+        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/courses', 1, 'lectures', 9, 'text-units', textUnit.id]);
+    });
+
+    it('should not offer the fullscreen view when the lecture of the unit is unknown', () => {
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        routeStub.snapshot.paramMap = convertToParamMap({});
+
+        fixture.detectChanges();
+        component.handleIsolatedView();
+
+        expect(fixture.debugElement.query(By.css('#view-isolated-button'))).toBeNull();
+        expect(navigateSpy).not.toHaveBeenCalled();
     });
 });

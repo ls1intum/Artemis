@@ -11,10 +11,10 @@ import { round } from 'app/foundation/util/utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PlagiarismAndTutorEffortDirective } from 'app/plagiarism/manage/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
-import { TumUiBarChartComponent, TumUiBarChartConfig } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig } from '@tumaet/ui-angular';
 
 interface TutorEffortRange {
     minimumTimeSpent: number;
@@ -25,7 +25,7 @@ interface TutorEffortRange {
     selector: 'jhi-text-exercise-tutor-effort-statistics',
     templateUrl: './tutor-effort-statistics.component.html',
     styleUrls: ['./tutor-effort-statistics.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, HelpIconComponent, TumUiBarChartComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FaIconComponent, HelpIconComponent, TumAetUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDirective implements OnInit {
     private route = inject(ActivatedRoute);
@@ -59,7 +59,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     private readonly resolvedColors = computed(() => this.chartColors());
 
     readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.resolvedColors()));
-    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+    readonly chartConfig = computed<TumAetUiBarChartConfig>(() => ({
         xAxis: { label: this.xAxisLabel() },
         yAxis: { label: this.yAxisLabel(), max: this.yScaleMax(), tickFormatter: this.yAxisTickFormatting },
         tooltip: {
