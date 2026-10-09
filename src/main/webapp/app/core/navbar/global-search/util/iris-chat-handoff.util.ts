@@ -4,68 +4,51 @@ import { convertCitationMarkers } from 'app/core/navbar/global-search/util/iris-
 import { CitedSources, citedEntitySource, citedLectureSource } from 'app/core/navbar/global-search/util/iris-cited-sources.util';
 import { ChatServiceMode, EXERCISE_TYPE_TO_CHAT_MODE } from 'app/iris/shared/entities/iris-session-context.model';
 
-/** A place a global search answer can be continued in: a course's Iris chat, optionally on one of its lectures or exercises. */
+/** The place a global search answer is continued in: a course's Iris chat, optionally on one of its lectures or exercises. */
 export interface IrisHandoffTarget {
     courseId: number;
-    courseName: string;
     /** The lecture or exercise the chat starts on; undefined for the course itself. */
     context?: { mode: ChatServiceMode; entityId: number };
     /** The lecture or exercise, or the course when there is none. */
     name: string;
-    /** How many of the answer's sources belong here. */
-    citationCount: number;
 }
 
-/** One course the answer cites, with its places in the order the menu lists them. */
-export interface IrisHandoffCourse {
-    courseId: number;
-    courseName: string;
-    /** The lectures and exercises the answer cites in this course, most cited first. */
-    places: IrisHandoffTarget[];
-    /** The course chat itself. */
-    wholeCourse: IrisHandoffTarget;
+interface Place {
+    context?: IrisHandoffTarget['context'];
+    name: string;
 }
 
-/** Where a global search answer can be continued. */
-export interface IrisHandoffOptions {
-    /** Where the button goes: the most cited lecture or exercise of the most cited course, or that course itself. */
-    defaultTarget: IrisHandoffTarget;
-    /** Every course the answer cites, most cited first. */
-    courses: IrisHandoffCourse[];
-    /** Whether there is anything to choose: several courses, or several lectures and exercises. */
-    hasChoice: boolean;
+interface Counted<T> {
+    value: T;
+    citations: number;
 }
 
 /**
- * Collects the places the answer's sources belong to. A lecture source belongs to its lecture, an exercise with an Iris chat
- * to its exercise, a lecture entry to its lecture, and every other source (FAQs, exams, channels, course entries) only to its
- * course. Ties keep the order the sources were cited in.
+ * The place the answer's sources point to most: the most cited lecture or exercise of the most cited course, or that course
+ * itself. A lecture source belongs to its lecture, an exercise with an Iris chat to its exercise, a lecture entry to its
+ * lecture, and every other source (FAQs, exams, channels, course entries) only to its course. Ties keep the order the sources
+ * were cited in.
  *
- * @returns the options, or undefined when no source names a course
+ * @returns the target, or undefined when no source names a course
  */
-export function handoffOptions(cited: CitedSources): IrisHandoffOptions | undefined {
-    const courses = new Map<number, IrisHandoffCourse>();
-    const count = (course: { id: number; name: string }, place?: { context: IrisHandoffTarget['context']; name: string }) => {
+export function handoffTarget(cited: CitedSources): IrisHandoffTarget | undefined {
+    const courses = new Map<number, Counted<{ id: number; name: string; places: Counted<Place>[] }>>();
+    const count = (course: { id: number; name: string }, place?: Place) => {
         let entry = courses.get(course.id);
         if (!entry) {
-            entry = {
-                courseId: course.id,
-                courseName: course.name,
-                places: [],
-                wholeCourse: { courseId: course.id, courseName: course.name, name: course.name, citationCount: 0 },
-            };
+            entry = { value: { id: course.id, name: course.name, places: [] }, citations: 0 };
             courses.set(course.id, entry);
         }
-        entry.wholeCourse.citationCount++;
+        entry.citations++;
         if (!place?.context) {
             return;
         }
         const placeContext = place.context;
-        const existing = entry.places.find((p) => p.context?.mode === placeContext.mode && p.context.entityId === placeContext.entityId);
+        const existing = entry.value.places.find((p) => p.value.context?.mode === placeContext.mode && p.value.context.entityId === placeContext.entityId);
         if (existing) {
-            existing.citationCount++;
+            existing.citations++;
         } else {
-            entry.places.push({ courseId: course.id, courseName: course.name, context: placeContext, name: place.name, citationCount: 1 });
+            entry.value.places.push({ value: place, citations: 1 });
         }
     };
 
@@ -76,22 +59,21 @@ export function handoffOptions(cited: CitedSources): IrisHandoffOptions | undefi
         }
     });
 
-    // Array.prototype.sort is stable, so equally cited entries keep the order they were cited in.
-    const sorted = [...courses.values()].sort((a, b) => b.wholeCourse.citationCount - a.wholeCourse.citationCount);
-    if (sorted.length === 0) {
+    const course = mostCited([...courses.values()]);
+    if (!course) {
         return undefined;
     }
-    sorted.forEach((course) => course.places.sort((a, b) => b.citationCount - a.citationCount));
-    const top = sorted[0];
-    return {
-        defaultTarget: top.places[0] ?? top.wholeCourse,
-        courses: sorted,
-        hasChoice: sorted.length > 1 || top.places.length > 1,
-    };
+    const place = mostCited(course.places);
+    return place ? { courseId: course.id, context: place.context, name: place.name } : { courseId: course.id, name: course.name };
+}
+
+/** Array.prototype.sort is stable, so equally cited entries keep the order they were cited in. */
+function mostCited<T>(entries: Counted<T>[]): T | undefined {
+    return [...entries].sort((a, b) => b.citations - a.citations)[0]?.value;
 }
 
 /** The lecture or exercise an entity source opens a chat on, if it has one. */
-function entityPlace(source: EntitySearchSource): { context: IrisHandoffTarget['context']; name: string } | undefined {
+function entityPlace(source: EntitySearchSource): Place | undefined {
     if (source.entityId === undefined || !source.title) {
         return undefined;
     }

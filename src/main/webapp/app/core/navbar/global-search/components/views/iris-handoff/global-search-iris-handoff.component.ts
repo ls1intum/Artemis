@@ -1,39 +1,30 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faArrowRight, faChevronDown } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiButtonGroupComponent, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { iconForEntityType } from 'app/core/navbar/global-search/util/entity-type-icons.util';
-import { IrisHandoffTarget, chatAnswer, handoffOptions } from 'app/core/navbar/global-search/util/iris-chat-handoff.util';
+import { OsDetectorService } from 'app/core/navbar/global-search/services/os-detector.service';
+import { IrisHandoffTarget, chatAnswer, handoffTarget } from 'app/core/navbar/global-search/util/iris-chat-handoff.util';
 import { CitedSources } from 'app/core/navbar/global-search/util/iris-cited-sources.util';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IRIS_SESSION_QUERY_PARAM } from 'app/iris/shared/entities/iris-session.model';
-import { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 
 /**
- * Continues a finished global search answer in the Iris chat of the course it came from. The button goes to the place the answer
- * cites most and names it; when the answer cites several courses, or several lectures and exercises, a menu next to it offers
- * the others. The chat is created with the question and the answer already in it before navigating, so it opens complete.
+ * Continues a finished global search answer in the Iris chat of the course it came from, on the lecture or exercise the answer
+ * cites most, by button or by Cmd/Ctrl+Enter. The chat is created with the question and the answer already in it before
+ * navigating, so it opens complete.
  */
 @Component({
     selector: 'jhi-global-search-iris-handoff',
     templateUrl: './global-search-iris-handoff.component.html',
-    imports: [
-        TumAetUiButtonDirective,
-        TumAetUiButtonGroupComponent,
-        TumAetUiMenuComponent,
-        TumAetUiMenuItemDirective,
-        TumAetUiMenuTriggerDirective,
-        FaIconComponent,
-        ArtemisTranslatePipe,
-    ],
+    styleUrl: './global-search-iris-handoff.component.scss',
+    imports: [TumAetUiTooltipDirective, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    host: { '(window:keydown)': 'onWindowKeydown($event)' },
 })
 export class GlobalSearchIrisHandoffComponent {
     private readonly irisChatHttpService = inject(IrisChatHttpService);
     private readonly router = inject(Router);
+    private readonly osDetector = inject(OsDetectorService);
 
     /** The question the student asked. */
     readonly question = input.required<string>();
@@ -42,12 +33,20 @@ export class GlobalSearchIrisHandoffComponent {
     /** The sources the answer cites, numbered the way its markers are. */
     readonly citedSources = input.required<CitedSources>();
 
-    protected readonly options = computed(() => handoffOptions(this.citedSources()));
+    protected readonly target = computed(() => handoffTarget(this.citedSources()));
     /** Set while the chat is being created, so a double click creates one chat rather than two. */
     protected readonly isOpening = signal(false);
+    protected readonly shortcutLabel = computed(() => `${this.osDetector.actionKeyLabel()}↵`);
 
-    protected readonly faArrowRight = faArrowRight;
-    protected readonly faChevronDown = faChevronDown;
+    /** Cmd/Ctrl+Enter, the same as the button; the palette's own Enter handlers leave the modified key alone. */
+    protected onWindowKeydown(event: KeyboardEvent): void {
+        const target = this.target();
+        if (event.key !== 'Enter' || !this.osDetector.isActionKey(event) || event.repeat || !target) {
+            return;
+        }
+        event.preventDefault();
+        this.continueIn(target);
+    }
 
     protected continueIn(target: IrisHandoffTarget): void {
         if (this.isOpening()) {
@@ -70,19 +69,5 @@ export class GlobalSearchIrisHandoffComponent {
                 // The failure itself is reported by the global HTTP error alert; the button only becomes usable again.
                 error: () => this.isOpening.set(false),
             });
-    }
-
-    /** The palette's icon for the kind of place, so a lecture or exercise looks the same here as in the results. */
-    protected iconFor(target: IrisHandoffTarget): IconDefinition {
-        switch (target.context?.mode) {
-            case ChatServiceMode.LECTURE:
-                return iconForEntityType('lecture');
-            case ChatServiceMode.PROGRAMMING_EXERCISE:
-                return iconForEntityType('exercise', 'programming');
-            case ChatServiceMode.TEXT_EXERCISE:
-                return iconForEntityType('exercise', 'text');
-            default:
-                return iconForEntityType('course');
-        }
     }
 }

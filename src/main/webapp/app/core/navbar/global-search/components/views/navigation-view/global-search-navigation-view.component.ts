@@ -301,7 +301,14 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
     @HostListener('window:keydown', ['$event'])
     handleKeydown(event: KeyboardEvent): void {
-        if (event.key !== 'Enter' || event.defaultPrevented || (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))) {
+        // A modified Enter (Cmd/Ctrl+Enter) continues the Iris answer in the chat; it never opens a result.
+        if (
+            event.key !== 'Enter' ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.defaultPrevented ||
+            (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))
+        ) {
             return;
         }
         const idx = this.selectedIndex();
