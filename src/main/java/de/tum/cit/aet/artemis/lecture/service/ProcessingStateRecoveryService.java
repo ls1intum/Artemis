@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.lecture.web.LectureWebsocketTopics.UNIT_PRO
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRecoveryRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
 /**
@@ -37,13 +39,16 @@ public class ProcessingStateRecoveryService {
 
     private final LectureUnitProcessingStateRepository processingStateRepository;
 
+    private final LectureUnitProcessingStateRecoveryRepository recoveryRepository;
+
     private final LectureTranscriptionRepository transcriptionRepository;
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    public ProcessingStateRecoveryService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            WebsocketMessagingService websocketMessagingService) {
+    public ProcessingStateRecoveryService(LectureUnitProcessingStateRepository processingStateRepository, LectureUnitProcessingStateRecoveryRepository recoveryRepository,
+            LectureTranscriptionRepository transcriptionRepository, WebsocketMessagingService websocketMessagingService) {
         this.processingStateRepository = processingStateRepository;
+        this.recoveryRepository = recoveryRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.websocketMessagingService = websocketMessagingService;
     }
@@ -51,13 +56,14 @@ public class ProcessingStateRecoveryService {
     /**
      * Handle an Iris restart notification.
      * <p>
-     * When Iris starts up, all previous in-flight jobs are lost. This method
-     * resets all TRANSCRIBING/INGESTING states to IDLE so they
-     * get re-dispatched to the now-fresh Iris instance.
+     * The restarted process lost its in-flight jobs, so they are reset to IDLE for re-dispatch: every push run, and every pull run whose
+     * lease the departed process held. Pull runs a worker of the new process already claimed are not touched. Without a boot id (an
+     * Iris that does not report one, restart seen as DOWN to UP) only push runs are reset; leased runs recover through lease expiry.
      *
+     * @param departedBootId the boot id of the process that restarted, or {@code null} when it is unknown
      * @return the number of jobs that were reset
      */
-    public int handleIrisReset() {
+    public int handleIrisReset(@Nullable String departedBootId) {
         List<LectureUnitProcessingState> activeStates = processingStateRepository.findByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING));
 
         if (activeStates.isEmpty()) {
@@ -72,7 +78,7 @@ public class ProcessingStateRecoveryService {
         RuntimeException firstFailure = null;
         for (LectureUnitProcessingState state : activeStates) {
             try {
-                if (resetToIdleForRecovery(state)) {
+                if (resetToIdleForRecovery(state, departedBootId)) {
                     resetCount++;
                 }
             }
@@ -94,7 +100,34 @@ public class ProcessingStateRecoveryService {
      *
      * @param state the stuck processing state to reset
      */
-    boolean resetToIdleForRecovery(LectureUnitProcessingState state) {
+    /**
+     * Reclaim one lapsed-lease run, atomically: see {@link LectureUnitProcessingStateRepository#reclaimLapsedLease}
+     * for why this cannot be a re-fetch-then-save like {@link #resetToIdleForRecovery}. Re-fetches only on
+     * success, purely to notify with the row the write actually produced.
+     *
+     * @param id     the processing state to reclaim
+     * @param token  the job token observed at batch-read time
+     * @param phases the in-flight phases eligible for reclaim
+     * @param cutoff the lease cutoff: a heartbeat at or after this time cancels the reclaim
+     * @return true when reclaimed, false when the run is no longer lapsed under this token
+     */
+    public boolean reclaimLapsedLease(long id, String token, List<ProcessingPhase> phases, ZonedDateTime cutoff) {
+        if (processingStateRepository.reclaimLapsedLease(id, token, phases, cutoff, ZonedDateTime.now()) == 0) {
+            return false;
+        }
+        processingStateRepository.findById(id).ifPresent(state -> {
+            LectureUnit lectureUnit = state.getLectureUnit();
+            if (lectureUnit == null) {
+                return;
+            }
+            TranscriptionStatus transcriptionStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnit.getId()).map(LectureTranscription::getTranscriptionStatus)
+                    .orElse(null);
+            notifyProcessingStateChange(state, transcriptionStatus);
+        });
+        return true;
+    }
+
+    boolean resetToIdleForRecovery(LectureUnitProcessingState state, @Nullable String departedBootId) {
         LectureUnit lectureUnit = state.getLectureUnit();
         if (lectureUnit == null) {
             log.warn("Skipping recovery for processing state {} because its lecture unit is missing", state.getId());
@@ -102,12 +135,20 @@ public class ProcessingStateRecoveryService {
         }
         TranscriptionStatus transcriptionStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnit.getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
         log.info("Recovering interrupted unit {} (was {}) - resetting to IDLE, retry budget preserved", lectureUnit.getId(), state.getPhase());
+        // Bound to the run that was read: a terminal callback landing between the batch read and this write would
+        // otherwise be reverted here and the completed work re-ingested.
+        if ((departedBootId != null
+                ? recoveryRepository.resetToIdleIfStillLiveAndOwnedBy(state.getId(), state.getPhase(), state.getIngestionJobToken(), departedBootId, ZonedDateTime.now())
+                : recoveryRepository.resetToIdleIfStillLiveAndUnowned(state.getId(), state.getPhase(), state.getIngestionJobToken(), ZonedDateTime.now())) == 0) {
+            log.info("Not recovering unit {}: its run completed, moved on since the batch read, or belongs to a worker of another Iris process", lectureUnit.getId());
+            return false;
+        }
         state.setPhase(ProcessingPhase.IDLE);
         state.setIngestionJobToken(null);
         state.setStartedAt(null);
         state.setRetryEligibleAt(null);
         state.setLastUpdated(ZonedDateTime.now());
-        processingStateRepository.save(state);
+        state.clearStageProgress();
 
         notifyProcessingStateChange(state, transcriptionStatus);
         return true;

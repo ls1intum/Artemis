@@ -199,6 +199,12 @@ public class IrisRequestMockProvider {
         mockWebhookPost("/lectures/delete", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer, count);
     }
 
+    /** The lecture deletion webhook fails once, as when Pyris is temporarily unavailable. */
+    public void mockDeletionWebhookFailure() {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/lectures/delete")).andExpect(method(HttpMethod.POST))
+                .andRespond(withRawStatus(HttpStatus.SERVICE_UNAVAILABLE.value()));
+    }
+
     public void mockLectureUnitMetadataWebhookRunResponse(Consumer<PyrisLectureUnitMetadataWebhookDTO> responseConsumer, ExpectedCount count) {
         mockWebhookPost("/lectures/metadata", PyrisLectureUnitMetadataWebhookDTO.class, responseConsumer, count);
     }
@@ -258,7 +264,8 @@ public class IrisRequestMockProvider {
                     null,
                     null
                 )
-            )
+            ),
+            null
         );
 
         shortTimeoutMockServer
@@ -306,7 +313,7 @@ public class IrisRequestMockProvider {
     public void mockHealthStatusSuccess(boolean overallHealthy, Map<String, PyrisHealthStatusDTO.ServiceStatus> moduleStatuses) throws JacksonException {
         var modules = moduleStatuses.entrySet().stream()
                 .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, e -> new PyrisHealthStatusDTO.ModuleStatusDTO(e.getValue(), null, null)));
-        var dto = new PyrisHealthStatusDTO(overallHealthy, modules);
+        var dto = new PyrisHealthStatusDTO(overallHealthy, modules, null);
         shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(mapper.writeValueAsString(dto), MediaType.APPLICATION_JSON));
     }
@@ -337,7 +344,7 @@ public class IrisRequestMockProvider {
 
     /** Full control over modules, including null, error, and metaData. */
     public void mockHealthWithModules(Boolean overallHealthy, Map<String, PyrisHealthStatusDTO.ModuleStatusDTO> modules) throws JacksonException {
-        var dto = new PyrisHealthStatusDTO(overallHealthy != null && overallHealthy, modules); // allow null → false
+        var dto = new PyrisHealthStatusDTO(overallHealthy != null && overallHealthy, modules, null); // allow null → false
         shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(mapper.writeValueAsString(dto), MediaType.APPLICATION_JSON));
     }
