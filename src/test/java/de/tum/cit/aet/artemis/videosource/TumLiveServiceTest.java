@@ -101,6 +101,9 @@ class TumLiveServiceTest {
     void isTumLiveUrl_checksTheWatchPageShapeWithoutCallingTheApi() {
         assertThat(tumLiveService.isTumLiveUrl("https://live.rbg.tum.de/w/abc-course/12345")).isTrue();
         assertThat(tumLiveService.isTumLiveUrl("https://example.com/some/path")).isFalse();
+        assertThat(tumLiveService.isTumLiveUrl("https://tum.live/w/abc-course/12345")).isTrue();
+        assertThat(tumLiveService.isTumLiveUrl("https://api.tum.live/w/abc-course/12345")).as("the host of the configured API").isTrue();
+        assertThat(tumLiveService.isTumLiveUrl("https://example.com/w/abc-course/12345")).as("a watch page path on another host").isFalse();
         assertThat(tumLiveService.isTumLiveUrl("mailto:lecturer@example.com")).as("an opaque URI has no path").isFalse();
         assertThat(tumLiveService.isTumLiveUrl("http://exa mple.com/w/a/1")).as("a malformed URL").isFalse();
         verify(restClient, never()).get();

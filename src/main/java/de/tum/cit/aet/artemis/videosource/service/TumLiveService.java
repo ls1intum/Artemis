@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.videosource.service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,17 +29,25 @@ public class TumLiveService {
 
     private static final Pattern TUM_LIVE_PATTERN = Pattern.compile("/w/([^/]+)/([0-9]+)");
 
+    /** Hosts that serve TUM Live watch pages, the same list the lecture unit form accepts. */
+    private static final Set<String> TUM_LIVE_HOSTS = Set.of("live.rbg.tum.de", "tum.live");
+
     private final RestClient restClient;
+
+    /** The host of the configured TUM Live API, accepted as a watch page host too (a self-hosted or test instance). */
+    private final String apiHost;
 
     public TumLiveService(RestClient.Builder restClientBuilder, @Value("${artemis.tum-live.api-base-url:#{null}}") String tumLiveApiBaseUrl) {
         if (tumLiveApiBaseUrl == null || tumLiveApiBaseUrl.isBlank()) {
             log.warn(
                     "TUM Live API base URL is not configured. TUM Live integration will be disabled and transcription generation will not work. Please set 'artemis.tum-live.api-base-url' in your configuration.");
             this.restClient = null;
+            this.apiHost = null;
         }
         else {
             log.info("TUM Live API base URL is set to '{}'", tumLiveApiBaseUrl);
             this.restClient = restClientBuilder.baseUrl(tumLiveApiBaseUrl).build();
+            this.apiHost = hostOf(tumLiveApiBaseUrl);
         }
     }
 
@@ -79,8 +89,8 @@ public class TumLiveService {
     }
 
     /**
-     * Whether the URL has the shape of a TUM Live watch page ({@code /w/<courseSlug>/<streamId>}). Checks only the shape, without calling the TUM Live API,
-     * so it also holds while that API is unreachable.
+     * Whether the URL is a TUM Live watch page: a TUM Live host and the path {@code /w/<courseSlug>/<streamId>}. Checks only the URL, without calling the TUM
+     * Live API, so it also holds while that API is unreachable.
      *
      * @param videoUrl the video URL to check
      * @return true if the URL names a TUM Live stream
@@ -90,12 +100,13 @@ public class TumLiveService {
     }
 
     /**
-     * Extracts courseSlug and streamId from TUM Live public video URLs.
+     * Extracts courseSlug and streamId from TUM Live public video URLs. A watch page path on any other host is not a TUM Live video.
      */
     private StreamInfo extractCourseSlugAndStreamId(String videoUrl) {
         try {
-            String path = new URI(videoUrl).getPath();
-            if (path == null) {
+            URI uri = new URI(videoUrl);
+            String path = uri.getPath();
+            if (path == null || !isTumLiveHost(uri.getHost())) {
                 // An opaque URI such as "mailto:..." has no path to match
                 return null;
             }
@@ -108,6 +119,24 @@ public class TumLiveService {
             log.warn("Malformed TUM Live URL: {} at index {}", e.getReason(), e.getIndex());
         }
         return null;
+    }
+
+    private boolean isTumLiveHost(String host) {
+        if (host == null) {
+            return false;
+        }
+        String normalized = host.toLowerCase(Locale.ROOT);
+        return normalized.equals(apiHost) || TUM_LIVE_HOSTS.stream().anyMatch(known -> normalized.equals(known) || normalized.endsWith("." + known));
+    }
+
+    private static String hostOf(String url) {
+        try {
+            String host = new URI(url).getHost();
+            return host != null ? host.toLowerCase(Locale.ROOT) : null;
+        }
+        catch (URISyntaxException e) {
+            return null;
+        }
     }
 
     /**
