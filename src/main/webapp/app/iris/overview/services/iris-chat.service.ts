@@ -301,7 +301,12 @@ export class IrisChatService implements OnDestroy {
         this.authenticationStateSubscription.unsubscribe();
     }
 
-    protected start() {
+    /**
+     * Loads the session of the page context, or the given session instead.
+     *
+     * @param sessionId an existing session of the current course to open instead of the page context's current one
+     */
+    protected start(sessionId?: number) {
         const sessionContext = this.contextService.page();
         const requiresAcceptance = sessionContext ? this.modeRequiresLLMAcceptance.get(sessionContext.mode) : true;
         if (
@@ -311,7 +316,8 @@ export class IrisChatService implements OnDestroy {
             this.hasJustAcceptedLLMUsage
         ) {
             this.sessionLoadingSubscription?.unsubscribe();
-            this.sessionLoadingSubscription = this.getCurrentSessionOrCreate().subscribe(cloneWith(this.handleNewSession(), { complete: () => this.loadChatSessions() }));
+            const session$ = sessionId === undefined ? this.getCurrentSessionOrCreate() : this.getCourseSessionById(sessionId);
+            this.sessionLoadingSubscription = session$.subscribe(cloneWith(this.handleNewSession(), { complete: () => this.loadChatSessions() }));
         }
     }
 
@@ -916,6 +922,15 @@ export class IrisChatService implements OnDestroy {
         );
     }
 
+    private getCourseSessionById(sessionId: number): Observable<IrisSession> {
+        const courseId = this.getCourseId();
+        if (!courseId) {
+            throw new Error('Course ID not set');
+        }
+
+        return this.irisChatHttpService.getChatSessionById(courseId, sessionId).pipe(catchError(() => throwError(() => new Error(IrisErrorMessageKey.SESSION_LOAD_FAILED))));
+    }
+
     private createCourseSession(): Observable<IrisSession> {
         const courseId = this.getCourseId();
         if (!courseId) {
@@ -977,12 +992,18 @@ export class IrisChatService implements OnDestroy {
      * session via {@link start}; no-op when the page context is unchanged. The server resolves the session:
      * an existing lecture/exercise chat with history is resumed, otherwise it falls back to the course session
      * and the page context is staged as pending (see {@link IrisChatContextService.adoptServerContext}).
+     *
+     * @param mode      the mode of the page
+     * @param entityId  the course, lecture or exercise the page shows
+     * @param sessionId an existing session of the course to open instead of resolving one, e.g. the chat a global
+     *                  search answer was continued in; opened even when the page context is unchanged
      */
-    public openChat(mode: ChatServiceMode, entityId: number): void {
+    public openChat(mode: ChatServiceMode, entityId: number, sessionId?: number): void {
         const ctx: SessionContext = { mode: mode, entityId: entityId };
-        if (sameSessionContext(ctx, this.contextService.page())) return;
+        if (sameSessionContext(ctx, this.contextService.page()) && (sessionId === undefined || sessionId === this.sessionId)) return;
         this.contextService.setPageContext(ctx);
-        this.closeAndStart();
+        this.close();
+        this.start(sessionId);
     }
 
     /**

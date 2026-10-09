@@ -7,6 +7,7 @@ import { CourseIrisComponent } from './course-iris.component';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { MockProvider } from 'ng-mocks';
+import { IRIS_SESSION_QUERY_PARAM } from 'app/iris/shared/entities/iris-session.model';
 
 @Component({
     selector: 'jhi-course-chatbot',
@@ -15,6 +16,7 @@ import { MockProvider } from 'ng-mocks';
 })
 class MockCourseChatbotComponent {
     readonly courseId = input<number>();
+    readonly sessionId = input<number>();
 
     toggleChatHistory = vi.fn();
 }
@@ -25,11 +27,13 @@ describe('CourseIrisComponent', () => {
     let component: CourseIrisComponent;
     let fixture: ComponentFixture<CourseIrisComponent>;
     let paramMapSubject: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+    let queryParamMapSubject: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
     let llmOptedOutSubject: Subject<void>;
     let router: Router;
 
     beforeEach(async () => {
         paramMapSubject = new BehaviorSubject(convertToParamMap({ courseId: '123' }));
+        queryParamMapSubject = new BehaviorSubject(convertToParamMap({}));
         llmOptedOutSubject = new Subject<void>();
 
         await TestBed.configureTestingModule({
@@ -41,6 +45,7 @@ describe('CourseIrisComponent', () => {
                         parent: {
                             paramMap: paramMapSubject.asObservable(),
                         },
+                        queryParamMap: queryParamMapSubject.asObservable(),
                     },
                 },
                 MockProvider(IrisChatService, {
@@ -84,6 +89,18 @@ describe('CourseIrisComponent', () => {
         paramMapSubject.next(convertToParamMap({}));
         await fixture.whenStable();
         expect(component.courseId()).toBeUndefined();
+    });
+
+    it('should parse the session to open from the irisSession query parameter', async () => {
+        expect(component.sessionId()).toBeUndefined();
+
+        queryParamMapSubject.next(convertToParamMap({ [IRIS_SESSION_QUERY_PARAM]: '77' }));
+        await fixture.whenStable();
+        expect(component.sessionId()).toBe(77);
+
+        queryParamMapSubject.next(convertToParamMap({ [IRIS_SESSION_QUERY_PARAM]: 'invalid' }));
+        await fixture.whenStable();
+        expect(component.sessionId()).toBeUndefined();
     });
 
     it('should derive isCollapsed from the chatbot chat-history open state', () => {
