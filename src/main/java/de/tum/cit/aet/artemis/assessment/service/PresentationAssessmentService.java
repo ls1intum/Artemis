@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -258,6 +259,7 @@ public class PresentationAssessmentService {
         if (students.isEmpty()) {
             throw new BadRequestAlertException("At least one student must be selected", PresentationAssessmentInstance.ENTITY_NAME, "individualInstanceHasInvalidStudentCount");
         }
+        rejectAlreadyAssignedStudents(assessmentId, students);
 
         List<PresentationAssessmentInstance> instances = students.stream().map(student -> createIndividualInstance(assessment, dto.forStudent(student.getLogin()), student))
                 .toList();
@@ -284,8 +286,29 @@ public class PresentationAssessmentService {
         // The course membership is only checked when the presenter changes, so a grade or remark can still be recorded for a student who left the course.
         boolean presenterUnchanged = dto.studentLogin() != null && dto.studentLogin().trim().equals(instance.getStudent().getLogin());
         User student = presenterUnchanged ? instance.getStudent() : resolveAssignedCourseStudent(courseId, dto.studentLogin());
+        if (!presenterUnchanged
+                && presentationAssessmentInstanceRepository.existsByPresentationAssessmentIdAndStudentIdAndIdNot(assessment.getId(), student.getId(), instance.getId())) {
+            throwStudentAlreadyAssigned(List.of(student.getLogin()));
+        }
         applyInstanceData(assessment, instance, dto);
         instance.setStudent(student);
+    }
+
+    /**
+     * A student presents a presentation once, so selecting a student who already has an instance of it is rejected instead of creating a second one.
+     * The check is not racy: both writes read the presentation version before this check and only one of them can advance it.
+     */
+    private void rejectAlreadyAssignedStudents(long assessmentId, Set<User> students) {
+        List<String> assignedLogins = presentationAssessmentInstanceRepository.findAssignedStudentLogins(assessmentId, students.stream().map(User::getId).toList());
+        if (!assignedLogins.isEmpty()) {
+            throwStudentAlreadyAssigned(assignedLogins);
+        }
+    }
+
+    private void throwStudentAlreadyAssigned(List<String> logins) {
+        String joinedLogins = String.join(", ", logins);
+        throw new BadRequestAlertException("These students already have an instance of this presentation: " + joinedLogins, PresentationAssessmentInstance.ENTITY_NAME,
+                "studentAlreadyAssigned", Map.of("logins", joinedLogins));
     }
 
     private void applyInstanceData(PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceRequestDTO dto) {

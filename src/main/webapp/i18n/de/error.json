@@ -84,6 +84,7 @@
         "maxPointsBelowExistingResult": "Die maximale Punktzahl darf nicht unter einem bereits eingetragenen Ergebnis liegen.",
         "resultPointsExceedMaxPoints": "Die erreichten Punkte dürfen die maximale Punktzahl nicht überschreiten.",
         "exerciseNotInCourse": "Die verknüpfte Aufgabe muss zu diesem Kurs gehören.",
+        "studentAlreadyAssigned": "Diese Studierenden haben diese Präsentation bereits: {{ logins }}",
         "invalidOrganizationReference": "Eine oder mehrere ausgewählte Organisationen sind ungültig oder nicht mehr vorhanden.",
         "ambiguousContext": "Ein neuer {{entityName}} muss einen eindeutigen Kontext haben",
         "invalid": {

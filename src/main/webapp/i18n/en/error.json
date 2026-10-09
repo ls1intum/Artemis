@@ -84,6 +84,7 @@
         "maxPointsBelowExistingResult": "The maximum points cannot be lower than a result that was already entered.",
         "resultPointsExceedMaxPoints": "The result points cannot exceed the maximum points.",
         "exerciseNotInCourse": "The linked exercise must belong to this course.",
+        "studentAlreadyAssigned": "These students already have this presentation: {{ logins }}",
         "invalidOrganizationReference": "One or more selected organizations are invalid or no longer exist.",
         "ambiguousContext": "A new {{entityName}} must have an unambiguous context",
         "invalid": {

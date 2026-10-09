@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -114,6 +115,32 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
     PresentationAssessmentStatisticsDTO findStatisticsByCourseId(@Param("courseId") long courseId);
 
     long countByPresentationAssessmentCourseId(long courseId);
+
+    /**
+     * Returns the logins of those of the given students that already have an instance of the presentation assessment.
+     *
+     * @param assessmentId the presentation assessment id
+     * @param studentIds   the ids of the students to check
+     * @return the logins of the students that are already assigned, in alphabetical order
+     */
+    @Query("""
+            SELECT instance.student.login
+            FROM PresentationAssessmentInstance instance
+            WHERE instance.presentationAssessment.id = :assessmentId
+                AND instance.student.id IN :studentIds
+            ORDER BY instance.student.login
+            """)
+    List<String> findAssignedStudentLogins(@Param("assessmentId") long assessmentId, @Param("studentIds") Collection<Long> studentIds);
+
+    /**
+     * Checks whether the student has another instance of the presentation assessment than the given one.
+     *
+     * @param assessmentId the presentation assessment id
+     * @param studentId    the student id
+     * @param instanceId   the id of the instance that is not counted
+     * @return true if the student has a different instance of the presentation assessment
+     */
+    boolean existsByPresentationAssessmentIdAndStudentIdAndIdNot(long assessmentId, long studentId, long instanceId);
 
     /**
      * Loads all presentation assessment instances of a student for the personal data export.

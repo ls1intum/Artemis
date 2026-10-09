@@ -725,6 +725,60 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         assertThat(presentationAssessmentInstanceRepository.count()).isEqualTo(instancesBeforeRequest);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void savePresentationAssessmentInstances_withStudentWhoAlreadyHasAnInstance_shouldRejectTheWholeRequest() throws Exception {
+        createSearchInstance(presentationAssessment, "student1", null);
+        PresentationAssessmentInstancesBatchCreateDTO dto = new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, null,
+                List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2"), "en", PresentationAssessmentMode.IN_PERSON, "Room 1", null, null);
+
+        request.post(getInstancesUrl(course, presentationAssessment), dto, HttpStatus.BAD_REQUEST);
+
+        // Nothing is created for the other student either, and the first instance is untouched.
+        assertThat(presentationAssessmentInstanceRepository.countByPresentationAssessmentCourseId(course.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void savePresentationAssessmentInstances_forSameStudentInAnotherPresentation_shouldBeAllowed() throws Exception {
+        createSearchInstance(presentationAssessment, "student1", null);
+        PresentationAssessment otherAssessment = createSearchAssessment("Other presentation", false);
+
+        PresentationAssessmentInstanceDTO other = createSearchInstance(otherAssessment, "student1", null);
+
+        assertThat(presentationAssessmentInstanceRepository.findById(other.id())).isPresent();
+        assertThat(presentationAssessmentInstanceRepository.countByPresentationAssessmentCourseId(course.getId())).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updatePresentationAssessmentInstance_toStudentWhoAlreadyHasAnInstance_shouldReturnBadRequest() throws Exception {
+        PresentationAssessmentInstanceDTO first = createSearchInstance(presentationAssessment, "student1", null);
+        createSearchInstance(presentationAssessment, "student2", null);
+        PresentationAssessmentInstanceRequestDTO updateDto = new PresentationAssessmentInstanceRequestDTO(first.id(), first.presentationDate(), null, TEST_PREFIX + "student2",
+                first.language(), first.mode(), first.location(), null, null);
+
+        request.putWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/" + first.id(), updateDto, PresentationAssessmentInstanceDTO.class, HttpStatus.BAD_REQUEST);
+
+        PresentationAssessmentInstance stored = presentationAssessmentInstanceRepository
+                .findByIdAndPresentationAssessmentIdAndPresentationAssessmentCourseId(first.id(), presentationAssessment.getId(), course.getId()).orElseThrow();
+        assertThat(stored.getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void presentationAssessmentInstance_forSameStudentTwice_shouldViolateTheUniqueIndex() throws Exception {
+        createSearchInstance(presentationAssessment, "student1", null);
+        PresentationAssessmentInstance duplicate = new PresentationAssessmentInstance();
+        duplicate.setPresentationAssessment(presentationAssessment);
+        duplicate.setStudent(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        duplicate.setPresentationDate(FIXED_DATE);
+        duplicate.setLanguage("en");
+        duplicate.setMode(PresentationAssessmentMode.IN_PERSON);
+
+        assertThatThrownBy(() -> presentationAssessmentInstanceRepository.save(duplicate)).isInstanceOf(DataIntegrityViolationException.class);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "zoom.example.org/j/1", "/j/1", "javascript:alert(1)", "https://", "https://exa mple.org" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
