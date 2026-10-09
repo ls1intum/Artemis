@@ -1,0 +1,46 @@
+// Blue text with the palette's keycap, top right of the answer card. Nothing else, so it reads as the one action of the card.
+.iris-handoff-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    padding: 0.15rem 0.5rem;
+    border: 0;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--bs-primary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+
+    // No background block on hover: the keycap fills solid and the label underlines, like a link.
+    // The underline sits on the label only: set on the button it would be drawn through the keycap too.
+    &:hover:not(:disabled),
+    &:focus-visible {
+        .iris-handoff-label {
+            text-decoration: underline;
+            text-underline-offset: 0.15em;
+        }
+
+        .iris-handoff-kbd {
+            border-color: var(--bs-primary);
+            background: var(--bs-primary);
+            color: var(--bs-white, #fff);
+        }
+    }
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.45;
+    }
+}
+
+.iris-handoff-kbd {
+    padding: 0.05rem 0.35rem;
+    border: 1px solid color-mix(in srgb, var(--bs-primary) 40%, transparent);
+    border-radius: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EntitySearchSource } from 'app/core/navbar/global-search/models/entity-search-source.model';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
-import { chatAnswer, handoffOptions } from 'app/core/navbar/global-search/util/iris-chat-handoff.util';
+import { chatAnswer, handoffTarget } from 'app/core/navbar/global-search/util/iris-chat-handoff.util';
 import { CitedSources } from 'app/core/navbar/global-search/util/iris-cited-sources.util';
 import { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 
@@ -45,57 +45,55 @@ function cited(sources: LectureSearchResult[], entitySources: EntitySearchSource
 const divideAndConquer = { id: 10, name: 'Divide and Conquer' };
 const recurrences = { id: 11, name: 'Recurrences' };
 
-describe('handoffOptions', () => {
-    it('goes straight to the only lecture when there is nothing to choose', () => {
-        const options = handoffOptions(cited([slide(algorithms, divideAndConquer, 100, 3), slide(algorithms, divideAndConquer, 101, 7)]))!;
+describe('handoffTarget', () => {
+    it('goes to the only cited lecture', () => {
+        const target = handoffTarget(cited([slide(algorithms, divideAndConquer, 100, 3), slide(algorithms, divideAndConquer, 101, 7)]));
 
-        expect(options.hasChoice).toBe(false);
-        expect(options.defaultTarget).toMatchObject({ courseId: 1, name: 'Divide and Conquer', citationCount: 2, context: { mode: ChatServiceMode.LECTURE, entityId: 10 } });
+        expect(target).toEqual({ courseId: 1, name: 'Divide and Conquer', context: { mode: ChatServiceMode.LECTURE, entityId: 10 } });
     });
 
-    it('defaults to the most cited lecture and offers the others', () => {
-        const options = handoffOptions(cited([slide(algorithms, recurrences, 100, 1), slide(algorithms, divideAndConquer, 101, 2), slide(algorithms, divideAndConquer, 102, 3)]))!;
+    it('goes to the most cited lecture', () => {
+        const target = handoffTarget(cited([slide(algorithms, recurrences, 100, 1), slide(algorithms, divideAndConquer, 101, 2), slide(algorithms, divideAndConquer, 102, 3)]));
 
-        expect(options.hasChoice).toBe(true);
-        expect(options.defaultTarget.name).toBe('Divide and Conquer');
-        expect(options.courses[0].places.map((place) => place.name)).toEqual(['Divide and Conquer', 'Recurrences']);
-        expect(options.courses[0].wholeCourse).toMatchObject({ courseId: 1, name: 'Introduction to Algorithms', citationCount: 3 });
+        expect(target?.name).toBe('Divide and Conquer');
     });
 
-    it('defaults to the most cited course when the answer spans several courses', () => {
+    it('goes to the first cited lecture when several are cited equally often', () => {
+        const target = handoffTarget(cited([slide(algorithms, recurrences, 100, 1), slide(algorithms, divideAndConquer, 101, 2)]));
+
+        expect(target?.name).toBe('Recurrences');
+    });
+
+    it('goes to the most cited course when the answer spans several courses', () => {
         const exercise: EntitySearchSource = { entityType: 'exercise', entityId: 50, course: dataStructures, title: 'Mergesort', exerciseType: 'programming' };
-        const options = handoffOptions(cited([slide(algorithms, divideAndConquer, 100, 3), slide(algorithms, divideAndConquer, 101, 4)], [exercise]))!;
+        const target = handoffTarget(cited([slide(algorithms, divideAndConquer, 100, 3), slide(algorithms, divideAndConquer, 101, 4)], [exercise]));
 
-        expect(options.hasChoice).toBe(true);
-        expect(options.courses.map((course) => course.courseName)).toEqual(['Introduction to Algorithms', 'Data Structures']);
-        expect(options.defaultTarget.courseId).toBe(1);
-        expect(options.courses[1].places[0]).toMatchObject({ name: 'Mergesort', context: { mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 50 } });
+        expect(target?.courseId).toBe(1);
     });
 
-    it('opens exercises without an Iris chat and other course information on the course itself', () => {
+    it('goes to an exercise with an Iris chat', () => {
+        const exercise: EntitySearchSource = { entityType: 'exercise', entityId: 50, course: dataStructures, title: 'Mergesort', exerciseType: 'programming' };
+
+        expect(handoffTarget(cited([], [exercise]))).toEqual({ courseId: 2, name: 'Mergesort', context: { mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 50 } });
+    });
+
+    it('goes to the course itself for exercises without an Iris chat and other course information', () => {
         const modeling: EntitySearchSource = { entityType: 'exercise', entityId: 51, course: algorithms, title: 'UML', exerciseType: 'modeling' };
         const faq: EntitySearchSource = { entityType: 'faq', entityId: 52, course: algorithms, title: 'Exam date' };
 
-        const options = handoffOptions(cited([], [modeling, faq]))!;
-
-        expect(options.hasChoice).toBe(false);
-        expect(options.defaultTarget).toEqual({ courseId: 1, courseName: 'Introduction to Algorithms', name: 'Introduction to Algorithms', citationCount: 2 });
+        expect(handoffTarget(cited([], [modeling, faq]))).toEqual({ courseId: 1, name: 'Introduction to Algorithms' });
     });
 
-    it('offers text exercises and lecture entries as places', () => {
+    it('recognises text exercises and lecture entries as places', () => {
         const textExercise: EntitySearchSource = { entityType: 'exercise', entityId: 53, course: algorithms, title: 'Essay', exerciseType: 'TEXT' };
         const lectureEntry: EntitySearchSource = { entityType: 'lecture', entityId: 10, course: algorithms, title: 'Divide and Conquer' };
 
-        const places = handoffOptions(cited([], [textExercise, lectureEntry]))!.courses[0].places;
-
-        expect(places.map((place) => place.context)).toEqual([
-            { mode: ChatServiceMode.TEXT_EXERCISE, entityId: 53 },
-            { mode: ChatServiceMode.LECTURE, entityId: 10 },
-        ]);
+        expect(handoffTarget(cited([], [textExercise]))?.context).toEqual({ mode: ChatServiceMode.TEXT_EXERCISE, entityId: 53 });
+        expect(handoffTarget(cited([], [lectureEntry]))?.context).toEqual({ mode: ChatServiceMode.LECTURE, entityId: 10 });
     });
 
-    it('offers nothing when no source names a course', () => {
-        expect(handoffOptions(cited([], [{ entityType: 'faq', title: 'Without a course' }]))).toBeUndefined();
+    it('has nowhere to go when no source names a course', () => {
+        expect(handoffTarget(cited([], [{ entityType: 'faq', title: 'Without a course' }]))).toBeUndefined();
     });
 });
 

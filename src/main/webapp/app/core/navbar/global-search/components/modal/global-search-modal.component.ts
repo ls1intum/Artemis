@@ -609,8 +609,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 }
                 break;
             case 'Enter':
-                // Enter on a keyboard-selected chip re-picks it, the same as clicking it.
-                if (event.defaultPrevented || (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))) {
+                // Enter on a keyboard-selected chip re-picks it, the same as clicking it. A modified Enter (Cmd/Ctrl+Enter)
+                // continues the Iris answer in the chat instead.
+                if (event.metaKey || event.ctrlKey || event.defaultPrevented || (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))) {
                     break;
                 }
                 if (this.selectedChip() >= 0) {
