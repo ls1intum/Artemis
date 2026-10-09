@@ -1,25 +1,50 @@
-<h5 jhiTranslate="artemisApp.exerciseActions.accessRepository"></h5>
+<div class="flex flex-col gap-3">
+    <h5 class="m-0" jhiTranslate="artemisApp.exerciseActions.accessRepository"></h5>
 
-<div class="flex">
-    <button
-        type="button"
-        class="flex items-center gap-2 rounded-s-sm! rounded-e-none! border border-primary bg-primary px-3 text-(--tumaet-ui-primary-contrast-color)"
-        [tumAetUiMenuTrigger]="authenticationMenu"
-    >
-        {{ selectedAuthenticationMechanismLabel() }}
-        <fa-icon [icon]="faCaretDown" size="xs" aria-hidden="true" />
-    </button>
+    @if (selectedAuthenticationMethod() === RepositoryAuthenticationMethod.SSH) {
+        @let sshKeys = sshKeyState();
+        @if (sshKeys.status === 'missing') {
+            <tumaet-ui-message severity="warn">
+                <span
+                    class="text-sm [&_a]:text-inherit! [&_a]:underline!"
+                    jhiTranslate="artemisApp.exerciseActions.codePopoverSshKeyTip"
+                    [translateValues]="{ sshSettingsUrl: sshSettingsUrl }"
+                ></span>
+            </tumaet-ui-message>
+        } @else if (sshKeys.hasExpiredKeys) {
+            <tumaet-ui-message severity="warn">
+                <span
+                    class="text-sm [&_a]:text-inherit! [&_a]:underline!"
+                    jhiTranslate="artemisApp.exerciseActions.codePopoverSshKeyExpiredTip"
+                    [translateValues]="{ sshSettingsUrl: sshSettingsUrl }"
+                ></span>
+            </tumaet-ui-message>
+        }
+    }
 
-    <div class="min-w-0 flex-1 rounded-e-sm border-y border-e px-3 py-2">
-        <code class="block truncate">ssh://git&#64;artemislocal.cit.tum.de:7921/very-long-course-name/programming-exercises/example-repository.git</code>
+    <div class="flex">
+        <button
+            type="button"
+            class="flex items-center gap-2 rounded-s-sm! rounded-e-none! border border-primary bg-primary px-3 text-(--tumaet-ui-primary-contrast-color)"
+            [tumAetUiMenuTrigger]="authenticationMenu"
+        >
+            {{ selectedAuthenticationMethodLabel() }}
+            <fa-icon [icon]="faCaretDown" size="xs" aria-hidden="true" />
+        </button>
+
+        <div class="min-w-0 flex-1 rounded-e-sm border-y border-e px-3 py-2">
+            <code class="block truncate">ssh://git&#64;artemislocal.cit.tum.de:7921/very-long-course-name/programming-exercises/example-repository.git</code>
+        </div>
     </div>
 </div>
 
 <ng-template #authenticationMenu>
     <tumaet-ui-menu>
-        @for (authenticationMechanism of authenticationMechanismsWithLabels(); track authenticationMechanism.authenticationMechanism) {
-            <button type="button" tumAetUiMenuItem (triggered)="selectedAuthenticationMechanism.set(authenticationMechanism.authenticationMechanism)">
-                {{ authenticationMechanism.label }}
+        @for (item of authenticationMethodsAndLabels(); track item.authenticationMethod) {
+            @let authenticationMethod = item.authenticationMethod;
+            @let label = item.label;
+            <button type="button" tumAetUiMenuItem (triggered)="selectAuthenticationMethod(authenticationMethod)">
+                {{ label }}
             </button>
         }
     </tumaet-ui-menu>

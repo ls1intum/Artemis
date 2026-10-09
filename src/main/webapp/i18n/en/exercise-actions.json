@@ -46,6 +46,8 @@
             "code": "Code",
             "codePopoverAriaLabel": "Repository actions",
             "codePopoverError": "An unexpected error has occurred. Please refresh the page.",
+            "codePopoverSshKeyTip": "To use SSH, you need to add an SSH key to your account <a href=\"{{ sshSettingsUrl }}\">here</a>.",
+            "codePopoverSshKeyExpiredTip": "Some of your SSH keys are expired. You might need to add a new SSH key to your account <a href=\"{{ sshSettingsUrl }}\">here</a>.",
             "accessRepository": "Access your Repository",
             "cloneSourceTree": {
                 "button": "Clone in Git client",

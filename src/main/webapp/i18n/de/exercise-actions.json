@@ -46,6 +46,8 @@
             "code": "Code",
             "codePopoverAriaLabel": "Repository-Aktionen",
             "codePopoverError": "Ein unerwarteter Fehler ist aufgetreten. Bitte lade die Seite neu.",
+            "codePopoverSshKeyTip": "Um SSH zu nutzen, musst du deinem Konto <a href=\"{{ sshSettingsUrl }}\">hier</a> einen SSH-Schlüssel hinzufügen.",
+            "codePopoverSshKeyExpiredTip": "Einige deiner SSH-Schlüssel sind abgelaufen. Möglicherweise musst du deinem Konto <a href=\"{{ sshSettingsUrl }}\">hier</a> einen neuen SSH-Schlüssel hinzufügen.",
             "accessRepository": "Greif auf dein Repository zu",
             "cloneSourceTree": {
                 "button": "Im Git Client klonen",
