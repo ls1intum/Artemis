@@ -1,0 +1,61 @@
+@if (options(); as options) {
+    <div class="flex justify-end px-3! pt-2 pb-2.5">
+        <tumaet-ui-button-group class="inline-flex max-w-full" [attr.aria-label]="'global.search.irisHandoffContinue' | artemisTranslate">
+            <!-- Capped so a long course name cannot stretch the card; the full name stays in the accessible name. -->
+            <button
+                type="button"
+                tumAetUiButton
+                size="small"
+                class="max-w-[260px] min-w-0 text-start"
+                [class]="options.hasChoice ? 'rounded-e-none!' : ''"
+                [disabled]="isOpening()"
+                [attr.aria-label]="'global.search.irisHandoffContinueIn' | artemisTranslate: { name: options.defaultTarget.name }"
+                (click)="continueIn(options.defaultTarget)"
+                data-testid="iris-handoff-button"
+            >
+                <span class="flex min-w-0 flex-col leading-tight">
+                    <span class="font-semibold">{{ 'global.search.irisHandoffContinue' | artemisTranslate }}</span>
+                    <span class="truncate text-xs opacity-80" data-testid="iris-handoff-destination">{{ options.defaultTarget.name }}</span>
+                </span>
+                @if (!options.hasChoice) {
+                    <fa-icon class="shrink-0" [icon]="faArrowRight" aria-hidden="true" />
+                }
+            </button>
+            @if (options.hasChoice) {
+                <button
+                    type="button"
+                    tumAetUiButton
+                    size="small"
+                    class="shrink-0 rounded-s-none! border-s-0!"
+                    [disabled]="isOpening()"
+                    [tumAetUiMenuTrigger]="targets"
+                    [attr.aria-label]="'global.search.irisHandoffChooseTarget' | artemisTranslate"
+                    data-testid="iris-handoff-menu-button"
+                >
+                    <fa-icon [icon]="faChevronDown" aria-hidden="true" />
+                </button>
+            }
+        </tumaet-ui-button-group>
+    </div>
+
+    <ng-template #targets>
+        <tumaet-ui-menu class="max-w-80" [attr.aria-label]="'global.search.irisHandoffChooseTarget' | artemisTranslate">
+            @for (course of options.courses; track course.courseId) {
+                <div role="group" [attr.aria-label]="course.courseName">
+                    <div class="truncate px-2 pt-2 pb-1 text-xs font-semibold text-muted-color" aria-hidden="true">{{ course.courseName }}</div>
+                    @for (place of course.places; track $index) {
+                        <button type="button" tumAetUiMenuItem (triggered)="continueIn(place)" data-testid="iris-handoff-target">
+                            <fa-icon [fixedWidth]="true" [icon]="iconFor(place)" aria-hidden="true" />
+                            <span class="min-w-0 grow whitespace-normal">{{ place.name }}</span>
+                            <span class="shrink-0 text-xs text-muted-color">{{ 'global.search.irisHandoffCitedCount' | artemisTranslate: { count: place.citationCount } }}</span>
+                        </button>
+                    }
+                    <button type="button" tumAetUiMenuItem (triggered)="continueIn(course.wholeCourse)" data-testid="iris-handoff-target">
+                        <fa-icon [fixedWidth]="true" [icon]="iconFor(course.wholeCourse)" aria-hidden="true" />
+                        <span>{{ 'global.search.irisHandoffWholeCourse' | artemisTranslate }}</span>
+                    </button>
+                </div>
+            }
+        </tumaet-ui-menu>
+    </ng-template>
+}

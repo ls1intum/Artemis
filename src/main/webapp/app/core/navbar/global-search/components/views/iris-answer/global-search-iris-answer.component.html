@@ -150,6 +150,10 @@
                                 }
                             </div>
                         }
+
+                        @if (canContinueInIris()) {
+                            <jhi-global-search-iris-handoff [question]="searchQuery()" [answer]="irisResult()?.answer ?? ''" [citedSources]="citedSources()" />
+                        }
                     }
                 }
             </div>
