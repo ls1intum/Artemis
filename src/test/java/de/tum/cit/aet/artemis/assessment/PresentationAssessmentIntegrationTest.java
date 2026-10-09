@@ -484,6 +484,35 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deletePresentationAssessment_withInstances_shouldDeleteOnlyItsOwnInstances() throws Exception {
+        PresentationAssessmentInstanceDTO first = createSearchInstance(presentationAssessment, "student1", 5.0);
+        PresentationAssessmentInstanceDTO second = createSearchInstance(presentationAssessment, "student2", null);
+        PresentationAssessment otherAssessment = createSearchAssessment("Other presentation", false);
+        PresentationAssessmentInstanceDTO otherInstance = createSearchInstance(otherAssessment, "student1", 7.0);
+
+        request.delete(getAssessmentUrl(course, presentationAssessment), HttpStatus.NO_CONTENT);
+
+        assertThat(presentationAssessmentRepository.findById(presentationAssessment.getId())).isEmpty();
+        assertThat(presentationAssessmentInstanceRepository.findById(first.id())).isEmpty();
+        assertThat(presentationAssessmentInstanceRepository.findById(second.id())).isEmpty();
+        assertThat(presentationAssessmentRepository.findById(otherAssessment.getId())).isPresent();
+        assertThat(presentationAssessmentInstanceRepository.findById(otherInstance.id())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteExercise_linkedToPresentationAssessment_shouldKeepThePresentationAsStandalone() throws Exception {
+        PresentationAssessment linkedAssessment = createSearchAssessment("Linked presentation", true);
+        long exerciseId = linkedAssessment.getExercise().getId();
+
+        request.delete("/api/text/text-exercises/" + exerciseId, HttpStatus.OK);
+
+        PresentationAssessment reloaded = presentationAssessmentRepository.findById(linkedAssessment.getId()).orElseThrow();
+        assertThat(reloaded.getExercise()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getPresentationAssessments_withFeatureDisabled_shouldReturnForbidden() throws Exception {
         featureToggleService.disableFeature(Feature.PresentationAssessments);
 
