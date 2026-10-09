@@ -52,6 +52,17 @@ class PyrisConnectorServiceCensusTest {
         return service;
     }
 
+    /** The base URL is encoded exactly once, so Pyris reads back the URL Artemis announces in its health check. */
+    @Test
+    void shouldEncodeTheBaseUrlExactlyOnce() {
+        server.expect(ExpectedCount.once(), requestTo(PYRIS_URL + "/api/v1/courses/7/ingestion-census?base_url=https%3A%2F%2Fartemis.test")).andRespond(withSuccess("""
+                {"courseId": 7, "currentPipelineVersion": 3, "truncated": false, "units": []}
+                """, MediaType.APPLICATION_JSON));
+
+        assertThat(connector.getIngestionCensus(7)).isNotNull();
+        server.verify();
+    }
+
     @Test
     void shouldParseTheCensusIncludingBothTruncationFlags() {
         server.expect(ExpectedCount.once(), requestTo(org.hamcrest.Matchers.startsWith(PYRIS_URL + "/api/v1/courses/7/ingestion-census?base_url="))).andRespond(withSuccess("""
