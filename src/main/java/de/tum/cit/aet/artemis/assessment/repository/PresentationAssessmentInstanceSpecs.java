@@ -77,7 +77,7 @@ public final class PresentationAssessmentInstanceSpecs {
     }
 
     /**
-     * Matches student login, full name, or presentation title against a prepared LIKE pattern.
+     * Matches student login, email, full name, or presentation title against a prepared LIKE pattern.
      *
      * @param searchPattern the lower-case LIKE pattern with escaped special characters and surrounding wildcards, or null for no filter
      * @return specification applying the search predicate
@@ -93,7 +93,8 @@ public final class PresentationAssessmentInstanceSpecs {
             Expression<String> fullName = builder
                     .trim(builder.concat(builder.concat(builder.coalesce(student.get(User_.FIRST_NAME), ""), " "), builder.coalesce(student.get(User_.LAST_NAME), "")));
 
-            return builder.or(builder.like(builder.lower(student.get(User_.LOGIN)), searchPattern, '\\'), builder.like(builder.lower(fullName), searchPattern, '\\'),
+            return builder.or(builder.like(builder.lower(student.get(User_.LOGIN)), searchPattern, '\\'),
+                    builder.like(builder.lower(student.get(User_.EMAIL)), searchPattern, '\\'), builder.like(builder.lower(fullName), searchPattern, '\\'),
                     builder.like(builder.lower(assessment.get(PresentationAssessment_.TITLE)), searchPattern, '\\'));
         };
     }

@@ -26,6 +26,9 @@ public class PresentationAssessment extends DomainObject {
 
     public static final String ENTITY_NAME = "presentationAssessment";
 
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Column(name = "title", nullable = false)
     private String title;
 
@@ -92,6 +95,10 @@ public class PresentationAssessment extends DomainObject {
 
     public void setInstances(Set<PresentationAssessmentInstance> instances) {
         this.instances = instances;
+    }
+
+    public long getVersion() {
+        return version;
     }
 
 }

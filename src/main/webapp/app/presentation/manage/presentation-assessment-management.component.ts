@@ -151,6 +151,8 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     protected readonly PresentationAssessmentMode = PresentationAssessmentMode;
     protected readonly ActionType = ActionType;
 
+    private courseContextGeneration = 0;
+
     readonly courseId = signal<number>(0);
     readonly course = signal<Course | undefined>(undefined);
     readonly presentationAssessments = signal<PresentationAssessment[]>([]);
@@ -300,6 +302,8 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             const assessmentsLoaded = this.presentationAssessmentsLoaded();
             untracked(() => {
                 if (courseId && courseId !== this.courseId()) {
+                    this.courseContextGeneration++;
+                    this.isSaving.set(false);
                     this.courseId.set(courseId);
                     this.presentationAssessmentsLoaded.set(false);
                     this.presentationLoadFailed.set(false);
@@ -544,33 +548,52 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     }
 
     handlePresentationDialogSave(result: PresentationAssessmentFormDialogResult): void {
+        const courseId = this.courseId();
+        const generation = this.courseContextGeneration;
+
         this.isSaving.set(true);
         const presentationAssessment = result.presentationAssessment;
         const isUpdate = Boolean(presentationAssessment.id);
         const request: Observable<HttpResponse<PresentationAssessment>> = isUpdate
-            ? this.presentationAssessmentService.update(this.courseId(), presentationAssessment)
-            : this.presentationAssessmentService.create(this.courseId(), presentationAssessment);
+            ? this.presentationAssessmentService.update(courseId, presentationAssessment)
+            : this.presentationAssessmentService.create(courseId, presentationAssessment);
 
-        request.pipe(finalize(() => this.isSaving.set(false))).subscribe({
-            next: (response) => {
-                this.presentationDialogVisible.set(false);
-                const savedAssessment = response.body;
-                if (savedAssessment) {
-                    this.presentationAssessments.update((assessments) => [...assessments.filter((assessment) => assessment.id !== savedAssessment.id), savedAssessment]);
-                    if (this.selectedPresentationId() === undefined) {
-                        this.selectedPresentationId.set(savedAssessment.id);
+        request
+            .pipe(
+                finalize(() => {
+                    if (generation === this.courseContextGeneration) {
+                        this.isSaving.set(false);
                     }
-                } else {
-                    // Saving succeeded, but the response body is missing. Reload the list to recover the saved state.
-                    this.loadAll();
-                }
-                if (isUpdate) {
-                    this.studentRowsResource.reload();
-                }
-                this.alertService.success(isUpdate ? 'artemisApp.presentationAssessment.updated' : 'artemisApp.presentationAssessment.created');
-            },
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
-        });
+                }),
+            )
+            .subscribe({
+                next: (response) => {
+                    if (generation !== this.courseContextGeneration) {
+                        return;
+                    }
+
+                    this.presentationDialogVisible.set(false);
+                    const savedAssessment = response.body;
+                    if (savedAssessment) {
+                        this.presentationAssessments.update((assessments) => [...assessments.filter((assessment) => assessment.id !== savedAssessment.id), savedAssessment]);
+                        if (this.selectedPresentationId() === undefined) {
+                            this.selectedPresentationId.set(savedAssessment.id);
+                        }
+                    } else {
+                        // Saving succeeded, but the response body is missing. Reload the list to recover the saved state.
+                        this.loadAll();
+                    }
+                    if (isUpdate) {
+                        this.studentRowsResource.reload();
+                    }
+                    this.alertService.success(isUpdate ? 'artemisApp.presentationAssessment.updated' : 'artemisApp.presentationAssessment.created');
+                },
+                error: (res: HttpErrorResponse) => {
+                    if (generation === this.courseContextGeneration) {
+                        onError(this.alertService, res);
+                    }
+                },
+            });
     }
 
     handlePresentationDialogCancel(): void {

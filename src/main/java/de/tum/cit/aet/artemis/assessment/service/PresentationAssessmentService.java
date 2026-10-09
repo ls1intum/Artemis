@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentReposi
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
@@ -108,7 +109,7 @@ public class PresentationAssessmentService {
      * @param assessmentId     the presentation assessment id, or null for no filter
      * @param assessed         whether result points are assigned, or null for no filter
      * @param linkedToExercise whether the presentation is linked to an exercise, or null for no filter
-     * @param searchTerm       text to search in student login, full name, or presentation title; null or blank disables searching
+     * @param searchTerm       text to search in student login, email, full name, or presentation title; null or blank disables searching
      * @param page             zero-based page index
      * @param size             page size between 1 and 100
      * @param sortField        studentLogin, presentationTitle, presentationDate, or resultPoints
@@ -186,15 +187,24 @@ public class PresentationAssessmentService {
             throw new BadRequestAlertException("The path id and body id must match", PresentationAssessment.ENTITY_NAME, "idMismatch");
         }
         PresentationAssessment presentationAssessment = findByIdAndCourseIdElseThrow(courseId, assessmentId);
+        long expectedVersion = presentationAssessment.getVersion();
+
         double highestResultPoints = presentationAssessmentInstanceRepository.findHighestResultPointsByPresentationAssessmentId(assessmentId).orElse(0.0);
         if (dto.maxPoints() < highestResultPoints) {
             throw new BadRequestAlertException("The maximum points cannot be lower than an existing result", PresentationAssessment.ENTITY_NAME, "maxPointsBelowExistingResult");
         }
         ExerciseIdAndTitleDTO exercise = applyDto(presentationAssessment, dto);
 
-        PresentationAssessment savedAssessment = presentationAssessmentRepository.save(presentationAssessment);
-        return new PresentationAssessmentDTO(savedAssessment.getId(), savedAssessment.getTitle(), savedAssessment.getDescription(), savedAssessment.getMaxPoints(), courseId,
-                exercise != null ? exercise.id() : null, exercise != null ? exercise.title() : null);
+        int updated = presentationAssessmentRepository.updateIfVersionMatches(assessmentId, courseId, expectedVersion, presentationAssessment.getTitle(),
+                presentationAssessment.getDescription(), presentationAssessment.getMaxPoints(), presentationAssessment.getExercise());
+
+        if (updated != 1) {
+            throw new ConflictException("The presentation assessment changed while the update was being validated. Please reload and try again.",
+                    PresentationAssessment.ENTITY_NAME, "concurrentModification");
+        }
+
+        return new PresentationAssessmentDTO(presentationAssessment.getId(), presentationAssessment.getTitle(), presentationAssessment.getDescription(),
+                presentationAssessment.getMaxPoints(), courseId, exercise != null ? exercise.id() : null, exercise != null ? exercise.title() : null);
     }
 
     /**
@@ -222,9 +232,13 @@ public class PresentationAssessmentService {
             throw new BadRequestAlertException("The path id and body id must match", PresentationAssessmentInstance.ENTITY_NAME, "idMismatch");
         }
         PresentationAssessment assessment = findByIdAndCourseIdElseThrow(courseId, assessmentId);
+        long expectedVersion = assessment.getVersion();
+
         PresentationAssessmentInstance instance = findInstanceElseThrow(courseId, assessmentId, instanceId);
         applyInstanceDto(courseId, assessment, instance, dto);
-        presentationAssessmentInstanceRepository.save(instance);
+
+        presentationAssessmentInstanceRepository.updateInstanceIfVersionMatches(courseId, assessmentId, expectedVersion, instance);
+
         return findInstanceElseThrow(courseId, assessmentId, instanceId);
     }
 
@@ -238,6 +252,8 @@ public class PresentationAssessmentService {
      */
     public List<PresentationAssessmentInstance> saveInstances(long courseId, long assessmentId, PresentationAssessmentInstancesBatchCreateDTO dto) {
         PresentationAssessment assessment = findByIdAndCourseIdElseThrow(courseId, assessmentId);
+        long expectedVersion = assessment.getVersion();
+
         Set<User> students = resolveAssignedCourseStudents(courseId, dto.studentLogins());
         if (students.isEmpty()) {
             throw new BadRequestAlertException("At least one student must be selected", PresentationAssessmentInstance.ENTITY_NAME, "individualInstanceHasInvalidStudentCount");
@@ -245,7 +261,7 @@ public class PresentationAssessmentService {
 
         List<PresentationAssessmentInstance> instances = students.stream().map(student -> createIndividualInstance(assessment, dto.forStudent(student.getLogin()), student))
                 .toList();
-        return presentationAssessmentInstanceRepository.saveAll(instances);
+        return presentationAssessmentInstanceRepository.createInstancesIfVersionMatches(courseId, assessmentId, expectedVersion, instances);
     }
 
     /**

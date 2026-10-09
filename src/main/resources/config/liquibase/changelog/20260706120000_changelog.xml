@@ -10,6 +10,7 @@
             <column name="title" type="varchar(255)"><constraints nullable="false"/></column>
             <column name="description" type="varchar(1000)"/>
             <column name="max_points" type="double"><constraints nullable="false"/></column>
+            <column name="version" type="bigint" defaultValueNumeric="0"><constraints nullable="false"/></column>
             <column name="course_id" type="bigint"><constraints nullable="false"/></column>
             <column name="exercise_id" type="bigint"/>
         </createTable>

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
@@ -17,6 +18,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -34,6 +36,7 @@ import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -269,6 +272,161 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
                 null);
 
         request.putWithResponseBody(getAssessmentUrl(course, presentationAssessment), dto, PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void updateInstance_afterConcurrentMaximumReduction_shouldRejectStaleWrite() {
+        PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
+        instance.setPresentationAssessment(presentationAssessment);
+        instance.setPresentationDate(FIXED_DATE);
+        instance.setResultPoints(5.0);
+        instance.setLanguage("en");
+        instance.setMode(PresentationAssessmentMode.IN_PERSON);
+        instance.setStudent(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        instance = presentationAssessmentInstanceRepository.save(instance);
+
+        long assessmentId = presentationAssessment.getId();
+        long courseId = course.getId();
+
+        // Both operations read and validate before either operation writes.
+        PresentationAssessment maximumUpdate = presentationAssessmentRepository.findByIdElseThrow(assessmentId);
+        PresentationAssessment instanceUpdate = presentationAssessmentRepository.findByIdElseThrow(assessmentId);
+
+        double highestResult = presentationAssessmentInstanceRepository.findHighestResultPointsByPresentationAssessmentId(assessmentId).orElse(0.0);
+
+        assertThat(highestResult).isLessThanOrEqualTo(10.0);
+        assertThat(instanceUpdate.getMaxPoints()).isGreaterThanOrEqualTo(18.0);
+        assertThat(instanceUpdate.getVersion()).isEqualTo(maximumUpdate.getVersion());
+
+        int updated = presentationAssessmentRepository.updateIfVersionMatches(assessmentId, courseId, maximumUpdate.getVersion(), maximumUpdate.getTitle(),
+                maximumUpdate.getDescription(), 10.0, null);
+
+        assertThat(updated).isEqualTo(1);
+
+        instance.setResultPoints(18.0);
+        PresentationAssessmentInstance staleInstance = instance;
+
+        assertThatThrownBy(() -> presentationAssessmentInstanceRepository.updateInstanceIfVersionMatches(courseId, assessmentId, instanceUpdate.getVersion(), staleInstance))
+                .isInstanceOf(ConflictException.class);
+
+        PresentationAssessment storedAssessment = presentationAssessmentRepository.findByIdElseThrow(assessmentId);
+
+        assertThat(storedAssessment.getMaxPoints()).isEqualTo(10.0);
+        assertThat(storedAssessment.getVersion()).isEqualTo(maximumUpdate.getVersion() + 1);
+        assertThat(presentationAssessmentInstanceRepository.findByIdElseThrow(instance.getId()).getResultPoints()).isEqualTo(5.0);
+    }
+
+    @Test
+    void updateMaximum_afterConcurrentInstanceUpdate_shouldRejectStaleWrite() {
+        PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
+        instance.setPresentationAssessment(presentationAssessment);
+        instance.setPresentationDate(FIXED_DATE);
+        instance.setResultPoints(5.0);
+        instance.setLanguage("en");
+        instance.setMode(PresentationAssessmentMode.IN_PERSON);
+        instance.setStudent(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        instance = presentationAssessmentInstanceRepository.save(instance);
+
+        long assessmentId = presentationAssessment.getId();
+        long courseId = course.getId();
+
+        // Both operations read and validate before either operation writes.
+        PresentationAssessment maximumUpdate = presentationAssessmentRepository.findByIdElseThrow(assessmentId);
+        PresentationAssessment instanceUpdate = presentationAssessmentRepository.findByIdElseThrow(assessmentId);
+
+        double highestResult = presentationAssessmentInstanceRepository.findHighestResultPointsByPresentationAssessmentId(assessmentId).orElse(0.0);
+
+        assertThat(highestResult).isLessThanOrEqualTo(10.0);
+        assertThat(instanceUpdate.getMaxPoints()).isGreaterThanOrEqualTo(18.0);
+        assertThat(instanceUpdate.getVersion()).isEqualTo(maximumUpdate.getVersion());
+
+        instance.setResultPoints(18.0);
+        presentationAssessmentInstanceRepository.updateInstanceIfVersionMatches(courseId, assessmentId, instanceUpdate.getVersion(), instance);
+
+        int updated = presentationAssessmentRepository.updateIfVersionMatches(assessmentId, courseId, maximumUpdate.getVersion(), maximumUpdate.getTitle(),
+                maximumUpdate.getDescription(), 10.0, null);
+
+        assertThat(updated).isZero();
+
+        PresentationAssessment storedAssessment = presentationAssessmentRepository.findByIdElseThrow(assessmentId);
+
+        assertThat(storedAssessment.getMaxPoints()).isEqualTo(20.0);
+        assertThat(storedAssessment.getVersion()).isEqualTo(maximumUpdate.getVersion() + 1);
+        assertThat(presentationAssessmentInstanceRepository.findByIdElseThrow(instance.getId()).getResultPoints()).isEqualTo(18.0);
+    }
+
+    @Test
+    void createInstances_afterConcurrentMaximumReduction_shouldRejectStaleWrite() {
+        long assessmentId = presentationAssessment.getId();
+        long courseId = course.getId();
+
+        PresentationAssessment batchAssessment = presentationAssessmentRepository.findByIdElseThrow(assessmentId);
+        long expectedVersion = batchAssessment.getVersion();
+
+        assertThat(batchAssessment.getMaxPoints()).isGreaterThanOrEqualTo(18.0);
+
+        List<PresentationAssessmentInstance> instances = List.of("student1", "student2").stream().map(studentSuffix -> {
+            PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
+            instance.setPresentationAssessment(batchAssessment);
+            instance.setPresentationDate(FIXED_DATE);
+            instance.setResultPoints(18.0);
+            instance.setLanguage("en");
+            instance.setMode(PresentationAssessmentMode.IN_PERSON);
+            instance.setStudent(userUtilService.getUserByLogin(TEST_PREFIX + studentSuffix));
+            return instance;
+        }).toList();
+
+        long instancesBeforeWrite = presentationAssessmentInstanceRepository.count();
+
+        int updated = presentationAssessmentRepository.updateIfVersionMatches(assessmentId, courseId, expectedVersion, batchAssessment.getTitle(), batchAssessment.getDescription(),
+                10.0, null);
+
+        assertThat(updated).isEqualTo(1);
+
+        assertThatThrownBy(() -> presentationAssessmentInstanceRepository.createInstancesIfVersionMatches(courseId, assessmentId, expectedVersion, instances))
+                .isInstanceOf(ConflictException.class);
+
+        assertThat(presentationAssessmentInstanceRepository.count()).isEqualTo(instancesBeforeWrite);
+
+        PresentationAssessment storedAssessment = presentationAssessmentRepository.findByIdElseThrow(assessmentId);
+
+        assertThat(storedAssessment.getMaxPoints()).isEqualTo(10.0);
+        assertThat(storedAssessment.getVersion()).isEqualTo(expectedVersion + 1);
+    }
+
+    @Test
+    void createInstances_whenPersistenceFails_shouldRollBackVersionAndInstances() {
+        long assessmentId = presentationAssessment.getId();
+        long courseId = course.getId();
+
+        PresentationAssessment assessment = presentationAssessmentRepository.findByIdElseThrow(assessmentId);
+        long originalVersion = assessment.getVersion();
+        long originalInstanceCount = presentationAssessmentInstanceRepository.count();
+
+        PresentationAssessmentInstance validInstance = new PresentationAssessmentInstance();
+        validInstance.setPresentationAssessment(assessment);
+        validInstance.setPresentationDate(FIXED_DATE);
+        validInstance.setResultPoints(5.0);
+        validInstance.setLanguage("en");
+        validInstance.setMode(PresentationAssessmentMode.IN_PERSON);
+        validInstance.setStudent(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        PresentationAssessmentInstance invalidInstance = new PresentationAssessmentInstance();
+        invalidInstance.setPresentationAssessment(assessment);
+        invalidInstance.setPresentationDate(FIXED_DATE);
+        invalidInstance.setResultPoints(5.0);
+        invalidInstance.setLanguage("en");
+        invalidInstance.setMode(PresentationAssessmentMode.IN_PERSON);
+        // Deliberately missing the required student to trigger a persistence failure.
+
+        assertThatThrownBy(
+                () -> presentationAssessmentInstanceRepository.createInstancesIfVersionMatches(courseId, assessmentId, originalVersion, List.of(validInstance, invalidInstance)))
+                .isInstanceOf(DataIntegrityViolationException.class);
+
+        PresentationAssessment storedAssessment = presentationAssessmentRepository.findByIdElseThrow(assessmentId);
+
+        assertThat(storedAssessment.getVersion()).isEqualTo(originalVersion);
+        assertThat(presentationAssessmentInstanceRepository.count()).isEqualTo(originalInstanceCount);
     }
 
     @Test
@@ -542,6 +700,19 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         createSearchInstance(otherAssessment, "student2", null);
 
         assertStudentRowSearch(Map.of("searchTerm", "  " + searchTerm + "  "), List.of(matchingInstance.id()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPresentationAssessmentStudentRows_shouldSearchEmailCaseInsensitively() throws Exception {
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        student.setEmail("unique.presentation.mail@example.org");
+        searchUserRepository.save(student);
+
+        var matchingInstance = createSearchInstance(presentationAssessment, "student1", null);
+        createSearchInstance(presentationAssessment, "student2", null);
+
+        assertStudentRowSearch(Map.of("searchTerm", "UNIQUE.PRESENTATION.MAIL@EXAMPLE.ORG"), List.of(matchingInstance.id()));
     }
 
     @ParameterizedTest

@@ -671,6 +671,87 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(presentationAssessmentService.findStudentRows).toHaveBeenCalledOnce();
     });
 
+    it.each(['success', 'error'])('should ignore a stale save %s after switching courses', (outcome) => {
+        const oldResponse = new Subject<HttpResponse<PresentationAssessment>>();
+        const currentResponse = new Subject<HttpResponse<PresentationAssessment>>();
+        presentationAssessmentService.create.mockReturnValueOnce(oldResponse).mockReturnValueOnce(currentResponse);
+
+        component.startCreate();
+        component.handlePresentationDialogSave({
+            presentationAssessment: { title: 'Course A presentation', maxPoints: 20, courseId },
+        });
+
+        expect(component.isSaving()).toBe(true);
+
+        const currentAssessment: PresentationAssessment = {
+            id: 99,
+            title: 'Course B presentation',
+            maxPoints: 20,
+            courseId: 2,
+        };
+        presentationAssessmentService.findAllByCourseId.mockReturnValue(of(new HttpResponse({ body: [currentAssessment] })));
+
+        routeParamMap.next(convertToParamMap({ courseId: 2 }));
+        fixture.detectChanges();
+
+        expect(component.isSaving()).toBe(false);
+
+        expect(component.selectedPresentationId()).toBe(currentAssessment.id);
+
+        component.startCreate();
+        component.handlePresentationDialogSave({
+            presentationAssessment: { title: 'Another course B presentation', maxPoints: 20, courseId: 2 },
+        });
+
+        alertService.success.mockClear();
+        alertService.addAlert.mockClear();
+
+        if (outcome === 'success') {
+            oldResponse.next(new HttpResponse({ body: { id: 123, title: 'Course A presentation', maxPoints: 20, courseId } }));
+            oldResponse.complete();
+        } else {
+            oldResponse.error(new HttpErrorResponse({ status: 500 }));
+        }
+
+        expect(component.presentationAssessments()).toEqual([currentAssessment]);
+        expect(component.selectedPresentationId()).toBe(currentAssessment.id);
+        expect(component.presentationDialogVisible()).toBe(true);
+        expect(component.isSaving()).toBe(true);
+        expect(alertService.success).not.toHaveBeenCalled();
+        expect(alertService.addAlert).not.toHaveBeenCalled();
+
+        currentResponse.complete();
+        expect(component.isSaving()).toBe(false);
+    });
+
+    it('should ignore a stale save after switching away and back to the same course', () => {
+        const oldResponse = new Subject<HttpResponse<PresentationAssessment>>();
+        presentationAssessmentService.create.mockReturnValue(oldResponse);
+
+        component.startCreate();
+        component.handlePresentationDialogSave({
+            presentationAssessment: { title: 'Old presentation', maxPoints: 20, courseId },
+        });
+
+        routeParamMap.next(convertToParamMap({ courseId: 2 }));
+        fixture.detectChanges();
+
+        routeParamMap.next(convertToParamMap({ courseId }));
+        fixture.detectChanges();
+
+        component.startCreate();
+        alertService.success.mockClear();
+
+        oldResponse.next(new HttpResponse({ body: { id: 123, title: 'Old presentation', maxPoints: 20, courseId } }));
+        oldResponse.complete();
+
+        expect(component.presentationAssessments()).toEqual([presentationAssessment]);
+        expect(component.selectedPresentationId()).toBe(presentationAssessment.id);
+        expect(component.presentationDialogVisible()).toBe(true);
+        expect(component.isSaving()).toBe(false);
+        expect(alertService.success).not.toHaveBeenCalled();
+    });
+
     it('should reload the presentation list when the save response has no body', () => {
         presentationAssessmentService.create.mockReturnValue(of(new HttpResponse()));
         component.startCreate();
