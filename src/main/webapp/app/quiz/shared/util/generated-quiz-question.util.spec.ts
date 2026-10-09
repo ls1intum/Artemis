@@ -110,6 +110,33 @@ describe('toQuizQuestion', () => {
         expect(converted.singleChoice).toBe(true);
         expect(converted.answerOptions).toBeUndefined();
     });
+
+    it('should convert a stored question to the same mappings on every load', () => {
+        const dragAndDrop: DragAndDropQuizQuestionWithSolution = {
+            type: 'drag-and-drop',
+            id: 1,
+            dragItems: [{ id: 11 }],
+            dropLocations: [{ id: 21 }],
+            correctMappings: [{ id: 31, dragItem: { id: 11 }, dropLocation: { id: 21 } }],
+        };
+        const shortAnswer: ShortAnswerQuizQuestionWithSolution = {
+            type: 'short-answer',
+            id: 2,
+            spots: [{ id: 41 }],
+            solutions: [{ id: 51, text: 'answer' }],
+            correctMappings: [{ id: 61, spot: { id: 41 }, solution: { id: 51, text: 'answer' } }],
+        };
+
+        // The re-evaluation warning loads the quiz a second time and compares the serialized mappings of both loads.
+        for (const question of [dragAndDrop, shortAnswer]) {
+            const first = toQuizQuestion(question) as DragAndDropQuestion | ShortAnswerQuestion;
+            const second = toQuizQuestion(question) as DragAndDropQuestion | ShortAnswerQuestion;
+            expect(JSON.stringify(first.correctMappings)).toBe(JSON.stringify(second.correctMappings));
+        }
+        const dragAndDropQuestion = toQuizQuestion(dragAndDrop) as DragAndDropQuestion;
+        expect(dragAndDropQuestion.dragItems![0].tempID).toBeUndefined();
+        expect(dragAndDropQuestion.dropLocations![0].tempID).toBeUndefined();
+    });
 });
 
 describe('toSubmittedAnswerFromLiveClient', () => {
