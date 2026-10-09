@@ -6,6 +6,7 @@ api/hyperion-exercise-variant-api.ts
 api/hyperion-faq-api.ts
 api/hyperion-problem-statement-api.ts
 api/hyperion-quiz-question-generation-api.ts
+api/ingestion-browser-api.ts
 api/quiz-exercise-api.ts
 api/quiz-exercise-batch-api.ts
 api/quiz-exercise-creation-update-api.ts
@@ -46,6 +47,7 @@ model/consistency-check-response.ts
 model/consistency-issue.ts
 model/conversation-user.ts
 model/costs.ts
+model/course-browser-data.ts
 model/course-competency.ts
 model/course-for-quiz-exercise.ts
 model/create-exercise-variant-group.ts
@@ -85,10 +87,17 @@ model/generated-assessment-instruction.ts
 model/global-search-result.ts
 model/grading-criterion.ts
 model/grading-instruction.ts
+model/indexed-content-object.ts
+model/indexed-content-presence.ts
+model/indexed-entity-record.ts
+model/indexed-entity.ts
 model/inferred-competency.ts
+model/ingestion-type-count.ts
 model/leaderboard-entry.ts
 model/leaderboard-setting.ts
 model/leaderboard-with-current-user-entry.ts
+model/missing-content.ts
+model/missing-entity.ts
 model/multiple-choice-question-create.ts
 model/multiple-choice-question-from-editor.ts
 model/multiple-choice-question-re-evaluate.ts

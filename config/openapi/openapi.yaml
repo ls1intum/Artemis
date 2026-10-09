@@ -1870,6 +1870,67 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/CodeGenerationJobStart'}
+  /api/global-search/admin/courses/{courseId}/units/{unitId}/content:
+    get:
+      tags: [ingestion-browser]
+      operationId: getUnitContent
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: unitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: key
+        in: query
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/IndexedContentObject'}
+  /api/global-search/admin/courses/{courseId}/entities:
+    get:
+      tags: [ingestion-browser]
+      operationId: getIndexedEntityRecords
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: type
+        in: query
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/IndexedEntityRecord'}
+  /api/global-search/admin/courses/{courseId}/browser:
+    get:
+      tags: [ingestion-browser]
+      operationId: getCourseBrowserData
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseBrowserData'}
   /api/calendar/subscription-token:
     get:
       tags: [calendar]
@@ -1983,6 +2044,7 @@ components:
         softDueDate: {type: string, format: date-time}
         masteryThreshold: {type: integer, format: int32}
         optional: {type: boolean}
+        generatedByAi: {type: boolean}
         type: {type: string}
     VariantJob:
       type: object
@@ -2168,6 +2230,14 @@ components:
             level (0.0–1.0)}
         CREATE: {type: number, format: double, description: Proportion of CREATE level
             (0.0–1.0)}
+    IngestionTypeCount:
+      type: object
+      properties:
+        type: {type: string}
+        expected: {type: integer, format: int64}
+        indexed: {type: integer, format: int64}
+        missing: {type: integer, format: int64}
+        orphaned: {type: integer, format: int64}
     MultipleChoiceQuestionFromEditor:
       required: [answerOptions, points, scoringType, singleChoice, title, type]
       type: object
@@ -2597,6 +2667,24 @@ components:
         points: {type: number, format: double}
         invalid: {type: boolean}
         quizQuestionStatistic: {$ref: '#/components/schemas/QuizQuestionStatistic'}
+    CourseBrowserData:
+      type: object
+      properties:
+        entities:
+          type: array
+          items: {$ref: '#/components/schemas/IndexedEntity'}
+        contentPresence:
+          type: array
+          items: {$ref: '#/components/schemas/IndexedContentPresence'}
+        missingEntities:
+          type: array
+          items: {$ref: '#/components/schemas/MissingEntity'}
+        contentGaps:
+          type: array
+          items: {$ref: '#/components/schemas/MissingContent'}
+        typeCounts:
+          type: array
+          items: {$ref: '#/components/schemas/IngestionTypeCount'}
     QuizQuestionBulkRefinementRequest:
       type: object
       description: Request to refine multiple quiz questions at once using a single
@@ -2628,6 +2716,12 @@ components:
         id: {type: integer, format: int64}
         startTime: {type: string, format: date-time}
         password: {type: string}
+    MissingContent:
+      type: object
+      properties:
+        lectureUnitId: {type: integer, format: int64}
+        title: {type: string}
+        kind: {type: string}
     QuizQuestionGenerationResponse:
       type: object
       description: Response containing generated quiz questions
@@ -2746,6 +2840,13 @@ components:
         id: {type: integer, format: int64}
         solutionTempId: {type: integer, format: int64}
         spotTempId: {type: integer, format: int64}
+    IndexedContentObject:
+      type: object
+      properties:
+        ingestedAt: {type: string, format: date-time}
+        properties:
+          type: object
+          additionalProperties: {}
     TutorialGroupSessionCount:
       type: object
       properties:
@@ -2892,6 +2993,7 @@ components:
       properties:
         competency: {$ref: '#/components/schemas/Competency'}
         weight: {type: number, format: double}
+        generatedByAi: {type: boolean, readOnly: true}
     ProblemStatementRewriteRequest:
       type: object
       description: Request to rewrite a problem statement
@@ -3033,6 +3135,13 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    MissingEntity:
+      type: object
+      properties:
+        type: {type: string}
+        entityId: {type: integer, format: int64}
+        title: {type: string}
+        lectureId: {type: integer, format: int64}
     CreateExerciseVariantGroup:
       type: object
       properties:
@@ -3280,6 +3389,7 @@ components:
         channelName: {type: string}
         testRunParticipationsExist: {type: boolean}
         isEditable: {type: boolean}
+        canBeEvaluated: {type: boolean}
     TutorialGroupSummary:
       type: object
       properties:
@@ -3535,6 +3645,18 @@ components:
           description: Related locations across artifacts
           items: {$ref: '#/components/schemas/ArtifactLocation'}
       required: [category, description, relatedLocations, severity, suggestedFix]
+    IndexedContentPresence:
+      type: object
+      properties:
+        key: {type: string}
+        unitIds:
+          type: array
+          items: {type: integer, format: int64}
+          uniqueItems: true
+        orphanedUnitIds:
+          type: array
+          items: {type: integer, format: int64}
+          uniqueItems: true
     DragAndDropQuizQuestionWithSolution:
       required: [type]
       type: object
@@ -3737,10 +3859,21 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    IndexedEntityRecord:
+      type: object
+      properties:
+        type: {type: string}
+        entityId: {type: integer, format: int64}
+        title: {type: string}
+        ingestedAt: {type: string, format: date-time}
+        properties:
+          type: object
+          additionalProperties: {}
     CompetencyExerciseLink:
       type: object
       properties:
         weight: {type: number, format: double}
+        generatedByAi: {type: boolean}
         competency: {$ref: '#/components/schemas/CourseCompetency'}
     DifficultyAssessment:
       type: object
@@ -4469,6 +4602,15 @@ components:
           type: string
           default: multiple-choice
           enum: [multiple-choice]
+    IndexedEntity:
+      type: object
+      properties:
+        type: {type: string}
+        entityId: {type: integer, format: int64}
+        title: {type: string}
+        lectureId: {type: integer, format: int64}
+        ingestedAt: {type: string, format: date-time}
+        expected: {type: boolean}
     ShortAnswerSubmittedText:
       type: object
       properties:

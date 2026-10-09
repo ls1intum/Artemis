@@ -36,6 +36,7 @@ api/quiz-participation-resources.ts
 api/hyperion-assessment-criteria-generation-resources.ts
 api/hyperion-quiz-question-generation-resources.ts
 api/quiz-submission-resources.ts
+api/ingestion-browser-resources.ts
 api/tutorial-group-session-resources.ts
 api/tutorial-groups-configuration-resources.ts
 api/quiz-exercise-evaluation-resources.ts

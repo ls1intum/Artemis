@@ -8,10 +8,9 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
-import type { Competency } from './competency';
 
-export interface CompetencyLink {
-    competency?: Competency;
-    weight?: number;
-    generatedByAi?: boolean;
+export interface MissingContent {
+    lectureUnitId?: number;
+    title?: string;
+    kind?: string;
 }
