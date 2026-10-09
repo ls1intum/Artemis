@@ -168,6 +168,11 @@
             "irisAnswerRetry": "Try again",
             "irisCollapseSources": "Show fewer sources",
             "irisAiBadge": "AI",
+            "irisHandoffContinue": "Continue in Iris",
+            "irisHandoffContinueIn": "Continue in Iris: {{name}}",
+            "irisHandoffChooseTarget": "Choose where to continue in Iris",
+            "irisHandoffWholeCourse": "Whole course",
+            "irisHandoffCitedCount": "{{count}} cited",
             "entityType": {
                 "exercise": "Exercise",
                 "lecture": "Lecture",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseCitationNumbers, renderCitationMarkers } from './iris-citation-markers.util';
+import { convertCitationMarkers, parseCitationNumbers, renderCitationMarkers } from './iris-citation-markers.util';
 
 describe('renderCitationMarkers', () => {
     it('converts a single marker into a citation chip element', () => {
@@ -333,5 +333,25 @@ describe('parseCitationNumbers', () => {
 
     it('returns empty for a missing attribute', () => {
         expect(parseCitationNumbers(undefined)).toEqual([]);
+    });
+});
+
+describe('convertCitationMarkers', () => {
+    const asChat = (n: number) => `{${n}}`;
+
+    it('rewrites every marker of a run, once per distinct source', () => {
+        expect(convertCitationMarkers('Claim.[1][3][1] Next.[2]', 3, asChat)).toBe('Claim.{1}{3} Next.{2}');
+    });
+
+    it('drops markers outside the source range like the answer card does', () => {
+        expect(convertCitationMarkers('Wrong.[9] Right.[2]', 3, asChat)).toBe('Wrong. Right.{2}');
+    });
+
+    it('leaves markers inside code and math untouched', () => {
+        expect(convertCitationMarkers('Use `list[1]` and $a[2]$ here.[1]', 2, asChat)).toBe('Use `list[1]` and $a[2]$ here.{1}');
+    });
+
+    it('returns the answer unchanged when there is no source', () => {
+        expect(convertCitationMarkers('Claim.[1]', 0, asChat)).toBe('Claim.[1]');
     });
 });

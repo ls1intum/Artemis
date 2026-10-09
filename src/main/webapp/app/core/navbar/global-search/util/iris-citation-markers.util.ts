@@ -148,6 +148,34 @@ export function renderCitationMarkers(answer: string | undefined, sourceCount: n
         return { html: answer, citedNumbers: new Set() };
     }
     const cited = new Set<number>();
+    const html = replaceMarkerRuns(answer, sourceCount, (numbers) => {
+        numbers.forEach((n) => cited.add(n));
+        return numbers.map((n) => `<sup class="iris-cite" data-n="${n}" role="link" tabindex="0">${n}</sup>`).join('');
+    });
+    return { html, citedNumbers: cited };
+}
+
+/**
+ * Rewrites the answer's citation markers into another citation format, such as the Iris chat's own, so the answer reads the
+ * same wherever it is carried. Exactly the markers the answer card turns into chips are rewritten: markers inside code and
+ * math stay as they are, markers outside `1..sourceCount` are dropped, and repeats inside one run collapse.
+ *
+ * @param answer the answer markdown as received from the server
+ * @param sourceCount the number of sources the markers may index into
+ * @param citationFor the text that replaces the marker of one source number
+ */
+export function convertCitationMarkers(answer: string, sourceCount: number, citationFor: (sourceNumber: number) => string): string {
+    if (sourceCount <= 0) {
+        return answer;
+    }
+    return replaceMarkerRuns(answer, sourceCount, (numbers) => numbers.map(citationFor).join(''));
+}
+
+/**
+ * Replaces every run of citation markers outside protected (code and math) segments with what `renderRun` makes of the
+ * run's valid, distinct source numbers; a run with none left disappears entirely.
+ */
+function replaceMarkerRuns(answer: string, sourceCount: number, renderRun: (numbers: number[]) => string): string {
     const replaceMarkers = (prose: string): string =>
         prose.replace(MARKER_RUN_REGEX, (run) => {
             const numbers: number[] = [];
@@ -157,25 +185,20 @@ export function renderCitationMarkers(answer: string | undefined, sourceCount: n
                     numbers.push(value);
                 }
             }
-            if (numbers.length === 0) {
-                return '';
-            }
-            numbers.forEach((n) => cited.add(n));
-            return numbers.map((n) => `<sup class="iris-cite" data-n="${n}" role="link" tabindex="0">${n}</sup>`).join('');
+            return numbers.length === 0 ? '' : renderRun(numbers);
         });
 
     // Walk the protected (code and math) segments in order, replacing markers only in the prose
     // between them; those segments themselves (and any bracketed text inside them) pass through unchanged.
-    let html = '';
+    let result = '';
     let cursor = 0;
     for (const match of answer.matchAll(PROTECTED_SEGMENT_REGEX)) {
         const index = match.index ?? 0;
-        html += replaceMarkers(answer.slice(cursor, index));
-        html += match[0];
+        result += replaceMarkers(answer.slice(cursor, index));
+        result += match[0];
         cursor = index + match[0].length;
     }
-    html += replaceMarkers(answer.slice(cursor));
-    return { html, citedNumbers: cited };
+    return result + replaceMarkers(answer.slice(cursor));
 }
 
 /**
