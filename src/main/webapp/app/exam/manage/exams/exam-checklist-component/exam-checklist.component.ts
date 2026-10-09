@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, effect, inject, input, signal } from '@an
 import { TumAetUiButtonDirective, TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
-import { faChartBar, faEye, faListAlt, faSpinner, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faEye, faHeartBroken, faListAlt, faSpinner, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -24,8 +24,9 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -44,6 +45,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
         HelpIconComponent,
         TumAetUiButtonDirective,
         TumAetUiTableDirective,
+        FeatureOverlayComponent,
     ],
 })
 export class ExamChecklistComponent implements OnInit, OnDestroy {
@@ -85,9 +87,11 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
     readonly numberOfStarted = signal(0);
 
     readonly disabledExercises = signal<Exercise[]>([]);
+    readonly plagiarismEnabled = signal(false);
 
     // Icons
     faEye = faEye;
+    faHeartBroken = faHeartBroken;
     faWrench = faWrench;
     faUser = faUser;
     faListAlt = faListAlt;
@@ -112,6 +116,7 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
                 this.calculateIsExamOver();
             });
         }
+        this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
         const profileInfo = this.profileService.getProfileInfo();
         this.disabledExercises.set(
             this.exam()
