@@ -314,6 +314,58 @@ describe('FeedbackComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="feedback-chart"]')).not.toBeNull();
     });
 
+    describe.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])('%s AI score display', (type) => {
+        it.each([0, 60, 100])('shows the stored score of %s even without visible feedback', (score) => {
+            fixture.componentRef.setInput('exercise', { ...exercise, type });
+            fixture.componentRef.setInput('result', { id: 89, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, score });
+            fixture.componentRef.setInput('showScoreChart', true);
+
+            fixture.detectChanges();
+
+            const bar = fixture.nativeElement.querySelector('[data-testid="ai-feedback-score-bar"]');
+            expect(bar?.getAttribute('aria-valuenow')).toBe(String(score));
+            expect(fixture.nativeElement.querySelector('h4 [jhiTranslate="artemisApp.result.scoreWithPoints"]')).not.toBeNull();
+            expect(fixture.nativeElement.textContent).toContain('artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip');
+        });
+    });
+
+    it.each([
+        { successful: undefined, score: 60 },
+        { successful: false, score: 60 },
+        { successful: true, score: undefined },
+        { successful: true, score: NaN },
+    ])('hides the AI score bar for unavailable scores: %j', ({ successful, score }) => {
+        fixture.componentRef.setInput('result', {
+            id: 89,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful,
+            score,
+            feedbacks: generateFeedbacksAndExpectedItems().feedbacks,
+        });
+        fixture.componentRef.setInput('showScoreChart', true);
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="ai-feedback-score-bar"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('h4 [jhiTranslate="artemisApp.result.scoreWithPoints"]')).toBeNull();
+    });
+
+    it('uses the stored AI score rather than credits on visible severity cards', () => {
+        fixture.componentRef.setInput('result', {
+            id: 89,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: true,
+            score: 60,
+            feedbacks: [makeFeedback({ detailText: 'Visible hint', credits: 3, severity: 'high' })],
+        });
+        fixture.componentRef.setInput('showScoreChart', true);
+
+        fixture.detectChanges();
+
+        expect(comp.feedbackItemNodes()?.[0].credits).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('[data-testid="ai-feedback-score-bar"]')?.getAttribute('aria-valuenow')).toBe('60');
+    });
+
     it('marks a preliminary result as preliminary when the participation carries no exercise', () => {
         // the list endpoints do not ship `participation.exercise`, so the tag has to read the exercise the popup resolved
         exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;

@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.PROGRAMMIN
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -35,7 +36,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -311,12 +311,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
         double successThreshold = 100.0; // TODO: Retrieve configuration from Iris settings
 
-        // Check if the user has already successfully submitted before
-        var successfulSubmission = recentSubmissions.stream()
-                .anyMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() == successThreshold);
-        if (!successfulSubmission && recentSubmissions.size() >= 3) {
-            var listOfScores = recentSubmissions.stream().map(Submission::getLatestResult).filter(Objects::nonNull).map(Result::getScore).toList();
-
+        // Preliminary AI feedback must not replace build scores in the student's progress history.
+        var listOfScores = recentSubmissions.stream().flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull)
+                .filter(result -> !result.isAthenaBased() && result.getScore() != null).max(Comparator.comparing(Result::getId)).stream()).map(Result::getScore).toList();
+        var successfulSubmission = listOfScores.stream().anyMatch(score -> score == successThreshold);
+        if (!successfulSubmission && listOfScores.size() >= 3) {
             // Check if the student needs intervention based on their recent score trajectory
             var needsIntervention = needsIntervention(listOfScores);
             if (needsIntervention) {

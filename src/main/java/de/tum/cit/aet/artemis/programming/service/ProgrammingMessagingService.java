@@ -87,7 +87,7 @@ public class ProgrammingMessagingService {
         // notify user via websocket
         resultWebsocketService.broadcastNewResult((Participation) participation, result);
 
-        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && !result.isAthenaBased()) {
             // do not try to report results for template or solution participations
             ltiApi.ifPresent(api -> api.onNewResult(studentParticipation));
             // Inform Iris about the submission status (when certain conditions are met)

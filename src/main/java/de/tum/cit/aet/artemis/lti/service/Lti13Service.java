@@ -257,7 +257,7 @@ public class Lti13Service {
         }
 
         // the result (and its synthesized feedback) is identical for all launches - load and synthesize it once
-        Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        Optional<Result> result = resultRepository.findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId());
 
         if (result.isEmpty()) {
             log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
