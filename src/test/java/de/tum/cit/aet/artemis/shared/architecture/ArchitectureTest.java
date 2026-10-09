@@ -488,15 +488,14 @@ class ArchitectureTest extends AbstractArchitectureTest {
             "de.tum.cit.aet.artemis.communication.domain.conversation.Channel.lecture", "de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore.user",
             "de.tum.cit.aet.artemis.iris.domain.message.IrisMessage.content", "de.tum.cit.aet.artemis.lecture.domain.Attachment.attachmentVideoUnit",
             "de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit.attachment", "de.tum.cit.aet.artemis.lecture.domain.LectureTranscription.lectureUnit",
-            "de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState.lectureUnit", "de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration.course",
-            "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase.post", "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission.plagiarismComparison",
+            "de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState.lectureUnit", "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase.post",
+            "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission.plagiarismComparison",
             "de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation.programmingExercise",
             "de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation.programmingExercise",
             "de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy.programmingExercise",
             "de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic.pointCounters", "de.tum.cit.aet.artemis.quiz.domain.QuizQuestionStatistic.quizQuestion",
             "de.tum.cit.aet.artemis.text.domain.TextBlock.feedback", "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup.tutorialGroupChannel",
-            "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup.tutorialGroupSchedule", "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule.tutorialGroup",
-            "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration.course");
+            "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup.tutorialGroupSchedule", "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule.tutorialGroup");
 
     /**
      * No new {@code @OneToOne}, {@code @OneToMany} or {@code @ManyToMany} may be fetched eagerly.

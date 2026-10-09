@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -66,6 +67,8 @@ public class ProgrammingExercisePartialUpdateResource {
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
     private final UserRepository userRepository;
 
     private final ExerciseVersionService exerciseVersionService;
@@ -75,7 +78,8 @@ public class ProgrammingExercisePartialUpdateResource {
     public ProgrammingExercisePartialUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, ExerciseService exerciseService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ExerciseVersionService exerciseVersionService, ExerciseVariantGroupService exerciseVariantGroupService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -115,6 +119,7 @@ public class ProgrammingExercisePartialUpdateResource {
         var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateTimeline(timelineUpdateDTO, notificationText);
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
+        teamAssignmentConfigRepository.attachTo(updatedProgrammingExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
                 .body(ProgrammingExerciseResponseDTO.of(updatedProgrammingExercise,
                         programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(updatedProgrammingExercise.getId())));
@@ -134,7 +139,7 @@ public class ProgrammingExercisePartialUpdateResource {
     public ResponseEntity<ProgrammingExerciseResponseDTO> updateProblemStatement(@PathVariable long exerciseId, @RequestBody String updatedProblemStatement,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise with new problem statement: {}", updatedProblemStatement);
-        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId)
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
         var user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
@@ -143,6 +148,7 @@ public class ProgrammingExercisePartialUpdateResource {
         exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
         // we saved a problem statement with test ids instead of test names. For easier editing we send a problem statement with test names to the client:
         programmingExerciseTaskService.replaceTestIdsWithNames(updatedProgrammingExercise);
+        teamAssignmentConfigRepository.attachTo(updatedProgrammingExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle())).body(
                 ProgrammingExerciseResponseDTO.of(updatedProgrammingExercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId)));
     }

@@ -135,13 +135,12 @@
                                     let last = $last
                                 ) {
                                     <div [class]="{ 'mb-2': !last }">
-                                        <div
-                                            jhiSidebarCard
+                                        <jhi-sidebar-card
                                             [size]="sidebarItem.size"
                                             [itemSelected]="itemSelected()"
                                             [sidebarType]="sidebarDataInternal().sidebarType"
                                             [sidebarItem]="sidebarItem"
-                                        ></div>
+                                        />
                                     </div>
                                 }
                             }

@@ -1,8 +1,8 @@
-<div
-    class="mb-[18px] box-border w-full min-w-0 rounded-md border border-(--course-exercise-card-border-color) bg-(--course-exercise-card-background) break-words first-of-type:mt-4"
->
+<div class="mb-(--spacing-divider) box-border w-full min-w-0 rounded-md border border-(--border-color) bg-(--course-exercise-card-background) break-words">
+    <!-- Exactly 40px like every other title bar. The rule only exists while the content is open, otherwise it would double the card border. -->
     <div
-        class="flex cursor-pointer items-center justify-between border-b border-(--course-exercise-card-border-color) px-4 py-2"
+        class="flex h-10 cursor-pointer items-center gap-2 border-(--border-color) px-[16px]"
+        [class.border-b]="!isCardContentCollapsed()"
         data-testid="collapsible-card-toggle"
         (click)="toggleCollapse()()"
         #keyboardAction2
@@ -13,13 +13,15 @@
         (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
         (keyup.space)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
     >
-        <ng-content select=".header" />
-        <span class="inline-flex px-3 py-1.5 transition-transform duration-300" [class.rotate-90]="!isCardContentCollapsed()" aria-hidden="true">
-            <fa-icon size="2x" [icon]="faAngleRight" />
+        <div class="min-w-0 flex-1" data-testid="collapsible-card-header">
+            <ng-content select=".header" />
+        </div>
+        <span class="inline-flex size-6 shrink-0 items-center justify-center transition-transform duration-300" [class.rotate-90]="!isCardContentCollapsed()" aria-hidden="true">
+            <fa-icon [icon]="faAngleRight" />
         </span>
     </div>
 
-    <div class="px-[0.85rem] py-[0.6rem]" data-testid="collapsible-card-content" [class.hidden]="isCardContentCollapsed()">
+    <div class="px-[16px] py-[12px]" data-testid="collapsible-card-content" [class.hidden]="isCardContentCollapsed()">
         <ng-content select=".collapsible-content" />
     </div>
 </div>

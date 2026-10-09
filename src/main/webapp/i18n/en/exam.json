@@ -394,6 +394,7 @@
                 "explanation": "Your submission and your results are stored on the server, nothing is lost. Please check your internet connection and try again.",
                 "retry": "Retry"
             },
+            "programmingActions": "Programming exercise actions",
             "saveExercise": "Save exercise",
             "exerciseSaved": "Exercise saved",
             "reloadWarning": "You are about to reload the page. All unsaved changes will be lost. Are you sure you want to continue?"
@@ -807,6 +808,7 @@
                     "examDetails": "Fill out all exam details",
                     "conductExam": "Conduct the exam",
                     "assessAllSubmissions": "Assess all submissions",
+                    "plagiarismCases": "Handle the plagiarism cases",
                     "publishResults": "Publish the exam results",
                     "examReview": "Plan the exam review",
                     "resolveComplaints": "Resolve all complaints",
@@ -824,6 +826,7 @@
                     "examDetails": "Before conducting an exam, please make sure to have filled out all exam details. (Start text, dates, etc.)",
                     "conductExam": "On the student exam page you can see which students have already submitted their exam.",
                     "assessAllSubmissions": "The number of correction rounds per exercise depends on the exam's number of correction rounds.",
+                    "plagiarismCases": "Review the plagiarism cases of the exam, inform the affected students and decide on a verdict for each case.",
                     "publishResults": "Publishing the results makes them available to students. Student exams are published on the publishing date for results within the exam.",
                     "examReview": "Make sure to have all dates specified correctly.",
                     "resolveComplaints": "Complaints can be resolved from the Assessment Dashboard.",

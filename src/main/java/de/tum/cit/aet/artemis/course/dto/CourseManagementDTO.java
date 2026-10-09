@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.course.dto;
 
 import java.time.ZonedDateTime;
 
-import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -62,8 +61,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
  * @param numberOfTeachingAssistants                     the optional teaching-assistant count
  * @param numberOfEditors                                the optional editor count
  * @param numberOfInstructors                            the optional instructor count
- * @param onlineCourseConfiguration                      the optional initialized online-course configuration
- * @param tutorialGroupsConfiguration                    the optional initialized tutorial-group configuration
+ * @param onlineCourseConfiguration                      the optional online-course configuration
+ * @param tutorialGroupsConfiguration                    the optional tutorial-group configuration
  * @param courseConfiguration                            the optional initialized course-level configuration
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -81,14 +80,26 @@ public record CourseManagementDTO(long id, String title, String shortName, @Null
         @Nullable TutorialGroupsConfigurationResponseDTO tutorialGroupsConfiguration, @Nullable CourseConfigurationResponseDTO courseConfiguration) {
 
     /**
-     * Maps a course without traversing any collection or uninitialized configuration association.
+     * Maps a course without traversing any collection or uninitialized configuration association, and without the online
+     * course configuration and the tutorial groups configuration, which a course does not carry.
      *
      * @param course the authorized course to map
      * @return the course management response
      */
     public static CourseManagementDTO of(Course course) {
-        OnlineCourseConfiguration onlineConfiguration = course.getOnlineCourseConfiguration();
-        TutorialGroupsConfiguration tutorialConfiguration = course.getTutorialGroupsConfiguration();
+        return of(course, null, null);
+    }
+
+    /**
+     * Maps a course together with the two configurations that hold the key to their course. They are read through their
+     * own repositories by the caller, which is also what decides whether the user may see them at all.
+     *
+     * @param course                the authorized course to map
+     * @param onlineConfiguration   the online course configuration, or null when the course has none or the user may not see it
+     * @param tutorialConfiguration the tutorial groups configuration, or null when the course has none or the user may not see it
+     * @return the course management response
+     */
+    public static CourseManagementDTO of(Course course, @Nullable OnlineCourseConfiguration onlineConfiguration, @Nullable TutorialGroupsConfiguration tutorialConfiguration) {
         CourseConfiguration configuration = course.getCourseConfiguration();
         return new CourseManagementDTO(course.getId(), course.getTitle(), course.getShortName(), course.getDescription(), course.getSemester(), course.getStartDate(),
                 course.getEndDate(), course.getEnrollmentStartDate(), course.getEnrollmentEndDate(), course.getUnenrollmentEndDate(), course.isTestCourse(), course.getLanguage(),
@@ -99,9 +110,8 @@ public record CourseManagementDTO(long id, String title, String shortName, @Null
                 course.getMaxComplaintResponseTextLimit(), course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getComplaintsEnabled(),
                 course.getRequestMoreFeedbackEnabled(), course.isAthenaGradingFeedbackEnabled(), course.isAthenaFormativeFeedbackEnabled(), course.getLearningPathsEnabled(),
                 course.getPresentationAssessmentsEnabled(), course.isTrainingEnabled(), course.getNumberOfStudents(), course.getNumberOfTeachingAssistants(),
-                course.getNumberOfEditors(), course.getNumberOfInstructors(),
-                onlineConfiguration != null && Hibernate.isInitialized(onlineConfiguration) ? OnlineCourseConfigurationResponseDTO.of(onlineConfiguration) : null,
-                tutorialConfiguration != null && Hibernate.isInitialized(tutorialConfiguration) ? TutorialGroupsConfigurationResponseDTO.of(tutorialConfiguration) : null,
+                course.getNumberOfEditors(), course.getNumberOfInstructors(), onlineConfiguration != null ? OnlineCourseConfigurationResponseDTO.of(onlineConfiguration) : null,
+                tutorialConfiguration != null ? TutorialGroupsConfigurationResponseDTO.of(tutorialConfiguration) : null,
                 configuration == null ? null : CourseConfigurationResponseDTO.of(configuration));
     }
 }

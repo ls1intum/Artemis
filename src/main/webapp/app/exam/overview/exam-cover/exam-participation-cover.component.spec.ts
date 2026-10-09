@@ -138,6 +138,26 @@ describe('ExamParticipationCoverComponent', () => {
         expect(component.endEnabled()).toBe(false);
     });
 
+    it('should put the title of the hand-in page in a title row of its own', () => {
+        flushInputs();
+
+        const element: HTMLElement = fixture.nativeElement;
+        expect(element.querySelector('[data-testid="exam-finished-header"] [data-testid="exam-finished-title"]')).not.toBeNull();
+        expect(element.querySelector('[data-testid="exam-start-header"]')).toBeNull();
+    });
+
+    it('should inset the hand-in page by the 12px of the exam bar, so that its title starts where the title of the bar starts', () => {
+        flushInputs();
+
+        const card: HTMLElement = fixture.nativeElement.firstElementChild;
+        expect(card.getAttribute('data-testid')).toBe('exam-cover');
+        expect(card.classList).toContain('px-3!');
+        expect(card.classList).not.toContain('px-4!');
+        expect(card.classList).not.toContain('px-6!');
+        // the same 12px between the rule and the content as on the pages of the exam
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-finished-header"]').classList).toContain('mb-3!');
+    });
+
     it('should not reset the confirmation on a live schedule update while waiting for the exam start (issue #13071)', () => {
         flushInputs();
 

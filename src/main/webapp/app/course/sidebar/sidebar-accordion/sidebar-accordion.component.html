@@ -58,9 +58,7 @@
                                     track sidebarItem.trackId ?? sidebarItem.id
                                 ) {
                                     <div [ngClass]="{ 'mb-2': !last }">
-                                        <!-- loading sidebarCard with help of a directive depending on its size input-->
-                                        <div
-                                            jhiSidebarCard
+                                        <jhi-sidebar-card
                                             [size]="sidebarItem.size"
                                             [itemSelected]="itemSelected()"
                                             [sidebarType]="sidebarType()"
@@ -68,7 +66,7 @@
                                             [groupKey]="groupKey"
                                             [activeItemId]="selectedItemId()"
                                             (onUpdateSidebar)="onUpdateSidebar.emit()"
-                                        ></div>
+                                        />
                                     </div>
                                 }
                             </div>
