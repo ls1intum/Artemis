@@ -139,7 +139,7 @@ class LectureContentProcessingServiceTest {
         recoveryService = new ProcessingStateRecoveryService(processingStateRepository, strandedRunRepository, transcriptionRepository, websocketMessagingService);
 
         service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService, attachmentRepository,
-                strandedRunRepository, transcriptionRepository, videoSourceResolver);
+                strandedRunRepository, transcriptionRepository, videoSourceResolver, new ProcessingStateNotificationService(websocketMessagingService, transcriptionRepository));
 
         testLecture = new Lecture();
         testLecture.setId(1L);
@@ -234,7 +234,7 @@ class LectureContentProcessingServiceTest {
                     new ProcessingStateNotificationService(mock(WebsocketMessagingService.class), transcriptionRepository), contentFingerprintService, fts, videoSourceResolver, 20,
                     8, 3, mock(IrisLectureUnitSyncStateRepository.class));
             service = new LectureContentProcessingService(processingStateRepository, Optional.empty(), fts, noIrisCallback, attachmentRepository, strandedRunRepository,
-                    transcriptionRepository, videoSourceResolver);
+                    transcriptionRepository, videoSourceResolver, new ProcessingStateNotificationService(websocketMessagingService, transcriptionRepository));
 
             service.triggerProcessing(testUnit);
 
@@ -1513,13 +1513,24 @@ class LectureContentProcessingServiceTest {
             testState.setPhase(ProcessingPhase.DONE);
             givenContentRemovalClaimSucceeds(48L);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(strandedRunRepository.settleStrandedRunIfClaimed(eq(48L), anyString(), eq(ProcessingPhase.SKIPPED), any())).thenReturn(1);
+            when(strandedRunRepository.settleStrandedRunIfClaimed(eq(48L), anyString(), eq(ProcessingPhase.SKIPPED), any())).thenAnswer(invocation -> {
+                testState.setPhase(ProcessingPhase.SKIPPED);
+                return 1;
+            });
 
             service.triggerProcessing(testUnit);
 
             verify(irisLectureApi).deleteLectureFromPyrisDB(any());
             verify(strandedRunRepository).settleStrandedRunIfClaimed(eq(48L), eq(testState.getClaimToken()), eq(ProcessingPhase.SKIPPED), any());
             verify(processingStateRepository, never()).requeueForContentChange(anyLong(), any(), any(), any(), any());
+            // No worker claims the settled row, so the open lecture page learns about the new state from this broadcast
+            assertBroadcastPhase(ProcessingPhase.SKIPPED);
+        }
+
+        private void assertBroadcastPhase(ProcessingPhase phase) {
+            ArgumentCaptor<Object> sent = ArgumentCaptor.forClass(Object.class);
+            verify(websocketMessagingService).sendMessage(any(WebsocketDestination.class), sent.capture());
+            assertThat(sent.getValue()).isInstanceOfSatisfying(LectureUnitCombinedStatusDTO.class, status -> assertThat(status.processingPhase()).isEqualTo(phase));
         }
 
         /** A new unit with only an unsupported video link is recorded as SKIPPED without content markers, so the backfill does not pick it again. */
@@ -1529,6 +1540,7 @@ class LectureContentProcessingServiceTest {
             testUnit.setAttachment(null);
             when(videoSourceResolver.isSupportedSource("https://example.com/recording")).thenReturn(false);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             service.triggerProcessing(testUnit);
 
@@ -1537,6 +1549,7 @@ class LectureContentProcessingServiceTest {
             assertThat(saved.getValue().getPhase()).isEqualTo(ProcessingPhase.SKIPPED);
             assertThat(saved.getValue().getVideoSourceHash()).isNull();
             assertThat(saved.getValue().getAttachmentVersion()).isNull();
+            assertBroadcastPhase(ProcessingPhase.SKIPPED);
         }
 
         /** A unit with a PDF stays processable with an unsupported video link: only the video is left out. */

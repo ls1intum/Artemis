@@ -87,10 +87,12 @@ public class LectureContentProcessingService {
 
     private final VideoSourceResolverService videoSourceResolver;
 
+    private final ProcessingStateNotificationService notificationService;
+
     public LectureContentProcessingService(LectureUnitProcessingStateRepository processingStateRepository, Optional<IrisLectureApi> irisLectureApi,
             FeatureToggleService featureToggleService, ProcessingStateCallbackService processingStateCallbackService, AttachmentRepository attachmentRepository,
-            LectureUnitProcessingStateRecoveryRepository recoveryRepository, LectureTranscriptionRepository transcriptionRepository,
-            VideoSourceResolverService videoSourceResolver) {
+            LectureUnitProcessingStateRecoveryRepository recoveryRepository, LectureTranscriptionRepository transcriptionRepository, VideoSourceResolverService videoSourceResolver,
+            ProcessingStateNotificationService notificationService) {
         this.processingStateRepository = processingStateRepository;
         this.irisLectureApi = irisLectureApi;
         this.featureToggleService = featureToggleService;
@@ -99,6 +101,7 @@ public class LectureContentProcessingService {
         this.recoveryRepository = recoveryRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.videoSourceResolver = videoSourceResolver;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -178,7 +181,7 @@ public class LectureContentProcessingService {
                 // with a video link and no processing state, would pick it again on every run. No content markers, so nothing is cleaned up later.
                 LectureUnitProcessingState skipped = new LectureUnitProcessingState(unit);
                 skipped.transitionTo(ProcessingPhase.SKIPPED);
-                processingStateRepository.save(skipped);
+                notificationService.notifyWithTranscriptionStatus(processingStateRepository.save(skipped));
             }
             log.debug("Unit {} has no PDF and no supported video to process", unit.getId());
             return false;
@@ -520,6 +523,11 @@ public class LectureContentProcessingService {
         }
         if (closed == 0 && recoveryRepository.requeueRunExposedToRecoveryCleanup(unit.getId(), claimToken, FRESH_DISPATCH_PRIORITY, ZonedDateTime.now()) == 1) {
             log.warn("Unit {} was taken over during the recovery of its interrupted content change; requeued the newer run after the Iris cleanup", unit.getId());
+            closed = 1;
+        }
+        if (closed == 1) {
+            // No worker claims a settled row, so nothing else would tell an open lecture page that its badge changed
+            processingStateRepository.findByLectureUnit_Id(unit.getId()).ifPresent(notificationService::notifyWithTranscriptionStatus);
         }
     }
 
