@@ -2,96 +2,93 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
-import { User } from 'app/account/user/user.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { PresentationAssessment, PresentationAssessmentInstance } from 'app/presentation/shared/entities/presentation-assessment.model';
-
+import {
+    PresentationAssessment,
+    PresentationAssessmentInstance,
+    PresentationAssessmentInstanceRequest,
+    PresentationAssessmentInstancesCreate,
+    PresentationAssessmentStatistics,
+    PresentationAssessmentStudentRow,
+    PresentationAssessmentStudentRowsRequest,
+} from 'app/presentation/shared/entities/presentation-assessment.model';
+import { createRequestOption } from 'app/foundation/util/request.util';
 type EntityResponseType = HttpResponse<PresentationAssessment>;
 type EntityArrayResponseType = HttpResponse<PresentationAssessment[]>;
-type PresentationAssessmentInstanceRest = Omit<PresentationAssessmentInstance, 'presentationDate'> & { presentationDate?: string };
+type PresentationAssessmentInstanceRequestRest = Omit<PresentationAssessmentInstanceRequest, 'presentationDate'> & { presentationDate?: string };
 
 @Service()
 export class PresentationAssessmentService {
     private readonly http = inject(HttpClient);
 
     findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
+        return this.http.get<PresentationAssessment[]>(`api/assessment/courses/${courseId}/presentation-assessments`, { observe: 'response' });
+    }
+
+    findStudentRows(courseId: number, request: PresentationAssessmentStudentRowsRequest): Observable<HttpResponse<PresentationAssessmentStudentRow[]>> {
+        const params = createRequestOption(Object.fromEntries(Object.entries(request).filter(([, value]) => value !== undefined)));
+
         return this.http
-            .get<PresentationAssessment[]>(`api/presentation/courses/${courseId}/presentation-assessments`, { observe: 'response' })
-            .pipe(map((res) => this.convertDateArrayFromServer(res)));
+            .get<PresentationAssessmentStudentRow[]>(`api/assessment/courses/${courseId}/presentation-assessments/student-rows`, {
+                params,
+                observe: 'response',
+            })
+            .pipe(
+                map((res) => {
+                    res.body?.forEach((row) => {
+                        row.instance.presentationDate = convertDateFromServer(row.instance.presentationDate);
+                    });
+                    return res;
+                }),
+            );
+    }
+
+    getStatistics(courseId: number): Observable<HttpResponse<PresentationAssessmentStatistics>> {
+        return this.http.get<PresentationAssessmentStatistics>(`api/assessment/courses/${courseId}/presentation-assessments/statistics`, { observe: 'response' });
     }
 
     create(courseId: number, presentationAssessment: PresentationAssessment): Observable<EntityResponseType> {
-        return this.http
-            .post<PresentationAssessment>(`api/presentation/courses/${courseId}/presentation-assessments`, presentationAssessment, { observe: 'response' })
-            .pipe(map((res) => this.convertDateResponseFromServer(res)));
+        return this.http.post<PresentationAssessment>(`api/assessment/courses/${courseId}/presentation-assessments`, presentationAssessment, { observe: 'response' });
     }
 
-    update(courseId: number, presentationAssessment: PresentationAssessment): Observable<HttpResponse<void>> {
-        return this.http.put<void>(`api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessment.id}`, presentationAssessment, {
+    update(courseId: number, presentationAssessment: PresentationAssessment): Observable<EntityResponseType> {
+        return this.http.put<PresentationAssessment>(`api/assessment/courses/${courseId}/presentation-assessments/${presentationAssessment.id}`, presentationAssessment, {
             observe: 'response',
         });
     }
 
     delete(courseId: number, presentationAssessmentId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}`, { observe: 'response' });
+        return this.http.delete<void>(`api/assessment/courses/${courseId}/presentation-assessments/${presentationAssessmentId}`, { observe: 'response' });
     }
 
-    createInstance(courseId: number, presentationAssessmentId: number, instance: PresentationAssessmentInstance): Observable<HttpResponse<PresentationAssessmentInstance>> {
-        return this.http
-            .post<PresentationAssessmentInstance>(
-                `api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/instances`,
-                this.convertInstanceDateFromClient(instance),
-                { observe: 'response' },
-            )
-            .pipe(map((res) => this.convertInstanceResponseFromServer(res)));
-    }
-
-    updateInstance(courseId: number, presentationAssessmentId: number, instance: PresentationAssessmentInstance): Observable<HttpResponse<PresentationAssessmentInstance>> {
+    updateInstance(courseId: number, presentationAssessmentId: number, instance: PresentationAssessmentInstanceRequest): Observable<HttpResponse<PresentationAssessmentInstance>> {
         return this.http
             .put<PresentationAssessmentInstance>(
-                `api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/instances/${instance.id}`,
+                `api/assessment/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/instances/${instance.id}`,
                 this.convertInstanceDateFromClient(instance),
                 { observe: 'response' },
             )
             .pipe(map((res) => this.convertInstanceResponseFromServer(res)));
     }
 
-    saveInstances(courseId: number, presentationAssessmentId: number, instance: PresentationAssessmentInstance): Observable<HttpResponse<PresentationAssessmentInstance[]>> {
+    saveInstances(courseId: number, presentationAssessmentId: number, request: PresentationAssessmentInstancesCreate): Observable<HttpResponse<PresentationAssessmentInstance[]>> {
         return this.http
             .post<PresentationAssessmentInstance[]>(
-                `api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/instances/batch`,
-                this.convertInstanceDateFromClient(instance),
+                `api/assessment/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/instances`,
+                cloneWith(request, { presentationDate: convertDateFromClient(request.presentationDate) }),
                 { observe: 'response' },
             )
             .pipe(map((res) => this.convertInstanceArrayResponseFromServer(res)));
     }
 
     deleteInstance(courseId: number, presentationAssessmentId: number, instanceId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/instances/${instanceId}`, {
+        return this.http.delete<void>(`api/assessment/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/instances/${instanceId}`, {
             observe: 'response',
         });
     }
 
-    findCourseStudents(courseId: number): Observable<HttpResponse<User[]>> {
-        return this.http.get<User[]>(`api/course/courses/${courseId}/students`, { observe: 'response' });
-    }
-
-    private convertDateResponseFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
-            res.body.instances?.forEach((instance) => (instance.presentationDate = convertDateFromServer(instance.presentationDate)));
-        }
-        return res;
-    }
-
-    private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        res.body?.forEach((presentationAssessment) => {
-            presentationAssessment.instances?.forEach((instance) => (instance.presentationDate = convertDateFromServer(instance.presentationDate)));
-        });
-        return res;
-    }
-
-    private convertInstanceDateFromClient(instance: PresentationAssessmentInstance): PresentationAssessmentInstanceRest {
+    private convertInstanceDateFromClient(instance: PresentationAssessmentInstanceRequest): PresentationAssessmentInstanceRequestRest {
         return cloneWith(instance, { presentationDate: convertDateFromClient(instance.presentationDate) });
     }
 

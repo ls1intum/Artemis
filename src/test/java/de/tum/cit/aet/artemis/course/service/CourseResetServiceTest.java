@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.course.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +14,11 @@ import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessment;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentInstance;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
@@ -32,11 +36,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
-import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentInstance;
-import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentMode;
-import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentInstanceRepository;
-import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -255,7 +254,7 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         instance.setLocation("Room 1");
         instance.setResultPoints(17.0);
         instance.setRemark("Strong presentation");
-        instance.setStudents(Set.of(student));
+        instance.setStudent(student);
         presentationAssessmentInstanceRepository.save(instance);
         return presentationAssessment;
     }

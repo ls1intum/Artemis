@@ -1,8 +1,6 @@
-package de.tum.cit.aet.artemis.presentation.domain;
+package de.tum.cit.aet.artemis.assessment.domain;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,8 +8,6 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -54,9 +50,9 @@ public class PresentationAssessmentInstance extends DomainObject {
     @Column(name = "remark", length = 1000)
     private String remark;
 
-    @ManyToMany
-    @JoinTable(name = "presentation_assessment_instance_student", joinColumns = @JoinColumn(name = "presentation_assessment_instance_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id"))
-    private Set<User> students = new HashSet<>();
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "student_id", nullable = false)
+    private User student;
 
     public PresentationAssessment getPresentationAssessment() {
         return presentationAssessment;
@@ -122,11 +118,11 @@ public class PresentationAssessmentInstance extends DomainObject {
         this.remark = remark;
     }
 
-    public Set<User> getStudents() {
-        return students;
+    public User getStudent() {
+        return student;
     }
 
-    public void setStudents(Set<User> students) {
-        this.students = students;
+    public void setStudent(User student) {
+        this.student = student;
     }
 }

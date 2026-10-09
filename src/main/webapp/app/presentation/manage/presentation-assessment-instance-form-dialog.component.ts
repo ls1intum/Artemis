@@ -1,18 +1,31 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { merge, pairwise } from 'rxjs';
 import dayjs from 'dayjs/esm';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonComponent, TumAetUiInputDirective, TumAetUiInputNumberComponent, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiDatePickerComponent,
+    TumAetUiInputDirective,
+    TumAetUiInputNumberComponent,
+    TumAetUiMessageComponent,
+    TumAetUiSelectComponent,
+} from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { User } from 'app/account/user/user.model';
-import { PresentationAssessment, PresentationAssessmentInstance, PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
+import {
+    PresentationAssessment,
+    PresentationAssessmentInstance,
+    PresentationAssessmentInstanceRequest,
+    PresentationAssessmentInstancesCreate,
+    PresentationAssessmentMode,
+} from 'app/presentation/shared/entities/presentation-assessment.model';
 import { TranslateService } from '@ngx-translate/core';
 import { PresentationAssessmentPresenterSelectorComponent } from 'app/presentation/manage/presentation-assessment-presenter-selector.component';
 
@@ -26,20 +39,21 @@ const RESULT_POINTS_UPPER_BOUND = 10000;
 const MIN_PRESENTATION_DATE = dayjs('1970-01-01T00:00:00');
 const minimumPresentationDate: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
     control.value && dayjs(control.value).isBefore(MIN_PRESENTATION_DATE) ? { minDate: true } : null;
+export type PresentationAssessmentInstanceFormResult =
+    { kind: 'create'; request: PresentationAssessmentInstancesCreate } | { kind: 'update'; instance: PresentationAssessmentInstanceRequest };
 
 @Component({
     selector: 'jhi-presentation-assessment-instance-form-dialog',
     templateUrl: './presentation-assessment-instance-form-dialog.component.html',
     styleUrl: './presentation-assessment-instance-form-dialog.component.scss',
     imports: [
-        FormsModule,
         ReactiveFormsModule,
         FaIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
-        FormDateTimePickerComponent,
         PresentationAssessmentPresenterSelectorComponent,
         TumAetUiButtonComponent,
+        TumAetUiDatePickerComponent,
         TumAetUiInputDirective,
         TumAetUiInputNumberComponent,
         TumAetUiMessageComponent,
@@ -56,16 +70,16 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     readonly instance = input<PresentationAssessmentInstance>();
     readonly initialAssignedStudents = input<User[]>([]);
     readonly isSaving = input(false);
-    readonly saved = output<PresentationAssessmentInstance>();
+    readonly saved = output<PresentationAssessmentInstanceFormResult>();
     readonly cancelled = output<void>();
 
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
     protected readonly PresentationAssessmentMode = PresentationAssessmentMode;
-    protected readonly DateTimePickerType = DateTimePickerType;
+    protected readonly dateTextValid = signal(true);
+    protected readonly timeTextValid = signal(true);
     protected readonly resultPointsUpperBound = RESULT_POINTS_UPPER_BOUND;
     protected readonly acceptedPointsDecimalSeparators = ['.', ','];
-    protected readonly minPresentationDate = MIN_PRESENTATION_DATE;
     readonly languageOptions = computed(() => {
         this.translationChanges();
         return [
@@ -109,6 +123,8 @@ export class PresentationAssessmentInstanceFormDialogComponent {
         });
         effect(() => {
             const instance = this.instance();
+            this.dateTextValid.set(true);
+            this.timeTextValid.set(true);
             this.assignedStudents.set([...this.initialAssignedStudents()]);
             this.editForm.reset({
                 presentationDate: instance?.presentationDate?.startOf('day'),
@@ -126,11 +142,18 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     }
 
     save(): void {
-        if (this.isSaving() || this.editForm.invalid || this.assignedStudents().length === 0) {
+        const instance = this.instance();
+
+        if (this.isSaving() || this.editForm.invalid || !this.dateTextValid() || !this.timeTextValid()) {
             this.editForm.markAllAsTouched();
             return;
         }
+
         const value = this.editForm.getRawValue();
+        if (!value.presentationDate || !value.language || !value.mode) {
+            return;
+        }
+
         const presentationDate = dayjs(value.presentationDate);
         const presentationTime = value.presentationTime ? dayjs(value.presentationTime) : undefined;
         const combinedPresentationDate = presentationDate
@@ -138,23 +161,47 @@ export class PresentationAssessmentInstanceFormDialogComponent {
             .minute(presentationTime?.minute() ?? 0)
             .second(0)
             .millisecond(0);
-        this.saved.emit({
-            id: this.instance()?.id,
+
+        const data = {
             presentationDate: combinedPresentationDate,
             resultPoints: value.resultPoints ?? undefined,
-            studentLogins: [
+            language: value.language,
+            mode: value.mode,
+            location: value.mode === PresentationAssessmentMode.IN_PERSON ? value.location?.trim() || undefined : undefined,
+            meetingLink: value.mode === PresentationAssessmentMode.ONLINE ? value.meetingLink?.trim() || undefined : undefined,
+            remark: value.remark?.trim() || undefined,
+        } satisfies Omit<PresentationAssessmentInstancesCreate, 'studentLogins'>;
+
+        if (instance) {
+            const studentLogin = instance.student?.login;
+            if (instance.id === undefined || !studentLogin) {
+                return;
+            }
+            this.saved.emit({
+                kind: 'update',
+                instance: cloneWith(data, {
+                    id: instance.id,
+                    studentLogin,
+                }),
+            });
+        } else {
+            const studentLogins = [
                 ...new Set(
                     this.assignedStudents()
                         .map((student) => student.login)
                         .filter((login): login is string => !!login),
                 ),
-            ],
-            language: value.language ?? undefined,
-            mode: value.mode ?? undefined,
-            location: value.mode === PresentationAssessmentMode.IN_PERSON ? value.location?.trim() || undefined : undefined,
-            meetingLink: value.mode === PresentationAssessmentMode.ONLINE ? value.meetingLink?.trim() || undefined : undefined,
-            remark: value.remark?.trim() || undefined,
-        } satisfies PresentationAssessmentInstance);
+            ];
+
+            if (studentLogins.length === 0) {
+                this.editForm.markAllAsTouched();
+                return;
+            }
+            this.saved.emit({
+                kind: 'create',
+                request: cloneWith(data, { studentLogins }),
+            });
+        }
     }
 
     cancel(): void {

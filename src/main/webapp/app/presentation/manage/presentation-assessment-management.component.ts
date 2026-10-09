@@ -1,9 +1,9 @@
 import { Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, merge } from 'rxjs';
-import { finalize, map } from 'rxjs/operators';
+import { finalize, map, tap } from 'rxjs/operators';
 
 import { faArrowUpRightFromSquare, faLink, faPencilAlt, faPlus, faSearch, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -29,19 +29,29 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { onError } from 'app/foundation/util/global.utils';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
-import { PresentationAssessment, PresentationAssessmentInstance, PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
+import {
+    PresentationAssessment,
+    PresentationAssessmentInstance,
+    PresentationAssessmentMode,
+    PresentationAssessmentStatistics,
+    PresentationAssessmentStudentRow,
+    PresentationAssessmentStudentRowsRequest,
+} from 'app/presentation/shared/entities/presentation-assessment.model';
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { PresentationAssessmentFormDialogComponent, PresentationAssessmentFormDialogResult } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { PresentationAssessmentInstanceFormDialogComponent } from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
-import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import {
+    PresentationAssessmentInstanceFormDialogComponent,
+    PresentationAssessmentInstanceFormResult,
+} from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { CollapseState, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import {
@@ -52,12 +62,7 @@ import {
     PresentationViewMode,
     SelectedPresentationStudentRow,
     createPresentationSidebarData,
-    createSelectedStudentRows,
-    createStudentRows,
-    filterAndSortStudentRows,
-    filterStudentRowsBySearch,
     hasResultPoints,
-    resolveStudentsByLogin,
 } from 'app/presentation/manage/presentation-assessment-management.helper';
 
 const presentationSidebarCollapseStateRecord: Record<string, boolean> = { standalone: false, linkedToExercise: false };
@@ -122,7 +127,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     private readonly router = inject(Router);
     private readonly presentationAssessmentService = inject(PresentationAssessmentService);
     private readonly alertService = inject(AlertService);
-    private readonly courseManagementService = inject(CourseManagementService);
+    private readonly exerciseService = inject(ExerciseService);
     private readonly translateService = inject(TranslateService);
     private readonly translationChanges = toSignal(merge(this.translateService.onLangChange, this.translateService.onTranslationChange));
     private readonly routeSelection = toSignal(
@@ -152,13 +157,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     private readonly presentationAssessmentsLoaded = signal(false);
     readonly presentationLoadFailed = signal(false);
     readonly isSaving = signal(false);
-    readonly isLoadingAssignedStudents = signal(false);
-    readonly exercises = signal<Exercise[]>([]);
-    readonly courseStudents = computed(() =>
-        this.presentationAssessments().flatMap((assessment) =>
-            (assessment.instances ?? []).flatMap((instance) => (instance.students ?? []).map((student) => hydrate(new User(), student))),
-        ),
-    );
+    readonly exercises = signal<ExerciseTitle[]>([]);
     readonly viewMode = signal<PresentationViewMode>('students');
     readonly selectedPresentationId = signal<number | undefined>(undefined);
     readonly contentReady = computed(() => {
@@ -183,10 +182,54 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     readonly instanceDialogVisible = signal(false);
     readonly dialogInstancePresentationAssessment = signal<PresentationAssessment | undefined>(undefined);
     readonly dialogInstance = signal<PresentationAssessmentInstance | undefined>(undefined);
-    readonly dialogInstanceStudentLogin = signal<string | undefined>(undefined);
     readonly dialogAssignedStudents = signal<User[]>([]);
-    readonly studentSortField = signal('studentLogin');
+    readonly studentSortField = signal<PresentationAssessmentStudentRowsRequest['sortField']>('studentLogin');
     readonly studentSortOrder = signal(1);
+    readonly studentRowsRequest = computed<PresentationAssessmentStudentRowsRequest>(() => {
+        const isOverview = this.viewMode() === 'students';
+        const presentationFilter = this.presentationFilter();
+        const status = this.assessmentStatusFilter();
+        const type = this.presentationTypeFilter();
+
+        return {
+            page: this.overviewPage(),
+            size: this.overviewPageSize(),
+            sortField: this.studentSortField(),
+            direction: this.studentSortOrder() === -1 ? 'DESC' : 'ASC',
+            assessmentId: isOverview ? (presentationFilter === 'all' ? undefined : presentationFilter) : this.selectedPresentationId(),
+            assessed: isOverview && status !== 'all' ? status === 'assessed' : undefined,
+            linkedToExercise: isOverview && type !== 'all' ? type === 'exercise' : undefined,
+            searchTerm: this.studentSearchTerm().trim() || undefined,
+        };
+    });
+    private readonly studentRowsResource = rxResource({
+        params: () => {
+            const courseId = this.courseId();
+            return courseId && this.contentReady() ? { courseId, request: this.studentRowsRequest() } : undefined;
+        },
+        stream: ({ params }) =>
+            this.presentationAssessmentService.findStudentRows(params.courseId, params.request).pipe(
+                tap({
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                }),
+            ),
+    });
+    private readonly statisticsResource = rxResource({
+        params: () => (this.viewMode() === 'students' && this.contentReady() ? this.courseId() || undefined : undefined),
+        stream: ({ params: courseId }) =>
+            this.presentationAssessmentService.getStatistics(courseId).pipe(
+                tap({
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                }),
+            ),
+    });
+    readonly statistics = computed<PresentationAssessmentStatistics | undefined>(() =>
+        this.statisticsResource.hasValue() ? (this.statisticsResource.value().body ?? undefined) : undefined,
+    );
+    readonly loadedStudentRows = computed<PresentationAssessmentStudentRow[]>(() => (this.studentRowsResource.hasValue() ? (this.studentRowsResource.value().body ?? []) : []));
+    readonly totalStudentRows = computed(() => (this.studentRowsResource.hasValue() ? Number(this.studentRowsResource.value().headers.get('X-Total-Count') ?? 0) : 0));
+    readonly isLoadingStudentRows = this.studentRowsResource.isLoading;
+    readonly studentRowsLoadFailed = computed(() => this.studentRowsResource.error() !== undefined);
     readonly sidebarCollapseState = PRESENTATION_SIDEBAR_COLLAPSE_STATE;
     readonly sidebarItemAlwaysShow = PRESENTATION_SIDEBAR_ALWAYS_SHOW;
     readonly selectedPresentation = computed(() => {
@@ -198,38 +241,36 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         const exercise = this.exercises().find((candidate) => candidate.id === presentationAssessment?.exerciseId);
         return exercise?.id && exercise.type ? ['/course-management', this.courseId(), `${exercise.type}-exercises`, exercise.id] : undefined;
     });
-    readonly studentRows = computed<PresentationStudentRow[]>(() => {
-        return createStudentRows(this.presentationAssessments(), this.courseStudents());
-    });
-    readonly selectedPresentationStudentRows = computed<SelectedPresentationStudentRow[]>(() => {
-        return createSelectedStudentRows(this.selectedPresentation(), this.courseStudents());
-    });
+    readonly currentPageStudentRows = computed<PresentationStudentRow[]>(() =>
+        this.loadedStudentRows().flatMap(({ presentationAssessment, instance }): PresentationStudentRow[] => {
+            const studentLogin = instance.student?.login;
+            if (!studentLogin) {
+                return [];
+            }
+
+            return [
+                {
+                    studentLogin,
+                    student: instance.student ? hydrate(new User(), instance.student) : new User(undefined, studentLogin),
+                    presentationAssessment,
+                    instance,
+                },
+            ];
+        }),
+    );
     readonly filteredSelectedPresentationStudentRows = computed(() => {
         const expandedRows = this.expandedStudentRows();
-        return filterStudentRowsBySearch(this.selectedPresentationStudentRows(), this.studentSearchTerm()).map((row) => decorateStudentRow(row, expandedRows));
+        return this.currentPageStudentRows().map((row) => decorateStudentRow(row, expandedRows));
     });
-    readonly filteredStudentRows = computed(() => {
-        return filterAndSortStudentRows(this.studentRows(), {
-            query: this.studentSearchTerm(),
-            status: this.assessmentStatusFilter(),
-            presentation: this.presentationFilter(),
-            type: this.presentationTypeFilter(),
-            sortField: this.studentSortField(),
-            sortOrder: this.studentSortOrder(),
-        });
-    });
-    readonly effectiveOverviewPage = computed(() =>
-        Math.min(Math.max(0, this.overviewPage()), Math.max(0, Math.ceil(this.filteredStudentRows().length / this.overviewPageSize()) - 1)),
-    );
     readonly paginatedStudentRows = computed(() => {
-        const start = this.effectiveOverviewPage() * this.overviewPageSize();
         const expandedRows = this.expandedStudentRows();
-        return this.filteredStudentRows()
-            .slice(start, start + this.overviewPageSize())
-            .map((row) => decorateStudentRow(row, expandedRows));
+        return this.currentPageStudentRows().map((row) => decorateStudentRow(row, expandedRows));
     });
-    readonly assessedStudentCount = computed(() => this.studentRows().filter((row) => hasResultPoints(row.instance.resultPoints)).length);
-    readonly pendingStudentCount = computed(() => this.studentRows().length - this.assessedStudentCount());
+    readonly assessedStudentCount = computed(() => this.statistics()?.assessedCount);
+    readonly pendingStudentCount = computed(() => {
+        const statistics = this.statistics();
+        return statistics ? statistics.totalCount - statistics.assessedCount : undefined;
+    });
     readonly presentationFilterOptions = computed<FilterOption<number | 'all'>[]>(() => {
         this.translationChanges();
         return [
@@ -267,7 +308,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                     this.dialogPresentationAssessment.set(undefined);
                     this.dialogInstancePresentationAssessment.set(undefined);
                     this.dialogInstance.set(undefined);
-                    this.dialogInstanceStudentLogin.set(undefined);
                     this.dialogAssignedStudents.set([]);
                     this.dialogErrorSource.next('');
                     this.presentationAssessments.set([]);
@@ -277,10 +317,10 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                     this.overviewPage.set(0);
                     this.presentationFilter.set('all');
                     this.loadAll();
-                    this.courseManagementService.findWithExercises(courseId).subscribe({
-                        next: (res: HttpResponse<Course>) => {
+                    this.exerciseService.getTitlesForCourse(courseId).subscribe({
+                        next: (exercises) => {
                             if (this.courseId() === courseId) {
-                                this.exercises.set(res.body?.exercises ?? []);
+                                this.exercises.set(exercises);
                             }
                         },
                         error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -288,6 +328,9 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                     return;
                 }
                 if (presentationId === undefined) {
+                    if (this.viewMode() !== 'students') {
+                        this.overviewPage.set(0);
+                    }
                     this.viewMode.set('students');
                     return;
                 }
@@ -301,6 +344,9 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                     return;
                 }
 
+                if (this.viewMode() !== 'presentations' || this.selectedPresentationId() !== presentation.id) {
+                    this.overviewPage.set(0);
+                }
                 this.selectedPresentationId.set(presentation.id);
                 this.viewMode.set('presentations');
                 if (presentation.exerciseId !== exerciseId) {
@@ -312,6 +358,14 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     ngOnInit(): void {
         this.route.parent?.data.subscribe(({ course }) => this.course.set(course));
+    }
+
+    retryLoading(): void {
+        if (this.presentationLoadFailed()) {
+            this.loadAll();
+        } else {
+            this.studentRowsResource.reload();
+        }
     }
 
     loadAll(): void {
@@ -344,12 +398,16 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     }
 
     selectPresentation(presentationAssessment: PresentationAssessment): void {
+        this.overviewPage.set(0);
         this.selectedPresentationId.set(presentationAssessment.id);
         this.viewMode.set('presentations');
         this.navigateToPresentation(presentationAssessment);
     }
 
     setViewMode(viewMode: PresentationViewMode): void {
+        if (this.viewMode() !== viewMode) {
+            this.overviewPage.set(0);
+        }
         this.viewMode.set(viewMode);
         if (viewMode === 'students') {
             void this.router.navigate(['/course-management', this.courseId(), 'presentations']);
@@ -362,8 +420,13 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     }
 
     onStudentSort(event: TumAetUiTableSortEvent): void {
-        this.studentSortField.set(event.field);
+        const field = event.field;
+        if (field !== 'studentLogin' && field !== 'presentationTitle' && field !== 'presentationDate' && field !== 'resultPoints') {
+            return;
+        }
+        this.studentSortField.set(field);
         this.studentSortOrder.set(event.order);
+        this.overviewPage.set(0);
     }
 
     setAssessmentStatusFilter(filter: AssessmentStatusFilter): void {
@@ -402,22 +465,24 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.openInstanceDialog(presentationAssessment);
     }
 
-    startEditInstance(presentationAssessment: PresentationAssessment, instance: PresentationAssessmentInstance, studentLogin: string): void {
-        this.openInstanceDialog(presentationAssessment, instance, studentLogin);
+    startEditInstance(presentationAssessment: PresentationAssessment, instance: PresentationAssessmentInstance): void {
+        this.openInstanceDialog(presentationAssessment, instance);
     }
 
-    deleteInstance(presentationAssessment: PresentationAssessment, instance: PresentationAssessmentInstance, studentLogin: string): void {
+    deleteInstance(presentationAssessment: PresentationAssessment, instance: PresentationAssessmentInstance): void {
         if (!presentationAssessment.id || !instance.id) {
             return;
         }
-        const remainingStudentLogins = (instance.studentLogins ?? []).filter((login) => login !== studentLogin);
-        const remainingInstance = deepClone(instance);
-        remainingInstance.studentLogins = remainingStudentLogins;
-        const request: Observable<unknown> = remainingStudentLogins.length
-            ? this.presentationAssessmentService.updateInstance(this.courseId(), presentationAssessment.id, remainingInstance)
-            : this.presentationAssessmentService.deleteInstance(this.courseId(), presentationAssessment.id, instance.id);
-        request.subscribe({
-            next: () => this.loadAll(),
+
+        this.presentationAssessmentService.deleteInstance(this.courseId(), presentationAssessment.id, instance.id).subscribe({
+            next: () => {
+                if (this.loadedStudentRows().length === 1 && this.overviewPage() > 0) {
+                    this.overviewPage.update((page) => page - 1);
+                } else {
+                    this.studentRowsResource.reload();
+                }
+                this.statisticsResource.reload();
+            },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
     }
@@ -448,6 +513,9 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                     if (this.presentationFilter() === presentationAssessment.id) {
                         this.presentationFilter.set('all');
                     }
+                    this.overviewPage.set(0);
+                    this.studentRowsResource.reload();
+                    this.statisticsResource.reload();
                     this.alertService.success('artemisApp.presentationAssessment.deleted', { title: presentationAssessment.title });
                 },
                 error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -474,15 +542,27 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.isSaving.set(true);
         const presentationAssessment = result.presentationAssessment;
         const isUpdate = Boolean(presentationAssessment.id);
-        const request: Observable<unknown> = isUpdate
+        const request: Observable<HttpResponse<PresentationAssessment>> = isUpdate
             ? this.presentationAssessmentService.update(this.courseId(), presentationAssessment)
             : this.presentationAssessmentService.create(this.courseId(), presentationAssessment);
 
         request.pipe(finalize(() => this.isSaving.set(false))).subscribe({
-            next: () => {
+            next: (response) => {
                 this.presentationDialogVisible.set(false);
+                const savedAssessment = response.body;
+                if (savedAssessment) {
+                    this.presentationAssessments.update((assessments) => [...assessments.filter((assessment) => assessment.id !== savedAssessment.id), savedAssessment]);
+                    if (this.selectedPresentationId() === undefined) {
+                        this.selectedPresentationId.set(savedAssessment.id);
+                    }
+                } else {
+                    // Saving succeeded, but the response body is missing. Reload the list to recover the saved state.
+                    this.loadAll();
+                }
+                if (isUpdate) {
+                    this.studentRowsResource.reload();
+                }
                 this.alertService.success(isUpdate ? 'artemisApp.presentationAssessment.updated' : 'artemisApp.presentationAssessment.created');
-                this.loadAll();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -502,29 +582,34 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.deletePresentationAssessment(presentationAssessment);
     }
 
-    private openInstanceDialog(presentationAssessment: PresentationAssessment, instance?: PresentationAssessmentInstance, studentLogin?: string): void {
+    private openInstanceDialog(presentationAssessment: PresentationAssessment, instance?: PresentationAssessmentInstance): void {
         const course = this.course();
         if (!presentationAssessment.id || !course) {
             return;
         }
         this.dialogInstancePresentationAssessment.set(presentationAssessment);
         this.dialogInstance.set(instance);
-        this.dialogInstanceStudentLogin.set(studentLogin);
-        this.dialogAssignedStudents.set(resolveStudentsByLogin(this.courseStudents(), studentLogin ? [studentLogin] : (instance?.studentLogins ?? [])));
+        this.dialogAssignedStudents.set(instance?.student ? [hydrate(new User(), instance.student)] : []);
         this.instanceDialogVisible.set(true);
     }
 
-    handleInstanceDialogSave(result: PresentationAssessmentInstance): void {
+    handleInstanceDialogSave(result: PresentationAssessmentInstanceFormResult): void {
         const presentationAssessment = this.dialogInstancePresentationAssessment();
-        if (!presentationAssessment?.id) {
+        if (!presentationAssessment?.id || this.isSaving()) {
             return;
         }
+
+        const request: Observable<unknown> =
+            result.kind === 'create'
+                ? this.presentationAssessmentService.saveInstances(this.courseId(), presentationAssessment.id, result.request)
+                : this.presentationAssessmentService.updateInstance(this.courseId(), presentationAssessment.id, result.instance);
+
         this.isSaving.set(true);
-        const request = this.presentationAssessmentService.saveInstances(this.courseId(), presentationAssessment.id, result);
         request.pipe(finalize(() => this.isSaving.set(false))).subscribe({
             next: () => {
                 this.instanceDialogVisible.set(false);
-                this.loadAll();
+                this.studentRowsResource.reload();
+                this.statisticsResource.reload();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.presentation.domain;
+package de.tum.cit.aet.artemis.assessment.domain;
 
 import java.util.HashSet;
 import java.util.Set;

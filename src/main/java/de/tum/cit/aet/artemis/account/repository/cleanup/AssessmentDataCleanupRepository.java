@@ -2,10 +2,8 @@ package de.tum.cit.aet.artemis.account.repository.cleanup;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -17,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentInstance;
 
 /**
  * Removes the assessment rows of a user that is being deleted permanently.
@@ -132,53 +129,26 @@ public interface AssessmentDataCleanupRepository extends ArtemisJpaRepository<Co
     int deleteTutorParticipations(@Param("userId") long userId);
 
     @Query("""
-            SELECT student.id AS userId, COUNT(instance) AS count
+            SELECT instance.student.id AS userId, COUNT(instance) AS count
             FROM PresentationAssessmentInstance instance
-            JOIN instance.students student
-            WHERE student.id IN :userIds
-            GROUP BY student.id
+            WHERE instance.student.id IN :userIds
+            GROUP BY instance.student.id
             """)
-    List<UserReferenceCount> countPresentationAssessmentInstanceStudents(@Param("userIds") Collection<Long> userIds);
-
-    @Query("""
-            SELECT DISTINCT instance
-            FROM PresentationAssessmentInstance instance
-            JOIN FETCH instance.students
-            JOIN instance.students matchingStudent
-            WHERE matchingStudent.id = :userId
-            """)
-    List<PresentationAssessmentInstance> findPresentationAssessmentInstancesByStudentId(@Param("userId") long userId);
-
-    @Modifying
-    @Transactional // ok because of delete
-    @Query("DELETE FROM PresentationAssessmentInstance instance WHERE instance.id IN :instanceIds")
-    void deletePresentationAssessmentInstancesByIds(@Param("instanceIds") Collection<Long> instanceIds);
+    List<UserReferenceCount> countPresentationAssessmentInstances(@Param("userIds") Collection<Long> userIds);
 
     /**
-     * Removes individual instances with their sole presenter and only detaches the presenter from shared instances.
-     * The database also removes the join-table rows for deleted instances.
+     * Deletes the individual presentation assessment instances of the account.
      *
      * @param userId the account being deleted
-     * @return the number of removed presenter assignments
+     * @return the number of deleted instances
      */
-    @Transactional
-    default int deletePresentationAssessmentInstanceStudents(long userId) {
-        List<PresentationAssessmentInstance> instances = findPresentationAssessmentInstancesByStudentId(userId);
-        List<Long> individualInstanceIds = new ArrayList<>();
-        for (PresentationAssessmentInstance instance : instances) {
-            if (instance.getStudents().size() == 1) {
-                individualInstanceIds.add(instance.getId());
-            }
-            else {
-                instance.getStudents().removeIf(student -> Objects.equals(student.getId(), userId));
-            }
-        }
-
-        if (!individualInstanceIds.isEmpty()) {
-            deletePresentationAssessmentInstancesByIds(individualInstanceIds);
-        }
-        return instances.size();
-    }
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE FROM PresentationAssessmentInstance instance
+            WHERE instance.student.id = :userId
+            """)
+    int deletePresentationAssessmentInstances(@Param("userId") long userId);
 
     /**
      * Deletes the responses to the complaints the account raised, so that the complaints themselves can be removed.

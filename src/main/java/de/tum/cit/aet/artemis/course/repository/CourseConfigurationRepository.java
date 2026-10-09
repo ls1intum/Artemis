@@ -81,11 +81,12 @@ public interface CourseConfigurationRepository extends ArtemisJpaRepository<Cour
      * Changes the settings an instructor or administrator edits in the course update, in place. The retention bookkeeping
      * (warning and reset dates) and the retention hold are not touched, so a concurrent cleanup run or hold change survives.
      *
-     * @param courseId                      the id of the course
-     * @param gradeRelevant                 whether the course is grade-relevant
-     * @param autoOrchestratorEnabled       whether the auto-orchestration pipeline is on
-     * @param debounceWindowSecondsOverride the debounce override, or null for the global default
-     * @param maxDailyOrchestrationOverride the daily run cap override, or null for the global default
+     * @param courseId                       the id of the course
+     * @param gradeRelevant                  whether the course is grade-relevant
+     * @param presentationAssessmentsEnabled whether presentation assessments are enabled
+     * @param autoOrchestratorEnabled        whether the auto-orchestration pipeline is on
+     * @param debounceWindowSecondsOverride  the debounce override, or null for the global default
+     * @param maxDailyOrchestrationOverride  the daily run cap override, or null for the global default
      * @return the number of updated rows: 1, or 0 if the course has no configuration row
      */
     @Modifying
@@ -93,10 +94,12 @@ public interface CourseConfigurationRepository extends ArtemisJpaRepository<Cour
     @Query("""
             UPDATE CourseConfiguration configuration
             SET configuration.gradeRelevant = :gradeRelevant, configuration.autoOrchestratorEnabled = :autoOrchestratorEnabled,
+                configuration.presentationAssessmentsEnabled = :presentationAssessmentsEnabled,
                 configuration.debounceWindowSecondsOverride = :debounceWindowSecondsOverride, configuration.maxDailyOrchestrationOverride = :maxDailyOrchestrationOverride
             WHERE configuration.course.id = :courseId
             """)
-    int updateEditableSettings(@Param("courseId") long courseId, @Param("gradeRelevant") boolean gradeRelevant, @Param("autoOrchestratorEnabled") boolean autoOrchestratorEnabled,
+    int updateEditableSettings(@Param("courseId") long courseId, @Param("gradeRelevant") boolean gradeRelevant,
+            @Param("presentationAssessmentsEnabled") boolean presentationAssessmentsEnabled, @Param("autoOrchestratorEnabled") boolean autoOrchestratorEnabled,
             @Param("debounceWindowSecondsOverride") @Nullable Integer debounceWindowSecondsOverride,
             @Param("maxDailyOrchestrationOverride") @Nullable Integer maxDailyOrchestrationOverride);
 

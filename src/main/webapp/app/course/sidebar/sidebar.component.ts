@@ -30,6 +30,9 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     selector: 'jhi-sidebar',
     templateUrl: './sidebar.component.html',
     styleUrls: ['./sidebar.component.scss'],
+    host: {
+        '[class.fit-container-height]': 'fitContainerHeight()',
+    },
     imports: [
         SearchFilterComponent,
         FaIconComponent,
@@ -64,6 +67,8 @@ export class SidebarComponent implements OnDestroy {
     onMarkAllChannelsAsRead = output<void>();
     readonly searchFieldEnabled = input<boolean>(true);
     readonly searchFieldSize = input<TumAetUiInputSize | undefined>(undefined);
+    /** Size the scrollable list from the available container height instead of the viewport. */
+    readonly fitContainerHeight = input(false);
     readonly sidebarData = input.required<SidebarData>();
     readonly courseId = input<number>();
     readonly itemSelected = input<boolean>();

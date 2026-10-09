@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.presentation.domain;
+package de.tum.cit.aet.artemis.assessment.domain;
 
 /**
  * Delivery mode of a presentation assessment instance.

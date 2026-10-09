@@ -1,10 +1,9 @@
-import { Component, computed, inject, input, model, viewChild } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Component, computed, inject, input, model, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { Observable, Subject, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { faUserMinus } from '@fortawesome/free-solid-svg-icons';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { TumAetUiButtonComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent, TumAetUiButtonComponent, TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
 
 import { User } from 'app/account/user/user.model';
 import { addPublicFilePrefix } from 'app/app.constants';
@@ -14,7 +13,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
-import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 
 @Component({
     selector: 'jhi-presentation-assessment-presenter-selector',
@@ -22,13 +20,12 @@ import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from
     imports: [
         ArtemisTranslatePipe,
         DeleteButtonDirective,
-        FaIconComponent,
-        NgbTypeahead,
         ProfilePictureComponent,
-        TableViewComponent,
         TranslateDirective,
         TumAetUiButtonComponent,
-        TumAetUiInputDirective,
+        TumAetUiAutoCompleteComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
     ],
 })
 export class PresentationAssessmentPresenterSelectorComponent {
@@ -38,35 +35,32 @@ export class PresentationAssessmentPresenterSelectorComponent {
     readonly presenters = model<User[]>([]);
     readonly editable = input(true);
 
+    protected readonly sortField = signal<'name' | 'login'>('name');
+    protected readonly sortAscending = signal(true);
+
+    protected readonly sortedPresenters = computed(() => {
+        const field = this.sortField();
+        const direction = this.sortAscending() ? 1 : -1;
+
+        return [...this.presenters()].sort(
+            (first, second) => direction * ((first[field] ?? '').localeCompare(second[field] ?? '') || (first.login ?? '').localeCompare(second.login ?? '')),
+        );
+    });
+
+    protected onSortChange(event: TumAetUiTableSortEvent): void {
+        if (event.field !== 'name' && event.field !== 'login') {
+            return;
+        }
+
+        this.sortField.set(event.field);
+        this.sortAscending.set(event.order > 0);
+    }
+
     protected readonly ActionType = ActionType;
     protected readonly faUserMinus = faUserMinus;
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
-    readonly profilePictureTemplate = viewChild<CellTemplateRef<User>>('profilePictureTemplate');
-    readonly columns = computed<ColumnDef<User>[]>(() => [
-        {
-            headerKey: 'artemisApp.presentationAssessment.picture',
-            width: '5rem',
-            templateRef: this.profilePictureTemplate(),
-        },
-        {
-            field: 'login',
-            headerKey: 'artemisApp.course.courseGroup.login',
-            sort: true,
-        },
-        {
-            field: 'name',
-            headerKey: 'artemisApp.course.courseGroup.name',
-            sort: true,
-        },
-    ]);
-    readonly tableOptions: TableViewOptions = {
-        lazy: false,
-        paginated: false,
-        showCurrentPageReport: false,
-        showSearch: false,
-        initialSortField: 'name',
-    };
+    private readonly presenterSearchTerms = new Subject<string>();
 
     readonly searchPresenters = (searchTerms: Observable<string>): Observable<User[]> =>
         searchTerms.pipe(
@@ -86,7 +80,30 @@ export class PresentationAssessmentPresenterSelectorComponent {
             }),
         );
 
+    protected readonly presenterSuggestions = toSignal(this.searchPresenters(this.presenterSearchTerms), { initialValue: [] });
+
+    protected searchPresentersByQuery(query: string): void {
+        this.presenterSearchTerms.next(query);
+    }
+
     readonly presenterFormatter = (presenter: User): string => `${presenter.name ?? ''} (${presenter.login ?? ''})`;
+
+    protected readonly presenterOptions = computed(() =>
+        this.presenterSuggestions().map((presenter) => ({
+            presenter,
+            label: this.presenterFormatter(presenter),
+        })),
+    );
+
+    protected selectPresenterOption(value: unknown, autocomplete: TumAetUiAutoCompleteComponent): void {
+        const option = this.presenterOptions().find((candidate) => candidate === value);
+        if (!option) {
+            return;
+        }
+
+        this.selectPresenter(option.presenter);
+        autocomplete.writeValue(undefined);
+    }
 
     selectPresenter(presenter: User): void {
         const alreadyAssigned = this.presenters().some((assignedPresenter) =>

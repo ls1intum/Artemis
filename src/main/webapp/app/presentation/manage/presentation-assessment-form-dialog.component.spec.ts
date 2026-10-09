@@ -3,7 +3,7 @@ import { Mock, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PresentationAssessmentFormDialogComponent, PresentationAssessmentFormDialogResult } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
 import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 
 describe('PresentationAssessmentFormDialogComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentFormDialogComponent>;
@@ -20,7 +20,7 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         maxPoints: 20,
         courseId,
     };
-    const exercise = { id: 7, title: 'Linked exercise' } as Exercise;
+    const exercise: ExerciseTitle = { id: 7, title: 'Linked exercise' };
 
     beforeEach(async () => {
         saved = vi.fn();
@@ -94,7 +94,7 @@ describe('PresentationAssessmentFormDialogComponent', () => {
     it('should save a replacement exercise selected by the user', () => {
         fixture.componentRef.setInput('presentationAssessment', { ...presentationAssessment, exerciseId: exercise.id });
         fixture.detectChanges();
-        const replacement = { id: 8, title: 'Replacement' } as Exercise;
+        const replacement: ExerciseTitle = { id: 8, title: 'Replacement' };
         component.editForm.controls.exercise.setValue(replacement);
         component.editForm.controls.exercise.markAsDirty();
 

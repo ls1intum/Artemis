@@ -84,6 +84,20 @@ describe('SidebarComponent', () => {
         fixture.componentRef.setInput('sidebarItemAlwaysShow', {});
     });
 
+    it('should only enable container-height layout when requested', () => {
+        fixture.changeDetectorRef.detectChanges();
+        const host = fixture.nativeElement as HTMLElement;
+        expect(host.classList.contains('fit-container-height')).toBe(false);
+
+        fixture.componentRef.setInput('fitContainerHeight', true);
+        fixture.changeDetectorRef.detectChanges();
+        expect(host.classList.contains('fit-container-height')).toBe(true);
+
+        fixture.componentRef.setInput('fitContainerHeight', false);
+        fixture.changeDetectorRef.detectChanges();
+        expect(host.classList.contains('fit-container-height')).toBe(false);
+    });
+
     describe('selected entity params', () => {
         /**
          * The sidebar renders on the list route ('exercises'), which carries no entity id of its own. The id lives on
@@ -183,11 +197,11 @@ describe('SidebarComponent', () => {
     it('should display the correct message when no data is found', () => {
         // Mock sidebarData to have no items
         fixture.componentRef.setInput('sidebarData', {
-            groupByCategory: false,
+            groupByCategory: true,
             ungroupedData: [],
         });
         component.sidebarDataBeforeFiltering.set({
-            groupByCategory: false,
+            groupByCategory: true,
             ungroupedData: [] as SidebarCardElement[],
         });
         fixture.changeDetectorRef.detectChanges();

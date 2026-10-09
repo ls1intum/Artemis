@@ -1,17 +1,25 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { MockComponent } from 'ng-mocks';
 import { Mock, beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
 
-import { PresentationAssessmentInstanceFormDialogComponent } from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
+import {
+    PresentationAssessmentInstanceFormDialogComponent,
+    PresentationAssessmentInstanceFormResult,
+} from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
 import { LangChangeEvent, TranslateService, TranslationChangeEvent } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { User } from 'app/account/user/user.model';
-import { PresentationAssessmentInstance, PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationAssessmentPresenterSelectorComponent } from 'app/presentation/manage/presentation-assessment-presenter-selector.component';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentInstanceFormDialogComponent>;
     let component: PresentationAssessmentInstanceFormDialogComponent;
-    let saved: Mock<(value: PresentationAssessmentInstance) => void>;
+    let saved: Mock<(value: PresentationAssessmentInstanceFormResult) => void>;
     let languageChanges: Subject<LangChangeEvent>;
     let translationChanges: Subject<TranslationChangeEvent>;
     let translate: Mock<(key: string) => string>;
@@ -35,7 +43,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         component = fixture.componentInstance;
         fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('presentationAssessment', { id: 42, maxPoints: 20 });
-        fixture.componentRef.setInput('instance', { id: 11, presentationDate });
+        fixture.componentRef.setInput('instance', { id: 11, presentationDate, student: { login: 'student1' } });
         fixture.componentRef.setInput('initialAssignedStudents', [new User(undefined, 'student1')]);
         component.saved.subscribe(saved);
         fixture.detectChanges();
@@ -112,9 +120,13 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
 
         component.save();
 
-        const savedInstance = saved.mock.calls[0][0];
-        expect(savedInstance.presentationDate).toBeDefined();
-        expect(savedInstance.presentationDate!.format('YYYY-MM-DD HH:mm')).toBe('2026-08-10 14:45');
+        const result = saved.mock.calls[0][0];
+        expect(result.kind).toBe('update');
+        if (result.kind !== 'update') {
+            throw new Error('Expected an update result');
+        }
+        expect(result.instance.presentationDate).toBeDefined();
+        expect(result.instance.presentationDate!.format('YYYY-MM-DD HH:mm')).toBe('2026-08-10 14:45');
     });
 
     it('should prevent saving an excessive remark and allow saving after shortening it', () => {
@@ -134,7 +146,47 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
 
         component.save();
 
-        expect(saved.mock.calls[0][0].remark).toBe('Strong presentation');
+        expect(saved).toHaveBeenCalledWith({
+            kind: 'update',
+            instance: expect.objectContaining({ remark: 'Strong presentation' }),
+        });
+    });
+
+    it('should emit a creation request for multiple selected students', () => {
+        fixture.componentRef.setInput('instance', undefined);
+        fixture.componentRef.setInput('initialAssignedStudents', [new User(undefined, 'student1'), new User(undefined, 'student2')]);
+        fixture.detectChanges();
+
+        component.editForm.controls.presentationDate.setValue(presentationDate);
+        component.editForm.controls.resultPoints.setValue(8);
+
+        component.save();
+
+        expect(saved).toHaveBeenCalledExactlyOnceWith({
+            kind: 'create',
+            request: expect.objectContaining({
+                studentLogins: ['student1', 'student2'],
+                resultPoints: 8,
+                language: 'en',
+                mode: PresentationAssessmentMode.IN_PERSON,
+            }),
+        });
+    });
+
+    it('should preserve the existing student assignment when updating', () => {
+        component.assignedStudents.set([new User(undefined, 'student2')]);
+        component.editForm.controls.resultPoints.setValue(9);
+
+        component.save();
+
+        expect(saved).toHaveBeenCalledExactlyOnceWith({
+            kind: 'update',
+            instance: expect.objectContaining({
+                id: 11,
+                studentLogin: 'student1',
+                resultPoints: 9,
+            }),
+        });
     });
 
     it('should retain a valid meeting link when switching away from online mode', () => {
@@ -171,5 +223,67 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         component.editForm.controls.mode.setValue(PresentationAssessmentMode.ONLINE);
 
         expect(component.editForm.controls.location.value).toBe('');
+    });
+});
+
+describe('PresentationAssessmentInstanceFormDialogComponent picker bindings', () => {
+    let fixture: ComponentFixture<PresentationAssessmentInstanceFormDialogComponent>;
+    let component: PresentationAssessmentInstanceFormDialogComponent;
+    let saved: Mock<(value: PresentationAssessmentInstanceFormResult) => void>;
+
+    beforeEach(async () => {
+        saved = vi.fn();
+        await TestBed.configureTestingModule({
+            imports: [PresentationAssessmentInstanceFormDialogComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        })
+            .overrideComponent(PresentationAssessmentInstanceFormDialogComponent, {
+                remove: { imports: [PresentationAssessmentPresenterSelectorComponent] },
+                add: { imports: [MockComponent(PresentationAssessmentPresenterSelectorComponent)] },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(PresentationAssessmentInstanceFormDialogComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('presentationAssessment', { id: 42, maxPoints: 20 });
+        fixture.componentRef.setInput('instance', { id: 11, presentationDate: dayjs('2026-07-31T13:26:00'), student: { login: 'student1' } });
+        fixture.componentRef.setInput('initialAssignedStudents', [new User(undefined, 'student1')]);
+        component.saved.subscribe(saved);
+        fixture.detectChanges();
+    });
+
+    it('should transfer picker values to the form controls', () => {
+        const [datePicker, timePicker] = fixture.debugElement
+            .queryAll(By.directive(TumAetUiDatePickerComponent))
+            .map((element) => element.componentInstance as TumAetUiDatePickerComponent);
+        const date = dayjs('2026-08-10');
+        const time = dayjs('2026-08-10T14:45');
+
+        datePicker.value.set(date);
+        timePicker.value.set(time);
+
+        expect(component.editForm.controls.presentationDate.value).toEqual(date);
+        expect(component.editForm.controls.presentationTime.value).toEqual(time);
+
+        datePicker.touch.emit();
+        timePicker.touch.emit();
+
+        expect(component.editForm.controls.presentationDate.touched).toBe(true);
+        expect(component.editForm.controls.presentationTime.touched).toBe(true);
+    });
+
+    it.each([0, 1])('should prevent saving while picker %i contains invalid text', (pickerIndex) => {
+        const picker = fixture.debugElement.queryAll(By.directive(TumAetUiDatePickerComponent))[pickerIndex].componentInstance as TumAetUiDatePickerComponent;
+
+        picker.inputValidityChange.emit(false);
+        component.save();
+
+        expect(saved).not.toHaveBeenCalled();
+
+        picker.inputValidityChange.emit(true);
+        component.save();
+
+        expect(saved).toHaveBeenCalledOnce();
     });
 });

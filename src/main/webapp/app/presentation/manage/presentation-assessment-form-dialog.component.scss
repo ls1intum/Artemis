@@ -32,11 +32,6 @@
     grid-column: 1 / -1;
 }
 
-.presentation-assessment-students {
-    min-width: 0;
-    overflow-x: auto;
-}
-
 .presentation-assessment-actions {
     display: flex;
     gap: 0.5rem;
@@ -44,12 +39,6 @@
 
 .presentation-assessment-actions-main {
     margin-left: auto;
-}
-
-.presentation-assessment-date-field {
-    ::ng-deep [data-testid='date-picker-wrapper'] {
-        margin-top: 0.5rem;
-    }
 }
 
 @media (max-width: 40rem) {

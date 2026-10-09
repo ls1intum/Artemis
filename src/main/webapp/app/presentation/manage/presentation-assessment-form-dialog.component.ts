@@ -1,5 +1,5 @@
 import { Component, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -17,7 +17,7 @@ import {
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
@@ -35,7 +35,6 @@ const notBlank: ValidatorFn = (control: AbstractControl): ValidationErrors | nul
     templateUrl: './presentation-assessment-form-dialog.component.html',
     styleUrl: './presentation-assessment-form-dialog.component.scss',
     imports: [
-        FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -54,7 +53,7 @@ export class PresentationAssessmentFormDialogComponent {
 
     readonly courseId = input.required<number>();
     readonly presentationAssessment = input<PresentationAssessment>();
-    readonly exercises = input<Exercise[]>([]);
+    readonly exercises = input<ExerciseTitle[]>([]);
     readonly isSaving = input(false);
     readonly dialogError = input<Observable<string>>();
     readonly saved = output<PresentationAssessmentFormDialogResult>();
@@ -68,13 +67,13 @@ export class PresentationAssessmentFormDialogComponent {
     protected readonly maxPointsUpperBound = MAX_POINTS_UPPER_BOUND;
     protected readonly minPoints = MIN_POINTS;
     protected readonly acceptedPointsDecimalSeparators = ['.', ','];
-    readonly filteredExercises = signal<Exercise[]>([]);
+    readonly filteredExercises = signal<ExerciseTitle[]>([]);
 
     editForm = this.formBuilder.group({
         title: ['', [Validators.required, notBlank, Validators.maxLength(255)]],
         description: ['', [Validators.maxLength(1000)]],
         maxPoints: [undefined as number | undefined, [Validators.required, Validators.min(MIN_POINTS), Validators.max(MAX_POINTS_UPPER_BOUND)]],
-        exercise: [undefined as Exercise | undefined],
+        exercise: [undefined as ExerciseTitle | undefined],
     });
 
     constructor() {

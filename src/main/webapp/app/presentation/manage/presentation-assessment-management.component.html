@@ -5,9 +5,10 @@
         </tumaet-ui-button>
     </div>
 
-    <div class="d-flex horizontal-scroll presentation-workspace" data-testid="presentation-master-detail">
+    <div class="flex horizontal-scroll presentation-workspace" data-testid="presentation-master-detail">
         <div class="presentation-sidebar">
             <jhi-sidebar
+                [fitContainerHeight]="true"
                 [courseId]="courseId()"
                 [sidebarData]="sidebarData()"
                 searchFieldSize="small"
@@ -17,10 +18,13 @@
             />
         </div>
 
-        <main class="presentation-content bg-module" [attr.aria-busy]="!contentReady() && !presentationLoadFailed()">
-            @if (presentationLoadFailed()) {
+        <main
+            class="presentation-content rounded-md border border-(--border-color) bg-(--module-bg)"
+            [attr.aria-busy]="(!contentReady() || isLoadingStudentRows()) && !presentationLoadFailed()"
+        >
+            @if (presentationLoadFailed() || (contentReady() && studentRowsLoadFailed())) {
                 <div class="flex flex-1 items-center justify-center" data-testid="presentation-load-error">
-                    <tumaet-ui-button (clicked)="loadAll()">
+                    <tumaet-ui-button (clicked)="retryLoading()">
                         <span jhiTranslate="entity.action.retry"></span>
                     </tumaet-ui-button>
                 </div>
@@ -44,7 +48,7 @@
                                     </div>
                                 </header>
 
-                                <div class="presentation-summary">{{ presentationAssessment.description || '-' }}</div>
+                                <div class="presentation-summary text-(--text-body-secondary)">{{ presentationAssessment.description || '-' }}</div>
 
                                 <div class="presentation-grading-toolbar">
                                     <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
@@ -84,7 +88,7 @@
                                                     <td>
                                                         <button
                                                             type="button"
-                                                            class="presentation-student-details-button flex items-center gap-3"
+                                                            class="presentation-student-details-button flex items-center gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--primary)"
                                                             [disabled]="!row.instance"
                                                             [attr.aria-expanded]="row.instance ? row.expanded : null"
                                                             [attr.aria-controls]="row.instance ? 'presentation-detail-' + row.rowKey : null"
@@ -94,7 +98,9 @@
                                                             "
                                                             (click)="toggleStudentRowDetails(row)"
                                                         >
-                                                            <span class="student-avatar">{{ row.studentLogin.slice(0, 2).toUpperCase() }}</span>
+                                                            <span class="student-avatar rounded-md bg-(--primary)/10 text-(--primary)">{{
+                                                                row.studentLogin.slice(0, 2).toUpperCase()
+                                                            }}</span>
                                                             <div class="flex flex-col">
                                                                 <strong>
                                                                     {{
@@ -144,7 +150,7 @@
                                                                     variant="text"
                                                                     [icon]="faPencilAlt"
                                                                     [ariaLabel]="'entity.action.edit' | artemisTranslate"
-                                                                    (clicked)="startEditInstance(presentationAssessment, instance, row.studentLogin)"
+                                                                    (clicked)="startEditInstance(presentationAssessment, instance)"
                                                                 />
                                                                 <tumaet-ui-button
                                                                     size="small"
@@ -157,7 +163,7 @@
                                                                     [renderButtonText]="false"
                                                                     [actionType]="ActionType.Delete"
                                                                     deleteQuestion="artemisApp.presentationAssessment.delete.instanceQuestion"
-                                                                    (delete)="deleteInstance(presentationAssessment, instance, row.studentLogin)"
+                                                                    (delete)="deleteInstance(presentationAssessment, instance)"
                                                                 />
                                                             </div>
                                                         }
@@ -207,21 +213,21 @@
                     } @else {
                         <section class="presentation-overview">
                             <div class="presentation-statistics" data-testid="presentation-overview-statistics">
-                                <div class="presentation-statistic presentation-statistic-total">
-                                    <strong>{{ studentRows().length }}</strong>
-                                    <span jhiTranslate="artemisApp.presentationAssessment.statistics.total"></span>
+                                <div class="presentation-statistic">
+                                    <strong class="text-base leading-tight text-(--primary)">{{ statistics()?.totalCount ?? '-' }}</strong>
+                                    <span class="text-[0.6875rem] text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.statistics.total"></span>
                                 </div>
-                                <div class="presentation-statistic presentation-statistic-assessed">
-                                    <strong>{{ assessedStudentCount() }}</strong>
-                                    <span jhiTranslate="artemisApp.presentationAssessment.assessed"></span>
+                                <div class="presentation-statistic">
+                                    <strong class="text-base leading-tight text-state-success">{{ assessedStudentCount() ?? '-' }}</strong>
+                                    <span class="text-[0.6875rem] text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.assessed"></span>
                                 </div>
-                                <div class="presentation-statistic presentation-statistic-pending">
-                                    <strong>{{ pendingStudentCount() }}</strong>
-                                    <span jhiTranslate="artemisApp.presentationAssessment.pending"></span>
+                                <div class="presentation-statistic">
+                                    <strong class="text-base leading-tight text-state-warning">{{ pendingStudentCount() ?? '-' }}</strong>
+                                    <span class="text-[0.6875rem] text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.pending"></span>
                                 </div>
                             </div>
 
-                            <div class="presentation-overall-toolbar">
+                            <div class="presentation-overall-toolbar border-y border-(--border-color)">
                                 <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
                                     <input
                                         tumAetUiInput
@@ -238,8 +244,7 @@
                                     <tumaet-ui-button
                                         size="small"
                                         variant="text"
-                                        severity="secondary"
-                                        [class.active]="assessmentStatusFilter() === 'all'"
+                                        [severity]="assessmentStatusFilter() === 'all' ? 'primary' : 'secondary'"
                                         [ariaPressed]="assessmentStatusFilter() === 'all'"
                                         (clicked)="setAssessmentStatusFilter('all')"
                                         ><span jhiTranslate="artemisApp.presentationAssessment.filter.all"></span
@@ -247,8 +252,7 @@
                                     <tumaet-ui-button
                                         size="small"
                                         variant="text"
-                                        severity="secondary"
-                                        [class.active]="assessmentStatusFilter() === 'assessed'"
+                                        [severity]="assessmentStatusFilter() === 'assessed' ? 'primary' : 'secondary'"
                                         [ariaPressed]="assessmentStatusFilter() === 'assessed'"
                                         (clicked)="setAssessmentStatusFilter('assessed')"
                                         ><span jhiTranslate="artemisApp.presentationAssessment.assessed"></span
@@ -256,14 +260,13 @@
                                     <tumaet-ui-button
                                         size="small"
                                         variant="text"
-                                        severity="secondary"
-                                        [class.active]="assessmentStatusFilter() === 'pending'"
+                                        [severity]="assessmentStatusFilter() === 'pending' ? 'primary' : 'secondary'"
                                         [ariaPressed]="assessmentStatusFilter() === 'pending'"
                                         (clicked)="setAssessmentStatusFilter('pending')"
                                         ><span jhiTranslate="artemisApp.presentationAssessment.pending"></span
                                     ></tumaet-ui-button>
                                 </tumaet-ui-button-group>
-                                <span class="presentation-toolbar-divider" aria-hidden="true"></span>
+                                <span class="presentation-toolbar-divider border-l border-(--border-color)" aria-hidden="true"></span>
                                 <tumaet-ui-select
                                     size="small"
                                     class="presentation-filter-select"
@@ -285,7 +288,7 @@
                                     [ariaLabel]="'artemisApp.presentationAssessment.filter.type' | artemisTranslate"
                                 />
                                 <span class="presentation-row-count text-muted-color">
-                                    {{ filteredStudentRows().length }} <span jhiTranslate="artemisApp.presentationAssessment.rows"></span>
+                                    {{ totalStudentRows() }} <span jhiTranslate="artemisApp.presentationAssessment.rows"></span>
                                 </span>
                             </div>
                             <div class="presentation-table-scroll">
@@ -314,7 +317,7 @@
                                                 <td>
                                                     <button
                                                         type="button"
-                                                        class="presentation-student-details-button flex items-center gap-3"
+                                                        class="presentation-student-details-button flex items-center gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--primary)"
                                                         [attr.aria-expanded]="row.expanded"
                                                         [attr.aria-controls]="'presentation-overview-detail-' + row.rowKey"
                                                         [attr.aria-label]="
@@ -323,7 +326,9 @@
                                                         "
                                                         (click)="toggleStudentRowDetails(row)"
                                                     >
-                                                        <span class="student-avatar">{{ row.studentLogin.slice(0, 2).toUpperCase() }}</span>
+                                                        <span class="student-avatar rounded-md bg-(--primary)/10 text-(--primary)">{{
+                                                            row.studentLogin.slice(0, 2).toUpperCase()
+                                                        }}</span>
                                                         <div class="flex min-w-0 flex-col">
                                                             <strong class="truncate">{{ row.student.name || row.studentLogin }}</strong>
                                                             <small class="truncate text-muted-color">{{ row.student.email || row.studentLogin }}</small>
@@ -379,7 +384,7 @@
                                                             variant="text"
                                                             [icon]="faPencilAlt"
                                                             [ariaLabel]="'entity.action.edit' | artemisTranslate"
-                                                            (clicked)="startEditInstance(row.presentationAssessment, row.instance, row.studentLogin)"
+                                                            (clicked)="startEditInstance(row.presentationAssessment, row.instance)"
                                                         />
                                                         <tumaet-ui-button
                                                             size="small"
@@ -392,7 +397,7 @@
                                                             [renderButtonText]="false"
                                                             [actionType]="ActionType.Delete"
                                                             deleteQuestion="artemisApp.presentationAssessment.delete.instanceQuestion"
-                                                            (delete)="deleteInstance(row.presentationAssessment, row.instance, row.studentLogin)"
+                                                            (delete)="deleteInstance(row.presentationAssessment, row.instance)"
                                                         />
                                                     </div>
                                                 </td>
@@ -444,17 +449,17 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <tumaet-ui-paginator
-                                class="presentation-paginator"
-                                [page]="effectiveOverviewPage()"
-                                [pageSize]="overviewPageSize()"
-                                [pageSizeOptions]="[10, 25, 50, 100]"
-                                [totalRecords]="filteredStudentRows().length"
-                                (pageChange)="overviewPage.set($event)"
-                                (pageSizeChange)="updateOverviewPageSize($event)"
-                            />
                         </section>
                     }
+                    <tumaet-ui-paginator
+                        class="presentation-paginator"
+                        [page]="overviewPage()"
+                        [pageSize]="overviewPageSize()"
+                        [pageSizeOptions]="[10, 25, 50, 100]"
+                        [totalRecords]="totalStudentRows()"
+                        (pageChange)="overviewPage.set($event)"
+                        (pageSizeChange)="updateOverviewPageSize($event)"
+                    />
                 } @else {
                     <tumaet-ui-message severity="secondary" data-testid="presentation-assessments-empty-message">
                         <span jhiTranslate="artemisApp.presentationAssessment.noExisting"></span>

@@ -79,19 +79,17 @@
                     @if (sidebarDataInternal().pinnedData?.length) {
                         <div class="mt-2 border-top border-bottom py-2">
                             @for (sidebarItem of sidebarDataInternal().pinnedData; track sidebarItem.trackId ?? sidebarItem.id) {
-                                <div
-                                    jhiSidebarCard
+                                <jhi-sidebar-card
                                     [size]="sidebarItem.size"
                                     [itemSelected]="itemSelected()"
                                     [sidebarType]="sidebarDataInternal().sidebarType"
                                     [sidebarItem]="sidebarItem"
-                                ></div>
+                                />
                             }
                         </div>
                     }
 
                     @if (
-                        !sidebarDataInternal().groupByCategory &&
                         !sidebarDataInternal().pinnedData?.length &&
                         (!sidebarDataInternal()?.ungroupedData ||
                             !(sidebarDataInternal()?.ungroupedData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems')?.length)

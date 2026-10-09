@@ -5,29 +5,34 @@
                 <span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span>
                 <span aria-hidden="true">*</span>
             </label>
-            <jhi-date-time-picker
+            <tumaet-ui-date-picker
                 inputId="presentation-instance-date"
+                [dateOnly]="true"
                 [hideLabelName]="true"
-                [requiredField]="editForm.controls.presentationDate.touched"
-                [pickerType]="DateTimePickerType.CALENDAR"
-                [min]="minPresentationDate"
-                [appendTo]="'self'"
+                [ariaLabel]="'artemisApp.presentationAssessment.presentationDate' | artemisTranslate"
+                [ariaRequired]="true"
                 [shouldDisplayTimeZoneWarning]="false"
-                [error]="editForm.controls.presentationDate.touched && editForm.controls.presentationDate.invalid"
-                formControlName="presentationDate"
-                name="presentationDate"
+                [disabled]="editForm.controls.presentationDate.disabled"
+                [invalid]="editForm.controls.presentationDate.touched && editForm.controls.presentationDate.invalid"
+                [value]="editForm.controls.presentationDate.value ?? undefined"
+                (valueChange)="editForm.controls.presentationDate.setValue($event)"
+                (inputValidityChange)="dateTextValid.set($event)"
+                (touch)="editForm.controls.presentationDate.markAsTouched()"
             />
         </div>
         <div class="flex flex-col gap-2">
             <label for="presentation-instance-time" jhiTranslate="artemisApp.presentationAssessment.presentationTime"></label>
-            <jhi-date-time-picker
+            <tumaet-ui-date-picker
                 inputId="presentation-instance-time"
+                [timeOnly]="true"
                 [hideLabelName]="true"
-                [pickerType]="DateTimePickerType.TIMER"
-                [appendTo]="'self'"
+                [ariaLabel]="'artemisApp.presentationAssessment.presentationTime' | artemisTranslate"
                 [shouldDisplayTimeZoneWarning]="false"
-                formControlName="presentationTime"
-                name="presentationTime"
+                [disabled]="editForm.controls.presentationTime.disabled"
+                [value]="editForm.controls.presentationTime.value ?? undefined"
+                (valueChange)="editForm.controls.presentationTime.setValue($event)"
+                (inputValidityChange)="timeTextValid.set($event)"
+                (touch)="editForm.controls.presentationTime.markAsTouched()"
             />
         </div>
         <div class="flex flex-col gap-2">
@@ -141,7 +146,7 @@
 
     <div class="flex justify-end gap-2">
         <tumaet-ui-button severity="secondary" type="button" (clicked)="cancel()"><fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel"></span></tumaet-ui-button>
-        <tumaet-ui-button type="submit" [disabled]="isSaving() || editForm.invalid || assignedStudents().length === 0">
+        <tumaet-ui-button type="submit" [disabled]="isSaving() || editForm.invalid || !dateTextValid() || !timeTextValid() || assignedStudents().length === 0">
             <fa-icon [icon]="faSave" /><span jhiTranslate="entity.action.save"></span>
         </tumaet-ui-button>
     </div>
