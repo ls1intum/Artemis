@@ -17,6 +17,8 @@
                         [class.modeling-editor__status-island--unsaved]="savedStatus()?.isChanged && !savedStatus()?.isSaving"
                         [class.modeling-editor__status-island--saving]="savedStatus()?.isSaving"
                         role="status"
+                        data-testid="modeling-editor-save-status"
+                        [attr.data-state]="saveState()"
                     >
                         @if (savedStatus()?.isSaving) {
                             <fa-icon class="spin" [icon]="faCircleNotch" />

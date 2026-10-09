@@ -26,16 +26,16 @@ import dockerStructure from './assets/artemis-docker-file-structure.drawio.png';
 3. From the **repository root**, run:
 
    ```bash
-   docker compose --env-file .env -f docker/docker-compose.yml pull
-   docker compose --env-file .env -f docker/docker-compose.yml up
+   docker compose --env-file .env -f deployment/docker/docker-compose.yml pull
+   docker compose --env-file .env -f deployment/docker/docker-compose.yml up
    ```
 
 4. Open the Artemis instance in your browser at https://localhost
 
-5. Run `docker compose --env-file .env -f docker/docker-compose.yml down` to stop and remove the docker containers
+5. Run `docker compose --env-file .env -f deployment/docker/docker-compose.yml down` to stop and remove the docker containers
 
 <Callout variant={CalloutVariant.warning}>
-    **Always pass `--env-file .env` and run from the repository root.** The Compose files take their image versions (`MYSQL_IMAGE`, `POSTGRES_VERSION`, `POSTGRES_IMAGE_VARIANT`, ...) from the `.env` file in the repository root, but Compose looks for `.env` next to the first `-f` file, which is `docker/`. Without `--env-file .env` those variables are unset: the MySQL setups fail immediately with *"service mysql has neither an image nor a build context specified"*, and the PostgreSQL setups resolve to an image tag of `postgres:` and fail later, when pulling. Every script in this repository (`run-e2e-tests-local*.sh`) passes `--env-file .env` for the same reason.
+    **Always pass `--env-file .env` and run from the repository root.** The Compose files take their image versions (`MYSQL_IMAGE`, `POSTGRES_VERSION`, `POSTGRES_IMAGE_VARIANT`, ...) from the `.env` file in the repository root, but Compose looks for `.env` next to the first `-f` file, which is `deployment/docker/`. Without `--env-file .env` those variables are unset: the MySQL setups fail immediately with *"service mysql has neither an image nor a build context specified"*, and the PostgreSQL setups resolve to an image tag of `postgres:` and fail later, when pulling. Every script in this repository (`run-e2e-tests-local*.sh`) passes `--env-file .env` for the same reason.
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
@@ -47,7 +47,7 @@ import dockerStructure from './assets/artemis-docker-file-structure.drawio.png';
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-    `docker-compose.yml` mirrors the production setup, so it needs a signing key and an admin password of your own before it starts. See [Other Docker Compose Setups](#other-docker-compose-setups) below. If you would rather not configure anything, `docker compose --env-file .env -f docker/artemis-dev-postgres.yml up` starts as it is.
+    `docker-compose.yml` mirrors the production setup, so it needs a signing key and an admin password of your own before it starts. See [Other Docker Compose Setups](#other-docker-compose-setups) below. If you would rather not configure anything, `docker compose --env-file .env -f deployment/docker/artemis-dev-postgres.yml up` starts as it is.
 </Callout>
 
 ## Other Docker Compose Setups
@@ -60,7 +60,7 @@ import dockerStructure from './assets/artemis-docker-file-structure.drawio.png';
 />
 
 The easiest way to configure a local deployment via Docker is a deployment with a *docker compose* file.
-In the directory `docker/` you can find the following *docker compose* files for different **setups**:
+In the directory `deployment/docker/` you can find the following *docker compose* files for different **setups**:
 
 - `artemis-dev-mysql.yml`: **Artemis-Dev-MySQL** Setup containing the development build of Artemis and a MySQL DB
 - `artemis-dev-postgres.yml`: **Artemis-Dev-Postgres** Setup containing the development build of Artemis and a PostgreSQL DB
@@ -76,18 +76,18 @@ In the directory `docker/` you can find the following *docker compose* files for
 Example command to run such setups, from the repository root:
 
 ```bash
-docker compose --env-file .env -f docker/artemis-dev-postgres.yml up
+docker compose --env-file .env -f deployment/docker/artemis-dev-postgres.yml up
 ```
 
 <Callout variant={CalloutVariant.info}>
-    There is also a single `docker-compose.yml` in the directory `docker/` which mirrors the setup of `artemis-prod-mysql.yml`. Always select it explicitly with `--env-file .env -f docker/docker-compose.yml` from the repository root; a bare `docker compose` run inside `docker/` does not find the root `.env`.
+    There is also a single `docker-compose.yml` in the directory `deployment/docker/` which mirrors the setup of `artemis-prod-mysql.yml`. Always select it explicitly with `--env-file .env -f deployment/docker/docker-compose.yml` from the repository root; a bare `docker compose` run inside `deployment/docker/` does not find the root `.env`.
 </Callout>
 
 ### Credentials for the Prod Setups
 
-The **dev** setups start without any configuration. The **prod** setups - and `docker-compose.yml`, which mirrors one of them - need credentials of your own: they activate the `prod` profile, and `docker/artemis/config/prod.env` deliberately keeps placeholders that Artemis rejects at startup, because a credential committed to this repository can be read by everyone.
+The **dev** setups start without any configuration. The **prod** setups - and `docker-compose.yml`, which mirrors one of them - need credentials of your own: they activate the `prod` profile, and `deployment/docker/artemis/config/prod.env` deliberately keeps placeholders that Artemis rejects at startup, because a credential committed to this repository can be read by everyone.
 
-Keep your values in a file of your own, for example `docker/artemis/config/local-secrets.env`, which is not tracked:
+Keep your values in a file of your own, for example `deployment/docker/artemis/config/local-secrets.env`, which is not tracked:
 
 ```bash
 JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64SECRET="<output of: openssl rand -base64 64 | tr -d '\n'>"
@@ -107,7 +107,7 @@ ARTEMIS_VERSIONCONTROL_BUILDAGENTGITPASSWORD="<a unique password, kept in sync w
 
 Do **not** set it where `localci` is active: such a node refuses to start with it, because its build agents authenticate per build job and need no shared secret. See [Build Agent Authentication](/admin/production-setup/security#build-agent-authentication).
 
-Hand the file to the setup with a small override file, `docker/local-secrets.yml`:
+Hand the file to the setup with a small override file, `deployment/docker/local-secrets.yml`:
 
 ```yaml
 services:
@@ -117,10 +117,10 @@ services:
 ```
 
 ```bash
-docker compose --env-file .env -f docker/artemis-prod-postgres.yml -f docker/local-secrets.yml up
+docker compose --env-file .env -f deployment/docker/artemis-prod-postgres.yml -f deployment/docker/local-secrets.yml up
 ```
 
-The `docker/test-server-*.yml` setups take a full replacement for `prod.env` through `ARTEMIS_ENV_FILE`, so there you point that variable at your own copy of `prod.env` rather than at a file that only holds the credentials. See [Security](/admin/production-setup/security) for the properties that are validated. If you just want a running Artemis without configuring anything, use one of the dev setups.
+The `deployment/docker/test-server-*.yml` setups take a full replacement for `prod.env` through `ARTEMIS_ENV_FILE`, so there you point that variable at your own copy of `prod.env` rather than at a file that only holds the credentials. See [Security](/admin/production-setup/security) for the properties that are validated. If you just want a running Artemis without configuring anything, use one of the dev setups.
 
 ### Base Services
 
@@ -147,17 +147,17 @@ When running Artemis from IntelliJ or via `./gradlew bootRun`, start only the in
 
 ```bash
 # Email testing only
-docker compose --env-file .env -f docker/mailpit.yml up
+docker compose --env-file .env -f deployment/docker/mailpit.yml up
 
 # SAML2 testing only
-docker compose --env-file .env -f docker/saml-test.yml up
+docker compose --env-file .env -f deployment/docker/saml-test.yml up
 
 # Both services
-docker compose --env-file .env -f docker/local-development.yml up
+docker compose --env-file .env -f deployment/docker/local-development.yml up
 
 # Or selectively from the combined file
-docker compose --env-file .env -f docker/local-development.yml up mailpit
-docker compose --env-file .env -f docker/local-development.yml up keycloak
+docker compose --env-file .env -f deployment/docker/local-development.yml up mailpit
+docker compose --env-file .env -f deployment/docker/local-development.yml up keycloak
 ```
 
 Then configure Artemis to connect to these services via `application-local.yml`. See the dedicated setup guides for detailed instructions:
@@ -171,9 +171,9 @@ Then configure Artemis to connect to these services via `application-local.yml`.
 
 ### Folder Structure
 
-**Base services** (compose file with just one service) and **setups** (compose files with multiple services) should be located directly in `docker/`.
+**Base services** (compose file with just one service) and **setups** (compose files with multiple services) should be located directly in `deployment/docker/`.
 
-Additional files like configuration files, Dockerfile, ... should be in a subdirectory with the **base service** or **setup** name (`docker/<base service or setup name>/`).
+Additional files like configuration files, Dockerfile, ... should be in a subdirectory with the **base service** or **setup** name (`deployment/docker/<base service or setup name>/`).
 
 ## Artemis Base Service
 
@@ -199,7 +199,7 @@ Container and volume names are prepended with `artemis-` in order to not interfe
 ## Get a Shell into the Containers
 
 <Callout variant={CalloutVariant.info}>
-    To keep the documentation short, we will use the short form of `docker compose COMMAND` from this point on. In practice, prefix each of them with `--env-file .env -f docker/<setup to be launched>.yml` from the repository root, so that Compose finds the image versions and the right setup.
+    To keep the documentation short, we will use the short form of `docker compose COMMAND` from this point on. In practice, prefix each of them with `--env-file .env -f deployment/docker/<setup to be launched>.yml` from the repository root, so that Compose finds the image versions and the right setup.
 </Callout>
 
 - **app container:**
@@ -353,7 +353,7 @@ services:
       - "22:22"
     environment:
       - spring.profiles.active=${PROFILES}
-      - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-db:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-db:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
     networks:
       - artemis-net
     labels:

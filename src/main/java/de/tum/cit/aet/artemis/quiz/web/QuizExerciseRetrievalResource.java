@@ -195,7 +195,9 @@ public class QuizExerciseRetrievalResource {
         setQuizBatches(user, quizExercise);
         boolean isEditable = quizExerciseService.isEditable(quizExercise);
         boolean effectiveQuizEnded = computeEffectiveQuizEnded(quizExercise);
-        QuizExerciseDetailsDTO quizExerciseDTO = QuizExerciseDetailsDTO.of(quizExercise, isEditable, effectiveQuizEnded);
+        // test exams have no common end and are evaluated when each attempt is handed in, so only real exams can be evaluated for all students at once
+        boolean canBeEvaluated = effectiveQuizEnded && !quizExercise.isTestExamExercise();
+        QuizExerciseDetailsDTO quizExerciseDTO = QuizExerciseDetailsDTO.of(quizExercise, isEditable, effectiveQuizEnded, canBeEvaluated);
         return ResponseEntity.ok(quizExerciseDTO);
     }
 

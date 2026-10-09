@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
@@ -62,7 +62,7 @@ public abstract class PostingService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    protected static final String METIS_POST_ENTITY_NAME = "metis.post";
+    protected static final String POST_ENTITY_NAME = "messages.post";
 
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
@@ -109,7 +109,7 @@ public abstract class PostingService {
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
         preparePostForBroadcast(updatedPost);
-        broadcastForPost(updatedPost, MetisCrudAction.UPDATE, course.getId(), null);
+        broadcastForPost(updatedPost, CommunicationCrudAction.UPDATE, course.getId(), null);
     }
 
     /**
@@ -131,7 +131,7 @@ public abstract class PostingService {
      *                       ({@link #hasPendingIrisReply}); in that case recipients are re-resolved via {@link #getNotificationRecipients}
      *                       because per-user delivery needs each recipient's course role to choose the tutor vs. student payload.
      */
-    public void broadcastForPost(Post post, MetisCrudAction action, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
+    public void broadcastForPost(Post post, CommunicationCrudAction action, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
         // A pending (unverified) Iris reply must never reach students. Clients replace their whole cached
         // post — including its answers — on every UPDATE frame, so a single shared payload cannot serve
         // students and tutors at once: re-broadcasting an unrelated change (a reaction, an edit, another
@@ -210,7 +210,7 @@ public abstract class PostingService {
      * @param action       the CRUD action this broadcast describes
      * @param conversation the conversation the post belongs to
      */
-    private void broadcastPostWithPendingIrisReply(Post post, MetisCrudAction action, Conversation conversation) {
+    private void broadcastPostWithPendingIrisReply(Post post, CommunicationCrudAction action, Conversation conversation) {
         // Tutor payload first, while the pending reply is still attached.
         PostBroadcastDTO tutorPayload = PostBroadcastDTO.from(post, action);
         // Then strip the pending replies and re-project for everyone else.
@@ -405,17 +405,17 @@ public abstract class PostingService {
         Set<User> mentionedUsers = userRepository.findAllWithCourseRolesAndAuthoritiesByDeletedIsFalseAndLoginIn(matches.keySet());
 
         if (mentionedUsers.size() != matches.size()) {
-            throw new BadRequestAlertException("At least one of the mentioned users does not exist", METIS_POST_ENTITY_NAME, "invalidUserMention");
+            throw new BadRequestAlertException("At least one of the mentioned users does not exist", POST_ENTITY_NAME, "invalidUserMention");
         }
 
         mentionedUsers.forEach(user -> {
             if (!user.getName().equals(matches.get(user.getLogin()))) {
-                throw new BadRequestAlertException("The name provided for user " + user.getLogin() + " does not match the user's full name " + user.getName(),
-                        METIS_POST_ENTITY_NAME, "invalidUserMention");
+                throw new BadRequestAlertException("The name provided for user " + user.getLogin() + " does not match the user's full name " + user.getName(), POST_ENTITY_NAME,
+                        "invalidUserMention");
             }
 
             if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
-                throw new BadRequestAlertException("The user " + user.getLogin() + " is not a member of the course", METIS_POST_ENTITY_NAME, "invalidUserMention");
+                throw new BadRequestAlertException("The user " + user.getLogin() + " is not a member of the course", POST_ENTITY_NAME, "invalidUserMention");
             }
         });
 

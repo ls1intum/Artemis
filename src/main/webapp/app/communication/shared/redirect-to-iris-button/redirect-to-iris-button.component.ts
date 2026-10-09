@@ -7,9 +7,9 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Router } from '@angular/router';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
@@ -20,8 +20,8 @@ import { MODULE_FEATURE_IRIS } from 'app/app.constants';
     imports: [IrisLogoComponent, NgClass, FaIconComponent],
 })
 export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
-    metisConversationService = inject(MetisConversationService);
-    protected metisService = inject(MetisService);
+    courseConversationsService = inject(CourseConversationsService);
+    protected communicationService = inject(CommunicationService);
     irisSettingsService = inject(IrisSettingsService);
     profileService = inject(ProfileService);
     router = inject(Router);
@@ -48,7 +48,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
         if (!isIrisActive) {
             return;
         }
-        this.conversationServiceSubscription = this.metisConversationService.activeConversation$
+        this.conversationServiceSubscription = this.courseConversationsService.activeConversation$
             .pipe(
                 filter((conversation) => !!conversation),
                 distinctUntilKeyChanged('id'),
@@ -139,7 +139,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
      */
     private setIrisStatus(enabled: boolean = false, channelDTO?: ChannelDTO): void {
         this.irisEnabled.set(enabled);
-        this.channelSubTypeReferenceRouterLink = enabled ? (this.metisService.getLinkForChannelSubType(channelDTO) ?? '') : '';
+        this.channelSubTypeReferenceRouterLink = enabled ? (this.communicationService.getLinkForChannelSubType(channelDTO) ?? '') : '';
     }
 
     /**

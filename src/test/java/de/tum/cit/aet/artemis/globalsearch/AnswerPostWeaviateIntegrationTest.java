@@ -4,13 +4,12 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertAn
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertAnswerPostNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryAnswerPostProperties;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -166,7 +165,7 @@ class AnswerPostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
 
             searchableEntityWeaviateService.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answerPost, channel));
 
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 var properties = queryAnswerPostProperties(weaviateService, answerPost.getId());
                 assertThat(properties).isNotNull();
                 assertThat(properties.get(SearchableEntitySchema.Properties.DESCRIPTION)).isEqualTo(answerPost.getContent());
@@ -186,10 +185,12 @@ class AnswerPostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
             searchableEntityWeaviateService.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answerPost, channel));
             assertAnswerPostExistsInWeaviate(weaviateService, answerPost.getId());
 
+            // Persist the update, since the dispatcher re-derives the entity from the database at dispatch time
             answerPost.setContent("Updated reply content");
+            answerPostRepository.save(answerPost);
             searchableEntityWeaviateService.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answerPost, channel));
 
-            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 var properties = queryAnswerPostProperties(weaviateService, answerPost.getId());
                 assertThat(properties).isNotNull();
                 assertThat(properties.get(SearchableEntitySchema.Properties.DESCRIPTION)).isEqualTo("Updated reply content");

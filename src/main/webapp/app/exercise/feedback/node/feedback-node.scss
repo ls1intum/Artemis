@@ -71,25 +71,30 @@
 }
 
 /*
- * Background color of the collapsible feedback-group header. The variant class is composed dynamically in
- * the template from runtime data (`feedback-group--{{ feedbackItemGroup().color }}`), so the color cannot be
- * expressed as a static Tailwind utility (e.g. `bg-state-success`) on the element — it must be resolved in
- * SCSS from the runtime-selected variant. Values map to the state tokens (`--success`/`--info`/`--warning`/`--danger`).
+ * Colors of the collapsible feedback-group header. The variant class is composed dynamically in the template
+ * from runtime data (`feedback-group--{{ feedbackItemGroup().color }}`), so the colors cannot be expressed as
+ * static Tailwind utilities (e.g. `bg-state-success`) on the element; they must be resolved in SCSS from the
+ * runtime-selected variant. Each variant uses the state background together with its contrast color, so the
+ * header text stays readable in both themes.
  */
 .feedback-group {
     &--success {
-        background-color: var(--success);
+        color: var(--tumaet-ui-state-success-contrast);
+        background-color: var(--tumaet-ui-state-success);
     }
 
     &--info {
-        background-color: var(--info);
+        color: var(--tumaet-ui-state-info-contrast);
+        background-color: var(--tumaet-ui-state-info);
     }
 
     &--warning {
-        background-color: var(--warning);
+        color: var(--tumaet-ui-state-warning-contrast);
+        background-color: var(--tumaet-ui-state-warning);
     }
 
     &--danger {
-        background-color: var(--danger);
+        color: var(--tumaet-ui-state-danger-contrast);
+        background-color: var(--tumaet-ui-state-danger);
     }
 }

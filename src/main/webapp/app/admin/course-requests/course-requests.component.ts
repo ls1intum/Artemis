@@ -2,14 +2,17 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
     TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
     TumAetUiDialogComponent,
     TumAetUiInputDirective,
     TumAetUiPaginatorComponent,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
     TumAetUiTableDirective,
     TumAetUiTagComponent,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
-import { faCheck, faExternalLinkAlt, faPencil, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faChevronDown, faExternalLinkAlt, faPencil, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -52,6 +55,9 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
         CourseRequestFormComponent,
         TumAetUiDialogComponent,
         TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
         TumAetUiTableDirective,
         TumAetUiTagComponent,
         TumAetUiInputDirective,
@@ -65,6 +71,7 @@ export class CourseRequestsComponent implements OnInit {
 
     protected readonly CourseRequestStatus = CourseRequestStatus;
     protected readonly faCheck = faCheck;
+    protected readonly faChevronDown = faChevronDown;
     protected readonly faTimes = faTimes;
     protected readonly faExternalLinkAlt = faExternalLinkAlt;
     protected readonly faSync = faSync;
@@ -104,6 +111,7 @@ export class CourseRequestsComponent implements OnInit {
         startDate: [undefined as dayjs.Dayjs | undefined, [Validators.required]],
         endDate: [undefined as dayjs.Dayjs | undefined, [Validators.required]],
         testCourse: [false],
+        gradeRelevant: [true],
         reason: ['', [Validators.required]],
     });
     /** Whether edit date range is invalid */
@@ -258,6 +266,8 @@ export class CourseRequestsComponent implements OnInit {
             startDate,
             endDate,
             testCourse: request.testCourse ?? false,
+            // The control holds the choice for a regular course; the form shows a test course as not grade-relevant on its own
+            gradeRelevant: request.testCourse ? true : (request.gradeRelevant ?? true),
             reason: request.reason,
         });
         this.editModalVisible.set(true);
@@ -278,13 +288,16 @@ export class CourseRequestsComponent implements OnInit {
             return;
         }
 
+        const testCourse = this.editForm.get('testCourse')!.value ?? false;
         const payload: BaseCourseRequest = {
             title: this.editForm.get('title')!.value!,
             shortName: this.editForm.get('shortName')!.value!,
             semester: this.editForm.get('semester')!.value!,
             startDate,
             endDate,
-            testCourse: this.editForm.get('testCourse')!.value ?? false,
+            testCourse,
+            // A test course is never grade relevant, whatever the (disabled) control still holds
+            gradeRelevant: !testCourse && (this.editForm.get('gradeRelevant')!.value ?? true),
             reason: this.editForm.get('reason')!.value!,
         };
 

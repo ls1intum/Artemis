@@ -389,7 +389,7 @@ const main = async () => {
         }
     }
 
-    const openApiSpecification = parse(readFileSync("openapi/openapi.yaml", "utf8")) as OpenApiSpecification;
+    const openApiSpecification = parse(readFileSync("config/openapi/openapi.yaml", "utf8")) as OpenApiSpecification;
     const multipartObjectPartNames = getMultipartObjectPartNames(openApiSpecification);
     const multipartObjectPartNameSet = new Set(multipartObjectPartNames);
     const multipartBinaryPartNames = getMultipartBinaryPartNames(openApiSpecification);

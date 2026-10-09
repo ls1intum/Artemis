@@ -205,6 +205,11 @@
                 "content": "{{replyMarkdownContent}}",
                 "settingsTitle": "Iris-Antwort prüfen"
             },
+            "atlasCompetencyUpdateNotification": {
+                "title": "Automatische Kompetenzaktualisierung",
+                "content": "Automatische Kompetenzaktualisierung nach Änderungen an {{exerciseCount}} Lernobjekt(en): {{appliedCount}} Änderung(en) übernommen. Die Details wurden per E-Mail verschickt.",
+                "settingsTitle": "Automatische Kompetenzaktualisierungen (Lehrende)"
+            },
             "newMentionNotification": {
                 "title": "Du wurdest markiert",
                 "content": "{{postMarkdownContent}}",
@@ -319,6 +324,11 @@
                 "title": "Übungsgruppe gelöscht",
                 "content": "Die Übungsgruppe {{groupTitle}} wurde gelöscht.",
                 "settingsTitle": "Übungsgruppe gelöscht"
+            },
+            "irisResponseNotification": {
+                "title": "Iris hat geantwortet - {{chatTitle}}",
+                "content": "{{messagePreview}}",
+                "settingsTitle": "Iris-Antwort"
             },
             "temporal": {
                 "now": "Jetzt",

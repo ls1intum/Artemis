@@ -57,6 +57,7 @@ import jakarta.persistence.OrderColumn;
 import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.util.SystemReader;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -144,7 +145,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 .because("Google libraries (Guava, Gson) are forbidden to reduce incompatibilities, to reduce dependencies and security risks. " + "Alternatives: "
                         + "Guava Cache -> Spring CacheManager (see HazelcastConfiguration), " + "Guava Collections -> Java Collections API (List.of(), Set.of(), Map.of()), "
                         + "Guava Strings -> Apache Commons Lang3 StringUtils or Spring StringUtils, "
-                        + "Guava Preconditions -> for nullness, @NonNull or @Nullable from org.jspecify.annotations (see checkstyle.xml); "
+                        + "Guava Preconditions -> for nullness, @NonNull or @Nullable from org.jspecify.annotations (see config/checkstyle/checkstyle.xml); "
                         + "for any other check, an explicit if throwing IllegalArgumentException or IllegalStateException, " + "Guava Optional -> java.util.Optional, "
                         + "Gson -> Jackson ObjectMapper");
         noGoogleDependencies.check(allClasses);
@@ -487,15 +488,14 @@ class ArchitectureTest extends AbstractArchitectureTest {
             "de.tum.cit.aet.artemis.communication.domain.conversation.Channel.lecture", "de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore.user",
             "de.tum.cit.aet.artemis.iris.domain.message.IrisMessage.content", "de.tum.cit.aet.artemis.lecture.domain.Attachment.attachmentVideoUnit",
             "de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit.attachment", "de.tum.cit.aet.artemis.lecture.domain.LectureTranscription.lectureUnit",
-            "de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState.lectureUnit", "de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration.course",
-            "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase.post", "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission.plagiarismComparison",
+            "de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState.lectureUnit", "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase.post",
+            "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission.plagiarismComparison",
             "de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation.programmingExercise",
             "de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation.programmingExercise",
             "de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy.programmingExercise",
             "de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic.pointCounters", "de.tum.cit.aet.artemis.quiz.domain.QuizQuestionStatistic.quizQuestion",
             "de.tum.cit.aet.artemis.text.domain.TextBlock.feedback", "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup.tutorialGroupChannel",
-            "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup.tutorialGroupSchedule", "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule.tutorialGroup",
-            "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration.course");
+            "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup.tutorialGroupSchedule", "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule.tutorialGroup");
 
     /**
      * No new {@code @OneToOne}, {@code @OneToMany} or {@code @ManyToMany} may be fetched eagerly.
@@ -921,6 +921,22 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testHibernatePropertyInitializedNotUsed() {
+        String reason = """
+                Hibernate.isPropertyInitialized takes the attribute name as a string, and a name that matches \
+                no attribute is not an error: for an entity without bytecode enhancement it answers true whatever the name, \
+                so the check passes without checking anything and the code behind it reads a lazy association that was never \
+                loaded. Static analysis also models the call as passing the entity to a logger inside Hibernate, so a client \
+                supplied entity reaching it is reported as log injection (SonarQube Cloud javasecurity:S5145).
+                Ask the standard JPA call instead, Persistence.getPersistenceUtil().isLoaded(entity, Entity_.ATTRIBUTE), \
+                with the constant of the generated static metamodel; checkstyle rejects a string literal there.""";
+
+        ArchRule noHibernatePropertyInitialized = noClasses().should().callMethod(Hibernate.class, "isPropertyInitialized", Object.class, String.class).because(reason);
+
+        noHibernatePropertyInitialized.check(allClasses);
+    }
+
+    @Test
     void testNoRestControllersImported() {
         final var exceptions = new String[] { "AccountResourceIntegrationTest", "AdminResourceArchitectureTest", "AndroidAppSiteAssociationResourceTest",
                 "AppleAppSiteAssociationResourceTest", "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "CourseResourceArchitectureTest",
@@ -930,7 +946,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // failure to a status, and the access checks made inside the method rather than by its annotations. They call
                 // the resource directly on purpose; the annotations and the routing stay covered by the integration tests.
                 "AuxiliaryRepositoryResourceTest", "BuildJobQueueResourceTest", "CourseArchiveResourceTest", "ProgrammingExerciseParticipationResourceResetTest",
-                "PublicProgrammingExerciseResultResourceTest", "RepositoryProgrammingExerciseParticipationResourceTest" };
+                "PublicProgrammingExerciseResultResourceTest", "RepositoryProgrammingExerciseParticipationResourceTest", "IrisGlobalSearchResourceTest",
+                "IngestionCoverageResourceTest" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }

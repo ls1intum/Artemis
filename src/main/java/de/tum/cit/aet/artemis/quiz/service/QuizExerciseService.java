@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
@@ -133,6 +134,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final ExerciseService exerciseService;
 
+    private final ExerciseConfigurationService exerciseConfigurationService;
+
     private final UserRepository userRepository;
 
     private final QuizBatchRepository quizBatchRepository;
@@ -156,7 +159,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService, ExerciseService exerciseService, UserRepository userRepository,
             QuizBatchRepository quizBatchRepository, ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService,
             Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService,
-            Optional<ExamDateApi> examDateApi, Optional<LtiApi> ltiApi) {
+            Optional<ExamDateApi> examDateApi, Optional<LtiApi> ltiApi, ExerciseConfigurationService exerciseConfigurationService) {
         super();
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -176,6 +179,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.examDateApi = examDateApi;
         this.ltiApi = ltiApi;
+        this.exerciseConfigurationService = exerciseConfigurationService;
     }
 
     /**
@@ -325,7 +329,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 originalAnswerOptionItem.setText(answerOptionDTOItem.text());
                 originalAnswerOptionItem.setHint(answerOptionDTOItem.hint());
                 originalAnswerOptionItem.setExplanation(answerOptionDTOItem.explanation());
-                if (originalAnswerOptionItem.isIsCorrect() != answerOptionDTOItem.isCorrect()) {
+                if (!Objects.equals(originalAnswerOptionItem.isIsCorrect(), answerOptionDTOItem.isCorrect())) {
                     recalculationNecessary = true;
                     originalAnswerOptionItem.setIsCorrect(answerOptionDTOItem.isCorrect());
                 }
@@ -745,8 +749,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         for (var question : quizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                if (dragAndDropQuestion.getBackgroundFilePath() != null) {
-                    handleDndBackgroundForCreation(dragAndDropQuestion, fileMap);
+                String backgroundFilePath = dragAndDropQuestion.getBackgroundFilePath();
+                if (backgroundFilePath != null) {
+                    handleDndBackgroundForCreation(dragAndDropQuestion, backgroundFilePath, fileMap);
                 }
                 handleDndQuizDragItemsCreation(dragAndDropQuestion, fileMap);
             }
@@ -758,11 +763,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * This logic is necessary to handle the case where a DragAndDropQuestion is created based on an existing one (e.g. via import).
      *
      * @param question the DragAndDropQuestion
+     * @param path     the stored background file path of the question, which is not null
      * @param fileMap  the map of provided files
      * @throws IOException if file operations fail
      */
-    public void handleDndBackgroundForCreation(DragAndDropQuestion question, Map<String, MultipartFile> fileMap) throws IOException {
-        String path = question.getBackgroundFilePath();
+    private void handleDndBackgroundForCreation(DragAndDropQuestion question, @NonNull String path, Map<String, MultipartFile> fileMap) throws IOException {
         FilePathType type = FilePathType.DRAG_AND_DROP_BACKGROUND;
         Path basePath = FilePathConverter.getDragAndDropBackgroundFilePath();
 
@@ -794,8 +799,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         dragAndDropQuestion.assignMissingComponentIds();
 
         for (var dragItem : dragAndDropQuestion.getDragItems()) {
-            if (dragItem.getPictureFilePath() != null) {
-                String path = dragItem.getPictureFilePath();
+            String path = dragItem.getPictureFilePath();
+            if (path != null) {
                 Path oldPath = new FileSystemLocation.DragItem(path).path();
                 if (Files.exists(oldPath)) {
                     Path newPath = FileUtil.copyExistingFileToTarget(oldPath, basePath, type);
@@ -1098,7 +1103,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 quizBatch.setQuizExercise(quizExercise);
                 if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
                     if (quizBatch.getStartTime() != null) {
-                        quizExercise.setDueDate(quizBatch.getStartTime().plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
+                        quizExercise.setDueDate(quizBatch.getStartTime().plusSeconds((long) quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
                     }
                 }
                 else {
@@ -1125,11 +1130,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, Function.identity()));
         for (var question : newQuizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                if (!Files.exists(new FileSystemLocation.DragAndDropBackground(dragAndDropQuestion.getBackgroundFilePath()).path())) {
+                String backgroundFilePath = dragAndDropQuestion.getBackgroundFilePath();
+                if (backgroundFilePath != null && !Files.exists(new FileSystemLocation.DragAndDropBackground(backgroundFilePath).path())) {
                     saveDndQuestionBackground(dragAndDropQuestion, fileMap);
                 }
                 for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
-                    if (dragItem.getPictureFilePath() != null && !Files.exists(new FileSystemLocation.DragItem(dragItem.getPictureFilePath()).path())) {
+                    String pictureFilePath = dragItem.getPictureFilePath();
+                    if (pictureFilePath != null && !Files.exists(new FileSystemLocation.DragItem(pictureFilePath).path())) {
                         saveDndDragItemPicture(dragItem, fileMap);
                     }
                 }
@@ -1388,6 +1395,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         // Save the exercise first to get an ID (competency links are passed separately and require the exercise ID)
         QuizExercise savedExercise = save(quizExercise);
+
+        // The permanent configuration rows hold the key to the exercise, so they are created once it is stored. Native statements,
+        // so the exercise itself is not saved again (see the note below).
+        exerciseConfigurationService.initialize(savedExercise);
 
         // Add competency links after the initial save (they need the exercise ID for @MapsId).
         // IMPORTANT: Do NOT re-save the exercise (neither via QuizService.save() nor via
