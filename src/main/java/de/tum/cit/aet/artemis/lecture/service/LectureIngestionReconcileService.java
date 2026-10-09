@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.IntUnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -147,9 +148,11 @@ public class LectureIngestionReconcileService {
     private final AtomicInteger passSpent = new AtomicInteger(0);
 
     /**
-     * Keeps a cron run and a continuation step from walking at the same time. In memory is enough: only the scheduling node walks.
+     * Held from reading the free backlog room until the units it allows are queued, by a walk step and by the backfill alike. Without it,
+     * a cron run, a continuation step and the backfill (separate scheduler threads) could each read the same room and together queue more
+     * than the bound. In memory is enough: only the scheduling node walks and backfills.
      */
-    private final AtomicBoolean walking = new AtomicBoolean(false);
+    private final AtomicBoolean spendingBacklog = new AtomicBoolean(false);
 
     /**
      * Where a course the budget ran out in resumes, or {@code null} when the next pass starts at a course boundary. Resuming after the last visited unit, rather than
@@ -223,8 +226,34 @@ public class LectureIngestionReconcileService {
      *
      * @return the free room, at most the configured bound; zero or less when the backlog is full
      */
-    public int backlogBudget() {
+    int backlogBudget() {
         return maxBacklog - (int) processingStateRepository.countOpenBackgroundUnits(LectureContentProcessingService.BACKLOG_DISPATCH_PRIORITY);
+    }
+
+    /**
+     * Queue background work within the free backlog room: reads the room and runs {@code spend} with it while no other walk step or
+     * backfill does the same, so together they never queue more than the bound. Does nothing when the room is zero or another caller is
+     * spending it right now; the next scheduled run tries again.
+     *
+     * @param spend queues at most the given number of units and returns how many it queued
+     * @return how many units {@code spend} queued, 0 when it did not run
+     */
+    public int spendBacklog(IntUnaryOperator spend) {
+        if (!spendingBacklog.compareAndSet(false, true)) {
+            log.debug("Background ingestion work skipped: another walk step or backfill is queueing right now");
+            return 0;
+        }
+        try {
+            int budget = backlogBudget();
+            if (budget <= 0) {
+                log.debug("Background ingestion work paused: the backlog of {} open units is full", maxBacklog);
+                return 0;
+            }
+            return spend.applyAsInt(budget);
+        }
+        finally {
+            spendingBacklog.set(false);
+        }
     }
 
     /**
@@ -238,16 +267,7 @@ public class LectureIngestionReconcileService {
         if (irisLectureApi.isEmpty()) {
             return 0;
         }
-        if (!walking.compareAndSet(false, true)) {
-            log.debug("Ingestion reconcile step skipped: another step is still walking");
-            return 0;
-        }
-        try {
-            int budget = backlogBudget();
-            if (budget <= 0) {
-                log.debug("Ingestion reconcile step paused: the backlog of {} open units is full", maxBacklog);
-                return 0;
-            }
+        return spendBacklog(budget -> {
             List<Long> courseIds = attachmentVideoUnitRepository.findReconcileCourseIdsAfter(courseCursor.get(), PageRequest.of(0, coursesPerRun));
             if (courseIds.isEmpty()) {
                 courseCursor.set(0);
@@ -260,10 +280,7 @@ public class LectureIngestionReconcileService {
             int spent = walkCourses(courseIds, budget);
             passSpent.addAndGet(spent);
             return spent;
-        }
-        finally {
-            walking.set(false);
-        }
+        });
     }
 
     private int walkCourses(List<Long> courseIds, int budget) {

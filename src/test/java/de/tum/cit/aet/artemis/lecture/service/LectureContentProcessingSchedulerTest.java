@@ -20,6 +20,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.IntUnaryOperator;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -426,19 +427,24 @@ class LectureContentProcessingSchedulerTest {
     @Nested
     class BackfillUnprocessedUnits {
 
+        /** The reconcile service runs the backfill under its guard with the given free room, as spendBacklog does. */
+        private void givenBacklogRoom(int room) {
+            when(reconcileService.spendBacklog(any())).thenAnswer(invocation -> room <= 0 ? 0 : invocation.<IntUnaryOperator>getArgument(0).applyAsInt(room));
+        }
+
         @Test
         void shouldSkipBackfillWhenNoProcessingCapabilities() {
             when(processingService.hasProcessingCapabilities()).thenReturn(false);
 
             scheduler.backfillUnprocessedUnits();
 
-            verify(reconcileService, never()).backlogBudget();
+            verify(reconcileService, never()).spendBacklog(any());
             verify(processingService, never()).triggerProcessingAsBacklog(any());
         }
 
         @Test
         void shouldTriggerProcessingForUnprocessedUnits() {
-            when(reconcileService.backlogBudget()).thenReturn(BACKLOG_BUDGET);
+            givenBacklogRoom(BACKLOG_BUDGET);
 
             AttachmentVideoUnit unit1 = new AttachmentVideoUnit();
             unit1.setId(101L);
@@ -455,7 +461,7 @@ class LectureContentProcessingSchedulerTest {
 
         @Test
         void shouldSkipBackfillWhenTheBacklogIsFull() {
-            when(reconcileService.backlogBudget()).thenReturn(0);
+            givenBacklogRoom(0);
 
             scheduler.backfillUnprocessedUnits();
 
@@ -465,7 +471,7 @@ class LectureContentProcessingSchedulerTest {
         @Test
         void shouldLimitToAvailableSlots() {
             // Room for one more background unit
-            when(reconcileService.backlogBudget()).thenReturn(1);
+            givenBacklogRoom(1);
             when(attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), any())).thenReturn(List.of());
 
             scheduler.backfillUnprocessedUnits();
@@ -475,7 +481,7 @@ class LectureContentProcessingSchedulerTest {
 
         @Test
         void shouldCatchExceptionsAndContinueProcessingOtherUnits() {
-            when(reconcileService.backlogBudget()).thenReturn(BACKLOG_BUDGET);
+            givenBacklogRoom(BACKLOG_BUDGET);
 
             AttachmentVideoUnit unit1 = new AttachmentVideoUnit();
             unit1.setId(201L);

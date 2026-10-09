@@ -464,7 +464,7 @@ public class LectureContentProcessingScheduler {
      * This handles units that existed before the automated processing pipeline was deployed.
      * <p>
      * Only processes units from active, non-test courses to avoid unnecessary work. Shares the bound on open
-     * background work with the reconcile walk ({@link LectureIngestionReconcileService#backlogBudget}), so the two
+     * background work with the reconcile walk ({@link LectureIngestionReconcileService#spendBacklog}), so the two
      * together never queue more than Iris works off.
      */
     @Scheduled(fixedRate = 900000) // 15 minutes
@@ -481,31 +481,29 @@ public class LectureContentProcessingScheduler {
 
         log.debug("Checking for unprocessed lecture units to backfill...");
 
-        int availableSlots = reconcileService.backlogBudget();
-        if (availableSlots <= 0) {
-            log.debug("The backlog of open background units is full, skipping backfill");
-            return;
-        }
-
-        List<AttachmentVideoUnit> unprocessedUnits = attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(ZonedDateTime.now(), PageRequest.of(0, availableSlots));
-
-        if (unprocessedUnits.isEmpty()) {
-            log.debug("No unprocessed units found for backfill");
-            return;
-        }
-
-        log.info("Found {} unprocessed lecture units to backfill ({} slots available)", unprocessedUnits.size(), availableSlots);
-
-        for (AttachmentVideoUnit unit : unprocessedUnits) {
-            try {
-                log.info("Triggering processing for legacy unit {} (lecture: {}, course: {})", unit.getId(), unit.getLecture() != null ? unit.getLecture().getId() : "unknown",
-                        unit.getLecture() != null && unit.getLecture().getCourse() != null ? unit.getLecture().getCourse().getId() : "unknown");
-                processingService.triggerProcessingAsBacklog(unit);
+        // Under the walk's guard: the walk and the backfill share the bound, so neither may queue on a room the other is spending
+        reconcileService.spendBacklog(availableSlots -> {
+            List<AttachmentVideoUnit> unprocessedUnits = attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(ZonedDateTime.now(),
+                    PageRequest.of(0, availableSlots));
+            if (unprocessedUnits.isEmpty()) {
+                log.debug("No unprocessed units found for backfill");
+                return 0;
             }
-            catch (Exception e) {
-                log.error("Failed to trigger processing for unit {}: {}", unit.getId(), e.getMessage());
+            log.info("Found {} unprocessed lecture units to backfill ({} slots available)", unprocessedUnits.size(), availableSlots);
+            int triggered = 0;
+            for (AttachmentVideoUnit unit : unprocessedUnits) {
+                try {
+                    log.info("Triggering processing for legacy unit {} (lecture: {}, course: {})", unit.getId(), unit.getLecture() != null ? unit.getLecture().getId() : "unknown",
+                            unit.getLecture() != null && unit.getLecture().getCourse() != null ? unit.getLecture().getCourse().getId() : "unknown");
+                    processingService.triggerProcessingAsBacklog(unit);
+                    triggered++;
+                }
+                catch (Exception e) {
+                    log.error("Failed to trigger processing for unit {}: {}", unit.getId(), e.getMessage());
+                }
             }
-        }
+            return triggered;
+        });
     }
 
     /**

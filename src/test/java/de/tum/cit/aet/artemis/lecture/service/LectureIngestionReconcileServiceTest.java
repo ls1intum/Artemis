@@ -866,6 +866,21 @@ class LectureIngestionReconcileServiceTest {
         }
 
         @Test
+        void shouldNotLetABackfillSpendTheRoomAWalkStepIsSpending() {
+            // A walk step holds the room it read while it waits for a census; a backfill running meanwhile must not spend the same room
+            int[] backfilled = { -1 };
+            int walked = reconcileService.spendBacklog(room -> {
+                backfilled[0] = reconcileService.spendBacklog(innerRoom -> innerRoom);
+                return room;
+            });
+
+            assertThat(walked).isEqualTo(10);
+            assertThat(backfilled[0]).as("the overlapping backfill queues nothing").isZero();
+            // Released afterwards: the next run gets the room again
+            assertThat(reconcileService.spendBacklog(room -> room)).isEqualTo(10);
+        }
+
+        @Test
         void shouldContinueOnlyAnActivePassAndEndItAtTheWrap() {
             when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
                     .thenAnswer(invocation -> (long) invocation.getArgument(0) < COURSE_ID ? List.of(COURSE_ID) : List.<Long>of());
