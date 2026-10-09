@@ -9,7 +9,7 @@ import { courseManagementRoutes } from 'app/course/manage/course-management.rout
 import { ArtemisRouteReuseStrategy } from 'app/core/config/artemis-route-reuse.strategy';
 import { PresentationAssessmentManagementComponent } from 'app/presentation/manage/presentation-assessment-management.component';
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
-import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
@@ -24,7 +24,7 @@ describe('presentation course navigation', () => {
             of(new HttpResponse({ body: [42, 43].map((id) => ({ id, title: `Course ${courseId}`, courseId, exerciseId: 7, instances: [] })) })),
         );
         const create = vi.fn().mockReturnValue(of(new HttpResponse({ body: { id: 43 } })));
-        const findWithExercises = vi.fn((id: number) => of(new HttpResponse({ body: { id, exercises: [] } })));
+        const getTitlesForCourse = vi.fn(() => of([]));
         const routes = presentationRoutes(courseManagementRoutes);
         expect(routes).toHaveLength(3);
         // Keep the real route data and component; isolate authorization and the surrounding course shell.
@@ -33,7 +33,7 @@ describe('presentation course navigation', () => {
                 provideRouter([{ path: 'course-management/:courseId', children: routes.map((route) => ({ ...route, canActivate: [], resolve: {} })) }]),
                 { provide: RouteReuseStrategy, useClass: ArtemisRouteReuseStrategy },
                 { provide: PresentationAssessmentService, useValue: { findAllByCourseId, create } },
-                { provide: CourseManagementService, useValue: { findWithExercises } },
+                { provide: ExerciseService, useValue: { getTitlesForCourse } },
                 { provide: AlertService, useValue: { success: vi.fn(), addAlert: vi.fn() } },
                 { provide: TranslateService, useValue: { instant: (key: string) => key, onLangChange: new Subject(), onTranslationChange: new Subject() } },
             ],
@@ -61,10 +61,11 @@ describe('presentation course navigation', () => {
         expect(second.presentationAssessments()[0].courseId).toBe(2);
         expect(findAllByCourseId).toHaveBeenCalledWith(1);
         expect(findAllByCourseId).toHaveBeenCalledWith(2);
-        expect(findWithExercises).toHaveBeenCalledWith(2);
+        expect(getTitlesForCourse).toHaveBeenCalledWith(1);
+        expect(getTitlesForCourse).toHaveBeenCalledWith(2);
         const detail = await harness.navigateByUrl('/course-management/2/presentations/42/exercises/7', PresentationAssessmentManagementComponent);
         const loadCount = findAllByCourseId.mock.calls.length;
-        const exerciseLoadCount = findWithExercises.mock.calls.length;
+        const exerciseLoadCount = getTitlesForCourse.mock.calls.length;
         const selected = await harness.navigateByUrl('/course-management/2/presentations/43/exercises/7', PresentationAssessmentManagementComponent);
         expect(selected).toBe(detail);
         expect(selected.selectedPresentationId()).toBe(43);
@@ -77,7 +78,7 @@ describe('presentation course navigation', () => {
             '/course-management/2/presentations/43/exercises/7',
         );
         expect(findAllByCourseId).toHaveBeenCalledTimes(loadCount);
-        expect(findWithExercises).toHaveBeenCalledTimes(exerciseLoadCount);
+        expect(getTitlesForCourse).toHaveBeenCalledTimes(exerciseLoadCount);
         second.handlePresentationDialogSave({ presentationAssessment: { title: 'New presentation', maxPoints: 10 } });
         expect(create).toHaveBeenCalledWith(2, expect.objectContaining({ title: 'New presentation' }));
     });

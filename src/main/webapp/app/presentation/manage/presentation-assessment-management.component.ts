@@ -316,6 +316,11 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                     this.expandedStudentRows.set([]);
                     this.overviewPage.set(0);
                     this.presentationFilter.set('all');
+                    this.studentSearchTerm.set('');
+                    this.assessmentStatusFilter.set('all');
+                    this.presentationTypeFilter.set('all');
+                    this.studentSortField.set('studentLogin');
+                    this.studentSortOrder.set(1);
                     this.loadAll();
                     this.exerciseService.getTitlesForCourse(courseId).subscribe({
                         next: (exercises) => {

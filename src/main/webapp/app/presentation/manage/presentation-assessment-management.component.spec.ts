@@ -428,6 +428,38 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.sidebarData().groupedData?.standalone.entityData[0].routerLink).toBe(`/course-management/${courseId}/presentations/42`);
     });
 
+    it('should reset overview filters and sorting when switching courses', () => {
+        component.studentSearchTerm.set('Student One');
+        component.assessmentStatusFilter.set('assessed');
+        component.presentationTypeFilter.set('exercise');
+        component.presentationFilter.set(42);
+        component.overviewPage.set(3);
+        component.studentSortField.set('presentationDate');
+        component.studentSortOrder.set(-1);
+
+        routeParamMap.next(convertToParamMap({ courseId: 2 }));
+        fixture.detectChanges();
+
+        expect(component.courseId()).toBe(2);
+        expect(component.studentSearchTerm()).toBe('');
+        expect(component.assessmentStatusFilter()).toBe('all');
+        expect(component.presentationTypeFilter()).toBe('all');
+        expect(component.presentationFilter()).toBe('all');
+        expect(component.overviewPage()).toBe(0);
+        expect(component.studentSortField()).toBe('studentLogin');
+        expect(component.studentSortOrder()).toBe(1);
+        expect(component.studentRowsRequest()).toEqual({
+            page: 0,
+            size: 25,
+            sortField: 'studentLogin',
+            direction: 'ASC',
+            assessmentId: undefined,
+            assessed: undefined,
+            linkedToExercise: undefined,
+            searchTerm: undefined,
+        });
+    });
+
     it('should discard open dialog data when switching courses', () => {
         component.presentationDialogVisible.set(true);
         component.instanceDialogVisible.set(true);

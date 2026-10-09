@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -58,6 +59,9 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
     @Autowired
     private CourseTestRepository courseRepository;
+
+    @Autowired
+    private CourseConfigurationRepository courseConfigurationRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -82,7 +86,6 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         otherCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         setPresentationAssessmentsEnabled(course, true);
         setPresentationAssessmentsEnabled(otherCourse, true);
-        courseRepository.saveAll(List.of(course, otherCourse));
 
         presentationAssessment = new PresentationAssessment();
         presentationAssessment.setCourse(course);
@@ -331,19 +334,14 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getPresentationAssessments_withCourseSettingDisabled_shouldReturnForbidden() throws Exception {
         setPresentationAssessmentsEnabled(course, false);
-        courseRepository.save(course);
 
         request.getList(getBaseUrl(course), HttpStatus.FORBIDDEN, PresentationAssessmentDTO.class);
     }
 
-    private static void setPresentationAssessmentsEnabled(Course course, boolean enabled) {
-        CourseConfiguration courseConfiguration = course.getCourseConfiguration();
-        if (courseConfiguration == null) {
-            courseConfiguration = new CourseConfiguration();
-            courseConfiguration.setCourse(course);
-            course.setCourseConfiguration(courseConfiguration);
-        }
+    private void setPresentationAssessmentsEnabled(Course course, boolean enabled) {
+        CourseConfiguration courseConfiguration = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
         courseConfiguration.setPresentationAssessmentsEnabled(enabled);
+        course.setCourseConfiguration(courseConfigurationRepository.save(courseConfiguration));
     }
 
     @Test
