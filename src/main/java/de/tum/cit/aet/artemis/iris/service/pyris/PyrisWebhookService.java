@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -109,7 +111,8 @@ public class PyrisWebhookService {
             // Only a stored PDF is page content; any other attachment (no file, an external link, another file type) is sent like a unit without one, so a
             // video next to it is still ingested instead of the whole unit failing preparation on every claim.
             base64EncodedPdf = PyrisLectureUnitEligibility.hasPdf(attachmentVideoUnit) ? attachmentToBase64(attachmentVideoUnit) : "";
-            lectureUnitLink = attachmentVideoUnit.getAttachment().getLink() != null ? artemisBaseUrl + "/" + attachmentVideoUnit.getAttachment().getLink() : "";
+            lectureUnitLink = attachmentVideoUnit.getAttachment().getLink() != null ? artemisBaseUrl + ARTEMIS_FILE_PATH_PREFIX + attachmentVideoUnit.getAttachment().getLink()
+                    : "";
         }
         else {
             base64EncodedPdf = "";

@@ -248,6 +248,8 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         AttachmentVideoUnit testUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
         String attachmentLink = testUnit.getAttachment().getLink();
         testUnit.setLecture(lecture1);
+        // The attachment is no stored PDF, so the video is what makes the unit processable
+        testUnit.setVideoSource(SUPPORTED_VIDEO);
         lecture1.addLectureUnit(testUnit);
         lecture1 = lectureRepository.save(lecture1);
         testUnit = attachmentVideoUnitTestRepository.save(testUnit);
