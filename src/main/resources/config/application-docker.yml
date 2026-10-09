@@ -8,6 +8,7 @@ artemis:
     legal-path: /opt/artemis/data/legal
     build-logs-path: /opt/artemis/data/build-logs
     failed-build-logs-path: /opt/artemis/data/failed-build-logs
+    data-export-path: /opt/artemis/data/data-exports
 
     version-control:
         local-vcs-repo-path: /opt/artemis/data/local-vcs-repos

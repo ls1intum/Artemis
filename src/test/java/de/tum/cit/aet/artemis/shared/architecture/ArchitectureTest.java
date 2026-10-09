@@ -947,7 +947,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // the resource directly on purpose; the annotations and the routing stay covered by the integration tests.
                 "AuxiliaryRepositoryResourceTest", "BuildJobQueueResourceTest", "CourseArchiveResourceTest", "ProgrammingExerciseParticipationResourceResetTest",
                 "PublicProgrammingExerciseResultResourceTest", "RepositoryProgrammingExerciseParticipationResourceTest", "IrisGlobalSearchResourceTest",
-                "IngestionCoverageResourceTest" };
+                "IngestionCoverageResourceTest", "PyrisInternalIngestionWorkerResourceTest" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
