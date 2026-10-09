@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import type { Route } from '@angular/router';
+import type { Route, UrlMatchResult, UrlMatcher } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { TutorialGroupManagementCourseResolver } from 'app/tutorialgroup/manage/service/tutorial-group-management-course-resolver.service';
@@ -11,9 +11,31 @@ import { CourseManagementResolve } from 'app/course/manage/services/course-manag
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
 import { presentationAssessmentFeatureGuard } from 'app/presentation/manage/presentation-assessment-feature.guard';
 
-function presentationAssessmentManagementRoute(path: string): Route {
+/**
+ * Matches `presentations`, `presentations/:presentationId` and `presentations/:presentationId/exercises/:exerciseId`.
+ * One route config for all three shapes lets Angular reuse the management component and its sidebar when the selected presentation
+ * changes. With one config per shape, moving between the overview, a presentation and an exercise-linked presentation would destroy
+ * and recreate the component, reload everything and reset the search, filters and paging.
+ */
+export const presentationAssessmentUrlMatcher: UrlMatcher = (segments): UrlMatchResult | null => {
+    if (segments[0]?.path !== 'presentations') {
+        return null;
+    }
+    switch (segments.length) {
+        case 1:
+            return { consumed: segments };
+        case 2:
+            return { consumed: segments, posParams: { presentationId: segments[1] } };
+        case 4:
+            return segments[2].path === 'exercises' ? { consumed: segments, posParams: { presentationId: segments[1], exerciseId: segments[3] } } : null;
+        default:
+            return null;
+    }
+};
+
+function presentationAssessmentManagementRoute(): Route {
     return {
-        path,
+        matcher: presentationAssessmentUrlMatcher,
         loadComponent: () => import('app/presentation/manage/presentation-assessment-management.component').then((m) => m.PresentationAssessmentManagementComponent),
         data: {
             authorities: IS_AT_LEAST_INSTRUCTOR,
@@ -288,9 +310,7 @@ export const courseManagementRoutes: Routes = [
                         },
                         canActivate: [UserRouteAccessService],
                     },
-                    presentationAssessmentManagementRoute('presentations/:presentationId/exercises/:exerciseId'),
-                    presentationAssessmentManagementRoute('presentations/:presentationId'),
-                    presentationAssessmentManagementRoute('presentations'),
+                    presentationAssessmentManagementRoute(),
                     {
                         path: 'competency-management',
                         loadComponent: () => import('app/atlas/manage/competency-management/competency-management.component').then((m) => m.CompetencyManagementComponent),
