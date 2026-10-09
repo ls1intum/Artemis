@@ -1,5 +1,7 @@
 <div class="mx-auto flex w-full max-w-4xl min-w-0 flex-col gap-4" data-testid="hyperion-run-page">
     <jhi-hyperion-run-header
+        [exerciseId]="exerciseId()"
+        [jobId]="jobId()"
         [exerciseTitle]="exercise()?.title"
         [adapting]="adapting()"
         [variant]="variant()"
@@ -22,7 +24,7 @@
         [stepTotal]="stepTotal"
         [spend]="spend()"
         [fileCount]="fileCount()"
-        (cancelRequested)="cancel()"
+        (cancelRequested)="cancel($event)"
         (startRequested)="openStartDialog()"
     />
 

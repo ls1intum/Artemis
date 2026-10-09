@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { HyperionRunHeaderComponent } from './hyperion-run-header.component';
 
 describe('HyperionRunHeaderComponent', () => {
@@ -30,6 +31,41 @@ describe('HyperionRunHeaderComponent', () => {
         fixture.componentRef.setInput('adapting', true);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-run-intent"]').textContent).toContain('adaptationTitle');
+    });
+
+    it('cancels the run that was confirmed', () => {
+        const cancelled = vi.fn();
+        fixture.componentInstance.cancelRequested.subscribe(cancelled);
+        fixture.componentRef.setInput('exerciseId', 42);
+        fixture.componentRef.setInput('jobId', 'run-a');
+        fixture.componentRef.setInput('cancelAvailable', true);
+        fixture.detectChanges();
+        const confirm = vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm');
+
+        button('hyperion-run-cancel').click();
+        confirm.mock.calls[0][0].accept?.();
+
+        expect(cancelled).toHaveBeenCalledExactlyOnceWith({ exerciseId: 42, jobId: 'run-a' });
+    });
+
+    it.each(['job', 'exercise', 'cancellability'])('ignores an old cancellation confirmation after the %s changes', (changed) => {
+        const cancelled = vi.fn();
+        fixture.componentInstance.cancelRequested.subscribe(cancelled);
+        fixture.componentRef.setInput('exerciseId', 42);
+        fixture.componentRef.setInput('jobId', 'run-a');
+        fixture.componentRef.setInput('cancelAvailable', true);
+        fixture.detectChanges();
+        const confirm = vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm');
+        button('hyperion-run-cancel').click();
+        const confirmation = confirm.mock.calls[0][0];
+
+        if (changed === 'job') fixture.componentRef.setInput('jobId', 'run-b');
+        if (changed === 'exercise') fixture.componentRef.setInput('exerciseId', 43);
+        if (changed === 'cancellability') fixture.componentRef.setInput('cancelAvailable', false);
+        fixture.detectChanges();
+        confirmation.accept?.();
+
+        expect(cancelled).not.toHaveBeenCalled();
     });
 
     it('emits startRequested from both the start and the run-again buttons while nothing blocks a run', () => {

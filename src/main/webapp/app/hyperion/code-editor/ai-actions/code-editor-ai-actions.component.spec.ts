@@ -55,6 +55,11 @@ describe('CodeEditorAiActionsComponent', () => {
         const adapt = testId('hyperion-adapt-with-feedback')!;
         expect(adapt.hasAttribute('disabled')).toBe(true);
         expect(fixture.nativeElement.textContent).toContain('artemisApp.hyperion.generation.blocker.released');
+        const blocker = testId('hyperion-adapt-blocker')!;
+        expect(blocker.closest('tumaet-ui-button-group')).toBeNull();
+        expect(blocker.closest('[data-testid="code-editor-ai-action-buttons"]')).toBeNull();
+        expect(adapt.getAttribute('aria-describedby')).toBe(blocker.id);
+        expect(fixture.nativeElement.querySelector('tumaet-ui-button-group').children).toHaveLength(2);
         adapt.click();
 
         expect(adaptRequested).not.toHaveBeenCalled();
@@ -70,10 +75,12 @@ describe('CodeEditorAiActionsComponent', () => {
     });
 
     it('reduces to the labelled menu trigger when adaptation is not offered', () => {
+        fixture.componentRef.setInput('adaptBlockedReason', 'artemisApp.review.adaptExercise.reloadRequired');
         fixture.componentRef.setInput('adaptOffered', false);
         fixture.detectChanges();
 
         expect(testId('hyperion-adapt-with-feedback')).toBeNull();
+        expect(testId('hyperion-adapt-blocker')).toBeNull();
         const trigger = testId('hyperion-ai-menu')!;
         expect(trigger.textContent).toContain('artemisApp.programmingExercise.artemisIntelligence.title');
         expect(trigger.getAttribute('aria-label')).toBeNull();

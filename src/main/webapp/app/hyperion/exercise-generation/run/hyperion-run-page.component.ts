@@ -448,8 +448,8 @@ export class HyperionRunPageComponent {
         this.facade.dismissRevert();
     }
 
-    protected cancel(): void {
-        this.facade.cancel();
+    protected cancel(target?: { exerciseId: number; jobId: string }): void {
+        this.facade.cancel(target);
     }
 
     protected retryStatus(): void {

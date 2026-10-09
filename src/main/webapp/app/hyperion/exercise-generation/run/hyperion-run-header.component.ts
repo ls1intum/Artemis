@@ -65,6 +65,8 @@ export class HyperionRunHeaderComponent {
 
     readonly variant = input(false);
     readonly adapting = input(false);
+    readonly exerciseId = input<number | undefined>();
+    readonly jobId = input<string | undefined>();
     readonly exerciseTitle = input<string | undefined>();
     /** Translation keys for the meta line, e.g. Java · Gradle · Medium. Never raw enum values. */
     readonly metaLabelKeys = input<readonly string[]>([]);
@@ -99,7 +101,7 @@ export class HyperionRunHeaderComponent {
     readonly spend = input<HyperionSpendView | undefined>();
     readonly fileCount = input(0);
 
-    readonly cancelRequested = output<void>();
+    readonly cancelRequested = output<{ exerciseId: number; jobId: string }>();
     /** Both the first start and a run-again ask for the same thing: the start dialog. */
     readonly startRequested = output<void>();
 
@@ -228,6 +230,11 @@ export class HyperionRunHeaderComponent {
     protected readonly typicalBandParams = { min: TYPICAL_DURATION_MIN_MINUTES, max: TYPICAL_DURATION_MAX_MINUTES };
 
     protected confirmCancel(): void {
+        const exerciseId = this.exerciseId();
+        const jobId = this.jobId();
+        if (!this.cancelAvailable() || exerciseId === undefined || jobId === undefined) {
+            return;
+        }
         this.confirmationService.confirm({
             key: CANCEL_CONFIRMATION_KEY,
             header: this.translateService.instant('artemisApp.hyperion.generation.actions.cancelConfirmHeader'),
@@ -235,7 +242,11 @@ export class HyperionRunHeaderComponent {
             acceptLabel: this.translateService.instant('artemisApp.hyperion.generation.actions.cancelConfirmAccept'),
             rejectLabel: this.translateService.instant('artemisApp.hyperion.generation.actions.cancelConfirmReject'),
             acceptSeverity: 'danger',
-            accept: () => this.cancelRequested.emit(),
+            accept: () => {
+                if (this.cancelAvailable() && this.exerciseId() === exerciseId && this.jobId() === jobId) {
+                    this.cancelRequested.emit({ exerciseId, jobId });
+                }
+            },
         });
     }
 }
