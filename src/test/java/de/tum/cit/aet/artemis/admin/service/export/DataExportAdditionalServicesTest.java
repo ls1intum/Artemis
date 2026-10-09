@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +28,11 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessment;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentInstance;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -114,6 +121,15 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private DataExportTutorialGroupService dataExportTutorialGroupService;
+
+    @Autowired
+    private DataExportPresentationAssessmentService dataExportPresentationAssessmentService;
+
+    @Autowired
+    private PresentationAssessmentRepository presentationAssessmentRepository;
+
+    @Autowired
+    private PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository;
 
     @Autowired
     private Optional<TutorialGroupUtilService> tutorialGroupUtilService;
@@ -417,6 +433,99 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
             assertThat(tutorialGroupFile).doesNotExist();
         }
 
+    }
+
+    @Nested
+    class PresentationAssessmentExportTest {
+
+        private final List<PresentationAssessment> createdAssessments = new ArrayList<>();
+
+        @AfterEach
+        void deleteCreatedAssessments() {
+            // The foreign key removes their instances. The user is shared by all tests of this class, so nothing may be left behind.
+            presentationAssessmentRepository.deleteAll(createdAssessments);
+            createdAssessments.clear();
+        }
+
+        private PresentationAssessmentInstance createInstance(User student, PresentationAssessment assessment, String remark, Double resultPoints) {
+            var instance = new PresentationAssessmentInstance();
+            instance.setPresentationAssessment(assessment);
+            instance.setStudent(student);
+            instance.setPresentationDate(ZonedDateTime.parse("2026-01-15T10:30:00Z"));
+            instance.setResultPoints(resultPoints);
+            instance.setLanguage("en");
+            instance.setMode(PresentationAssessmentMode.IN_PERSON);
+            instance.setLocation("Room 101");
+            instance.setRemark(remark);
+            return presentationAssessmentInstanceRepository.save(instance);
+        }
+
+        private PresentationAssessment createAssessment(String title) {
+            var assessment = new PresentationAssessment();
+            assessment.setCourse(testCourse);
+            assessment.setTitle(title);
+            assessment.setMaxPoints(20.0);
+            assessment = presentationAssessmentRepository.save(assessment);
+            createdAssessments.add(assessment);
+            return assessment;
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testExportPresentationAssessments() throws IOException {
+            var assessment = createAssessment("Final presentation");
+            createInstance(testUser, assessment, "Clear structure, slightly too long", 17.5);
+
+            dataExportPresentationAssessmentService.createPresentationAssessmentExport(testUser.getId(), workingDirectory);
+
+            Path file = workingDirectory.resolve("presentation_assessments.csv");
+            assertThat(file).exists();
+            try (var reader = Files.newBufferedReader(file); var csvParser = CSVParser.parse(reader, CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).get())) {
+                var records = csvParser.getRecords();
+                assertThat(records).hasSize(1);
+                var record = records.getFirst();
+                assertThat(record.get("course_title")).isEqualTo(testCourse.getTitle());
+                assertThat(record.get("presentation_title")).isEqualTo("Final presentation");
+                assertThat(record.get("presentation_date")).startsWith("2026-01-15T10:30");
+                assertThat(record.get("mode")).isEqualTo("IN_PERSON");
+                assertThat(record.get("language")).isEqualTo("en");
+                assertThat(record.get("location")).isEqualTo("Room 101");
+                assertThat(record.get("meeting_link")).isEmpty();
+                assertThat(record.get("max_points")).isEqualTo("20.0");
+                assertThat(record.get("result_points")).isEqualTo("17.5");
+                assertThat(record.get("remark")).isEqualTo("Clear structure, slightly too long");
+            }
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testExportPresentationAssessmentsContainsOnlyOwnRowsAndOpenResults() throws IOException {
+            userUtilService.addUsers(TEST_PREFIX + "other", 1, 0, 0, 0);
+            User otherUser = userUtilService.getUserByLogin(TEST_PREFIX + "otherstudent1");
+            var assessment = createAssessment("Seminar talk");
+            createInstance(testUser, assessment, null, null);
+            createInstance(otherUser, assessment, "Remark about somebody else", 12.0);
+
+            dataExportPresentationAssessmentService.createPresentationAssessmentExport(testUser.getId(), workingDirectory);
+
+            Path file = workingDirectory.resolve("presentation_assessments.csv");
+            assertThat(file).exists();
+            assertThat(Files.readString(file)).doesNotContain("Remark about somebody else");
+            try (var reader = Files.newBufferedReader(file); var csvParser = CSVParser.parse(reader, CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).get())) {
+                var records = csvParser.getRecords();
+                assertThat(records).hasSize(1);
+                assertThat(records.getFirst().get("result_points")).isEmpty();
+                assertThat(records.getFirst().get("remark")).isEmpty();
+            }
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testExportPresentationAssessmentsWithNoData() throws IOException {
+            dataExportPresentationAssessmentService.createPresentationAssessmentExport(testUser.getId(), workingDirectory);
+
+            assertThat(workingDirectory.resolve("presentation_assessments.csv")).doesNotExist();
+        }
     }
 
     @Nested

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentInstance;
+import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentExportDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO;
 import de.tum.cit.aet.artemis.core.domain.DomainObject_;
@@ -113,6 +114,24 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
     PresentationAssessmentStatisticsDTO findStatisticsByCourseId(@Param("courseId") long courseId);
 
     long countByPresentationAssessmentCourseId(long courseId);
+
+    /**
+     * Loads all presentation assessment instances of a student for the personal data export.
+     *
+     * @param userId the id of the student
+     * @return the instances of the student ordered by course, presentation and date
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentExportDTO(
+                course.title, assessment.title, assessment.maxPoints, instance.presentationDate, instance.resultPoints,
+                instance.language, instance.mode, instance.location, instance.meetingLink, instance.remark)
+            FROM PresentationAssessmentInstance instance
+            JOIN instance.presentationAssessment assessment
+            JOIN assessment.course course
+            WHERE instance.student.id = :userId
+            ORDER BY course.title, assessment.title, instance.presentationDate, instance.id
+            """)
+    List<PresentationAssessmentExportDTO> findExportRowsByStudentId(@Param("userId") long userId);
 
     @Transactional // ok because of delete
     long deleteAllByPresentationAssessmentCourseId(long courseId);
