@@ -85,11 +85,7 @@ public class SecurityFrameworkService {
         validateJavaExercise(exercise);
         validateFrameworkVersion(frameworkVersion);
         synchronized (lockFor(exercise)) {
-            String commitHash = ares2SecurityPolicyService.createAndCommitPolicy(exercise, frameworkVersion);
-            SecurityFrameworkConfigDTO config = new SecurityFrameworkConfigDTO(SecurityActivationStatus.ACTIVE.name(), frameworkVersion, commitHash, Instant.now().toString());
-            configByExerciseId.put(exercise.getId(), config);
-            log.debug("Activated the Security Framework for exercise {} (framework {}, commit {})", exercise.getId(), frameworkVersion, commitHash);
-            return config;
+            return generateCommitAndStore(exercise, frameworkVersion, "Activated");
         }
     }
 
@@ -126,12 +122,25 @@ public class SecurityFrameworkService {
                 throw new BadRequestAlertException("The framework version cannot be changed because the Security Framework is not active for this exercise.", ENTITY_NAME,
                         "securityFrameworkNotActive");
             }
-            String commitHash = ares2SecurityPolicyService.createAndCommitPolicy(exercise, frameworkVersion);
-            SecurityFrameworkConfigDTO config = new SecurityFrameworkConfigDTO(SecurityActivationStatus.ACTIVE.name(), frameworkVersion, commitHash, Instant.now().toString());
-            configByExerciseId.put(exercise.getId(), config);
-            log.debug("Re-synced the Security Framework of exercise {} to framework {} (commit {})", exercise.getId(), frameworkVersion, commitHash);
-            return config;
+            return generateCommitAndStore(exercise, frameworkVersion, "Re-synced");
         }
+    }
+
+    /**
+     * Generates and commits the implicit default policy for the given framework version (via Ares2) and stores the
+     * resulting ACTIVE config. The caller holds the per-exercise lock and has already validated the inputs.
+     *
+     * @param exercise         the programming exercise
+     * @param frameworkVersion the framework version to generate the policy with
+     * @param logAction        the verb used in the debug log line (e.g. "Activated", "Re-synced")
+     * @return the stored ACTIVE config
+     */
+    private SecurityFrameworkConfigDTO generateCommitAndStore(ProgrammingExercise exercise, String frameworkVersion, String logAction) {
+        String commitHash = ares2SecurityPolicyService.createAndCommitPolicy(exercise, frameworkVersion);
+        SecurityFrameworkConfigDTO config = new SecurityFrameworkConfigDTO(SecurityActivationStatus.ACTIVE.name(), frameworkVersion, commitHash, Instant.now().toString());
+        configByExerciseId.put(exercise.getId(), config);
+        log.debug("{} the Security Framework for exercise {} (framework {}, commit {})", logAction, exercise.getId(), frameworkVersion, commitHash);
+        return config;
     }
 
     /**
