@@ -1,28 +1,22 @@
-<div class="label-and-input">
-    <label for="tutorial-edit-language-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.language' | artemisTranslate }} *</label>
-    <tumaet-ui-input-group>
-        @let languageValidation = languageValidationResult();
-        <tumaet-ui-input-group-addon>
-            <fa-icon [icon]="faFlag" aria-hidden="true" />
-        </tumaet-ui-input-group-addon>
-        <input
-            id="tutorial-edit-language-input"
-            #searchInput
-            tumAetUiInput
-            [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.language' | artemisTranslate"
-            [(ngModel)]="language"
-            [tumAetUiInputInvalid]="languageValidation.status === TutorialEditValidationStatus.INVALID && languageInputTouched()"
-            (blur)="onBlur()"
-            (focus)="openPanel()"
-            (keydown)="onKeyDown($event)"
-        />
-        @if (languageValidation.status === TutorialEditValidationStatus.INVALID && languageInputTouched()) {
-            <tumaet-ui-input-group-addon [tumAetUiTooltip]="languageValidation.message | artemisTranslate" tumAetUiTooltipPlacement="bottom">
-                <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
-            </tumaet-ui-input-group-addon>
-        }
-    </tumaet-ui-input-group>
-</div>
+@let languageValidation = languageValidationResult();
+<tumaet-ui-form-field
+    controlId="tutorial-edit-language-input"
+    [label]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.language' | artemisTranslate"
+    [required]="true"
+    [invalid]="languageValidation.status === TutorialEditValidationStatus.INVALID && languageInputTouched()"
+    [error]="languageValidation.status === TutorialEditValidationStatus.INVALID ? (languageValidation.message | artemisTranslate) : ''"
+>
+    <input
+        id="tutorial-edit-language-input"
+        #searchInput
+        tumAetUiInput
+        [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.placeholder.language' | artemisTranslate"
+        [(ngModel)]="language"
+        (blur)="onBlur()"
+        (focus)="openPanel()"
+        (keydown)="onKeyDown($event)"
+    />
+</tumaet-ui-form-field>
 
 <ng-template #panelTemplate>
     <div class="suggestion-panel">

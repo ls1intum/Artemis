@@ -7,7 +7,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiMessageComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faGear } from '@fortawesome/free-solid-svg-icons';
+import { faUsers } from '@fortawesome/free-solid-svg-icons';
 
 export interface TutorialGroupsConfigurationFormData {
     period?: Date[];
@@ -53,7 +53,7 @@ export function tutorialPeriodRangeValidator(control: AbstractControl): Validati
 export class TutorialGroupsConfigurationFormComponent implements OnInit {
     private fb = inject(FormBuilder);
 
-    protected readonly faGear = faGear;
+    protected readonly faUsers = faUsers;
 
     readonly formData = input<TutorialGroupsConfigurationFormData>({
         period: undefined,
