@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { hasExerciseDueDatePassed, isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -122,6 +122,7 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly isLoading = this._isLoading.asReadonly();
     readonly studentParticipations = this._studentParticipations.asReadonly();
     readonly hasGradedSubmission = computed(() => !!this._gradedParticipation()?.submissions?.some((submission) => submission.submitted));
+    readonly gradedRepositoryUri = computed(() => this.getGradedRepositoryUri());
 
     readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
 
@@ -169,6 +170,15 @@ export class ExerciseDetailsStudentActionsComponent {
         this._hasRatedGradedResult.set(
             !!getAllResultsOfAllSubmissions(gradedParticipation?.submissions)?.some((result) => result.rated === true && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA),
         );
+    }
+
+    private getGradedRepositoryUri(): string {
+        const participation = this.gradedParticipation();
+        return participation && this.isProgrammingExerciseStudentParticipation(participation) ? (participation.repositoryUri ?? '') : '';
+    }
+
+    private isProgrammingExerciseStudentParticipation(participation: StudentParticipation): participation is ProgrammingExerciseStudentParticipation {
+        return participation.type === ParticipationType.PROGRAMMING;
     }
 
     /**

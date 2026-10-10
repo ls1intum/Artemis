@@ -307,10 +307,6 @@ export class CodeButtonComponent implements OnInit {
         return this.translateService.instant(translationKey).replace(/{link:(.*)}/, `<a href="${url}" target="_blank">$1</a>`);
     }
 
-    private getRepositoryUri() {
-        return this.activeParticipation()?.repositoryUri ?? this.repositoryUri();
-    }
-
     onClick() {
         let storedState = this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state');
         if (storedState === RepositoryAuthenticationMethod.Password) {
@@ -346,9 +342,9 @@ export class CodeButtonComponent implements OnInit {
      */
     getHttpOrSshRepositoryUri(insertPlaceholder = true, alwaysUsetoken = false, alwaysReturnHttp = false): string {
         if (!alwaysReturnHttp && this.useSsh() && this.sshTemplateUrl) {
-            return this.getSshCloneUrl(this.getRepositoryUri());
+            return this.getSshCloneUrl(this.repositoryUri());
         }
-        const url = this.getRepositoryUri();
+        const url = this.repositoryUri();
         const useToken = this.useToken() || alwaysUsetoken;
         const token = insertPlaceholder ? '**********' : this.getUsedToken(alwaysUsetoken);
 
@@ -586,7 +582,7 @@ export class CodeButtonComponent implements OnInit {
     private currentRepositoryIdentity(): string {
         return [
             this.repositoryType(),
-            this.getRepositoryUri(),
+            this.repositoryUri(),
             this.exercise()?.id ?? this.exerciseId() ?? this.activeParticipation()?.exercise?.id,
             this.auxiliaryRepositoryId(),
             this.participationId() ?? this.activeParticipation()?.id,

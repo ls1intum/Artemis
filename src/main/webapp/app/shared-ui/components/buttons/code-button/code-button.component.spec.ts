@@ -101,7 +101,7 @@ describe('CodeButtonComponent', () => {
                 getCachedSshKeysSpy = vi
                     .spyOn(sshUserSettingsService, 'getCachedSshKeys')
                     .mockImplementation(() => Promise.resolve([{ id: 99, publicKey: 'key' } as UserSshPublicKey]));
-                fixture.componentRef.setInput('repositoryUri', '');
+                fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
                 vi.spyOn(localStorageMock, 'retrieve').mockImplementation(() => {
                     return localStorageState;
                 });
@@ -111,7 +111,7 @@ describe('CodeButtonComponent', () => {
                     .mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400, statusText: 'Bad Request' })));
 
                 // Reset input properties
-                fixture.componentRef.setInput('repositoryUri', '');
+                fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
                 fixture.componentRef.setInput('participations', []);
                 fixture.componentRef.setInput('smallButtons', true);
                 fixture.componentRef.setInput('routerLinkForRepositoryView', []);
@@ -611,6 +611,7 @@ describe('CodeButtonComponent', () => {
     it('should get ssh url (same url for team and individual participation)', async () => {
         participation.repositoryUri = 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git';
         participation.team = {};
+        fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
         fixture.componentRef.setInput('participations', [participation]);
         component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
         fixture.changeDetectorRef.detectChanges();
@@ -625,6 +626,7 @@ describe('CodeButtonComponent', () => {
     it('should get copy the repository uri', async () => {
         participation.repositoryUri = `https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         participation.team = {};
+        fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
         fixture.componentRef.setInput('participations', [participation]);
         component.useHttpsPassword();
         fixture.changeDetectorRef.detectChanges();
@@ -639,6 +641,7 @@ describe('CodeButtonComponent', () => {
 
     it('should insert the correct token in the repository uri', async () => {
         participation.repositoryUri = `https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
         fixture.componentRef.setInput('participations', [participation]);
         localStorageState = RepositoryAuthenticationMethod.Token;
 
@@ -855,6 +858,7 @@ describe('CodeButtonComponent', () => {
 
     it('should add the user login and token to the URL', async () => {
         participation.repositoryUri = `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
         fixture.componentRef.setInput('participations', [participation]);
         component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
         fixture.changeDetectorRef.detectChanges();
@@ -865,6 +869,7 @@ describe('CodeButtonComponent', () => {
 
     it('should return http url if ssh is selected but http is forced', async () => {
         participation.repositoryUri = `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
         fixture.componentRef.setInput('participations', [participation]);
         component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
 
@@ -885,6 +890,7 @@ describe('CodeButtonComponent', () => {
             testRun: true,
         };
         fixture.componentRef.setInput('participations', [participation1, participation2]);
+        fixture.componentRef.setInput('repositoryUri', participation1.repositoryUri);
         component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Password);
         fixture.detectChanges();
         await fixture.whenStable();
@@ -893,6 +899,7 @@ describe('CodeButtonComponent', () => {
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
 
         fixture.componentRef.setInput('isPractice', true);
+        fixture.componentRef.setInput('repositoryUri', participation2.repositoryUri);
         fixture.detectChanges();
 
         expect(component.activeParticipation()).toEqual(participation2);
@@ -1129,6 +1136,7 @@ describe('CodeButtonComponent', () => {
         const getToolTokenSpy = vi.spyOn(accountService, 'getToolToken').mockReturnValue(of('token'));
 
         fixture.componentRef.setInput('exercise', { buildConfig: { theiaImage: 'theia-image' } } as any);
+        fixture.componentRef.setInput('repositoryUri', 'https://repo.uri');
         fixture.componentRef.setInput('participations', [{ repositoryUri: 'https://repo.uri', vcsAccessToken: 'token' } as any]);
 
         component.theiaPortalURL = 'https://theia.portal.url';
@@ -1176,6 +1184,7 @@ describe('CodeButtonComponent', () => {
         const getToolTokenSpy = vi.spyOn(accountService, 'getToolToken').mockReturnValue(of('token'));
 
         fixture.componentRef.setInput('exercise', { buildConfig: { theiaImage: 'theia-image' } } as any);
+        fixture.componentRef.setInput('repositoryUri', 'https://repo.uri');
         fixture.componentRef.setInput('participations', [{ repositoryUri: 'https://repo.uri', vcsAccessToken: 'token' }]);
         component.theiaPortalURL = 'https://theia.portal.url';
 

@@ -129,7 +129,7 @@
                             [exercise]="exercise()"
                             [routerLinkForRepositoryView]="['/courses', courseId(), 'exercises', exercise().id!, 'repository', studentParticipations()[0]!.id!]"
                             [hideLabelMobile]="true"
-                            [repositoryUri]="''"
+                            [repositoryUri]="gradedRepositoryUri()"
                         />
                     }
                     @if (

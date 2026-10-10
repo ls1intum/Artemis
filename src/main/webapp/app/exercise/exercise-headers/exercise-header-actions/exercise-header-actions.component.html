@@ -155,10 +155,10 @@
                             [exercise]="exercise()"
                             [routerLinkForRepositoryView]="routerLinkForRepositoryView()"
                             [hideLabelMobile]="true"
-                            [repositoryUri]="''"
+                            [repositoryUri]="repositoryUriForCode()"
                             [isPractice]="participationMode() === 'practice'"
                         />
-                        <jhi-code-button-new />
+                        <jhi-code-button-new [repositoryUri]="activeParticipationForCode()?.repositoryUri ?? ''" />
                     }
                 }
                 @if (

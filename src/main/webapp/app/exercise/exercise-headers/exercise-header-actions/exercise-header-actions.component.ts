@@ -27,7 +27,7 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { hasExerciseDueDatePassed, isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -195,6 +195,7 @@ export class ExerciseHeaderActionsComponent {
     readonly activeParticipationForCode = computed(() => {
         return this.participationMode() === 'practice' ? (this._practiceParticipation() ?? this._gradedParticipation()) : this._gradedParticipation();
     });
+    readonly repositoryUriForCode = computed(() => this.getRepositoryUriForCode());
 
     readonly routerLinkForRepositoryView = computed(() => {
         const participation = this.activeParticipationForCode();
@@ -301,6 +302,16 @@ export class ExerciseHeaderActionsComponent {
         this._hasRatedGradedResult.set(
             !!getAllResultsOfAllSubmissions(gradedParticipation?.submissions)?.some((result) => result.rated === true && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA),
         );
+    }
+
+    private getRepositoryUriForCode(): string {
+        const participations = this.studentParticipations();
+        const participation = this.participationService.getSpecificStudentParticipation(participations, this.participationMode() === 'practice') ?? participations[0];
+        return participation && this.isProgrammingExerciseStudentParticipation(participation) ? (participation.repositoryUri ?? '') : '';
+    }
+
+    private isProgrammingExerciseStudentParticipation(participation: StudentParticipation): participation is ProgrammingExerciseStudentParticipation {
+        return participation.type === ParticipationType.PROGRAMMING;
     }
 
     isStartExerciseAvailable(): boolean {
