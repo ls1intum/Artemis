@@ -17,8 +17,9 @@ export const presentationAssessmentFeatureGuard: CanActivateFn = (route) => {
             if (presentationAssessmentsActive && response.body?.presentationAssessmentsEnabled) {
                 return true;
             }
-            return router.createUrlTree(['/course-management', courseId, 'lectures']);
+            // The course overview is open to every role that may open this page; the lectures page is not available to tutors.
+            return router.createUrlTree(['/course-management', courseId]);
         }),
-        catchError(() => of(router.createUrlTree(['/course-management', courseId, 'lectures']))),
+        catchError(() => of(router.createUrlTree(['/course-management', courseId]))),
     );
 };
