@@ -426,16 +426,55 @@ describe('GlobalSearchFilterService', () => {
             expect(service.selectedChip()).toBe(-1);
         });
 
-        it('does not remove a filter on backspace over the empty input (removal needs chip navigation)', () => {
-            service.tokens.set([
-                { facet: 'type', value: 'exercise' },
-                { facet: 'type', value: 'lecture' },
-            ]);
+        describe('selectLastChipOnBackspace', () => {
+            const backspace = (repeat = false) => new KeyboardEvent('keydown', { key: 'Backspace', repeat, cancelable: true });
 
-            service.onBackspaceRemoveFilter();
+            beforeEach(() => {
+                service.tokens.set([
+                    { facet: 'type', value: 'exercise' },
+                    { facet: 'type', value: 'lecture' },
+                ]);
+            });
 
-            expect(applyTokens).not.toHaveBeenCalled();
-            expect(service.tokens()).toHaveLength(2);
+            it('selects the last chip without removing it and marks the event as handled', () => {
+                const event = backspace();
+
+                expect(service.selectLastChipOnBackspace(event)).toBe(true);
+
+                expect(service.selectedChip()).toBe(1);
+                expect(event.defaultPrevented).toBe(true);
+                expect(applyTokens).not.toHaveBeenCalled();
+                expect(service.tokens()).toHaveLength(2);
+            });
+
+            it('leaves an already selected chip for the modal to remove', () => {
+                service.selectedChip.set(0);
+                const event = backspace();
+
+                expect(service.selectLastChipOnBackspace(event)).toBe(false);
+
+                expect(service.selectedChip()).toBe(0);
+                expect(event.defaultPrevented).toBe(false);
+            });
+
+            it('ignores a held key', () => {
+                expect(service.selectLastChipOnBackspace(backspace(true))).toBe(false);
+                expect(service.selectedChip()).toBe(-1);
+            });
+
+            it('does nothing without chips', () => {
+                service.tokens.set([]);
+
+                expect(service.selectLastChipOnBackspace(backspace())).toBe(false);
+                expect(service.selectedChip()).toBe(-1);
+            });
+
+            it('does nothing while the filter menu is open', () => {
+                service.filterPickerOpen.set(true);
+
+                expect(service.selectLastChipOnBackspace(backspace())).toBe(false);
+                expect(service.selectedChip()).toBe(-1);
+            });
         });
 
         it('starts re-picking a chip: opens its facet operator and marks it as edited', () => {
