@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -179,7 +181,7 @@ public class PlagiarismCaseResource {
     @PutMapping("courses/{courseId}/plagiarism-cases/{plagiarismCaseId}/verdict")
     @EnforceAtLeastInstructor
     public ResponseEntity<PlagiarismCaseVerdictResponseDTO> savePlagiarismCaseVerdict(@PathVariable long courseId, @PathVariable long plagiarismCaseId,
-            @RequestBody PlagiarismVerdictDTO plagiarismVerdictDTO) {
+            @Valid @RequestBody PlagiarismVerdictDTO plagiarismVerdictDTO) {
         log.debug("REST request to save plagiarism verdict for plagiarism case with id: {}", plagiarismCaseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithAuthorities())) {
