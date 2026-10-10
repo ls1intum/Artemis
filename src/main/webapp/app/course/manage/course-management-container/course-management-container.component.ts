@@ -343,7 +343,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         if (this.lectureEnabled && isEditor) {
             sidebarItems.push(this.sidebarItemService.getLecturesItem(courseId));
         }
-        if (isInstructor && this.presentationAssessmentsActive() && currentCourse.presentationAssessmentsEnabled) {
+        if (currentCourse.isAtLeastTutor && this.presentationAssessmentsActive() && currentCourse.presentationAssessmentsEnabled) {
             sidebarItems.push(this.sidebarItemService.getPresentationAssessmentsItem(courseId));
         }
         sidebarItems.push(...this.addTutorialGroupsItem(currentCourse, isInstructor));

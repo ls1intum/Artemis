@@ -36,7 +36,9 @@ import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.assessment.service.PresentationAssessmentService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -72,7 +74,7 @@ public class PresentationAssessmentResource {
      * @return the ResponseEntity with status 200 (OK) and the presentation assessments
      */
     @GetMapping("courses/{courseId}/presentation-assessments")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<PresentationAssessmentDTO>> getPresentationAssessments(@PathVariable long courseId) {
         log.debug("REST request to get presentation assessments for course {}", courseId);
         presentationAssessmentService.checkPresentationAssessmentsEnabled(courseId);
@@ -95,7 +97,7 @@ public class PresentationAssessmentResource {
      * @return the rows with pagination headers
      */
     @GetMapping("courses/{courseId}/presentation-assessments/student-rows")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<PresentationAssessmentStudentRowDTO>> getPresentationAssessmentStudentRows(@PathVariable long courseId,
             @RequestParam(required = false) Long assessmentId, @RequestParam(required = false) Boolean assessed, @RequestParam(required = false) Boolean linkedToExercise,
             @RequestParam(required = false) String searchTerm, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size,
@@ -113,7 +115,7 @@ public class PresentationAssessmentResource {
      * @return the total and assessed instance counts
      */
     @GetMapping("courses/{courseId}/presentation-assessments/statistics")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<PresentationAssessmentStatisticsDTO> getPresentationAssessmentStatistics(@PathVariable long courseId) {
         return ResponseEntity.ok(presentationAssessmentService.getStatistics(courseId));
     }
@@ -127,7 +129,7 @@ public class PresentationAssessmentResource {
      * @throws URISyntaxException if the Location URI is invalid
      */
     @PostMapping("courses/{courseId}/presentation-assessments")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<PresentationAssessmentDTO> createPresentationAssessment(@PathVariable long courseId, @Valid @RequestBody PresentationAssessmentDTO dto)
             throws URISyntaxException {
         log.debug("REST request to create presentation assessment for course {}: {}", courseId, dto);
@@ -146,7 +148,7 @@ public class PresentationAssessmentResource {
      * @return the ResponseEntity with status 200 (OK) and the updated presentation assessment
      */
     @PutMapping("courses/{courseId}/presentation-assessments/{assessmentId}")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<PresentationAssessmentDTO> updatePresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId,
             @Valid @RequestBody PresentationAssessmentDTO dto) {
         log.debug("REST request to update presentation assessment {} for course {}: {}", assessmentId, courseId, dto);
@@ -180,7 +182,7 @@ public class PresentationAssessmentResource {
      * @return the created presentation assessment instances
      */
     @PostMapping("courses/{courseId}/presentation-assessments/{assessmentId}/instances")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<PresentationAssessmentInstanceDTO>> savePresentationAssessmentInstances(@PathVariable long courseId, @PathVariable long assessmentId,
             @Valid @RequestBody PresentationAssessmentInstancesBatchCreateDTO dto) {
         presentationAssessmentService.checkPresentationAssessmentsEnabled(courseId);
@@ -197,7 +199,7 @@ public class PresentationAssessmentResource {
      * @return the ResponseEntity with status 200 (OK) and the updated instance including student details
      */
     @PutMapping("courses/{courseId}/presentation-assessments/{assessmentId}/instances/{instanceId}")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<PresentationAssessmentInstanceDTO> updatePresentationAssessmentInstance(@PathVariable long courseId, @PathVariable long assessmentId,
             @PathVariable long instanceId, @Valid @RequestBody PresentationAssessmentInstanceRequestDTO dto) {
         presentationAssessmentService.checkPresentationAssessmentsEnabled(courseId);
@@ -213,7 +215,7 @@ public class PresentationAssessmentResource {
      * @return the ResponseEntity with status 204 (No Content)
      */
     @DeleteMapping("courses/{courseId}/presentation-assessments/{assessmentId}/instances/{instanceId}")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> deletePresentationAssessmentInstance(@PathVariable long courseId, @PathVariable long assessmentId, @PathVariable long instanceId) {
         presentationAssessmentService.checkPresentationAssessmentsEnabled(courseId);
         presentationAssessmentService.deleteInstance(courseId, assessmentId, instanceId);

@@ -80,7 +80,7 @@
     </div>
 
     <div class="presentation-assessment-actions">
-        @if (presentationAssessment()?.id) {
+        @if (presentationAssessment()?.id && canDelete()) {
             <button
                 tumAetUiButton
                 severity="danger"

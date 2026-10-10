@@ -226,6 +226,24 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.presentationAssessments()).toEqual([presentationAssessment]);
     });
 
+    it.each([
+        { role: 'tutor', isAtLeastEditor: false, isAtLeastInstructor: false },
+        { role: 'editor', isAtLeastEditor: true, isAtLeastInstructor: false },
+        { role: 'instructor', isAtLeastEditor: true, isAtLeastInstructor: true },
+    ])('should derive the presentation permissions of a $role', ({ isAtLeastEditor, isAtLeastInstructor }) => {
+        component.course.set({ ...course, isAtLeastTutor: true, isAtLeastEditor, isAtLeastInstructor } as Course);
+
+        expect(component.isAtLeastEditor()).toBe(isAtLeastEditor);
+        expect(component.isAtLeastInstructor()).toBe(isAtLeastInstructor);
+    });
+
+    it('should allow nothing beyond grading while the course is not loaded', () => {
+        component.course.set(undefined);
+
+        expect(component.isAtLeastEditor()).toBe(false);
+        expect(component.isAtLeastInstructor()).toBe(false);
+    });
+
     it('should represent the selected linked presentation in the route', () => {
         const linkedPresentation = { ...presentationAssessment, id: 43, exerciseId: 7 };
         component.presentationAssessments.set([linkedPresentation]);

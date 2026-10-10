@@ -38,7 +38,7 @@ function presentationAssessmentManagementRoute(): Route {
         matcher: presentationAssessmentUrlMatcher,
         loadComponent: () => import('app/presentation/manage/presentation-assessment-management.component').then((m) => m.PresentationAssessmentManagementComponent),
         data: {
-            authorities: IS_AT_LEAST_INSTRUCTOR,
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.presentationAssessment.home.title',
             transparentCourseBody: true,
         },

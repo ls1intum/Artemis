@@ -158,6 +158,10 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     readonly courseId = signal<number>(0);
     readonly course = signal<Course | undefined>(undefined);
+    /** Editors create and edit presentations and remove assigned students; tutors only assign and grade students. */
+    readonly isAtLeastEditor = computed(() => this.course()?.isAtLeastEditor ?? false);
+    /** Only instructors delete presentations. */
+    readonly isAtLeastInstructor = computed(() => this.course()?.isAtLeastInstructor ?? false);
     readonly presentationAssessments = signal<PresentationAssessment[]>([]);
     private readonly presentationAssessmentsLoaded = signal(false);
     readonly presentationLoadFailed = signal(false);

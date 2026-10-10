@@ -13,6 +13,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
+import { IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 
 function presentationRoutes(routes: Routes): Routes {
     return routes.flatMap((route) => (route.matcher === presentationAssessmentUrlMatcher ? [route] : presentationRoutes(route.children ?? [])));
@@ -74,6 +75,14 @@ describe('presentation assessment url matcher', () => {
 
     it.each(['lectures', 'presentations/42/exercises', 'presentations/42/lectures/7', 'presentations/42/exercises/7/teams', 'other/presentations'])('does not match %s', (path) => {
         expect(presentationAssessmentUrlMatcher(segmentsOf(path), {} as UrlSegmentGroup, {} as Route)).toBeNull();
+    });
+});
+
+describe('presentation assessment route access', () => {
+    it('should open the presentation page for tutors', () => {
+        const [route] = presentationRoutes(courseManagementRoutes);
+
+        expect(route.data?.['authorities']).toEqual(IS_AT_LEAST_TUTOR);
     });
 });
 

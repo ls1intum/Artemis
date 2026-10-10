@@ -57,6 +57,8 @@ export class PresentationAssessmentFormDialogComponent {
     readonly presentationAssessment = input<PresentationAssessment>();
     readonly exercises = input<ExerciseTitle[]>([]);
     readonly isSaving = input(false);
+    /** Whether the current user may delete the presentation; only instructors may. */
+    readonly canDelete = input(false);
     readonly dialogError = input<Observable<string>>();
     readonly saved = output<PresentationAssessmentFormDialogResult>();
     readonly cancelled = output<void>();

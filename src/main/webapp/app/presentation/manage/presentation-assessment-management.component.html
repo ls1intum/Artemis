@@ -1,8 +1,10 @@
 <div class="presentation-page flex flex-col">
     <div *titleBarActions class="flex items-center justify-end">
-        <tumaet-ui-button id="create-presentation-assessment" size="small" [icon]="faPlus" (clicked)="startCreate()">
-            <span jhiTranslate="artemisApp.presentationAssessment.home.createLabel"></span>
-        </tumaet-ui-button>
+        @if (isAtLeastEditor()) {
+            <tumaet-ui-button id="create-presentation-assessment" size="small" [icon]="faPlus" (clicked)="startCreate()">
+                <span jhiTranslate="artemisApp.presentationAssessment.home.createLabel"></span>
+            </tumaet-ui-button>
+        }
     </div>
 
     <div class="flex horizontal-scroll presentation-workspace" data-testid="presentation-master-detail">
@@ -42,9 +44,17 @@
                                                 <span>{{ presentationAssessment.exerciseTitle }}</span>
                                             </a>
                                         }
-                                        <tumaet-ui-button size="small" severity="secondary" variant="outlined" [icon]="faPencilAlt" (clicked)="startEdit(presentationAssessment)">
-                                            <span jhiTranslate="entity.action.edit"></span>
-                                        </tumaet-ui-button>
+                                        @if (isAtLeastEditor()) {
+                                            <tumaet-ui-button
+                                                size="small"
+                                                severity="secondary"
+                                                variant="outlined"
+                                                [icon]="faPencilAlt"
+                                                (clicked)="startEdit(presentationAssessment)"
+                                            >
+                                                <span jhiTranslate="entity.action.edit"></span>
+                                            </tumaet-ui-button>
+                                        }
                                     </div>
                                 </header>
 
@@ -144,19 +154,21 @@
                                                                     [ariaLabel]="'entity.action.edit' | artemisTranslate"
                                                                     (clicked)="startEditInstance(presentationAssessment, instance)"
                                                                 />
-                                                                <tumaet-ui-button
-                                                                    size="small"
-                                                                    severity="danger"
-                                                                    variant="text"
-                                                                    [icon]="faTrash"
-                                                                    [ariaLabel]="'entity.action.delete' | artemisTranslate"
-                                                                    jhiDeleteButton
-                                                                    [renderButtonStyle]="false"
-                                                                    [renderButtonText]="false"
-                                                                    [actionType]="ActionType.Delete"
-                                                                    deleteQuestion="artemisApp.presentationAssessment.delete.instanceQuestion"
-                                                                    (delete)="deleteInstance(presentationAssessment, instance)"
-                                                                />
+                                                                @if (isAtLeastEditor()) {
+                                                                    <tumaet-ui-button
+                                                                        size="small"
+                                                                        severity="danger"
+                                                                        variant="text"
+                                                                        [icon]="faTrash"
+                                                                        [ariaLabel]="'entity.action.delete' | artemisTranslate"
+                                                                        jhiDeleteButton
+                                                                        [renderButtonStyle]="false"
+                                                                        [renderButtonText]="false"
+                                                                        [actionType]="ActionType.Delete"
+                                                                        deleteQuestion="artemisApp.presentationAssessment.delete.instanceQuestion"
+                                                                        (delete)="deleteInstance(presentationAssessment, instance)"
+                                                                    />
+                                                                }
                                                             </div>
                                                         }
                                                     </td>
@@ -380,19 +392,21 @@
                                                             [ariaLabel]="'entity.action.edit' | artemisTranslate"
                                                             (clicked)="startEditInstance(row.presentationAssessment, row.instance)"
                                                         />
-                                                        <tumaet-ui-button
-                                                            size="small"
-                                                            severity="danger"
-                                                            variant="text"
-                                                            [icon]="faTrash"
-                                                            [ariaLabel]="'entity.action.delete' | artemisTranslate"
-                                                            jhiDeleteButton
-                                                            [renderButtonStyle]="false"
-                                                            [renderButtonText]="false"
-                                                            [actionType]="ActionType.Delete"
-                                                            deleteQuestion="artemisApp.presentationAssessment.delete.instanceQuestion"
-                                                            (delete)="deleteInstance(row.presentationAssessment, row.instance)"
-                                                        />
+                                                        @if (isAtLeastEditor()) {
+                                                            <tumaet-ui-button
+                                                                size="small"
+                                                                severity="danger"
+                                                                variant="text"
+                                                                [icon]="faTrash"
+                                                                [ariaLabel]="'entity.action.delete' | artemisTranslate"
+                                                                jhiDeleteButton
+                                                                [renderButtonStyle]="false"
+                                                                [renderButtonText]="false"
+                                                                [actionType]="ActionType.Delete"
+                                                                deleteQuestion="artemisApp.presentationAssessment.delete.instanceQuestion"
+                                                                (delete)="deleteInstance(row.presentationAssessment, row.instance)"
+                                                            />
+                                                        }
                                                     </div>
                                                 </td>
                                             </tr>
@@ -480,6 +494,7 @@
                 [presentationAssessment]="dialogPresentationAssessment()"
                 [exercises]="exercises()"
                 [isSaving]="isSaving()"
+                [canDelete]="isAtLeastInstructor()"
                 [dialogError]="dialogError$"
                 (saved)="handlePresentationDialogSave($event)"
                 (deleteRequested)="handlePresentationDialogDelete($event)"
