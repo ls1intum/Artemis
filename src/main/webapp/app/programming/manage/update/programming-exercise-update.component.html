@@ -74,8 +74,6 @@
                 [isCreation]="!programmingExercise.id"
                 [isImport]="isImportFromExistingExercise || isImportFromFile || isImportFromSharing"
                 [isSaving]="isSaving()"
-                [isGeneratingWithAi]="isGeneratingWithAi()"
-                [showGenerateWithAi]="showGenerateWithAi()"
                 [(notificationText)]="notificationText"
                 [isSimpleMode]="isSimpleMode()"
                 [switchEditMode]="switchEditMode"
@@ -83,7 +81,6 @@
                 [invalidReasons]="getInvalidReasons()"
                 [revalidate]="revalidate"
                 (save)="save()"
-                (generateWithAi)="saveWithAi()"
                 (onCancel)="previousState()"
             />
         </div>

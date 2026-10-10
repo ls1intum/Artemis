@@ -1061,6 +1061,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.reviewCommentManager?.clearDrafts();
     }
 
+    hasReviewCommentDrafts(): boolean {
+        return this.reviewCommentManager?.hasDrafts() ?? false;
+    }
+
     private getReviewCommentManager(): ReviewCommentWidgetManager | undefined {
         if (!this.monacoEditor()) {
             return undefined;
@@ -1081,7 +1085,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 onApplyInlineFix: ({ thread }) => this.onApplyInlineFix.emit({ threadId: thread.id }),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
                 showLocationWarning: () => this.showLocationWarning(),
-                showFeedbackAction: () => false,
             });
         }
         return this.reviewCommentManager;

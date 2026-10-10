@@ -446,6 +446,13 @@
         },
         "imageCropper": {
             "sourceImage": "Bild zum Zuschneiden"
+        },
+        "stepState": {
+            "pending": "Noch nicht begonnen",
+            "current": "Läuft",
+            "complete": "Fertig",
+            "failed": "Fehlgeschlagen",
+            "skipped": "Übersprungen"
         }
     },
     "entity": {

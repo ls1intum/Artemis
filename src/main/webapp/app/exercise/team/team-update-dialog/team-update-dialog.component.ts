@@ -1,4 +1,5 @@
-import { Component, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
 import { AbstractControl, FormsModule, NgForm } from '@angular/forms';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -31,6 +32,7 @@ export type StudentTeamConflict = { studentLogin: string; teamId: string };
     imports: [FormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, TeamOwnerSearchComponent, TeamStudentSearchComponent, KeyValuePipe, RemoveKeysPipe],
 })
 export class TeamUpdateDialogComponent implements OnInit {
+    private readonly destroyRef = inject(DestroyRef);
     private teamService = inject(TeamService);
     private readonly dialogRef = inject(DynamicDialogRef);
     private readonly dialogConfig = inject(DynamicDialogConfig);
@@ -245,6 +247,7 @@ export class TeamUpdateDialogComponent implements OnInit {
             .pipe(
                 debounceTime(500),
                 switchMap((shortName) => this.teamService.existsByShortName(this.exercise().course!, shortName)),
+                takeUntilDestroyed(this.destroyRef),
             )
             .subscribe((alreadyTakenResponse) => {
                 const alreadyTaken = alreadyTakenResponse.body;

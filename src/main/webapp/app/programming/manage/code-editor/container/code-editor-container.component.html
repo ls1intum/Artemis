@@ -46,6 +46,7 @@
         [(selectedFile)]="selectedFile"
         [(commitState)]="commitState"
         (onFileChange)="onFileChange($event)"
+        (repositoryFilesLoaded)="onRepositoryFilesLoaded.emit()"
         (onError)="onError($event)"
         (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
     />

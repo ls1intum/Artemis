@@ -25,7 +25,6 @@ export type ReviewCommentWidgetManagerConfig = {
     onApplyInlineFix?: (payload: { thread: CommentThread; inlineFix: InlineCodeChange }) => void;
     onNavigateToLocation?: (location: ReviewThreadLocation) => void;
     showLocationWarning: () => boolean;
-    showFeedbackAction: (thread: CommentThread) => boolean;
 };
 
 enum InlineFixApplyResult {
@@ -76,6 +75,10 @@ export class ReviewCommentWidgetManager {
         this.draftWidgetRefs.forEach((ref) => {
             setInputs(ref, { canSubmit });
         });
+    }
+
+    hasDrafts(): boolean {
+        return this.draftLinesByFile.size > 0;
     }
 
     /**
@@ -286,7 +289,7 @@ export class ReviewCommentWidgetManager {
      * @param showLocationWarning Whether the widget should show a location warning.
      */
     private setThreadWidgetInputs(widgetRef: ComponentRef<ReviewCommentThreadWidgetComponent>, thread: CommentThread, showLocationWarning: boolean): void {
-        setInputs(widgetRef, { thread, showLocationWarning, showFeedbackAction: this.config.showFeedbackAction(thread) });
+        setInputs(widgetRef, { thread, showLocationWarning });
     }
 
     /**

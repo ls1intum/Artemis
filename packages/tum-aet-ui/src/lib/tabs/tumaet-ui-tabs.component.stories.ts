@@ -90,3 +90,21 @@ export const KeyboardNavigation: Story = {
         await expect(canvas.getByRole('tabpanel')).toHaveTextContent('Course settings');
     },
 };
+
+/** Panels can align with a containing card or section rather than adding a second inset. */
+export const UnpaddedPanels: Story = {
+    render: () => ({
+        template: `
+            <tumaet-ui-tabs value="overview">
+                <tumaet-ui-tab-list aria-label="Course">
+                    <tumaet-ui-tab value="overview">Overview</tumaet-ui-tab>
+                    <tumaet-ui-tab value="exercises">Exercises</tumaet-ui-tab>
+                </tumaet-ui-tab-list>
+                <tumaet-ui-tab-panels [padded]="false">
+                    <tumaet-ui-tab-panel value="overview">Content aligned with its containing surface.</tumaet-ui-tab-panel>
+                    <tumaet-ui-tab-panel value="exercises">Exercise list</tumaet-ui-tab-panel>
+                </tumaet-ui-tab-panels>
+            </tumaet-ui-tabs>
+        `,
+    }),
+};

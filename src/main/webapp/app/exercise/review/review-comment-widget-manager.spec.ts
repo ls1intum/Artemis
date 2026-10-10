@@ -106,7 +106,6 @@ describe('ReviewCommentWidgetManager', () => {
         getThreadLine: (thread) => (thread.lineNumber ?? 1) - 1,
         onAdd: vi.fn(),
         showLocationWarning: () => false,
-        showFeedbackAction: () => false,
         ...overrides,
     });
 
@@ -140,6 +139,7 @@ describe('ReviewCommentWidgetManager', () => {
         const addCallback = editor.setLineDecorationsHoverButton.mock.calls[0][1];
         addCallback(5);
 
+        expect(manager.hasDrafts()).toBe(true);
         expect(editor.addLineWidget).toHaveBeenCalledWith(5, expect.stringContaining('review-comment-'), expect.any(HTMLElement));
         expect(onAdd).toHaveBeenCalledWith({ lineNumber: 5, fileName: 'file.java' });
 
@@ -148,6 +148,7 @@ describe('ReviewCommentWidgetManager', () => {
 
         expect(editor.disposeWidgetsByPrefix).toHaveBeenCalledWith(expect.stringContaining('review-comment-'));
         expect(draftRef.destroy).toHaveBeenCalled();
+        expect(manager.hasDrafts()).toBe(false);
     });
 
     it('should not create duplicate draft widgets when adding the same line twice', () => {
