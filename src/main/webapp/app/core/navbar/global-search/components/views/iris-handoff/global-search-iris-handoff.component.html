@@ -1,0 +1,17 @@
+@if (target(); as target) {
+    <!-- The palette's own trigger style (see the Filter button), with its keyboard shortcut. The destination is named in the
+         tooltip and the accessible name, not on the button, which keeps it short. -->
+    <button
+        type="button"
+        class="iris-handoff-trigger"
+        [disabled]="isOpening()"
+        [tumAetUiTooltip]="target.name"
+        tumAetUiTooltipDescribesHost="false"
+        [attr.aria-label]="'global.search.irisHandoffContinueIn' | artemisTranslate: { name: target.name }"
+        (click)="continueIn(target)"
+        data-testid="iris-handoff-button"
+    >
+        <span class="iris-handoff-label">{{ 'global.search.irisHandoffContinue' | artemisTranslate }}</span>
+        <span class="iris-handoff-kbd" aria-hidden="true">{{ shortcutLabel() }}</span>
+    </button>
+}

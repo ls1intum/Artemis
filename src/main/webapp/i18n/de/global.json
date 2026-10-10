@@ -168,6 +168,8 @@
             "irisAnswerRetry": "Erneut versuchen",
             "irisCollapseSources": "Weniger Quellen anzeigen",
             "irisAiBadge": "KI",
+            "irisHandoffContinue": "In Iris fortsetzen",
+            "irisHandoffContinueIn": "In Iris fortsetzen: {{name}}",
             "entityType": {
                 "exercise": "Aufgabe",
                 "lecture": "Vorlesung",

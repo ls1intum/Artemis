@@ -411,6 +411,60 @@ describe('IrisChatService', () => {
             // Re-opening the same page context short-circuits before re-resolving the session.
             expect(httpStub).toHaveBeenCalledTimes(1);
         });
+
+        describe('with a session to open', () => {
+            const handedOffSession = { ...mockConversationWithNoMessages, id: 777, mode: ChatServiceMode.LECTURE, entityId: lectureId } as IrisSession;
+
+            beforeEach(() => {
+                service.setCourseId(courseId);
+                vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+                vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+            });
+
+            it('should load that session instead of resolving the current one', async () => {
+                const byIdStub = vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(handedOffSession));
+                const currentStub = vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists');
+
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+                await waitForSessionIdValue(777);
+
+                expect(byIdStub).toHaveBeenCalledExactlyOnceWith(courseId, 777);
+                expect(currentStub).not.toHaveBeenCalled();
+                // The session's own topic becomes the committed context, so the chip shows the lecture the chat was opened on.
+                expect(service['contextService'].committed()).toEqual({ mode: ChatServiceMode.LECTURE, entityId: lectureId });
+            });
+
+            it('should load that session even when the course page is already open', async () => {
+                vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithId(999)));
+                const byIdStub = vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(handedOffSession));
+
+                service.openChat(ChatServiceMode.COURSE, courseId);
+                await waitForSessionIdValue(999);
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+                await waitForSessionIdValue(777);
+
+                expect(byIdStub).toHaveBeenCalledOnce();
+            });
+
+            it('should not reload the session when it is already open', async () => {
+                const byIdStub = vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(handedOffSession));
+
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+                await waitForSessionIdValue(777);
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+
+                expect(byIdStub).toHaveBeenCalledOnce();
+            });
+
+            it('should report a session that cannot be loaded', async () => {
+                vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+
+                expect(await firstValueFrom(service.currentError())).toBeDefined();
+                expect(service.sessionId).toBeUndefined();
+            });
+        });
     });
 
     describe('close', () => {
