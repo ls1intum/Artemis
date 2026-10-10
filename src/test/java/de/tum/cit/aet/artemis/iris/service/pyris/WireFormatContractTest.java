@@ -17,6 +17,10 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureUnitDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWorkerClaimRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWorkerClaimResponseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWorkerHeartbeatRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWorkerHeartbeatResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -48,10 +52,12 @@ class WireFormatContractTest {
 
     @Test
     void outboundWebhookUsesCamelCaseVideoSourceType() throws Exception {
-        var dto = new PyrisLectureUnitWebhookDTO("", 0, null, 1L, "name", 2L, "lecture", 3L, "course", "desc", "url", "https://x", VideoSourceType.YOUTUBE);
+        var dto = new PyrisLectureUnitWebhookDTO("", 0, null, 1L, "name", 2L, "lecture", 3L, "course", "desc", "url", "https://x", VideoSourceType.YOUTUBE, "v1:abc");
         String json = mapper.writeValueAsString(dto);
         assertThat(json).contains("\"videoSourceType\":\"YOUTUBE\"");
         assertThat(json).doesNotContain("video_source_type");
+        assertThat(json).contains("\"contentFingerprint\":\"v1:abc\"");
+        assertThat(json).doesNotContain("content_fingerprint");
     }
 
     @Test
@@ -84,6 +90,37 @@ class WireFormatContractTest {
         // if Pyris accidentally sends "errorCode" instead of "error": {"code": ...}, we will silently see null.
         var dto = mapper.readValue(wire, PyrisLectureIngestionStatusUpdateDTO.class);
         assertThat(dto.error()).isNull();
+    }
+
+    @Test
+    void workerClaimRequestReadsBootIdAndMaxJobs() throws Exception {
+        String json = "{\"bootId\":\"boot-1\",\"maxJobs\":2}";
+        var dto = mapper.readValue(json, PyrisWorkerClaimRequestDTO.class);
+        assertThat(dto.bootId()).isEqualTo("boot-1");
+        assertThat(dto.maxJobs()).isEqualTo(2);
+    }
+
+    @Test
+    void workerHeartbeatRequestToleratesMissingActiveJobTokens() throws Exception {
+        // An idle worker may heartbeat without any active runs; the field must stay optional.
+        String json = "{\"bootId\":\"boot-1\"}";
+        var dto = mapper.readValue(json, PyrisWorkerHeartbeatRequestDTO.class);
+        assertThat(dto.bootId()).isEqualTo("boot-1");
+        assertThat(dto.activeJobTokens()).isNull();
+    }
+
+    @Test
+    void workerHeartbeatResponseSerializesRevokedTokensCamelCase() throws Exception {
+        String json = mapper.writeValueAsString(new PyrisWorkerHeartbeatResponseDTO(java.util.List.of("tok-a")));
+        assertThat(json).contains("\"revokedJobTokens\":[\"tok-a\"]");
+        assertThat(json).doesNotContain("revoked_job_tokens");
+    }
+
+    @Test
+    void workerClaimResponseSerializesJobsField() throws Exception {
+        String json = mapper.writeValueAsString(new PyrisWorkerClaimResponseDTO(java.util.List.of()));
+        // NON_EMPTY drops the empty list entirely — the worker treats a missing "jobs" as none.
+        assertThat(mapper.readTree(json).has("jobs")).isFalse();
     }
 
     @Test

@@ -1,0 +1,29 @@
+.ingestion-status-badge {
+    // Keep the pill on a single line so a long stage label plus the counter and clock never wrap it tall.
+    white-space: nowrap;
+
+    // The spinner is the only icon the badge renders, and it should sit under the cap height of the
+    // label rather than matching it, so the pill reads as text with a marker instead of icon-plus-text.
+    fa-icon {
+        font-size: 0.9em;
+        line-height: 1;
+    }
+
+    // Counter ("41/142"), elapsed clock, and retry count are three separate readings. Run together they
+    // read as one unparseable run of digits ("20/318 8m 36s x1"), so each is divided from the one before
+    // it and set lighter than the phase label, which stays the thing the eye lands on first.
+    .stage-counter,
+    .stage-elapsed,
+    .stage-retry {
+        font-variant-numeric: tabular-nums;
+        font-weight: 500;
+        opacity: 0.75;
+
+        &::before {
+            content: '·';
+            margin-inline: 0.1em 0.35em;
+            font-weight: 400;
+            opacity: 0.65;
+        }
+    }
+}
