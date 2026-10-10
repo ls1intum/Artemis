@@ -26,7 +26,9 @@
                 "explanation": "Der Übungsmodus ermöglicht es dir nach der Einreichungsfrist zu Übungszwecken weiter an der Aufgabe zu arbeiten. Dies wird deine Bewertung nicht beeinflussen! Artemis wird dafür ein separates Repository aufsetzen, das du erneut clonen musst.",
                 "repositoryChoice": "Du hast bereits vor der Einreichungsfrist eine bewertete Abgabe gemacht. Daher hast du die Wahl, ob der Code im neu aufgesetzten Repository der aus dem Template-Repository der Aufgabe oder deiner bewerteten Abgabe sein soll.",
                 "practiceWithTemplate": "Üben mit Template-Repository",
-                "practiceWithGradedParticipation": "Üben mit bewerteter Abgabe"
+                "practiceWithGradedParticipation": "Üben mit bewerteter Abgabe",
+                "teamHint": "Das Üben ist individuell. Es verändert das Ergebnis deines Teams nicht und deine Teammitglieder können es nicht sehen.",
+                "teamNote": "Du übst gerade allein. Das verändert das Ergebnis deines Teams nicht und deine Teammitglieder können deine Übungsarbeit nicht sehen."
             },
             "resetRepository": {
                 "label": "Repository zurücksetzen",

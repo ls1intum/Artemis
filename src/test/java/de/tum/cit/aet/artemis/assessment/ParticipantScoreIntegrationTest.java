@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.assessment;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.assessment.dto.score.ScoreDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
+import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleFactory;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -91,6 +93,9 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
+
+    @Autowired
+    private ResultService resultService;
 
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
@@ -360,6 +365,91 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     private record IdsMapValue(long exerciseId, long studentId, double score) {
+    }
+
+    /**
+     * A student practices a team exercise on their own. The participant of that participation is the student, but the participant scores of a team exercise are keyed by team,
+     * so reading the student's id as a team id would update, replace or delete the scores of an unrelated team. Therefore, no participant score update may be scheduled for it,
+     * neither when the result is created, nor by the cron job, nor when it is deleted.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void practiceResultOfStudentOnTeamExercise_isNotScheduledForParticipantScores() {
+        Exercise teamExercise = exerciseRepository.findById(idOfTeamTextExercise).orElseThrow();
+        var teamScoresBefore = participantScoreRepository.findAllByExercise(teamExercise);
+        assertThat(teamScoresBefore).hasSize(1);
+
+        StudentParticipation practiceParticipation = participationUtilService.createAndSaveParticipationForExercise(teamExercise, TEST_PREFIX + "student2");
+        practiceParticipation.setTestRun(true);
+        practiceParticipation = studentParticipationRepository.save(practiceParticipation);
+
+        Result practiceResult = participationUtilService.createSubmissionAndResult(practiceParticipation, 100, true);
+        assertThat(participantScoreScheduleService.isIdle()).as("creating the result of an individual practice participation of a team exercise schedules no score update")
+                .isTrue();
+
+        participantScoreScheduleService.executeScheduledTasks();
+        assertThat(participantScoreScheduleService.isIdle()).as("the cron job schedules no score update for it either").isTrue();
+
+        resultRepository.deleteById(practiceResult.getId());
+        assertThat(participantScoreScheduleService.isIdle()).as("deleting the result schedules no score update").isTrue();
+
+        // a task would stay scheduled for the waiting time of the scheduler, so a window longer than that shows that none was queued and finished unnoticed
+        await().during(Duration.ofMillis(3 * ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS)).atMost(Duration.ofSeconds(10))
+                .until(participantScoreScheduleService::isIdle);
+
+        var teamScoresAfter = participantScoreRepository.findAllByExercise(teamExercise);
+        assertThat(teamScoresAfter).hasSize(1);
+        var scoreBefore = teamScoresBefore.getFirst();
+        var scoreAfter = teamScoresAfter.getFirst();
+        assertThat(scoreAfter.getId()).isEqualTo(scoreBefore.getId());
+        assertThat(scoreAfter.getParticipant().getId()).as("the score still belongs to the team").isEqualTo(scoreBefore.getParticipant().getId());
+        assertThat(scoreAfter.getLastRatedScore()).isEqualTo(scoreBefore.getLastRatedScore()).isNotEqualTo(100.0);
+        assertThat(scoreAfter.getLastScore()).isEqualTo(scoreBefore.getLastScore()).isNotEqualTo(100.0);
+        assertThat(scoreAfter.getLastModifiedDate()).as("the score of the team was not recalculated").isEqualTo(scoreBefore.getLastModifiedDate());
+        assertThat(participantScoreRepository.findAllByExercise(teamExercise)).extracting(score -> score.getParticipant().getId())
+                .as("no score was created for the student whose id is not a team id").doesNotContain(practiceParticipation.getParticipant().getId());
+    }
+
+    /**
+     * Deleting a result through the service takes a second route when its feedbacks are not loaded: the result is removed with JPQL, which bypasses the listener, so the service
+     * schedules the score update itself and has to apply the same rule.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deletePracticeResultOfStudentOnTeamExerciseThroughTheService_isNotScheduledForParticipantScores() {
+        Exercise teamExercise = exerciseRepository.findById(idOfTeamTextExercise).orElseThrow();
+        var teamScoresBefore = participantScoreRepository.findAllByExercise(teamExercise);
+        assertThat(teamScoresBefore).hasSize(1);
+
+        StudentParticipation practiceParticipation = participationUtilService.createAndSaveParticipationForExercise(teamExercise, TEST_PREFIX + "student2");
+        practiceParticipation.setTestRun(true);
+        practiceParticipation = studentParticipationRepository.save(practiceParticipation);
+        Result practiceResult = participationUtilService.createSubmissionAndResult(practiceParticipation, 100, true);
+        assertThat(participantScoreScheduleService.isIdle()).isTrue();
+
+        // read it again so that its feedbacks are an uninitialized lazy collection
+        Result resultWithoutFeedbacks = resultRepository.findById(practiceResult.getId()).orElseThrow();
+        resultService.deleteResult(resultWithoutFeedbacks, true);
+
+        assertThat(resultRepository.findById(practiceResult.getId())).isEmpty();
+        assertThat(participantScoreScheduleService.isIdle()).as("deleting the result schedules no score update").isTrue();
+        var teamScoresAfter = participantScoreRepository.findAllByExercise(teamExercise);
+        assertThat(teamScoresAfter).hasSize(1);
+        assertThat(teamScoresAfter.getFirst().getId()).isEqualTo(teamScoresBefore.getFirst().getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void practiceResultOfStudentOnIndividualExercise_isStillScheduledForParticipantScores() {
+        Exercise individualExercise = exerciseRepository.findById(idOfIndividualTextExercise).orElseThrow();
+        StudentParticipation practiceParticipation = participationUtilService.createAndSaveParticipationForExercise(individualExercise, TEST_PREFIX + "student2");
+        practiceParticipation.setTestRun(true);
+        practiceParticipation = studentParticipationRepository.save(practiceParticipation);
+
+        participationUtilService.createSubmissionAndResult(practiceParticipation, 100, true);
+
+        assertThat(participantScoreScheduleService.isIdle()).as("an individual exercise keeps scheduling the score update for practice results").isFalse();
+        await().until(participantScoreScheduleService::isIdle);
     }
 
     @Test

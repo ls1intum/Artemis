@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -10,7 +10,7 @@ import { ParticipationWebsocketService } from 'app/course/shared/services/partic
 import { TextEditorService } from 'app/text/overview/service/text-editor.service';
 import dayjs from 'dayjs/esm';
 import { Subject, Subscription, merge } from 'rxjs';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
@@ -113,6 +113,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     isAfterPublishDate = false;
     readonly isOwnerOfParticipation = signal<boolean>(false);
     readonly isReadOnlyWithShowResult = signal(false);
+    // The team works on one shared submission of the graded participation. A practice participation of a team exercise belongs to a single student, so it is not shared.
+    readonly teamCollaborationEnabled = computed(() => !!this.textExercise()?.teamMode && !isPracticeMode(this.participation()));
     // Icon
     farListAlt = faListAlt;
     faChevronDown = faChevronDown;

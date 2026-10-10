@@ -1,4 +1,3 @@
-import { SimpleChanges } from '@angular/core';
 import { Exercise, ExerciseType, hasDueDatePassed } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { InitializationState, Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -103,18 +102,6 @@ export class SaveExerciseCommand<T extends Exercise> {
     }
 }
 
-export const hasExerciseChanged = (changes: SimpleChanges) => {
-    return changes.exercise && changes.exercise.currentValue && (!changes.exercise.previousValue || changes.exercise.previousValue.id !== changes.exercise.currentValue.id);
-};
-
-export const problemStatementHasChanged = (changes: SimpleChanges) => {
-    return (
-        changes.exercise &&
-        changes.exercise.currentValue &&
-        (!changes.exercise.previousValue || changes.exercise.previousValue.problemStatement !== changes.exercise.currentValue.problemStatement)
-    );
-};
-
 /**
  * Checks if the due date of a given exercise lies in the past. If there is no due date it evaluates to false.
  *
@@ -178,24 +165,49 @@ export const isResumeExerciseAvailable = (exercise: Exercise, participation?: St
 };
 
 /**
+ * Whether the work period for practicing is over, the same condition as the server checks before it starts the practice mode: the exercise due date has passed and, if the
+ * graded participation has an individual due date (an extension), that due date has passed as well. There is no practice without a due date.
+ * @param exercise the exercise that the student wants to practice
+ * @param deadlineParticipation the graded participation of the student or the team, which may carry an individual due date
+ */
+const isPracticeDeadlineOver = (exercise: Exercise, deadlineParticipation?: StudentParticipation): boolean => {
+    const dueDate = getExerciseDueDate(exercise, deadlineParticipation);
+    return exercise.dueDate != undefined && dueDate != undefined && dayjs().isAfter(exercise.dueDate) && dayjs().isAfter(dueDate);
+};
+
+/**
  * The start practice button should be available for programming, quiz, text, and modeling exercises
  * - For quizzes when they are open for practice and the regular work period is over
- * - For programming, text, and modeling exercises when it's after the due date and the exercise is not a team exercise
+ * - For programming, text, and modeling exercises when it's after the due date, also for a team exercise, which is practiced individually by each student.
+ *   While the graded participation has an individual due date (an extension), practicing is only possible after that one, the server answers 403 before.
  * @param exercise the exercise that the student wants to practice
- * @param participation the potentially existing participation
+ * @param participation the potentially existing practice participation
+ * @param deadlineParticipation the graded participation of the student (or of the team for a team exercise), which defines the individual due date.
  */
-export const isStartPracticeAvailable = (exercise: Exercise, participation?: StudentParticipation): boolean => {
+export const isStartPracticeAvailable = (exercise: Exercise, participation?: StudentParticipation, deadlineParticipation?: StudentParticipation): boolean => {
     switch (exercise.type) {
         case ExerciseType.QUIZ:
             return hasDueDatePassed(exercise);
         case ExerciseType.PROGRAMMING:
-            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !exercise.teamMode && (!participation || programmingSetupNotFinished(participation));
+            return isPracticeDeadlineOver(exercise, deadlineParticipation) && (!participation || programmingSetupNotFinished(participation));
         case ExerciseType.TEXT:
         case ExerciseType.MODELING:
-            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !exercise.teamMode && !isPracticeMode(participation);
+            return isPracticeDeadlineOver(exercise, deadlineParticipation) && !isPracticeMode(participation);
         default:
             return false;
     }
+};
+
+/**
+ * The participations of a team exercise after the team assignment of the student changed.
+ * The assignment delivers the participations of the team only. The practice participation of the student is individual, it belongs to the student rather than to the team,
+ * so it has to survive the replacement.
+ * @param current the participations the exercise currently has
+ * @param delivered the participations that the team assignment delivers
+ */
+export const withPracticeParticipations = (current: StudentParticipation[] | undefined, delivered: StudentParticipation[]): StudentParticipation[] => {
+    const practiceParticipations = (current ?? []).filter((participation) => isPracticeMode(participation) && !delivered.some((other) => other.id === participation.id));
+    return [...delivered, ...practiceParticipations];
 };
 
 /**

@@ -141,7 +141,6 @@
             "participationInPracticeMode": "Das Abgabedatum der Übung ist bereits abgelaufen, eine reguläre Teilnahme an der Übung ist nicht mehr möglich. Du kannst den Übungsmodus verwenden, um die Übung zu lösen.",
             "unsupportedExerciseType": "Dieser Aufgabentyp unterstützt den Übungsmodus nicht.",
             "notAvailableInExam": "Der Übungsmodus ist für Klausuraufgaben nicht verfügbar.",
-            "notSupportedForTeams": "Der Übungsmodus wird für Teamübungen nicht unterstützt.",
             "programmingExercisesDisabled": "Der Übungsmodus für Programmieraufgaben ist deaktiviert.",
             "programmingExercisesDisabled_detail": "Die Funktion für Programmieraufgaben ist deaktiviert.",
             "athenaNotEnabled": "Der Übungsmodus für Text- und Modellierungsaufgaben ist nicht verfügbar.",
