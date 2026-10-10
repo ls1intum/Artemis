@@ -9,14 +9,14 @@ import { expect } from '@playwright/test';
 export class ProgrammingExerciseFeedbackPage extends AbstractExerciseFeedback {
     override async shouldShowAdditionalFeedback(points: number, feedbackText: string) {
         await Commands.reloadUntilFound(this.page, this.page.locator(this.ADDITIONAL_FEEDBACK_SELECTOR));
-        await expect(this.page.locator(this.ADDITIONAL_FEEDBACK_SELECTOR).getByText(`${points} Points: ${feedbackText}`)).toBeVisible();
+        await super.shouldShowAdditionalFeedback(points, feedbackText);
     }
 
     async shouldShowCodeFeedback(exerciseID: number, filename: string, feedback: string, points: string, editorPage: OnlineEditorPage) {
         await editorPage.openFileWithName(exerciseID, filename);
         const feedbackElement = await this.findVisibleInlineFeedback();
-        await expect(feedbackElement.getByText(feedback)).toBeVisible();
-        await expect(feedbackElement.getByText(`${points}P`)).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-text', { hasText: feedback })).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-points', { hasText: points })).toBeVisible();
     }
 
     private async findVisibleInlineFeedback() {
