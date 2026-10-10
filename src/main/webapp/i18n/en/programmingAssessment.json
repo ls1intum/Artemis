@@ -14,7 +14,8 @@
             "issuesTooltip": "Issues: {{ percentage }}% of all detected issues.",
             "deductionsTooltip": "Deductions: {{ percentage }}% of all deducted points.",
             "codeIssueNotApplied": "This issue does not deduct the maximum number of possible points, since similar code issues already deduct enough points. If this was the only issue, it would deduct {{points}} points.",
-            "invalidAssessments": "Your assessments are not valid!"
+            "invalidAssessments": "Your assessments are not valid!",
+            "loadFeedbackSuggestionsFailed": "Retrieving AI generated feedback suggestions failed."
         }
     }
 }

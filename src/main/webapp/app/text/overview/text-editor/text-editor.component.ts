@@ -24,7 +24,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult, getNewestResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
+import { AthenaResultNotificationTracker, getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -128,6 +128,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     submissionId: number | undefined;
     resultId: number | undefined;
 
+    private readonly athenaResultNotificationTracker = new AthenaResultNotificationTracker();
+
     ngOnInit() {
         if (this.inputValuesArePresent()) {
             this.setupComponentWithInputValues();
@@ -200,15 +202,12 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 }
                 const changedParticipation = updatedParticipation as StudentParticipation;
                 const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
-                const oldResults = this.participation().submissions?.flatMap((submission) => submission.results ?? []) || [];
                 // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
                 const lastResult = getNewestResult(results);
-                const isNewAthenaResult =
-                    !!results &&
-                    ((results?.length || 0) > (oldResults.length || 0) || lastResult?.completionDate === undefined) &&
-                    lastResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
-                    lastResult?.successful !== undefined;
-                if (isNewAthenaResult) {
+                // The result's own submission back-reference is not reliably populated on this path, so resolve the
+                // containing submission explicitly for dedup purposes.
+                const lastResultSubmissionId = changedParticipation.submissions?.find((submission) => submission.results?.includes(lastResult!))?.id;
+                if (this.athenaResultNotificationTracker.shouldNotify(lastResult, lastResultSubmissionId)) {
                     if (lastResult?.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     } else {
