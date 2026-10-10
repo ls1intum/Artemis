@@ -42,9 +42,7 @@ RUN set -eu; \
 
 # Server tests use PostgreSQL through Testcontainers by default, which needs Docker and cannot work offline.
 # -Dzonky.test.database.type=H2 runs them against in-process H2 instead. Run one cheap integration test: it fetches the
-# test dependencies and compiles the tests, so they are in the image for the offline analysis. A failing assertion only
-# logs a warning. The build still fails if the test did not run at all (an unresolved dependency, a test compile error,
-# a JVM that cannot start), because the report file below exists only once the test class has run.
-RUN ./gradlew --no-daemon --stacktrace test --tests ClientForwardTest -x webapp -Dzonky.test.database.type=H2 \
-    || echo "WARNING: the server test reported failures"; \
-    test -s build/test-results/test/TEST-de.tum.cit.aet.artemis.core.ClientForwardTest.xml
+# test dependencies, compiles the tests and starts the Spring context, so everything the offline server tests need is in
+# the image. The step is strict on purpose. If this test cannot pass, the scanner would get an image that cannot run
+# server tests, and a warning in the build log is easy to miss.
+RUN ./gradlew --no-daemon --stacktrace test --tests ClientForwardTest -x webapp -Dzonky.test.database.type=H2
