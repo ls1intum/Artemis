@@ -7,9 +7,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.MAX_ENVIRONMENT_VARIA
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PACKAGE_NAME_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -28,6 +27,7 @@ import tools.jackson.core.JacksonException;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
@@ -35,7 +35,8 @@ import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDockerFlagsDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -282,9 +283,63 @@ public class ProgrammingExerciseValidationService {
         if (dockerFlagsDTO == null) {
             return;
         }
+        validateDockerFlagValues(dockerFlagsDTO.env(), dockerFlagsDTO.cpuCount(), dockerFlagsDTO.memory(), dockerFlagsDTO.memorySwap());
+    }
 
-        if (dockerFlagsDTO.env() != null) {
-            for (var entry : dockerFlagsDTO.env().entrySet()) {
+    /**
+     * Validates the Docker flags the containers of a build plan set for their own jobs with the rules that apply to the
+     * exercise's flags: a set field has to satisfy the same bounds, and a network has to be allowed on this instance. A
+     * field a container leaves unset takes the exercise's value, which is validated on its own, so the memory and swap
+     * limits are checked as the pair the job runs with: a container that overrides only the memory limit must not end
+     * up with the exercise's swap limit below it, which Docker rejects when the container is created.
+     *
+     * @param buildPlan   the build plan whose containers are validated
+     * @param buildConfig the build configuration whose Docker flags a container inherits where it sets none
+     */
+    public void validateContainerDockerFlags(BuildPlanPhasesDTO buildPlan, ProgrammingExerciseBuildConfig buildConfig) {
+        DockerFlagsDTO exerciseFlags;
+        try {
+            exerciseFlags = programmingExerciseBuildConfigService.parseDockerFlags(buildConfig);
+        }
+        catch (IllegalArgumentException e) {
+            throw new BadRequestAlertException("Error while parsing the docker flags", "Exercise", "dockerFlagsParsingError");
+        }
+        int exerciseMemory = exerciseFlags == null ? 0 : exerciseFlags.memory();
+        int exerciseMemorySwap = exerciseFlags == null ? 0 : exerciseFlags.memorySwap();
+
+        for (BuildContainerDTO container : buildPlan.effectiveContainers()) {
+            BuildContainerDockerFlagsDTO flags = container.dockerFlags();
+            if (flags == null) {
+                continue;
+            }
+            if (!programmingExerciseBuildConfigService.isAllowedNetwork(flags.network())) {
+                throw new BadRequestAlertException("The network " + flags.network() + " of the build container " + container.name() + " is not allowed", "Exercise",
+                        "dockerNetworkNotAllowed");
+            }
+            validateDockerFlagValues(flags.env(), flags.cpuCount(), flags.memory(), flags.memorySwap());
+
+            int effectiveMemory = flags.memory() != null ? flags.memory() : exerciseMemory;
+            int effectiveMemorySwap = flags.memorySwap() != null ? flags.memorySwap() : exerciseMemorySwap;
+            if (effectiveMemory > 0 && effectiveMemorySwap > 0 && effectiveMemorySwap < effectiveMemory) {
+                throw new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE,
+                        "The memory swap limit of the build container " + container.name() + " is below its memory limit", "buildConfig", "buildContainerMemorySwapBelowMemory",
+                        Map.of("message", "error.buildContainerMemorySwapBelowMemory", "params",
+                                Map.of("container", container.name(), "memory", effectiveMemory, "memorySwap", effectiveMemorySwap)));
+            }
+        }
+    }
+
+    /**
+     * The bounds every set Docker flag has to satisfy, whether the exercise or a container sets it.
+     *
+     * @param env        the environment variables, or null for none
+     * @param cpuCount   the CPU count, or null if unset
+     * @param memory     the memory limit in MB, or null if unset
+     * @param memorySwap the memory swap limit in MB, or null if unset
+     */
+    private static void validateDockerFlagValues(@Nullable Map<String, String> env, @Nullable Integer cpuCount, @Nullable Integer memory, @Nullable Integer memorySwap) {
+        if (env != null) {
+            for (var entry : env.entrySet()) {
                 if (entry.getKey().length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH || entry.getValue().length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH) {
                     throw new BadRequestAlertException("The environment variables are too long. Max " + MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH + " chars", "Exercise",
                             "envVariablesTooLong");
@@ -292,16 +347,22 @@ public class ProgrammingExerciseValidationService {
             }
         }
 
-        if (dockerFlagsDTO.memory() < MIN_DOCKER_MEMORY_MB) {
+        if (memory != null && memory < MIN_DOCKER_MEMORY_MB) {
             throw new BadRequestAlertException("The memory limit is invalid. The minimum memory limit is " + MIN_DOCKER_MEMORY_MB + "MB", "Exercise", "memoryLimitInvalid");
         }
 
-        if (dockerFlagsDTO.cpuCount() <= 0) {
+        if (cpuCount != null && cpuCount <= 0) {
             throw new BadRequestAlertException("The cpu count is invalid. The minimum cpu count is 1", "Exercise", "cpuCountInvalid");
         }
 
-        if (dockerFlagsDTO.memorySwap() < 0) {
+        if (memorySwap != null && memorySwap < 0) {
             throw new BadRequestAlertException("The memory swap limit is invalid. The minimum memory swap limit is 0", "Exercise", "memorySwapLimitInvalid");
+        }
+
+        // Docker reads the swap limit as the total of memory and swap, so a positive limit below the memory limit cannot
+        // be applied and the container never starts; 0 leaves the swap to Docker's default
+        if (memory != null && memorySwap != null && memorySwap > 0 && memorySwap < memory) {
+            throw new BadRequestAlertException("The memory swap limit must not be below the memory limit", "Exercise", "memorySwapBelowMemoryLimit");
         }
     }
 
@@ -343,53 +404,20 @@ public class ProgrammingExerciseValidationService {
             throw new BadRequestAlertException("The build config is invalid", "programmingExercise", "invalidBuildConfig");
         }
 
-        List<BuildPhaseDTO> phases;
+        BuildPlanPhasesDTO buildPlan;
         try {
-            phases = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration()).phases();
+            buildPlan = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration());
         }
         catch (JacksonException e) {
             throw new BadRequestAlertException("The build plan configuration is invalid", "programmingExercise", "invalidBuildPlanConfiguration");
         }
 
-        if (phases == null) {
+        if (buildPlan.phases() == null && buildPlan.containers() == null) {
             return; // default will be used when saving
         }
 
-        validateBuildPhases(phases);
-    }
-
-    /**
-     * Validates a list of build phases: it must contain at least one phase, and every phase name must match the configured
-     * pattern, avoid the reserved names, and be unique case-insensitively. The script is deliberately not validated, see
-     * the note at the end of this method. Shared by the full exercise update and the dedicated build plan editor so the
-     * same misconfiguration is rejected with the same error and key on both pages.
-     *
-     * @param phases the build phases to validate
-     */
-    public void validateBuildPhases(List<BuildPhaseDTO> phases) {
-        if (phases == null || phases.isEmpty()) {
-            throw new BadRequestAlertException("Build plan must include at least one phase", "programmingExercise", "noBuildPhases");
-        }
-
-        Set<String> normalizedNames = new HashSet<>();
-        for (BuildPhaseDTO phase : phases) {
-            if (phase == null || phase.name() == null || !BuildPhaseDTO.BUILD_PHASE_NAME_PATTERN.matcher(phase.name()).matches()) {
-                throw new BadRequestAlertException("Invalid build phase name", "programmingExercise", "invalidBuildPhaseName");
-            }
-
-            String normalizedName = phase.name().toLowerCase(Locale.ROOT);
-            if (BuildPhaseDTO.RESERVED_PHASE_NAMES.contains(normalizedName)) {
-                throw new BadRequestAlertException("Invalid build phase name", "programmingExercise", "invalidBuildPhaseName");
-            }
-            if (!normalizedNames.add(normalizedName)) {
-                throw new BadRequestAlertException("Build phase names must be unique", "programmingExercise", "duplicateBuildPhaseNames");
-            }
-        }
-        // A blank script is intentionally accepted here: rejecting it would also apply to the full exercise update, which
-        // re-validates the exercise's already-stored build phases on every save, and to importing a file whose build phases
-        // predate this check, both of which have no in-place way to fix the offending phase. A blank script is dropped on
-        // write by @JsonInclude(NON_EMPTY) on BuildPhaseDTO and defaulted back to '' on read by the client parser
-        // (isBuildPhase in build-plan-phases.model.ts), so it is harmless: a no-op phase, not a corrupted plan.
+        BuildPlanConfigurationValidator.validate(buildPlan, buildConfig.getTimeoutSeconds());
+        validateContainerDockerFlags(buildPlan, buildConfig);
     }
 
     /**
