@@ -446,6 +446,23 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_descriptionAtMaxLength_shouldCreateAttachmentVideoUnit() throws Exception {
+        attachmentVideoUnit.setDescription("a".repeat(1000));
+        var result = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+        assertThat(persistedAttachmentVideoUnit.description()).hasSize(1000);
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.id())).hasSize(SLIDE_COUNT));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_descriptionTooLong_shouldReturnBadRequest() throws Exception {
+        attachmentVideoUnit.setDescription("a".repeat(1001));
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentVideoUnit_asInstructor_shouldUpdateAttachmentVideoUnit() throws Exception {
         attachmentVideoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentVideoUnit, 1)));
         var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
@@ -502,6 +519,41 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(persistedAttachment.getAttachmentVideoUnit()).isEqualTo(attachmentVideoUnit2);
         assertThat(attachmentVideoUnit1.competencyLinks()).anyMatch(link -> Objects.equals(link.competency().id(), competency.getId()));
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of(competency.getId())), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_descriptionAtMaxLength_shouldUpdateAttachmentVideoUnit() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var created = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+
+        var details = new AttachmentVideoUnit();
+        details.setId(created.id());
+        details.setDescription("a".repeat(1000));
+        details.setVideoSource(created.videoSource());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + created.id())
+                .file(createAttachmentVideoUnitPart(details, AttachmentUpdateIntent.NO_FILE_CHANGE)).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        var result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
+        var updated = mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+        assertThat(updated.description()).hasSize(1000);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_descriptionTooLong_shouldReturnBadRequest() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var created = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+
+        var details = new AttachmentVideoUnit();
+        details.setId(created.id());
+        details.setDescription("a".repeat(1001));
+        details.setVideoSource(created.videoSource());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + created.id())
+                .file(createAttachmentVideoUnitPart(details, AttachmentUpdateIntent.NO_FILE_CHANGE)).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        request.performMvcRequest(builder).andExpect(status().isBadRequest());
+
+        var unchanged = attachmentVideoUnitRepository.findById(created.id()).orElseThrow();
+        assertThat(unchanged.getDescription()).isEqualTo("Lorem Ipsum");
     }
 
     @Test
