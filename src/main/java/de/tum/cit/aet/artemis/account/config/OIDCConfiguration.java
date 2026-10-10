@@ -1,6 +1,12 @@
 package de.tum.cit.aet.artemis.account.config;
 
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -32,6 +38,12 @@ import de.tum.cit.aet.artemis.account.security.OIDCService;
 @Lazy
 @Conditional(OIDCEnabled.class)
 public class OIDCConfiguration {
+
+    private static final Logger log = LoggerFactory.getLogger(OIDCConfiguration.class);
+
+    private static final String SCOPE_PROPERTY = "spring.security.oauth2.client.registration.oidc.scope";
+
+    private static final List<String> DEFAULT_SCOPES = List.of("openid", "profile", "email");
 
     private final OIDCService oidcService;
 
@@ -81,17 +93,28 @@ public class OIDCConfiguration {
      */
     @Bean
     public ClientRegistrationRepository clientRegistrationRepository() {
-        // Fetch scopes from environment
-        String[] configuredScopes = environment.getProperty("spring.security.oauth2.client.registration.oidc.scope", String[].class);
-        if (configuredScopes == null || configuredScopes.length == 0) {
-            configuredScopes = new String[] { "openid", "profile", "email" };
-        }
+        List<String> configuredScopes = resolveScopes();
+        log.info("OIDC login requests the scopes {}", configuredScopes);
         ClientRegistration oidcRegistration = ClientRegistration.withRegistrationId("oidc").clientId(clientId).clientSecret(clientSecret)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE).redirectUri("{baseUrl}/login/oauth2/code/{registrationId}").scope(configuredScopes)
                 .issuerUri(issuerUri).authorizationUri(authorizationUri).tokenUri(tokenUri).userInfoUri(userInfoUri).jwkSetUri(jwkSetUri).userNameAttributeName(usernameClaimKey)
                 .clientName("TUM Login").build();
 
         return new InMemoryClientRegistrationRepository(oidcRegistration);
+    }
+
+    /**
+     * Reads the scopes to request from the identity provider.
+     * <p>
+     * The scopes are bound through a {@link Binder} because {@link Environment#getProperty(String, Class)} only sees a property that exists under exactly this name. It
+     * silently returns nothing for a YAML list and for indexed environment variables such as {@code SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_SCOPE_0}, which would
+     * drop every configured scope, including client-specific ones like the matriculation number scope of TUM Login, and fall back to the default.
+     *
+     * @return the configured scopes, or openid, profile and email if none are configured
+     */
+    private List<String> resolveScopes() {
+        List<String> scopes = Binder.get(environment).bind(SCOPE_PROPERTY, Bindable.listOf(String.class)).orElse(List.of());
+        return scopes.isEmpty() ? DEFAULT_SCOPES : scopes;
     }
 
     /**
