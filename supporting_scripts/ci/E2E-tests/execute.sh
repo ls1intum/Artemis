@@ -24,8 +24,15 @@ if [ "$CONFIGURATION" = "postgres" ]; then
   elif [ "$CONFIGURATION" = "multi-node" ]; then
     echo "Running for playwright (multi-node)"
     COMPOSE_FILE="playwright-E2E-tests-multi-node.yml"
+  elif [ "$CONFIGURATION" = "multi-node-redis" ]; then
+    echo "Running for playwright (multi-node, Redis distributed data provider)"
+    # Two files, spelled as the argument list `docker compose -f $COMPOSE_FILE` splits them into: the Redis file layers
+    # the Redis container and the per-node provider settings over the Hazelcast stack.
+    COMPOSE_FILE="playwright-E2E-tests-multi-node.yml -f playwright-E2E-tests-multi-node-redis.yml"
+    # ClusterFormation.spec.ts reads this to decide which node-identity shape it may assert.
+    export DISTRIBUTED_DATA_PROVIDER="redis"
   else
-      echo "Invalid configuration. Please choose among postgres, postgres-localci or multi-node."
+      echo "Invalid configuration. Please choose among postgres, postgres-localci, multi-node or multi-node-redis."
       exit 1
 fi
 
