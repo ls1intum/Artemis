@@ -83,6 +83,15 @@ jobs:
             echo "${key}: ${values[0]} (consistent across ${files[*]})"
           done
 
+      - name: Check every action is pinned to a commit SHA
+        # A version tag is mutable, so `uses:` must name a full commit SHA with a `# vX.Y.Z` comment
+        # (see "Action pinning policy" in .github/workflows/README.md). The unit test pins what the
+        # checker accepts, so a loosened rule fails here instead of silently letting tags back in.
+        run: |
+          set -Eeuo pipefail
+          python3 supporting_scripts/test_check_action_pinning.py
+          python3 supporting_scripts/check_action_pinning.py
+
       - name: Check area filters exercise their own implementations
         run: |
           python3 - <<'PY'
