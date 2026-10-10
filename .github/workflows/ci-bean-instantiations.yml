@@ -28,7 +28,9 @@ jobs:
       MIN_INSTANTIATED_BEANS: 20
       # 159 rather than 158 since the per-node title cache: the notification cache service reaches
       # TitleCacheConfiguration at startup.
-      MAX_INSTANTIATED_BEANS: 159
+      # 160 rather than 159 since the reliable mail delivery: the mail sending service reaches the
+      # mail retry queue and the test account e-mail service at startup.
+      MAX_INSTANTIATED_BEANS: 160
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
