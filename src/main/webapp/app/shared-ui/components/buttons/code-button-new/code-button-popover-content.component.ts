@@ -8,6 +8,10 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 
 export type NonEmptyArray<T> = readonly [T, ...T[]];
 export type SshKeyState = { status: 'missing' } | { status: 'configured'; hasExpiredKeys: boolean };
+export type AuthenticationMethodData =
+    | { authenticationMethod: RepositoryAuthenticationMethod.SSH; url: string; sshKeyState: SshKeyState }
+    | { authenticationMethod: RepositoryAuthenticationMethod.Token; url: string }
+    | { authenticationMethod: RepositoryAuthenticationMethod.Password; url: string };
 
 @Component({
     selector: 'jhi-code-button-popover-content',
@@ -21,30 +25,30 @@ export class CodeButtonPopoverContentComponent {
     protected readonly RepositoryAuthenticationMethod = RepositoryAuthenticationMethod;
     protected readonly sshSettingsUrl = `${window.location.origin}/user-settings/ssh`;
 
-    readonly authenticationMechanisms = input.required<NonEmptyArray<RepositoryAuthenticationMethod>>();
-    readonly sshKeyState = input.required<SshKeyState>();
-    protected readonly selectedAuthenticationMethod = linkedSignal(() => this.initializeSelectedAuthenticationMethod());
-    protected readonly selectedAuthenticationMethodLabel = computed(() => this.getAuthenticationMechanismLabel(this.selectedAuthenticationMethod()));
-    protected readonly authenticationMethodsAndLabels = computed(() => this.getAuthenticationMechanismsWithLabels());
+    readonly authenticationMethodData = input.required<NonEmptyArray<AuthenticationMethodData>>();
+    protected readonly selectedAuthenticationMethodData = linkedSignal(() => this.initializeSelectedAuthenticationMethodData());
+    protected readonly selectedAuthenticationMethodLabel = computed(() => this.getAuthenticationMechanismLabel(this.selectedAuthenticationMethodData().authenticationMethod));
+    protected readonly authenticationMethodDataAndLabels = computed(() => this.getAuthenticationMechanismsWithLabels());
+    protected readonly repositoryUrl = computed(() => this.selectedAuthenticationMethodData().url);
 
-    selectAuthenticationMethod(authenticationMethod: RepositoryAuthenticationMethod) {
-        this.selectedAuthenticationMethod.set(authenticationMethod);
-        this.localStorageService.store<RepositoryAuthenticationMethod>('code-button-state', authenticationMethod);
+    selectAuthenticationMethod(authenticationMethodData: AuthenticationMethodData) {
+        this.selectedAuthenticationMethodData.set(authenticationMethodData);
+        this.localStorageService.store<RepositoryAuthenticationMethod>('code-button-state', authenticationMethodData.authenticationMethod);
     }
 
-    private initializeSelectedAuthenticationMethod(): RepositoryAuthenticationMethod {
-        const authenticationMechanisms = this.authenticationMechanisms();
+    private initializeSelectedAuthenticationMethodData(): AuthenticationMethodData {
+        const authenticationMethodData = this.authenticationMethodData();
         let initialAuthenticationMethod = this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state');
         if (initialAuthenticationMethod === RepositoryAuthenticationMethod.Password) {
             initialAuthenticationMethod = RepositoryAuthenticationMethod.Token;
         }
-        return initialAuthenticationMethod && authenticationMechanisms.includes(initialAuthenticationMethod) ? initialAuthenticationMethod : authenticationMechanisms[0];
+        return authenticationMethodData.find((data) => data.authenticationMethod === initialAuthenticationMethod) ?? authenticationMethodData[0];
     }
 
     private getAuthenticationMechanismsWithLabels() {
-        return this.authenticationMechanisms().map((authenticationMethod) => ({
-            authenticationMethod: authenticationMethod,
-            label: this.getAuthenticationMechanismLabel(authenticationMethod),
+        return this.authenticationMethodData().map((authenticationMethodData) => ({
+            authenticationMethodData,
+            label: this.getAuthenticationMechanismLabel(authenticationMethodData.authenticationMethod),
         }));
     }
 

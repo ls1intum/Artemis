@@ -1,8 +1,9 @@
 <div class="flex flex-col gap-3">
     <h5 class="m-0" jhiTranslate="artemisApp.exerciseActions.accessRepository"></h5>
 
-    @if (selectedAuthenticationMethod() === RepositoryAuthenticationMethod.SSH) {
-        @let sshKeys = sshKeyState();
+    @let selectedMethodData = selectedAuthenticationMethodData();
+    @if (selectedMethodData.authenticationMethod === RepositoryAuthenticationMethod.SSH) {
+        @let sshKeys = selectedMethodData.sshKeyState;
         @if (sshKeys.status === 'missing') {
             <tumaet-ui-message severity="warn">
                 <span
@@ -33,17 +34,17 @@
         </button>
 
         <div class="min-w-0 flex-1 rounded-e-sm border-y border-e px-3 py-2">
-            <code class="block truncate">ssh://git&#64;artemislocal.cit.tum.de:7921/very-long-course-name/programming-exercises/example-repository.git</code>
+            <code class="block truncate">{{ repositoryUrl() }}</code>
         </div>
     </div>
 </div>
 
 <ng-template #authenticationMenu>
     <tumaet-ui-menu>
-        @for (item of authenticationMethodsAndLabels(); track item.authenticationMethod) {
-            @let authenticationMethod = item.authenticationMethod;
+        @for (item of authenticationMethodDataAndLabels(); track item.authenticationMethodData.authenticationMethod) {
+            @let authenticationMethodData = item.authenticationMethodData;
             @let label = item.label;
-            <button type="button" tumAetUiMenuItem (triggered)="selectAuthenticationMethod(authenticationMethod)">
+            <button type="button" tumAetUiMenuItem (triggered)="selectAuthenticationMethod(authenticationMethodData)">
                 {{ label }}
             </button>
         }

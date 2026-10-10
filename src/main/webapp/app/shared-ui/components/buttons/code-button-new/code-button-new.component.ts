@@ -4,15 +4,10 @@ import { faCircleExclamation, faCircleNotch, faCode } from '@fortawesome/free-so
 import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { CodeButtonPopoverContentComponent, NonEmptyArray, SshKeyState } from './code-button-popover-content.component';
+import { AuthenticationMethodData, CodeButtonPopoverContentComponent, NonEmptyArray, SshKeyState } from './code-button-popover-content.component';
 import { RepositoryAuthenticationMethod } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
 import dayjs from 'dayjs/esm';
-
-interface CodeButtonData {
-    authenticationMechanisms: NonEmptyArray<RepositoryAuthenticationMethod>;
-    sshKeyState: SshKeyState;
-}
 
 @Component({
     selector: 'jhi-code-button-new',
@@ -26,29 +21,55 @@ export class CodeButtonNewComponent {
     protected readonly faCircleExclamation = faCircleExclamation;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCode = faCode;
-    protected readonly dataResource = resource({ loader: () => this.loadCodeButtonData() });
+    protected readonly dataResource = resource({ loader: () => this.loadAuthenticationMethodData() });
 
-    private async loadCodeButtonData(): Promise<CodeButtonData> {
-        const authenticationMechanisms = this.getAuthenticationMechanisms();
-        const sshKeyState = await this.getSshKeyState();
-
-        if (!authenticationMechanisms || !sshKeyState) {
+    private async loadAuthenticationMethodData(): Promise<NonEmptyArray<AuthenticationMethodData>> {
+        const authenticationMethods = this.getAuthenticationMethods();
+        const authenticationMethodData = await Promise.all(authenticationMethods.map((authenticationMethod) => this.getAuthenticationMethodData(authenticationMethod)));
+        if (authenticationMethodData.length === 0) {
             throw new Error('Incomplete code button data');
         }
+        return [authenticationMethodData[0], ...authenticationMethodData.slice(1)];
+    }
 
+    private getAuthenticationMethods(): RepositoryAuthenticationMethod[] {
+        const authenticationMechanismStrings = this.profileService.getProfileInfo().repositoryAuthenticationMechanisms ?? [];
+        return authenticationMechanismStrings.filter((method): method is RepositoryAuthenticationMethod =>
+            Object.values(RepositoryAuthenticationMethod).includes(method as RepositoryAuthenticationMethod),
+        );
+    }
+
+    private async getAuthenticationMethodData(authenticationMethod: RepositoryAuthenticationMethod): Promise<AuthenticationMethodData> {
+        switch (authenticationMethod) {
+            case RepositoryAuthenticationMethod.SSH:
+                return this.getSshAuthenticationMethodData();
+            case RepositoryAuthenticationMethod.Token:
+                return this.getTokenAuthenticationMethodData();
+            case RepositoryAuthenticationMethod.Password:
+                return this.getPasswordAuthenticationMethodData();
+        }
+    }
+
+    private async getSshAuthenticationMethodData(): Promise<AuthenticationMethodData> {
+        const sshKeyState = await this.getSshKeyState();
+        if (!sshKeyState) {
+            throw new Error('Incomplete SSH authentication data');
+        }
+        return { authenticationMethod: RepositoryAuthenticationMethod.SSH, url: 'SSH', sshKeyState };
+    }
+
+    private getTokenAuthenticationMethodData(): AuthenticationMethodData {
         return {
-            authenticationMechanisms,
-            sshKeyState,
+            authenticationMethod: RepositoryAuthenticationMethod.Token,
+            url: 'https://artemis-user:**********@artemis.example.com/very-long-course-name/programming-exercises/example-repository.git',
         };
     }
 
-    private getAuthenticationMechanisms(): NonEmptyArray<RepositoryAuthenticationMethod> | undefined {
-        const authenticationMechanismStrings = this.profileService.getProfileInfo().repositoryAuthenticationMechanisms ?? [];
-        const authenticationMechanisms = authenticationMechanismStrings.filter((method): method is RepositoryAuthenticationMethod =>
-            Object.values(RepositoryAuthenticationMethod).includes(method as RepositoryAuthenticationMethod),
-        );
-
-        return authenticationMechanisms.length > 0 ? [authenticationMechanisms[0], ...authenticationMechanisms.slice(1)] : undefined;
+    private getPasswordAuthenticationMethodData(): AuthenticationMethodData {
+        return {
+            authenticationMethod: RepositoryAuthenticationMethod.Password,
+            url: 'https://artemis-user@artemis.example.com/very-long-course-name/programming-exercises/example-repository.git',
+        };
     }
 
     private async getSshKeyState(): Promise<SshKeyState | undefined> {

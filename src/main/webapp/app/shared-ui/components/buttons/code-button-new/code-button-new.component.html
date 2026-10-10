@@ -16,7 +16,7 @@
                 <fa-icon [icon]="faCircleNotch" animation="spin" data-testid="code-button-popover-loading" />
             </div>
         } @else if (dataResource.hasValue()) {
-            <jhi-code-button-popover-content [authenticationMechanisms]="dataResource.value().authenticationMechanisms" [sshKeyState]="dataResource.value().sshKeyState" />
+            <jhi-code-button-popover-content [authenticationMethodData]="dataResource.value()" />
         } @else {
             <div class="flex h-40 w-full flex-col items-center justify-center gap-2 text-center">
                 <fa-icon class="text-state-danger" [icon]="faCircleExclamation" size="2x" aria-hidden="true" />
