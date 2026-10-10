@@ -10,8 +10,8 @@ description: Set up or troubleshoot a local Artemis server and client developmen
 | Tool   | Version          | Note                                                                  |
 | ------ | ---------------- | --------------------------------------------------------------------- |
 | JDK    | 25               | Pinned by the Gradle toolchain                                        |
-| Node   | 24.20.0 or newer | Pinned in `gradle.properties` and `package.json`                      |
-| pnpm   | 12.8.1           | Pinned by the `packageManager` field; activate with `corepack enable` |
+| Node   | 24.21.0 or newer | Pinned in `gradle.properties` and `package.json`                      |
+| pnpm   | 12.10.1          | Pinned by the `packageManager` field; activate with `corepack enable` |
 | Docker | current          | Required for the database and for server tests                        |
 
 Run `corepack enable` once. It activates the exact pnpm version the repository pins, which avoids a
