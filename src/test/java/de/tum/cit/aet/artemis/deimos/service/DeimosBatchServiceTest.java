@@ -246,7 +246,10 @@ class DeimosBatchServiceTest {
         verify(mailSendingService).buildAndSendAsync(any(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"), contextCaptor.capture());
         var emailData = (DeimosAnalysisCompleteEmailDTO) contextCaptor.getValue().get("analysis");
         assertThat(emailData.analyzed()).isEqualTo(0L);
-        assertThat(emailData.failed()).isEqualTo(1L);
+        // The collection aborts before the candidate list is assigned, so the count observed while collecting is what
+        // the email has to report. Reporting one failure instead would tell the instructor a single participation went
+        // wrong, when in fact none of more than five thousand of them was examined.
+        assertThat(emailData.failed()).isEqualTo(PARTICIPATION_LIMIT + 1);
         assertThat(emailData.failedAnalysisDetails()).hasSize(1);
         assertThat(emailData.failedAnalysisDetails().getFirst().reason()).contains("exceeded");
     }

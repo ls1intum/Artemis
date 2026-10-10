@@ -63,8 +63,9 @@ class DiagramRenderingProfileValidationTest {
     private ConfigurationValidator createValidator() {
         Environment mockEnvironment = mock(Environment.class);
         when(mockEnvironment.getProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
+        when(mockEnvironment.getProperty(Constants.DEIMOS_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
         return new ConfigurationValidator(mockEnvironment, false, null, null, false, null, ConfigurationValidator.MIN_PORT, ConfigurationValidator.MIN_PORT, null, null, null, null,
-                false, "http://localhost");
+                false, "http://localhost", "https://llm.example.com", "openai/gpt-oss-120b", "/api/chat/completions", 90, 3);
     }
 
     @Test
