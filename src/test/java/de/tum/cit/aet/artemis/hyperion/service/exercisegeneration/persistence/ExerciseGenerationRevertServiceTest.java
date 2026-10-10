@@ -90,8 +90,8 @@ class ExerciseGenerationRevertServiceTest {
         when(persistenceService.canRestoreGrading(any(Long.class), any(), any())).thenReturn(true);
         when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any())).thenReturn(true);
         when(persistenceService.resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any())).thenReturn(true);
-        revertService = new ExerciseGenerationRevertService(new HazelcastDistributedDataProviderService(hazelcastInstance), gitService, persistenceService, tempFileUtilService,
-                DEFAULT_BRANCH);
+        revertService = new ExerciseGenerationRevertService(new HazelcastDistributedDataProviderService(hazelcastInstance),
+                new GenerationRepositoryRevertService(gitService, tempFileUtilService), persistenceService, DEFAULT_BRANCH);
         revertService.init();
 
         templateUri = mock(LocalVCRepositoryUri.class);
