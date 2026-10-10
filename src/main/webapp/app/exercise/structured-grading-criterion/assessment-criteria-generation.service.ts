@@ -40,7 +40,7 @@ export class AssessmentCriteriaGenerationService {
                 response.criteria.map((generatedCriterion) => {
                     const criterion = new GradingCriterion();
                     criterion.title = generatedCriterion.title;
-                    criterion.structuredGradingInstructions = generatedCriterion.structuredGradingInstructions.map((generatedInstruction) => {
+                    criterion.structuredGradingInstructions = (generatedCriterion.structuredGradingInstructions ?? []).map((generatedInstruction) => {
                         const instruction = new GradingInstruction();
                         instruction.credits = generatedInstruction.credits;
                         instruction.gradingScale = generatedInstruction.gradingScale;

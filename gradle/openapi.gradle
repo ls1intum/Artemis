@@ -32,6 +32,10 @@
                 "-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,theia,dev,localci,localvc",
                 "-Dartemis.lti.enabled=true",
                 "-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web.openapi",
+                // Legacy path aliases (the second path of a multi-path mapping, see LegacyApiPathDeprecationInterceptor)
+                // would each become a second operation with a numbered operationId. Document only the canonical path.
+                // Remove once the aliases are gone after their sunset.
+                "-Dspringdoc.paths-to-exclude=/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",
                 "-Dartemis.hyperion.enabled=true",
                 "-Dartemis.weaviate.enabled=true",
                 "-Dartemis.openapi-docs-generation=true",
@@ -88,13 +92,14 @@
                 set: 'Array',
         ]
         languageSpecificPrimitives =['void']
-        // useHttpResource=false: classical HttpClient.get() Observable methods (not the signal-based
-        // httpResource API). useInjectFunction=true: inject() instead of constructor injection.
+        // useHttpResource=true + separateResources=true: every GET also gets a signal-based httpResource
+        // function in api/<tag>-resources.ts; api/<tag>-api.ts keeps an Observable method for every
+        // operation. useInjectFunction=true: inject() instead of constructor injection.
         // readonlyModels=false: keep DTO properties mutable (Artemis builds/edits DTOs in place).
         configOptions = [
-            useHttpResource  : "false",
+            useHttpResource  : "true",
             useInjectFunction: "true",
-            separateResources: "false",
+            separateResources: "true",
             readonlyModels   : "false"
         ]
     }
@@ -281,7 +286,7 @@
 
         pathsMap.each { String pathName, Map<String, Object> operationsMap ->
             List<String> operationsToRemove = operationsMap.findAll { String operationName, Object operationValue ->
-                operationContainsNullSchema(operationValue as Map<String, Object>)
+                operationContainsNullSchema(operationValue as Map<String, Object>, pathName)
             }.keySet().toList()
 
             operationsToRemove.each { operationsMap.remove(it) }
@@ -294,7 +299,15 @@
         emptyPathNames.each { pathsMap.remove(it) }
     }
 
-    private static boolean operationContainsNullSchema(Map<String, Object> operationDefinition) {
+    private static boolean operationContainsNullSchema(Map<String, Object> operationDefinition, String pathName) {
+        boolean parameterHasNullSchema = operationDefinition.parameters?.any { parameter -> parameter.schema == null && parameter.content == null }
+        Set<String> declaredPathParameters = (operationDefinition.parameters ?: []).findAll { it.in == 'path' }.collect { it.name } as Set<String>
+        boolean pathVariableUndeclared = (pathName =~ /\{([^}]+)\}/).collect { it[1] }.any { !declaredPathParameters.contains(it) }
+        if (parameterHasNullSchema || pathVariableUndeclared) {
+            println "✘ Dropping ${pathName}: " + (parameterHasNullSchema ? 'a parameter lost its schema' : 'a path variable is not a declared path parameter')
+            return true
+        }
+
         boolean requestHasNullSchema = operationDefinition.requestBody
             ?.content
             ?.values()

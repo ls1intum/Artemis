@@ -50,7 +50,7 @@ buildscript {
             mavenCentral()
         }
         dependencies {
-            classpath "de.tum.cit.aet:openapi-generator-angular22:1.0.0"
+            classpath "de.tum.cit.aet:openapi-generator-angular22:2.0.0"
         }
     }
     dependencies {

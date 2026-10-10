@@ -506,6 +506,16 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetMessages_withCourseIdQueryParameterOtherThanPath_badRequest() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("conversationIds", existingConversationMessages.getFirst().getConversation().getId().toString());
+        params.add("courseId", String.valueOf(courseId + 1));
+
+        request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.BAD_REQUEST, PostResponseDTO.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetCourseWideMessages() throws Exception {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
