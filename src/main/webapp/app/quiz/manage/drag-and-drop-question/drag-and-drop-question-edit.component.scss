@@ -5,6 +5,11 @@
         background: white !important;
 
         .drag-item {
+            &:has(.drag-item-text-limit) {
+                height: auto;
+                padding: 134px 4px 20px;
+            }
+
             img {
                 max-height: 100%;
                 max-width: 100%;

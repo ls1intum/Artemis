@@ -33,7 +33,7 @@ import { ImageComponent, ImageLoadingStatus } from 'app/shared-ui/image/image.co
 import { generateExerciseHintExplanation } from 'app/foundation/util/markdown.util';
 import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 import { CdkDrag, CdkDragDrop, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
-import { MAX_QUIZ_QUESTION_POINTS } from 'app/foundation/constants/input.constants';
+import { MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH, MAX_QUIZ_QUESTION_POINTS } from 'app/foundation/constants/input.constants';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizHintAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-hint.action';
 import { QuizExplanationAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-explanation.action';
@@ -125,6 +125,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
     protected readonly faScissors = faScissors;
 
     readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
+    readonly MAX_DRAG_ITEM_TEXT_LENGTH = MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH;
 
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 

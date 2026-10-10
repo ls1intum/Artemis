@@ -24,6 +24,8 @@ import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/ser
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
 import type { Mock } from 'vitest';
+import { By } from '@angular/platform-browser';
+import { NgModel } from '@angular/forms';
 
 /**
  * Helper function to set up canvas and Image mocks for image processing tests.
@@ -378,6 +380,40 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(component.filePreviewPaths().size).toBe(0);
         expect(addFileSpy).not.toHaveBeenCalled();
         expect(removeFileSpy).not.toHaveBeenCalled();
+    });
+
+    it.each([false, true])('should let instructors correct over-limit text during re-evaluation: %s', async (reEvaluationInProgress) => {
+        const question = new DragAndDropQuestion();
+        question.dragItems = [{ text: 'a'.repeat(256), invalid: false }];
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('reEvaluationInProgress', reEvaluationInProgress);
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        const textareaElement = fixture.debugElement.query(By.css('#drag-item-0-text'));
+        const textarea: HTMLTextAreaElement = textareaElement.nativeElement;
+        const model = textareaElement.injector.get(NgModel);
+        expect(model.hasError('maxlength')).toBe(true);
+        expect(textarea.value).toBe('a'.repeat(256));
+        expect(textarea.getAttribute('aria-invalid')).toBe('true');
+        expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).not.toBeNull();
+
+        textarea.value = 'a'.repeat(255);
+        textarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        expect(model.hasError('maxlength')).toBe(false);
+        expect(question.dragItems![0].text).toBe('a'.repeat(255));
+        expect(textarea.getAttribute('aria-invalid')).toBe('false');
+
+        textarea.value = 'Short item';
+        textarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        expect(question.dragItems![0].text).toBe('Short item');
+        expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).toBeNull();
     });
 
     it('should create image item', () => {
