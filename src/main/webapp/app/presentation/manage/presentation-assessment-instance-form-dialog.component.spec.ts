@@ -9,8 +9,7 @@ import {
     PresentationAssessmentInstanceFormDialogComponent,
     PresentationAssessmentInstanceFormResult,
 } from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
-import { LangChangeEvent, TranslateService, TranslationChangeEvent } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/account/user/user.model';
 import { PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { PresentationAssessmentPresenterSelectorComponent } from 'app/presentation/manage/presentation-assessment-presenter-selector.component';
@@ -20,23 +19,23 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentInstanceFormDialogComponent>;
     let component: PresentationAssessmentInstanceFormDialogComponent;
     let saved: Mock<(value: PresentationAssessmentInstanceFormResult) => void>;
-    let languageChanges: Subject<LangChangeEvent>;
-    let translationChanges: Subject<TranslationChangeEvent>;
-    let translate: Mock<(key: string) => string>;
+    let translateService: MockTranslateService;
 
     const presentationDate = dayjs('2026-07-31T13:26:00');
 
     beforeEach(async () => {
         saved = vi.fn();
-        languageChanges = new Subject<LangChangeEvent>();
-        translationChanges = new Subject<TranslationChangeEvent>();
-        translate = vi.fn((key: string) => key);
+        translateService = new MockTranslateService();
 
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentInstanceFormDialogComponent],
-            providers: [{ provide: TranslateService, useValue: { instant: translate, onLangChange: languageChanges, onTranslationChange: translationChanges } }],
+            providers: [{ provide: TranslateService, useValue: translateService }],
         })
-            .overrideComponent(PresentationAssessmentInstanceFormDialogComponent, { set: { template: '' } })
+            // The presenter selector searches students on the server and is tested on its own.
+            .overrideComponent(PresentationAssessmentInstanceFormDialogComponent, {
+                remove: { imports: [PresentationAssessmentPresenterSelectorComponent] },
+                add: { imports: [MockComponent(PresentationAssessmentPresenterSelectorComponent)] },
+            })
             .compileComponents();
 
         fixture = TestBed.createComponent(PresentationAssessmentInstanceFormDialogComponent);
@@ -48,6 +47,10 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         component.saved.subscribe(saved);
         fixture.detectChanges();
     });
+
+    function query(selector: string): HTMLElement | null {
+        return fixture.nativeElement.querySelector(selector);
+    }
 
     it('should split an existing presentation timestamp into date and time controls', () => {
         expect(component.editForm.controls.presentationDate.value?.hour()).toBe(0);
@@ -65,8 +68,8 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     it('should refresh both option lists when the active language changes', () => {
         component.languageOptions();
         component.modeOptions();
-        translate.mockImplementation((key) => `de:${key}`);
-        languageChanges.next({ lang: 'de', translations: {} });
+        vi.spyOn(translateService, 'instant').mockImplementation((key) => `de:${key}`);
+        translateService.onLangChangeSubject.next({ lang: 'de', translations: {} });
 
         expect(component.languageOptions().map((option) => option.label)).toEqual([
             'de:artemisApp.presentationAssessment.languageOptions.english',
@@ -81,8 +84,8 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     it('should refresh option labels when translations are loaded', () => {
         component.languageOptions();
         component.modeOptions();
-        translate.mockImplementation((key) => `loaded:${key}`);
-        translationChanges.next({ lang: 'en', translations: {} });
+        vi.spyOn(translateService, 'instant').mockImplementation((key) => `loaded:${key}`);
+        translateService.onTranslationChangeSubject.next('en');
 
         expect(component.languageOptions()[0].label).toBe('loaded:artemisApp.presentationAssessment.languageOptions.english');
         expect(component.modeOptions()[0].label).toBe('loaded:artemisApp.presentationAssessment.mode.online');
@@ -240,34 +243,6 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
 
         expect(component.editForm.controls.location.value).toBe('');
     });
-});
-
-describe('PresentationAssessmentInstanceFormDialogComponent picker bindings', () => {
-    let fixture: ComponentFixture<PresentationAssessmentInstanceFormDialogComponent>;
-    let component: PresentationAssessmentInstanceFormDialogComponent;
-    let saved: Mock<(value: PresentationAssessmentInstanceFormResult) => void>;
-
-    beforeEach(async () => {
-        saved = vi.fn();
-        await TestBed.configureTestingModule({
-            imports: [PresentationAssessmentInstanceFormDialogComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .overrideComponent(PresentationAssessmentInstanceFormDialogComponent, {
-                remove: { imports: [PresentationAssessmentPresenterSelectorComponent] },
-                add: { imports: [MockComponent(PresentationAssessmentPresenterSelectorComponent)] },
-            })
-            .compileComponents();
-
-        fixture = TestBed.createComponent(PresentationAssessmentInstanceFormDialogComponent);
-        component = fixture.componentInstance;
-        fixture.componentRef.setInput('courseId', 1);
-        fixture.componentRef.setInput('presentationAssessment', { id: 42, maxPoints: 20 });
-        fixture.componentRef.setInput('instance', { id: 11, presentationDate: dayjs('2026-07-31T13:26:00'), student: { login: 'student1' } });
-        fixture.componentRef.setInput('initialAssignedStudents', [new User(undefined, 'student1')]);
-        component.saved.subscribe(saved);
-        fixture.detectChanges();
-    });
 
     it('should transfer picker values to the form controls', () => {
         const [datePicker, timePicker] = fixture.debugElement
@@ -301,5 +276,57 @@ describe('PresentationAssessmentInstanceFormDialogComponent picker bindings', ()
         component.save();
 
         expect(saved).toHaveBeenCalledOnce();
+    });
+
+    it('should show the location field in person and the meeting link field online', () => {
+        expect(query('#presentation-instance-location')).not.toBeNull();
+        expect(query('#presentation-instance-link')).toBeNull();
+
+        fixture.componentRef.setInput('instance', {
+            id: 11,
+            presentationDate: dayjs('2026-07-31T13:26:00'),
+            student: { login: 'student1' },
+            mode: PresentationAssessmentMode.ONLINE,
+            meetingLink: 'https://example.org/presentation',
+        });
+        fixture.detectChanges();
+
+        expect(query('#presentation-instance-location')).toBeNull();
+        expect(query('#presentation-instance-link')).not.toBeNull();
+    });
+
+    it('should explain an invalid meeting link', () => {
+        component.editForm.controls.mode.setValue(PresentationAssessmentMode.ONLINE);
+        component.editForm.controls.meetingLink.setValue('zoom.example.org/j/123');
+        fixture.detectChanges();
+
+        expect(query('[data-testid="presentation-instance-link-invalid"]')).not.toBeNull();
+    });
+
+    it('should explain result points above the maximum of the presentation', () => {
+        expect(query('[data-testid="presentation-instance-points-exceed-max"]')).toBeNull();
+
+        component.editForm.controls.resultPoints.setValue(21);
+        fixture.detectChanges();
+
+        expect(query('[data-testid="presentation-instance-points-exceed-max"]')).not.toBeNull();
+    });
+
+    it('should explain a remark that is too long', () => {
+        component.editForm.controls.remark.setValue('a'.repeat(1001));
+        fixture.detectChanges();
+
+        expect(query('#presentation-instance-remark-error')).not.toBeNull();
+    });
+
+    it('should ask for a presenter once the form was touched without one', () => {
+        component.assignedStudents.set([]);
+        fixture.detectChanges();
+        expect(query('[data-testid="presentation-instance-presenter-missing"]')).toBeNull();
+
+        component.editForm.markAllAsTouched();
+        fixture.detectChanges();
+
+        expect(query('[data-testid="presentation-instance-presenter-missing"]')).not.toBeNull();
     });
 });

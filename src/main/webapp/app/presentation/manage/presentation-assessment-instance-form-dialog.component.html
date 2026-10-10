@@ -63,7 +63,9 @@
                 </tumaet-ui-message>
             }
             @if (editForm.hasError('resultPointsExceedMaxPoints')) {
-                <tumaet-ui-message severity="error"><span jhiTranslate="artemisApp.presentationAssessment.resultPointsExceedMaxPoints"></span></tumaet-ui-message>
+                <tumaet-ui-message severity="error" data-testid="presentation-instance-points-exceed-max">
+                    <span jhiTranslate="artemisApp.presentationAssessment.resultPointsExceedMaxPoints"></span>
+                </tumaet-ui-message>
             }
         </div>
         <div class="flex flex-col gap-2">
@@ -147,7 +149,9 @@
 
     <jhi-presentation-assessment-presenter-selector [(presenters)]="assignedStudents" [courseId]="courseId()" [editable]="!instance()" />
     @if (assignedStudents().length === 0 && editForm.touched) {
-        <tumaet-ui-message severity="error"><span jhiTranslate="artemisApp.presentationAssessment.instanceRequiresPresenter"></span></tumaet-ui-message>
+        <tumaet-ui-message severity="error" data-testid="presentation-instance-presenter-missing">
+            <span jhiTranslate="artemisApp.presentationAssessment.instanceRequiresPresenter"></span>
+        </tumaet-ui-message>
     }
 
     <div class="flex justify-end gap-2">

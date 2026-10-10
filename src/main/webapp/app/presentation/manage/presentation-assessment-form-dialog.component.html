@@ -83,6 +83,7 @@
         @if (presentationAssessment()?.id && canDelete()) {
             <button
                 tumAetUiButton
+                data-testid="delete-presentation-button"
                 severity="danger"
                 type="button"
                 [renderButtonStyle]="false"

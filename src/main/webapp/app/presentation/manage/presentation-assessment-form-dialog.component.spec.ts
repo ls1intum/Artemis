@@ -1,9 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
 import { Mock, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PresentationAssessmentFormDialogComponent, PresentationAssessmentFormDialogResult } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
 import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('PresentationAssessmentFormDialogComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentFormDialogComponent>;
@@ -29,11 +33,11 @@ describe('PresentationAssessmentFormDialogComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentFormDialogComponent],
-        })
-            .overrideComponent(PresentationAssessmentFormDialogComponent, {
-                set: { template: '' },
-            })
-            .compileComponents();
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
+            ],
+        }).compileComponents();
 
         fixture = TestBed.createComponent(PresentationAssessmentFormDialogComponent);
         component = fixture.componentInstance;
@@ -45,6 +49,10 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         component.deleteRequested.subscribe(deleteRequested);
         fixture.detectChanges();
     });
+
+    function byTestId(testId: string): HTMLElement | null {
+        return fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
+    }
 
     it('should initialize the presentation fields', () => {
         expect(component.editForm.controls.title.value).toBe('Final presentation');
@@ -200,5 +208,54 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         component.requestDelete();
 
         expect(deleteRequested).toHaveBeenCalledWith(presentationAssessment);
+    });
+
+    it.each([
+        { case: 'an instructor editing a presentation', canDelete: true, isNew: false, shown: true },
+        { case: 'an editor editing a presentation', canDelete: false, isNew: false, shown: false },
+        { case: 'a new presentation', canDelete: true, isNew: true, shown: false },
+    ])('should show the delete button only for $case: $shown', ({ canDelete, isNew, shown }) => {
+        fixture.componentRef.setInput('canDelete', canDelete);
+        fixture.componentRef.setInput('presentationAssessment', isNew ? undefined : presentationAssessment);
+        fixture.detectChanges();
+
+        expect(!!byTestId('delete-presentation-button')).toBe(shown);
+    });
+
+    it('should show the title error only after the blank title was touched', () => {
+        component.editForm.controls.title.setValue('   ');
+        fixture.detectChanges();
+        expect(byTestId('presentation-title-error')).toBeNull();
+
+        component.editForm.controls.title.markAsTouched();
+        fixture.detectChanges();
+
+        expect(byTestId('presentation-title-error')).not.toBeNull();
+    });
+
+    it('should show the max points error for points above the upper bound', () => {
+        component.editForm.controls.maxPoints.setValue(10001);
+        component.editForm.controls.maxPoints.markAsTouched();
+        fixture.detectChanges();
+
+        expect(byTestId('presentation-max-points-error')).not.toBeNull();
+    });
+
+    it('should explain that typed exercise text must be selected from the list', () => {
+        component.editForm.controls.exercise.setValue('Linked exer' as unknown as ExerciseTitle);
+
+        component.save();
+        fixture.detectChanges();
+
+        expect(byTestId('presentation-exercise-error')).not.toBeNull();
+    });
+
+    it('should save when the form is submitted', () => {
+        component.editForm.controls.title.setValue('Submitted title');
+        fixture.detectChanges();
+
+        fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
+
+        expect(saved).toHaveBeenCalledWith({ presentationAssessment: expect.objectContaining({ title: 'Submitted title' }) });
     });
 });

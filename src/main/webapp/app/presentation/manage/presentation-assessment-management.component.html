@@ -51,6 +51,7 @@
                                                 variant="outlined"
                                                 [icon]="faPencilAlt"
                                                 (clicked)="startEdit(presentationAssessment)"
+                                                data-testid="edit-presentation-button"
                                             >
                                                 <span jhiTranslate="entity.action.edit"></span>
                                             </tumaet-ui-button>
@@ -153,6 +154,7 @@
                                                                     [icon]="faPencilAlt"
                                                                     [ariaLabel]="'entity.action.edit' | artemisTranslate"
                                                                     (clicked)="startEditInstance(presentationAssessment, instance)"
+                                                                    data-testid="edit-instance-button"
                                                                 />
                                                                 @if (isAtLeastEditor()) {
                                                                     <tumaet-ui-button
@@ -167,6 +169,7 @@
                                                                         [actionType]="ActionType.Delete"
                                                                         deleteQuestion="artemisApp.presentationAssessment.delete.instanceQuestion"
                                                                         (delete)="deleteInstance(presentationAssessment, instance)"
+                                                                        data-testid="delete-instance-button"
                                                                     />
                                                                 }
                                                             </div>
@@ -253,6 +256,7 @@
                                         [severity]="assessmentStatusFilter() === 'all' ? 'primary' : 'secondary'"
                                         [ariaPressed]="assessmentStatusFilter() === 'all'"
                                         (clicked)="setAssessmentStatusFilter('all')"
+                                        data-testid="status-filter-all"
                                         ><span jhiTranslate="artemisApp.presentationAssessment.filter.all"></span
                                     ></tumaet-ui-button>
                                     <tumaet-ui-button
@@ -261,6 +265,7 @@
                                         [severity]="assessmentStatusFilter() === 'assessed' ? 'primary' : 'secondary'"
                                         [ariaPressed]="assessmentStatusFilter() === 'assessed'"
                                         (clicked)="setAssessmentStatusFilter('assessed')"
+                                        data-testid="status-filter-assessed"
                                         ><span jhiTranslate="artemisApp.presentationAssessment.assessed"></span
                                     ></tumaet-ui-button>
                                     <tumaet-ui-button
@@ -269,6 +274,7 @@
                                         [severity]="assessmentStatusFilter() === 'pending' ? 'primary' : 'secondary'"
                                         [ariaPressed]="assessmentStatusFilter() === 'pending'"
                                         (clicked)="setAssessmentStatusFilter('pending')"
+                                        data-testid="status-filter-pending"
                                         ><span jhiTranslate="artemisApp.presentationAssessment.pending"></span
                                     ></tumaet-ui-button>
                                 </tumaet-ui-button-group>
@@ -331,6 +337,7 @@
                                                                 | artemisTranslate
                                                         "
                                                         (click)="toggleStudentRowDetails(row)"
+                                                        data-testid="toggle-overview-row-details"
                                                     >
                                                         <span class="student-avatar rounded-md bg-(--primary)/10 text-(--primary)">{{
                                                             row.studentLogin.slice(0, 2).toUpperCase()
@@ -391,6 +398,7 @@
                                                             [icon]="faPencilAlt"
                                                             [ariaLabel]="'entity.action.edit' | artemisTranslate"
                                                             (clicked)="startEditInstance(row.presentationAssessment, row.instance)"
+                                                            data-testid="edit-instance-button"
                                                         />
                                                         @if (isAtLeastEditor()) {
                                                             <tumaet-ui-button
@@ -405,6 +413,7 @@
                                                                 [actionType]="ActionType.Delete"
                                                                 deleteQuestion="artemisApp.presentationAssessment.delete.instanceQuestion"
                                                                 (delete)="deleteInstance(row.presentationAssessment, row.instance)"
+                                                                data-testid="delete-instance-button"
                                                             />
                                                         }
                                                     </div>

@@ -1,14 +1,27 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { DebugElement, EmbeddedViewRef, getDebugNode } from '@angular/core';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import type { ParamMap } from '@angular/router';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MockComponent } from 'ng-mocks';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PresentationAssessmentManagementComponent } from 'app/presentation/manage/presentation-assessment-management.component';
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
-import { PresentationAssessmentInstanceFormResult } from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
+import { PresentationAssessmentFormDialogComponent } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
+import {
+    PresentationAssessmentInstanceFormDialogComponent,
+    PresentationAssessmentInstanceFormResult,
+} from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
+import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
+import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { By } from '@angular/platform-browser';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import {
@@ -21,7 +34,7 @@ import {
 } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { LangChangeEvent, TranslateService, TranslationChangeEvent } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('PresentationAssessmentManagementComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentManagementComponent>;
@@ -37,14 +50,15 @@ describe('PresentationAssessmentManagementComponent', () => {
         saveInstances: ReturnType<typeof vi.fn>;
         deleteInstance: ReturnType<typeof vi.fn>;
     };
-    let alertService: { success: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
-    let router: { navigate: ReturnType<typeof vi.fn> };
+    let alertService: { success: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn>; closeAll: ReturnType<typeof vi.fn> };
+    let dialogService: MockDialogService;
+    let navigateSpy: MockInstance<Router['navigate']>;
     let routeParamMap: BehaviorSubject<ParamMap>;
-    let languageChanges: Subject<LangChangeEvent>;
-    let translationChanges: Subject<TranslationChangeEvent>;
+    let translateService: MockTranslateService;
+    let titleBarActionViews: EmbeddedViewRef<unknown>[] = [];
 
     const courseId = 1;
-    const course = { id: courseId, title: 'Test Course', isAtLeastInstructor: true } as Course;
+    const course = { id: courseId, title: 'Test Course', isAtLeastTutor: true, isAtLeastEditor: true, isAtLeastInstructor: true } as Course;
     const presentationDate = dayjs('2026-07-20T10:00:00+02:00');
     const presentationAssessment: PresentationAssessment = {
         id: 42,
@@ -70,8 +84,7 @@ describe('PresentationAssessmentManagementComponent', () => {
     ];
 
     beforeEach(async () => {
-        languageChanges = new Subject<LangChangeEvent>();
-        translationChanges = new Subject<TranslationChangeEvent>();
+        translateService = new MockTranslateService();
         presentationAssessmentService = {
             findAllByCourseId: vi.fn().mockReturnValue(of(new HttpResponse({ body: [presentationAssessment] }))),
             getStatistics: vi.fn().mockReturnValue(of(new HttpResponse({ body: { totalCount: 2, assessedCount: 2 } }))),
@@ -93,8 +106,8 @@ describe('PresentationAssessmentManagementComponent', () => {
             saveInstances: vi.fn(),
             deleteInstance: vi.fn(),
         };
-        alertService = { success: vi.fn(), addAlert: vi.fn() };
-        router = { navigate: vi.fn().mockResolvedValue(true) };
+        alertService = { success: vi.fn(), addAlert: vi.fn(), closeAll: vi.fn() };
+        dialogService = new MockDialogService();
         routeParamMap = new BehaviorSubject(convertToParamMap({}));
 
         await TestBed.configureTestingModule({
@@ -102,8 +115,10 @@ describe('PresentationAssessmentManagementComponent', () => {
             providers: [
                 { provide: PresentationAssessmentService, useValue: presentationAssessmentService },
                 { provide: AlertService, useValue: alertService },
-                { provide: Router, useValue: router },
-                { provide: TranslateService, useValue: { instant: (key: string) => key, onLangChange: languageChanges, onTranslationChange: translationChanges } },
+                provideRouter([]),
+                provideArtemisTumAetUiTranslator(),
+                { provide: TranslateService, useValue: translateService },
+                { provide: DialogService, useValue: dialogService },
                 {
                     provide: ExerciseService,
                     useValue: { getTitlesForCourse: vi.fn().mockReturnValue(of([])) },
@@ -121,11 +136,20 @@ describe('PresentationAssessmentManagementComponent', () => {
                 },
             ],
         })
+            // The sidebar needs the course shell around it, and both dialogs have specs of their own.
             .overrideComponent(PresentationAssessmentManagementComponent, {
-                set: { template: '' },
+                remove: { imports: [SidebarComponent, PresentationAssessmentFormDialogComponent, PresentationAssessmentInstanceFormDialogComponent] },
+                add: {
+                    imports: [
+                        MockComponent(SidebarComponent),
+                        MockComponent(PresentationAssessmentFormDialogComponent),
+                        MockComponent(PresentationAssessmentInstanceFormDialogComponent),
+                    ],
+                },
             })
             .compileComponents();
 
+        navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
         fixture = TestBed.createComponent(PresentationAssessmentManagementComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
@@ -136,6 +160,42 @@ describe('PresentationAssessmentManagementComponent', () => {
         component.studentSearchTerm.set(searchTerm);
         component.overviewPage.set(0);
     }
+
+    function query(selector: string): HTMLElement | null {
+        return fixture.nativeElement.querySelector(selector);
+    }
+
+    function countByTestId(testId: string): number {
+        return fixture.nativeElement.querySelectorAll(`[data-testid="${testId}"]`).length;
+    }
+
+    /** Clicks the native button inside a TUM AET UI button or a plain button with the given test id. */
+    function clickByTestId(testId: string, index = 0): void {
+        const host: HTMLElement = fixture.nativeElement.querySelectorAll(`[data-testid="${testId}"]`)[index];
+        (host.querySelector('button') ?? host).click();
+        fixture.detectChanges();
+    }
+
+    /** Renders the `*titleBarActions` template as `jhi-course-title-bar` would, so its controls can be queried. */
+    function renderTitleBarActions(): DebugElement {
+        const view = TestBed.inject(CourseTitleBarService).actionsTemplate()!.createEmbeddedView({});
+        titleBarActionViews.push(view);
+        view.detectChanges();
+        return getDebugNode(view.rootNodes[0]) as DebugElement;
+    }
+
+    function presentationDialog(): PresentationAssessmentFormDialogComponent {
+        return fixture.debugElement.query(By.directive(PresentationAssessmentFormDialogComponent)).componentInstance;
+    }
+
+    function instanceDialog(): PresentationAssessmentInstanceFormDialogComponent {
+        return fixture.debugElement.query(By.directive(PresentationAssessmentInstanceFormDialogComponent)).componentInstance;
+    }
+
+    afterEach(() => {
+        titleBarActionViews.forEach((view) => view.destroy());
+        titleBarActionViews = [];
+    });
 
     it('should send the search term only after typing paused and start on the first page', () => {
         vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
@@ -188,9 +248,9 @@ describe('PresentationAssessmentManagementComponent', () => {
         component.sidebarData();
         vi.spyOn(TestBed.inject(TranslateService), 'instant').mockImplementation((key) => `updated:${key}`);
         if (eventType === 'language') {
-            languageChanges.next({ lang: 'de', translations: {} });
+            translateService.onLangChangeSubject.next({ lang: 'de', translations: {} });
         } else {
-            translationChanges.next({ lang: 'de', translations: {} });
+            translateService.onTranslationChangeSubject.next('de');
         }
         expect(component.presentationFilterOptions()[0].label).toBe('updated:artemisApp.presentationAssessment.filter.allPresentations');
         expect(component.typeFilterOptions()[0].label).toBe('updated:artemisApp.presentationAssessment.filter.allTypes');
@@ -247,17 +307,17 @@ describe('PresentationAssessmentManagementComponent', () => {
     it('should represent the selected linked presentation in the route', () => {
         const linkedPresentation = { ...presentationAssessment, id: 43, exerciseId: 7 };
         component.presentationAssessments.set([linkedPresentation]);
-        router.navigate.mockClear();
+        navigateSpy.mockClear();
 
         component.selectPresentation(linkedPresentation);
         fixture.detectChanges();
 
-        expect(router.navigate).toHaveBeenCalledWith(['/course-management', courseId, 'presentations', 43, 'exercises', 7], { replaceUrl: false });
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'presentations', 43, 'exercises', 7], { replaceUrl: false });
 
-        router.navigate.mockClear();
+        navigateSpy.mockClear();
         component.setViewMode('students');
         fixture.detectChanges();
-        expect(router.navigate).toHaveBeenCalledWith(['/course-management', courseId, 'presentations']);
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'presentations']);
     });
 
     it('should restore the selected presentation from the route', () => {
@@ -1128,13 +1188,13 @@ describe('PresentationAssessmentManagementComponent', () => {
         component.selectedPresentationId.set(presentationAssessment.id);
         component.viewMode.set('presentations');
         presentationAssessmentService.delete.mockReturnValue(of(new HttpResponse<void>()));
-        router.navigate.mockClear();
+        navigateSpy.mockClear();
 
         component.deletePresentationAssessment(presentationAssessment);
 
         expect(component.viewMode()).toBe('students');
-        expect(router.navigate).toHaveBeenCalledOnce();
-        expect(router.navigate).toHaveBeenCalledWith(['/course-management', courseId, 'presentations']);
+        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'presentations']);
     });
 
     it('should not navigate when the page was left while the presentation deletion was pending', () => {
@@ -1143,13 +1203,13 @@ describe('PresentationAssessmentManagementComponent', () => {
         component.presentationAssessments.set([presentationAssessment, remaining]);
         component.selectedPresentationId.set(presentationAssessment.id);
         presentationAssessmentService.delete.mockReturnValue(response);
-        router.navigate.mockClear();
+        navigateSpy.mockClear();
 
         component.deletePresentationAssessment(presentationAssessment);
         fixture.destroy();
         response.next(new HttpResponse<void>());
 
-        expect(router.navigate).not.toHaveBeenCalled();
+        expect(navigateSpy).not.toHaveBeenCalled();
     });
 
     it('should preserve selection and filter referencing another assessment', () => {
@@ -1163,5 +1223,191 @@ describe('PresentationAssessmentManagementComponent', () => {
 
         expect(component.selectedPresentationId()).toBe(99);
         expect(component.presentationFilter()).toBe(99);
+    });
+
+    it('should list every student row in the overview', () => {
+        const table = query('[data-testid="presentation-student-overview-table"]')!;
+
+        expect(table.textContent).toContain('student1');
+        expect(table.textContent).toContain('student2');
+    });
+
+    it.each([
+        { role: 'tutor', isAtLeastEditor: false, isAtLeastInstructor: false },
+        { role: 'editor', isAtLeastEditor: true, isAtLeastInstructor: false },
+        { role: 'instructor', isAtLeastEditor: true, isAtLeastInstructor: true },
+    ])('should show a $role only the actions of the role', ({ isAtLeastEditor, isAtLeastInstructor }) => {
+        component.course.set({ ...course, isAtLeastTutor: true, isAtLeastEditor, isAtLeastInstructor } as Course);
+        fixture.detectChanges();
+
+        expect(!!renderTitleBarActions().nativeElement.querySelector('#create-presentation-assessment')).toBe(isAtLeastEditor);
+        expect(countByTestId('edit-instance-button')).toBe(2);
+        expect(countByTestId('delete-instance-button')).toBe(isAtLeastEditor ? 2 : 0);
+
+        routeParamMap.next(convertToParamMap({ courseId, presentationId: presentationAssessment.id }));
+        fixture.detectChanges();
+
+        expect(countByTestId('edit-presentation-button')).toBe(isAtLeastEditor ? 1 : 0);
+        expect(countByTestId('create-instance-button')).toBe(1);
+        expect(countByTestId('edit-instance-button')).toBe(2);
+        expect(countByTestId('delete-instance-button')).toBe(isAtLeastEditor ? 2 : 0);
+    });
+
+    it('should reload the rows when a status filter is chosen', () => {
+        presentationAssessmentService.findStudentRows.mockClear();
+
+        clickByTestId('status-filter-assessed');
+
+        expect(presentationAssessmentService.findStudentRows).toHaveBeenLastCalledWith(courseId, expect.objectContaining({ assessed: true, page: 0 }));
+    });
+
+    it('should expand a row with its details and open an online meeting link safely', () => {
+        const onlineInstance = { ...instances[0], mode: PresentationAssessmentMode.ONLINE, meetingLink: 'https://example.org/meeting' };
+        presentationAssessmentService.findStudentRows.mockReturnValue(
+            of(new HttpResponse({ body: [{ presentationAssessment, instance: onlineInstance }], headers: new HttpHeaders({ 'X-Total-Count': '1' }) })),
+        );
+        applySearch('student1');
+        fixture.detectChanges();
+        expect(query('.presentation-detail-row')).toBeNull();
+
+        clickByTestId('toggle-overview-row-details');
+
+        const link = query('.presentation-detail-row a[href="https://example.org/meeting"]')!;
+        expect(link.getAttribute('target')).toBe('_blank');
+        expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+    });
+
+    it('should open the grading dialog with the clicked instance', () => {
+        clickByTestId('edit-instance-button');
+
+        expect(component.instanceDialogVisible()).toBe(true);
+        expect(instanceDialog().instance()).toEqual(instances[0]);
+        expect(instanceDialog().presentationAssessment()).toEqual(presentationAssessment);
+    });
+
+    it('should open the presentation dialog with the selected presentation', () => {
+        routeParamMap.next(convertToParamMap({ courseId, presentationId: presentationAssessment.id }));
+        fixture.detectChanges();
+
+        clickByTestId('edit-presentation-button');
+
+        expect(component.presentationDialogVisible()).toBe(true);
+        expect(presentationDialog().presentationAssessment()).toEqual(presentationAssessment);
+    });
+
+    it('should offer a retry instead of the table when the presentations cannot be loaded', () => {
+        presentationAssessmentService.findAllByCourseId.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+        routeParamMap.next(convertToParamMap({ courseId: 2 }));
+        fixture.detectChanges();
+
+        expect(countByTestId('presentation-load-error')).toBe(1);
+        expect(countByTestId('presentation-student-overview-table')).toBe(0);
+    });
+
+    it('should list the students and their points in the table of a presentation', () => {
+        routeParamMap.next(convertToParamMap({ courseId, presentationId: presentationAssessment.id }));
+        fixture.detectChanges();
+
+        const table = query('[data-testid="presentation-instances-table"]')!;
+
+        expect(table.textContent).toContain('student1');
+        expect(table.textContent).toContain('student2');
+        expect(table.textContent).toContain('18');
+    });
+
+    it('should reload the overview sorted by points when the points column is clicked', () => {
+        presentationAssessmentService.findStudentRows.mockClear();
+
+        (query('th[tumAetUiSortableColumn="resultPoints"] button') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(presentationAssessmentService.findStudentRows).toHaveBeenLastCalledWith(courseId, expect.objectContaining({ sortField: 'resultPoints', page: 0 }));
+    });
+
+    it('should load the next page of the overview from the paginator', () => {
+        // More rows than fit on one page (25), so the paginator offers a next page.
+        presentationAssessmentService.findStudentRows.mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: instances.map((instance) => ({ presentationAssessment, instance })),
+                    headers: new HttpHeaders({ 'X-Total-Count': '60' }),
+                }),
+            ),
+        );
+        applySearch('student');
+        fixture.detectChanges();
+        presentationAssessmentService.findStudentRows.mockClear();
+
+        (query('button[aria-label="global.paginator.next"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(presentationAssessmentService.findStudentRows).toHaveBeenLastCalledWith(courseId, expect.objectContaining({ page: 1, size: 25 }));
+    });
+
+    it('should show the empty state instead of the tables when the course has no presentations', () => {
+        presentationAssessmentService.findAllByCourseId.mockReturnValue(of(new HttpResponse({ body: [] })));
+
+        routeParamMap.next(convertToParamMap({ courseId: 2 }));
+        fixture.detectChanges();
+
+        expect(countByTestId('presentation-assessments-empty-message')).toBe(1);
+        expect(countByTestId('presentation-student-overview-table')).toBe(0);
+    });
+
+    it('should collapse an expanded row again', () => {
+        clickByTestId('toggle-overview-row-details');
+        expect(query('.presentation-detail-row')).not.toBeNull();
+
+        clickByTestId('toggle-overview-row-details');
+
+        expect(query('.presentation-detail-row')).toBeNull();
+        expect(query('[data-testid="toggle-overview-row-details"]')!.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('should open an empty presentation dialog from the create button in the title bar', () => {
+        (renderTitleBarActions().nativeElement.querySelector('#create-presentation-assessment button') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(component.presentationDialogVisible()).toBe(true);
+        expect(presentationDialog().presentationAssessment()).toBeUndefined();
+    });
+
+    it('should open an empty grading dialog for the presentation from the enter grade button', () => {
+        routeParamMap.next(convertToParamMap({ courseId, presentationId: presentationAssessment.id }));
+        fixture.detectChanges();
+
+        clickByTestId('create-instance-button');
+
+        expect(component.instanceDialogVisible()).toBe(true);
+        expect(instanceDialog().instance()).toBeUndefined();
+        expect(instanceDialog().presentationAssessment()).toEqual(presentationAssessment);
+    });
+
+    it('should delete an instance only after the deletion was confirmed', () => {
+        presentationAssessmentService.deleteInstance.mockReturnValue(of(new HttpResponse<void>()));
+
+        clickByTestId('delete-instance-button');
+
+        // The confirmation dialog is open, nothing is deleted yet.
+        expect(dialogService.open).toHaveBeenCalledOnce();
+        expect(presentationAssessmentService.deleteInstance).not.toHaveBeenCalled();
+
+        // Confirming in the dialog calls the delete handler it was given.
+        dialogService.open.mock.calls[0][1].data.delete({});
+
+        expect(presentationAssessmentService.deleteInstance).toHaveBeenCalledExactlyOnceWith(courseId, presentationAssessment.id, instances[0].id);
+    });
+
+    it('should delete a presentation when its dialog requests the deletion', () => {
+        presentationAssessmentService.delete.mockReturnValue(of(new HttpResponse<void>()));
+        routeParamMap.next(convertToParamMap({ courseId, presentationId: presentationAssessment.id }));
+        fixture.detectChanges();
+        clickByTestId('edit-presentation-button');
+
+        // The dialog has its own spec; here it only reports that the user confirmed the deletion there.
+        presentationDialog().deleteRequested.emit(presentationAssessment);
+
+        expect(presentationAssessmentService.delete).toHaveBeenCalledExactlyOnceWith(courseId, presentationAssessment.id);
     });
 });
