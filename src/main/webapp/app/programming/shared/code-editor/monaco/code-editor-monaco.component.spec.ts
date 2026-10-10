@@ -798,7 +798,7 @@ describe('CodeEditorMonacoComponent', () => {
         cancelRafSpy.mockRestore();
     });
 
-    describe('inline feedback on the first line of a file', () => {
+    describe('inline feedback placement', () => {
         // The editor stores the line of an inline feedback 0-based: `_line:0` is the first line, shown as editor line 1
         const firstLineFeedback: Feedback = { id: 10, type: FeedbackType.MANUAL, reference: 'file:file1.java_line:0', text: 'File file1.java at line 1', detailText: 'first' };
         const laterFeedback: Feedback = { id: 11, type: FeedbackType.MANUAL, reference: 'file:file1.java_line:4', text: 'File file1.java at line 5', detailText: 'later' };
@@ -821,7 +821,7 @@ describe('CodeEditorMonacoComponent', () => {
             fixture.componentRef.setInput('readOnlyManualFeedback', true);
         });
 
-        it('should render it at editor line 1 without hiding the other feedback of the file', async () => {
+        it('should render feedback on the first line at editor line 1 without hiding the other feedback of the file', async () => {
             fixture.componentRef.setInput('selectedFile', 'file1.java');
             fixture.componentRef.setInput('feedbacks', [firstLineFeedback, laterFeedback, otherFileFeedback]);
             await settle();
@@ -831,7 +831,7 @@ describe('CodeEditorMonacoComponent', () => {
             expect(addLineWidgetStub).toHaveBeenCalledWith(5, 'feedback-11-line-5', expect.any(HTMLElement));
         });
 
-        it('should render it after switching to the file it belongs to', async () => {
+        it('should render feedback on the first line after switching to the file it belongs to', async () => {
             fixture.componentRef.setInput('selectedFile', 'file1.java');
             fixture.componentRef.setInput('feedbacks', [firstLineFeedback, laterFeedback, otherFileFeedback]);
             await settle();
@@ -844,7 +844,7 @@ describe('CodeEditorMonacoComponent', () => {
             expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(1, 'feedback-12-line-1', expect.any(HTMLElement));
         });
 
-        it('should render it when the feedback arrives after the file was opened', async () => {
+        it('should render feedback on the first line when it arrives after the file was opened', async () => {
             fixture.componentRef.setInput('selectedFile', 'file1.java');
             await settle();
             expect(addLineWidgetStub).not.toHaveBeenCalled();
@@ -871,22 +871,17 @@ describe('CodeEditorMonacoComponent', () => {
             expect(renderedInlineFeedbackLines()).toEqual([0]);
             expect(addLineWidgetStub).toHaveBeenCalledWith(1, expect.stringMatching(/^feedback-.*-line-1$/), expect.any(HTMLElement));
         });
-    });
 
-    it('should not let a feedback whose line cannot be resolved hide the other feedback of the file', async () => {
-        const addLineWidgetStub = vi.spyOn(comp.editor(), 'addLineWidget').mockImplementation(() => {});
-        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
-        const malformedFeedback: Feedback = { id: 20, type: FeedbackType.MANUAL, reference: 'file:file1.java_line:abc', text: 'malformed' };
-        const validFeedback: Feedback = { id: 21, type: FeedbackType.MANUAL, reference: 'file:file1.java_line:2', text: 'valid' };
-        fixture.componentRef.setInput('readOnlyManualFeedback', true);
-        fixture.componentRef.setInput('selectedFile', 'file1.java');
-        fixture.componentRef.setInput('feedbacks', [malformedFeedback, validFeedback]);
-        fixture.changeDetectorRef.detectChanges();
-        await new Promise(process.nextTick);
-        await fixture.whenStable();
+        it('should not let a feedback whose line cannot be resolved hide the other feedback of the file', async () => {
+            const malformedFeedback: Feedback = { id: 20, type: FeedbackType.MANUAL, reference: 'file:file1.java_line:abc', text: 'malformed' };
+            fixture.componentRef.setInput('selectedFile', 'file1.java');
+            fixture.componentRef.setInput('feedbacks', [malformedFeedback, laterFeedback]);
+            await settle();
 
-        expect(comp.feedbackForSelectedFile()).toEqual([validFeedback]);
-        expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(3, 'feedback-21-line-3', expect.any(HTMLElement));
+            expect(comp.feedbackForSelectedFile()).toEqual([laterFeedback]);
+            expect(renderedInlineFeedbackLines()).toEqual([4]);
+            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(5, 'feedback-11-line-5', expect.any(HTMLElement));
+        });
     });
 
     it('should add a new feedback widget', async () => {

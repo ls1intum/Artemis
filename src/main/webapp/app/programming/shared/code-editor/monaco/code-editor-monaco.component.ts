@@ -911,7 +911,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     /**
      * Returns the feedbacks that refer to a line of the currently selected file, or an empty array if no file is selected.
      * A feedback whose line cannot be resolved is left out: it has no line to render a widget at, and letting it through
-     * would abort {@link renderFeedbackWidgets} and hide every other inline feedback of the file.
+     * would abort {@link renderFeedbackWidgets} before the inline feedback after it in the file is placed.
      * @param feedbacks The feedbacks to filter.
      */
     filterFeedbackForSelectedFile(feedbacks: Feedback[]): Feedback[] {
