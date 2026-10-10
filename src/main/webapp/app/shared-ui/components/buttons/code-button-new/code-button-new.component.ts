@@ -1,4 +1,4 @@
-import { Component, inject, resource } from '@angular/core';
+import { Component, inject, input, resource } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleExclamation, faCircleNotch, faCode } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
@@ -21,7 +21,12 @@ export class CodeButtonNewComponent {
     protected readonly faCircleExclamation = faCircleExclamation;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCode = faCode;
-    protected readonly dataResource = resource({ loader: () => this.loadAuthenticationMethodData() });
+
+    readonly repositoryUri = input.required<string>();
+    protected readonly dataResource = resource({
+        params: () => this.repositoryUri(),
+        loader: () => this.loadAuthenticationMethodData(),
+    });
 
     private async loadAuthenticationMethodData(): Promise<NonEmptyArray<AuthenticationMethodData>> {
         const authenticationMethods = this.getAuthenticationMethods();
@@ -51,11 +56,32 @@ export class CodeButtonNewComponent {
     }
 
     private async getSshAuthenticationMethodData(): Promise<AuthenticationMethodData> {
+        const repositoryUri = this.repositoryUri();
+        const sshCloneUrlTemplate = this.profileService.getProfileInfo().sshCloneURLTemplate;
+        const sshRepositoryUrl = this.getSshRepositoryUrl(repositoryUri, sshCloneUrlTemplate);
+
         const sshKeyState = await this.getSshKeyState();
-        if (!sshKeyState) {
+        if (!sshCloneUrlTemplate || !sshKeyState) {
             throw new Error('Incomplete SSH authentication data');
         }
-        return { authenticationMethod: RepositoryAuthenticationMethod.SSH, url: 'SSH', sshKeyState };
+
+        return {
+            authenticationMethod: RepositoryAuthenticationMethod.SSH,
+            url: sshRepositoryUrl,
+            sshKeyState,
+        };
+    }
+
+    /**
+     * Converts an HTTP(S) repository URI into the SSH clone URL configured by the server.
+     *
+     * For example, let `repositoryUri` be `https://artemis.example.com/scm/course/repository.git` and `sshCloneUrlTemplate`
+     * be `ssh://git@artemis.example.com:7999/`. In this example, the regular expression matches
+     * `https://artemis.example.com/`, optionally matches `scm/`, and captures `course/repository.git` as `$2`. The replacement appends
+     * `$2` to `sshCloneUrlTemplate`, producing `ssh://git@artemis.example.com:7999/course/repository.git`.
+     */
+    private getSshRepositoryUrl(repositoryUri: string, sshCloneUrlTemplate: string): string {
+        return repositoryUri.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/, sshCloneUrlTemplate + '$2');
     }
 
     private getTokenAuthenticationMethodData(): AuthenticationMethodData {
