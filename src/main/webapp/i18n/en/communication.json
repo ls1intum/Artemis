@@ -53,6 +53,7 @@
                 "lecture": "Lecture",
                 "channel": "Channel",
                 "user": "User",
+                "allMembers": "Notify all members of this group chat",
                 "faq": "FAQ",
                 "emoji": "Emoji"
             },

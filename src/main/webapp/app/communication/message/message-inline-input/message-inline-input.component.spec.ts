@@ -22,6 +22,8 @@ import { PostingButtonComponent } from 'app/communication/posting-button/posting
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { DialogService } from 'primeng/dynamicdialog';
+import { By } from '@angular/platform-browser';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 
 describe('MessageInlineInputComponent', () => {
     let component: MessageInlineInputComponent;
@@ -90,6 +92,16 @@ describe('MessageInlineInputComponent', () => {
         vi.advanceTimersByTime(0);
         expect(component.isLoading()).toBe(false);
         expect(onCreateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should pass the conversation of the posting to the markdown editor', () => {
+        const conversation = new GroupChatDTO();
+        component.posting.set(communicationPostToCreateUser1);
+        fixture.componentRef.setInput('activeConversation', conversation);
+        fixture.detectChanges();
+
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.activeConversation()).toBe(conversation);
     });
 
     it('should stop loading when communication service throws error during message creation', () => {

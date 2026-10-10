@@ -363,6 +363,16 @@ in order to easily read the content by clicking the image.
 
 Users can mention other course members within a message, by either typing an `@` character or clicking the `@` button available on the posting markdown editor. By typing in the name of a user to mention, the author of the message can search for a certain user they want to mention as demonstrated in the video below.
 
+##### Notify all members of a group chat
+
+In a group chat, the suggestion list starts with `@all`. Any member of the group chat can use it to notify every other member at once, for example to announce a meeting time. The members receive the same notification as for a personal mention.
+
+- `@all` only works in group chats. In channels and direct messages it stays plain text and does not trigger a mention notification. The message itself still sends the regular notification, like any other message.
+- Members who muted or hid the group chat are not notified, and neither is the author.
+- `@all` only counts where it is displayed as normal text. Inside a quote, inline code, a code block (also as HTML `code`, `pre` or `blockquote`), an HTML comment, the address of a link or a URL (also one that starts with `www.` or `mailto:`) it does not count, so quoting a message that contains `@all` does not notify the group again. Text in other HTML, for example in a paragraph, counts, and so does `@all` that stands next to a URL, as in `see www.example.org @all`.
+- It works for messages and for replies in a thread. Editing a message does not send any notifications.
+- A member who is mentioned by name and through `@all` in the same message receives one notification.
+
 #### Reference channels
 
 Similar to course members, users can reference public and course-wide channels of a course by either typing an `#` character or clicking the `#` button available on the posting markdown editor.
