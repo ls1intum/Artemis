@@ -5,15 +5,20 @@
 /build
 /.gradle
 
-# Local secrets and private keys. A fresh clone has none; this keeps them out when the Dockerfile is built from a working
-# tree. The root .dockerignore also drops application-localci.yml and application-localvc.yml, which are production
-# profile configs, so they are re-admitted here as they are in .gitignore.
+# Local secrets, credentials and private keys: the ones .gitignore lists. A fresh clone has none; this keeps them out
+# when the Dockerfile is built from a working tree. The tracked root .env stays on purpose: it only pins public image
+# versions (it says so itself), and the Gradle build reads it (gradle/env.gradle).
+# The root .dockerignore also drops application-localci.yml and application-localvc.yml, which are production profile
+# configs, so they are re-admitted here as they are in .gitignore.
 /src/main/resources/config/application-local*.yml
 !/src/main/resources/config/application-localci.yml
 !/src/main/resources/config/application-localvc.yml
 /src/main/resources/id_*
 /src/main/resources/known_hosts
+/src/test/playwright/.auth
+/src/test/playwright/ssh-keys/known_hosts
 /deployment/docker/.env
+/deployment/docker/playwright-*override.yml
 /deployment/docker/local-secrets.yml
 /deployment/docker/artemis/config/local-secrets.env
 /deployment/docker/.docker-data

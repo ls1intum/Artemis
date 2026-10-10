@@ -122,7 +122,10 @@ reproducers as tests instead.
   except the Super Admin boundary and passkey enforcement named under High; hardening gaps without a demonstrated attack.
 - For `.github/workflows`: **High** if a pull request from a fork can reach a secret or a write token, **Low** for
   hardening without such a path.
-- A finding without a working reproducer (a failing test, request sequence or proof of concept) is capped at medium.
+- Rate by impact. A working reproducer (a failing test, request sequence or proof of concept) is welcome but not required:
+  an attack path that the code establishes on its own, such as a missing authorization check, keeps the rating its
+  impact earns. Cap a finding at medium only while its exploitability or impact is still unproven, and say what is
+  unproven.
 - Code that students submit is meant to run in the build container, so whatever it does inside its own container is not a
   finding. Reading another job's repositories or secrets, reaching the host, or influencing another student's result is.
 

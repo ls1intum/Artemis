@@ -40,12 +40,11 @@ RUN set -eu; \
     node --version; \
     test "$(pnpm --version)" = "$(sed -n 's/^pnpm_version=//p' gradle.properties)"
 
-# Fetch the test dependencies and compile the tests. This step must succeed: without it the offline analysis cannot run
-# any server test.
-RUN ./gradlew --no-daemon --stacktrace testClasses -x webapp -Dzonky.test.database.type=H2
-
 # Server tests use PostgreSQL through Testcontainers by default, which needs Docker and cannot work offline.
-# -Dzonky.test.database.type=H2 runs them against in-process H2 instead. Run one cheap integration test so a failing
-# setup shows up in the build log, but do not let a failing test fail the build.
+# -Dzonky.test.database.type=H2 runs them against in-process H2 instead. Run one cheap integration test: it fetches the
+# test dependencies and compiles the tests, so they are in the image for the offline analysis. A failing assertion only
+# logs a warning. The build still fails if the test did not run at all (an unresolved dependency, a test compile error,
+# a JVM that cannot start), because the report file below exists only once the test class has run.
 RUN ./gradlew --no-daemon --stacktrace test --tests ClientForwardTest -x webapp -Dzonky.test.database.type=H2 \
-    || echo "WARNING: the server test reported failures"
+    || echo "WARNING: the server test reported failures"; \
+    test -s build/test-results/test/TEST-de.tum.cit.aet.artemis.core.ClientForwardTest.xml
