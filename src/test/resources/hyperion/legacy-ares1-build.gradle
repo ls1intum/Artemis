@@ -1,0 +1,191 @@
+plugins {
+    // %static-code-analysis-start%
+    id 'checkstyle'
+    id 'pmd'
+    id 'com.github.spotbugs' version '6.1.0'
+    // %static-code-analysis-stop%
+    id 'com.teamscale' version '34.2.1'
+    id 'java'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+version = '1.0.0'
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+
+repositories {
+    // %maven-central-mirror-start%
+    maven {
+        name 'artemisMavenCentralMirror'
+        url '${mavenCentralMirrorUrl}'
+    }
+    // %maven-central-mirror-stop%
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    // artemis-java-test-sandbox still resolves to Logback 1.5.18 and AssertJ 3.27.3, both of which carry
+    // published advisories (GHSA-25qh-j22f-pwp8, GHSA-qqpg-mvqg-649v, GHSA-p47f-322f-whfh,
+    // GHSA-jhq6-gfmj-v8fx and GHSA-rqfh-9r24-8c9r). Pin the patched releases here until the sandbox
+    // ships them itself; both bumps stay within the same minor version and are API-compatible.
+    constraints {
+        testImplementation 'ch.qos.logback:logback-classic:1.5.38'
+        testImplementation 'ch.qos.logback:logback-core:1.5.38'
+        testImplementation 'org.assertj:assertj-core:3.27.7'
+    }
+
+    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.15.0'
+    implementation 'org.apache.commons:commons-lang3:3.18.0'
+
+    // testImplementation(':${exerciseNamePomXml}')
+    // testImplementation(':${exerciseNamePomXml}-Solution')
+}
+
+def assignmentSrcDir = "${studentWorkingDirectoryNoSlash}"
+def studentOutputDir = sourceSets.main.java.destinationDirectory.get()
+// %static-code-analysis-start%
+def scaConfigDirectory = "$projectDir/staticCodeAnalysisConfig"
+// %static-code-analysis-stop%
+
+sourceSets {
+    // %non-sequential-start%
+    test {
+        java {
+            srcDir 'test'
+        }
+        resources {
+            srcDir 'test'
+        }
+    }
+    // %non-sequential-stop%
+
+    // %sequential-start%
+    structuralTest {
+        java {
+            srcDir 'structural/test'
+            compileClasspath += sourceSets.main.runtimeClasspath
+        }
+        resources {
+            srcDir 'structural/test'
+        }
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
+
+    behaviorTest {
+        java {
+            srcDir 'behavior/test'
+            compileClasspath += sourceSets.main.runtimeClasspath
+        }
+        resources {
+            srcDir 'behavior/test'
+        }
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
+    // %sequential-stop%
+
+    main {
+        java {
+            srcDirs = [assignmentSrcDir]
+        }
+        resources {
+            srcDirs = []
+        }
+    }
+}
+
+def forbiddenPackageFolders = [ //(2)
+                                "$studentOutputDir/ch/qos/logback/",
+                                "$studentOutputDir/com/github/javaparser/",
+                                "$studentOutputDir/com/intellij/",
+                                "$studentOutputDir/com/sun/",
+                                "$studentOutputDir/de/tum/in/test/api/",
+                                "$studentOutputDir/java/",
+                                "$studentOutputDir/javax/",
+                                "$studentOutputDir/jdk/",
+                                "$studentOutputDir/net/jqwik/",
+                                "$studentOutputDir/org/assertj/",
+                                "$studentOutputDir/org/apache/",
+                                "$studentOutputDir/org/eclipse/",
+                                "$studentOutputDir/org/gradle/",
+                                "$studentOutputDir/org/jacoco/",
+                                "$studentOutputDir/org/json/",
+                                "$studentOutputDir/org/junit/",
+                                "$studentOutputDir/org/opentest4j/",
+                                "$studentOutputDir/sun/",
+                                "$studentOutputDir/worker/org/gradle/"
+]
+test {
+    doFirst { //(1)
+        for (String packageFolder in forbiddenPackageFolders) {
+            assert !file(packageFolder).exists(): "$packageFolder must not exist within the submission."
+        }
+    }
+    defaultCharacterEncoding = 'UTF-8'
+    testLogging.showStandardStreams = true
+    useJUnitPlatform()
+}
+
+// %sequential-start%
+configurations {
+    structuralTestImplementation.extendsFrom testImplementation
+    structuralTestRuntime.extendsFrom testRuntime
+    behaviorTestImplementation.extendsFrom testImplementation
+    behaviorTestRuntime.extendsFrom testRuntime
+}
+
+tasks.register('structuralTests', Test) {
+    testClassesDirs = sourceSets.structuralTest.output.classesDirs
+    classpath += sourceSets.structuralTest.runtimeClasspath
+    useJUnitPlatform()
+}
+
+tasks.register('behaviorTests', Test) {
+    testClassesDirs = sourceSets.behaviorTest.output.classesDirs
+    classpath += sourceSets.behaviorTest.runtimeClasspath
+    useJUnitPlatform()
+}
+// %sequential-stop%
+
+// %static-code-analysis-start%
+checkstyle {
+    configFile = file("$scaConfigDirectory/checkstyle-configuration.xml")
+    configDirectory.set(file(scaConfigDirectory))
+    ignoreFailures = true
+    // exclude the test files
+    checkstyleTest.enabled = false
+    checkstyleMain.reports {
+        xml.outputLocation = file('target/checkstyle-result.xml')
+    }
+}
+
+spotbugs {
+    excludeFilter = file("$scaConfigDirectory/spotbugs-exclusions.xml")
+    ignoreFailures = true
+    // exclude the test files
+    spotbugsTest.enabled = false
+    spotbugsMain.reports {
+        xml {
+            enabled = true
+            outputLocation = file('target/spotbugsXml.xml')
+        }
+        html.enabled = false
+    }
+}
+
+pmd {
+    ruleSets = ["$scaConfigDirectory/pmd-configuration.xml"]
+    rulesMinimumPriority = 5
+    ignoreFailures = true
+    toolVersion = '7.16.0'
+    // exclude the test files
+    pmdTest.enabled = false
+    pmdMain.reports {
+        xml.outputLocation = file('target/pmd.xml')
+    }
+}
+// %static-code-analysis-stop%

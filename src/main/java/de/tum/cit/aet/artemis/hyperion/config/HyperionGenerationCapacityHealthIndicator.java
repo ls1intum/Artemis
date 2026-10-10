@@ -33,7 +33,7 @@ public class HyperionGenerationCapacityHealthIndicator implements HealthIndicato
         long now = System.currentTimeMillis();
         long previous = lastWarning.get();
         if (now - previous > 300_000 && lastWarning.compareAndSet(previous, now)) {
-            log.warn("Hyperion generation has no available worker. Check the generation broker, worker image and worker readiness.");
+            log.warn("Hyperion generation has no available worker. Check the distributed-data provider, worker image and worker readiness.");
         }
     }
 
