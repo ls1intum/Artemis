@@ -40,7 +40,7 @@ jobs:
           ${{ env.java }}
     - name: Setup Gradle
       # Sole Gradle dependency-cache mechanism (prunes unused artifacts -> leaner cache, less eviction). See ci-build.yml.
-      uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
+      uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
     - name: Java Tests (module-affected)
       if: ${{ !env.RUN_ALL_TESTS }}
       run: |
@@ -96,7 +96,7 @@ jobs:
         fi
     - name: Upload JUnit Test Results
       if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: JUnit Test Results (MySQL)
         path: build/test-results/test/*.xml
@@ -105,7 +105,7 @@ jobs:
       run: grep "Test >.* FAILED\$" tests.log | grep -v "Starting logs for" || echo "No failed tests."
     - name: Test Report
       # Renders the JUnit report as a check-run AND annotates failing tests in the PR diff.
-      uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
+      uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a  # v3.2.0
       if: ${{ !cancelled() }}
       with:
         name: MySQL Tests

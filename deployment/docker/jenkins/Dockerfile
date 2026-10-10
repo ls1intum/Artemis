@@ -1,4 +1,4 @@
-FROM docker.io/jenkins/jenkins:lts@sha256:8547df3b0db2803d158ecc9499207a056bb30c23fddc18bb5b4a4dc14e77dd09
+FROM docker.io/jenkins/jenkins:2.568.3-lts@sha256:c1e4c349365f6d16d88595b2c5f7e8ff39b8ae1d061f62420bac193b4b9616d0
 
 LABEL description="Jenkins with plugins pre-installed for Artemis"
 
