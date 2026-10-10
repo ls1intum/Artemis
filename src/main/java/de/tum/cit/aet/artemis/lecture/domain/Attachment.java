@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture.domain;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import jakarta.persistence.Column;
@@ -174,6 +175,20 @@ public class Attachment extends DomainObject implements Serializable {
         }
         Lecture lecture = attachmentVideoUnit.getLecture();
         return Optional.of(FileSystemLocation.ofAttachment(attachmentVideoUnit.getId(), lecture != null ? lecture.getId() : null, link));
+    }
+
+    /**
+     * Whether this attachment is a PDF file this application stores, which is the only kind whose pages Iris ingests.
+     * <p>
+     * An external link ending in {@code .pdf} is not one: it has no {@link #fileLocation()}, so the ingestion payload, the content fingerprint and the reconciler's
+     * structural checks must all treat it like a unit without a PDF. Keeping the rule here is what keeps those callers in agreement. Classifies the stored value only and
+     * never touches the disk.
+     *
+     * @return true if this is a stored PDF file
+     */
+    @JsonIgnore
+    public boolean isStoredPdf() {
+        return attachmentType == AttachmentType.FILE && FileSystemLocation.refersToStoredFile(link) && link.toLowerCase(Locale.ROOT).endsWith(".pdf");
     }
 
     /**
