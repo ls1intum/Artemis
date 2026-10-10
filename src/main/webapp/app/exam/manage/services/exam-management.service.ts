@@ -527,7 +527,7 @@ export class ExamManagementService {
     }
 
     /**
-     * Resets an Exam with examId by deleting all its studentExams and participations.
+     * Resets an Exam with examId by deleting all its studentExams and participations and unregistering all its students.
      * @param courseId The course id.
      * @param examId The exam id.
      */

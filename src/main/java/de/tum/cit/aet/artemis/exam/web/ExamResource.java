@@ -1086,7 +1086,8 @@ public class ExamResource {
 
     /**
      * DELETE /courses/{courseId}/exams/{examId}/reset : Reset the exam with the given id.
-     * The reset operation deletes all studentExams, participations, submissions and feedback.
+     * The reset operation deletes all studentExams, participations, submissions and feedback and unregisters all students from the exam.
+     * The exam itself, its exercise groups and exercises are kept, and so are the students in the course.
      *
      * @param courseId the course to which the exam belongs
      * @param examId   the id of the exam to reset

@@ -13,7 +13,7 @@ const course = { id: SEED_COURSES.examManagement.id } as any;
 
 /**
  * The two destructive actions on an exam that a student has already taken. The deletion dialog tells an instructor what would be deleted
- * before anything is, and a reset throws away what students did while keeping the registrations and the exercise configuration.
+ * before anything is, and a reset throws away what students did and unregisters them while keeping the exam and its exercise configuration.
  */
 test.describe.serial('Exam reset and deletion summary', { tag: '@slow' }, () => {
     let exam: Exam;
@@ -48,16 +48,22 @@ test.describe.serial('Exam reset and deletion summary', { tag: '@slow' }, () => 
         expect(await examAPIRequests.getAllStudentExams(exam)).toHaveLength(1);
     });
 
-    test('Resetting the exam deletes what the students did and keeps the exam and its exercises', async ({ page, login, examAPIRequests }) => {
+    test('Resetting the exam deletes what the students did, unregisters them and keeps the exam and its exercises', async ({ page, login, examAPIRequests }) => {
         await login(instructor, `/course-management/${course.id}/exams/${exam.id}`);
+        // The exam page shows the one registered student before the reset.
+        await expect(page.getByText('Current number of students registered: 1').first()).toBeVisible();
         await page.getByRole('button', { name: 'Reset' }).click();
         const dialog = page.getByRole('dialog');
+        // The dialog tells the instructor what the reset does to the registrations, instead of promising to keep them.
+        await expect(dialog).toContainText('all registered students will be removed from the exam');
         await dialog.locator('#confirm-entity-name').fill(exam.title!);
         const reset = page.waitForResponse((response) => response.url().endsWith(`/exams/${exam.id}/reset`) && response.request().method() === 'DELETE');
         await dialog.getByTestId('delete-dialog-confirm-button').click();
         expect((await reset).status()).toBe(200);
+        // The page now shows no registered student, without a reload.
+        await expect(page.getByText('Current number of students registered: 0').first()).toBeVisible();
 
-        // The work of the students is gone ...
+        // The work of the students is gone, and so are their registrations ...
         await login(admin);
         expect(await examAPIRequests.getAllStudentExams(exam)).toHaveLength(0);
         // ... while the exam and its exercises remain.
@@ -69,13 +75,6 @@ test.describe.serial('Exam reset and deletion summary', { tag: '@slow' }, () => 
         const counts = await summary.json();
         expect(counts.numberSubmittedExams).toBe(0);
         expect(counts.numberStartedExams).toBe(0);
-    });
-
-    // KNOWN INCONSISTENCY: the reset dialog says "Registered students and the exercise configurations will remain", but the reset also
-    // deletes the exam users (registrations, seating, identity images), so no student is registered afterwards.
-    test.fixme('Resetting the exam keeps the registered students, as the dialog promises', async ({ page, login }) => {
-        await login(admin);
-        const summary = await page.request.get(`api/exam/courses/${course.id}/exams/${exam.id}/deletion-summary`);
-        expect((await summary.json()).numberRegisteredStudents).toBe(1);
+        expect(counts.numberRegisteredStudents).toBe(0);
     });
 });
