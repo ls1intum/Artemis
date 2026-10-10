@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -160,6 +161,21 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
             """)
     List<PresentationAssessmentExportDTO> findExportRowsByStudentId(@Param("userId") long userId);
 
+    /**
+     * Deletes all presentation assessment instances of the course with a single statement, keeping the presentation assessments themselves.
+     *
+     * @param courseId the id of the course
+     * @return the number of deleted instances
+     */
+    @Modifying
     @Transactional // ok because of delete
-    long deleteAllByPresentationAssessmentCourseId(long courseId);
+    @Query("""
+            DELETE FROM PresentationAssessmentInstance instance
+            WHERE instance.presentationAssessment.id IN (
+                SELECT assessment.id
+                FROM PresentationAssessment assessment
+                WHERE assessment.course.id = :courseId
+            )
+            """)
+    int deleteAllByCourseId(@Param("courseId") long courseId);
 }

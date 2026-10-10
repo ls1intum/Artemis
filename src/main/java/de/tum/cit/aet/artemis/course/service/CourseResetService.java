@@ -513,7 +513,7 @@ public class CourseResetService {
      * @param courseId the ID of the course whose presentation assessment instances should be deleted
      */
     private void deletePresentationAssessmentInstances(long courseId) {
-        presentationAssessmentInstanceRepository.deleteAllByPresentationAssessmentCourseId(courseId);
+        presentationAssessmentInstanceRepository.deleteAllByCourseId(courseId);
     }
 
     /**
