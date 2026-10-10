@@ -274,6 +274,42 @@
                 "noImageAvailable": "Die Online IDE ist für diese Programmiersprache noch nicht verfügbar.",
                 "alert": "Es muss eine gültige Konfiguration für die Online IDE ausgewählt werden."
             },
+            "security": {
+                "title": "Sicherheit",
+                "description": "Aktiviere die Security-Framework-Sandbox für diese Aufgabe. Feingranulare Pfadberechtigungen werden im erweiterten Modus konfiguriert.",
+                "activateLabel": "Security Framework aktivieren",
+                "subtitle": "Sicherheitsframework für Programmieraufgaben",
+                "frameworkVersion": "Framework-Version",
+                "frameworkVersionHelp": "Welche Security-Framework-Version die Richtlinie dieser Aufgabe erzeugt und durchsetzt. Wähle eine ältere Version nur, wenn die Aufgabe ein älteres Sandbox-Verhalten reproduzieren muss.",
+                "status": {
+                    "inactive": "Inaktiv",
+                    "generating": "Wird erstellt",
+                    "active": "Aktiv",
+                    "deleting": "Wird entfernt",
+                    "error": "Fehler"
+                },
+                "desc": {
+                    "inactive": "Für diese Aufgabe nicht aktiviert. Der Code der Studierenden läuft ohne Sandbox.",
+                    "generating": "Eine implizite Standard-Sicherheitsrichtlinie wird erstellt – keine manuelle Richtliniendatei nötig.",
+                    "activeEdit": "Sandbox für diese Aufgabe aktiviert. Erzeugung und Durchsetzung der Richtlinie sind an die Ares2-Integration delegiert.",
+                    "activeCreate": "Die Sicherheitsrichtlinie wird beim Generieren der Aufgabe committet.",
+                    "deleting": "Das Security Framework wird aus dieser Aufgabe entfernt.",
+                    "error": "Die Sicherheitsrichtlinie konnte nicht synchronisiert werden. Die Sandbox ist noch nicht aktiv."
+                },
+                "sync": {
+                    "inactive": "Nicht synchronisiert – eine Richtlinie wird beim Aktivieren committet.",
+                    "generating": "Richtlinie wird in das exercise-tests-Repository committet …",
+                    "active": "Sandbox aktiv · Richtlinie wird über die Ares2-Integration verwaltet.",
+                    "activeCreate": "Noch nicht synchronisiert – die Richtlinie wird beim Generieren der Aufgabe committet.",
+                    "deleting": "Sandbox-Effekte werden im exercise-tests-Repository zurückgenommen …",
+                    "error": "Synchronisierung fehlgeschlagen · versuche es erneut."
+                },
+                "retry": "Erneut versuchen",
+                "activationFailedOnCreate": "Die Aufgabe wurde erstellt, aber das Aktivieren des Security Frameworks ist fehlgeschlagen. Du kannst es auf der Bearbeitungsseite der Aufgabe aktivieren.",
+                "loadError": "Sicherheitsstatus konnte nicht geladen werden.",
+                "latestSuffix": "(neueste)",
+                "deactivateWarning": "Beim Deaktivieren wird ein neuer Commit erstellt, der die Sicherheitsrichtlinie und die Enforcement-Hooks aus dem exercise-tests-Repository entfernt."
+            },
             "appName": "App-Name",
             "templateResult": "Ergebnis der Vorlage",
             "solutionResult": "Ergebnis der Musterlösung",
