@@ -171,6 +171,12 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void getUsersViaAuthorityFilter_pageSmallerThanMatches_totalCountIsCorrect() throws Exception {
+        userTestService.getUsersViaAuthorityFilter_pageSmallerThanMatches_totalCountIsCorrect();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void getAuthorities_asAdmin_isSuccessful() throws Exception {
         userTestService.getAuthorities_asAdmin_isSuccessful();
     }

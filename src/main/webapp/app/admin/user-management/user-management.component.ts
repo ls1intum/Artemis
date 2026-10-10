@@ -12,7 +12,7 @@ import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { finalize, switchMap, tap } from 'rxjs/operators';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/foundation/constants/pagination.constants';
+import { ASC, DESC, ITEMS_PER_PAGE, SIZE, SORT } from 'app/foundation/constants/pagination.constants';
 import { faEye, faFileImport, faFilter, faPencil, faPlus, faSync, faTrash } from '@fortawesome/free-solid-svg-icons';
 import {
     TumAetUiButtonComponent,
@@ -195,8 +195,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /** Total number of items for pagination */
     readonly totalItems = signal(0);
 
+    /** Page sizes the user can choose from */
+    readonly pageSizeOptions = [10, 20, 50, 100, 200];
+
     /** Items per page for pagination */
-    readonly itemsPerPage = ITEMS_PER_PAGE;
+    readonly itemsPerPage = signal(ITEMS_PER_PAGE);
 
     /** Current page number */
     readonly page = signal(1);
@@ -253,7 +256,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                     this.adminUserService.query(
                         {
                             page: this.page() - 1,
-                            pageSize: this.itemsPerPage,
+                            pageSize: this.itemsPerPage(),
                             searchTerm: this.searchTerm(),
                             sortingOrder: this.ascending() ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
                             sortedColumn: this.predicate(),
@@ -470,8 +473,13 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Apply the filter and close the modal.
      */
     applyFilter() {
-        this.loadAll();
         this.filterModalVisible.set(false);
+        // The current page may not exist for the new filters
+        if (this.page() === 1) {
+            this.loadAll();
+        } else {
+            this.goToFirstPage();
+        }
     }
 
     /**
@@ -560,10 +568,16 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Retrieve the list of users from the user service for a single page in the user management based on the page, size and sort configuration
      */
     loadAll() {
+        const searchTermChanged = this.searchControl.value !== this.searchTerm();
         this.searchTerm.set(this.searchControl.value);
         if (this.searchTerm().length >= 3 || this.searchTerm().length === 0) {
             this.searchInvalid.set(false);
-            this.search.next();
+            // The current page may not exist for the new search term; the navigation reloads the users
+            if (searchTermChanged && this.page() !== 1) {
+                this.goToFirstPage();
+            } else {
+                this.search.next();
+            }
         } else {
             this.searchInvalid.set(true);
         }
@@ -586,6 +600,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             relativeTo: this.activatedRoute.parent,
             queryParams: {
                 page: this.page(),
+                size: this.itemsPerPage(),
                 sort: `${this.predicate()},${this.ascending() ? ASC : DESC}`,
             },
         });
@@ -594,6 +609,18 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /** Handles a tumaet-ui paginator page change by converting the 0-indexed page to the 1-indexed page and navigating. */
     onPageChange(page: number): void {
         this.page.set(page + 1);
+        this.transition();
+    }
+
+    /** Handles a tumaet-ui paginator page size change by applying the new size and returning to the first page. */
+    onPageSizeChange(pageSize: number): void {
+        this.itemsPerPage.set(pageSize);
+        this.goToFirstPage();
+    }
+
+    /** Navigates to the first page; the resulting route change reloads the users. */
+    private goToFirstPage(): void {
+        this.page.set(1);
         this.transition();
     }
 
@@ -614,6 +641,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         }).subscribe(({ data, params }) => {
             const pageParam = params.get('page');
             this.page.set(pageParam != undefined ? +pageParam : 1);
+            const sizeParam = Number(params.get(SIZE));
+            this.itemsPerPage.set(this.pageSizeOptions.includes(sizeParam) ? sizeParam : ITEMS_PER_PAGE);
             const sort = (params.get(SORT) ?? data['defaultSort']).split(',');
             this.predicate.set(sort[0]);
             this.ascending.set(sort[1] === ASC);
