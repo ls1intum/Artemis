@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.lecture.web.LectureWebsocketTopics.UNIT_PRO
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -28,7 +27,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepos
  * Handles lightweight recovery of lecture processing states after infrastructure-level Iris restarts.
  * <p>
  * This service intentionally does not depend on the dispatch pipeline or Iris APIs. It is used by the
- * Pyris health indicator during startup checks and must stay lightweight.
+ * Pyris restart watch during health checks and must stay lightweight.
  */
 @Conditional(LectureWithIrisEnabled.class)
 @Service
@@ -56,14 +55,14 @@ public class ProcessingStateRecoveryService {
     /**
      * Handle an Iris restart notification.
      * <p>
-     * The restarted process lost its in-flight jobs, so they are reset to IDLE for re-dispatch: every push run, and every pull run whose
-     * lease the departed process held. Pull runs a worker of the new process already claimed are not touched. Without a boot id (an
-     * Iris that does not report one, restart seen as DOWN to UP) only push runs are reset; leased runs recover through lease expiry.
+     * The restarted process lost its in-flight jobs, so every run whose lease the departed process held is reset to IDLE for the next claim,
+     * as is a run without an owner that an Artemis version that still pushed jobs started before an upgrade. Runs a worker of the new process
+     * already claimed are not touched.
      *
-     * @param departedBootId the boot id of the process that restarted, or {@code null} when it is unknown
+     * @param departedBootId the boot id of the process that restarted
      * @return the number of jobs that were reset
      */
-    public int handleIrisReset(@Nullable String departedBootId) {
+    public int handleIrisReset(String departedBootId) {
         List<LectureUnitProcessingState> activeStates = processingStateRepository.findByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING));
 
         if (activeStates.isEmpty()) {
@@ -96,11 +95,6 @@ public class ProcessingStateRecoveryService {
     }
 
     /**
-     * Reset a stuck processing state directly to IDLE without touching the retry budget.
-     *
-     * @param state the stuck processing state to reset
-     */
-    /**
      * Reclaim one lapsed-lease run, atomically: see {@link LectureUnitProcessingStateRepository#reclaimLapsedLease}
      * for why this cannot be a re-fetch-then-save like {@link #resetToIdleForRecovery}. Re-fetches only on
      * success, purely to notify with the row the write actually produced.
@@ -127,7 +121,7 @@ public class ProcessingStateRecoveryService {
         return true;
     }
 
-    boolean resetToIdleForRecovery(LectureUnitProcessingState state, @Nullable String departedBootId) {
+    boolean resetToIdleForRecovery(LectureUnitProcessingState state, String departedBootId) {
         LectureUnit lectureUnit = state.getLectureUnit();
         if (lectureUnit == null) {
             log.warn("Skipping recovery for processing state {} because its lecture unit is missing", state.getId());
@@ -137,9 +131,7 @@ public class ProcessingStateRecoveryService {
         log.info("Recovering interrupted unit {} (was {}) - resetting to IDLE, retry budget preserved", lectureUnit.getId(), state.getPhase());
         // Bound to the run that was read: a terminal callback landing between the batch read and this write would
         // otherwise be reverted here and the completed work re-ingested.
-        if ((departedBootId != null
-                ? recoveryRepository.resetToIdleIfStillLiveAndOwnedBy(state.getId(), state.getPhase(), state.getIngestionJobToken(), departedBootId, ZonedDateTime.now())
-                : recoveryRepository.resetToIdleIfStillLiveAndUnowned(state.getId(), state.getPhase(), state.getIngestionJobToken(), ZonedDateTime.now())) == 0) {
+        if (recoveryRepository.resetToIdleIfStillLiveAndOwnedBy(state.getId(), state.getPhase(), state.getIngestionJobToken(), departedBootId, ZonedDateTime.now()) == 0) {
             log.info("Not recovering unit {}: its run completed, moved on since the batch read, or belongs to a worker of another Iris process", lectureUnit.getId());
             return false;
         }

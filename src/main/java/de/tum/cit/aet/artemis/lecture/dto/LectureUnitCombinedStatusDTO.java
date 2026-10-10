@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
  * @param stageProgress       progress counter within the stage; {@code null} when the stage has no counter
  * @param stageTotal          total work items of the stage; {@code null} when the stage has no counter
  * @param lastHeartbeatAt     when the worker holding this run last renewed its lease; {@code null} for
- *                                runs without a worker lease (legacy push dispatch or older Iris). The
+ *                                runs without a worker lease (started before Artemis stopped pushing jobs). The
  *                                client derives liveness from the freshness of these values: a running
  *                                unit whose renewals stop is rendered as having lost contact.
  */

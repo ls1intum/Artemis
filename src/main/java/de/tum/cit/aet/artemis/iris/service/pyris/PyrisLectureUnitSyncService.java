@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
+
 import java.util.Comparator;
 import java.util.List;
 
@@ -76,7 +78,7 @@ public class PyrisLectureUnitSyncService {
 
         String lectureUnitLink = "";
         if (attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().getLink() != null) {
-            lectureUnitLink = artemisBaseUrl + "/" + attachmentVideoUnit.getAttachment().getLink();
+            lectureUnitLink = artemisBaseUrl + ARTEMIS_FILE_PATH_PREFIX + attachmentVideoUnit.getAttachment().getLink();
         }
 
         ResolvedVideo resolved = resolveVideoUrl(attachmentVideoUnit.getVideoSource());
@@ -104,6 +106,7 @@ public class PyrisLectureUnitSyncService {
     }
 
     private boolean isLectureUnitProcessableForPyris(AttachmentVideoUnit attachmentVideoUnit) {
-        return irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse()) && PyrisLectureUnitEligibility.isProcessable(attachmentVideoUnit);
+        return irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse())
+                && PyrisLectureUnitEligibility.isProcessable(attachmentVideoUnit, videoSourceResolver);
     }
 }

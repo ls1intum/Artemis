@@ -49,10 +49,12 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * excluded from the no-callback arm: its liveness is judged by the stall detector and the much tighter
      * lease expiry in {@link #findRunsWithLapsedLease}. A leased run that has NOT reported a stage — the
      * whole transcription phase, which sends no stage name — stays in the no-callback arm, because
-     * {@code lastUpdated} (bumped by every raw transcription checkpoint) is its only liveness signal, just
-     * as in push mode; otherwise a silently wedged transcription would hide behind its fresh lease until
-     * the absolute deadline. The absolute deadline on {@code startedAt} is the backstop for jobs that keep
-     * sending heartbeats without ever terminating: no single ingestion run may exceed it.
+     * {@code lastUpdated} (bumped by every raw transcription checkpoint) is its only liveness signal;
+     * otherwise a silently wedged transcription would hide behind its fresh lease until the absolute
+     * deadline. A run without any lease, which an Artemis version that still pushed jobs to Pyris started
+     * before an upgrade, is judged by this arm alone. The absolute deadline on {@code startedAt} is the
+     * backstop for jobs that keep sending heartbeats without ever terminating: no single ingestion run may
+     * exceed it.
      * <p>
      * Only finds states that are NOT already scheduled for retry (retryEligibleAt IS NULL).
      * This prevents stuck detection from interfering with states waiting for their backoff period.
@@ -78,7 +80,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * a timer, not the pipeline's work, so its silence means the worker process is gone, not that a
      * stage is slow. Recovery therefore preserves the retry budget, unlike {@link #findStuckStates}.
      * <p>
-     * Runs without any recorded heartbeat (legacy push dispatch, or an Iris without worker support)
+     * Runs without any recorded heartbeat (started by an Artemis version that still pushed jobs to Pyris)
      * never match here and stay under the timeout-based stuck detection.
      *
      * @param phases      the in-flight phases to check
@@ -250,17 +252,22 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     List<LectureUnitProcessingState> findByPhaseIn(@Param("phases") List<ProcessingPhase> phases);
 
     /**
-     * Count processing states currently in active processing phases (TRANSCRIBING or INGESTING).
-     * Used to limit the number of concurrent processing jobs.
+     * Count the background units that are still open: backfill and reconcile work (dispatch priority at least the given one) that waits
+     * in the queue, runs, or waits for a scheduled retry. A failed unit counts while any retry is scheduled, whether due or not, so a run
+     * of failures, or a worker too busy to claim due retries, does not free room for more background work. This is the backlog that
+     * the reconcile walk and the backfill keep below their configured bound, so they add work only as fast as Iris finishes it.
      *
-     * @param phases the phases to count
-     * @return count of states in the given phases
+     * @param minDispatchPriority the lowest dispatch priority that counts as background work
+     * @return the number of open background units
      */
     @Query("""
             SELECT COUNT(ps) FROM LectureUnitProcessingState ps
-            WHERE ps.phase IN :phases
+            WHERE ps.dispatchPriority >= :minDispatchPriority
+            AND (ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING,
+                    de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING)
+                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt IS NOT NULL))
             """)
-    long countByPhaseIn(@Param("phases") List<ProcessingPhase> phases);
+    long countOpenBackgroundUnits(@Param("minDispatchPriority") int minDispatchPriority);
 
     /**
      * List IDLE jobs that are ready for dispatch.
@@ -731,41 +738,6 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     int activateClaimedJob(@Param("lectureUnitId") long lectureUnitId, @Param("phase") ProcessingPhase phase, @Param("token") String token,
             @Param("contentFingerprint") String contentFingerprint, @Param("workerBootId") String workerBootId, @Param("claimToken") String claimToken,
             @Param("now") ZonedDateTime now);
-
-    /**
-     * Activate a push-dispatched claim exactly once: same claim-shape guard and reasoning as
-     * {@link #activateClaimedJob}, for the legacy push dispatch path instead of the pull-based worker claim.
-     * <p>
-     * The dispatching node calls Iris synchronously and only learns the job token once that call returns; while it
-     * is in flight, a content update has nothing to match against ({@code ingestionJobToken} is still null) and can
-     * requeue this same claimed row for the new content. Without this guard, saving the whole detached entity after
-     * the slow call returns would overwrite that requeue with the stale token, fingerprint and phase, silently
-     * losing the current-content job. There is no worker lease to open here (unlike {@link #activateClaimedJob}):
-     * a push-dispatched run's liveness comes from Iris's own heartbeat and checkpoint callbacks, not from an
-     * external worker renewing a lease.
-     *
-     * @param lectureUnitId      the claimed unit
-     * @param phase              the in-flight phase to enter
-     * @param token              the registered Pyris job token
-     * @param contentFingerprint the fingerprint computed at claim time
-     * @param claimToken         identity of the claim being committed
-     * @param now                the activation time, recorded as start and last update
-     * @return 1 when the claim was activated, 0 when the row no longer holds this exact claim
-     */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE LectureUnitProcessingState ps
-            SET ps.phase = :phase, ps.startedAt = :now, ps.lastUpdated = :now, ps.errorKey = NULL, ps.retryEligibleAt = NULL, ps.claimToken = NULL,
-                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL,
-                ps.ingestionJobToken = :token, ps.contentFingerprint = :contentFingerprint, ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL
-            WHERE ps.lectureUnit.id = :lectureUnitId
-            AND ps.ingestionJobToken IS NULL
-            AND ps.claimToken = :claimToken
-            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED)
-            """)
-    int activatePushDispatch(@Param("lectureUnitId") long lectureUnitId, @Param("phase") ProcessingPhase phase, @Param("token") String token,
-            @Param("contentFingerprint") String contentFingerprint, @Param("claimToken") String claimToken, @Param("now") ZonedDateTime now);
 
     /**
      * Mark a claimed unit SKIPPED, but only while it still holds the claim that decided it was not processable:

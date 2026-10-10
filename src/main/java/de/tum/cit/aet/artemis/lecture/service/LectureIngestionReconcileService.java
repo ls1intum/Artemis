@@ -7,9 +7,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.IntUnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,11 +58,14 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepos
  * fingerprint. Re-runs of genuinely unchanged, complete content are cheap because the Iris pipeline
  * skips the expensive per-page work in that case.
  * <p>
- * The walk is budgeted and cursor-based: each pass covers the next few courses (including inactive and
- * archived ones the backfill never reaches) and requeues at most a configured number of units, so a large
- * backlog drains gradually underneath fresh uploads instead of flooding the queue. The cursor lives in
- * memory; the walker only runs on the scheduling node, and losing the cursor on a restart merely restarts
- * the walk from the beginning, which is idempotent.
+ * The walk is work-driven and cursor-based. A pass walks all courses (including inactive and archived ones
+ * the backfill never reaches) in steps of a few courses. Each step may only add as many units as keep the
+ * open background work (queued, running, or waiting for a retry) below a configured bound, so a large
+ * backlog drains as fast as Iris finishes it, underneath fresh uploads, instead of flooding the queue or
+ * idling while the units it requeued are already done. The cron schedule starts a pass; a short continuation
+ * job takes the next step while a pass is active. The cursor lives in memory: the walker only runs on the
+ * scheduling node (one node per installation), and losing the cursor on a restart merely restarts the walk
+ * from the beginning, which is idempotent.
  */
 @Conditional(LectureWithIrisEnabled.class)
 @Service
@@ -91,7 +97,11 @@ public class LectureIngestionReconcileService {
 
     private final int coursesPerRun;
 
-    private final int requeueLimitPerRun;
+    /**
+     * Upper bound on open background units (backfill and reconcile work that is queued, running, or waiting for a retry). A walk step adds
+     * at most the difference to this bound, so the walk adds work only as fast as Iris finishes it.
+     */
+    private final int maxBacklog;
 
     private final double qualityThreshold;
 
@@ -129,6 +139,22 @@ public class LectureIngestionReconcileService {
     private final AtomicLong courseCursor = new AtomicLong(0);
 
     /**
+     * Whether a pass is running: started by the cron schedule, continued step by step, and ended when the walk wraps around after the last
+     * course. Separate from {@link #courseResume}, which only marks a pause inside one course.
+     */
+    private final AtomicBoolean passActive = new AtomicBoolean(false);
+
+    /** How many units the active pass requeued or triggered so far, for the log line at its end. */
+    private final AtomicInteger passSpent = new AtomicInteger(0);
+
+    /**
+     * Held from reading the free backlog room until the units it allows are queued, by a walk step and by the backfill alike. Without it,
+     * a cron run, a continuation step and the backfill (separate scheduler threads) could each read the same room and together queue more
+     * than the bound. In memory is enough: only the scheduling node walks and backfills.
+     */
+    private final AtomicBoolean spendingBacklog = new AtomicBoolean(false);
+
+    /**
      * Where a course the budget ran out in resumes, or {@code null} when the next pass starts at a course boundary. Resuming after the last visited unit, rather than
      * revisiting the course from its start, is what keeps the walk moving: a course with more units that diverge again after every re-ingest than one pass can spend on
      * would otherwise hold the walk on its first units for good and starve every course after it.
@@ -150,8 +176,7 @@ public class LectureIngestionReconcileService {
     public LectureIngestionReconcileService(LectureUnitProcessingStateRepository processingStateRepository, LectureUnitProcessingStateReconcileRepository reconcileStateRepository,
             AttachmentVideoUnitRepository attachmentVideoUnitRepository, Optional<IrisLectureApi> irisLectureApi, LectureUnitContentFingerprintService contentFingerprintService,
             LectureContentProcessingService processingService, @Value("${artemis.iris.ingestion.reconcile.courses-per-run:10}") int coursesPerRun,
-            @Value("${artemis.iris.ingestion.reconcile.requeue-limit-per-run:3}") int requeueLimitPerRun,
-            @Value("${artemis.iris.ingestion.reconcile.quality-threshold:0.8}") double qualityThreshold,
+            @Value("${artemis.iris.ingestion.reconcile.max-backlog:3}") int maxBacklog, @Value("${artemis.iris.ingestion.reconcile.quality-threshold:0.8}") double qualityThreshold,
             @Value("${artemis.iris.ingestion.reconcile.failed-revival-cooldown:PT1H}") Duration failedRevivalCooldown,
             @Value("${artemis.iris.ingestion.reconcile.max-revivals:10}") int maxRevivals, LectureTranscriptionRepository transcriptionRepository) {
         this.processingStateRepository = processingStateRepository;
@@ -161,7 +186,7 @@ public class LectureIngestionReconcileService {
         this.contentFingerprintService = contentFingerprintService;
         this.processingService = processingService;
         this.coursesPerRun = coursesPerRun;
-        this.requeueLimitPerRun = requeueLimitPerRun;
+        this.maxBacklog = maxBacklog;
         this.qualityThreshold = qualityThreshold;
         this.failedRevivalCooldown = failedRevivalCooldown;
         this.maxRevivals = maxRevivals;
@@ -169,22 +194,96 @@ public class LectureIngestionReconcileService {
     }
 
     /**
-     * Walk the next slice of courses and reconcile each one.
-     * Called by the scheduler on the scheduling node; one call covers up to the configured number of
-     * courses and spends at most the configured requeue budget across all of them.
+     * Start a pass unless one is active, then take its next step. Called by the cron schedule; a tick during an active pass continues it
+     * where it stands instead of starting over.
      *
-     * @return how many units were requeued or newly triggered; the caller dispatches when this is positive
+     * @return how many units this step requeued or triggered
      */
-    public int walkNextCourses() {
+    public int startOrContinuePass() {
+        if (passActive.compareAndSet(false, true)) {
+            passSpent.set(0);
+            log.info("Ingestion reconcile pass started");
+        }
+        return walkNextCourses();
+    }
+
+    /**
+     * Take the next step of the active pass, if there is one. Called by the continuation job, so a pass moves on as soon as the
+     * background work it added is done instead of waiting for the next cron tick.
+     *
+     * @return how many units this step requeued or triggered
+     */
+    public int continuePass() {
+        if (!passActive.get()) {
+            return 0;
+        }
+        return walkNextCourses();
+    }
+
+    /**
+     * How many more background units may be queued now: the configured bound minus the background units still open. Shared by the walk and
+     * the backfill, so together they never keep more than the bound in flight.
+     *
+     * @return the free room, at most the configured bound; zero or less when the backlog is full
+     */
+    int backlogBudget() {
+        return maxBacklog - (int) processingStateRepository.countOpenBackgroundUnits(LectureContentProcessingService.BACKLOG_DISPATCH_PRIORITY);
+    }
+
+    /**
+     * Queue background work within the free backlog room: reads the room and runs {@code spend} with it while no other walk step or
+     * backfill does the same, so together they never queue more than the bound. Does nothing when the room is zero or another caller is
+     * spending it right now; the next scheduled run tries again.
+     *
+     * @param spend queues at most the given number of units and returns how many it queued
+     * @return how many units {@code spend} queued, 0 when it did not run
+     */
+    public int spendBacklog(IntUnaryOperator spend) {
+        if (!spendingBacklog.compareAndSet(false, true)) {
+            log.debug("Background ingestion work skipped: another walk step or backfill is queueing right now");
+            return 0;
+        }
+        try {
+            int budget = backlogBudget();
+            if (budget <= 0) {
+                log.debug("Background ingestion work paused: the backlog of {} open units is full", maxBacklog);
+                return 0;
+            }
+            return spend.applyAsInt(budget);
+        }
+        finally {
+            spendingBacklog.set(false);
+        }
+    }
+
+    /**
+     * Take one step of the walk: reconcile the next slice of courses, spending at most the free backlog room. With no room, it returns
+     * before touching the cursor or the resume point, so the step resumes exactly there once the room frees up. When no course is left
+     * after the cursor, the pass ends and the next one starts from the beginning.
+     *
+     * @return how many units were requeued or newly triggered
+     */
+    int walkNextCourses() {
         if (irisLectureApi.isEmpty()) {
             return 0;
         }
-        List<Long> courseIds = attachmentVideoUnitRepository.findReconcileCourseIdsAfter(courseCursor.get(), PageRequest.of(0, coursesPerRun));
-        if (courseIds.isEmpty()) {
-            log.debug("Ingestion reconcile walk completed a full pass, restarting from the beginning next run");
-            courseCursor.set(0);
-            return 0;
-        }
+        return spendBacklog(budget -> {
+            List<Long> courseIds = attachmentVideoUnitRepository.findReconcileCourseIdsAfter(courseCursor.get(), PageRequest.of(0, coursesPerRun));
+            if (courseIds.isEmpty()) {
+                courseCursor.set(0);
+                courseResume.set(null);
+                if (passActive.getAndSet(false)) {
+                    log.info("Ingestion reconcile pass completed, {} units requeued or triggered", passSpent.get());
+                }
+                return 0;
+            }
+            int spent = walkCourses(courseIds, budget);
+            passSpent.addAndGet(spent);
+            return spent;
+        });
+    }
+
+    private int walkCourses(List<Long> courseIds, int budget) {
         CourseResume resume = courseResume.getAndSet(null);
         int spent = 0;
         for (Long courseId : courseIds) {
@@ -194,7 +293,7 @@ public class LectureIngestionReconcileService {
             // abort the pass before the cursor advances, which would re-hit the same course every run
             // and permanently block reconciliation of every course after it.
             try {
-                visit = reconcileCourse(courseId, requeueLimitPerRun - spent, afterUnitId);
+                visit = reconcileCourse(courseId, budget - spent, afterUnitId);
             }
             catch (RuntimeException e) {
                 log.error("Reconcile: course {} failed this pass and was skipped: {}", courseId, e.getMessage());
@@ -204,22 +303,15 @@ public class LectureIngestionReconcileService {
                 log.info("reconcile-course course={} requeued_or_triggered={}", courseId, visit.spent());
             }
             if (visit.pausedAfterUnitId() != null) {
-                // The budget ran out inside this course: the next pass comes back to it (the cursor sits just
+                // The budget ran out inside this course: the next step comes back to it (the cursor sits just
                 // before it) and continues after the last unit visited here instead of skipping the rest.
                 courseCursor.set(courseId - 1);
                 courseResume.set(new CourseResume(courseId, visit.pausedAfterUnitId()));
+                break;
             }
-            else {
-                courseCursor.set(courseId);
-            }
-            if (spent >= requeueLimitPerRun) {
-                // Budget exhausted mid-slice; a course left unfinished resumes next pass, see above. A saturated
-                // budget is also the mass-divergence signal: a backup restore or collection recreate makes
-                // every walked course diverge at once, and healing at this budget takes many passes.
-                log.error(
-                        "mass-divergence: reconcile budget of {} exhausted after {} of {} courses — "
-                                + "the index diverges broadly (backup restore or collection recreate?); healing continues at the configured pace",
-                        requeueLimitPerRun, courseIds.indexOf(courseId) + 1, courseIds.size());
+            courseCursor.set(courseId);
+            if (spent >= budget) {
+                // The budget ran out exactly at the end of this course: the next step starts with the next course.
                 break;
             }
         }
@@ -247,6 +339,10 @@ public class LectureIngestionReconcileService {
      * @return what the visit spent, and where it paused if the budget ran out with units still ahead
      */
     CourseVisit reconcileCourse(long courseId, int requeueBudget, long afterUnitId) {
+        if (requeueBudget <= 0) {
+            // Nothing may be spent: pause before the first unit still to visit, so the course is not skipped
+            return new CourseVisit(0, afterUnitId);
+        }
         IngestionCensusDTO fetchedCensus = irisLectureApi.get().getIngestionCensus(courseId);
         if (fetchedCensus != null && fetchedCensus.truncated()) {
             // The unit-row scan hit its cap, so any unit-row-derived fact (row counts, stamps, lecture ids) may be missing for
@@ -281,11 +377,10 @@ public class LectureIngestionReconcileService {
             // must not abort the course, which would otherwise leave the cursor stuck and starve every
             // later course of reconciliation.
             try {
-                boolean hasVideo = unit.getVideoSource() != null && !unit.getVideoSource().isBlank();
-                boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().isStoredPdf();
                 LectureUnitProcessingState state = stateByUnitId.get(unit.getId());
-                if (!hasVideo && !hasPdf) {
-                    // An earlier removed-content cleanup whose Iris delete failed leaves its markers behind; retry it here.
+                if (!processingService.hasProcessableContent(unit)) {
+                    // Content removed, or only a link to a video Iris cannot transcribe: an earlier unit with content still records its markers
+                    // until the removed-content cleanup succeeded, which settles it as nothing indexed. Retry that cleanup here.
                     if (state != null && hasRetryableContentCleanup(state) && processingService.retryRemovedContentCleanup(unit, state.getId())) {
                         log.info("Reconcile: retried the cleanup of removed content for unit {} of course {}", unit.getId(), courseId);
                         spent++;

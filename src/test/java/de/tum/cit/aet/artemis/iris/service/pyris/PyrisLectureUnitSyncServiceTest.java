@@ -70,7 +70,8 @@ class PyrisLectureUnitSyncServiceTest {
         assertThat(dto.lectureUnitId()).isEqualTo(30L);
         assertThat(dto.lectureUnitName()).isEqualTo("Unit 1");
         // The link the webhook carries is the path the attachment is served under, which is built from the unit and the stored filename without touching the file.
-        assertThat(dto.lectureUnitLink()).isEqualTo(ARTEMIS_BASE_URL + "/attachments/attachment-video-units/30/read.pdf");
+        // The attachment link is relative to the file endpoint, so the full URL carries its prefix
+        assertThat(dto.lectureUnitLink()).isEqualTo(ARTEMIS_BASE_URL + "/api/core/files/attachments/attachment-video-units/30/read.pdf");
         assertThat(dto.lectureId()).isEqualTo(20L);
         assertThat(dto.lectureName()).isEqualTo("Lecture 1");
         assertThat(dto.courseId()).isEqualTo(10L);
@@ -85,6 +86,8 @@ class PyrisLectureUnitSyncServiceTest {
         AttachmentVideoUnit unit = attachmentVideoUnit();
         unit.getAttachment().setLink(null);
         when(irisSettingsService.isEnabledForCourse(unit.getLecture().getCourse())).thenReturn(true);
+        // Without a stored PDF, only a supported video makes the unit processable
+        when(videoSourceResolver.isSupportedSource(unit.getVideoSource())).thenReturn(true);
         when(videoSourceResolver.resolve(unit.getVideoSource())).thenReturn(new ResolvedVideo(null, null, null));
 
         service.updateLectureUnitMetadataInPyris(unit);
@@ -92,6 +95,17 @@ class PyrisLectureUnitSyncServiceTest {
         ArgumentCaptor<PyrisLectureUnitMetadataWebhookDTO> dtoCaptor = ArgumentCaptor.forClass(PyrisLectureUnitMetadataWebhookDTO.class);
         verify(pyrisConnectorService).executeLectureMetadataWebhook(dtoCaptor.capture());
         assertThat(dtoCaptor.getValue().lectureUnitLink()).isEmpty();
+    }
+
+    @Test
+    void updateLectureUnitMetadataInPyrisSkipsAUnitWhoseOnlyContentIsAnUnsupportedVideo() {
+        AttachmentVideoUnit unit = attachmentVideoUnit();
+        unit.getAttachment().setLink(null);
+        unit.setVideoSource("https://example.com/recording");
+        when(irisSettingsService.isEnabledForCourse(unit.getLecture().getCourse())).thenReturn(true);
+
+        assertThat(service.updateLectureUnitMetadataInPyris(unit)).isEqualTo(LectureUnitSyncOutcome.SKIPPED);
+        verify(pyrisConnectorService, never()).executeLectureMetadataWebhook(any());
     }
 
     @Test
