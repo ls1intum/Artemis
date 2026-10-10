@@ -964,7 +964,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // the resource directly on purpose; the annotations and the routing stay covered by the integration tests.
                 "AuxiliaryRepositoryResourceTest", "BuildJobQueueResourceTest", "CourseArchiveResourceTest", "ProgrammingExerciseParticipationResourceResetTest",
                 "PublicProgrammingExerciseResultResourceTest", "RepositoryProgrammingExerciseParticipationResourceTest", "IrisGlobalSearchResourceTest",
-                "IngestionCoverageResourceTest" };
+                "IngestionCoverageResourceTest", "PyrisInternalIngestionWorkerResourceTest" };
         // Resource unit tests exercise validation and ownership checks directly. Their nested parameterized cases belong to the same test, not production code.
         final var resourceBehaviourTests = new String[] { "ParticipationResourceGenerationGuardTest", "ProgrammingExerciseCreationResourceMutationGuardTest",
                 "ProgrammingExerciseDeletionResourceMutationGuardTest", "ProgrammingExercisePartialUpdateResourceTest", "ProgrammingExerciseTestCaseResourceTest",
