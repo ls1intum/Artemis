@@ -23,13 +23,22 @@ export class CodeButtonPopoverContentComponent {
 
     readonly authenticationMechanisms = input.required<NonEmptyArray<RepositoryAuthenticationMethod>>();
     readonly sshKeyState = input.required<SshKeyState>();
-    protected readonly selectedAuthenticationMethod = linkedSignal(() => this.authenticationMechanisms()[0]);
+    protected readonly selectedAuthenticationMethod = linkedSignal(() => this.initializeSelectedAuthenticationMethod());
     protected readonly selectedAuthenticationMethodLabel = computed(() => this.getAuthenticationMechanismLabel(this.selectedAuthenticationMethod()));
     protected readonly authenticationMethodsAndLabels = computed(() => this.getAuthenticationMechanismsWithLabels());
 
     selectAuthenticationMethod(authenticationMethod: RepositoryAuthenticationMethod) {
         this.selectedAuthenticationMethod.set(authenticationMethod);
         this.localStorageService.store<RepositoryAuthenticationMethod>('code-button-state', authenticationMethod);
+    }
+
+    private initializeSelectedAuthenticationMethod(): RepositoryAuthenticationMethod {
+        const authenticationMechanisms = this.authenticationMechanisms();
+        let initialAuthenticationMethod = this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state');
+        if (initialAuthenticationMethod === RepositoryAuthenticationMethod.Password) {
+            initialAuthenticationMethod = RepositoryAuthenticationMethod.Token;
+        }
+        return initialAuthenticationMethod && authenticationMechanisms.includes(initialAuthenticationMethod) ? initialAuthenticationMethod : authenticationMechanisms[0];
     }
 
     private getAuthenticationMechanismsWithLabels() {
