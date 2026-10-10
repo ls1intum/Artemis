@@ -495,6 +495,17 @@ describe('HyperionGenerationActivityFacade', () => {
         expect(service.cancelCalls).toEqual([[42, 'j1']]);
         expect(fixture.componentInstance.facade.cancelRequested()).toBe(true);
     });
+    it.each([
+        { exerciseId: 42, jobId: 'old-run' },
+        { exerciseId: 43, jobId: 'j1' },
+    ])('rejects a stale cancellation target %o', (target) => {
+        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileChanges: [] });
+
+        fixture.componentInstance.facade.cancel(target);
+
+        expect(service.cancelCalls).toEqual([]);
+        expect(fixture.componentInstance.facade.cancelRequested()).toBe(false);
+    });
     it('reports a cancellation request failure and refreshes status', () => {
         const fixture = createWith({ jobId: 'j1', running: true, events: [], fileChanges: [] });
         const alertService = TestBed.inject(AlertService);

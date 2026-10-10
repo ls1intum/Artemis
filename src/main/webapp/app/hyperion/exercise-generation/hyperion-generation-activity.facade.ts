@@ -254,9 +254,12 @@ export class HyperionGenerationActivityFacade {
             });
     }
 
-    cancel(): void {
+    cancel(target?: { exerciseId: number; jobId: string }): void {
         const id = this.exerciseId();
         const job = this.jobId();
+        if (target && (target.exerciseId !== id || target.jobId !== job)) {
+            return;
+        }
         if (this.destroyRef.destroyed || id === undefined || job === undefined || !this.ownedByCaller() || !this.cancellable() || this.cancelRequested()) {
             return;
         }
