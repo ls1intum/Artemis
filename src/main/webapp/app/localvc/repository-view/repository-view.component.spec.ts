@@ -32,6 +32,8 @@ import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-butto
 import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/programming/shared/actions/student-repo-download/programming-exercise-student-repo-download.component';
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/instructor-repo-download/programming-exercise-instructor-repo-download.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('RepositoryViewComponent', () => {
     let component: RepositoryViewComponent;
@@ -400,6 +402,46 @@ describe('RepositoryViewComponent', () => {
         // Expect subscription to be unsubscribed
         expect(component.participationWithLatestResultSub?.closed).toBe(true);
         expect(component.paramSub?.closed).toBe(true);
+    });
+
+    it('should offer the inline feedback toggle when the only inline feedback is on the first line of a file', () => {
+        // Shape of the student-participation-with-latest-result-and-feedbacks response: the editor stores inline feedback lines 0-based
+        const participationWithFirstLineFeedback: ProgrammingExerciseStudentParticipation = {
+            id: 2,
+            repositoryUri: 'student-repo-uri',
+            exercise: { id: 1, numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()], studentAssignedTeamIdComputed: true, secondCorrectionEnabled: false },
+            submissions: [
+                {
+                    id: 5,
+                    results: [
+                        {
+                            id: 3,
+                            score: 50,
+                            rated: true,
+                            assessmentType: AssessmentType.SEMI_AUTOMATIC,
+                            feedbacks: [
+                                {
+                                    id: 7,
+                                    type: FeedbackType.MANUAL,
+                                    reference: 'file:helloWorld.c_line:0',
+                                    text: 'File helloWorld.c at line 1',
+                                    detailText: 'first line',
+                                    credits: -1,
+                                },
+                                { id: 8, type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'general', credits: 1 },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        };
+        activatedRoute.setParameters({ repositoryId: 2 });
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(participationWithFirstLineFeedback));
+
+        component.ngOnInit();
+
+        expect(component.result()?.id).toBe(3);
+        expect(component.resultHasInlineFeedback()).toBe(true);
     });
 
     it('should handle error when loading participation', () => {
