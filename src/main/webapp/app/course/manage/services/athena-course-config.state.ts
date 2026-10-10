@@ -36,9 +36,25 @@ export class AthenaCourseConfigState {
     /** The configuration on screen; undefined until it is either loaded or switched. */
     readonly config = signal<AthenaCourseConfigDTO | undefined>(undefined);
 
+    /**
+     * Whether the load has succeeded. Until then the configuration on screen is only the "disabled" fallback, so
+     * switching a feature off would be dropped as a no-op while the stored state may well be on.
+     */
+    readonly loaded = signal(false);
+
+    /** Whether the latest load failed, so the toggles can offer to {@link load} again instead of staying blocked. */
+    readonly loadFailed = signal(false);
+
     readonly formativeFeedbackEnabled: Signal<boolean> = computed(() => this.config()?.formativeFeedbackEnabled ?? false);
 
     readonly gradingFeedbackEnabled: Signal<boolean> = computed(() => this.config()?.gradingFeedbackEnabled ?? false);
+
+    /**
+     * Whether either feature is on, for the single course-overview toggle. There is no separate stored "master" flag:
+     * this is derived from the two features so that a course configured before this toggle existed still shows the
+     * right state.
+     */
+    readonly masterEnabled: Signal<boolean> = computed(() => this.formativeFeedbackEnabled() || this.gradingFeedbackEnabled());
 
     /**
      * The state the server confirmed per feature; a failed switch rolls back to it. A feature the server has not
@@ -67,8 +83,11 @@ export class AthenaCourseConfigState {
      * that feature is still in flight, because what that switch put on screen is what the instructor last asked for.
      * It is recorded as the confirmed state either way, so a switch that then fails rolls back to what is stored
      * rather than to "disabled".
+     *
+     * Can be called again after a failed load to retry it.
      */
     load(): void {
+        this.loadFailed.set(false);
         this.athenaCourseConfigService.getCourseConfig(this.courseId).subscribe({
             next: (loaded) => {
                 for (const feature of ATHENA_FEATURES) {
@@ -80,8 +99,12 @@ export class AthenaCourseConfigState {
                         this.apply(feature, loaded[feature]);
                     }
                 }
+                this.loaded.set(true);
             },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            error: (error: HttpErrorResponse) => {
+                this.loadFailed.set(true);
+                onError(this.alertService, error);
+            },
         });
     }
 
@@ -89,10 +112,9 @@ export class AthenaCourseConfigState {
      * Switch one of the two features and save it. The new state is shown right away and rolled back to the last state
      * the server confirmed if the request fails, so the toggle never claims a setting that was not stored.
      *
-     * A course that has never been configured has no stored configuration, and a failed load leaves none either. Both
-     * cases count as "both features off" rather than blocking the toggles, so the instructor can always switch a
-     * feature on and find out from the alert if that could not be saved. A failure while the load is still on its way
-     * falls back to "off" for the same reason; correcting that is what the load is still applied for afterwards.
+     * A feature the server has not confirmed yet counts as "off": a switch that fails while the load is still on its
+     * way falls back to that, and correcting it is what the load is still applied for afterwards. Toggles that offer
+     * switching a feature off wait for {@link loaded}, since before it that switch would be dropped as a no-op.
      *
      * @param feature the feature to switch
      * @param enabled whether the feature should be enabled
@@ -120,6 +142,20 @@ export class AthenaCourseConfigState {
                 onError(this.alertService, error);
             },
         });
+    }
+
+    /**
+     * Switches the single course-overview toggle. Since there is no stored master flag, switching it on and off is
+     * defined in terms of the two features it derives from: on turns both on, off turns both off. Reading it back is
+     * still the OR of the two (see {@link masterEnabled}), so a course set up from the settings page to run only one
+     * of them keeps showing as enabled here — switching this toggle off then on again does turn both on, though,
+     * rather than restoring that finer configuration.
+     *
+     * @param enabled whether Athena should be on for the course
+     */
+    setMasterEnabled(enabled: boolean): void {
+        this.setEnabled('gradingFeedbackEnabled', enabled);
+        this.setEnabled('formativeFeedbackEnabled', enabled);
     }
 
     /**
