@@ -18,7 +18,7 @@ public record WorkerEventDTO(int protocolVersion, String workerId, UUID incarnat
 
     public static final int MAX_PAYLOAD_LENGTH = 48 * 1024 * 1024;
 
-    /** Accounting carries usage evidence, not exercise artifacts; keep a broker outage from filling worker memory. */
+    /** Accounting carries usage evidence, not exercise artifacts; keep a provider outage from filling worker memory. */
     public static final int MAX_ACCOUNTING_PAYLOAD_LENGTH = 8 * 1024;
 
     private static final Pattern WORKER_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_-]{1,64}");

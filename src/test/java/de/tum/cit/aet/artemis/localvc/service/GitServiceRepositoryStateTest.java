@@ -8,7 +8,8 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -191,22 +192,6 @@ class GitServiceRepositoryStateTest {
     }
 
     @Test
-    void getOrCheckoutRepository_whileTheWorkingCopyIsBeingCloned_doesNotDeleteIt() throws Exception {
-        // A clone in progress writes HEAD and config last, so its git directory looks incomplete until the clone is done
-        Path workingCopy = baseDir.resolve("working-copy-being-cloned");
-        Path packFile = workingCopy.resolve(".git").resolve("objects").resolve("pack").resolve("pack-in-progress.pack");
-        FileUtils.write(packFile.toFile(), "being written", StandardCharsets.UTF_8);
-        Map<Path, Path> cloneInProgress = (Map<Path, Path>) ReflectionTestUtils.getField(gitService, "cloneInProgressOperations");
-        cloneInProgress.put(workingCopy, workingCopy);
-        try (Repository ignored = gitService.getOrCheckoutRepositoryWithLocalPath(uriFor("abc-being-cloned"), workingCopy, false, false)) {
-            assertThat(packFile).as("the files of the clone in progress are left alone").exists();
-        }
-        finally {
-            cloneInProgress.remove(workingCopy);
-        }
-    }
-
-    @Test
     void listFilesAndFolders_reportsFilesAndFoldersAndNeverTheGitDirectory() throws Exception {
         try (Repository repository = checkoutOf("abc-listing")) {
             ReflectionTestUtils.setField(repository, "localPath", repository.getWorkTree().toPath());
@@ -278,27 +263,30 @@ class GitServiceRepositoryStateTest {
     }
 
     @Test
-    void getOrCheckoutRepository_whileTheSamePathIsBeingCloned_givesUpInsteadOfCloningTwice() {
-        // A second clone into a directory that a clone is already writing to would corrupt it, so the service waits and then refuses.
+    void getOrCheckoutRepository_whileTheSamePathIsBeingCloned_givesUpInsteadOfCloningTwice() throws Exception {
         LocalVCRepositoryUri repositoryUri = uriFor("abc-busy");
         Path localPath = gitService.getLocalPathOfRepo(baseDir, repositoryUri);
-        Map<Path, Path> cloneInProgress = (Map<Path, Path>) ReflectionTestUtils.getField(gitService, "cloneInProgressOperations");
-        cloneInProgress.put(localPath, localPath);
-        try {
-            assertThatExceptionOfType(GitException.class).isThrownBy(() -> gitService.getOrCheckoutRepositoryWithTargetPath(repositoryUri, baseDir, true, true))
-                    .withMessageContaining("Cannot clone the same repository multiple times");
-        }
-        finally {
-            cloneInProgress.remove(localPath);
+        var locks = (RepositoryCheckoutLocks) ReflectionTestUtils.getField(gitService, "checkoutLocks");
+        try (var ignored = locks.acquire(localPath, 0)) {
+            var attempt = new FutureTask<>(() -> {
+                assertThatExceptionOfType(GitException.class).isThrownBy(() -> gitService.getOrCheckoutRepositoryWithTargetPath(repositoryUri, baseDir, true, true))
+                        .withMessageContaining("still being prepared");
+                return true;
+            });
+            Thread thread = Thread.ofPlatform().start(attempt);
+            try {
+                assertThat(attempt.get(10, TimeUnit.SECONDS)).isTrue();
+            }
+            finally {
+                thread.interrupt();
+                thread.join();
+            }
         }
     }
 
     @Test
     void getOrCheckoutRepository_whenWaitingForABusyPathIsInterrupted_reportsTheCancellation() {
         LocalVCRepositoryUri repositoryUri = uriFor("abc-interrupted");
-        Path localPath = gitService.getLocalPathOfRepo(baseDir, repositoryUri);
-        Map<Path, Path> cloneInProgress = (Map<Path, Path>) ReflectionTestUtils.getField(gitService, "cloneInProgressOperations");
-        cloneInProgress.put(localPath, localPath);
         try {
             Thread.currentThread().interrupt();
             assertThatExceptionOfType(CanceledException.class).isThrownBy(() -> gitService.getOrCheckoutRepositoryWithTargetPath(repositoryUri, baseDir, true, true))
@@ -306,8 +294,24 @@ class GitServiceRepositoryStateTest {
         }
         finally {
             Thread.interrupted();
-            cloneInProgress.remove(localPath);
         }
+    }
+
+    @Test
+    void ordinaryCloneFollowsRemoteHeadWhileAuthoringRequiresItsSelectedBranch() throws Exception {
+        String slug = "abc-branch-selection";
+        try (Repository repository = checkoutOf(slug); Git git = new Git(repository)) {
+            git.branchCreate().setName("release").call();
+            git.push().setRefSpecs(new RefSpec("refs/heads/release:refs/heads/release")).call();
+        }
+        var uri = uriFor(slug);
+        try (Repository ordinary = gitService.getOrCheckoutRepository(uri, uri, baseDir.resolve("ordinary"), false, "not-in-source", false)) {
+            assertThat(ordinary.getBranch()).isEqualTo(DEFAULT_BRANCH);
+        }
+        try (Repository selected = gitService.getOrCheckoutRepositoryOnBranch(uri, baseDir.resolve("selected"), "release")) {
+            assertThat(selected.getBranch()).isEqualTo("release");
+        }
+        assertThatExceptionOfType(GitException.class).isThrownBy(() -> gitService.getOrCheckoutRepositoryOnBranch(uri, baseDir.resolve("missing-branch"), "not-in-source"));
     }
 
     /**

@@ -95,7 +95,8 @@ class AuxiliaryRepositoryResourceTest {
     @BeforeEach
     void setUp() {
         auxiliaryRepositoryResource = new AuxiliaryRepositoryResource(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository,
-                repositoryAccessService, Optional.of(localVCServletService), auxiliaryRepositoryRepository);
+                repositoryAccessService, Optional.of(localVCServletService), auxiliaryRepositoryRepository,
+                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService.class));
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setId(7L);
         auxiliaryRepository = new AuxiliaryRepository();

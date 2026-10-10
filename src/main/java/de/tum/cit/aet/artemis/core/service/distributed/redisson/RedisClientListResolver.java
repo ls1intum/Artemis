@@ -6,8 +6,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,14 +48,15 @@ public class RedisClientListResolver {
      *                                  from Redis' own {@code CLIENT LIST} view of the connection, so it is observed rather than self-reported and is therefore usable for
      *                                  authorizing git requests. The port is dropped: it is ephemeral and changes on every reconnect. A client that reconnects can briefly
      *                                  appear under two addresses, and clients behind one NAT gateway share an address, which is why the value is a set.
+     * @param coordinationNodeIds   unique process incarnations observed on Redisson connections, separate from display names
      * @param complete              whether the lookup covered the whole deployment. A single {@code CLIENT LIST} is answered by one Redis node only, so in cluster mode the
      *                                  result is complete only once every node has answered. Callers that conclude a node is gone from its <em>absence</em> must require
      *                                  this flag, because a partial answer is indistinguishable from a node that shut down.
      */
-    public record ClientListSnapshot(Map<String, Set<String>> addressesByClientName, boolean complete) {
+    public record ClientListSnapshot(Map<String, Set<String>> addressesByClientName, Set<String> coordinationNodeIds, boolean complete) {
 
         static ClientListSnapshot incomplete() {
-            return new ClientListSnapshot(Map.of(), false);
+            return new ClientListSnapshot(Map.of(), Set.of(), false);
         }
 
         /**
@@ -107,7 +110,7 @@ public class RedisClientListResolver {
             }
             Map<String, Set<String>> addressesByClientName = artemisClientAddresses(clients);
             log.debug("Redis client list based on names: {}", addressesByClientName.keySet());
-            return new ClientListSnapshot(addressesByClientName, true);
+            return new ClientListSnapshot(addressesByClientName, coordinationNodeIds(clients), true);
         }
         catch (RuntimeException e) {
             log.error("Failed to fetch Redis client list within timeout", e);
@@ -123,17 +126,23 @@ public class RedisClientListResolver {
         }
 
         Map<String, Set<String>> addressesByClientName = new HashMap<>();
+        Set<String> coordinationNodeIds = new HashSet<>();
         for (RedisClusterNode clusterNode : clusterNodes) {
             List<RedisClientInfo> clients = clusterConnection.serverCommands().getClientList(clusterNode).collectList().block(LOOKUP_TIMEOUT);
             if (clients == null) {
                 log.error("Redis Cluster node {} did not return a client list, treating the client list as incomplete", clusterNode.getId());
                 return ClientListSnapshot.incomplete();
             }
+            coordinationNodeIds.addAll(coordinationNodeIds(clients));
             // One client can hold connections to several cluster nodes, so the per-node address sets are merged rather than replaced.
             artemisClientAddresses(clients).forEach((clientName, addresses) -> addressesByClientName.computeIfAbsent(clientName, _ -> new HashSet<>()).addAll(addresses));
         }
         log.debug("Aggregated Redis client list across {} cluster nodes: {}", clusterNodes.size(), addressesByClientName.keySet());
-        return new ClientListSnapshot(addressesByClientName, true);
+        return new ClientListSnapshot(addressesByClientName, Set.copyOf(coordinationNodeIds), true);
+    }
+
+    private static Set<String> coordinationNodeIds(List<RedisClientInfo> clients) {
+        return clients.stream().map(RedisClientInfo::getName).filter(Objects::nonNull).filter(RedisNodeIdentity::isCoordinationName).collect(Collectors.toUnmodifiableSet());
     }
 
     private static Map<String, Set<String>> artemisClientAddresses(List<RedisClientInfo> clients) {
@@ -146,7 +155,7 @@ public class RedisClientListResolver {
             if (clientName == null || !clientName.toLowerCase(Locale.ROOT).startsWith(ARTEMIS_CLIENT_NAME_PREFIX)) {
                 continue;
             }
-            Set<String> addresses = addressesByClientName.computeIfAbsent(clientName, _ -> new HashSet<>());
+            Set<String> addresses = addressesByClientName.computeIfAbsent(RedisNodeIdentity.displayName(clientName), _ -> new HashSet<>());
             String host = hostOf(clientInfo.getAddressPort());
             if (host != null) {
                 addresses.add(host);

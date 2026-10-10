@@ -20,7 +20,7 @@ class RedissonDistributedDataProviderServiceTest {
     @Test
     void testNamespacesDataKeysButKeepsCrossReleaseLocksStable() {
         RedissonClient redissonClient = mock(RedissonClient.class);
-        var service = new RedissonDistributedDataProviderService(redissonClient, mock(RedisClientListResolver.class));
+        var service = new RedissonDistributedDataProviderService(redissonClient, mock(RedisClientListResolver.class), new RedisNodeIdentity("artemis-test"));
 
         var queue = service.<String>getQueue("jobs");
         service.getLock("scheduler-lock");
@@ -32,12 +32,31 @@ class RedissonDistributedDataProviderServiceTest {
     }
 
     @Test
+    void coordinationRequiresCompleteViewContainingThisProcess() {
+        var client = mock(RedissonClient.class);
+        var resolver = mock(RedisClientListResolver.class);
+        var identity = new RedisNodeIdentity("artemis-core");
+        var provider = new RedissonDistributedDataProviderService(client, resolver, identity);
+        when(resolver.resolveClients()).thenReturn(new RedisClientListResolver.ClientListSnapshot(Map.of(), Set.of(identity.connectionName()), false));
+        assertThat(provider.getCoordinationSnapshot()).isEmpty();
+        when(resolver.resolveClients()).thenReturn(new RedisClientListResolver.ClientListSnapshot(Map.of(), Set.of("other"), true));
+        assertThat(provider.getCoordinationSnapshot()).isEmpty();
+        when(resolver.resolveClients()).thenReturn(new RedisClientListResolver.ClientListSnapshot(Map.of(), Set.of(identity.connectionName(), "other"), true));
+        var snapshot = provider.getCoordinationSnapshot().orElseThrow();
+        assertThat(snapshot.ownerNodeIds()).containsExactlyInAnyOrder(identity.connectionName(), "other");
+        assertThat(snapshot.memberQuorumRequired()).isFalse();
+        assertThat(provider.getLocalNodeId()).isEqualTo(identity.connectionName());
+        when(client.isShutdown()).thenReturn(true);
+        assertThat(provider.getCoordinationSnapshot()).isEmpty();
+    }
+
+    @Test
     void testClientDisconnectionListenerIsNotifiedAboutClientsMissingFromTheNextCompleteSnapshot() {
         RedissonClient redissonClient = mock(RedissonClient.class);
         RedisClientListResolver resolver = mock(RedisClientListResolver.class);
         when(resolver.getUniqueClients()).thenReturn(Set.of("node-a", "node-b"));
-        when(resolver.resolveClients()).thenReturn(new RedisClientListResolver.ClientListSnapshot(Map.of("node-a", Set.of("10.0.0.1:1")), true));
-        var service = new RedissonDistributedDataProviderService(redissonClient, resolver);
+        when(resolver.resolveClients()).thenReturn(new RedisClientListResolver.ClientListSnapshot(Map.of("node-a", Set.of("10.0.0.1:1")), Set.of("node-a"), true));
+        var service = new RedissonDistributedDataProviderService(redissonClient, resolver, new RedisNodeIdentity("artemis-core"));
         var disconnected = new CopyOnWriteArrayList<String>();
 
         var listenerId = service.addClientDisconnectionListener(disconnected::add);

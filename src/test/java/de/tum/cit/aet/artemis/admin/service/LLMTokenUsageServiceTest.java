@@ -56,6 +56,13 @@ class LLMTokenUsageServiceTest {
     }
 
     @Test
+    void reportedZeroCacheHitsNeedNoCachePriceButUnknownOrPositiveHitsDo() {
+        assertThat(llmTokenUsageService.buildLLMRequest("gpt-5-mini", 11, 7, "PIPE", null, 0L).costEstimateComplete()).isTrue();
+        assertThat(llmTokenUsageService.buildLLMRequest("gpt-5-mini", 11, 7, "PIPE", null, null).costEstimateComplete()).isFalse();
+        assertThat(llmTokenUsageService.buildLLMRequest("gpt-5-mini", 11, 7, "PIPE", null, 2L).costEstimateComplete()).isFalse();
+    }
+
+    @Test
     void absentProviderUsageDoesNotCreateZeroCostRecord() {
         // a response without provider usage carries the empty usage, which is neither stored nor reported as a failure
         List<ILoggingEvent> warnings = warningsLoggedBy(() -> llmTokenUsageService.trackChatResponseTokenUsage(new ChatResponse(List.of()), LLMServiceType.ATLAS,
@@ -116,6 +123,23 @@ class LLMTokenUsageServiceTest {
 
         assertThat(request.costPerMillionInputToken()).isEqualTo(0.0f);
         assertThat(request.costPerMillionOutputToken()).isEqualTo(0.0f);
+    }
+
+    @Test
+    void explicitCachePricesRemainSeparateInPersistenceAndEstimatedCost() {
+        LLMRequest request = new LLMRequest("model", 11, 2f, 7, 5f, "PIPE", 2, 0.5f, 3, 4f);
+        llmTokenUsageService.saveLLMTokenUsage(java.util.List.of(request), LLMServiceType.IRIS, builder -> builder);
+
+        var saved = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
+        verify(llmTokenUsageTraceRepository).save(saved.capture());
+        assertThat(saved.getValue().getLLMRequests()).singleElement().satisfies(persisted -> {
+            assertThat(persisted.getCostPerMillionInputTokens()).isEqualTo(2f);
+            assertThat(persisted.getNumCachedInputTokens()).isEqualTo(2);
+            assertThat(persisted.getCostPerMillionCachedInputTokens()).isEqualTo(0.5f);
+            assertThat(persisted.getNumCacheWriteInputTokens()).isEqualTo(3);
+            assertThat(persisted.getCostPerMillionCacheWriteInputTokens()).isEqualTo(4f);
+        });
+        assertThat(LLMTokenUsageService.estimatedCostEur(request)).isEqualTo(0.000060);
     }
 
     @Test

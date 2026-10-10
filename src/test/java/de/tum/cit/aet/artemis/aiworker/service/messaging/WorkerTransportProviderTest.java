@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
 import de.tum.cit.aet.artemis.core.config.RedissonCodecConfiguration;
 import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisClientListResolver;
+import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisNodeIdentity;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedDataProviderService;
 import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
 
@@ -69,10 +70,10 @@ class WorkerTransportProviderTest {
             var second = redis(address);
             try {
                 verifyDelivery(
-                        new WorkerTransport(new RedissonDistributedDataProviderService(first, new RedisClientListResolver(new RedissonConnectionFactory(first))),
-                                new WorkerMessageCodecApi()),
-                        new WorkerTransport(new RedissonDistributedDataProviderService(second, new RedisClientListResolver(new RedissonConnectionFactory(second))),
-                                new WorkerMessageCodecApi()));
+                        new WorkerTransport(new RedissonDistributedDataProviderService(first, new RedisClientListResolver(new RedissonConnectionFactory(first)),
+                                new RedisNodeIdentity("aiworker-test")), new WorkerMessageCodecApi()),
+                        new WorkerTransport(new RedissonDistributedDataProviderService(second, new RedisClientListResolver(new RedissonConnectionFactory(second)),
+                                new RedisNodeIdentity("aiworker-test")), new WorkerMessageCodecApi()));
             }
             finally {
                 first.shutdown();
@@ -89,7 +90,7 @@ class WorkerTransportProviderTest {
         var config = new Config();
         config.useSingleServer().setAddress(address).setConnectionMinimumIdleSize(1).setConnectionPoolSize(2).setSubscriptionConnectionMinimumIdleSize(1)
                 .setSubscriptionConnectionPoolSize(2);
-        new RedissonCodecConfiguration().artemisRedissonSerializationCodecCustomizer().customize(config);
+        new RedissonCodecConfiguration().artemisRedissonSerializationCodecCustomizer(new RedisNodeIdentity("aiworker-test")).customize(config);
         return Redisson.create(config);
     }
 
