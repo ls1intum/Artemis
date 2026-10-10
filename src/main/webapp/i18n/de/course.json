@@ -358,6 +358,9 @@
                     "hint": "Zwischen 3 und 24 Buchstaben oder Ziffern, beginnend mit einem Buchstaben. Er erscheint in URLs und Gruppennamen und kann später nicht mehr geändert werden.",
                     "hintReadOnly": "Der Kurzname kann nach dem Erstellen des Kurses nicht mehr geändert werden."
                 },
+                "description": {
+                    "maxlength": "Die Beschreibung darf höchstens 2000 Zeichen lang sein."
+                },
                 "startDate": {
                     "invalid": "Muss vor dem Enddatum des Kurses liegen",
                     "required": "Gib ein Startdatum ein."

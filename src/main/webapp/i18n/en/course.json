@@ -358,6 +358,9 @@
                     "hint": "Between 3 and 24 letters or digits, starting with a letter. It appears in URLs and group names and cannot be changed later.",
                     "hintReadOnly": "The short name cannot be changed after the course has been created."
                 },
+                "description": {
+                    "maxlength": "Description must not exceed 2000 characters."
+                },
                 "startDate": {
                     "invalid": "Must be before the end date of the course",
                     "required": "Enter a start date."
