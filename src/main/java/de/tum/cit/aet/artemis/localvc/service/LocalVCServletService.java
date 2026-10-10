@@ -213,6 +213,12 @@ public class LocalVCServletService {
 
     private static final String AUTHENTICATION_MECHANISM_REQUEST_ATTRIBUTE = "artemis.authenticationMechanism";
 
+    /**
+     * Carries the {@link GitHandshakeDecision} the admission filter made ahead of repository resolution, so the
+     * authentication filters can complete the request without repeating the build-agent check or the rate limit.
+     */
+    static final String GIT_HANDSHAKE_DECISION_REQUEST_ATTRIBUTE = "artemis.gitHandshakeDecision";
+
     public LocalVCServletService(AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             RepositoryAccessService repositoryAccessService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
@@ -325,57 +331,26 @@ public class LocalVCServletService {
 
         long timeNanoStart = System.nanoTime();
 
-        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-
-        // The first request does not contain an authorizationHeader, the client expects this response
-        if (authorizationHeader == null) {
-            throw new LocalVCAuthException("No authorization header provided", true);
+        // The pre-flight (missing credentials, build-agent shortcuts, rate limit) is normally decided by the admission
+        // filter ahead of repository resolution, so that a missing and an existing repository are throttled and answered
+        // identically before their paths can diverge. When no admission filter ran (a direct call, e.g. in a test), the
+        // same decision is computed here, so there is a single implementation and the behaviour is unchanged.
+        GitHandshakeDecision decision = (GitHandshakeDecision) request.getAttribute(GIT_HANDSHAKE_DECISION_REQUEST_ATTRIBUTE);
+        if (decision == null) {
+            decision = admitGitRequest(request, repositoryAction);
         }
-
-        // A build agent cloning for a build job it is currently running. Ahead of the rate limiter on purpose: agents
-        // are exempt from it today only because the shortcut below returns early, and throttling them would stall
-        // every build during an exam peak. Unlike that shortcut this grants nothing installation-wide - it opens the
-        // repositories of one running job, to the agent that holds it, from the address that agent is connected from.
-        if (repositoryAction == RepositoryActionType.READ && authenticateBuildJobCloneToken(request, authorizationHeader)) {
-            return;
-        }
-
-        // If it is a fetch request, we check if it is the build agent that is fetching the repository. Two conditions
-        // close this shortcut entirely rather than narrowing it, because what it grants - repository-wide read, ahead
-        // of the rate limit, the authorization checks and the access log - is worth strictly less than the attack
-        // surface it carries wherever something else can do the job.
-        //
-        // Local CI is one of them: every build job there carries a token scoped to its own repositories, so no Artemis
-        // build agent has any use for a shared credential. LocalVCBuildAgentCredentialsValidator already refuses to
-        // start such a node with one configured; this makes the shortcut unreachable rather than merely unconfigured,
-        // so a credential that arrives by some other route still opens nothing. What remains is a local VC node
-        // without local CI, whose client is Jenkins - not an Artemis build agent, and with neither key nor build job.
-        //
-        // The other is ssh: build agents that authenticate with a key never present this pair.
-        if (repositoryAction == RepositoryActionType.READ && !useSshForBuildAgent && distributedDataAccessService.isEmpty()) {
-            UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
-            // A blank configured credential must never match: this shortcut returns ahead of the rate limit, the
-            // repository authorization checks and the access log, so an empty configured password would hand
-            // repository-wide read access to anyone presenting the build-agent username. ConfigurationValidator
-            // rejects that configuration under prod, but this path also runs where that validation does not.
-            // The hasText guard is not made redundant by the constant-time comparison below: a blank configured
-            // password would still match an equally blank provided one.
-            if (StringUtils.hasText(buildAgentGitUsername) && StringUtils.hasText(buildAgentGitPassword) && Objects.equals(usernameAndPassword.username(), buildAgentGitUsername)
-                    && secretMatches(buildAgentGitPassword, usernameAndPassword.password())) {
-                // Authentication successful
+        switch (decision) {
+            case GitHandshakeDecision.Unauthenticated unauthenticated -> throw new LocalVCAuthException("No authorization header provided", unauthenticated.expectedHandshake());
+            case GitHandshakeDecision.RateLimited rateLimited -> throw new RateLimitExceededException(rateLimited.retryAfterSeconds());
+            case GitHandshakeDecision.BuildAgentClone ignored -> {
                 return;
+            }
+            case GitHandshakeDecision.OrdinaryAuthentication ignored -> {
+                // fall through to ordinary user authentication and authorization below
             }
         }
 
-        // Only count rate limit on /info/refs (the initial handshake request per git operation).
-        // The data transfer requests (git-upload-pack, git-receive-pack) reuse the same credentials
-        // and should not consume additional rate limit budget.
-        if (request.getRequestURI().endsWith("/info/refs")) {
-            String ipString = getIpStringFromRequest(request);
-            final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
-            rateLimitService.enforcePerMinute(ipAddress, RateLimitType.AUTHENTICATION);
-        }
-
+        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
         log.debug("Parsed repository URI from request: {}", localVCRepositoryUri);
         String projectKey = localVCRepositoryUri.getProjectKey();
@@ -410,7 +385,7 @@ public class LocalVCServletService {
             // Only create the preliminary access log on /info/refs requests.
             // The data transfer requests (git-upload-pack, git-receive-pack) will update this log entry
             // via PreUploadHook / processNewPush rather than creating a duplicate.
-            if (request.getRequestURI().endsWith("/info/refs")) {
+            if (GitRequestClassifier.isInfoRefsHandshake(request)) {
                 savePreliminaryVcsAccessLogForHTTPs(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation, authenticated.mechanism());
             }
         }
@@ -421,6 +396,86 @@ public class LocalVCServletService {
         }
 
         log.debug("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
+    }
+
+    /**
+     * Decides the pre-flight of a git request, before JGit resolves the repository: whether it carries credentials at
+     * all, whether it is a build agent that is exempt from ordinary authentication and the rate limit, and whether the
+     * authentication rate limit is exhausted. It never resolves the repository, so a missing and an existing repository
+     * reach this decision identically, which is what closes the repository-existence oracle under rate limiting.
+     * <p>
+     * The build-agent shortcuts keep their existing side effects (the {@code artemis.buildAgentClone} request attribute,
+     * the build-agent clone-token bucket, the build-agent access log) and must therefore be run exactly once per request;
+     * the admission filter is that single caller in production, and {@link #authenticateAndAuthorizeGitRequest} only falls
+     * back to it when no admission filter ran.
+     *
+     * @param request          the incoming git request
+     * @param repositoryAction whether the request reads or writes
+     * @return the admission decision; never {@code null}
+     */
+    GitHandshakeDecision admitGitRequest(HttpServletRequest request, RepositoryActionType repositoryAction) {
+        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+        // The first request does not contain an authorizationHeader, the client expects this response
+        if (authorizationHeader == null) {
+            return new GitHandshakeDecision.Unauthenticated(true);
+        }
+
+        // A build agent cloning for a build job it is currently running. Ahead of the rate limiter on purpose: agents
+        // are exempt from it today only because the shortcut below returns early, and throttling them would stall
+        // every build during an exam peak. Unlike that shortcut this grants nothing installation-wide - it opens the
+        // repositories of one running job, to the agent that holds it, from the address that agent is connected from.
+        if (repositoryAction == RepositoryActionType.READ && authenticateBuildJobCloneToken(request, authorizationHeader)) {
+            return new GitHandshakeDecision.BuildAgentClone();
+        }
+
+        // If it is a fetch request, we check if it is the build agent that is fetching the repository. Two conditions
+        // close this shortcut entirely rather than narrowing it, because what it grants - repository-wide read, ahead
+        // of the rate limit, the authorization checks and the access log - is worth strictly less than the attack
+        // surface it carries wherever something else can do the job.
+        //
+        // Local CI is one of them: every build job there carries a token scoped to its own repositories, so no Artemis
+        // build agent has any use for a shared credential. LocalVCBuildAgentCredentialsValidator already refuses to
+        // start such a node with one configured; this makes the shortcut unreachable rather than merely unconfigured,
+        // so a credential that arrives by some other route still opens nothing. What remains is a local VC node
+        // without local CI, whose client is Jenkins - not an Artemis build agent, and with neither key nor build job.
+        //
+        // The other is ssh: build agents that authenticate with a key never present this pair.
+        if (repositoryAction == RepositoryActionType.READ && !useSshForBuildAgent && distributedDataAccessService.isEmpty()) {
+            try {
+                UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
+                // A blank configured credential must never match: this shortcut returns ahead of the rate limit, the
+                // repository authorization checks and the access log, so an empty configured password would hand
+                // repository-wide read access to anyone presenting the build-agent username. ConfigurationValidator
+                // rejects that configuration under prod, but this path also runs where that validation does not.
+                // The hasText guard is not made redundant by the constant-time comparison below: a blank configured
+                // password would still match an equally blank provided one.
+                if (StringUtils.hasText(buildAgentGitUsername) && StringUtils.hasText(buildAgentGitPassword)
+                        && Objects.equals(usernameAndPassword.username(), buildAgentGitUsername) && secretMatches(buildAgentGitPassword, usernameAndPassword.password())) {
+                    return new GitHandshakeDecision.BuildAgentClone();
+                }
+            }
+            catch (LocalVCAuthException ignored) {
+                // A malformed authorization header is not the shared build-agent credential; fall through to ordinary
+                // authentication, which reports the malformed credential as a 401 just as before.
+            }
+        }
+
+        // Only count rate limit on /info/refs (the initial handshake request per git operation).
+        // The data transfer requests (git-upload-pack, git-receive-pack) reuse the same credentials
+        // and should not consume additional rate limit budget.
+        if (GitRequestClassifier.isInfoRefsHandshake(request)) {
+            String ipString = getIpStringFromRequest(request);
+            final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
+            try {
+                rateLimitService.enforcePerMinute(ipAddress, RateLimitType.AUTHENTICATION);
+            }
+            catch (RateLimitExceededException e) {
+                return new GitHandshakeDecision.RateLimited(e.getRetryAfterSeconds());
+            }
+        }
+
+        return new GitHandshakeDecision.OrdinaryAuthentication();
     }
 
     /**
@@ -692,7 +747,7 @@ public class LocalVCServletService {
             request.setAttribute(BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE, agentName);
             // Only on the handshake, like the rate limiter above: git follows /info/refs with a git-upload-pack
             // using the same credentials, and one clone should leave one audit entry rather than two.
-            if (request.getRequestURI().endsWith("/info/refs")) {
+            if (GitRequestClassifier.isInfoRefsHandshake(request)) {
                 saveBuildAgentVcsAccessLog(localVCRepositoryUri, agentName, matchingBuildJob.id(), peerIpAddress, AuthenticationMechanism.BUILD_JOB_TOKEN);
             }
             return true;
