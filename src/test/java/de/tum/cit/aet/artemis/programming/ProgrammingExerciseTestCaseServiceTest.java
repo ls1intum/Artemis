@@ -109,8 +109,8 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
         testCaseService.reset(programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId())
+                .orElseThrow();
 
         for (ProgrammingExerciseTestCase testCase : testCases) {
             assertThat(testCase.getWeight()).isEqualTo(1.0);
@@ -139,8 +139,8 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
 
         testCaseService.update(programmingExercise.getId(), programmingExerciseTestCaseDTOS);
 
-        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId())
+                .orElseThrow();
 
         assertThat(testCaseRepository.findById(testCase.getId()).orElseThrow().getWeight()).isEqualTo(400);
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();

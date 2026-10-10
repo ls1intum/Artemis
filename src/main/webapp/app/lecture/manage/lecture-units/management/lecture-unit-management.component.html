@@ -91,34 +91,7 @@
                                                 </tumaet-ui-tag>
                                             }
                                         }
-                                        @if (isAwaitingProcessing(lectureUnit)) {
-                                            <tumaet-ui-tag severity="secondary">
-                                                <fa-icon [icon]="faClock" class="me-1" /><span jhiTranslate="artemisApp.attachmentVideoUnit.awaitingProcessing"></span>
-                                            </tumaet-ui-tag>
-                                        } @else if (isProcessingTranscribing(lectureUnit)) {
-                                            <tumaet-ui-tag severity="info">
-                                                <fa-icon [icon]="faSpinner" animation="spin" class="me-1" /><span
-                                                    jhiTranslate="artemisApp.attachmentVideoUnit.processingTranscribing"
-                                                ></span>
-                                            </tumaet-ui-tag>
-                                        } @else if (isProcessingIngesting(lectureUnit)) {
-                                            <tumaet-ui-tag severity="info">
-                                                <fa-icon [icon]="faSpinner" animation="spin" class="me-1" /><span
-                                                    jhiTranslate="artemisApp.attachmentVideoUnit.processingIngesting"
-                                                ></span>
-                                            </tumaet-ui-tag>
-                                        } @else if (isProcessingFailed(lectureUnit)) {
-                                            <tumaet-ui-tag severity="danger" data-testid="lecture-unit-processing-failed">
-                                                <fa-icon [icon]="faExclamationTriangle" class="me-1" /><span jhiTranslate="artemisApp.attachmentVideoUnit.processingFailed"></span>
-                                                @if (getProcessingErrorKey(lectureUnit); as errorKey) {
-                                                    <span>: {{ errorKey | artemisTranslate }}</span>
-                                                }
-                                            </tumaet-ui-tag>
-                                        } @else if (isProcessingDone(lectureUnit)) {
-                                            <tumaet-ui-tag severity="success">
-                                                <fa-icon [icon]="faFileLines" class="me-1" /><span jhiTranslate="artemisApp.attachmentVideoUnit.processingComplete"></span>
-                                            </tumaet-ui-tag>
-                                        }
+                                        <jhi-ingestion-status-badge [status]="processingStatus()[lectureUnit.id!]" [awaiting]="isAwaitingProcessing(lectureUnit)" />
                                     }
                                     @if (showCompetencies()) {
                                         @for (competencyLink of lectureUnit.competencyLinks ?? []; track competencyLink.competency?.id) {
@@ -136,6 +109,9 @@
                                 role="group"
                                 [attr.aria-label]="'artemisApp.lectureUnit.management.actions' | artemisTranslate: { name: unitName }"
                             >
+                                @if (currentLecture.isAtLeastInstructor && isOrchestrationAvailable(lectureUnit)) {
+                                    <jhi-atlas-orchestration-trigger [lectureUnitId]="lectureUnit.id!" [showLabel]="false" [buttonClass]="'btn btn-link btn-sm'" />
+                                }
                                 @if (currentLecture.isAtLeastEditor && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO && isProcessingFailed(lectureUnit)) {
                                     @let retryLabel = 'artemisApp.lectureUnit.retryProcessing' | artemisTranslate;
                                     <button

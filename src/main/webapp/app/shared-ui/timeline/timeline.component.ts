@@ -67,6 +67,8 @@ export class TimelineComponent {
     }
 
     updateDate(item: TimelineItem, newInternalDate: Date | string | null) {
+        // A picked date or the clear icon replaces whatever text was flagged as invalid, even when the bound date stays as it was.
+        this.setInvalidInput(item, false);
         const currentDate = item.date();
         const newDate = newInternalDate instanceof Date ? dayjs(newInternalDate) : undefined;
         const oldAndNewDateUndefined = currentDate === undefined && newDate === undefined;
