@@ -80,7 +80,8 @@ class ExerciseGenerationRevertServiceTest {
         when(persistenceService.canRestoreGrading(any(Long.class), any(), any())).thenReturn(true);
         when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any())).thenReturn(true);
         when(persistenceService.resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any())).thenReturn(true);
-        revertService = new ExerciseGenerationRevertService(recovery, metadata, testCases, gitService, persistenceService, tempFileUtilService, DEFAULT_BRANCH);
+        revertService = new ExerciseGenerationRevertService(recovery, metadata, testCases, new GenerationRepositoryRevertService(gitService, tempFileUtilService),
+                persistenceService, DEFAULT_BRANCH);
 
         templateUri = mock(LocalVCRepositoryUri.class);
         solutionUri = mock(LocalVCRepositoryUri.class);

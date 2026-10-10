@@ -8,13 +8,16 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -25,14 +28,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
 import org.springframework.dao.CannotAcquireLockException;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -40,12 +47,15 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
+import de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRecoveryRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
+import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 
 /**
  * Unit tests for {@link LectureContentProcessingService} and {@link ProcessingStateCallbackService}.
@@ -67,11 +77,15 @@ class LectureContentProcessingServiceTest {
 
     private ProcessingStateCallbackService callbackService;
 
+    private TranscriptionCheckpointService checkpointService;
+
     private ProcessingStateRecoveryService recoveryService;
 
     private LectureUnitProcessingStateRepository processingStateRepository;
 
     private LectureTranscriptionRepository transcriptionRepository;
+
+    private LectureUnitProcessingStateRecoveryRepository strandedRunRepository;
 
     private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
@@ -79,9 +93,13 @@ class LectureContentProcessingServiceTest {
 
     private IrisLectureApi irisLectureApi;
 
+    private LectureUnitContentFingerprintService contentFingerprintService;
+
     private WebsocketMessagingService websocketMessagingService;
 
     private IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository;
+
+    private VideoSourceResolverService videoSourceResolver;
 
     private AttachmentVideoUnit testUnit;
 
@@ -93,6 +111,9 @@ class LectureContentProcessingServiceTest {
     void setUp() {
         processingStateRepository = mock(LectureUnitProcessingStateRepository.class);
         transcriptionRepository = mock(LectureTranscriptionRepository.class);
+        strandedRunRepository = mock(LectureUnitProcessingStateRecoveryRepository.class);
+        // An enriched checkpoint records its version first; by default the run still owns the unit
+        when(processingStateRepository.recordTranscriptionVersionIfTranscribing(anyLong(), any(), any(), any())).thenReturn(1);
         attachmentVideoUnitRepository = mock(AttachmentVideoUnitTestRepository.class);
         attachmentRepository = mock(AttachmentRepository.class);
         irisLectureApi = mock(IrisLectureApi.class);
@@ -101,12 +122,24 @@ class LectureContentProcessingServiceTest {
         when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
 
         websocketMessagingService = mock(WebsocketMessagingService.class);
+        contentFingerprintService = mock(LectureUnitContentFingerprintService.class);
+        when(contentFingerprintService.computeFingerprint(any())).thenReturn("v1:test-fingerprint");
+        // The atomic terminal-callback claims succeed by default; duplicate-claim tests override these
+        when(processingStateRepository.completeIngestionIfLive(anyLong(), anyString(), any())).thenReturn(1);
+        when(processingStateRepository.failIfStillLive(anyLong(), any(), any(), anyInt(), any(), any(), any())).thenReturn(1);
         irisLectureUnitSyncStateRepository = mock(IrisLectureUnitSyncStateRepository.class);
-        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, Optional.of(irisLectureApi),
-                websocketMessagingService, irisLectureUnitSyncStateRepository);
-        recoveryService = new ProcessingStateRecoveryService(processingStateRepository, transcriptionRepository, websocketMessagingService);
+        // Every video link of these tests is a supported source unless a test says otherwise
+        videoSourceResolver = mock(VideoSourceResolverService.class);
+        when(videoSourceResolver.isSupportedSource(anyString())).thenReturn(true);
+        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository,
+                new ProcessingStateNotificationService(websocketMessagingService, transcriptionRepository), contentFingerprintService, featureToggleService, videoSourceResolver,
+                20, 8, 3, irisLectureUnitSyncStateRepository);
+        checkpointService = new TranscriptionCheckpointService(processingStateRepository, transcriptionRepository,
+                new ProcessingStateNotificationService(websocketMessagingService, transcriptionRepository), JsonObjectMapper.get());
+        recoveryService = new ProcessingStateRecoveryService(processingStateRepository, strandedRunRepository, transcriptionRepository, websocketMessagingService);
 
-        service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService, attachmentRepository);
+        service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService, attachmentRepository,
+                strandedRunRepository, transcriptionRepository, videoSourceResolver, new ProcessingStateNotificationService(websocketMessagingService, transcriptionRepository));
 
         testLecture = new Lecture();
         testLecture.setId(1L);
@@ -131,8 +164,6 @@ class LectureContentProcessingServiceTest {
             // Given: A new unit with video source
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            // Mock dispatch — no slots available (dispatch tested separately)
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             // When
             service.triggerProcessing(testUnit);
@@ -143,6 +174,35 @@ class LectureContentProcessingServiceTest {
 
             LectureUnitProcessingState savedState = stateCaptor.getValue();
             assertThat(savedState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+        }
+
+        /** The content check uses the same stored-PDF rule as the payload, so an uppercase extension counts as a PDF. */
+        @Test
+        void shouldEnqueueAPdfOnlyUnitWithAnUppercaseExtension() {
+            testUnit.setVideoSource(null);
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setAttachmentType(AttachmentType.FILE);
+            pdfAttachment.setLink("attachments/SLIDES.PDF");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            service.triggerProcessing(testUnit);
+
+            ArgumentCaptor<LectureUnitProcessingState> stateCaptor = ArgumentCaptor.forClass(LectureUnitProcessingState.class);
+            verify(processingStateRepository).save(stateCaptor.capture());
+            assertThat(stateCaptor.getValue().getPhase()).as("an uppercase .PDF is processable content").isEqualTo(ProcessingPhase.IDLE);
+        }
+
+        /**
+         * The walk and the backfill queue background units under one guard on the free backlog room; the row has to be written before the
+         * guard is released, so the backlog trigger must not hand the work to another thread.
+         */
+        @Test
+        void shouldTriggerBacklogWorkOnTheCallingThread() throws NoSuchMethodException {
+            assertThat(LectureContentProcessingService.class.getMethod("triggerProcessingAsBacklog", AttachmentVideoUnit.class)
+                    .isAnnotationPresent(org.springframework.scheduling.annotation.Async.class)).isFalse();
         }
 
         @Test
@@ -171,8 +231,10 @@ class LectureContentProcessingServiceTest {
             FeatureToggleService fts = mock(FeatureToggleService.class);
             when(fts.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
             ProcessingStateCallbackService noIrisCallback = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository,
-                    Optional.empty(), mock(WebsocketMessagingService.class), mock(IrisLectureUnitSyncStateRepository.class));
-            service = new LectureContentProcessingService(processingStateRepository, Optional.empty(), fts, noIrisCallback, attachmentRepository);
+                    new ProcessingStateNotificationService(mock(WebsocketMessagingService.class), transcriptionRepository), contentFingerprintService, fts, videoSourceResolver, 20,
+                    8, 3, mock(IrisLectureUnitSyncStateRepository.class));
+            service = new LectureContentProcessingService(processingStateRepository, Optional.empty(), fts, noIrisCallback, attachmentRepository, strandedRunRepository,
+                    transcriptionRepository, videoSourceResolver, new ProcessingStateNotificationService(websocketMessagingService, transcriptionRepository));
 
             service.triggerProcessing(testUnit);
 
@@ -200,13 +262,15 @@ class LectureContentProcessingServiceTest {
         }
     }
 
-    // ==================== FLOW 2: Capacity-Aware Dispatch ====================
+    // ==================== FLOW 2: Worker Claim Preparation ====================
 
     @Nested
-    class DispatchPendingJobs {
+    class WorkerClaimPreparation {
+
+        private static final String WORKER_BOOT_ID = "worker-boot";
 
         /**
-         * findIdleForDispatch returns persisted rows and the dispatcher claims each one by id, so these fixtures need
+         * findIdleForDispatch returns persisted rows and the claim takes each one by id, so these fixtures need
          * one. It is set here rather than in the outer setup because a persisted state changes how
          * handleContentChanges classifies the unit, which the trigger tests above depend on.
          */
@@ -216,107 +280,137 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void shouldDispatchIdleJobWithVideoAsTranscribing() {
-            // Given: One IDLE job, one slot available, unit has video, no existing transcription
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(1L); // 1 slot available (MAX_CONCURRENT_PROCESSING - 1)
+        void shouldClaimAnIdleJobWithVideoAsTranscribing() {
             when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
-            when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), any())).thenReturn(1);
+            when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), anyString(), any(), anyInt())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn(TEST_JOB_TOKEN);
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-            // When
-            callbackService.dispatchPendingJobs();
+            List<ClaimedIngestionUnitDTO> claims = callbackService.claimUnitsForWorker(WORKER_BOOT_ID, 2);
 
-            // Then: Should dispatch as TRANSCRIBING (has video, no completed transcription)
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
-            assertThat(testState.getIngestionJobToken()).isEqualTo(TEST_JOB_TOKEN);
-            verify(irisLectureApi).addLectureUnitToPyrisDB(testUnit);
+            assertThat(claims).singleElement().extracting(ClaimedIngestionUnitDTO::targetPhase).isEqualTo(ProcessingPhase.TRANSCRIBING);
         }
 
         @Test
-        void shouldDispatchAsIngestingWhenTranscriptionExists() {
-            // Given: IDLE job with completed transcription (retry after ingestion failure)
+        void shouldChargeAFailureInsteadOfClaimingAUnitAtTheAttemptLimit() {
+            testState.setUnsettledAttempts(3);
+            when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
+            when(processingStateRepository.failExhaustedIdleAttempts(eq(PROCESSING_STATE_ID), eq(0), eq(1), anyString(), any(), eq(3), any())).thenReturn(1);
+
+            assertThat(callbackService.claimUnitsForWorker(WORKER_BOOT_ID, 2)).isEmpty();
+
+            verify(processingStateRepository, never()).claimIdleForDispatch(anyLong(), anyString(), any(), anyInt());
+            // Charged with backoff, so the normal retry limit bounds the unit
+            verify(processingStateRepository).failExhaustedIdleAttempts(eq(PROCESSING_STATE_ID), eq(0), eq(1),
+                    eq("artemisApp.attachmentVideoUnit.processing.error.recoveryLimitReached"), notNull(), eq(3), any());
+            verify(websocketMessagingService).sendMessage(any(WebsocketDestination.class), any(Object.class));
+        }
+
+        @Test
+        void shouldClaimAsIngestingWhenTranscriptionExists() {
             LectureTranscription completedTranscription = new LectureTranscription();
             completedTranscription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
-
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(0L);
             when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
-            when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), any())).thenReturn(1);
+            when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), anyString(), any(), anyInt())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(completedTranscription));
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn(TEST_JOB_TOKEN);
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-            // When
-            callbackService.dispatchPendingJobs();
-
-            // Then: Should dispatch as INGESTING (transcription already done)
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            assertThat(callbackService.claimUnitsForWorker(WORKER_BOOT_ID, 2)).singleElement().extracting(ClaimedIngestionUnitDTO::targetPhase)
+                    .isEqualTo(ProcessingPhase.INGESTING);
         }
 
         @Test
-        void shouldDispatchPdfOnlyAsIngesting() {
-            // Given: IDLE job with no video (PDF only)
+        void shouldClaimPdfOnlyAsIngesting() {
             testUnit.setVideoSource(null);
             Attachment pdfAttachment = new Attachment();
             pdfAttachment.setLink("/path/to/file.pdf");
             testUnit.setAttachment(pdfAttachment);
-
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(0L);
             when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
-            when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), any())).thenReturn(1);
+            when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), anyString(), any(), anyInt())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn(TEST_JOB_TOKEN);
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-            // When
-            callbackService.dispatchPendingJobs();
-
-            // Then: Should dispatch as INGESTING (no video to transcribe)
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            assertThat(callbackService.claimUnitsForWorker(WORKER_BOOT_ID, 2)).singleElement().extracting(ClaimedIngestionUnitDTO::targetPhase)
+                    .isEqualTo(ProcessingPhase.INGESTING);
         }
 
         @Test
-        void shouldNotDispatchWhenNoSlotsAvailable() {
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L); // All slots full
-
-            callbackService.dispatchPendingJobs();
-
-            verify(processingStateRepository, never()).findIdleForDispatch(any(), anyInt());
-        }
-
-        @Test
-        void shouldMarkDoneWhenIrisReturnsNull() {
-            // Given: Iris returns null (not applicable for course)
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(0L);
+        void shouldFailImmediatelyWithoutRetriesWhenAttachmentIsUnreadable() {
+            // The attachment file cannot be read from disk — a local problem Iris cannot fix
             when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
-            when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), any())).thenReturn(1);
-            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn(null);
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.claimIdleForDispatch(anyLong(), anyString(), any(), anyInt())).thenReturn(1);
+            // Committed through the claim-guarded update rather than a whole-entity save, so a content requeue landing
+            // during fingerprinting is not overwritten; 1 means this claim is still the current one.
+            when(processingStateRepository.failPreparationIfStillClaimed(anyLong(), any(), anyString(), any())).thenReturn(1);
+            when(contentFingerprintService.computeFingerprint(any())).thenThrow(new IllegalStateException("Cannot read attachment file"));
 
-            callbackService.dispatchPendingJobs();
+            List<ClaimedIngestionUnitDTO> claims;
+            // The file store is initialized, so the failure is judged permanent, not a startup race
+            try (MockedStatic<FilePathConverter> filePathConverter = mockStatic(FilePathConverter.class)) {
+                filePathConverter.when(FilePathConverter::getFileUploadPath).thenReturn(Path.of("uploads"));
+                claims = callbackService.claimUnitsForWorker(WORKER_BOOT_ID, 2);
+            }
 
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
-        }
-
-        @Test
-        void shouldHandleDispatchFailureWithRetry() {
-            // Given: Iris throws exception during dispatch
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(0L);
-            when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
-            when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), any())).thenReturn(1);
-            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenThrow(new RuntimeException("Iris unavailable"));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-            callbackService.dispatchPendingJobs();
-
-            // Then: Should mark as FAILED with retry backoff scheduled
+            // FAILED with the specific key, no retry scheduled, no retry budget spent, nothing handed to the worker
+            assertThat(claims).isEmpty();
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
-            assertThat(testState.getRetryCount()).isEqualTo(1);
-            assertThat(testState.getRetryEligibleAt()).isNotNull();
-            assertThat(testState.getStartedAt()).isNull(); // Back in queue
+            assertThat(testState.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.attachmentUnreadable");
+            assertThat(testState.getRetryEligibleAt()).isNull();
+            assertThat(testState.getRetryCount()).isZero();
+        }
+
+        @Test
+        void shouldRequeueWithoutFailingWhenTheFileStoreIsNotInitializedYet() {
+            // The same read failure, but the file store path is not configured yet — a claim that raced application
+            // startup, not an actually-unreadable attachment
+            when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
+            when(processingStateRepository.claimIdleForDispatch(anyLong(), anyString(), any(), anyInt())).thenReturn(1);
+            when(contentFingerprintService.computeFingerprint(any())).thenThrow(new IllegalStateException("Cannot read attachment file"));
+
+            List<ClaimedIngestionUnitDTO> claims;
+            try (MockedStatic<FilePathConverter> filePathConverter = mockStatic(FilePathConverter.class)) {
+                filePathConverter.when(FilePathConverter::getFileUploadPath).thenReturn(null);
+                claims = callbackService.claimUnitsForWorker(WORKER_BOOT_ID, 2);
+            }
+
+            // Requeued with no error key and no retry spent, not permanently failed
+            assertThat(claims).isEmpty();
+            verify(processingStateRepository).requeueIfStillClaimed(eq(PROCESSING_STATE_ID), anyString(), any());
+            assertThat(testState.getErrorKey()).isNull();
+            assertThat(testState.getRetryCount()).isZero();
+        }
+
+        @Test
+        void shouldFailOnMalformedAttachmentLinkWithoutAbortingTheBatch() {
+            // A malformed link surfaces as IllegalArgumentException from URI.create, not IllegalStateException.
+            // It must be caught (not escape and abort the batch) and the poison unit marked FAILED, while a
+            // second claimed unit is still handed to the worker.
+            LectureUnitProcessingState poison = new LectureUnitProcessingState(testUnit);
+            poison.setId(1L);
+            poison.setPhase(ProcessingPhase.IDLE);
+            AttachmentVideoUnit healthyUnit = new AttachmentVideoUnit();
+            healthyUnit.setId(101L);
+            healthyUnit.setLecture(testLecture);
+            healthyUnit.setVideoSource("https://live.rbg.tum.de/w/course/999");
+            LectureUnitProcessingState healthy = new LectureUnitProcessingState(healthyUnit);
+            healthy.setId(2L);
+            healthy.setPhase(ProcessingPhase.IDLE);
+
+            when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(poison, healthy));
+            when(processingStateRepository.claimIdleForDispatch(anyLong(), anyString(), any(), anyInt())).thenReturn(1);
+            when(processingStateRepository.failPreparationIfStillClaimed(anyLong(), any(), anyString(), any())).thenReturn(1);
+            when(contentFingerprintService.computeFingerprint(testUnit)).thenThrow(new IllegalArgumentException("Illegal character in path"));
+            when(contentFingerprintService.computeFingerprint(healthyUnit)).thenReturn("v1:ok");
+            when(transcriptionRepository.findByLectureUnit_Id(healthyUnit.getId())).thenReturn(Optional.empty());
+
+            List<ClaimedIngestionUnitDTO> claims;
+            // The file store is initialized, so the poison failure is judged permanent, not a startup race.
+            try (MockedStatic<FilePathConverter> filePathConverter = mockStatic(FilePathConverter.class)) {
+                filePathConverter.when(FilePathConverter::getFileUploadPath).thenReturn(Path.of("uploads"));
+                claims = callbackService.claimUnitsForWorker(WORKER_BOOT_ID, 2);
+            }
+
+            // The poison unit is FAILED with the specific key; the healthy sibling is still claimed.
+            assertThat(poison.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+            assertThat(poison.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.attachmentUnreadable");
+            assertThat(claims).extracting(ClaimedIngestionUnitDTO::lectureUnitId).containsExactly(101L);
         }
     }
 
@@ -328,46 +422,65 @@ class LectureContentProcessingServiceTest {
         @Test
         void shouldSaveRawTranscriptionAndStayInTranscribing() {
             // Given: State is TRANSCRIBING with valid token
+            testState.setId(PROCESSING_STATE_ID);
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
-            when(transcriptionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(transcriptionRepository.saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(true);
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.touchLastUpdated(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
 
             // Raw transcript: all slideNumber=0
             String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
 
             // When
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
 
-            // Then: Should save transcription as PENDING and stay in TRANSCRIBING
-            verify(transcriptionRepository).save(any());
+            // Then: Should insert transcription as PENDING, atomically conditional on the token, and stay in TRANSCRIBING
+            verify(transcriptionRepository).saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), eq("en"), any(), eq(TranscriptionStatus.PENDING));
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
         }
 
         @Test
         void shouldSaveEnrichedTranscriptionAndTransitionToIngesting() {
             // Given: State is TRANSCRIBING with valid token
+            testState.setId(PROCESSING_STATE_ID);
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setRetryCount(2); // Had retries during transcription
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
-            when(transcriptionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(transcriptionRepository.saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(true);
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(1);
+            // The row as the transition wrote it: INGESTING, retries reset, and the worker lease kept
+            LectureUnitProcessingState transitioned = new LectureUnitProcessingState(testUnit);
+            transitioned.setId(PROCESSING_STATE_ID);
+            transitioned.setPhase(ProcessingPhase.INGESTING);
+            transitioned.setIngestionJobToken(TEST_JOB_TOKEN);
+            transitioned.setLastHeartbeatAt(ZonedDateTime.now());
+            when(processingStateRepository.findById(PROCESSING_STATE_ID)).thenReturn(Optional.of(transitioned));
 
             // Enriched transcript: some slideNumber≠0
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
 
             // When
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
 
-            // Then: Should save as COMPLETED and transition to INGESTING
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
-            assertThat(testState.getRetryCount()).isZero(); // Reset for ingestion phase
+            // Then: Should insert as COMPLETED, atomically conditional on the token, and transition to INGESTING
+            verify(transcriptionRepository).saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), eq("en"), any(), eq(TranscriptionStatus.COMPLETED));
+            verify(processingStateRepository).transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any());
+            // The client is told the stored row, lease included, not an in-memory copy without it
+            ArgumentCaptor<Object> sent = ArgumentCaptor.forClass(Object.class);
+            verify(websocketMessagingService).sendMessage(any(WebsocketDestination.class), sent.capture());
+            assertThat(sent.getValue()).isInstanceOfSatisfying(LectureUnitCombinedStatusDTO.class, status -> {
+                assertThat(status.processingPhase()).isEqualTo(ProcessingPhase.INGESTING);
+                assertThat(status.retryCount()).isZero();
+                assertThat(status.lastHeartbeatAt()).isNotNull();
+            });
         }
 
         /**
@@ -377,11 +490,15 @@ class LectureContentProcessingServiceTest {
          */
         @Test
         void shouldNotAdvanceTheVersionWhenARerunEndsWithTheSameTranscription() {
+            testState.setId(PROCESSING_STATE_ID);
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.touchLastUpdated(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(transcriptionRepository.saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(true);
             when(transcriptionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -389,18 +506,247 @@ class LectureContentProcessingServiceTest {
             String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
 
             // A first, complete run: raw segments followed by the enriched ones
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
 
             assertThat(testState.getTranscriptionVersion()).isEqualTo(1);
 
             // The unit is transcribed again and Pyris produces exactly the same transcript
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
 
             assertThat(testState.getTranscriptionVersion()).isEqualTo(1);
+            // The version reaches the database only through the guarded transition, once per enriched checkpoint, both times as 1
+            verify(processingStateRepository, times(2)).transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), eq(1),
+                    eq(testState.getTranscriptionContentHash()));
+        }
+
+        @Test
+        void shouldNotTransitionWhenTheEnrichedInsertIsRefusedForALostToken() {
+            // A content-triggered requeue (video changed) can invalidate the token and delete the stored transcription
+            // between the checkpoint's arrival and this write. The token-checked insert then refuses, so the old video's
+            // transcription is never recreated, and with ownership gone the run must not move to INGESTING either.
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(transcriptionRepository.saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(false);
+
+            String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
+
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+
+            verify(processingStateRepository, never()).transitionToIngestingIfTranscribing(anyLong(), any(), any(), any(), any());
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+        }
+
+        /**
+         * A transcript write can fail (a lock-wait timeout, a dropped connection) and Iris then redelivers the same checkpoint. Writing the transcript before the phase
+         * transition is what keeps that redelivery useful: the failed attempt leaves the row TRANSCRIBING, so the retry replays both steps instead of being dropped as a stale
+         * checkpoint for a run that already moved to INGESTING without its transcript.
+         */
+        @Test
+        void shouldReplayAnEnrichedCheckpointWhoseTranscriptWriteFailed() {
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(transcriptionRepository.saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), any(), any(), any()))
+                    .thenThrow(new CannotAcquireLockException("lock wait timeout")).thenReturn(true);
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(1);
+
+            String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
+
+            assertThatThrownBy(() -> checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson)).isInstanceOf(CannotAcquireLockException.class);
+            verify(processingStateRepository, never()).transitionToIngestingIfTranscribing(anyLong(), any(), any(), any(), any());
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+
+            // Iris redelivers the same checkpoint: it is not dropped as stale, and both steps now complete once
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+
+            verify(transcriptionRepository, times(2)).saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), eq("en"), any(), eq(TranscriptionStatus.COMPLETED));
+            verify(processingStateRepository, times(1)).transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any());
+        }
+
+        @Test
+        void shouldNotSaveRawTranscriptionWhenLosingTheRaceOnCheckpoint() {
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(processingStateRepository.touchLastUpdated(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(0);
+
+            String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
+
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+
+            verify(transcriptionRepository, never()).saveCheckpointIfTokenMatches(any(), any(), any(), any(), any());
+        }
+
+        @Test
+        void shouldRecordTheVersionBeforeTheTranscriptAndRefuseTheWriteWhenItCannot() {
+            // The version is recorded first, so an interruption before the transition can only over-count it. When it cannot be
+            // recorded the run no longer owns the unit, and neither the transcript nor the transition may follow.
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(transcriptionRepository.saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(true);
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(1);
+            String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
+
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+
+            var order = org.mockito.Mockito.inOrder(processingStateRepository, transcriptionRepository);
+            order.verify(processingStateRepository).recordTranscriptionVersionIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), eq(1), any());
+            order.verify(transcriptionRepository).saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), eq("en"), any(), eq(TranscriptionStatus.COMPLETED));
+            order.verify(processingStateRepository).transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), eq(1), any());
+
+            // Ownership lost before the version could be recorded: nothing else is written
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            when(processingStateRepository.recordTranscriptionVersionIfTranscribing(anyLong(), any(), any(), any())).thenReturn(0);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+            verify(transcriptionRepository, times(1)).saveCheckpointIfTokenMatches(any(), any(), any(), any(), any());
+            verify(processingStateRepository, times(1)).transitionToIngestingIfTranscribing(anyLong(), any(), any(), any(), any());
+        }
+
+        @Test
+        void shouldNotTransitionWhenTheTokenChangedRightAfterTheTranscriptWrite() {
+            // The transcript was written while the run still owned the unit, but the token changed before the transition.
+            // The guarded transition refuses, the run is left to whoever took it over, and nothing is pushed for it.
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(transcriptionRepository.saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(true);
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(0);
+
+            String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
+
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+
+            verify(transcriptionRepository).saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), eq("en"), any(), eq(TranscriptionStatus.COMPLETED));
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+            verify(websocketMessagingService, never()).sendMessage(any(WebsocketDestination.class), any(LectureUnitCombinedStatusDTO.class));
+        }
+
+        @Test
+        void shouldSkipRawTranscriptionInsertWhenTokenChangedSinceOwnershipWasProven() {
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(processingStateRepository.touchLastUpdated(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+            when(transcriptionRepository.saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(false);
+
+            String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
+
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+
+            verify(transcriptionRepository).saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), eq("en"), any(), eq(TranscriptionStatus.PENDING));
+        }
+
+        @Test
+        void shouldUpdateExistingTranscriptionContentWhenEnriched() {
+            // A row already exists for this unit (an earlier raw checkpoint created it): the update
+            // must go through the id-guarded conditional update, not a blind save, so a content-change
+            // requeue deleting this row between the read and the write cannot be silently resurrected.
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            LectureTranscription existingTranscription = new LectureTranscription();
+            existingTranscription.setId(99L);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any())).thenReturn(1);
+            when(transcriptionRepository.saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), eq("en"), any(), eq(TranscriptionStatus.COMPLETED))).thenReturn(true);
+
+            String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
+
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+
+            verify(transcriptionRepository).saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), eq("en"), any(), eq(TranscriptionStatus.COMPLETED));
+            verify(transcriptionRepository, never()).save(any());
+            verify(processingStateRepository).transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any());
+        }
+
+        @Test
+        void shouldNotFailWhenExistingTranscriptionWasDeletedBeforeEnrichedWrite() {
+            // The transcription row was deleted between the read and this write by a content-change requeue that has
+            // already moved the unit on to a fresh generation. The stale content is dropped silently, and since the
+            // requeue took ownership, the run is not moved to INGESTING either.
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            LectureTranscription existingTranscription = new LectureTranscription();
+            existingTranscription.setId(99L);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
+            when(transcriptionRepository.saveCheckpointIfTokenMatches(any(), any(), any(), any(), any())).thenReturn(false);
+
+            String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
+
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+
+            verify(transcriptionRepository, never()).save(any());
+            verify(processingStateRepository, never()).transitionToIngestingIfTranscribing(anyLong(), any(), any(), any(), any());
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+        }
+
+        @Test
+        void shouldUpdateExistingTranscriptionContentWhenRaw() {
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            LectureTranscription existingTranscription = new LectureTranscription();
+            existingTranscription.setId(99L);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
+            when(processingStateRepository.touchLastUpdated(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+            when(transcriptionRepository.saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), eq("en"), any(), eq(TranscriptionStatus.PENDING))).thenReturn(true);
+
+            String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
+
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+
+            verify(transcriptionRepository).saveCheckpointIfTokenMatches(any(), eq(TEST_JOB_TOKEN), eq("en"), any(), eq(TranscriptionStatus.PENDING));
+            verify(transcriptionRepository, never()).save(any());
+        }
+
+        @Test
+        void shouldNotFailWhenExistingTranscriptionWasDeletedBeforeRawWrite() {
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            LectureTranscription existingTranscription = new LectureTranscription();
+            existingTranscription.setId(99L);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
+            when(processingStateRepository.touchLastUpdated(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+            when(transcriptionRepository.saveCheckpointIfTokenMatches(any(), any(), any(), any(), any())).thenReturn(false);
+
+            String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
+
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+
+            verify(transcriptionRepository, never()).save(any());
         }
 
         @Test
@@ -410,7 +756,7 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
 
-            callbackService.handleCheckpointData(testUnit.getId(), "stale-token", "{\"segments\":[]}");
+            checkpointService.handleCheckpointData(testUnit.getId(), "stale-token", "{\"segments\":[]}");
 
             verify(transcriptionRepository, never()).save(any());
         }
@@ -422,16 +768,16 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
 
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, "{\"segments\":[{\"startTime\":0,\"endTime\":5,\"text\":\"x\",\"slideNumber\":0}]}");
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, "{\"segments\":[{\"startTime\":0,\"endTime\":5,\"text\":\"x\",\"slideNumber\":0}]}");
 
             verify(transcriptionRepository, never()).save(any());
         }
 
         @Test
         void shouldIgnoreNullOrBlankResult() {
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, null);
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, "");
-            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, "  ");
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, null);
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, "");
+            checkpointService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, "  ");
 
             verify(processingStateRepository, never()).findByLectureUnit_Id(anyLong());
         }
@@ -442,14 +788,19 @@ class LectureContentProcessingServiceTest {
     @Nested
     class HandleIngestionComplete {
 
+        @BeforeEach
+        void givePersistedStateAnId() {
+            // Callback handling claims the terminal transition by row id; a state reaching this
+            // code path always came out of the repository and therefore has one.
+            testState.setId(1L);
+        }
+
         @Test
         void shouldMarkAsDoneOnSuccess() {
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             // Mock dispatch after completion
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
 
@@ -458,12 +809,83 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
+        void shouldClearTheForceReingestMarkerOnSuccess() {
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            testState.setForceReingest(true);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
+
+            assertThat(testState.isForceReingest()).isFalse();
+        }
+
+        @Test
+        void shouldConfirmTheDispatchedFingerprintOnSuccess() {
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            testState.setContentFingerprint("v1:dispatched-fingerprint");
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
+
+            assertThat(testState.getConfirmedFingerprint()).isEqualTo("v1:dispatched-fingerprint");
+        }
+
+        @Test
+        void shouldDropTheLoserOfARacingDuplicateSuccessCallback() {
+            // Two callbacks with the same live token race: the atomic claim lets exactly one through.
+            // This test simulates the loser, whose conditional completion write updates zero rows.
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.completeIngestionIfLive(anyLong(), anyString(), any())).thenReturn(0);
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
+
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            verify(processingStateRepository, never()).save(any());
+        }
+
+        @Test
+        void shouldNotWriteDisplayPageNumbersWhenLosingTheRaceOnSuccess() {
+            // A callback that loses the atomic claim (a content-triggered requeue or newer
+            // activation already moved this run on) must never touch the attachment:
+            // cleanupForReprocessing may have already cleared the display page number mapping in
+            // preparation for different content, and writing this stale callback's numbers over
+            // that would resurrect stale data for the wrong attachment version.
+            Attachment attachment = new Attachment();
+            testUnit.setAttachment(attachment);
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.completeIngestionIfLive(anyLong(), anyString(), any())).thenReturn(0);
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, List.of(1, 2, -1));
+
+            verify(attachmentRepository, never()).updateDisplayPageNumbersIfVersionMatches(any(), any(), any());
+        }
+
+        @Test
+        void shouldDropTheLoserOfARacingDuplicateFailureCallback() {
+            // Same race as above, but the loser is a failure callback: the conditional failure write
+            // updates zero rows, and the run must not be treated as having freed a dispatch slot.
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.failIfStillLive(anyLong(), any(), any(), anyInt(), any(), any(), any())).thenReturn(0);
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null, null);
+
+            verify(processingStateRepository, never()).save(any());
+        }
+
+        @Test
         void shouldReopenASettledOrInFlightIrisSynchronizationButLeaveACleanOneAlone() {
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
 
@@ -509,6 +931,10 @@ class LectureContentProcessingServiceTest {
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
             assertThat(testState.getIngestionJobToken()).isEqualTo(TEST_JOB_TOKEN);
             verify(processingStateRepository, never()).save(any());
+            // The synchronization update runs before the terminal claim precisely so that a failure here leaves the
+            // claim untouched: reaching completeIngestionIfLive first would already have committed DONE with the
+            // token cleared, making this callback non-replayable even though the exception below is visible.
+            verify(processingStateRepository, never()).completeIngestionIfLive(anyLong(), anyString(), any());
         }
 
         @Test
@@ -518,8 +944,6 @@ class LectureContentProcessingServiceTest {
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
 
@@ -529,19 +953,39 @@ class LectureContentProcessingServiceTest {
         @Test
         void shouldSaveDisplayPageNumbersOnSuccess() {
             Attachment attachment = new Attachment();
+            attachment.setId(77L);
             testUnit.setAttachment(attachment);
+            testState.setAttachmentVersion(3);
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
-            when(attachmentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(attachmentRepository.updateDisplayPageNumbersIfVersionMatches(any(), any(), any())).thenReturn(1);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, List.of(1, 2, -1));
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
-            assertThat(testUnit.getAttachment().getDisplayPageNumbers()).containsExactly(1, 2, -1);
-            verify(attachmentRepository).save(attachment);
+            verify(attachmentRepository).updateDisplayPageNumbersIfVersionMatches(77L, List.of(1, 2, -1), 3);
+        }
+
+        @Test
+        void shouldSkipDisplayPageNumbersWriteWhenAttachmentVersionChangedSinceThisRunStarted() {
+            // A content-triggered requeue landing between the completion claim and this write clears
+            // the mapping and bumps the version (cleanupForReprocessing); the conditional update then
+            // matches zero rows, and this run must not treat that as an error or retry the write with
+            // stale data -- the fresh generation's own run is responsible for the mapping now.
+            Attachment attachment = new Attachment();
+            attachment.setId(77L);
+            testUnit.setAttachment(attachment);
+            testState.setAttachmentVersion(3);
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(attachmentRepository.updateDisplayPageNumbersIfVersionMatches(any(), any(), any())).thenReturn(0);
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, List.of(1, 2, -1));
+
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
+            verify(attachmentRepository).updateDisplayPageNumbersIfVersionMatches(77L, List.of(1, 2, -1), 3);
         }
 
         @Test
@@ -552,14 +996,12 @@ class LectureContentProcessingServiceTest {
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
             assertThat(testUnit.getAttachment().getDisplayPageNumbers()).containsExactly(1, 2, -1);
-            verify(attachmentRepository, never()).save(attachment);
+            verify(attachmentRepository, never()).updateDisplayPageNumbersIfVersionMatches(any(), any(), any());
         }
 
         @Test
@@ -568,13 +1010,11 @@ class LectureContentProcessingServiceTest {
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, List.of(1, 2, -1));
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
-            verify(attachmentRepository, never()).save(any());
+            verify(attachmentRepository, never()).updateDisplayPageNumbersIfVersionMatches(any(), any(), any());
         }
 
         @Test
@@ -583,8 +1023,6 @@ class LectureContentProcessingServiceTest {
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setRetryCount(0);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null, null);
 
@@ -601,8 +1039,6 @@ class LectureContentProcessingServiceTest {
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setRetryCount(MAX_PROCESSING_RETRIES - 1);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null, null);
 
@@ -638,8 +1074,6 @@ class LectureContentProcessingServiceTest {
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setRetryCount(0);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, "YOUTUBE_PRIVATE", null);
 
@@ -656,8 +1090,6 @@ class LectureContentProcessingServiceTest {
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setRetryCount(0);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, "YOUTUBE_DOWNLOAD_FAILED", null);
 
@@ -687,7 +1119,6 @@ class LectureContentProcessingServiceTest {
             });
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
             // Mock dispatch — no slots
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             LectureUnitProcessingState result = service.retryProcessing(testUnit);
 
@@ -714,7 +1145,6 @@ class LectureContentProcessingServiceTest {
                 return inv.getArgument(0);
             });
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             LectureUnitProcessingState result = service.retryProcessing(testUnit);
 
@@ -765,7 +1195,6 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             // Mock dispatch — no slots
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             service.triggerProcessing(testUnit);
 
@@ -776,13 +1205,178 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
+        void shouldInvalidateTokenBeforeCleanupWhenContentChangesMidRun() {
+            // A content change detected while a run is still in flight must invalidate its token
+            // before the transcript/attachment cleanup runs, so a checkpoint still holding that token
+            // fails its own ownership check immediately instead of racing the cleanup with stale
+            // content (see LectureUnitProcessingStateRepository#invalidateTokenIfMatches).
+            testState.setId(50L);
+            testState.setVideoSourceHash("old-hash-12345");
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.invalidateTokenIfMatches(eq(50L), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+
+            service.triggerProcessing(testUnit);
+
+            verify(processingStateRepository).invalidateTokenIfMatches(eq(50L), eq(TEST_JOB_TOKEN), any());
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+        }
+
+        /**
+         * The token invalidation commits on its own. If the cleanup right after it throws, the row is left in flight with no
+         * token and is never requeued; the content markers were not written either, so resuming the content change (what
+         * the scheduler's sweep does) detects the same change again, finishes the cleanup and requeues the unit.
+         */
+        @Test
+        void shouldFinishAContentChangeOnResumeAfterTheCleanupFailedRightAfterInvalidation() {
+            testState.setId(52L);
+            testState.setVideoSourceHash("old-hash-12345");
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            LectureTranscription oldVideoTranscript = new LectureTranscription();
+            oldVideoTranscript.setId(98L);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.invalidateTokenIfMatches(eq(52L), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(oldVideoTranscript));
+            doThrow(new CannotAcquireLockException("lock wait timeout")).doNothing().when(transcriptionRepository).delete(oldVideoTranscript);
+
+            assertThatThrownBy(() -> service.triggerProcessing(testUnit)).isInstanceOf(CannotAcquireLockException.class);
+            verify(processingStateRepository).invalidateTokenIfMatches(eq(52L), eq(TEST_JOB_TOKEN), any());
+            verify(processingStateRepository, never()).requeueForContentChange(anyLong(), any(), any(), any(), any());
+
+            // The row as the failed attempt left it: in flight, token gone, markers unchanged, and claimed by the sweep
+            testState.setIngestionJobToken(null);
+            testState.setClaimToken("recovery-claim");
+
+            service.recoverInterruptedContentChange(testUnit, "recovery-claim");
+
+            // The changed video's transcript goes and the unit is requeued for its current content, both only under the claim
+            verify(transcriptionRepository).deleteIfRecoveryClaimHolds(testUnit.getId(), "recovery-claim");
+            verify(strandedRunRepository).requeueStrandedRunIfClaimed(eq(52L), eq("recovery-claim"), eq(computeTestHash(testUnit.getVideoSource())), any(), any(), any());
+            verify(processingStateRepository, never()).requeueForContentChange(anyLong(), any(), any(), any(), any());
+        }
+
+        @Test
+        void shouldRequeueTheRunThatTookTheUnitOverAfterTheRecoveryClaimCheck() {
+            // The claim holds at the check, then an edit takes the unit over while the Iris deletion is in progress and a newer
+            // run writes its content. The page mapping is only cleared under the claim; the deletion cannot be, so once the
+            // closing requeue finds the claim gone, the newer run is requeued after the deletion, as an edit would requeue it.
+            Attachment attachment = new Attachment();
+            attachment.setId(78L);
+            attachment.setDisplayPageNumbers(List.of(1, 2));
+            testUnit.setAttachment(attachment);
+            testState.setId(55L);
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setVideoSourceHash(computeTestHash(testUnit.getVideoSource()));
+            testState.setClaimToken("recovery-claim");
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(strandedRunRepository.requeueStrandedRunIfClaimed(anyLong(), anyString(), any(), any(), any(), any())).thenReturn(0);
+            when(strandedRunRepository.requeueRunExposedToRecoveryCleanup(anyLong(), anyString(), any(), any())).thenReturn(1);
+
+            service.recoverInterruptedContentChange(testUnit, "recovery-claim");
+
+            var order = org.mockito.Mockito.inOrder(attachmentRepository, irisLectureApi, strandedRunRepository);
+            order.verify(attachmentRepository).clearDisplayPageNumbersIfRecoveryClaimHolds(78L, testUnit.getId(), "recovery-claim");
+            order.verify(irisLectureApi).deleteLectureFromPyrisDB(List.of(testUnit));
+            order.verify(strandedRunRepository).requeueStrandedRunIfClaimed(eq(55L), eq("recovery-claim"), any(), any(), any(), any());
+            order.verify(strandedRunRepository).requeueRunExposedToRecoveryCleanup(eq(testUnit.getId()), eq("recovery-claim"), any(), any());
+            verify(attachmentRepository, never()).updateDisplayPageNumbers(any(), any());
+        }
+
+        @Test
+        void shouldNotRepairWhenTheRecoveryClosedUnderItsOwnClaim() {
+            testState.setId(56L);
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setVideoSourceHash(computeTestHash(testUnit.getVideoSource()));
+            testState.setClaimToken("recovery-claim");
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(strandedRunRepository.requeueStrandedRunIfClaimed(anyLong(), anyString(), any(), any(), any(), any())).thenReturn(1);
+
+            service.recoverInterruptedContentChange(testUnit, "recovery-claim");
+
+            verify(strandedRunRepository, never()).requeueRunExposedToRecoveryCleanup(anyLong(), anyString(), any(), any());
+        }
+
+        @Test
+        void shouldLeaveARowAloneWhenItsRecoveryClaimWasTakenOverByAnEdit() {
+            // An edit requeued the unit after the sweep claimed it, which cleared the claim: the recovery must write nothing
+            testState.setId(53L);
+            testState.setPhase(ProcessingPhase.IDLE);
+            testState.setClaimToken(null);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+
+            service.recoverInterruptedContentChange(testUnit, "recovery-claim");
+
+            verify(transcriptionRepository, never()).deleteIfRecoveryClaimHolds(anyLong(), anyString());
+            verify(strandedRunRepository, never()).requeueStrandedRunIfClaimed(anyLong(), anyString(), any(), any(), any(), any());
+            verify(irisLectureApi, never()).deleteLectureFromPyrisDB(any());
+        }
+
+        @Test
+        void shouldSettleARecoveredRowWhoseContentWasRemovedOnlyOnceIrisCleanupSucceeds() {
+            testState.setId(54L);
+            testState.setVideoSourceHash("old-hash-12345");
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setClaimToken("recovery-claim");
+            testUnit.setVideoSource(null);
+            testUnit.setAttachment(null);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            doThrow(new IllegalStateException("Iris down")).doNothing().when(irisLectureApi).deleteLectureFromPyrisDB(any());
+
+            service.recoverInterruptedContentChange(testUnit, "recovery-claim");
+            // The Iris cleanup failed: the claim is kept and nothing is settled, so the sweep retries after the cutoff
+            verify(strandedRunRepository, never()).settleStrandedRunIfClaimed(anyLong(), anyString(), any(), any());
+
+            service.recoverInterruptedContentChange(testUnit, "recovery-claim");
+            verify(strandedRunRepository).settleStrandedRunIfClaimed(eq(54L), eq("recovery-claim"), eq(ProcessingPhase.DONE), any());
+            verify(strandedRunRepository, never()).requeueStrandedRunIfClaimed(anyLong(), anyString(), any(), any(), any(), any());
+        }
+
+        @Test
+        void shouldNotInvalidateTokenWhenNoRunIsInFlight() {
+            // The common case: content changes on a DONE unit with no active token to invalidate.
+            testState.setId(51L);
+            testState.setVideoSourceHash("old-hash-12345");
+            testState.setPhase(ProcessingPhase.DONE);
+            testState.setIngestionJobToken(null);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            service.triggerProcessing(testUnit);
+
+            verify(processingStateRepository, never()).invalidateTokenIfMatches(anyLong(), any(), any());
+        }
+
+        @Test
+        void shouldClearFingerprintsOnContentChange() {
+            // Given: A verified DONE state whose video source then changes
+            testState.setVideoSourceHash("old-hash-12345");
+            testState.setPhase(ProcessingPhase.DONE);
+            testState.setContentFingerprint("v1:old-content");
+            testState.setConfirmedFingerprint("v1:old-content");
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            service.triggerProcessing(testUnit);
+
+            // Then: The stale verification evidence is gone; only a fresh confirmed run may restore it
+            assertThat(testState.getContentFingerprint()).isNull();
+            assertThat(testState.getConfirmedFingerprint()).isNull();
+        }
+
+        @Test
         void shouldDeleteFromIrisOnVideoChange() {
             testState.setVideoSourceHash("old-hash-12345");
             testState.setPhase(ProcessingPhase.DONE);
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             service.triggerProcessing(testUnit);
 
@@ -798,7 +1392,6 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             service.triggerProcessing(testUnit);
 
@@ -812,7 +1405,8 @@ class LectureContentProcessingServiceTest {
         void shouldResetToIdleWhenAttachmentIsAddedToExistingState() {
             // Given: Existing persisted DONE state, known video, but no previous attachment
             Attachment pdfAttachment = new Attachment();
-            pdfAttachment.setLink("/path/to/slides.pdf");
+            pdfAttachment.setAttachmentType(AttachmentType.FILE);
+            pdfAttachment.setLink("attachments/slides.pdf");
             pdfAttachment.setVersion(1);
             testUnit.setAttachment(pdfAttachment);
 
@@ -823,7 +1417,6 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             service.triggerProcessing(testUnit);
 
@@ -839,7 +1432,8 @@ class LectureContentProcessingServiceTest {
             // Given: Existing persisted DONE state with known video hash, video removed in update while PDF remains
             testUnit.setVideoSource(null);
             Attachment pdfAttachment = new Attachment();
-            pdfAttachment.setLink("/path/to/slides.pdf");
+            pdfAttachment.setAttachmentType(AttachmentType.FILE);
+            pdfAttachment.setLink("attachments/slides.pdf");
             pdfAttachment.setVersion(3);
             testUnit.setAttachment(pdfAttachment);
             testState.setId(44L);
@@ -851,7 +1445,6 @@ class LectureContentProcessingServiceTest {
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             service.triggerProcessing(testUnit);
 
@@ -874,7 +1467,6 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             service.triggerProcessing(testUnit);
 
@@ -893,56 +1485,143 @@ class LectureContentProcessingServiceTest {
             testState.setVideoSourceHash("old-video-hash");
             testState.setAttachmentVersion(4);
             testState.setPhase(ProcessingPhase.DONE);
-
-            LectureTranscription existingTranscription = new LectureTranscription();
-            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
+            givenContentRemovalClaimSucceeds(46L);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(strandedRunRepository.settleStrandedRunIfClaimed(eq(46L), anyString(), eq(ProcessingPhase.DONE), any())).thenReturn(1);
+
+            service.triggerProcessing(testUnit);
+
+            // Everything after the claim is pinned to it: the transcript of the removed video, the Iris content, and the settle.
+            // Which fields the settle clears is asserted against a real database by LectureUnitProcessingStateClaimTest.
+            verify(transcriptionRepository).deleteIfRecoveryClaimHolds(eq(testUnit.getId()), eq(testState.getClaimToken()));
+            verify(irisLectureApi).deleteLectureFromPyrisDB(any());
+            verify(strandedRunRepository).settleStrandedRunIfClaimed(eq(46L), eq(testState.getClaimToken()), eq(ProcessingPhase.DONE), any());
+            verify(processingStateRepository, never()).save(testState);
+        }
+
+        /**
+         * A unit indexed before only supported videos counted, whose only content is a link to a video page Iris cannot transcribe: the
+         * removed-content path cleans it up and settles it as SKIPPED, not as DONE, so it is shown as not processed.
+         */
+        @Test
+        void shouldSettleAUnitWithOnlyAnUnsupportedVideoAsSkipped() {
+            testUnit.setVideoSource("https://example.com/recording");
+            testUnit.setAttachment(null);
+            when(videoSourceResolver.isSupportedSource("https://example.com/recording")).thenReturn(false);
+            testState.setId(48L);
+            testState.setVideoSourceHash("old-video-hash");
+            testState.setPhase(ProcessingPhase.DONE);
+            givenContentRemovalClaimSucceeds(48L);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(strandedRunRepository.settleStrandedRunIfClaimed(eq(48L), anyString(), eq(ProcessingPhase.SKIPPED), any())).thenAnswer(invocation -> {
+                testState.setPhase(ProcessingPhase.SKIPPED);
+                return 1;
+            });
+
+            service.triggerProcessing(testUnit);
+
+            verify(irisLectureApi).deleteLectureFromPyrisDB(any());
+            verify(strandedRunRepository).settleStrandedRunIfClaimed(eq(48L), eq(testState.getClaimToken()), eq(ProcessingPhase.SKIPPED), any());
+            verify(processingStateRepository, never()).requeueForContentChange(anyLong(), any(), any(), any(), any());
+            // No worker claims the settled row, so the open lecture page learns about the new state from this broadcast
+            assertBroadcastPhase(ProcessingPhase.SKIPPED);
+        }
+
+        private void assertBroadcastPhase(ProcessingPhase phase) {
+            ArgumentCaptor<Object> sent = ArgumentCaptor.forClass(Object.class);
+            verify(websocketMessagingService).sendMessage(any(WebsocketDestination.class), sent.capture());
+            assertThat(sent.getValue()).isInstanceOfSatisfying(LectureUnitCombinedStatusDTO.class, status -> assertThat(status.processingPhase()).isEqualTo(phase));
+        }
+
+        /** A new unit with only an unsupported video link is recorded as SKIPPED without content markers, so the backfill does not pick it again. */
+        @Test
+        void shouldRecordANewUnitWithOnlyAnUnsupportedVideoAsSkipped() {
+            testUnit.setVideoSource("https://example.com/recording");
+            testUnit.setAttachment(null);
+            when(videoSourceResolver.isSupportedSource("https://example.com/recording")).thenReturn(false);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             service.triggerProcessing(testUnit);
 
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
-            assertThat(testState.getVideoSourceHash()).isNull();
-            assertThat(testState.getAttachmentVersion()).isNull();
-            assertThat(testState.getIngestionJobToken()).isNull();
-            assertThat(testState.getStartedAt()).isNull();
-            assertThat(testState.getRetryEligibleAt()).isNull();
-            assertThat(testState.getErrorKey()).isNull();
-            verify(transcriptionRepository).delete(existingTranscription);
-            verify(irisLectureApi).deleteLectureFromPyrisDB(any());
-            verify(processingStateRepository).save(testState);
-            verify(processingStateRepository, never()).countByPhaseIn(any());
+            ArgumentCaptor<LectureUnitProcessingState> saved = ArgumentCaptor.forClass(LectureUnitProcessingState.class);
+            verify(processingStateRepository).save(saved.capture());
+            assertThat(saved.getValue().getPhase()).isEqualTo(ProcessingPhase.SKIPPED);
+            assertThat(saved.getValue().getVideoSourceHash()).isNull();
+            assertThat(saved.getValue().getAttachmentVersion()).isNull();
+            assertBroadcastPhase(ProcessingPhase.SKIPPED);
+        }
+
+        /** A unit with a PDF stays processable with an unsupported video link: only the video is left out. */
+        @Test
+        void shouldEnqueueAPdfUnitWhoseVideoLinkIsUnsupported() {
+            testUnit.setVideoSource("https://example.com/recording");
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setAttachmentType(AttachmentType.FILE);
+            pdfAttachment.setLink("attachments/slides.pdf");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+            when(videoSourceResolver.isSupportedSource("https://example.com/recording")).thenReturn(false);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            service.triggerProcessing(testUnit);
+
+            ArgumentCaptor<LectureUnitProcessingState> saved = ArgumentCaptor.forClass(LectureUnitProcessingState.class);
+            verify(processingStateRepository).save(saved.capture());
+            assertThat(saved.getValue().getPhase()).isEqualTo(ProcessingPhase.IDLE);
         }
 
         @Test
-        void shouldPreserveStoredContentMarkersWhenDeleteFailsDuringLastContentRemoval() {
+        void shouldKeepTheClaimAndContentMarkersWhenDeleteFailsDuringLastContentRemoval() {
             testUnit.setVideoSource(null);
             testUnit.setAttachment(null);
             testState.setId(47L);
             testState.setVideoSourceHash("old-video-hash");
             testState.setAttachmentVersion(5);
             testState.setPhase(ProcessingPhase.DONE);
-
-            LectureTranscription existingTranscription = new LectureTranscription();
-            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
+            givenContentRemovalClaimSucceeds(47L);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             doThrow(new RuntimeException("Pyris unavailable")).when(irisLectureApi).deleteLectureFromPyrisDB(any());
 
             service.triggerProcessing(testUnit);
 
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
+            // Not settled: the markers and the claim stay, so a later attempt takes the cleanup over once the claim is stale
+            verify(strandedRunRepository, never()).settleStrandedRunIfClaimed(anyLong(), anyString(), any(), any());
             assertThat(testState.getVideoSourceHash()).isEqualTo("old-video-hash");
             assertThat(testState.getAttachmentVersion()).isEqualTo(5);
-            verify(transcriptionRepository).delete(existingTranscription);
-            verify(irisLectureApi).deleteLectureFromPyrisDB(any());
             verify(processingStateRepository, never()).save(any());
-            verify(processingStateRepository, never()).countByPhaseIn(any());
+        }
+
+        @Test
+        void shouldNotCleanUpWhenAnotherCleanupHoldsTheClaim() {
+            testUnit.setVideoSource(null);
+            testUnit.setAttachment(null);
+            testState.setId(48L);
+            testState.setVideoSourceHash("old-video-hash");
+            testState.setPhase(ProcessingPhase.DONE);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(strandedRunRepository.claimForContentRemoval(eq(48L), anyString(), any(), any())).thenReturn(0);
+
+            service.triggerProcessing(testUnit);
+
+            verify(irisLectureApi, never()).deleteLectureFromPyrisDB(any());
+            verify(transcriptionRepository, never()).deleteIfRecoveryClaimHolds(anyLong(), anyString());
+        }
+
+        /** The claim write is mocked, so mirror it onto the in-memory state the recovery re-reads, as the database would. */
+        private void givenContentRemovalClaimSucceeds(long stateId) {
+            when(strandedRunRepository.claimForContentRemoval(eq(stateId), anyString(), any(), any())).thenAnswer(invocation -> {
+                testState.setClaimToken(invocation.getArgument(1));
+                return 1;
+            });
         }
 
         @Test
         void shouldClearDisplayPageNumbersOnAttachmentChange() {
             Attachment attachment = new Attachment();
             attachment.setVersion(2);
+            attachment.setAttachmentType(AttachmentType.FILE);
             attachment.setLink("slides.pdf");
             attachment.setDisplayPageNumbers(List.of(1, 2, -1));
             testUnit.setAttachment(attachment);
@@ -952,28 +1631,12 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             service.triggerProcessing(testUnit);
 
-            assertThat(attachment.getDisplayPageNumbers()).isNull();
-            verify(attachmentRepository).save(attachment);
-        }
-
-        @Test
-        void shouldResetToIdleWhenForcedReprocessAndContentUnchanged() {
-            testState.setVideoSourceHash(computeTestHash(testUnit.getVideoSource()));
-            testState.setPhase(ProcessingPhase.DONE);
-
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
-
-            service.triggerProcessingForMetadataChange(testUnit);
-
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
-            assertThat(testState.getStartedAt()).isNull();
-            verify(irisLectureApi, never()).deleteLectureFromPyrisDB(any());
+            // A field-only update: a whole-entity save of this snapshot could revert a concurrently uploaded version
+            verify(attachmentRepository).updateDisplayPageNumbers(attachment.getId(), null);
+            verify(attachmentRepository, never()).save(attachment);
         }
 
         @Test
@@ -1009,22 +1672,21 @@ class LectureContentProcessingServiceTest {
 
         @Test
         void shouldCalculateCorrectBackoffMinutes() {
-            assertThat(ProcessingStateCallbackService.calculateBackoffMinutes(1)).isEqualTo(2);
-            assertThat(ProcessingStateCallbackService.calculateBackoffMinutes(2)).isEqualTo(4);
-            assertThat(ProcessingStateCallbackService.calculateBackoffMinutes(3)).isEqualTo(8);
-            assertThat(ProcessingStateCallbackService.calculateBackoffMinutes(4)).isEqualTo(16);
-            assertThat(ProcessingStateCallbackService.calculateBackoffMinutes(5)).isEqualTo(32);
+            assertThat(LectureIngestionFailureClassifier.calculateBackoffMinutes(1)).isEqualTo(2);
+            assertThat(LectureIngestionFailureClassifier.calculateBackoffMinutes(2)).isEqualTo(4);
+            assertThat(LectureIngestionFailureClassifier.calculateBackoffMinutes(3)).isEqualTo(8);
+            assertThat(LectureIngestionFailureClassifier.calculateBackoffMinutes(4)).isEqualTo(16);
+            assertThat(LectureIngestionFailureClassifier.calculateBackoffMinutes(5)).isEqualTo(32);
         }
 
         @Test
         void shouldMarkAsFailedWithCorrectBackoff() {
             // Given: Ingestion fails (not at max retries)
+            testState.setId(1L);
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setRetryCount(1);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             ZonedDateTime beforeCall = ZonedDateTime.now();
 
@@ -1045,9 +1707,36 @@ class LectureContentProcessingServiceTest {
     @Nested
     class WebSocketNotifications {
 
+        /**
+         * Claudia-Anthropica review finding on PR #13798: the bulk failure statements do not touch the loaded
+         * entity, so the state change pushed afterwards could describe the run as still live — and a permanent
+         * failure schedules no retry that would later correct it. This pins what the client actually receives.
+         */
+        @Test
+        void shouldReportTheCommittedFailureToClientsForAPermanentError() {
+            testState.setId(1L);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            testState.setStartedAt(ZonedDateTime.now().minusMinutes(5));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+
+            // YOUTUBE_PRIVATE is classified as permanent, so no retry follows to correct a stale broadcast.
+            callbackService.handleProcessingFailureIfStillLive(testState, "YOUTUBE_PRIVATE", null, null);
+
+            ArgumentCaptor<LectureUnitCombinedStatusDTO> dtoCaptor = ArgumentCaptor.forClass(LectureUnitCombinedStatusDTO.class);
+            verify(websocketMessagingService).sendMessage(any(WebsocketDestination.class), dtoCaptor.capture());
+            LectureUnitCombinedStatusDTO sentDto = dtoCaptor.getValue();
+
+            assertThat(sentDto.processingPhase()).as("clients must not be left seeing an active run").isEqualTo(ProcessingPhase.FAILED);
+            assertThat(sentDto.processingErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.youtubePrivate");
+            assertThat(sentDto.startedAt()).as("the dispatch attempt was undone, so there is no start time to show").isNull();
+            assertThat(sentDto.retryCount()).isEqualTo(1);
+        }
+
         @Test
         void shouldPreserveTranscriptionStatusOnFailure() {
             // Given: Unit in INGESTING phase with a completed transcription
+            testState.setId(1L);
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
 
@@ -1056,8 +1745,6 @@ class LectureContentProcessingServiceTest {
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(completedTranscription));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
 
             // When: Ingestion fails
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null, null);
@@ -1072,26 +1759,6 @@ class LectureContentProcessingServiceTest {
         }
     }
 
-    // ==================== Dispatch Slot Limiting ====================
-
-    @Nested
-    class DispatchSlotLimiting {
-
-        @Test
-        void shouldPassAvailableSlotsAsLimitToRetryQuery() {
-            // Given: 1 active job, so 1 slot available (MAX_CONCURRENT_PROCESSING = 2)
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(1L);
-            when(processingStateRepository.findStatesReadyForRetry(anyString(), any(), anyInt())).thenReturn(List.of());
-            when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of());
-
-            // When
-            callbackService.dispatchPendingJobs();
-
-            // Then: Should pass availableSlots (2 - 1 = 1) as the limit
-            verify(processingStateRepository).findStatesReadyForRetry(eq(ProcessingPhase.FAILED.name()), any(ZonedDateTime.class), eq(1));
-        }
-    }
-
     // ==================== Iris Reset ====================
 
     @Nested
@@ -1101,6 +1768,7 @@ class LectureContentProcessingServiceTest {
         void shouldResetActiveStatesToIdlePreservingRetryBudget() {
             // Given: Two in-flight jobs with existing retry counts
             LectureUnitProcessingState transcribingState = new LectureUnitProcessingState(testUnit);
+            transcribingState.setId(801L);
             transcribingState.setPhase(ProcessingPhase.TRANSCRIBING);
             transcribingState.setRetryCount(2);
             transcribingState.setIngestionJobToken("token-1");
@@ -1110,17 +1778,19 @@ class LectureContentProcessingServiceTest {
             unit2.setId(200L);
             unit2.setLecture(testLecture);
             LectureUnitProcessingState ingestingState = new LectureUnitProcessingState(unit2);
+            ingestingState.setId(802L);
             ingestingState.setPhase(ProcessingPhase.INGESTING);
             ingestingState.setRetryCount(3);
             ingestingState.setIngestionJobToken("token-2");
             ingestingState.setStartedAt(ZonedDateTime.now().minusMinutes(10));
 
             when(processingStateRepository.findByPhaseIn(any())).thenReturn(List.of(transcribingState, ingestingState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            // Recovery is bound to the run it read, so a completion landing since the batch read is not reverted; 1 = still in flight.
+            when(strandedRunRepository.resetToIdleIfStillLiveAndOwnedBy(anyLong(), any(), any(), any(), any())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(anyLong())).thenReturn(Optional.empty());
 
             // When
-            int resetCount = recoveryService.handleIrisReset();
+            int resetCount = recoveryService.handleIrisReset("departed-boot");
 
             // Then: Both reset to IDLE, retry budget preserved, tokens cleared
             assertThat(resetCount).isEqualTo(2);
@@ -1135,7 +1805,8 @@ class LectureContentProcessingServiceTest {
             assertThat(ingestingState.getIngestionJobToken()).isNull();
             assertThat(ingestingState.getStartedAt()).isNull();
 
-            verify(processingStateRepository, times(2)).save(any());
+            verify(strandedRunRepository, times(2)).resetToIdleIfStillLiveAndOwnedBy(anyLong(), any(), any(), any(), any());
+            verify(processingStateRepository, never()).save(any());
             verify(websocketMessagingService, times(2)).sendMessage(any(WebsocketDestination.class), any(LectureUnitCombinedStatusDTO.class));
         }
 
@@ -1146,7 +1817,7 @@ class LectureContentProcessingServiceTest {
             orphanedState.setPhase(ProcessingPhase.INGESTING);
             when(processingStateRepository.findByPhaseIn(any())).thenReturn(List.of(orphanedState));
 
-            int resetCount = recoveryService.handleIrisReset();
+            int resetCount = recoveryService.handleIrisReset("departed-boot");
 
             assertThat(resetCount).isZero();
             assertThat(orphanedState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
@@ -1160,6 +1831,7 @@ class LectureContentProcessingServiceTest {
             LectureUnitProcessingState failingState = new LectureUnitProcessingState(testUnit);
             failingState.setId(301L);
             failingState.setPhase(ProcessingPhase.TRANSCRIBING);
+            failingState.setIngestionJobToken("token-301");
 
             AttachmentVideoUnit secondUnit = new AttachmentVideoUnit();
             secondUnit.setId(201L);
@@ -1167,18 +1839,63 @@ class LectureContentProcessingServiceTest {
             LectureUnitProcessingState recoverableState = new LectureUnitProcessingState(secondUnit);
             recoverableState.setId(302L);
             recoverableState.setPhase(ProcessingPhase.INGESTING);
+            recoverableState.setIngestionJobToken("token-302");
 
             when(processingStateRepository.findByPhaseIn(any())).thenReturn(List.of(failingState, recoverableState));
-            when(processingStateRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+            when(strandedRunRepository.resetToIdleIfStillLiveAndOwnedBy(anyLong(), any(), any(), any(), any())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenThrow(new IllegalStateException("database unavailable"));
             when(transcriptionRepository.findByLectureUnit_Id(secondUnit.getId())).thenReturn(Optional.empty());
 
-            assertThatThrownBy(recoveryService::handleIrisReset).isInstanceOf(IllegalStateException.class).hasMessageContaining("Failed to recover all");
+            assertThatThrownBy(() -> recoveryService.handleIrisReset("departed-boot")).isInstanceOf(IllegalStateException.class).hasMessageContaining("Failed to recover all");
 
             assertThat(failingState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
             assertThat(recoverableState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
-            verify(processingStateRepository).save(recoverableState);
+            verify(strandedRunRepository).resetToIdleIfStillLiveAndOwnedBy(eq(302L), any(), any(), any(), any());
             verify(websocketMessagingService).sendMessage(any(WebsocketDestination.class), any(LectureUnitCombinedStatusDTO.class));
+        }
+    }
+
+    @Nested
+    class Heartbeats {
+
+        @Test
+        void shouldBroadcastLiveStageProgressWhenTheCounterAdvances() {
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.findByIdForUpdate(PROCESSING_STATE_ID)).thenReturn(Optional.of(testState));
+            when(processingStateRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.applyHeartbeatLocked(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any(), any())).thenCallRealMethod();
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+
+            callbackService.handleHeartbeat(testUnit.getId(), TEST_JOB_TOKEN, "chunking", 5, 64);
+
+            // The stage progress is persisted AND pushed to the client so the badge can render "Indexing 5/64".
+            assertThat(testState.getStageProgress()).isEqualTo(5);
+            assertThat(testState.getStageTotal()).isEqualTo(64);
+            verify(websocketMessagingService).sendMessage(any(WebsocketDestination.class), any(LectureUnitCombinedStatusDTO.class));
+        }
+
+        @Test
+        void shouldNotBroadcastWhenTheHeartbeatCarriesNoNewProgress() {
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.findByIdForUpdate(PROCESSING_STATE_ID)).thenReturn(Optional.of(testState));
+            when(processingStateRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.applyHeartbeatLocked(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any(), any(), any(), any())).thenCallRealMethod();
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+
+            callbackService.handleHeartbeat(testUnit.getId(), TEST_JOB_TOKEN, "chunking", 5, 64);
+            // A repeat of the same stage and number is a bare liveness heartbeat: it refreshes lastUpdated
+            // but must not spam the WebSocket.
+            callbackService.handleHeartbeat(testUnit.getId(), TEST_JOB_TOKEN, "chunking", 5, 64);
+
+            verify(websocketMessagingService, times(1)).sendMessage(any(WebsocketDestination.class), any(LectureUnitCombinedStatusDTO.class));
         }
     }
 }
