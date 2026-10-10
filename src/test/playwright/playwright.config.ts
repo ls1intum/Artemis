@@ -49,6 +49,7 @@ export default defineConfig({
             : []),
     ],
     globalSetup: require.resolve('./init/global-setup.ts'),
+    globalTeardown: require.resolve('./init/global-teardown.ts'),
 
     /* Increase default expect timeout from 5s to 10s for CI environments under parallel load */
     expect: {
