@@ -166,7 +166,8 @@ public class AttachmentVideoUnitResource {
      * @param hiddenPages            the pages to be hidden in the attachment video unit
      * @param pageOrder              the new order of the edited attachment video unit
      * @param keepFilename           specifies if the original filename should be kept or not
-     * @param notificationText       the text to be used for the notification. No notification will be sent if the parameter is not set
+     * @param notificationText       the message students are notified with. No notification will be sent if the parameter is not set; an empty one notifies
+     *                                   students without a message
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentVideoUnit
      */
     @PutMapping(value = "lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -209,7 +210,7 @@ public class AttachmentVideoUnitResource {
 
         if (notificationText != null && attachment != null) {
             // The unit lecture is already loaded with its course, which is what the notification resolves the recipients from.
-            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment(), savedAttachmentVideoUnit.getLecture());
+            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment(), savedAttachmentVideoUnit.getLecture(), notificationText);
         }
 
         searchableEntityWeaviateService.ifPresent(service -> {

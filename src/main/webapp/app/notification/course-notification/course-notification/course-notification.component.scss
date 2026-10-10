@@ -119,8 +119,11 @@ $notification-padding-x: 1.2rem;
 // `min-width: 0` is required so this flex item may shrink below the intrinsic width of its
 // content. Without it the `-webkit-box` content below keeps the item at its single-line width,
 // so the text never wraps and gets clipped horizontally instead of breaking into two lines.
+// `white-space: normal` is required for the same reason: the notification overview opens inside the
+// navbar, which does not wrap text, so the content would otherwise stay on one line there.
 .course-notification-content-wrap {
     min-width: 0;
+    white-space: normal;
 }
 
 .course-notification-content {

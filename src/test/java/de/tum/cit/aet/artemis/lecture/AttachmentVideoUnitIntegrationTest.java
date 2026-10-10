@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.lecture;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
@@ -50,6 +52,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.web.client.ExpectedCount;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -89,6 +92,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     private static final int SLIDE_COUNT = 3;
+
+    /** The attachment changed notifications in a page of course notifications, as a JSON path filter. */
+    private static final String ATTACHMENT_CHANGED_NOTIFICATIONS = "$.content[?(@.notificationType == 'attachmentChangedNotification')]";
 
     @Autowired
     private ApplicationEvents applicationEvents;
@@ -393,6 +399,51 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         MockMultipartHttpServletRequestBuilder updateBuilder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, null);
         updateBuilder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("notificationText", "The attachment was updated");
         request.performMvcRequest(updateBuilder).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_withNotificationText_deliversTheTextToStudents() throws Exception {
+        updateAttachmentVideoUnitCreatedViaEndpoint("  Please re-download, slide 4 was corrected  ");
+
+        // What a student's client reads: the stored notification, rebuilt from its parameter rows. The editor's text is
+        // trimmed, and it is in the flat parameters too, which is what the released iOS app reads.
+        performGetAttachmentChangedNotificationsAsStudent().andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS, hasSize(1)))
+                .andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".payload.notificationText", contains("Please re-download, slide 4 was corrected")))
+                .andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".parameters.notificationText", contains("Please re-download, slide 4 was corrected"))).andExpect(
+                        jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".relativeWebAppUrl", contains("/courses/" + lecture1.getCourse().getId() + "/lectures/" + lecture1.getId())));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_withEmptyNotificationText_notifiesStudentsWithoutText() throws Exception {
+        // The in-place lecture editor asks for a notification without a text by sending an empty one: students are
+        // notified, and the notification carries no text, so the client shows its generic message.
+        updateAttachmentVideoUnitCreatedViaEndpoint("");
+
+        performGetAttachmentChangedNotificationsAsStudent().andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS, hasSize(1)))
+                .andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".payload.notificationText").doesNotExist());
+    }
+
+    /**
+     * Creates an attachment video unit through the REST endpoint and updates its attachment with the given notification text.
+     */
+    private void updateAttachmentVideoUnitCreatedViaEndpoint(String notificationText) throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persisted = request.getObjectMapper().readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+        attachmentVideoUnit.setId(persisted.id());
+        attachment.setId(persisted.attachment().id());
+        MockMultipartHttpServletRequestBuilder updateBuilder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, null);
+        updateBuilder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("notificationText", notificationText);
+        request.performMvcRequest(updateBuilder).andExpect(status().isOk());
+    }
+
+    private ResultActions performGetAttachmentChangedNotificationsAsStudent() throws Exception {
+        var result = request.performMvcRequest(
+                MockMvcRequestBuilders.get("/api/notification/courses/" + lecture1.getCourse().getId() + "?page=0&size=20").with(user(TEST_PREFIX + "student1").roles("USER")))
+                .andExpect(status().isOk());
+        request.restoreSecurityContext();
+        return result;
     }
 
     @Test

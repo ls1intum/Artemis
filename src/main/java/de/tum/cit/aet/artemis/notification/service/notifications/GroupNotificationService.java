@@ -6,6 +6,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -38,6 +40,12 @@ public class GroupNotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(GroupNotificationService.class);
 
+    /**
+     * The longest message of an editor that a notification delivers. A notification is a short heads-up that links to
+     * what changed, and its stored parameter values are bounded, so a longer message is shortened with an ellipsis.
+     */
+    private static final int MAX_NOTIFICATION_TEXT_LENGTH = 255;
+
     private final UserRepository userRepository;
 
     private final CourseNotificationService courseNotificationService;
@@ -51,9 +59,10 @@ public class GroupNotificationService {
      * Checks if a notification has to be created for this exercise update and creates one if the situation is appropriate
      *
      * @param exercise         that is updated
-     * @param notificationText that is used for the notification process
+     * @param notificationText the message the editor wrote for the update; {@code null} sends no notification, a blank one
+     *                             sends a notification without a message
      */
-    public void notifyAboutExerciseUpdate(Exercise exercise, String notificationText) {
+    public void notifyAboutExerciseUpdate(Exercise exercise, @Nullable String notificationText) {
         if (exercise.isExamExercise()) {
             // Do not send an exercise-update notification if it's an exam exercise.
             // Exam exercise updates are handled using exam live events.
@@ -67,7 +76,7 @@ public class GroupNotificationService {
 
         if (notificationText != null) {
             // sends an exercise-update notification
-            notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise);
+            notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
         }
     }
 
@@ -78,10 +87,12 @@ public class GroupNotificationService {
      * the lecture in rather than the attachment carrying a reference to one. The exercise id of the payload stays
      * {@code null}: an attachment has never belonged to an exercise on any released version.
      *
-     * @param attachment that has been changed
-     * @param lecture    the lecture the attachment's unit belongs to, loaded with its course
+     * @param attachment       that has been changed
+     * @param lecture          the lecture the attachment's unit belongs to, loaded with its course
+     * @param notificationText the message the editor wrote for students about the change, delivered with the notification
+     *                             unless it is {@code null} or blank
      */
-    public void notifyStudentGroupAboutAttachmentChange(Attachment attachment, Lecture lecture) {
+    public void notifyStudentGroupAboutAttachmentChange(Attachment attachment, Lecture lecture, @Nullable String notificationText) {
         // Do not send a notification before the release date of the attachment.
         if (attachment.getReleaseDate() != null && attachment.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
@@ -91,7 +102,7 @@ public class GroupNotificationService {
         var recipients = userRepository.getStudents(course);
 
         var attachmentChangedNotification = new AttachmentChangedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), attachment.getName(), lecture.getTitle(),
-                null, lecture.getId());
+                null, lecture.getId(), normalizeNotificationText(notificationText));
 
         courseNotificationService.sendCourseNotification(attachmentChangedNotification, recipients.stream().toList());
     }
@@ -154,9 +165,11 @@ public class GroupNotificationService {
      * Tutors will only work on the exercise during the assessment therefore it is not urgent to inform them about changes beforehand.
      * Students, instructors, and editors should be notified about changed as quickly as possible.
      *
-     * @param exercise that has been updated
+     * @param exercise         that has been updated
+     * @param notificationText the message the editor wrote for the update, delivered with the notification unless it is
+     *                             {@code null} or blank
      */
-    public void notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise) {
+    public void notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, @Nullable String notificationText) {
         if (exercise.isExamExercise()) {
             // Do not send exercise update notifications to students for exam exercises.
             // The notification URL points to the course-management page which students cannot access.
@@ -173,7 +186,7 @@ public class GroupNotificationService {
         var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR, CourseRole.STUDENT));
 
         var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getExerciseNotificationTitle(), null, null, exercise.getType());
+                exercise.getExerciseNotificationTitle(), null, null, exercise.getType(), normalizeNotificationText(notificationText));
 
         courseNotificationService.sendCourseNotification(exerciseUpdatedNotification, recipients.stream().toList());
     }
@@ -213,7 +226,7 @@ public class GroupNotificationService {
         ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
         var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
                 exercise.getExerciseNotificationTitle(), exerciseGroup != null ? exerciseGroup.getExam().getId() : null, exerciseGroup != null ? exerciseGroup.getId() : null,
-                exercise.getType());
+                exercise.getType(), null);
 
         courseNotificationService.sendCourseNotification(exerciseUpdatedNotification, recipients.stream().toList());
     }
@@ -267,5 +280,24 @@ public class GroupNotificationService {
                 exerciseGroup != null ? exerciseGroup.getId() : null);
 
         courseNotificationService.sendCourseNotification(duplicateTestCaseNotification, recipients.stream().toList());
+    }
+
+    /**
+     * Turns the text an editor entered into the message a notification delivers.
+     * <p>
+     * Sending the text at all is what asks for a notification, and the in-place lecture editor sends an empty one to
+     * notify students without a message. A blank text therefore delivers no message, and clients show their generic
+     * one instead. The message is plain text, which clients render as text and never as markup.
+     *
+     * @param notificationText the text the editor entered, possibly {@code null} or blank
+     * @return the trimmed text, shortened with an ellipsis beyond {@link #MAX_NOTIFICATION_TEXT_LENGTH} characters, or
+     *         {@code null} when there is no message to deliver
+     */
+    @Nullable
+    private static String normalizeNotificationText(@Nullable String notificationText) {
+        if (notificationText == null || notificationText.isBlank()) {
+            return null;
+        }
+        return StringUtils.abbreviate(notificationText.strip(), "…", MAX_NOTIFICATION_TEXT_LENGTH);
     }
 }
