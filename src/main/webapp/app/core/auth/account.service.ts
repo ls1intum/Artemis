@@ -466,6 +466,27 @@ export class AccountService implements IAccountService {
         this.applyLLMSelectionDecision(accepted, timestamp);
     }
 
+    /**
+     * Re-reads the user's current AI Experience choice from the server and patches it onto the cached identity.
+     * `userIdentity` is only ever updated by this tab's own writes (accepting/declining, or this refresh), so a
+     * choice made in another tab is otherwise invisible here until a full reload. Anything that gates a real,
+     * server-visible action on the choice (e.g. requesting AI feedback) must call this immediately beforehand
+     * instead of trusting the cached signal. Patches only the two related fields via {@link applyLLMSelectionDecision}
+     * rather than replacing the whole identity, so nothing else observing `userIdentity` (authenticated(), the
+     * websocket/feature-toggle login effect, ...) sees a spurious flicker. Errors propagate: a caller about to send
+     * a request must not fall back to a cached choice that another tab may already have revoked.
+     */
+    refreshSelectedLLMUsage(): Observable<LLMSelectionDecision | undefined> {
+        return this.fetch().pipe(
+            map((response) => {
+                const selection = response.body?.selectedLLMUsage;
+                const timestamp = response.body?.selectedLLMUsageTimestamp;
+                this.applyLLMSelectionDecision(selection, timestamp ? dayjs(timestamp) : undefined);
+                return selection;
+            }),
+        );
+    }
+
     private applyLLMSelectionDecision(accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined): void {
         this.userIdentity.update((currentUserIdentity) => {
             if (!currentUserIdentity) {

@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { Subscription, filter, skip } from 'rxjs';
+import { Subscription, filter, firstValueFrom, skip } from 'rxjs';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenSquare } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -18,11 +19,12 @@ import { UserService } from 'app/account/user/shared/user.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED, isAcceptedLLMSelection } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { isAthenaAIResult } from 'app/exercise/result/result.utils';
 import dayjs from 'dayjs/esm';
 
@@ -42,7 +44,7 @@ function isPendingAthenaFeedbackResult(result: Result | undefined): boolean {
 
 @Component({
     selector: 'jhi-request-feedback-button',
-    imports: [FontAwesomeModule, TranslateDirective],
+    imports: [TumAetUiButtonComponent, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
@@ -59,17 +61,22 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     protected readonly faPenSquare = faPenSquare;
 
-    protected readonly ExerciseType = ExerciseType;
-
     readonly athenaEnabled = signal(false);
     readonly requestFeedbackEnabled = signal(false);
     readonly isExamExercise = signal<boolean>(undefined!);
     participation?: StudentParticipation;
     readonly hasUserAcceptedLLMUsage = signal(false);
+    /** A deliberate No AI choice, as opposed to no choice yet: the prompt then offers to change the selection instead of making one. */
+    readonly hasChosenNoAi = computed(() => this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.NO_AI);
+    readonly aiExperienceActionKey = computed(() => (this.hasChosenNoAi() ? 'artemisApp.exerciseActions.changeAiExperience' : 'artemisApp.exerciseActions.chooseAiExperience'));
     currentFeedbackRequestCount = signal(0);
     readonly feedbackRequestLimit = DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT;
     readonly isFeedbackLimitReached = computed(() => this.currentFeedbackRequestCount() >= this.feedbackRequestLimit);
     private readonly isFeedbackRequestPending = signal(false);
+    readonly isFeedbackRequestBlocked = computed(() => !this.isSubmitted() || this.isFeedbackGenerationInProgress() || this.isFeedbackLimitReached());
+    readonly showOptInPrompt = computed(() => this.showAiExperiencePrompt() && !this.hasUserAcceptedLLMUsage());
+    readonly buttonIdPrefix = computed(() => (this.showOptInPrompt() ? 'enable-ai-feedback-' : 'request-feedback-'));
+    readonly buttonLabelKey = computed(() => (this.showOptInPrompt() ? this.aiExperienceActionKey() : 'artemisApp.exerciseActions.requestAutomaticFeedback'));
 
     isSubmitted = input<boolean>();
     pendingChanges = input<boolean>(false);
@@ -78,6 +85,16 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     smallButtons = input<boolean>(false);
     exercise = input.required<Exercise>();
     readonly participationId = input<number>();
+    /**
+     * Whether a user without an AI-enabled AI Experience gets the dedicated prompt (a Choose/Change AI Experience button).
+     * Off by default, so every user sees the plain "Request AI feedback" button, whose click still opens the AI Experience
+     * selection first if needed; the exercise header and its post-submission popover opt in.
+     */
+    readonly showAiExperiencePrompt = input<boolean>(false);
+    /** Renders the action as a TUM UI button instead of a Bootstrap `.btn`. */
+    readonly asTumAetUiButton = input<boolean>(false);
+    /** Keeps the button's text label visible on narrow viewports instead of collapsing to icon-only. */
+    readonly alwaysShowLabel = input<boolean>(false);
 
     private athenaResultUpdateListener?: Subscription;
     private acceptSubscription?: Subscription;
@@ -102,10 +119,6 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
                 }
             });
         });
-    }
-
-    private isAcceptedLLMSelection(selection?: LLMSelectionDecision): boolean {
-        return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
     }
 
     ngOnInit() {
@@ -168,40 +181,47 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     setUserAcceptedLLMUsage(): void {
         const selection = this.accountService.userIdentity()?.selectedLLMUsage;
-        this.hasUserAcceptedLLMUsage.set(this.isAcceptedLLMSelection(selection));
+        this.hasUserAcceptedLLMUsage.set(isAcceptedLLMSelection(selection));
     }
 
     async showLLMSelectionModal(): Promise<void> {
+        // The router can reuse this component for another exercise while the modal is open; pin the exercise and
+        // participation the student opened it for, so accepting cannot request feedback for a different one.
+        const exerciseIdAtPrompt = this.exercise().id;
+        const participationIdAtPrompt = this.participationId();
         const choice = await this.llmModalService.open(this.accountService.userIdentity()?.selectedLLMUsage);
 
         switch (choice) {
             case LLMSelectionDecision.CLOUD_AI:
-                this.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
+                this.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI, exerciseIdAtPrompt, participationIdAtPrompt);
                 break;
             case LLMSelectionDecision.LOCAL_AI:
-                this.acceptLLMUsage(LLMSelectionDecision.LOCAL_AI);
+                this.acceptLLMUsage(LLMSelectionDecision.LOCAL_AI, exerciseIdAtPrompt, participationIdAtPrompt);
                 break;
             case LLMSelectionDecision.NO_AI:
                 // Store that the user actively declined AI usage
-                this.acceptLLMUsage(LLMSelectionDecision.NO_AI);
+                this.acceptLLMUsage(LLMSelectionDecision.NO_AI, exerciseIdAtPrompt, participationIdAtPrompt);
                 break;
             case LLM_MODAL_DISMISSED:
                 break;
         }
     }
 
-    acceptLLMUsage(decision: LLMSelectionDecision) {
+    acceptLLMUsage(decision: LLMSelectionDecision, exerciseIdAtPrompt = this.exercise().id, participationIdAtPrompt = this.participationId()) {
         this.acceptSubscription?.unsubscribe();
 
         this.acceptSubscription = this.userService.updateLLMSelectionDecision(decision).subscribe(() => {
-            const hasAccepted = this.isAcceptedLLMSelection(decision);
+            const hasAccepted = isAcceptedLLMSelection(decision);
 
             this.hasUserAcceptedLLMUsage.set(hasAccepted);
             this.accountService.setUserLLMSelectionDecision(decision);
 
-            // Proceed with feedback request only when an AI option was accepted
-            if (hasAccepted && this.assureConditionsSatisfied()) {
-                this.processFeedbackRequest();
+            // requestFeedback() re-fetches the participation: the click that opened the modal also closes the
+            // surrounding popover, destroying this component and possibly canceling its initial participation load.
+            // The choice itself is saved regardless, but feedback is only requested for the exercise the modal was opened for.
+            const isSameExercise = this.exercise().id === exerciseIdAtPrompt && this.participationId() === participationIdAtPrompt;
+            if (hasAccepted && isSameExercise && this.isSubmitted()) {
+                this.requestFeedback();
             }
         });
     }
@@ -210,6 +230,23 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (this.isFeedbackLimitReached()) {
             return;
         }
+        // Another tab may have changed the AI Experience choice since this tab cached it (or since this component was
+        // created); re-check right before an actual request goes out, so a No AI choice made elsewhere is still honored.
+        // The router can reuse this component for another exercise while the refresh is pending; pin the clicked
+        // exercise and participation so the continuation cannot send a request for one the student never clicked.
+        const exerciseIdAtClick = this.exercise().id;
+        const participationIdAtClick = this.participationId();
+        try {
+            await firstValueFrom(this.accountService.refreshSelectedLLMUsage());
+        } catch {
+            // Falling back to the cached choice could send a request although No AI was chosen in another tab.
+            this.alertService.error('artemisApp.exercise.aiExperienceRefreshFailed');
+            return;
+        }
+        if (this.exercise().id !== exerciseIdAtClick || this.participationId() !== participationIdAtClick) {
+            return;
+        }
+        this.setUserAcceptedLLMUsage();
         if (!this.hasUserAcceptedLLMUsage()) {
             await this.showLLMSelectionModal();
             return;
@@ -252,15 +289,22 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     requestFeedback() {
+        // The router can reuse this component for another exercise while the details are refetched; pin the
+        // exercise and participation, and drop the request if the inputs changed, so the request never mixes
+        // one exercise's ID with another's participation.
+        const exerciseId = this.exercise().id!;
         const participationId = this.participationId();
-        this.exerciseService.getExerciseDetails(this.exercise().id!).subscribe({
+        this.exerciseService.getExerciseDetails(exerciseId).subscribe({
             next: (exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
-                const participations = exerciseResponse.body!.exercise.studentParticipations ?? [];
-                const participation = this.selectParticipation(participations, participationId);
-                if (!this.assureConditionsSatisfied(participation)) {
+                if (this.exercise().id !== exerciseId || this.participationId() !== participationId) {
                     return;
                 }
-                this.processFeedbackRequest(participation);
+                const participations = exerciseResponse.body!.exercise.studentParticipations ?? [];
+                const participation = this.selectParticipation(participations, participationId);
+                if (this.isFeedbackRequestBlockedForParticipation(participation) || !this.assureConditionsSatisfied(participation)) {
+                    return;
+                }
+                this.processFeedbackRequest(exerciseId, participation);
             },
             error: (error: HttpErrorResponse) => {
                 this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
@@ -268,8 +312,15 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         });
     }
 
-    private processFeedbackRequest(participation = this.participation) {
-        this.courseExerciseService.requestFeedback(this.exercise().id!, participation!.id!).subscribe({
+    // Same pending-request/request-limit checks as isFeedbackRequestBlocked(), but derived from the given
+    // participation directly rather than from this component's own (possibly stale, see acceptLLMUsage()) signals.
+    private isFeedbackRequestBlockedForParticipation(participation?: StudentParticipation): boolean {
+        const pendingAthenaResult = getAllResultsOfAllSubmissions(participation?.submissions).find(isPendingAthenaFeedbackResult);
+        return !!pendingAthenaResult || countSuccessfulAthenaFeedbackRequests(participation) >= this.feedbackRequestLimit;
+    }
+
+    private processFeedbackRequest(exerciseId: number, participation: StudentParticipation | undefined) {
+        this.courseExerciseService.requestFeedback(exerciseId, participation!.id!).subscribe({
             next: () => {
                 if (this.participationId() === undefined || this.participationId() === participation?.id) {
                     this.isFeedbackRequestPending.set(true);

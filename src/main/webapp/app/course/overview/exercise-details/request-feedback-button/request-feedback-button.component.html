@@ -1,27 +1,27 @@
 @if (!isExamExercise() && requestFeedbackEnabled() && athenaEnabled()) {
-    @if (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) {
-        <button
-            type="button"
-            class="btn btn-primary"
-            (click)="requestAIFeedback()"
-            [class.btn-sm]="smallButtons()"
-            [disabled]="(exercise().type !== ExerciseType.PROGRAMMING && !isSubmitted()) || isFeedbackGenerationInProgress() || isFeedbackLimitReached()"
-            [id]="'request-feedback-' + exercise().id"
+    @if (asTumAetUiButton()) {
+        <tumaet-ui-button
+            [size]="smallButtons() ? 'small' : 'default'"
+            [icon]="faPenSquare"
+            [disabled]="isFeedbackRequestBlocked()"
+            [id]="buttonIdPrefix() + exercise().id"
+            [ariaLabel]="buttonLabelKey() | artemisTranslate"
+            (clicked)="requestAIFeedback()"
         >
-            <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
-        </button>
+            <span [class]="alwaysShowLabel() ? '' : 'hidden md:inline'" [jhiTranslate]="buttonLabelKey()"></span>
+        </tumaet-ui-button>
     } @else {
         <button
             type="button"
             class="btn btn-primary"
             (click)="requestAIFeedback()"
             [class.btn-sm]="smallButtons()"
-            [disabled]="!isSubmitted() || isFeedbackGenerationInProgress() || isFeedbackLimitReached()"
-            [id]="'request-feedback-' + exercise().id"
+            [disabled]="isFeedbackRequestBlocked()"
+            [id]="buttonIdPrefix() + exercise().id"
+            [attr.aria-label]="buttonLabelKey() | artemisTranslate"
         >
             <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
+            <span [class]="alwaysShowLabel() ? '' : 'd-none d-md-inline'" [jhiTranslate]="buttonLabelKey()"></span>
         </button>
     }
 }

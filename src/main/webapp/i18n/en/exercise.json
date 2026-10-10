@@ -228,6 +228,7 @@
             "personalRepositoryOnline": "Your personal repository has been set up. Click the button <i>Open code editor</i>!",
             "resumeProgrammingExercise": "The exercise has been resumed. You can now continue working on the exercise!",
             "feedbackRequestSent": "Your feedback request has been sent.",
+            "aiExperienceRefreshFailed": "Your AI Experience setting could not be checked, so no feedback was requested. Please try again.",
             "feedbackRequestAlreadySent": "Your feedback request has already been sent.",
             "noSubmissionExists": "You have to submit your work at least once.",
             "lockRepositoryWarning": "Your repository will be locked. You can only continue working after you receive an answer.",
@@ -240,8 +241,13 @@
             "noAthenaFeedbackOnEmptySubmission": "You cannot request AI feedback on an empty submission.",
             "aiFeedbackPopover": {
                 "title": "AI Feedback",
-                "description": "You can request AI-generated feedback for your submission. This feedback is preliminary and can include mistakes. Consider checking important information.",
-                "selectedAiType": "Your current AI selection: {{ type }}",
+                "description": "Get AI-generated feedback for your submission. It's preliminary and can include mistakes. Consider checking important information.",
+                "descriptionDisabled": "This exercise supports AI-generated feedback on your submission. Choose Cloud or On-premise as your AI Experience to get it.",
+                "descriptionNoAi": "Change your AI Experience to Cloud or On-premise to get AI-generated feedback.",
+                "descriptionDisabledCloudOnly": "This exercise supports AI-generated feedback on your submission. Choose Cloud as your AI Experience to get it.",
+                "descriptionNoAiCloudOnly": "Change your AI Experience to Cloud to get AI-generated feedback.",
+                "selectedAiType": "Using: {{ type }}",
+                "dontShowAgain": "Don't show this again",
                 "aiType": {
                     "CLOUD_AI": "Cloud AI",
                     "LOCAL_AI": "Local AI"
