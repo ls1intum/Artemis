@@ -1,5 +1,5 @@
 import { ExerciseGenerationFileChange, HyperionFileChangeAction, HyperionFileChangeRepo } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
-import { REPO_ORDER, displayFileChangePath, newestFileChange } from 'app/hyperion/exercise-generation/hyperion-generation-activity.utils';
+import { REPO_ORDER, displayFileChangePath, isExerciseDesignChange, newestFileChange } from 'app/hyperion/exercise-generation/hyperion-generation-activity.utils';
 
 /** File-change metadata only; source contents belong in the code editor. */
 export interface HyperionArtifactFile {
@@ -61,13 +61,14 @@ function entry(repo: HyperionFileChangeRepo, path: string, rest: Pick<HyperionAr
 
 /** Latest file metadata, grouped consistently by repository and path. */
 export function artifactFiles(changes: readonly ExerciseGenerationFileChange[]): HyperionArtifactFile[] {
+    const repositoryChanges = changes.filter((change) => !isExerciseDesignChange(change));
     const newestKey = (() => {
-        const newest = newestFileChange(changes);
+        const newest = newestFileChange(repositoryChanges);
         return newest ? artifactKey(newest.repo, displayFileChangePath(newest)) : undefined;
     })();
 
     const byKey = new Map<string, HyperionArtifactFile>();
-    for (const change of changes) {
+    for (const change of repositoryChanges) {
         const path = displayFileChangePath(change);
         const key = artifactKey(change.repo, path);
         byKey.set(key, entry(change.repo, path, { action: change.action, turn: change.turn, changedAt: change.timestamp, mostRecent: key === newestKey }));

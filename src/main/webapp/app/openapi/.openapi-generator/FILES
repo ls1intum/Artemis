@@ -4,10 +4,13 @@ api/admin-hyperion-generation-monitoring-api.ts
 api/calendar-api.ts
 api/global-search-api.ts
 api/hyperion-assessment-criteria-generation-api.ts
+api/hyperion-authoring-run-api.ts
 api/hyperion-code-generation-api.ts
 api/hyperion-exercise-generation-api.ts
+api/hyperion-exercise-variant-api.ts
 api/hyperion-faq-api.ts
 api/hyperion-problem-statement-api.ts
+api/hyperion-programming-variant-api.ts
 api/hyperion-quiz-question-generation-api.ts
 api/quiz-training-api.ts
 api/tutorial-group-api.ts
@@ -20,6 +23,8 @@ model/answer-option-without-solution.ts
 model/artifact-location.ts
 model/assessment-criteria-generation-request.ts
 model/assessment-criteria-generation-response.ts
+model/authoring-run-page.ts
+model/authoring-run.ts
 model/bloom-radar.ts
 model/calendar-event.ts
 model/channel.ts
@@ -46,6 +51,7 @@ model/drop-location.ts
 model/entity-id-ref.ts
 model/exam-seat.ts
 model/exercise-generation-activity.ts
+model/exercise-generation-capabilities.ts
 model/exercise-generation-effort-profile.ts
 model/exercise-generation-event.ts
 model/exercise-generation-feedback.ts

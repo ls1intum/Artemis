@@ -10,12 +10,43 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser;
+import de.tum.cit.aet.artemis.hyperion.runtime.verification.JUnitReportParser;
+import de.tum.cit.aet.artemis.hyperion.runtime.verification.JUnitReportParser.TestCaseResult;
 
 class TestResultXmlParserTest {
 
     private final List<LocalCITestJobDTO> failedTests = new ArrayList<>();
 
     private final List<LocalCITestJobDTO> successfulTests = new ArrayList<>();
+
+    @Test
+    void localCiAndHyperionAgreeOnNestedJUnitReports() throws IOException {
+        String report = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <testsuites>
+                    <testsuite name="first">
+                        <testsuite name="nested">
+                            <testcase name="passes"/>
+                            <testcase name="fails"><failure message="wrong answer"/></testcase>
+                            <testcase name="skipped"><skipped/></testcase>
+                        </testsuite>
+                    </testsuite>
+                    <testsuite name="second">
+                        <testcase name="errors"><error>broken setup</error></testcase>
+                    </testsuite>
+                </testsuites>
+                """;
+        List<TestCaseResult> hyperionFailures = new ArrayList<>();
+        List<TestCaseResult> hyperionSuccesses = new ArrayList<>();
+
+        TestResultXmlParser.processTestResultFile(report, failedTests, successfulTests);
+        new JUnitReportParser(20_000).processTestResultFile(report, hyperionFailures, hyperionSuccesses);
+
+        assertThat(hyperionFailures).extracting(TestCaseResult::name).containsExactly("first.nested.fails", "second.errors");
+        assertThat(hyperionSuccesses).extracting(TestCaseResult::name).containsExactly("first.nested.passes");
+        assertThat(failedTests).map(test -> new TestCaseResult(test.name(), test.testMessages())).containsExactlyElementsOf(hyperionFailures);
+        assertThat(successfulTests).map(test -> new TestCaseResult(test.name(), test.testMessages())).containsExactlyElementsOf(hyperionSuccesses);
+    }
 
     @Test
     void testParseResultXmlInnerText() throws IOException {

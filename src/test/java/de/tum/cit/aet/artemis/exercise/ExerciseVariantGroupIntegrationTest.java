@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
@@ -13,10 +14,12 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementExerciseDTO;
@@ -35,6 +38,7 @@ import de.tum.cit.aet.artemis.exercise.dto.UpdateExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.dto.FileUploadExerciseDTO;
@@ -99,6 +103,9 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
+
+    @Autowired
+    private ExerciseVariantGroupService variantGroupService;
 
     private Course course;
 
@@ -446,6 +453,74 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(reloadedExercise.getExerciseVariantGroup()).isNull();
         assertThat(reloadedExercise.getDueDate().toInstant()).isEqualTo(originalDueDate.toInstant());
         assertThat(reloadedExercise.getBuildAndTestStudentSubmissionsAfterDueDate().toInstant()).isEqualTo(originalBuildAndTestDate.toInstant());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void sourceTimelineEditedDuringGenerationDoesNotLeaveRejectedMembership() throws Exception {
+        ProgrammingExercise source = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        ZonedDateTime originalDue = source.getDueDate().truncatedTo(ChronoUnit.MILLIS);
+        source.setDueDate(originalDue);
+        source.setBuildAndTestStudentSubmissionsAfterDueDate(originalDue.plusMinutes(10));
+        source.setAssessmentDueDate(originalDue.plusHours(2));
+        exerciseRepository.save(source);
+        ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime groupDue = release.plusDays(6);
+        var created = request.postWithResponseBody(groupsUrl(),
+                new CreateExerciseVariantGroupDTO("Generated variants", null, release, null, groupDue, groupDue.plusMinutes(30), null), ExerciseVariantGroupDTO.class,
+                HttpStatus.CREATED);
+        var group = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(created.id(), course.getId());
+        group.setCourse(course);
+
+        // Generation does not hold the source lease: a valid intervening edit changes the build offset.
+        source.setBuildAndTestStudentSubmissionsAfterDueDate(originalDue.plusHours(1));
+        exerciseRepository.save(source);
+
+        assertThatThrownBy(() -> variantGroupService.assignProgrammingSourceIfUngrouped(source.getId(), group)).isInstanceOf(BadRequestAlertException.class);
+        ProgrammingExercise reloaded = (ProgrammingExercise) exerciseRepository.findByIdElseThrow(source.getId());
+        assertThat(reloaded.getExerciseVariantGroup() == null).as("rejected source must remain ungrouped").isTrue();
+        assertThat(reloaded.getDueDate().toInstant()).isEqualTo(originalDue.toInstant());
+        assertThat(reloaded.getBuildAndTestStudentSubmissionsAfterDueDate().toInstant()).isEqualTo(originalDue.plusHours(1).toInstant());
+        assertThat(exerciseVariantGroupRepository.findByExerciseId(source.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void sourceAssignmentFailureRollsBackClaimAndPersistedTimeline() throws Exception {
+        ProgrammingExercise source = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        ZonedDateTime originalDue = exerciseRepository.findByIdElseThrow(source.getId()).getDueDate();
+        var group = createGroupAsEditor();
+        var failure = new DataIntegrityViolationException("assignment failed after saving timeline");
+
+        assertThatThrownBy(() -> exerciseVariantGroupRepository.claimAndAssignExerciseIfUngrouped(source.getId(), group.id(), () -> {
+            Exercise claimed = exerciseRepository.findByIdElseThrow(source.getId());
+            assertThat(claimed.getExerciseVariantGroup().getId()).isEqualTo(group.id());
+            claimed.setDueDate(originalDue.plusDays(1));
+            exerciseRepository.saveAndFlush(claimed);
+            throw failure;
+        })).isSameAs(failure);
+
+        Exercise reloaded = exerciseRepository.findByIdElseThrow(source.getId());
+        assertThat(reloaded.getExerciseVariantGroup() == null).as("failed assignment must roll back its claim").isTrue();
+        assertThat(reloaded.getDueDate().toInstant()).isEqualTo(originalDue.toInstant());
+        assertThat(exerciseVariantGroupRepository.findByExerciseId(source.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void sourceAssignmentCommitsAndDoesNotMoveAlreadyGroupedSource() throws Exception {
+        ProgrammingExercise source = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        var created = createGroupAsEditor();
+        var group = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(created.id(), course.getId());
+        group.setCourse(course);
+        assertThat(variantGroupService.assignProgrammingSourceIfUngrouped(source.getId(), group)).isTrue();
+        var other = createGroupAsEditor();
+        var otherGroup = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(other.id(), course.getId());
+        otherGroup.setCourse(course);
+        assertThat(variantGroupService.assignProgrammingSourceIfUngrouped(source.getId(), otherGroup)).isFalse();
+        assertThat(exerciseVariantGroupRepository.findByExerciseId(source.getId())).get().extracting(ExerciseVariantGroup::getId).isEqualTo(group.getId());
+        Exercise saved = exerciseRepository.findByIdElseThrow(source.getId());
+        assertThat(saved.getDueDate().toInstant()).isEqualTo(group.getDueDate().toInstant());
     }
 
     @Test

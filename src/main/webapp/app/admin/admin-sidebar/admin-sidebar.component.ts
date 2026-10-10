@@ -72,7 +72,8 @@ export class AdminSidebarComponent {
     passkeyEnabled = input<boolean>(false);
     isSuperAdmin = input<boolean>(false);
     irisEnabled = input<boolean>(false);
-    hyperionGenerationEnabled = input(false);
+    hyperionGenerationEnabled = input<boolean>(false);
+    aiWorkerEnabled = input<boolean>(false);
     weaviateEnabled = input<boolean>(false);
 
     toggleCollapseState = output<void>();
@@ -237,21 +238,13 @@ export class AdminSidebarComponent {
             },
         ];
 
-        monitoringItems.push({
-            routerLink: '/admin/ai-workers',
-            icon: faRobot,
-            title: 'AI Workers',
-            translation: 'artemisApp.aiworker.title',
-            testId: 'admin-ai-workers',
-        });
-
-        if (this.hyperionGenerationEnabled()) {
+        if (this.hyperionGenerationEnabled() || this.aiWorkerEnabled()) {
             monitoringItems.push({
-                routerLink: '/admin/hyperion-generations',
+                routerLink: '/admin/ai-generation',
                 icon: faRobot,
-                title: 'Generations',
+                title: 'AI Generation',
                 translation: 'artemisApp.hyperion.workers.title',
-                testId: 'admin-hyperion-workers',
+                testId: 'admin-ai-generation',
             });
         }
 

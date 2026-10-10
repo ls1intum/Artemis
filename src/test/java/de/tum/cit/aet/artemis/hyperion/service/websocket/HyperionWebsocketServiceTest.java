@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.websocket;
 
+import static de.tum.cit.aet.artemis.hyperion.web.HyperionWebsocketTopics.EXERCISE_GENERATION_STATE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.mock;
@@ -7,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,6 +18,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.env.MapPropertySource;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -23,6 +27,8 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStateDTO;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.ExerciseGenerationStateChangedEvent;
 import de.tum.cit.aet.artemis.hyperion.web.HyperionWebsocketTopics;
 
 /**
@@ -149,5 +155,21 @@ class HyperionWebsocketServiceTest {
      */
     private List<ILoggingEvent> ownLogEvents() {
         return logAppender.list.stream().filter(event -> event.getFormattedMessage().contains(TOPIC)).toList();
+    }
+
+    @Test
+    void publishesExerciseStateToItsSharedTopic() {
+        var messaging = mock(WebsocketMessagingService.class);
+        var state = new ExerciseGenerationStateDTO(42, "job-1", true);
+
+        try (var context = new AnnotationConfigApplicationContext()) {
+            context.getEnvironment().setActiveProfiles("core");
+            context.getEnvironment().getPropertySources().addFirst(new MapPropertySource("hyperion-test", Map.of("artemis.hyperion.enabled", "true")));
+            context.registerBean(HyperionWebsocketService.class, () -> new HyperionWebsocketService(messaging));
+            context.refresh();
+            context.publishEvent(new ExerciseGenerationStateChangedEvent(state));
+        }
+
+        verify(messaging).sendMessage(EXERCISE_GENERATION_STATE.at(42), state);
     }
 }

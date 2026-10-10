@@ -493,7 +493,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         // step output for inspection.
         String buildLogs = "compiler output line\n".repeat(200);
         ScriptedModel script = scriptChatModel(PLAN_JSON, tools -> "no changes applied",
-                List.of("The requested domain change was not applied" + VariantBuildVerificationService.BUILD_LOGS_SECTION + buildLogs));
+                List.of("The requested domain change was not applied" + VerificationReport.BUILD_LOGS_SECTION + buildLogs));
 
         String jobId = startJob(sourceQuiz.getId(), domainChangeRequest(standalonePlacement()));
         VariantJob job = awaitTerminal(jobId, EDITOR_LOGIN);

@@ -1,18 +1,12 @@
 <section class="flex flex-col gap-4" aria-labelledby="ai-workers-title" [attr.aria-busy]="loading()">
-    <h5 *adminTitleBarTitle id="ai-workers-title" class="m-0" jhiTranslate="artemisApp.aiworker.title"></h5>
-    <div *adminTitleBarActions>
-        <tumaet-ui-button severity="secondary" variant="outlined" size="small" [disabled]="loading()" (clicked)="refresh()" data-testid="ai-workers-refresh">
-            <span jhiTranslate="artemisApp.aiworker.refresh"></span>
-        </tumaet-ui-button>
-    </div>
-    <p class="m-0 text-muted-color" jhiTranslate="artemisApp.aiworker.description"></p>
+    <h2 id="ai-workers-title" class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.aiworker.title"></h2>
+    @if (updatedAt(); as updated) {
+        <p class="m-0 text-xs text-muted-color" data-testid="ai-workers-updated"><span jhiTranslate="artemisApp.aiworker.updated"></span> {{ updated | date: 'mediumTime' }}</p>
+    }
     @if (failed()) {
         <tumaet-ui-message severity="error" data-testid="ai-workers-error">
             <span jhiTranslate="artemisApp.aiworker.loadFailed"></span>
         </tumaet-ui-message>
-    }
-    @if (updatedAt(); as updated) {
-        <p class="m-0 text-xs text-muted-color" data-testid="ai-workers-updated"><span jhiTranslate="artemisApp.aiworker.updated"></span> {{ updated | date: 'mediumTime' }}</p>
     }
     @if (!failed() && updatedAt()) {
         <dl class="m-0 grid grid-cols-2 gap-4 rounded-md border border-surface p-4 sm:grid-cols-4" data-testid="ai-workers-summary">
@@ -51,8 +45,7 @@
                     <th scope="col" jhiTranslate="artemisApp.aiworker.status"></th>
                     <th scope="col" jhiTranslate="artemisApp.aiworker.availableSlots"></th>
                     <th scope="col" jhiTranslate="artemisApp.aiworker.heartbeat"></th>
-                    <th scope="col" jhiTranslate="artemisApp.aiworker.capability"></th>
-                    <th scope="col" jhiTranslate="artemisApp.aiworker.diagnostics"></th>
+                    <th scope="col" jhiTranslate="artemisApp.aiworker.runningJobs"></th>
                 </tr>
             </thead>
             <tbody>
@@ -69,40 +62,29 @@
                             }
                         </td>
                         <td>{{ (worker.lastHeartbeat | date: 'medium') ?? '—' }}</td>
-                        <td data-testid="ai-worker-toolchain">{{ row.capability }}</td>
-                        <td class="max-w-md">
-                            <details>
-                                <summary class="cursor-pointer text-sm" jhiTranslate="artemisApp.aiworker.diagnostics"></summary>
-                                <dl class="mt-2 mb-0 flex flex-col gap-2 text-xs">
-                                    <div>
-                                        <dt jhiTranslate="artemisApp.aiworker.execution"></dt>
-                                        @for (execution of row.executions; track execution.id) {
-                                            <dd class="m-0 break-all font-mono" data-testid="ai-worker-execution">{{ execution.slot ?? '—' }}: {{ execution.id }}</dd>
-                                        } @empty {
-                                            <dd class="m-0">—</dd>
-                                        }
-                                    </div>
-                                    <div>
-                                        <dt jhiTranslate="artemisApp.aiworker.reservation"></dt>
-                                        <dd class="m-0">
-                                            {{ (worker.leaseHeld ? 'artemisApp.aiworker.reserved' : 'artemisApp.aiworker.notReserved') | artemisTranslate }}
-                                        </dd>
-                                    </div>
-                                    <div>
-                                        <dt jhiTranslate="artemisApp.aiworker.incarnation"></dt>
-                                        <dd class="m-0 break-all font-mono">{{ worker.incarnation ?? '—' }}</dd>
-                                    </div>
-                                    <div>
-                                        <dt jhiTranslate="artemisApp.aiworker.image"></dt>
-                                        <dd class="m-0 break-all font-mono">{{ worker.imageDigest ?? '—' }}</dd>
-                                    </div>
-                                </dl>
-                            </details>
+                        <td data-testid="ai-worker-running">
+                            <span class="tabular-nums">{{ row.capacityKnown ? (worker.executions?.length ?? 0) : '—' }}</span>
+                            @if (worker.executions?.length || worker.imageDigest || worker.capability?.profile) {
+                                <details class="mt-1 text-sm">
+                                    <summary jhiTranslate="artemisApp.aiworker.details"></summary>
+                                    @if (worker.capability?.profile) {
+                                        <div><span jhiTranslate="artemisApp.aiworker.profile"></span>: {{ worker.capability?.profile }}</div>
+                                    }
+                                    @if (worker.imageDigest) {
+                                        <div class="break-all"><span jhiTranslate="artemisApp.aiworker.image"></span>: {{ worker.imageDigest }}</div>
+                                    }
+                                    @for (execution of worker.executions ?? []; track execution.slot ?? $index) {
+                                        <div>
+                                            <span jhiTranslate="artemisApp.aiworker.slot"></span> {{ execution.slot ?? '—' }} · <span jhiTranslate="artemisApp.aiworker.job"></span>
+                                            {{ execution.jobId ?? '—' }} · <span jhiTranslate="artemisApp.aiworker.resource"></span> {{ execution.resourceId ?? '—' }}
+                                        </div>
+                                    }
+                                </details>
+                            }
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
     </div>
-    <p class="text-sm text-muted-color" jhiTranslate="artemisApp.aiworker.snapshotHint"></p>
 </section>

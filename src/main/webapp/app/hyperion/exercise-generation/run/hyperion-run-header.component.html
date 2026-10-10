@@ -4,7 +4,13 @@
             <p
                 class="mt-0 mb-1 text-sm font-medium text-muted-color"
                 data-testid="hyperion-run-intent"
-                [jhiTranslate]="adapting() ? 'artemisApp.hyperion.generation.run.adaptationTitle' : 'artemisApp.hyperion.generation.run.title'"
+                [jhiTranslate]="
+                    variant()
+                        ? 'artemisApp.hyperion.activity.kind.variant'
+                        : adapting()
+                          ? 'artemisApp.hyperion.generation.run.adaptationTitle'
+                          : 'artemisApp.hyperion.generation.run.title'
+                "
             ></p>
             <!-- Sized by this component's own stylesheet, which is what removes the `!` the type utilities needed here. -->
             <h1 class="hyperion-run-title wrap-anywhere" data-testid="hyperion-run-title">{{ exerciseTitle() }}</h1>
@@ -20,7 +26,7 @@
             }
         </div>
 
-        <tumaet-ui-status-dot class="shrink-0" [state]="statusState()" [label]="statusLabelKey() | artemisTranslate" data-testid="hyperion-run-status" />
+        <jhi-hyperion-status class="shrink-0" [state]="statusState()" [label]="statusLabelKey() | artemisTranslate" data-testid="hyperion-run-status" />
     </div>
 
     @if (facts().length) {
@@ -67,7 +73,8 @@
                 severity="primary"
                 size="small"
                 [loading]="startPending()"
-                [disabledReason]="startBlockedReasonText()"
+                [disabled]="!!startBlockedReasonText()"
+                [ariaDescribedBy]="startBlockedReasonText() ? 'hyperion-run-start-blocker' : undefined"
                 (clicked)="startRequested.emit()"
                 data-testid="hyperion-run-start"
             >
@@ -79,7 +86,8 @@
                 severity="secondary"
                 variant="outlined"
                 size="small"
-                [disabledReason]="startBlockedReasonText()"
+                [disabled]="!!startBlockedReasonText()"
+                [ariaDescribedBy]="startBlockedReasonText() ? 'hyperion-run-start-blocker' : undefined"
                 (clicked)="startRequested.emit()"
                 data-testid="hyperion-run-run-again"
             >
@@ -91,6 +99,7 @@
                 <span jhiTranslate="artemisApp.hyperion.generation.actions.openEditor"></span>
             </a>
         }
+
         @if (exerciseLink(); as link) {
             <!--
                 A button-shaped anchor, not a styled one. `global.scss` sets `a { text-decoration: none !important }`
@@ -103,6 +112,11 @@
             </a>
         }
     </div>
+    @if ((startAvailable() || runAgainAvailable()) && startBlockedReasonText(); as reason) {
+        <tumaet-ui-message id="hyperion-run-start-blocker" severity="warn" class="mt-3 block min-w-0" data-testid="hyperion-run-start-blocker">
+            <span class="block wrap-anywhere">{{ reason }}</span>
+        </tumaet-ui-message>
+    }
 </tumaet-ui-card>
 
 <tumaet-ui-confirm-dialog [key]="cancelConfirmationKey" />

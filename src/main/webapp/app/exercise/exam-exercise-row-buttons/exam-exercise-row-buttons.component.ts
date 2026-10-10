@@ -1,3 +1,4 @@
+import { injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
@@ -24,8 +25,8 @@ import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
-import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
+import { ExerciseVariantAiModalWizardComponent } from 'app/hyperion/variants/exercise-variant-ai-modal-wizard.component';
+import { supportsAiVariantGeneration } from 'app/hyperion/variants/exercise-variant-ai-modal.utils';
 
 /** setTimeout truncates delays beyond a signed 32-bit millisecond value. */
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
@@ -72,6 +73,11 @@ export class ExamExerciseRowButtonsComponent {
 
     /** Controls the AI variant generation wizard opened via the "Create Variant with AI" action. */
     readonly aiVariantModalVisible = signal(false);
+
+    private readonly generationCapabilities = injectGenerationCapabilities(
+        this.exercise,
+        computed(() => this.course().isAtLeastEditor ?? false),
+    );
 
     private readonly localCIEnabled = signal(this.profileService.isProfileActive(PROFILE_LOCALCI));
 
@@ -204,9 +210,13 @@ export class ExamExerciseRowButtonsComponent {
             });
         }
         // Sits between the info/success-colored actions above and the warning-colored edit actions below, matching its
-        // own warning color. Only offered when Hyperion is enabled and for exercise types the generator supports; the
-        // server rejects other types.
-        if (this.hyperionEnabled && course.isAtLeastEditor && supportsAiVariantGeneration(ex)) {
+        // own warning color. Programming exercises also require the server's generation capability.
+        if (
+            this.hyperionEnabled &&
+            course.isAtLeastEditor &&
+            supportsAiVariantGeneration(ex) &&
+            (ex.type !== ExerciseType.PROGRAMMING || this.generationCapabilities.value()?.canCreateVariant === true)
+        ) {
             items.push({
                 id: 'create-variant-ai',
                 labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',

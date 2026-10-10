@@ -19,7 +19,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
-import { AssessmentCriteriaGenerationService } from 'app/exercise/structured-grading-criterion/assessment-criteria-generation.service';
+import { AssessmentCriteriaGenerationService } from 'app/hyperion/assessment/assessment-criteria-generation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';

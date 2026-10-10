@@ -1,0 +1,107 @@
+// Colour alone never separates two states: `neutral`, `queued` and `unknown` share the muted colour and are told
+// apart by their shape — a filled dot, a ring, and a dashed ring.
+// ---
+// The semantic states take the `-foreground` state colours rather than the raw fills. A dot is a graphical object
+// a reader needs in order to understand the state, so it owes 3:1 against the surface behind it, and the raw
+// warning fill measures 1.63:1 on a light surface — a yellow dot nobody can see is not a warning. Every
+// `-foreground` variant clears 7:1 in both themes.
+:host {
+    --hyperion-status-size: calc(var(--tumaet-ui-spacing) * 2);
+    --hyperion-status-fill: var(--tumaet-ui-muted-color);
+    --hyperion-status-edge: transparent;
+    --hyperion-status-edge-style: solid;
+}
+
+:host([data-state='running']) {
+    --hyperion-status-fill: var(--tumaet-ui-state-info-foreground);
+}
+
+:host([data-state='success']) {
+    --hyperion-status-fill: var(--tumaet-ui-state-success-foreground);
+}
+
+:host([data-state='warning']) {
+    --hyperion-status-fill: var(--tumaet-ui-state-warning-foreground);
+}
+
+:host([data-state='danger']) {
+    --hyperion-status-fill: var(--tumaet-ui-state-danger-foreground);
+}
+
+// Waiting to start: an outline, not a filled dot, so a screenshot separates it from `neutral`. A ring needs a little
+// more room than a filled dot to read as a ring at all, hence the slightly larger size.
+:host([data-state='queued']) {
+    --hyperion-status-size: calc(var(--tumaet-ui-spacing) * 2.5);
+    --hyperion-status-fill: transparent;
+    --hyperion-status-edge: var(--tumaet-ui-muted-color);
+}
+
+// The state could not be determined — a broken outline, and deliberately motionless.
+:host([data-state='unknown']) {
+    --hyperion-status-size: calc(var(--tumaet-ui-spacing) * 2.5);
+    --hyperion-status-fill: transparent;
+    --hyperion-status-edge: var(--tumaet-ui-muted-color);
+    --hyperion-status-edge-style: dashed;
+}
+
+.hyperion-status-indicator {
+    display: block;
+    width: var(--hyperion-status-size);
+    height: var(--hyperion-status-size);
+    box-sizing: border-box;
+    flex-shrink: 0;
+    border: 2px var(--hyperion-status-edge-style) var(--hyperion-status-edge);
+    border-radius: 50%;
+    background: var(--hyperion-status-fill);
+}
+
+// Only the in-flight states pulse, and only when motion is welcome. Terminal states, `neutral` and `unknown` carry no
+// animation at all, so there is nothing to switch off under reduced motion.
+@media (prefers-reduced-motion: no-preference) {
+    :host([data-state='queued']) .hyperion-status-indicator,
+    :host([data-state='running']) .hyperion-status-indicator {
+        animation: hyperion-status-pulse 1800ms ease-in-out infinite;
+    }
+
+    // The pulse owns `opacity`, so the state change transitions only the colours.
+    .hyperion-status-indicator {
+        transition:
+            border-color 180ms cubic-bezier(0.2, 0, 0, 1),
+            background-color 180ms cubic-bezier(0.2, 0, 0, 1),
+            color 180ms cubic-bezier(0.2, 0, 0, 1);
+    }
+}
+
+@keyframes hyperion-status-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.45;
+    }
+}
+
+// Forced colors discards every fill, so the four semantic states would render as one shape in one colour. What
+// survives is what was load-bearing anyway: the three muted states keep their filled / ring / dashed-ring
+// distinction, and the state word — always rendered, visibly or for assistive technology only — carries the rest.
+// Colour was never allowed to be the only signal here, which is why this block can afford to drop it.
+@media (forced-colors: active) {
+    .hyperion-status-indicator {
+        border-color: CanvasText;
+        background: CanvasText;
+        forced-color-adjust: none;
+    }
+
+    :host([data-state='queued']) .hyperion-status-indicator,
+    :host([data-state='unknown']) .hyperion-status-indicator {
+        background: Canvas;
+    }
+
+    // The one distinction worth keeping in colour: "in flight" against everything terminal.
+    :host([data-state='running']) .hyperion-status-indicator {
+        border-color: Highlight;
+        background: Highlight;
+    }
+}

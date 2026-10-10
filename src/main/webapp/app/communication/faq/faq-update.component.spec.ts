@@ -21,7 +21,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FaqConsistencyComponent } from './faq-consistency.component';
-import { RewriteAction } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { RewriteAction } from 'app/hyperion/editor/artemis-intelligence/rewrite.action';
 import { ModuleFeature } from 'app/app.constants';
 
 describe('FaqUpdateComponent', () => {

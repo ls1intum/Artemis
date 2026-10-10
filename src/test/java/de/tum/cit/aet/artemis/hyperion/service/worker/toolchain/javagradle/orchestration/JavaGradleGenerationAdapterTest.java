@@ -21,6 +21,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 
+import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.aiworker.api.SandboxApi;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief;
@@ -40,7 +41,7 @@ class JavaGradleGenerationAdapterTest {
 
     private final SandboxApi sandbox = mock(SandboxApi.class);
 
-    private final de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox executionSandbox = mock(de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox.class);
+    private final InteractiveSandbox executionSandbox = mock(InteractiveSandbox.class);
 
     private final ChatModel model = mock(ChatModel.class);
 
@@ -145,8 +146,8 @@ class JavaGradleGenerationAdapterTest {
         var engine = engine(0);
         var first = assignment(Instant.now().plusSeconds(300));
         var second = assignment(Instant.now().plusSeconds(300));
-        var firstSandbox = mock(de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox.class);
-        var secondSandbox = mock(de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox.class);
+        var firstSandbox = mock(InteractiveSandbox.class);
+        var secondSandbox = mock(InteractiveSandbox.class);
         when(sandbox.forExecution(first.identity().executionId())).thenReturn(firstSandbox);
         when(sandbox.forExecution(second.identity().executionId())).thenReturn(secondSandbox);
         var entered = new java.util.concurrent.CountDownLatch(2);

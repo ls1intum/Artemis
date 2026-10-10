@@ -24,6 +24,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import de.tum.cit.aet.artemis.aiworker.service.WorkerRegistryService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerClientService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerRegistryService;
 import de.tum.cit.aet.artemis.localci.service.TestBuildAgentConfiguration;
@@ -66,7 +67,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected GenerationWorkerClientService workerClient;
 
     @MockitoBean
-    protected de.tum.cit.aet.artemis.aiworker.service.WorkerRegistryService aiWorkers;
+    protected WorkerRegistryService aiWorkers;
 
     @AfterEach
     @Override

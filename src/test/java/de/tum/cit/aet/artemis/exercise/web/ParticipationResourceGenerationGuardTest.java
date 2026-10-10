@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.exercise.service.FeedbackRequestService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
+import de.tum.cit.aet.artemis.hyperion.api.dtos.ParticipationReservation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -102,7 +103,7 @@ class ParticipationResourceGenerationGuardTest {
     void startParticipation_withoutActiveGeneration_startsTheExercise() throws Exception {
         exercise.setDueDate(ZonedDateTime.now().plusDays(1));
         var released = new java.util.concurrent.atomic.AtomicBoolean();
-        when(hyperionExerciseMutationApi.reserveParticipation(EXERCISE_ID)).thenReturn(new HyperionExerciseMutationApi.ParticipationReservation(() -> released.set(true)));
+        when(hyperionExerciseMutationApi.reserveParticipation(EXERCISE_ID)).thenReturn(new ParticipationReservation(() -> released.set(true)));
         StudentParticipation participation = participationWithExercise();
         when(participationService.startExercise(exercise, student, true)).thenAnswer(invocation -> {
             assertThat(released).isFalse();
@@ -135,7 +136,7 @@ class ParticipationResourceGenerationGuardTest {
     void startPracticeParticipation_withoutActiveGeneration_startsPracticeMode() throws Exception {
         when(participationService.findOneGradedByExerciseAndParticipant(exercise, student)).thenReturn(Optional.empty());
         var released = new java.util.concurrent.atomic.AtomicBoolean();
-        when(hyperionExerciseMutationApi.reserveParticipation(EXERCISE_ID)).thenReturn(new HyperionExerciseMutationApi.ParticipationReservation(() -> released.set(true)));
+        when(hyperionExerciseMutationApi.reserveParticipation(EXERCISE_ID)).thenReturn(new ParticipationReservation(() -> released.set(true)));
         StudentParticipation participation = participationWithExercise();
         when(participationService.startPracticeMode(exercise, student, Optional.empty(), false)).thenAnswer(invocation -> {
             assertThat(released).isFalse();

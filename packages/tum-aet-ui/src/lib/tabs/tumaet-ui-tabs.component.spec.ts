@@ -27,7 +27,7 @@ function ariaViolations(warn: ReturnType<typeof vi.spyOn>): unknown[][] {
                 <tumaet-ui-tab [value]="3" [disabled]="thirdDisabled()">Three</tumaet-ui-tab>
                 <tumaet-ui-tab [value]="4" [disabled]="true">Four</tumaet-ui-tab>
             </tumaet-ui-tab-list>
-            <tumaet-ui-tab-panels [padded]="padded()">
+            <tumaet-ui-tab-panels>
                 <tumaet-ui-tab-panel [value]="1">Panel One</tumaet-ui-tab-panel>
                 <tumaet-ui-tab-panel [value]="2">Panel Two</tumaet-ui-tab-panel>
                 <tumaet-ui-tab-panel [value]="3">Panel Three</tumaet-ui-tab-panel>
@@ -40,7 +40,6 @@ function ariaViolations(warn: ReturnType<typeof vi.spyOn>): unknown[][] {
 class TabsHostComponent {
     readonly value = signal<number | string>(1);
     readonly thirdDisabled = signal(false);
-    readonly padded = signal(true);
     changes: (number | string | undefined)[] = [];
 
     onValueChange(next: number | string | undefined): void {
@@ -88,16 +87,6 @@ describe('TumAetUiTabs family', () => {
         fixture.detectChanges();
         await fixture.whenStable();
     }
-
-    it('lets an already padded surface opt out without changing the active panel', () => {
-        const container = fixture.debugElement.query(By.directive(TumAetUiTabPanelsComponent)).nativeElement as HTMLElement;
-        expect(container.getAttribute('data-padded')).toBe('true');
-        host.padded.set(false);
-        fixture.detectChanges();
-        expect(container.getAttribute('data-padded')).toBe('false');
-        expect(panels()[0].textContent).toContain('Panel One');
-        expect(tabs()[0].getAttribute('aria-selected')).toBe('true');
-    });
 
     it('renders the ARIA tabs structure (tablist / tab / tabpanel roles)', () => {
         const tabList = fixture.debugElement.query(By.css('tumaet-ui-tab-list')).nativeElement as HTMLElement;

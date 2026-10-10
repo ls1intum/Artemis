@@ -54,6 +54,28 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 public interface ProgrammingExerciseRepository extends DynamicSpecificationRepository<ProgrammingExercise, Long, ProgrammingExerciseFetchOptions> {
 
     /**
+     * Makes a prepared draft and its authoring reservation visible as one database commit.
+     * The callback creates only database metadata and claims coordination; repository copies and builds run after commit.
+     *
+     * @param prepareAndReserve draft initialization followed by its exclusive authoring reservation
+     * @param <T>               prepared authoring result
+     * @return the prepared result after commit
+     */
+    @Transactional
+    default <T> T prepareAuthoringDraft(java.util.function.Supplier<T> prepareAndReserve) {
+        return prepareAndReserve.get();
+    }
+
+    /**
+     * Reads only the exam identity before a draft transaction starts, so its first consistent read follows the exam lock.
+     *
+     * @param exerciseId protected source exercise
+     * @return its exam identity, or empty for a course exercise or a missing source
+     */
+    @Query("SELECT pe.exerciseGroup.exam.id FROM ProgrammingExercise pe WHERE pe.id = :exerciseId")
+    Optional<Long> findExamIdById(@Param("exerciseId") long exerciseId);
+
+    /**
      * Atomically couples the metadata compare-and-set with its database-only task synchronization.
      *
      * @param exerciseId               the exercise to update
@@ -360,6 +382,18 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         return Optional.of(exercise);
     }
 
+    /**
+     * Loads the complete import source in one persistence context. Separate collection queries initialize
+     * the managed collections without replacing Hibernate's orphan-removal wrappers.
+     *
+     * @param exerciseId protected source exercise
+     * @return the initialized source, if it exists
+     */
+    @Transactional(readOnly = true)
+    default Optional<ProgrammingExercise> findForAuthoringImportById(long exerciseId) {
+        return findForVersioningById(exerciseId);
+    }
+
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "submissionPolicy", "auxiliaryRepositories", "competencyLinks", "categories",
             "gradingCriteria" })
     Optional<ProgrammingExercise> findForVersioningBaseById(long exerciseId);
@@ -654,6 +688,22 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE pe.id = :exerciseId
             """)
     Optional<ProgrammingExercise> findWithEagerCourseAndExamById(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Loads authorization context for a bounded set of destinations in one query, without participation or repository data.
+     *
+     * @param exerciseIds destination ids
+     * @return exercises with course and exam ownership loaded
+     */
+    @Query("""
+            SELECT pe FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.course
+                LEFT JOIN FETCH pe.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam e
+                LEFT JOIN FETCH e.course
+            WHERE pe.id IN :exerciseIds
+            """)
+    List<ProgrammingExercise> findAllWithEagerCourseAndExamByIdIn(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.

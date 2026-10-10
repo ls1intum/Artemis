@@ -18,7 +18,7 @@ public record ExerciseVersionMetadataDTO(long id, UserPublicInfoDTO author, Inst
      * @param createdDate the version creation date
      */
     public ExerciseVersionMetadataDTO(long id, User user, Instant createdDate) {
-        this(id, new UserPublicInfoDTO(user), createdDate);
+        this(id, user == null ? null : new UserPublicInfoDTO(user), createdDate);
     }
 
 }

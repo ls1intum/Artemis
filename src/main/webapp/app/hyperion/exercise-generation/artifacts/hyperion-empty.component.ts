@@ -1,64 +1,31 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import {
-    TumAetUiEmptyComponent,
-    TumAetUiEmptyContentComponent,
-    TumAetUiEmptyDescriptionComponent,
-    TumAetUiEmptyHeaderComponent,
-    TumAetUiEmptyMediaComponent,
-    TumAetUiEmptySize,
-    TumAetUiEmptyTitleComponent,
-} from '@tumaet/ui-angular';
-
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
-/**
- * A `tumaet-ui-empty` with Artemis' translation keys already wired in.
- *
- * The package component is slot-only on purpose - a design system must not decide what an application says - and
- * the generation surfaces need the same eight-line composition in seven places. This is that composition, once,
- * with the two keys as inputs. It adds no styling and no structure of its own.
- *
- * The rule the package states and this component exists to make cheap: **an empty state carries an action, or it
- * names who can act.** `descriptionKey` is therefore not decoration - it is the sentence that says why the region
- * is empty and what fills it. Project the action, when there is one, as content.
- */
+/** Empty generation output with a reason and optional recovery action. */
 @Component({
     selector: 'jhi-hyperion-empty',
     template: `
-        <tumaet-ui-empty [size]="size()">
-            <tumaet-ui-empty-header>
-                @if (icon(); as emptyIcon) {
-                    <tumaet-ui-empty-media variant="icon"><fa-icon [icon]="emptyIcon" /></tumaet-ui-empty-media>
-                }
-                <tumaet-ui-empty-title>{{ titleKey() | artemisTranslate: titleParams() }}</tumaet-ui-empty-title>
-                @if (descriptionKey(); as description) {
-                    <tumaet-ui-empty-description>{{ description | artemisTranslate: descriptionParams() }}</tumaet-ui-empty-description>
-                }
-            </tumaet-ui-empty-header>
-            <tumaet-ui-empty-content><ng-content /></tumaet-ui-empty-content>
-        </tumaet-ui-empty>
+        <div class="flex flex-col items-center gap-3 text-center" [class.p-4]="size() === 'small'" [class.p-6]="size() === 'medium'">
+            @if (icon(); as emptyIcon) {
+                <fa-icon class="text-muted-color" [icon]="emptyIcon" />
+            }
+            <p class="m-0 font-medium">{{ titleKey() | artemisTranslate: titleParams() }}</p>
+            @if (descriptionKey(); as description) {
+                <p class="m-0 max-w-prose text-sm text-muted-color">{{ description | artemisTranslate: descriptionParams() }}</p>
+            }
+            <div class="flex flex-wrap justify-center gap-2"><ng-content /></div>
+        </div>
     `,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [
-        ArtemisTranslatePipe,
-        FaIconComponent,
-        TumAetUiEmptyComponent,
-        TumAetUiEmptyContentComponent,
-        TumAetUiEmptyDescriptionComponent,
-        TumAetUiEmptyHeaderComponent,
-        TumAetUiEmptyMediaComponent,
-        TumAetUiEmptyTitleComponent,
-    ],
+    imports: [ArtemisTranslatePipe, FaIconComponent],
 })
 export class HyperionEmptyComponent {
     readonly titleKey = input.required<string>();
     readonly titleParams = input<Record<string, unknown> | undefined>();
-    /** The sentence that says why the region is empty, and who or what fills it. */
     readonly descriptionKey = input<string | undefined>();
     readonly descriptionParams = input<Record<string, unknown> | undefined>();
     readonly icon = input<IconDefinition | undefined>();
-    /** `small` is the docked-panel tier; `medium` is the page tier. Density is an input, never a second component. */
-    readonly size = input<TumAetUiEmptySize>('medium');
+    readonly size = input<'small' | 'medium'>('medium');
 }

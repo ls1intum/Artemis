@@ -1,3 +1,4 @@
+import { AuthoringRunPage } from 'app/openapi/model/authoring-run-page';
 import { TestBed } from '@angular/core/testing';
 import { effect, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -8,11 +9,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { HyperionGenerationEvent, HyperionGenerationStatus } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
-import {
-    HYPERION_JOB_APPEARANCE_DEBOUNCE_MS,
-    HYPERION_JOB_POLL_INTERVAL_MS,
-    HyperionJobRegistryService,
-} from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
+import { HYPERION_JOB_POLL_INTERVAL_MS, HyperionJobRegistryService, isTerminalHyperionJobStatus } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 
 const LOGIN = 'ab12cde';
 
@@ -42,16 +39,24 @@ describe('HyperionJobRegistryService', () => {
     let identity: ReturnType<typeof signal<User | undefined>>;
     let connectionState: BehaviorSubject<ConnectionState>;
     let getStatus: Mock<(exerciseId: number) => Observable<HyperionGenerationStatus | null>>;
+    let getRuns: Mock<(beforeId?: number) => Observable<AuthoringRunPage>>;
+    let getRunStatus: Mock<(exerciseId: number, runId: string) => Observable<HyperionGenerationStatus | null>>;
     let streams: Map<string, Subject<unknown>>;
+    let getRunAccess: Mock<(jobIds: string[]) => Observable<string[]>>;
 
     function configure(): void {
         identity = signal<User | undefined>(undefined);
         connectionState = new BehaviorSubject<ConnectionState>(new ConnectionState(false, false));
         getStatus = vi.fn(() => of(status({ running: true, events: [event('STARTED')] })) as Observable<HyperionGenerationStatus | null>);
         streams = new Map();
+        getRuns = vi.fn(() => of({ runs: [] }));
+        getRunStatus = vi.fn((exerciseId) => getStatus(exerciseId));
+        getRunAccess = vi.fn((jobIds) => of(jobIds));
 
         const generationServiceMock = {
-            getStatus: (exerciseId: number) => getStatus(exerciseId),
+            getRuns: (beforeId?: number) => getRuns(beforeId),
+            getRunAccess: (jobIds: string[]) => getRunAccess(jobIds),
+            getRunStatus: (exerciseId: number, runId: string) => getRunStatus(exerciseId, runId),
             subscribeToStream: (jobId: string) => {
                 const stream = streams.get(jobId) ?? new Subject<unknown>();
                 streams.set(jobId, stream);
@@ -111,7 +116,7 @@ describe('HyperionJobRegistryService', () => {
             request.next(status({ jobId: `j${id}`, running: true }));
         }
         expect(getStatus).toHaveBeenCalledTimes(30);
-        expect(service.activeCount()).toBe(30);
+        expect(service.entries().filter((entry) => !isTerminalHyperionJobStatus(entry.status)).length).toBe(30);
     });
 
     it('bounds a hung sweep and cancels queued requests on logout', () => {
@@ -144,7 +149,7 @@ describe('HyperionJobRegistryService', () => {
         pending.error(new HttpErrorResponse({ status: 503 }));
         expect(getStatus).toHaveBeenCalledTimes(6);
         expect(service.loadFailed()).toBe(true);
-        expect(service.activeCount()).toBe(6);
+        expect(service.entries().filter((entry) => !isTerminalHyperionJobStatus(entry.status)).length).toBe(6);
     });
 
     it.each([{ status: 'obsolete' }, { mode: undefined }, { mode: 'obsolete' }, { seen: undefined }, { exerciseId: -1 }])(
@@ -177,7 +182,7 @@ describe('HyperionJobRegistryService', () => {
         },
     );
 
-    it('keeps tracked runs across a reload, namespaced per login', () => {
+    it('rediscovers runs after reload without restoring exercise metadata from browser storage', () => {
         const service = createService();
         service.track({ jobId: 'j1', exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting', mode: 'GENERATE' });
         expect(service.entries()).toHaveLength(1);
@@ -185,6 +190,12 @@ describe('HyperionJobRegistryService', () => {
         // Simulate a browser reload: a brand-new injector reading the same localStorage.
         TestBed.resetTestingModule();
         configure();
+        expect(JSON.parse(localStorage.getItem(`artemis.hyperion.jobRegistry.${LOGIN}`)!)).toEqual({ version: 2, seenJobIds: [] });
+        getRuns.mockReturnValue(
+            of({
+                runs: [{ jobId: 'j1', exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting', kind: 'CREATE', status: 'SAVED', running: false, startedAt: '2025-01-01T00:00:00Z' }],
+            }),
+        );
         const reloaded = createService();
         expect(reloaded.entries()).toHaveLength(1);
         expect(reloaded.entries()[0].jobId).toBe('j1');
@@ -212,7 +223,7 @@ describe('HyperionJobRegistryService', () => {
             pending.error(new HttpErrorResponse({ status: 500 }));
         }
         expect(service.entries()[0].jobId).toBe('j2');
-        expect(service.activeCount()).toBe(1);
+        expect(service.entries().filter((entry) => !isTerminalHyperionJobStatus(entry.status)).length).toBe(1);
         expect(service.loadFailed()).toBe(false);
 
         getStatus.mockReturnValue(of(status({ jobId: 'j2', running: false, events: [event('DONE', 'SUCCESS')] })));
@@ -231,7 +242,7 @@ describe('HyperionJobRegistryService', () => {
 
         expect(service.entries().find((entry) => entry.jobId === 'j1')?.status).toBe(response === 'absent' ? 'unknown' : 'saved');
         expect(service.entries().find((entry) => entry.jobId === 'j2')?.status).toBe('queued');
-        expect(service.activeCount()).toBe(1);
+        expect(service.entries().filter((entry) => !isTerminalHyperionJobStatus(entry.status)).length).toBe(1);
         getStatus.mockReturnValue(of(status({ jobId: 'j2', running: false, events: [event('DONE', 'SUCCESS')] })));
         vi.advanceTimersByTime(HYPERION_JOB_POLL_INTERVAL_MS);
         expect(service.entries().find((entry) => entry.jobId === 'j2')?.status).toBe('saved');
@@ -246,10 +257,8 @@ describe('HyperionJobRegistryService', () => {
         service.refresh();
 
         expect(service.entries()[0].status).toBe('saved');
-        expect(service.activeCount()).toBe(0);
-        expect(service.unseenCount()).toBe(1);
-        vi.advanceTimersByTime(HYPERION_JOB_APPEARANCE_DEBOUNCE_MS);
-        expect(service.indicatorState()).toBe('success');
+        expect(service.entries().filter((entry) => !isTerminalHyperionJobStatus(entry.status)).length).toBe(0);
+        expect(service.entries().filter((entry) => isTerminalHyperionJobStatus(entry.status) && !entry.seen).length).toBe(1);
     });
 
     it('marks a run whose exercise has moved on to another job as unknown', () => {
@@ -283,16 +292,24 @@ describe('HyperionJobRegistryService', () => {
         expect(service.entries()[0].endedAt).toBeUndefined();
     });
 
-    it('reports a failed run as attention once the appearance debounce elapsed', () => {
+    it('retains the server phase and cancellation permission without parsing progress messages', () => {
+        const service = createService();
+        service.track({ jobId: 'j1', exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting', mode: 'ADAPT' });
+        getStatus.mockReturnValue(of(status({ running: true, cancellable: true, events: [{ ...event('PROGRESS'), phase: 'REVIEWING' }] })));
+        service.refresh();
+        expect(service.entries()[0]).toMatchObject({ phase: 'REVIEWING', cancellable: true });
+        getStatus.mockReturnValue(of(status({ running: true, cancellable: false, events: [{ ...event('PROGRESS'), phase: 'SAVING' }] })));
+        service.refresh();
+        expect(service.entries()[0]).toMatchObject({ phase: 'SAVING', cancellable: false });
+    });
+
+    it('records a failed run from the authoritative response', () => {
         const service = createService();
         service.track({ jobId: 'j1', exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting', mode: 'GENERATE' });
         getStatus.mockReturnValue(of(status({ running: false, events: [event('ERROR')] })));
         service.refresh();
 
-        expect(service.indicatorState()).toBe('idle');
-        vi.advanceTimersByTime(HYPERION_JOB_APPEARANCE_DEBOUNCE_MS);
         expect(service.entries()[0].status).toBe('failed');
-        expect(service.indicatorState()).toBe('attention');
     });
 
     it('opening an active job does not acknowledge its future completion', () => {
@@ -305,9 +322,9 @@ describe('HyperionJobRegistryService', () => {
         service.markSeen('j1');
         getStatus.mockReturnValue(of(status({ running: false, events: [event('DONE', 'SUCCESS')] })));
         service.refresh();
-        expect(service.unseenCount()).toBe(1);
+        expect(service.entries().filter((entry) => isTerminalHyperionJobStatus(entry.status) && !entry.seen).length).toBe(1);
         service.markSeen('j1');
-        expect(service.unseenCount()).toBe(0);
+        expect(service.entries().filter((entry) => isTerminalHyperionJobStatus(entry.status) && !entry.seen).length).toBe(0);
     });
 
     it('acknowledges a terminal reconciliation that arrives after an open page starts observing', () => {
@@ -322,9 +339,9 @@ describe('HyperionJobRegistryService', () => {
         TestBed.tick();
 
         expect(service.entries()[0].seen).toBe(true);
-        expect(service.unseenCount()).toBe(0);
+        expect(service.entries().filter((entry) => isTerminalHyperionJobStatus(entry.status) && !entry.seen).length).toBe(0);
         TestBed.tick();
-        expect(service.unseenCount()).toBe(0);
+        expect(service.entries().filter((entry) => isTerminalHyperionJobStatus(entry.status) && !entry.seen).length).toBe(0);
     });
 
     it('clears the unseen badge when a run is opened', () => {
@@ -332,33 +349,15 @@ describe('HyperionJobRegistryService', () => {
         service.track({ jobId: 'j1', exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting', mode: 'GENERATE' });
         getStatus.mockReturnValue(of(status({ running: false, events: [event('DONE', 'SUCCESS')] })));
         service.refresh();
-        expect(service.unseenCount()).toBe(1);
+        expect(service.entries().filter((entry) => isTerminalHyperionJobStatus(entry.status) && !entry.seen).length).toBe(1);
 
         service.markSeen('j1');
 
-        expect(service.unseenCount()).toBe(0);
+        expect(service.entries().filter((entry) => isTerminalHyperionJobStatus(entry.status) && !entry.seen).length).toBe(0);
         expect(service.entries()).toHaveLength(1);
-        vi.advanceTimersByTime(HYPERION_JOB_APPEARANCE_DEBOUNCE_MS);
-        expect(service.indicatorState()).toBe('idle');
     });
 
-    it('clears the unseen badge and drops the entry when a run is dismissed for good', () => {
-        const service = createService();
-        service.track({ jobId: 'j1', exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting', mode: 'GENERATE' });
-        getStatus.mockReturnValue(of(status({ running: false, events: [event('ERROR')] })));
-        service.refresh();
-
-        service.dismiss('j1');
-
-        expect(service.unseenCount()).toBe(0);
-        expect(service.entries()).toHaveLength(0);
-
-        // A dismissed run never comes back, not even when it is tracked again.
-        service.track({ jobId: 'j1', exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting', mode: 'GENERATE' });
-        expect(service.entries()).toHaveLength(0);
-    });
-
-    it('polls while a run is active and stops once nothing is', () => {
+    it('polls active statuses and relies on authorized history for terminal rows', () => {
         const service = createService();
         service.track({ jobId: 'j1', exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting', mode: 'GENERATE' });
         expect(getStatus).not.toHaveBeenCalled();
@@ -371,8 +370,9 @@ describe('HyperionJobRegistryService', () => {
         getStatus.mockReturnValue(of(status({ running: false, events: [event('DONE', 'SUCCESS')] })));
         vi.advanceTimersByTime(HYPERION_JOB_POLL_INTERVAL_MS);
         expect(getStatus).toHaveBeenCalledTimes(3);
-        expect(service.activeCount()).toBe(0);
+        expect(service.entries().filter((entry) => !isTerminalHyperionJobStatus(entry.status)).length).toBe(0);
 
+        getRuns.mockReturnValue(of({ runs: [{ jobId: 'j1', exerciseId: 42, courseId: 7, kind: 'CREATE', status: 'SAVED', running: false, startedAt: '2025-01-01T00:00:00Z' }] }));
         vi.advanceTimersByTime(4 * HYPERION_JOB_POLL_INTERVAL_MS);
         expect(getStatus).toHaveBeenCalledTimes(3);
     });
@@ -445,11 +445,235 @@ describe('HyperionJobRegistryService', () => {
         expect(service.entries()[0].status).toBe('partial');
     });
 
-    it('prunes runs older than a day', () => {
+    it('discovers a run started in another browser even when this browser has never tracked one', () => {
+        const service = createService();
+        expect(service.entries()).toEqual([]);
+        getRuns.mockReturnValue(
+            of({
+                runs: [{ jobId: 'remote', exerciseId: 42, sourceExerciseId: 41, courseId: 7, kind: 'VARIANT', status: 'SAVED', running: false, startedAt: '2025-01-01T00:00:00Z' }],
+            }),
+        );
+        vi.advanceTimersByTime(HYPERION_JOB_POLL_INTERVAL_MS);
+        expect(service.entries()[0]).toMatchObject({ jobId: 'remote', kind: 'VARIANT', status: 'saved', sourceExerciseId: 41 });
+        expect(getStatus).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        [true, 403],
+        [true, 404],
+    ])('evicts a retained run after same-login access is revoked (running=%s, HTTP %s)', (running, responseStatus) => {
+        getRuns.mockReturnValue(
+            of({
+                runs: [{ jobId: 'j1', exerciseId: 42, courseId: 7, exerciseTitle: 'Private exercise', kind: 'ADAPT', status: 'SAVED', running, startedAt: '2025-01-01T00:00:00Z' }],
+            }),
+        );
+        const service = createService();
+        expect(service.entries()).toHaveLength(1);
+        getRuns.mockReturnValue(of({ runs: [] }));
+        getRunStatus.mockReturnValue(throwError(() => new HttpErrorResponse({ status: responseStatus })));
+
+        vi.advanceTimersByTime(HYPERION_JOB_POLL_INTERVAL_MS);
+
+        expect(getRunStatus).toHaveBeenCalledWith(42, 'j1');
+        expect(service.entries()).toEqual([]);
+        expect(streams.get('j1')?.observed ?? false).toBe(false);
+        expect(service.loadFailed()).toBe(false);
+    });
+
+    it.each([0, 404, 500, 503])('retains terminal history and reports a transient HTTP %s revalidation failure', (responseStatus) => {
+        getRuns.mockReturnValue(of({ runs: [{ jobId: 'j1', exerciseId: 42, courseId: 7, kind: 'CREATE', status: 'SAVED', running: false, startedAt: '2025-01-01T00:00:00Z' }] }));
+        const service = createService();
+        getRuns.mockReturnValue(of({ runs: [] }));
+        getRunAccess.mockReturnValue(throwError(() => new HttpErrorResponse({ status: responseStatus })));
+
+        service.refresh();
+
+        expect(service.entries()[0]).toMatchObject({ jobId: 'j1', status: 'saved' });
+        expect(service.loadFailed()).toBe(true);
+    });
+
+    it('revalidates an older retained page without removing authorized history or refetching the current page', () => {
+        getRuns.mockReturnValueOnce(
+            of({ runs: [{ jobId: 'j1', exerciseId: 42, courseId: 7, kind: 'CREATE', status: 'SAVED', running: false, startedAt: '2025-01-01T00:00:00Z' }], nextBeforeId: 100 }),
+        );
+        const service = createService();
+        expect(getRunStatus).not.toHaveBeenCalled();
+        getRuns.mockReturnValueOnce(
+            of({ runs: [{ jobId: 'j2', exerciseId: 43, courseId: 7, kind: 'CREATE', status: 'SAVED', running: false, startedAt: '2024-01-01T00:00:00Z' }] }),
+        );
+
+        service.loadMoreHistory();
+
+        expect(getRunAccess).toHaveBeenCalledExactlyOnceWith(['j1']);
+        expect(getRunStatus).not.toHaveBeenCalled();
+        expect(service.entries().map((entry) => entry.jobId)).toEqual(['j1', 'j2']);
+        expect(service.hasMoreHistory()).toBe(false);
+    });
+
+    it('reauthorizes ten retained history pages with one bounded bulk request per poll', () => {
+        const pages: AuthoringRunPage[] = Array.from({ length: 10 }, (_, page) => ({
+            runs: Array.from({ length: 50 }, (_, row) => ({
+                jobId: `history-${page}-${row}`,
+                exerciseId: 42,
+                courseId: 7,
+                kind: 'CREATE',
+                status: 'SAVED',
+                running: false,
+                startedAt: '2025-01-01T00:00:00Z',
+            })),
+            nextBeforeId: page + 1,
+        }));
+        for (const page of pages) getRuns.mockReturnValueOnce(of(page));
+        const service = createService();
+        for (let page = 1; page < pages.length; page++) service.loadMoreHistory();
+        expect(service.entries()).toHaveLength(500);
+        getRunAccess.mockClear();
+        getRunStatus.mockClear();
+        getRuns.mockReturnValue(of(pages[0]));
+
+        vi.advanceTimersByTime(3 * HYPERION_JOB_POLL_INTERVAL_MS);
+
+        expect(getRunAccess).toHaveBeenCalledTimes(3);
+        for (const [ids] of getRunAccess.mock.calls) expect(ids).toHaveLength(450);
+        expect(getRunStatus).not.toHaveBeenCalled();
+        expect(service.entries()).toHaveLength(500);
+    });
+
+    it.each(['SAVED', 'PARTIAL'] as const)('removes a %s row omitted from the authorized subset', (runStatus) => {
+        getRuns.mockReturnValue(of({ runs: [{ jobId: 'j1', exerciseId: 42, courseId: 7, kind: 'CREATE', status: runStatus, running: false, startedAt: '2025-01-01T00:00:00Z' }] }));
+        const service = createService();
+        getRuns.mockReturnValue(of({ runs: [] }));
+        getRunAccess.mockReturnValue(of([]));
+        service.refresh();
+        expect(service.entries()).toEqual([]);
+        expect(getRunStatus).not.toHaveBeenCalled();
+        expect(service.loadFailed()).toBe(false);
+    });
+
+    it('rotates bounded access batches so histories larger than 500 are fully reauthorized', () => {
+        const pages: AuthoringRunPage[] = Array.from({ length: 22 }, (_, page) => ({
+            runs: Array.from({ length: 50 }, (_, row) => ({
+                jobId: `history-${page}-${row}`,
+                exerciseId: 42,
+                courseId: 7,
+                kind: 'CREATE',
+                status: 'SAVED',
+                running: false,
+                startedAt: '2025-01-01T00:00:00Z',
+            })),
+            nextBeforeId: page + 1,
+        }));
+        for (const page of pages) getRuns.mockReturnValueOnce(of(page));
+        const service = createService();
+        for (let page = 1; page < pages.length; page++) service.loadMoreHistory();
+        getRunAccess.mockClear();
+        getRuns.mockReturnValue(of(pages[0]));
+        vi.advanceTimersByTime(4 * HYPERION_JOB_POLL_INTERVAL_MS);
+        expect(getRunAccess).toHaveBeenCalledTimes(4);
+        const checked = new Set<string>();
+        for (const [ids] of getRunAccess.mock.calls) {
+            expect(ids.length).toBeLessThanOrEqual(500);
+            for (const id of ids) checked.add(id);
+        }
+        expect(checked.size).toBe(1050);
+        expect(service.entries()).toHaveLength(1100);
+        expect(getRunStatus).not.toHaveBeenCalled();
+    });
+
+    it('cancels pending access checks on login change and ignores their results', () => {
+        getRuns.mockReturnValue(of({ runs: [{ jobId: 'j1', exerciseId: 42, courseId: 7, kind: 'CREATE', status: 'SAVED', running: false, startedAt: '2025-01-01T00:00:00Z' }] }));
+        const service = createService();
+        getRuns.mockReturnValue(of({ runs: [] }));
+        const pending = new Subject<string[]>();
+        getRunAccess.mockReturnValueOnce(pending);
+        service.refresh();
+        expect(pending.observed).toBe(true);
+        identity.set(user('other-editor'));
+        TestBed.tick();
+        expect(pending.observed).toBe(false);
+        pending.next(['j1']);
+        expect(service.entries()).toEqual([]);
+        expect(service.loadFailed()).toBe(false);
+    });
+
+    it('evicts the checked batch when the bulk endpoint denies the editor role', () => {
+        getRuns.mockReturnValue(of({ runs: [{ jobId: 'j1', exerciseId: 42, courseId: 7, kind: 'CREATE', status: 'SAVED', running: false, startedAt: '2025-01-01T00:00:00Z' }] }));
+        const service = createService();
+        getRuns.mockReturnValue(of({ runs: [] }));
+        getRunAccess.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+        service.refresh();
+        expect(service.entries()).toEqual([]);
+        expect(service.loadFailed()).toBe(false);
+    });
+
+    it('uses server cursors, including empty pages after permissions change', () => {
+        getRuns
+            .mockReturnValueOnce(of({ runs: [], nextBeforeId: 51 }))
+            .mockReturnValueOnce(of({ runs: [], nextBeforeId: 1 }))
+            .mockReturnValueOnce(of({ runs: [] }));
+        const service = createService();
+        expect(service.hasMoreHistory()).toBe(true);
+        service.loadMoreHistory();
+        expect(getRuns).toHaveBeenLastCalledWith(51);
+        service.loadMoreHistory();
+        expect(getRuns).toHaveBeenLastCalledWith(1);
+        expect(service.hasMoreHistory()).toBe(false);
+    });
+
+    it('never accepts a history response from the previous login', () => {
+        const pending = new Subject<AuthoringRunPage>();
+        getRuns.mockReturnValueOnce(pending);
+        const service = createService();
+        identity.set(user('other-editor'));
+        TestBed.tick();
+        pending.next({ runs: [{ jobId: 'secret', exerciseId: 42, courseId: 7, kind: 'CREATE', status: 'SAVED', running: false, startedAt: '2025-01-01T00:00:00Z' }] });
+        expect(service.entries()).toEqual([]);
+        expect(service.hasMoreHistory()).toBe(false);
+        expect(pending.observed).toBe(false);
+    });
+
+    it('reconciles each active run by its own identity, even on the same exercise', () => {
+        const service = createService();
+        service.track({ jobId: 'first', exerciseId: 42, courseId: 7, exerciseTitle: 'Stack', mode: 'ADAPT' });
+        service.track({ jobId: 'second', exerciseId: 42, courseId: 7, exerciseTitle: 'Stack', mode: 'ADAPT' });
+        getRunStatus.mockImplementation((_exercise, runId) => of(status({ jobId: runId, running: false, events: [event('DONE', 'SUCCESS')] })));
+        service.refresh();
+        expect(getRunStatus).toHaveBeenCalledWith(42, 'first');
+        expect(getRunStatus).toHaveBeenCalledWith(42, 'second');
+        expect(service.entries().every((entry) => entry.status === 'saved')).toBe(true);
+    });
+
+    it('shows durable restoration without resurrecting a prior partial outcome', () => {
+        getRuns.mockReturnValue(
+            of({
+                runs: [
+                    {
+                        jobId: 'restored',
+                        exerciseId: 42,
+                        courseId: 7,
+                        kind: 'ADAPT',
+                        status: 'SAVED',
+                        running: false,
+                        startedAt: '2025-01-01T00:00:00Z',
+                        revertedAt: '2025-01-02T00:00:00Z',
+                    },
+                ],
+            }),
+        );
+        const service = createService();
+        expect(service.entries()[0].status).toBe('reverted');
+        expect(streams.size).toBe(0);
+        service.markSeen('restored');
+        service.refresh();
+        expect(service.entries()[0].seen).toBe(true);
+        expect(JSON.parse(localStorage.getItem(`artemis.hyperion.jobRegistry.${LOGIN}`)!)).toEqual({ version: 2, seenJobIds: ['restored'] });
+    });
+
+    it('does not discard an active run merely because it is older than a day', () => {
         const service = createService();
         const yesterday = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
         service.track({ jobId: 'old', exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting', mode: 'GENERATE', startedAt: yesterday });
 
-        expect(service.entries()).toHaveLength(0);
+        expect(service.entries()).toHaveLength(1);
     });
 });

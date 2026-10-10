@@ -20,7 +20,7 @@ import { GradingCriterionAction } from 'app/editor/monaco-editor/model/actions/g
 import { TextWithDomainAction } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { parseMarkdownForDomainActions } from 'app/editor/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { AssessmentCriteriaGenerationService } from 'app/exercise/structured-grading-criterion/assessment-criteria-generation.service';
+import { AssessmentCriteriaGenerationService } from 'app/hyperion/assessment/assessment-criteria-generation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
