@@ -7,28 +7,28 @@ packages:
   - 'packages/*'
 
 catalog:
-  '@analogjs/vite-plugin-angular': 2.7.5
-  '@analogjs/vitest-angular': 2.7.5
+  '@analogjs/vite-plugin-angular': 2.8.0
+  '@analogjs/vitest-angular': 2.8.0
   '@arethetypeswrong/cli': 0.18.5
-  '@angular-devkit/architect': 0.2202.0
-  '@angular-devkit/core': 22.2.0
+  '@angular-devkit/architect': 0.2202.2
+  '@angular-devkit/core': 22.2.2
   # Released from angular/components with @angular/cdk, and peers on exactly that cdk version:
   # move both together.
-  '@angular/aria': 22.2.1
-  '@angular/build': 22.2.0
-  '@angular/cdk': 22.2.1
-  '@angular/cli': 22.2.0
-  '@angular/common': 22.2.1
-  '@angular/compiler': 22.2.1
-  '@angular/compiler-cli': 22.2.1
-  '@angular/core': 22.2.1
-  '@angular/forms': 22.2.1
-  '@angular/localize': 22.2.1
-  '@angular/platform-browser': 22.2.1
+  '@angular/aria': 22.2.2
+  '@angular/build': 22.2.2
+  '@angular/cdk': 22.2.2
+  '@angular/cli': 22.2.2
+  '@angular/common': 22.2.2
+  '@angular/compiler': 22.2.2
+  '@angular/compiler-cli': 22.2.2
+  '@angular/core': 22.2.2
+  '@angular/forms': 22.2.2
+  '@angular/localize': 22.2.2
+  '@angular/platform-browser': 22.2.2
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
-  '@playwright/test': 1.63.0
+  '@playwright/test': 1.64.0
   '@storybook/addon-a11y': 10.6.1
   '@storybook/addon-docs': 10.6.1
   '@storybook/addon-themes': 10.6.1
@@ -42,17 +42,17 @@ catalog:
   '@vitest/coverage-istanbul': 5.0.3
   '@vitest/coverage-v8': 5.0.3
   chokidar: 5.0.0
-  concurrently: 10.0.5
+  concurrently: 10.0.6
   cross-env: 10.1.0
   dayjs: 1.11.23
-  eslint: 10.11.0
+  eslint: 10.12.0
   eslint-plugin-storybook: 10.6.1
   jsdom: 30.0.1
   lodash-es: 4.18.1
-  ng-packagr: 22.2.3
-  postcss: 8.5.28
-  publint: 0.3.24
-  playwright: 1.63.0
+  ng-packagr: 22.2.4
+  postcss: 8.5.29
+  publint: 0.3.25
+  playwright: 1.64.0
   # Only here to satisfy Storybook's peer requirement (packages/tum-aet-ui declares it); Artemis itself is Angular.
   # Must equal the react and react-dom overrides below - see the note there.
   react: 19.2.8
@@ -60,11 +60,11 @@ catalog:
   sass: 1.105.1
   semver: 7.8.5
   storybook: 10.6.1
-  stylelint: 17.15.0
+  stylelint: 17.16.0
   tailwindcss: 4.3.3
   tslib: 2.8.1
   typescript: 6.0.3
-  vite: 8.3.1
+  vite: 8.3.4
   vitest: 5.0.3
   yaml: 2.9.1
   zone.js: 0.16.3
@@ -84,18 +84,6 @@ preferFrozenLockfile: true
 
 # Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
 enablePrePostScripts: true
-
-# Temporary exceptions to pnpm's default 24h minimumReleaseAge. Every entry names an exact version, and
-# is deleted once that version is older than a day; `pnpm install --frozen-lockfile` names any entry
-# that is still needed.
-# - @analogjs 2.7.5 (published 2026-09-25): Angular 22.2 builds its JavaScript transformer around a
-#   content hash that must be initialized first, and every analog release before 2.7.3 fails every spec
-#   file with "Hash utility must be initialized by awaiting `initializeHash()`" (analogjs/analog#2576).
-#   2.7.5 additionally stops 22.2's pre-warmed transformer worker pools from idling in the Vitest
-#   process (analogjs/analog#2581). Remove on or after 2026-09-26.
-minimumReleaseAgeExclude:
-  - '@analogjs/vite-plugin-angular@2.7.5'
-  - '@analogjs/vitest-angular@2.7.5'
 
 # Tell pnpm that the Angular major this project is on is an acceptable peer for
 # packages whose published peerDependencies range still lists only older majors.
@@ -143,16 +131,16 @@ overrides:
   # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
   # whose peer range requires the current Angular major). Without this pin it resolves to a
   # straggler from an older major that violates that peer range; keep it equal to @angular/core.
-  '@angular/localize': 22.2.1
+  '@angular/localize': 22.2.2
   # @angular/animations is never declared either: it arrives as an optional auto-installed peer of
   # @angular/platform-browser. Both sides of that edge pin an exact patch - platform-browser asks for
   # animations of its own version and animations asks for core of its own version - so without this pin
   # an Angular patch bump leaves animations behind on the old patch against the new core. Keep it equal
   # to @angular/core.
-  '@angular/animations': 22.2.1
+  '@angular/animations': 22.2.2
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
-  '@babel/runtime': '7.29.7'
+  '@babel/runtime': '7.29.10'
   '@babel/plugin-transform-modules-systemjs': '7.29.8'
   '@primeuix/styled': '0.7.4'
   '@primeuix/utils': '0.7.2'
@@ -163,7 +151,7 @@ overrides:
   debug: '4.4.3'
   # Must stay >= 5.9.3, which fixed the uneval/stringify advisories reached through svelte (@embedpdf/engines).
   # Kept on the 5.x line; 6.x is a major bump.
-  devalue: '5.9.3'
+  devalue: '5.9.4'
   diff: '9.0.0'
   dompurify: '3.4.16'
   esbuild: '0.28.2'
@@ -171,7 +159,7 @@ overrides:
   # Must stay >= 3.1.6, which fixed CVE-2026-76172, CVE-2026-75899, CVE-2026-75975
   # and CVE-2026-75931 (host confusion / SSRF via URI normalization).
   fast-uri: '3.1.8'
-  globals: '17.12.0'
+  globals: '17.13.0'
   http-proxy-middleware: '3.0.7'
   immutable: '5.1.9'
   # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
@@ -179,25 +167,27 @@ overrides:
   # Held at 30.0.1: in 30.1.0 a detached element's style object no longer passes jsdom's own
   # brand check, so reading a property off it throws "called on an object that is not a valid
   # instance of CSSStyleProperties". PrimeNG's MotionDirective does exactly that while tearing
-  # down, which failed 65 tests across two specs on teardown alone. Revisit once PrimeNG or
-  # jsdom fixes it; keep this equal to the catalog entry.
+  # down, which failed 65 tests across two specs on teardown alone. Still broken in 30.1.2 (re-checked
+  # 2026-10-10). Revisit once PrimeNG or jsdom fixes it; keep this equal to the catalog entry.
   jsdom: '30.0.1'
+  # Held at 0.18.10: 0.18.11 was published by accident with breaking changes and is deprecated on npm
+  # ("Use 0.19.0 instead"). 0.19.0 is the real release of those changes and a breaking 0.x minor.
   katex: '0.18.10'
   # Must stay >= 0.2.119: 0.2.118 only fixes CVE-2026-102360, 0.2.119 also fixes CVE-2026-102521. Mend flags 0.2.117, reached through yjs,
   # y-protocols, y-monaco and @tumaet/apollon, none of which declare a patched range of their own yet.
   lib0: '0.2.119'
-  # less dropped the optional `image-size` dependency in 4.9.0. Every image-size release published so
-  # far carries unfixed infinite-loop DoS advisories (GHSA-5p2g-fcmc-qvqq, GHSA-w3rx-r6r6-pgpr), so
-  # there is no version to upgrade to.
+  # less dropped the optional `image-size` dependency in 4.9.0. image-size up to 2.0.2 carries infinite-loop
+  # DoS advisories (GHSA-5p2g-fcmc-qvqq, GHSA-w3rx-r6r6-pgpr), fixed in 2.0.3, which the ~0.5.0 range older
+  # less releases ask for cannot reach.
   # @angular/build pulls less in transitively and accepts ^4.2.0, so pinning the latest 4.x
   # drops the package from the tree entirely instead.
   less: '4.9.1'
   minimatch: '10.2.6'
   # Reached dev-side via postcss, whose range allows the patched release pinned here
   # (GHSA: custom generators can loop indefinitely when size is zero).
-  nanoid: '3.3.19'
+  nanoid: '3.3.20'
   piscina: '5.3.2'
-  postcss: '8.5.28'
+  postcss: '8.5.29'
   punycode: '2.3.1'
   # React and react-dom must resolve to one version each, and to the same one: react-dom asserts this at import time
   # and throws "Incompatible React versions" otherwise. Only Storybook renders React here, but that is enough - the
@@ -214,20 +204,20 @@ overrides:
   react: '19.2.8'
   react-dom: '19.2.8'
   semver: '7.8.5'
-  serialize-javascript: '7.1.1'
-  shell-quote: '1.10.0'
+  serialize-javascript: '7.1.2'
+  shell-quote: '1.12.0'
   tar: '7.5.22'
   tmp: '0.2.7'
   tough-cookie: '6.0.2'
-  undici: '7.29.1'
+  undici: '7.30.0'
   uuid: '14.0.2'
   # Vite 8 leaves decorators in external spec helpers untransformed. Keep the Vitest toolchain on
   # Vite 7 until @analogjs/vite-plugin-angular handles those helpers; Angular and Storybook use Vite 8.
-  'vitest>vite': '7.3.6'
-  '@vitest/mocker>vite': '7.3.6'
-  '@analogjs/vite-plugin-angular>vite': '7.3.6'
+  'vitest>vite': '7.3.7'
+  '@vitest/mocker>vite': '7.3.7'
+  '@analogjs/vite-plugin-angular>vite': '7.3.7'
   word-wrap: '1.2.5'
-  ws: '8.21.3'
+  ws: '8.22.0'
   yargs-parser: '22.0.0'
 
 # Patch files applied by pnpm to specific transitive dependencies during install
@@ -238,7 +228,7 @@ patchedDependencies:
   # resolves to an Object.prototype member and aborts the whole lint run. Remove this entry once angular-eslint
   # releases the fix (any version after 22.5.0).
   '@angular-eslint/eslint-plugin@22.5.0': 'config/pnpm/patches/@angular-eslint__eslint-plugin@22.5.0.patch'
-  'eslint@10.11.0': 'config/pnpm/patches/eslint+10.11.0.patch'
+  'eslint@10.12.0': 'config/pnpm/patches/eslint+10.12.0.patch'
   y-monaco@0.1.6: config/pnpm/patches/y-monaco@0.1.6.patch
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
