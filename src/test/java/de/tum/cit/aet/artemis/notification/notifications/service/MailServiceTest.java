@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Map;
 
 import jakarta.mail.internet.MimeMessage;
 
@@ -24,9 +25,13 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
+import de.tum.cit.aet.artemis.notification.config.MailDeliveryProperties;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.TestAccountEmailService;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailRetryQueueService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 /**
  * This is a very basic testing class for the mail service
@@ -98,7 +103,8 @@ class MailServiceTest {
         templateEngine = mock(SpringTemplateEngine.class);
         when(templateEngine.process(any(String.class), any())).thenReturn("test");
 
-        mailSendingService = new MailSendingService(jHipsterProperties, javaMailSender, messageSource, templateEngine);
+        mailSendingService = new MailSendingService(jHipsterProperties, javaMailSender, messageSource, templateEngine,
+                new MailRetryQueueService(new MailDeliveryProperties(), new SimpleMeterRegistry()), mock(TestAccountEmailService.class));
 
         MailService mailService = new MailService(messageSource, templateEngine, mailSendingService);
         ReflectionTestUtils.setField(mailService, "artemisServerUrl", new URI("http://localhost:8080").toURL());
@@ -118,7 +124,7 @@ class MailServiceTest {
      */
     @Test
     void testNoMailSendExceptionThrown() {
-        doThrow(new MailSendException("Some error occurred during mail send")).when(javaMailSender).send(any(MimeMessage.class));
+        doThrow(new MailSendException(Map.of(new Object(), new IllegalStateException("Some error occurred during mail send")))).when(javaMailSender).send(any(MimeMessage.class));
         assertThatNoException().isThrownBy(() -> mailSendingService.sendEmail(MailRecipientDTO.from(student1), subject, content, false, true));
     }
 }

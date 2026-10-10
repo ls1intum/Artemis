@@ -27,7 +27,7 @@ public interface MaintenanceEmailRecipientRepository extends ArtemisJpaRepositor
     // Note: these two queries share identical WHERE logic; keep them in sync when modifying.
     @Query("""
             SELECT DISTINCT new de.tum.cit.aet.artemis.notification.dto.MaintenanceEmailRecipientDTO(
-                u.id, u.email, u.langKey, u.firstName, u.lastName)
+                u.id, u.login, u.email, u.langKey, u.firstName, u.lastName, u.isTestUser)
             FROM User u
             WHERE u.deleted = FALSE
                 AND u.activated = TRUE

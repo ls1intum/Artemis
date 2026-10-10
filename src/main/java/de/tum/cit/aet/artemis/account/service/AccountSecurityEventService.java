@@ -112,7 +112,8 @@ public class AccountSecurityEventService {
         }
 
         // Addressed to the previous e-mail, but otherwise the user's own identity, so the greeting still reads correctly.
-        var previousAddressRecipient = new MailRecipientDTO(previousEmail, previousLangKey, user.getLogin(), user.getFirstName(), user.getLastName(), null, null);
+        var previousAddressRecipient = new MailRecipientDTO(previousEmail, previousLangKey, user.getLogin(), user.getFirstName(), user.getLastName(), null, null,
+                user.isTestUser());
         String newEmail = user.getEmail();
         sendSecurityNotification(previousAddressRecipient, "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
                 Map.of("emailRemoved", newEmail == null, "newEmail", newEmail == null ? "" : newEmail));

@@ -61,6 +61,24 @@ public interface UserCourseNotificationSettingPresetRepository extends ArtemisJp
             """)
     List<UserCourseNotificationSettingPresetEntryDTO> findSettingPresetsByUserIdsAndCourseId(@Param("userIds") Collection<Long> userIds, @Param("courseId") Long courseId);
 
+    /**
+     * Checks whether the user with the given login has chosen a preset in any course that is none of the given ones.
+     * <p>
+     * The caller passes the presets that do not deliver e-mail by themselves, the custom one, which is described by
+     * specifications, and the one that switches everything off. Choosing any other preset is choosing to receive e-mail.
+     *
+     * @param login           the login of the user
+     * @param excludedPresets the presets that do not count
+     * @return true if the user chose another preset in at least one course
+     */
+    @Query("""
+            SELECT COUNT(p) > 0
+            FROM UserCourseNotificationSettingPreset p
+            WHERE p.user.login = :login
+                AND p.settingPreset NOT IN :excludedPresets
+            """)
+    boolean existsChosenPresetByUserLoginOtherThan(@Param("login") String login, @Param("excludedPresets") Collection<Short> excludedPresets);
+
     /***
      * Get the setting preset entity for a given user id and course id, for a caller that has to write it back.
      * <p>

@@ -32,6 +32,7 @@ const sidebars: SidebarsConfig = {
         'user-registration',
         'user-deletion',
         'user-email-uniqueness',
+        'email-delivery',
         'jenkins-localvc',
         'saml2-login-registration',
         'oidc-login-registration',

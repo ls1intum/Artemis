@@ -30,6 +30,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailPriority;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomLinkRendererService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomReferenceRendererService;
@@ -168,9 +169,12 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
             }
 
             var mailRecipient = new MailRecipientDTO(recipient.email(), recipient.langKey(), recipient.login(), recipient.firstName(), recipient.lastName());
-            if (!mailSendingService.sendEmailSync(mailRecipient, subject, content, false, true)) {
-                // Mail not configured for this deployment, or the message could not be built or sent. Either way this
-                // recipient did not get their notification, which is what the channel's error rate has to reflect.
+            // Bulk: a mail the SMTP server does not accept now waits in the retry queue behind the transactional mails, so an
+            // announcement that meets an exhausted quota is delivered later instead of being lost for every student.
+            if (!mailSendingService.sendEmailSync(mailRecipient, subject, content, false, true, MailPriority.BULK)) {
+                // Mail not configured for this deployment, or the message could not be built or sent for good. Either way
+                // this recipient did not get their notification, which is what the channel's error rate has to reflect. A
+                // mail that waits for another attempt is not counted here: it is not lost.
                 skippedRecipients.incrementAndGet();
             }
         });

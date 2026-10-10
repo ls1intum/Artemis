@@ -41,6 +41,8 @@ import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.notification.repository.MaintenanceEmailRecipientRepository;
+import de.tum.cit.aet.artemis.notification.service.TestAccountEmailService;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailRetryQueueService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -71,6 +73,12 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Autowired
     private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
+    @Autowired
+    private MailRetryQueueService mailRetryQueue;
+
+    @Autowired
+    private TestAccountEmailService testAccountEmailPolicy;
+
     private MailSendingService testMailService;
 
     private User recipient;
@@ -94,7 +102,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         var mailEnabledProperties = new ArtemisProperties();
         mailEnabledProperties.getMail().setFrom("test@greenmail.test");
 
-        testMailService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine);
+        testMailService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine, mailRetryQueue, testAccountEmailPolicy);
         ReflectionTestUtils.setField(testMailService, "artemisServerUrl", URI.create("http://localhost:9000").toURL());
 
         recipient = new User();

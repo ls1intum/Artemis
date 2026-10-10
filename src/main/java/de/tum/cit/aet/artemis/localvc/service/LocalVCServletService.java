@@ -1743,7 +1743,7 @@ public class LocalVCServletService {
 
         // If cache was empty then send an email
         if (isFirstTimeIn24Hours) {
-            MailRecipientDTO mailRecipient = new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, null);
+            MailRecipientDTO mailRecipient = MailRecipientDTO.from(user);
 
             mailSendingService.buildAndSendAsync(mailRecipient, "email.httpsCloneTip.title", "mail/httpsCloneTipEmail", Map.of());
         }

@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.dto.GlobalNotificationSettingDTO;
 import de.tum.cit.aet.artemis.notification.dto.UpdateGlobalNotificationSettingDTO;
-import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
 
 @Profile(PROFILE_CORE)
@@ -34,21 +33,16 @@ public class GlobalNotificationSettingResource {
 
     private final GlobalNotificationSettingService globalNotificationSettingService;
 
-    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
-
     private final UserRepository userRepository;
 
     /**
      * Creates a new {@code GlobalNotificationSettingResource}.
      *
-     * @param globalNotificationSettingService    business service used to create, update and read settings
-     * @param globalNotificationSettingRepository repository used to fetch global notification settings
-     * @param userRepository                      repository used to fetch the currently authenticated {@link User}
+     * @param globalNotificationSettingService business service used to create, update and read settings
+     * @param userRepository                   repository used to fetch the currently authenticated {@link User}
      */
-    public GlobalNotificationSettingResource(GlobalNotificationSettingService globalNotificationSettingService,
-            GlobalNotificationSettingRepository globalNotificationSettingRepository, UserRepository userRepository) {
+    public GlobalNotificationSettingResource(GlobalNotificationSettingService globalNotificationSettingService, UserRepository userRepository) {
         this.globalNotificationSettingService = globalNotificationSettingService;
-        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
         this.userRepository = userRepository;
     }
 
@@ -75,14 +69,13 @@ public class GlobalNotificationSettingResource {
      *
      * @return {@link ResponseEntity} with HTTP status 200 (OK) and a map containing each {@link GlobalNotificationType}
      *         as a key (using {@code name()}) and a boolean value indicating whether notifications of that type are enabled.
-     *         If a specific type has no stored setting, it defaults to {@code true}.
+     *         If a specific type has no stored setting, it defaults to {@code true}, except for test accounts, where it defaults to {@code false}.
      */
     @GetMapping("global-notification-settings")
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, Boolean>> getAllSettings() {
-        // Only the id is used. getUserWithAuthorities additionally joins the authorities collection, so this was
-        // fetching a user, their roles, and sixty columns in order to read a primary key.
-        Map<String, Boolean> result = globalNotificationSettingRepository.getAllSettingsAsMap(userRepository.getUserIdElseThrow());
+        // Not getUserWithAuthorities: it additionally joins the authorities collection, and only the id and the login are used.
+        Map<String, Boolean> result = globalNotificationSettingService.getAllSettingsAsMap(userRepository.getUser());
         return ResponseEntity.ok(result);
     }
 }

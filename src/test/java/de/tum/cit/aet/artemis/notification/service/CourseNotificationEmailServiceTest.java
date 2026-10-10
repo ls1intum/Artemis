@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.payload.ExerciseOpenForPracticePayloadDTO;
 import de.tum.cit.aet.artemis.notification.dto.payload.NewAnnouncementPayloadDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailPriority;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomLinkRendererService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomReferenceRendererService;
@@ -84,7 +85,7 @@ class CourseNotificationEmailServiceTest {
         ReflectionTestUtils.setField(courseNotificationEmailService, "artemisServerUrl", serverUrl);
         // sendEmailSync now reports whether the mail went out, and a boolean-returning mock answers false by default,
         // which would make every test here see a failed delivery. Lenient because several of these never reach the send.
-        lenient().when(mailSendingService.sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean())).thenReturn(true);
+        lenient().when(mailSendingService.sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean(), any(MailPriority.class))).thenReturn(true);
     }
 
     @Test
@@ -100,7 +101,7 @@ class CourseNotificationEmailServiceTest {
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource).getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), eq(Locale.forLanguageTag("en")));
             verify(templateEngine).process(eq("mail/course_notification/ANNOUNCEMENT"), contextCaptor.capture());
-            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(recipient)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
+            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(recipient)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true), eq(MailPriority.BULK));
 
             Context capturedContext = contextCaptor.getValue();
             assertThat(capturedContext.getVariable("serverUrl")).isEqualTo(serverUrl);
@@ -127,8 +128,8 @@ class CourseNotificationEmailServiceTest {
             verify(messageSource, times(1)).getMessage(eq("email.courseNotification.ASSIGNMENT_RELEASED.title"), any(), eq(Locale.forLanguageTag("en")));
             verify(messageSource, times(1)).getMessage(eq("email.courseNotification.ASSIGNMENT_RELEASED.title"), any(), eq(Locale.forLanguageTag("de")));
             verify(templateEngine, times(2)).process(eq("mail/course_notification/ASSIGNMENT_RELEASED"), any(Context.class));
-            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(englishUser)), anyString(), anyString(), eq(false), eq(true));
-            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(germanUser)), anyString(), anyString(), eq(false), eq(true));
+            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(englishUser)), anyString(), anyString(), eq(false), eq(true), eq(MailPriority.BULK));
+            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(germanUser)), anyString(), anyString(), eq(false), eq(true), eq(MailPriority.BULK));
         });
     }
 
@@ -141,7 +142,7 @@ class CourseNotificationEmailServiceTest {
         Awaitility.await().during(1, TimeUnit.SECONDS).atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource, never()).getMessage(anyString(), any(), any(Locale.class));
             verify(templateEngine, never()).process(anyString(), any(Context.class));
-            verify(mailSendingService, never()).sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean());
+            verify(mailSendingService, never()).sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean(), any(MailPriority.class));
         });
     }
 
@@ -162,7 +163,7 @@ class CourseNotificationEmailServiceTest {
         CourseNotificationDTO notification = createNotification("ANNOUNCEMENT", 123L);
         when(messageSource.getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), any(Locale.class))).thenReturn("Test Subject");
         when(templateEngine.process(eq("mail/course_notification/ANNOUNCEMENT"), any(Context.class))).thenReturn("Test Content");
-        when(mailSendingService.sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean())).thenReturn(false);
+        when(mailSendingService.sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean(), any(MailPriority.class))).thenReturn(false);
 
         var delivery = courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
 
@@ -207,7 +208,7 @@ class CourseNotificationEmailServiceTest {
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource).getMessage(eq("email.courseNotification.UNKNOWN_TYPE.title"), any(), any(Locale.class));
             verify(templateEngine, never()).process(anyString(), any(Context.class));
-            verify(mailSendingService, never()).sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean());
+            verify(mailSendingService, never()).sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean(), any(MailPriority.class));
         });
     }
 
@@ -224,7 +225,7 @@ class CourseNotificationEmailServiceTest {
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource).getMessage(eq("email.courseNotification.VALID_TYPE.title"), any(), any(Locale.class));
             verify(templateEngine).process(eq("mail/course_notification/VALID_TYPE"), any(Context.class));
-            verify(mailSendingService, never()).sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean());
+            verify(mailSendingService, never()).sendEmailSync(any(), anyString(), anyString(), anyBoolean(), anyBoolean(), any(MailPriority.class));
         });
     }
 
@@ -246,8 +247,8 @@ class CourseNotificationEmailServiceTest {
             verify(messageSource).getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), eq(Locale.forLanguageTag("en")));
             verify(messageSource).getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), eq(Locale.forLanguageTag("de")));
             verify(templateEngine).process(eq("mail/course_notification/ANNOUNCEMENT"), any(Context.class));
-            verify(mailSendingService, never()).sendEmailSync(eq(expectedMailRecipient(user1)), anyString(), anyString(), anyBoolean(), anyBoolean());
-            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(user2)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
+            verify(mailSendingService, never()).sendEmailSync(eq(expectedMailRecipient(user1)), anyString(), anyString(), anyBoolean(), anyBoolean(), any(MailPriority.class));
+            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(user2)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true), eq(MailPriority.BULK));
         });
     }
 
@@ -328,7 +329,7 @@ class CourseNotificationEmailServiceTest {
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource).getMessage(eq(expectedLocalePrefix), any(), any(Locale.class));
             verify(templateEngine).process(eq(expectedTemplatePath), any(Context.class));
-            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(recipient)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
+            verify(mailSendingService).sendEmailSync(eq(expectedMailRecipient(recipient)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true), eq(MailPriority.BULK));
         });
     }
 
