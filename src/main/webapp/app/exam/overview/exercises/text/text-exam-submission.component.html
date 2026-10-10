@@ -1,26 +1,12 @@
 @if (exercise()) {
-    <div class="flex items-center justify-between">
-        <h3 class="mb-0! font-normal">
-            <span>
-                {{ exercise().exerciseGroup?.title }}
-            </span>
-            <span
-                [jhiTranslate]="exercise().bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
-                [translateValues]="{ points: exercise().maxPoints, bonusPoints: exercise().bonusPoints }"
-            >
-            </span>
-            @if (exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                <jhi-included-in-score-badge [includedInOverallScore]="exercise().includedInOverallScore" />
-            }
-        </h3>
+    <jhi-exam-exercise-header [exercise]="exercise()">
         <jhi-exercise-save-button [submission]="studentSubmission()" (save)="notifyTriggerSave()" />
-    </div>
-    <hr />
+    </jhi-exam-exercise-header>
     <!--resizable container-->
     <jhi-resizeable-container [examTimeline]="examTimeline()">
         <!--region Left Panel-->
         <span class="exercise-title" left-header>{{ examTimeline() ? exercise().title : ('artemisApp.exam.yourSolution' | artemisTranslate) }}</span>
-        <div left-body class="mt-6 w-full ps-2 pb-2">
+        <div left-body class="w-full ps-2 pb-2">
             <div>
                 <div class="mb-2 flex flex-wrap gap-1">
                     <tumaet-ui-tag severity="info" data-testid="word-count">

@@ -823,7 +823,7 @@ When an application component needs owned class selectors, use [BEM](https://get
 | `text-right` / `text-left`                                      | `text-end` / `text-start`                                                                                                                                             |
 | `text-muted`                                                    | an application style using the semantic `--text-body-secondary` property                                                                                              |
 | `text-danger` / `text-success` / `text-warning` / `text-info`   | `text-state-danger` / `text-state-success` / `text-state-warning` / `text-state-info`                                                                                 |
-| `me-*` / `ms-*` / `mb-*` / `p-*` / `gap-*`                      | Tailwind logical spacing; convert by target size because the numeric scales differ (`Bootstrap mb-3` is `1rem`, Tailwind `mb-4` is `1rem`)                            |
+| `me-*` / `ms-*` / `mb-*` / `p-*` / `gap-*`                      | Tailwind logical spacing; convert by target size and write the steps 3 to 5 with `!` (Bootstrap `mb-3` is `1rem`, so `mb-4!`; see _Ambiguous Spacing Utilities_)      |
 
 **Colors — use semantic tokens, never primitives.** Color follows the three-tier design-token model (primitive → semantic → component): a _primitive_ token names a value (`red-500`); a _semantic_ token names intent (`danger`). Always apply a **semantic** token; never apply a primitive directly — naming the value to express a role drifts and reads inconsistently (the documented design-token anti-pattern). Pick by what you are styling:
 
@@ -870,10 +870,11 @@ Keep the ESLint, Stylelint, and Tailwind source lists synchronized as described 
 **Migrate a section — the runbook.** Migrating a section off Bootstrap, in order:
 
 1. **Closure first, not directory.** Map what actually _renders_: the section's component tree **plus** the global shell (footer, navbar, alert overlay) and any runtime dialogs (`jhiDeleteButton → delete-dialog → confirm-entity-name`). For each shared/leaf component in that closure — if already locked, reuse it; if small and section-local, migrate it first as its own locked unit; if app-wide and not yet migrated, **leave it Bootstrap and do not put a Tailwind utility on its host** (a half-migrated shared component loses the cascade everywhere it renders).
-2. **Enumerate + triage.** Grep the closure's `.html` for Bootstrap classes and its `.scss`/`.ts` for hex / `var(--bs-*)` / class-strings. Discount false positives (shared spacing `mb-*`/`me-*`/`gap-*` are allowed; many `row`/`table` hits are `p-table` `styleClass` or custom classes).
+2. **Enumerate + triage.** Grep the closure's `.html` for Bootstrap classes and its `.scss`/`.ts` for hex / `var(--bs-*)` / class-strings. Discount false positives (shared spacing `mb-*`/`me-*`/`gap-*` are allowed, but see _Ambiguous Spacing Utilities_ below for the values 3 to 5; many `row`/`table` hits are `p-table` `styleClass` or custom classes).
 3. **Convert templates fully** (never half). Use the TUM AET UI and Tailwind quick-reference table above,
-   and convert spacing by target size rather than copying the class index. Import package symbols
-   from `@tumaet/ui-angular`, never through a deep path.
+   and convert spacing by target size rather than copying the class index; spell the steps 3 to 5 as
+   _Ambiguous Spacing Utilities_ describes. Import package symbols from `@tumaet/ui-angular`, never
+   through a deep path.
 4. **Replace legacy behavior with the target primitive.** Use `tumaet-ui-dialog` for modal presentation,
    `[tumAetUiTooltip]` for tooltips, and the corresponding TUM AET UI control where it exists. Keep
    application state and results in the Artemis component. If TUM AET UI lacks a capability, either add
@@ -893,6 +894,7 @@ Keep the ESLint, Stylelint, and Tailwind source lists synchronized as described 
 | ------------------------------------------------ | ---------------------------------------------------------- | ----------------------------------------------- |
 | Styles absent in the build                       | path missing from `@source`                                | add it (step 8)                                 |
 | Spacing shifted ~4×                              | copied the class index instead of converting by rem        | step 3                                          |
+| Spacing changes when Bootstrap is removed        | a bare `mb-3` to `mb-5` renders Bootstrap's value          | write the important spelling (step 3)           |
 | A legacy control renders grey or unstyled        | a `p-*` root class hand-painted on a bare element          | use TUM AET UI or the actual fallback component |
 | A migrated element still shows Bootstrap styling | a half-migrated ancestor/shared component wins the cascade | convert the whole closure (step 1)              |
 
@@ -902,6 +904,52 @@ drops Bootstrap-specific token aliases. PrimeNG can be removed after its remaini
 have TUM AET UI replacements and all imports, theme setup, and PrimeUI-specific utilities are gone. The
 TUM AET UI host adapter keeps these migrations behind one boundary, so package component APIs and
 semantic tokens do not need to change as either legacy framework leaves.
+
+#### Ambiguous Spacing Utilities
+
+Bootstrap and Tailwind define the same class names for margin, padding and gap (`m`, `mt`, `mb`, `ms`, `me`, `mx`,
+`my`, `p`, `pt`, `pb`, `ps`, `pe`, `px`, `py` and `gap`, each with 0 to 5), but they scale them differently. The two
+agree for 0 to 2 and differ for 3 to 5:
+
+| Class suffix | Bootstrap (wins while loaded) | Tailwind         |
+| ------------ | ----------------------------- | ---------------- |
+| `-3`         | `1rem` (16px)                 | `0.75rem` (12px) |
+| `-4`         | `1.5rem` (24px)               | `1rem` (16px)    |
+| `-5`         | `3rem` (48px)                 | `1.25rem` (20px) |
+
+Bootstrap's utilities are unlayered and `!important`, so while Bootstrap is loaded it wins: a bare `mb-3` renders
+16px, and renders 12px once Bootstrap is removed. The author of a template cannot tell which of the two they get, and
+the element shifts silently when Bootstrap leaves. `localRules/no-ambiguous-spacing-utility`
+(`config/eslint/rules/no-ambiguous-spacing-utility.mjs`) reports every such bare token in a static `class`,
+`[class.<token>]`, `[class]`, `[ngClass]` and the `styleClass` inputs (including component-specific ones such as
+`contentStyleClass`), and offers both fixes as ESLint suggestions:
+
+- To keep the value Bootstrap renders, write the important Tailwind step that has the Bootstrap value: `mb-3` becomes
+  `mb-4!`, `mb-4` becomes `mb-6!`, `mb-5` becomes `mb-12!`.
+- To take the Tailwind value, write it with the important modifier: `mb-3!`, `mb-4!`, `mb-5!`.
+
+The `!` is needed in both spellings. `mb-4!` is a different class from Bootstrap's `mb-4`, so Bootstrap's rule does not
+apply to it. And a bare `mb-6`, although Bootstrap has no such class, is a normal declaration in a Tailwind layer,
+which loses to Bootstrap's Reboot and to component SCSS that set the same property: a `<p class="mt-6">` renders no
+top margin, because Reboot sets `p { margin-top: 0 }`, while Bootstrap's `mt-4` is important and wins.
+
+The rule does not report what is already unambiguous: a variant (`md:mb-3`), an important token (`mb-3!`), an
+arbitrary value (`mb-[3px]`), a negative one (`-mb-3`), the steps 0 to 2, steps above 5, and `ml`, `mr`, `pl` and
+`pr`, which Bootstrap 5 does not define. Neither does it report utilities that merely look similar, such as `gap-x-3`
+or `space-x-3`. It judges the class names that are in the template text: a name that an expression computes
+(`[class]="spacing"`), a literal inside an interpolation of a class list, a plain `ngClass="..."` attribute, the case
+body of an ICU expression and the inline `template:` of a component are not looked at.
+
+It is enabled as an error for the Tailwind-laid-out templates of the student exam mode and the pages it shows: the
+templates under `app/exam/overview`, `app/exam/shared`, `app/assessment/overview`,
+`app/assessment/manage/complaints-for-tutor`, `app/assessment/manage/complaint-response`, `app/exercise/feedback`,
+`app/text/overview/text-editor` and `app/fileupload/overview/file-upload-submission`. Student-reachable folders that are
+still laid out with Bootstrap, such as the code editor and the modeling submission, join the list with their migration. To adopt it
+for another folder,
+add `<folder>/**/*.html` to the block that enables it in `eslint.config.mjs`, and fix the findings with the first
+suggestion, which changes nothing on screen. The folder must be listed in the `@source` allowlist of `tailwind.css`,
+because the classes the rule asks for exist only if Tailwind scans the template; the `migration-source-coverage` test
+fails otherwise. Update the specs that assert the old class names and run `pnpm run test:rules` and `pnpm run lint`.
 
 ### Chart Instantiation
 
@@ -1171,6 +1219,50 @@ The check reads one file at a time and does not resolve types, so it does not re
 
 Moving the call into a service therefore silences the rule without solving the problem. Return the redirect from the
 guard or resolver itself.
+
+### Setting inputs of a component created in code
+
+`ComponentRef.setInput(name, value)` identifies the input by a plain string and accepts any value. A misspelled or removed
+input still compiles. At runtime Angular only logs NG0303 with `console.error`, it does not throw, and in production it logs
+nothing, so the component silently keeps its default and the bug shows up far from its cause.
+
+Production code therefore does not call `setInput`. Choose in this order:
+
+1. **Declare the component in a template.** When the set of components is closed and known, put them in a `@switch`. The
+   template compiler then checks every input name and value type. `SidebarCardComponent` renders the small, medium and large
+   sidebar card this way, and passes `activeItemId` only to the medium card, which is the only one that declares it.
+2. **Use `setInputs` when the component has to be created in code**, for example a widget inside an editor, a component
+   rendered into markdown HTML or the content of an overlay. Import it from `app/foundation/util/set-inputs.util`:
+
+    ```ts
+    const widgetRef = this.viewContainerRef.createComponent(ReviewCommentThreadWidgetComponent);
+    setInputs(widgetRef, { thread, showLocationWarning, showFeedbackAction });
+    ```
+
+    The input names and the value types are checked against the component class at compile time. A misspelled name, a value
+    of the wrong type and a member that is not an input are all compile errors. Every input that is passed needs a value of
+    its declared type, so `undefined` is only accepted by an input whose type includes it. Pass a plain object, not a class
+    instance, and a ref to one component type: a union of components is rejected, because its members can declare the same
+    input differently.
+
+Inputs are named by the class member, and an input that is declared with an `alias` is set under its alias. When the
+component is chosen from data, narrow the data first and tie the two together with one type parameter, so that a component
+is only accepted with the kind of data it declares. `ExerciseDetailDirective` does this with a `switch` on the detail type
+and a `render<D extends ShownDetail>(component: Type<{ readonly detail: InputSignal<D> }>, detail: D)` method. A lookup table from the type to
+the component cannot express that link, and `InputSignal` is invariant, so a map of components to one common input type does
+not compile either.
+
+`inputBinding(...)`, the `inputs` of `ngComponentOutlet` and the `inputValues` of the PrimeNG `DialogService` take the name
+as a string as well and are not type checked, so they are no substitute. The rule does not cover them, because they are not
+calls to `setInput`.
+
+`packages/tum-aet-ui` must not import from the application and keeps its own internal copy of the helper in
+`packages/tum-aet-ui/src/lib/internal/set-inputs.ts`. Keep the two in step.
+
+`localRules/no-component-ref-set-input` (`config/eslint/rules/no-component-ref-set-input.mjs`) bans any use of the `setInput`
+member in production code under `src/main/webapp` and `packages/tum-aet-ui` at error level, so aliasing, destructuring and
+`call`, `apply` or `bind` do not get around it. Specs are exempt, because they set inputs on fixtures. The two helpers are the
+only places that disable the rule.
 
 ## Advanced Topics
 
