@@ -3,6 +3,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
@@ -213,6 +214,28 @@ describe('CourseOnboardingComponent', () => {
             comp.nextStep();
 
             expect(updateSpy).not.toHaveBeenCalled();
+            expect(comp.activeStep()).toBe(1);
+        });
+
+        it('should neither save nor advance while a date picker of the general settings holds text that is not a date', () => {
+            const updateSpy = vi.spyOn(courseManagementService, 'update');
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            const generalSettings = () => fixture.debugElement.query(By.css('jhi-onboarding-general-settings'));
+            generalSettings().triggerEventHandler('dateTextValidityChange', false);
+            expect(comp.generalSettingsDateTextValid()).toBe(false);
+            comp.nextStep();
+
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.course.onboarding.validation.dateTextInvalid');
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(comp.activeStep()).toBe(0);
+
+            generalSettings().triggerEventHandler('dateTextValidityChange', true);
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+            comp.nextStep();
+
             expect(comp.activeStep()).toBe(1);
         });
     });

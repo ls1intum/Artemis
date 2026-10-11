@@ -40,7 +40,11 @@
     <div class="onboarding-content" data-testid="onboarding-content">
         @switch (activeStep()) {
             @case (0) {
-                <jhi-onboarding-general-settings [course]="course()" (courseUpdated)="onCourseUpdated($event)" />
+                <jhi-onboarding-general-settings
+                    [course]="course()"
+                    (courseUpdated)="onCourseUpdated($event)"
+                    (dateTextValidityChange)="generalSettingsDateTextValid.set($event)"
+                />
             }
             @case (1) {
                 <jhi-onboarding-enrollment [course]="course()" (courseUpdated)="onCourseUpdated($event)" />

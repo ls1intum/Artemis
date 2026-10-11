@@ -50,7 +50,7 @@
                     [ariaRequired]="true"
                     [ariaDescribedBy]="startDateMissing() ? 'onboarding-startDate-missing' : undefined"
                     (valueChange)="updateField('startDate', $event)"
-                    (inputValidityChange)="startTextValid.set($event)"
+                    (inputValidityChange)="setStartTextValid($event)"
                 />
                 @if (startDateMissing() && startTextValid()) {
                     <div id="onboarding-startDate-missing" class="text-state-danger text-sm mt-1 block" data-testid="onboarding-startDate-missing">
@@ -68,7 +68,7 @@
                     [ariaRequired]="true"
                     [ariaDescribedBy]="endDateMissing() ? 'onboarding-endDate-missing' : undefined"
                     (valueChange)="updateField('endDate', $event)"
-                    (inputValidityChange)="endTextValid.set($event)"
+                    (inputValidityChange)="setEndTextValid($event)"
                 />
                 @if (endDateMissing() && endTextValid()) {
                     <div id="onboarding-endDate-missing" class="text-state-danger text-sm mt-1 block" data-testid="onboarding-endDate-missing">

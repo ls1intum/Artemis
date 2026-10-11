@@ -316,6 +316,7 @@
                                                 [hideLabelName]="true"
                                                 [shouldDisplayTimeZoneWarning]="false"
                                                 [(value)]="newGroupReleaseDate"
+                                                (inputValidityChange)="setDateTextValid('release', $event)"
                                             />
                                         </div>
                                         <div>
@@ -328,6 +329,7 @@
                                                 [hideLabelName]="true"
                                                 [shouldDisplayTimeZoneWarning]="false"
                                                 [(value)]="newGroupStartDate"
+                                                (inputValidityChange)="setDateTextValid('start', $event)"
                                             />
                                         </div>
                                         <div>
@@ -340,6 +342,7 @@
                                                 [hideLabelName]="true"
                                                 [shouldDisplayTimeZoneWarning]="false"
                                                 [(value)]="newGroupDueDate"
+                                                (inputValidityChange)="setDateTextValid('due', $event)"
                                             />
                                         </div>
                                         <div>
@@ -352,6 +355,7 @@
                                                 [hideLabelName]="true"
                                                 [shouldDisplayTimeZoneWarning]="false"
                                                 [(value)]="newGroupAssessmentDueDate"
+                                                (inputValidityChange)="setDateTextValid('assessment-due', $event)"
                                             />
                                         </div>
                                     </div>

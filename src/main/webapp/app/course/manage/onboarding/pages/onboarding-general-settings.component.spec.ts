@@ -190,6 +190,24 @@ describe('OnboardingGeneralSettingsComponent', () => {
             expect(missingMessage('onboarding-startDate')).not.toBeNull();
         });
 
+        it('should report to the wizard whether the text of both pickers is a date', () => {
+            const emitSpy = vi.spyOn(comp.dateTextValidityChange, 'emit');
+
+            pickerById('onboarding-startDate').componentInstance.inputValidityChange.emit(false);
+            expect(emitSpy).toHaveBeenLastCalledWith(false);
+
+            // The end date is fine, but the start date still is not.
+            pickerById('onboarding-endDate').componentInstance.inputValidityChange.emit(true);
+            expect(emitSpy).toHaveBeenLastCalledWith(false);
+
+            pickerById('onboarding-endDate').componentInstance.inputValidityChange.emit(false);
+            pickerById('onboarding-startDate').componentInstance.inputValidityChange.emit(true);
+            expect(emitSpy).toHaveBeenLastCalledWith(false);
+
+            pickerById('onboarding-endDate').componentInstance.inputValidityChange.emit(true);
+            expect(emitSpy).toHaveBeenLastCalledWith(true);
+        });
+
         it('should write a picked date back to the course', () => {
             const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
             const picked = dayjs('2025-10-01T08:00:00');

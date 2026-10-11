@@ -236,7 +236,10 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         return this.anyCardSelected() && (!this.changeDomain() || this.domainText().trim().length > 0) && (!this.changeCustom() || this.additionalInstructions().trim().length > 0);
     });
 
-    readonly canGenerate = computed(() => this.placementChoice() !== 'new-group' || this.newGroupTitle().trim().length > 0);
+    /** Ids of the new-group date pickers whose text is not a date; a picker keeps its last valid date while that is the case. */
+    private readonly invalidDateTexts = signal<ReadonlySet<string>>(new Set());
+
+    readonly canGenerate = computed(() => this.placementChoice() !== 'new-group' || (this.newGroupTitle().trim().length > 0 && this.invalidDateTexts().size === 0));
 
     /** Index of the active timeline step; REPAIRING maps back onto the VERIFYING step (repeat visit). */
     readonly currentPhaseIndex = computed(() => {
@@ -396,6 +399,25 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.wizardStep.set(2);
     }
 
+    /**
+     * Records whether the text of one new-group date picker is a date. While it is not, the picker still holds its
+     * last valid date, so generating would submit a schedule that differs from what the field shows.
+     *
+     * @param pickerId the picker the report is about
+     * @param valid    whether the text of that picker is a date, or empty
+     */
+    protected setDateTextValid(pickerId: string, valid: boolean): void {
+        this.invalidDateTexts.update((current) => {
+            const next = new Set(current);
+            if (valid) {
+                next.delete(pickerId);
+            } else {
+                next.add(pickerId);
+            }
+            return next;
+        });
+    }
+
     goToStep1(): void {
         this.wizardStep.set(1);
     }
@@ -446,6 +468,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.newGroupStartDate.set(undefined);
         this.newGroupDueDate.set(undefined);
         this.newGroupAssessmentDueDate.set(undefined);
+        this.invalidDateTexts.set(new Set());
         this.changeDifficulty.set(false);
         this.changeDomain.set(false);
         this.domainText.set('');
@@ -458,7 +481,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     /** Starts the real server job — intents by field presence, no title input. */
     startGeneration(): void {
         const sourceExercise = this.sourceExercise();
-        if (!sourceExercise?.id) return;
+        if (!sourceExercise?.id || !this.canGenerate()) return;
         const request: VariantGenerationRequest = {
             targetDifficulty: this.changeDifficulty() ? this.targetDifficulty() : undefined,
             domainText: this.changeDomain() && this.domainText().trim() ? this.domainText().trim() : undefined,

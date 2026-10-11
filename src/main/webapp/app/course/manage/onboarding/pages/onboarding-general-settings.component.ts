@@ -55,6 +55,8 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
 
     readonly course = input.required<Course>();
     readonly courseUpdated = output<Course>();
+    /** Emits whether the text in both date pickers is a date, so the wizard does not advance with dates the fields no longer show. */
+    readonly dateTextValidityChange = output<boolean>();
 
     readonly irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
     readonly irisSettings = signal<IrisCourseSettingsDTO | undefined>(undefined);
@@ -89,6 +91,16 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     protected readonly endTextValid = signal(true);
 
     private previousSemester?: string;
+
+    protected setStartTextValid(valid: boolean) {
+        this.startTextValid.set(valid);
+        this.dateTextValidityChange.emit(valid && this.endTextValid());
+    }
+
+    protected setEndTextValid(valid: boolean) {
+        this.endTextValid.set(valid);
+        this.dateTextValidityChange.emit(this.startTextValid() && valid);
+    }
 
     readonly languageOptions: { key: string; value: string }[] = [
         { key: Language.ENGLISH, value: 'English' },

@@ -43,6 +43,8 @@ export class CourseOnboardingComponent implements OnInit {
     readonly activeStep = signal(0);
     readonly isSaving = signal(false);
     readonly course = signal<Course>(new Course());
+    /** False while a date picker of the general settings holds text that is not a date; the course keeps the last valid date then. */
+    readonly generalSettingsDateTextValid = signal(true);
 
     readonly stepKeys = ['generalSettings', 'enrollment', 'communication', 'assessment', 'explore'];
     readonly totalSteps = this.stepKeys.length;
@@ -155,6 +157,11 @@ export class CourseOnboardingComponent implements OnInit {
                 // General Settings: startDate, endDate and semester are mandatory, and startDate must be before endDate.
                 // The course arrives here already validated by the create endpoint, but the date pickers and the
                 // semester select stay editable in the wizard, so a value set on create can still be cleared here.
+                // A picker whose text is not a date still reports its last valid date, which would be saved silently.
+                if (!this.generalSettingsDateTextValid()) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.dateTextInvalid');
+                    return false;
+                }
                 if (!current.startDate) {
                     this.alertService.error('artemisApp.course.onboarding.validation.startDateRequired');
                     return false;

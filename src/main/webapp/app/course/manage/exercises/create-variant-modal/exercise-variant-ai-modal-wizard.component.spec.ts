@@ -233,6 +233,35 @@ describe('ExerciseVariantAiModalWizardComponent (new-group placement availabilit
         expect(component.newGroupAssessmentDueDate()?.format('YYYY-MM-DD HH:mm')).toBe('2030-04-20 10:15');
     });
 
+    it('blocks generation while a new-group picker holds text that is not a date', async () => {
+        const release = dayjs('2030-03-01T08:30:00');
+        await createWizard({ ...programmingExercise, releaseDate: release } as Exercise);
+        component.goToPlacement();
+        fixture.detectChanges();
+        const generationService = TestBed.inject(ExerciseVariantGenerationService);
+        const input = document.body.querySelector<HTMLInputElement>('input#wiz-group-release')!;
+        expect(component.canGenerate()).toBe(true);
+
+        // The picker keeps the last valid date, so without this guard the stale schedule would be submitted.
+        input.value = 'not a date';
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(component.newGroupReleaseDate()?.isSame(release)).toBe(true);
+        expect(component.canGenerate()).toBe(false);
+        component.startGeneration();
+        expect(generationService.startGeneration).not.toHaveBeenCalled();
+        expect(component.wizardStep()).toBe(3);
+
+        input.value = '02.03.2030 09:00';
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(component.canGenerate()).toBe(true);
+        component.startGeneration();
+        expect(generationService.startGeneration).toHaveBeenCalledOnce();
+    });
+
     it('offers the new-group placement for an individual-mode quiz', async () => {
         await createWizard({ id: 2, title: 'Quiz', type: ExerciseType.QUIZ, quizMode: QuizMode.INDIVIDUAL } as QuizExercise);
 
