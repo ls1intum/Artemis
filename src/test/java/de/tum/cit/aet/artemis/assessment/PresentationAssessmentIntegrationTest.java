@@ -421,6 +421,56 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
+    void updateInstance_afterConcurrentDeletion_shouldRejectStaleWrite() {
+        PresentationAssessmentInstance instance = saveInstanceForStudent1();
+        long assessmentId = presentationAssessment.getId();
+        long courseId = course.getId();
+
+        // Both operations read the version before either operation writes.
+        long versionReadByDeletion = presentationAssessmentRepository.findByIdElseThrow(assessmentId).getVersion();
+        long versionReadByUpdate = presentationAssessmentRepository.findByIdElseThrow(assessmentId).getVersion();
+
+        presentationAssessmentInstanceRepository.deleteInstanceIfVersionMatches(courseId, assessmentId, versionReadByDeletion, instance);
+        instance.setResultPoints(18.0);
+        PresentationAssessmentInstance staleInstance = instance;
+
+        assertThatThrownBy(() -> presentationAssessmentInstanceRepository.updateInstanceIfVersionMatches(courseId, assessmentId, versionReadByUpdate, staleInstance))
+                .isInstanceOf(ConflictException.class);
+        assertThat(presentationAssessmentInstanceRepository.findById(instance.getId())).isEmpty();
+    }
+
+    @Test
+    void deleteInstance_afterConcurrentUpdate_shouldRejectStaleDeletion() {
+        PresentationAssessmentInstance instance = saveInstanceForStudent1();
+        long assessmentId = presentationAssessment.getId();
+        long courseId = course.getId();
+
+        // Both operations read the version before either operation writes.
+        long versionReadByUpdate = presentationAssessmentRepository.findByIdElseThrow(assessmentId).getVersion();
+        long versionReadByDeletion = presentationAssessmentRepository.findByIdElseThrow(assessmentId).getVersion();
+
+        instance.setResultPoints(18.0);
+        presentationAssessmentInstanceRepository.updateInstanceIfVersionMatches(courseId, assessmentId, versionReadByUpdate, instance);
+        PresentationAssessmentInstance updatedInstance = instance;
+
+        assertThatThrownBy(() -> presentationAssessmentInstanceRepository.deleteInstanceIfVersionMatches(courseId, assessmentId, versionReadByDeletion, updatedInstance))
+                .isInstanceOf(ConflictException.class);
+        assertThat(presentationAssessmentInstanceRepository.findByIdElseThrow(instance.getId()).getResultPoints()).isEqualTo(18.0);
+    }
+
+    /** Stores an instance of the setup presentation for student1 with 5 points directly, like the other concurrency tests. */
+    private PresentationAssessmentInstance saveInstanceForStudent1() {
+        PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
+        instance.setPresentationAssessment(presentationAssessment);
+        instance.setPresentationDate(FIXED_DATE);
+        instance.setResultPoints(5.0);
+        instance.setLanguage("en");
+        instance.setMode(PresentationAssessmentMode.IN_PERSON);
+        instance.setStudent(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        return presentationAssessmentInstanceRepository.save(instance);
+    }
+
+    @Test
     void createInstances_afterConcurrentMaximumReduction_shouldRejectStaleWrite() {
         long assessmentId = presentationAssessment.getId();
         long courseId = course.getId();

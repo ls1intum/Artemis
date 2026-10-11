@@ -274,7 +274,10 @@ public class PresentationAssessmentService {
      * @param instanceId   the instance id
      */
     public void deleteInstance(long courseId, long assessmentId, long instanceId) {
-        presentationAssessmentInstanceRepository.delete(findInstanceElseThrow(courseId, assessmentId, instanceId));
+        PresentationAssessment assessment = findByIdAndCourseIdElseThrow(courseId, assessmentId);
+        long expectedVersion = assessment.getVersion();
+        PresentationAssessmentInstance instance = findInstanceElseThrow(courseId, assessmentId, instanceId);
+        presentationAssessmentInstanceRepository.deleteInstanceIfVersionMatches(courseId, assessmentId, expectedVersion, instance);
     }
 
     private PresentationAssessmentInstance findInstanceElseThrow(long courseId, long assessmentId, long instanceId) {

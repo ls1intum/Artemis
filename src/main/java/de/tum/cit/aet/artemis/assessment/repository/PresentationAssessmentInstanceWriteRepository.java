@@ -42,4 +42,15 @@ public interface PresentationAssessmentInstanceWriteRepository {
      */
     @Transactional
     List<PresentationAssessmentInstance> createInstancesIfVersionMatches(long courseId, long assessmentId, long expectedVersion, List<PresentationAssessmentInstance> instances);
+
+    /**
+     * Deletes an instance and increments its parent assessment version atomically, so that a concurrent update of the deleted instance is rejected.
+     *
+     * @param courseId        the owning course id
+     * @param assessmentId    the parent presentation assessment id
+     * @param expectedVersion the parent version read before the instance was loaded
+     * @param instance        the instance to delete
+     */
+    @Transactional
+    void deleteInstanceIfVersionMatches(long courseId, long assessmentId, long expectedVersion, PresentationAssessmentInstance instance);
 }

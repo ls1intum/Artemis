@@ -39,6 +39,12 @@ public class PresentationAssessmentInstanceWriteRepositoryImpl implements Presen
         return instanceRepository.getObject().saveAll(instances);
     }
 
+    @Override
+    public void deleteInstanceIfVersionMatches(long courseId, long assessmentId, long expectedVersion, PresentationAssessmentInstance instance) {
+        incrementVersionOrThrow(courseId, assessmentId, expectedVersion);
+        instanceRepository.getObject().delete(instance);
+    }
+
     /**
      * Advances the parent version or rejects a write based on an outdated state.
      *
