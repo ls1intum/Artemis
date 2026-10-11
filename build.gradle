@@ -79,7 +79,7 @@ plugins {
     id "com.adarshr.test-logger" version "4.0.0"
     id "com.diffplug.spotless" version "${spotless_plugin_version}"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
-    id "io.github.ben-manes.versions" version "0.64.0"
+    id "io.github.ben-manes.versions" version "0.65.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.google.cloud.tools.jib" version "3.5.4"
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
@@ -463,7 +463,7 @@ dependencies {
 
     implementation "org.jsoup:jsoup:1.23.2"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
-    implementation "commons-codec:commons-codec:1.22.1"
+    implementation "commons-codec:commons-codec:1.23.0"
 
     implementation "org.semver4j:semver4j:6.0.0"
 
@@ -654,9 +654,9 @@ dependencies {
     // used for testing and Java Template Upgrade Service
     implementation "org.apache.pdfbox:pdfbox:3.0.8"
     implementation "org.apache.commons:commons-csv:1.14.1"
-    implementation "org.commonmark:commonmark:0.30.0"
-    implementation "org.commonmark:commonmark-ext-gfm-tables:0.30.0"
-    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.30.0"
+    implementation "org.commonmark:commonmark:0.30.1"
+    implementation "org.commonmark:commonmark-ext-gfm-tables:0.30.1"
+    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.30.1"
 
     implementation "commons-fileupload:commons-fileupload:1.6.0"
 

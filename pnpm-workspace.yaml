@@ -212,7 +212,7 @@ overrides:
   tmp: '0.2.7'
   tough-cookie: '6.0.2'
   undici: '7.30.0'
-  uuid: '14.0.2'
+  uuid: '14.0.3'
   # Vite 8 leaves decorators in external spec helpers untransformed. Keep the Vitest toolchain on
   # Vite 7 until @analogjs/vite-plugin-angular handles those helpers; Angular and Storybook use Vite 8.
   'vitest>vite': '7.3.7'
