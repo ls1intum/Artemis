@@ -1,7 +1,7 @@
 <div class="presentation-page flex flex-col">
     <div *titleBarActions class="flex items-center justify-end">
         @if (isAtLeastEditor()) {
-            <tumaet-ui-button id="create-presentation-assessment" size="small" [icon]="faPlus" (clicked)="startCreate()">
+            <tumaet-ui-button id="create-presentation-assessment" data-testid="create-presentation-button" size="small" [icon]="faPlus" (clicked)="startCreate()">
                 <span jhiTranslate="artemisApp.presentationAssessment.home.createLabel"></span>
             </tumaet-ui-button>
         }

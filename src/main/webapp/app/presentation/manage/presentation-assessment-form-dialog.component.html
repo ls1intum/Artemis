@@ -105,7 +105,7 @@
                 <fa-icon [icon]="faBan" />
                 <span jhiTranslate="entity.action.cancel"></span>
             </tumaet-ui-button>
-            <tumaet-ui-button type="submit" [disabled]="isSaving() || editForm.invalid">
+            <tumaet-ui-button type="submit" data-testid="save-presentation-button" [disabled]="isSaving() || editForm.invalid">
                 <fa-icon [icon]="faSave" />
                 <span jhiTranslate="entity.action.save"></span>
             </tumaet-ui-button>

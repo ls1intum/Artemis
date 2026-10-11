@@ -156,7 +156,11 @@
 
     <div class="flex justify-end gap-2">
         <tumaet-ui-button severity="secondary" type="button" (clicked)="cancel()"><fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel"></span></tumaet-ui-button>
-        <tumaet-ui-button type="submit" [disabled]="isSaving() || editForm.invalid || !dateTextValid() || !timeTextValid() || assignedStudents().length === 0">
+        <tumaet-ui-button
+            type="submit"
+            data-testid="save-instance-button"
+            [disabled]="isSaving() || editForm.invalid || !dateTextValid() || !timeTextValid() || assignedStudents().length === 0"
+        >
             <fa-icon [icon]="faSave" /><span jhiTranslate="entity.action.save"></span>
         </tumaet-ui-button>
     </div>
