@@ -116,6 +116,15 @@ describe('PresentationAssessmentService', () => {
         req.flush([]);
     });
 
+    it('should fetch the presentation statistics', () => {
+        service.getStatistics(courseId).subscribe((response) => {
+            expect(response.body).toEqual({ totalCount: 5, assessedCount: 3 });
+        });
+
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/statistics` });
+        req.flush({ totalCount: 5, assessedCount: 3 });
+    });
+
     it('should create a presentation assessment', () => {
         const presentationAssessment: PresentationAssessment = {
             title: 'Final presentation',
@@ -135,6 +144,23 @@ describe('PresentationAssessmentService', () => {
             maxPoints: 30,
             courseId,
         });
+    });
+
+    it('should update a presentation assessment', () => {
+        const presentationAssessment: PresentationAssessment = {
+            id: 1,
+            title: 'Updated presentation',
+            maxPoints: 25,
+            courseId,
+        };
+
+        service.update(courseId, presentationAssessment).subscribe((response) => {
+            expect(response.body).toEqual(presentationAssessment);
+        });
+
+        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1` });
+        expect(req.request.body).toEqual(presentationAssessment);
+        req.flush(presentationAssessment);
     });
 
     it('should delete a presentation assessment', () => {
@@ -206,5 +232,14 @@ describe('PresentationAssessmentService', () => {
             mode: PresentationAssessmentMode.IN_PERSON,
             student: { login: 'student1', name: 'Student One' },
         });
+    });
+
+    it('should delete a presentation instance', () => {
+        service.deleteInstance(courseId, 42, 11).subscribe((response) => {
+            expect(response.ok).toBe(true);
+        });
+
+        const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/42/instances/11` });
+        req.flush(null);
     });
 });
