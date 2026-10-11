@@ -18,16 +18,19 @@ SHA = "d23441a48e516b6c34aea4fa41551a30e30af803"
 DIGEST = "a" * 64
 
 
-class CheckLineTest(unittest.TestCase):
-    """The decision for a single line of a workflow or composite action."""
+class CheckTextTest(unittest.TestCase):
+    """The decision for the `uses` entries of a piece of YAML."""
 
-    def assert_accepted(self, line: str) -> None:
-        self.assertIsNone(pinning.check_line(line), line)
+    def reasons(self, text: str) -> list[str]:
+        return [reason for _, _, reason in pinning.violations_in_text(text)]
 
-    def assert_rejected(self, line: str, reason_part: str) -> None:
-        reason = pinning.check_line(line)
-        self.assertIsNotNone(reason, f"expected a violation for: {line}")
-        self.assertIn(reason_part, reason)
+    def assert_accepted(self, text: str) -> None:
+        self.assertEqual([], self.reasons(text), text)
+
+    def assert_rejected(self, text: str, reason_part: str) -> None:
+        reasons = self.reasons(text)
+        self.assertNotEqual([], reasons, f"expected a violation for: {text}")
+        self.assertIn(reason_part, reasons[0])
 
     def test_accepts_sha_with_version_comment(self):
         self.assert_accepted(f"        uses: actions/checkout@{SHA} # v6.1.0")
@@ -42,6 +45,7 @@ class CheckLineTest(unittest.TestCase):
 
     def test_accepts_a_quoted_reference(self):
         self.assert_accepted(f"        uses: 'actions/checkout@{SHA}' # v6")
+        self.assert_accepted(f'        uses: "actions/checkout@{SHA}" # v6')
 
     def test_accepts_actions_in_a_sub_directory(self):
         self.assert_accepted(f"        uses: github/codeql-action/upload-sarif@{SHA} # v4.31.2")
@@ -56,10 +60,10 @@ class CheckLineTest(unittest.TestCase):
     def test_accepts_docker_images_pinned_by_digest(self):
         self.assert_accepted(f"        uses: docker://alpine@sha256:{DIGEST}")
 
-    def test_ignores_lines_that_are_not_uses_entries(self):
+    def test_ignores_text_that_is_not_a_uses_entry(self):
         self.assert_accepted("        run: echo uses actions/checkout@v6")
         self.assert_accepted("        # uses: actions/checkout@v6")
-        self.assert_accepted("        name: uses: is part of this name")
+        self.assert_accepted('        name: "uses: is part of this name"')
         self.assert_accepted("")
 
     def test_rejects_a_major_version_tag(self):
@@ -94,31 +98,69 @@ class CheckLineTest(unittest.TestCase):
         self.assert_rejected("      - {uses: actions/checkout@v6}", "commit SHA")
         self.assert_rejected("      - { name: Checkout, uses: actions/checkout@v6, with: { fetch-depth: 0 } }", "commit SHA")
 
+    def test_rejects_a_tag_in_a_flow_mapping_spread_over_several_lines(self):
+        self.assert_rejected("      - {\n          name: Checkout, uses: actions/checkout@v6\n        }", "commit SHA")
+        self.assert_rejected("      - {\n          name: Checkout,\n          uses: actions/checkout@v6,\n        }", "commit SHA")
+
     def test_rejects_a_tag_in_a_flow_sequence_of_steps(self):
-        line = "    steps: [{ uses: actions/checkout@v6 }, { uses: actions/setup-node@v4 }]"
-        self.assert_rejected(line, "commit SHA")
-        self.assertEqual(["actions/checkout@v6", "actions/setup-node@v4"], [reference for reference, _ in pinning.parse_uses(line)])
+        text = "    steps: [{ uses: actions/checkout@v6 }, { uses: actions/setup-node@v4 }]"
+        self.assertEqual(["actions/checkout@v6", "actions/setup-node@v4"], [reference for _, reference, _ in pinning.violations_in_text(text)])
 
     def test_rejects_a_tag_behind_a_quoted_key(self):
         self.assert_rejected('      - "uses": actions/checkout@v6', "commit SHA")
         self.assert_rejected("      - 'uses': actions/checkout@v6", "commit SHA")
         self.assert_rejected('      - { "uses": "actions/checkout@v6" }', "commit SHA")
 
-    def test_rejects_a_reference_that_is_not_on_the_line_of_the_key(self):
-        self.assert_rejected("      - uses:", "same line")
-        self.assert_rejected("      - uses: # actions/checkout@v6", "same line")
+    def test_rejects_a_tag_on_the_line_after_the_key(self):
+        self.assert_rejected("      - uses:\n          actions/checkout@v6", "commit SHA")
+
+    def test_rejects_a_tag_written_as_a_block_scalar(self):
+        self.assert_rejected("      - uses: >-\n          actions/checkout@v6", "commit SHA")
+
+    def test_rejects_an_empty_reference(self):
+        self.assert_rejected("      - uses:", "commit SHA")
+        self.assert_rejected("      - uses: # actions/checkout@v6", "commit SHA")
+
+    def test_rejects_a_value_that_is_not_a_string(self):
+        self.assert_rejected("      - uses: { name: actions/checkout@v6 }", "must be a string")
+        self.assert_rejected("      - uses: [actions/checkout@v6]", "must be a string")
+
+    def test_rejects_a_tag_in_a_reused_anchor(self):
+        text = f"x-step: &checkout\n  uses: actions/checkout@v6\njobs:\n  a:\n    steps:\n      - *checkout\n      - uses: actions/setup-node@{SHA} # v4\n"
+        self.assertEqual(["actions/checkout@v6"], [reference for _, reference, _ in pinning.violations_in_text(text)])
+
+    def test_checks_every_document_of_a_stream(self):
+        text = f"a:\n  uses: actions/checkout@{SHA} # v6\n---\nb:\n  uses: actions/checkout@v6\n"
+        self.assertEqual([5], [line for line, _, _ in pinning.violations_in_text(text)])
 
     def test_accepts_pinned_references_in_a_flow_mapping_or_behind_a_quoted_key(self):
         self.assert_accepted(f"      - {{ uses: actions/checkout@{SHA} }} # v6")
         self.assert_accepted(f'      - "uses": actions/checkout@{SHA} # v6')
         self.assert_accepted("      - { uses: ./.github/actions/setup }")
 
+    def test_reads_the_version_comment_from_the_line_of_the_reference_in_a_multi_line_flow_mapping(self):
+        self.assert_accepted(f"      - {{\n          uses: actions/checkout@{SHA}, # v6\n          name: Checkout\n        }}")
+        # Renovate reads the comment behind the reference, not one on a later line.
+        self.assert_rejected(f"      - {{\n          uses: actions/checkout@{SHA}\n        }} # v6", "# vX.Y.Z")
+        self.assert_rejected(f"      - {{\n          uses: actions/checkout@{SHA}\n        }}", "# vX.Y.Z")
+
     def test_requires_the_version_comment_in_a_flow_mapping_too(self):
         self.assert_rejected(f"      - {{ uses: actions/checkout@{SHA} }}", "# vX.Y.Z")
 
-    def test_ignores_a_comma_and_a_colon_in_text_outside_a_flow_mapping(self):
-        self.assert_accepted('        run: echo "done, uses: actions/checkout@v6"')
-        self.assert_accepted("        name: Checkout, uses: actions/checkout@v6")
+    def test_ignores_flow_style_text_in_comments(self):
+        self.assert_accepted("      # - { uses: actions/checkout@v6 }")
+        self.assert_accepted("      - name: Example # { uses: actions/checkout@v6 }\n        run: ls")
+
+    def test_ignores_uses_text_in_run_scripts(self):
+        self.assert_accepted("      - run: |\n          echo '- { uses: actions/checkout@v6 }'\n          cat <<EOF\n          uses: actions/checkout@v6\n          EOF")
+        self.assert_accepted("        run: 'echo \"done, uses: actions/checkout@v6\"'")
+
+    def test_keeps_a_hash_inside_a_quoted_value(self):
+        self.assert_rejected("      - { name: 'a # b', uses: actions/checkout@v6 }", "commit SHA")
+
+    def test_reports_the_line_of_the_reference(self):
+        text = f"jobs:\n  a:\n    steps:\n      - uses: actions/checkout@{SHA} # v6\n      - {{\n          uses: actions/setup-node@v4\n        }}\n"
+        self.assertEqual([(6, "actions/setup-node@v4")], [(line, reference) for line, reference, _ in pinning.violations_in_text(text)])
 
 
 class RepositoryScanTest(unittest.TestCase):
@@ -159,6 +201,28 @@ class RepositoryScanTest(unittest.TestCase):
         exit_code, output = self.run_main()
         self.assertEqual(1, exit_code)
         self.assertIn("::error file=.github/workflows/ci.yml,line=4::actions/checkout@v6:", output)
+
+    def test_reports_a_tag_in_a_multi_line_flow_mapping_in_a_whole_file(self):
+        self.write(".github/workflows/ci.yml", "jobs:\n  a:\n    steps:\n      - {\n          name: Checkout, uses: actions/checkout@v6\n        }\n")
+        exit_code, output = self.run_main()
+        self.assertEqual(1, exit_code)
+        self.assertIn("::error file=.github/workflows/ci.yml,line=5::actions/checkout@v6:", output)
+
+    def test_does_not_fail_on_text_that_only_looks_like_a_reference(self):
+        self.write(
+            ".github/workflows/ci.yml",
+            f"# Example: {{ uses: actions/checkout@v6 }}\njobs:\n  a:\n    steps:\n      - uses: actions/checkout@{SHA} # v6\n"
+            "      - run: |\n          echo '- { uses: actions/checkout@v6 }'\n",
+        )
+        exit_code, _ = self.run_main()
+        self.assertEqual(0, exit_code)
+
+    def test_reports_a_file_that_is_not_valid_yaml(self):
+        self.write(".github/workflows/ci.yml", "jobs:\n  a:\n    steps:\n      - uses: [actions/checkout@v6\n")
+        exit_code, output = self.run_main()
+        self.assertEqual(1, exit_code)
+        self.assertIn("::error file=.github/workflows/ci.yml", output)
+        self.assertIn("not valid YAML", output)
 
     def test_scans_composite_actions(self):
         self.write(".github/actions/setup/action.yml", "runs:\n  using: composite\n  steps:\n    - uses: actions/cache@v4\n")

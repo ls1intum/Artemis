@@ -12,12 +12,16 @@ Every `uses:` entry in `.github/workflows` and `.github/actions` must be one of:
 * a local path (`./.github/actions/e2e-setup`, `./.github/workflows/ci-build.yml`),
 * `owner/repo[/path]@<40 hex characters>` followed by a `# vX.Y.Z` comment (the `v` follows the upstream
   tag), the shape Renovate reads to update the SHA and the comment together (`helpers:pinGitHubActionDigests`),
+  for an action of a step as well as for a reusable workflow of a job,
 * `docker://image@sha256:<64 hex characters>`.
 
-The check is line based and needs no YAML parser. It finds a `uses` key at the start of a line (behind
-an optional list dash), in a flow mapping (`- { uses: actions/checkout@v6 }`), and when the key is
-quoted (`"uses": actions/checkout@v6`). It fails closed: a `uses` key whose reference it cannot read, for
-example one on the next line, is reported instead of skipped.
+The files are parsed as YAML, so a `uses` key is found however it is written (block or flow style, quoted, spread
+over several lines), and text that only looks like one (a comment, a `run:` script) is not mistaken for a
+reference. The parser's node marks give the line of each reference and the original line, from which the trailing
+`# vX.Y.Z` comment is read, because the parser itself drops comments. A `uses` key whose value is not a plain
+string, and a file that is not valid YAML, are reported instead of skipped.
+
+Needs PyYAML, which the GitHub-hosted Ubuntu runners and most developer machines provide (`pip install pyyaml`).
 
 Usage:
     python3 supporting_scripts/check_action_pinning.py
@@ -31,15 +35,15 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+try:
+    import yaml
+except ImportError:  # pragma: no cover - the message is the point
+    print("::error::The action pinning check needs PyYAML. Install it with `pip install pyyaml`.")
+    sys.exit(2)
+
 SEARCH_ROOTS = (".github/workflows", ".github/actions")
 
 YAML_SUFFIXES = (".yml", ".yaml")
-
-# Where a `uses` key can start: at the beginning of a line behind an optional list dash, or inside a flow
-# mapping after `{` or `,`. The key may be quoted. `name: uses: x` and `run: echo uses: x` do not qualify.
-USES_KEY = re.compile(r"""(?P<prefix>^\s*(?:-\s+)?|[{,]\s*)["']?uses["']?\s*:""")
-
-USES_VALUE = re.compile(r"""\s*(?P<reference>"[^"]*"|'[^']*'|[^\s#,}]+)""")
 
 TRAILING_COMMENT = re.compile(r"(?:^|\s)(?P<comment>#.*)$")
 
@@ -51,8 +55,8 @@ PINNED_DOCKER_IMAGE = re.compile(r"^docker://\S+@sha256:[0-9a-f]{64}$")
 # Some upstream repositories tag their releases without the `v` prefix, so it is optional.
 VERSION_COMMENT = re.compile(r"^#\s*v?\d+(?:\.\d+){0,2}\S*(?:\s.*)?$")
 
-# Stands in for a `uses` key whose reference the line based parser could not read.
-UNREADABLE_REFERENCE = "uses"
+# Stands in for a `uses` value that is not a plain string, so that it is rejected like any other bad reference.
+UNREADABLE_REFERENCE = "<not a string>"
 
 
 @dataclass(frozen=True)
@@ -65,29 +69,10 @@ class Violation:
     reason: str
 
 
-def parse_uses(line: str) -> list[tuple[str, str]]:
-    """Return the unquoted reference and the trailing comment of every `uses` entry in the line.
-
-    A `uses` key whose reference cannot be read yields the pseudo reference `uses` with an empty comment, which
-    `violation_reason` rejects, so an unusual layout never slips through unnoticed.
-    """
-    entries: list[tuple[str, str]] = []
-    for key in USES_KEY.finditer(line):
-        if key.group("prefix").startswith(",") and "{" not in line[: key.start()]:
-            continue  # a comma outside of a flow mapping, e.g. in the text of an echo
-        value = USES_VALUE.match(line, key.end())
-        if value is None:
-            entries.append((UNREADABLE_REFERENCE, ""))
-            continue
-        comment = TRAILING_COMMENT.search(line, value.end())
-        entries.append((value.group("reference").strip("'\""), comment.group("comment") if comment else ""))
-    return entries
-
-
 def violation_reason(reference: str, comment: str) -> str | None:
     """Return why the reference breaks the pinning policy, or None if it complies."""
     if reference == UNREADABLE_REFERENCE:
-        return "write the reference on the same line as `uses:` so that it can be checked"
+        return "the value of `uses` must be a string naming the action, so that it can be checked"
     if reference.startswith("./"):
         return None
     if reference.startswith("docker://"):
@@ -101,9 +86,47 @@ def violation_reason(reference: str, comment: str) -> str | None:
     return None
 
 
-def check_line(line: str) -> str | None:
-    """Return why the first violating `uses` entry of the line breaks the policy, or None if there is none."""
-    return next((reason for reason in (violation_reason(*entry) for entry in parse_uses(line)) if reason is not None), None)
+def uses_entries(text: str) -> list[tuple[int, str, str]]:
+    """Return the line, the reference and the trailing comment of every `uses` entry of a YAML document.
+
+    The line numbers start at 1. Raises `yaml.YAMLError` if the text is not valid YAML.
+    """
+    lines = text.splitlines()
+    entries: list[tuple[int, str, str]] = []
+    seen: set[int] = set()
+
+    def visit(node: yaml.Node) -> None:
+        if id(node) in seen:  # an anchor used several times, or a cyclic alias
+            return
+        seen.add(id(node))
+        if isinstance(node, yaml.MappingNode):
+            for key, value in node.value:
+                if isinstance(key, yaml.ScalarNode) and key.value == "uses":
+                    entries.append(entry(value))
+                visit(key)
+                visit(value)
+        elif isinstance(node, yaml.SequenceNode):
+            for item in node.value:
+                visit(item)
+
+    def entry(value: yaml.Node) -> tuple[int, str, str]:
+        line_index = value.start_mark.line
+        if not isinstance(value, yaml.ScalarNode):
+            return line_index + 1, UNREADABLE_REFERENCE, ""
+        # The comment follows the end of the value on the line where it ends, behind a closing `}` of a flow mapping, if any.
+        end_line = lines[value.end_mark.line] if value.end_mark.line < len(lines) else ""
+        comment = TRAILING_COMMENT.search(end_line, value.end_mark.column)
+        return line_index + 1, value.value.strip(), comment.group("comment") if comment else ""
+
+    for document in yaml.compose_all(text):
+        if document is not None:
+            visit(document)
+    return entries
+
+
+def violations_in_text(text: str) -> list[tuple[int, str, str]]:
+    """Return the line, the reference and the reason of every entry of the YAML text that breaks the policy."""
+    return [(line, reference, reason) for line, reference, comment in uses_entries(text) if (reason := violation_reason(reference, comment)) is not None]
 
 
 def workflow_files(root: Path) -> list[Path]:
@@ -120,11 +143,14 @@ def find_violations(root: Path) -> list[Violation]:
     """Collect every unpinned `uses:` entry in the workflows and composite actions below the root."""
     violations: list[Violation] = []
     for path in workflow_files(root):
-        for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
-            for reference, comment in parse_uses(line):
-                reason = violation_reason(reference, comment)
-                if reason is not None:
-                    violations.append(Violation(path.relative_to(root), line_number, reference, reason))
+        relative = path.relative_to(root)
+        try:
+            found = violations_in_text(path.read_text(encoding="utf-8"))
+        except yaml.YAMLError as error:
+            mark = getattr(error, "problem_mark", None)
+            violations.append(Violation(relative, mark.line + 1 if mark else 1, "<file>", f"the file is not valid YAML, so its action references cannot be checked ({error})"))
+            continue
+        violations.extend(Violation(relative, line, reference, reason) for line, reference, reason in found)
     return violations
 
 
@@ -136,7 +162,8 @@ def main(argv: list[str]) -> int:
         return 2
     violations = find_violations(root)
     for violation in violations:
-        print(f"::error file={violation.path},line={violation.line_number}::{violation.reference}: {violation.reason}")
+        message = f"{violation.reference}: {violation.reason}".replace("\n", " ")
+        print(f"::error file={violation.path},line={violation.line_number}::{message}")
     if violations:
         print(f"{len(violations)} unpinned action reference(s). See .github/workflows/README.md (Action pinning policy).")
         return 1

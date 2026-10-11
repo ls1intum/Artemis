@@ -145,7 +145,8 @@ gate closed.
   The `helpers:pinGitHubActionDigests` preset also pins newly added action references.
 - **The policy is enforced.** `supporting_scripts/check_action_pinning.py` runs in `ci-workflows.yml`
   and fails on any `uses:` in `.github/workflows` or `.github/actions` that is not a local path,
-  a Docker image digest, or `owner/repo@<40-hex SHA> # vX.Y.Z`. Run it locally with
+  a Docker image digest, or `owner/repo@<40-hex SHA> # vX.Y.Z`. It parses the files with PyYAML,
+  which the Ubuntu runners provide. Run it locally with
   `python3 supporting_scripts/check_action_pinning.py`; its unit test is
   `supporting_scripts/test_check_action_pinning.py`.
 
