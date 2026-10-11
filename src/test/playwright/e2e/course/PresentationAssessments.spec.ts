@@ -39,6 +39,10 @@ test.describe('Presentation assessments', { tag: '@fast' }, () => {
 
         await presentationAssessmentManagement.deletePresentation(title);
         await expect(page.getByRole('link', { name: title })).toHaveCount(0);
+
+        // Reload so that the list comes from the server, not from the client state.
+        await presentationAssessmentManagement.goto(course.id!);
+        await expect(page.getByRole('link', { name: title })).toHaveCount(0);
     });
 
     test('Tutor grades a student but cannot manage presentations', async ({ page, login, presentationAssessmentManagement }) => {
@@ -48,7 +52,7 @@ test.describe('Presentation assessments', { tag: '@fast' }, () => {
         expect(created.status()).toBe(201);
 
         await login(tutor, `/course-management/${course.id}`);
-        await page.getByRole('link', { name: 'Presentations' }).click();
+        await page.locator('#presentations').click();
         await expect(page.getByTestId('presentation-master-detail')).toBeVisible();
         await expect(page.getByTestId('create-presentation-button')).toHaveCount(0);
 

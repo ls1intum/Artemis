@@ -257,6 +257,7 @@ export class CourseSidebarItemService {
             iconColor: 'var(--primary)',
             title: 'Presentations',
             translation: 'artemisApp.presentationAssessment.home.title',
+            testId: 'presentations',
             hidden: false,
         };
     }
