@@ -1,9 +1,9 @@
-import { Component, OnDestroy, OnInit, inject, input, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
 import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { Observable, Subscription } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { filter, map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -14,7 +14,8 @@ import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
+import { getManualUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -53,6 +54,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private submissionPolicyService = inject(SubmissionPolicyService);
     private route = inject(ActivatedRoute);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
 
     readonly codeEditorContainer = viewChild(CodeEditorContainerComponent);
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -78,6 +80,12 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     // Written only in a template event handler, which schedules change detection itself — may stay plain.
     showEditorInstructions = true;
     readonly latestResult = signal<Result | undefined>(undefined);
+    /** The latest successful preliminary AI feedback on the latest submission, shown in the editor next to the latest result. */
+    readonly athenaResult = signal<Result | undefined>(undefined);
+    /** The feedback shown in the editor: that of the latest result and of the preliminary AI feedback. */
+    readonly editorFeedback = computed<Feedback[]>(() => [...(this.latestResult()?.feedbacks ?? []), ...(this.athenaResult()?.feedbacks ?? [])]);
+    private latestSubmissionId?: number;
+    private resultSubscription?: Subscription;
     readonly hasTutorAssessment = signal(false);
     readonly numberOfSubmissionsForSubmissionPolicy = signal<number | undefined>(undefined);
 
@@ -106,7 +114,11 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
                         // TODO: load this information from the server in case submission policies are enabled for programming exercises
                         this.repositoryIsLocked.set(dueDateHasPassed && !isPracticeMode(participationWithResults));
                         const allResults = getAllResultsOfAllSubmissions(participationWithResults.submissions);
-                        this.latestResult.set(allResults.length >= 1 ? allResults.first() : undefined);
+                        // The server sends the latest result and, separately, the latest preliminary AI feedback of the latest submission
+                        this.latestResult.set(allResults.find((result) => !isAthenaAIResult(result)));
+                        this.athenaResult.set(allResults.find((result) => isAthenaAIResult(result) && result.successful === true));
+                        this.latestSubmissionId = participationWithResults.submissions?.[0]?.id;
+                        this.subscribeForNewResults(participationWithResults.id!, exercise.id);
                         this.checkForTutorAssessment(dueDateHasPassed);
                         this.course.set(getCourseFromExercise(exercise));
                         this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exercise.id!).subscribe((submissionPolicy) => {
@@ -115,8 +127,9 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
                                 this.getNumberOfSubmissionsForSubmissionPolicy();
                             }
                         });
-                        if (allResults && allResults[0] && allResults[0].feedbacks) {
-                            checkSubsequentFeedbackInAssessment(allResults[0].feedbacks);
+                        const latestFeedbacks = this.latestResult()?.feedbacks;
+                        if (latestFeedbacks) {
+                            checkSubsequentFeedbackInAssessment(latestFeedbacks);
                         }
                     }),
                 )
@@ -142,6 +155,38 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     ngOnDestroy() {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
+        }
+        this.resultSubscription?.unsubscribe();
+    }
+
+    /**
+     * Keeps the feedback in the editor current: the participation is loaded once, but a build result and the preliminary AI
+     * feedback a student requests both arrive over the websocket, in either order.
+     */
+    private subscribeForNewResults(participationId: number, exerciseId?: number) {
+        this.resultSubscription?.unsubscribe();
+        this.resultSubscription = this.participationWebsocketService
+            .subscribeForLatestResultOfParticipation(participationId, true, exerciseId)
+            .pipe(filter((result): result is Result => !!result))
+            .subscribe((result) => this.receiveResult(result));
+    }
+
+    private receiveResult(result: Result) {
+        const submissionId = result.submission?.id;
+        if (submissionId === undefined || (this.latestSubmissionId !== undefined && submissionId < this.latestSubmissionId)) {
+            return;
+        }
+        if (this.latestSubmissionId === undefined || submissionId > this.latestSubmissionId) {
+            // New code was submitted: the AI feedback refers to lines of the previous version
+            this.latestSubmissionId = submissionId;
+            this.athenaResult.set(undefined);
+        }
+        if (isAthenaAIResult(result)) {
+            if (result.successful === true) {
+                this.athenaResult.set(result);
+            }
+        } else if (result.id !== undefined && result.id > (this.latestResult()?.id ?? -1)) {
+            this.latestResult.set(result);
         }
     }
 
@@ -182,15 +227,16 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     }
 
     /**
-     * Check whether a latestResult exists and if, returns the unreferenced feedback of it
+     * Returns the unreferenced feedback of the latest result, followed by the preliminary AI feedback that refers to no code line
      */
     get unreferencedFeedback(): Feedback[] {
         const latestResult = this.latestResult();
+        const aiFeedback = this.athenaResult()?.feedbacks?.filter((feedback) => !feedback.reference) ?? [];
         if (latestResult?.feedbacks) {
             checkSubsequentFeedbackInAssessment(latestResult.feedbacks);
-            return getManualUnreferencedFeedback(latestResult.feedbacks) ?? [];
+            return [...(getManualUnreferencedFeedback(latestResult.feedbacks) ?? []), ...aiFeedback];
         }
-        return [];
+        return aiFeedback;
     }
 
     receivedNewResult() {

@@ -931,6 +931,15 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     Set<Result> findLatestResultsWithAssessmentNoteBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
 
+    /**
+     * Finds the latest result of a submission that a student may see, with its feedbacks. Preliminary Athena feedback is left
+     * out: it is requested alongside a build and often completes before it, so letting it compete for "latest" would hide
+     * the test result (or the other way round). Load it with {@link #findLatestSuccessfulAthenaResultWithFeedbacksBySubmissionId}.
+     *
+     * @param submissionId the id of the submission
+     * @param dateTime     the current time, compared against the assessment due date
+     * @return the latest visible non-Athena result with its feedbacks, if any
+     */
     @Query("""
               SELECT r
               FROM Submission s
@@ -942,6 +951,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                   FROM Submission s2
                     JOIN s2.results r2
                   WHERE s2.id = :submissionId
+                    AND r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
                     AND (
                       r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                       OR (
@@ -955,6 +965,31 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 )
             """)
     Optional<Result> findLatestResultWithFeedbacksBySubmissionId(@Param("submissionId") long submissionId, @Param("dateTime") ZonedDateTime dateTime);
+
+    /**
+     * Finds the latest successfully generated preliminary Athena feedback of a submission, with its feedbacks. Students see it
+     * before the assessment due date, as it is not graded.
+     *
+     * @param submissionId the id of the submission
+     * @return the latest successful Athena result with its feedbacks, if any
+     */
+    @Query("""
+              SELECT r
+              FROM Submission s
+                JOIN s.results r
+                LEFT JOIN FETCH r.feedbacks f
+              WHERE s.id = :submissionId
+                AND r.id = (
+                  SELECT MAX(r2.id)
+                  FROM Submission s2
+                    JOIN s2.results r2
+                  WHERE s2.id = :submissionId
+                    AND r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
+                    AND r2.successful = TRUE
+                    AND r2.completionDate IS NOT NULL
+                )
+            """)
+    Optional<Result> findLatestSuccessfulAthenaResultWithFeedbacksBySubmissionId(@Param("submissionId") long submissionId);
 
     /**
      * Find the latest results for the given participation IDs.

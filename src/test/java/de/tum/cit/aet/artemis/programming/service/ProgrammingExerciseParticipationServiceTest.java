@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -226,6 +227,27 @@ class ProgrammingExerciseParticipationServiceTest {
 
         assertThat(loaded.getSubmissions()).containsExactly(submission);
         assertThat(submission.getResults()).containsExactly(result);
+    }
+
+    @Test
+    void findStudentParticipationWithLatestSubmission_attachesThePreliminaryAthenaFeedbackAfterTheLatestResult() {
+        // Athena feedback is requested alongside a build, so both results of the submission have to reach the code editor.
+        var participation = participationInitializedAt(1L, ZonedDateTime.now());
+        Submission submission = new ProgrammingSubmission();
+        submission.setId(50L);
+        Result buildResult = new Result();
+        buildResult.setId(91L);
+        Result athenaResult = new Result();
+        athenaResult.setId(90L);
+        athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        when(studentParticipationRepository.findByIdElseThrow(1L)).thenReturn(participation);
+        when(submissionRepository.findLatestSubmissionByParticipationId(1L)).thenReturn(Optional.of(submission));
+        when(resultRepository.findLatestResultWithFeedbacksBySubmissionId(eqId(50L), any())).thenReturn(Optional.of(buildResult));
+        when(resultRepository.findLatestSuccessfulAthenaResultWithFeedbacksBySubmissionId(eqId(50L))).thenReturn(Optional.of(athenaResult));
+
+        participationService.findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(1L);
+
+        assertThat(submission.getResults()).containsExactly(buildResult, athenaResult);
     }
 
     @Test

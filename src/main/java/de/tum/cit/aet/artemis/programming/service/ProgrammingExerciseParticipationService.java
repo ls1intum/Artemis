@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -395,16 +396,18 @@ public class ProgrammingExerciseParticipationService {
 
     /**
      * Retrieves the {@link ProgrammingExerciseStudentParticipation} for the given ID, including
-     * its latest {@link Submission} and the most recent {@link Result} with feedback (if available).
+     * its latest {@link Submission}, the most recent {@link Result} with feedback (if available) and the most recent
+     * successful preliminary Athena feedback of that submission (if available).
      *
      * <p>
      * If no submission exists for the participation, the returned participation will contain
      * an empty set of submissions. If a submission exists but no result with feedback is found,
-     * the submission will contain an empty list of results.
+     * the submission will contain an empty list of results. The Athena result is loaded separately and comes second,
+     * because it is requested alongside a build and must neither hide the test result nor be hidden by it.
      * </p>
      *
      * @param participationId the ID of the student participation to retrieve
-     * @return the participation enriched with its latest submission and corresponding result (if available)
+     * @return the participation enriched with its latest submission and corresponding results (if available)
      * @throws EntityNotFoundException if no participation exists with the given ID
      */
     public ProgrammingExerciseStudentParticipation findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(long participationId) throws EntityNotFoundException {
@@ -415,8 +418,10 @@ public class ProgrammingExerciseParticipationService {
             return participation;
         }
         Submission latestSubmission = latestSubmissionOptional.get();
-        Optional<Result> latestResultOptional = resultRepository.findLatestResultWithFeedbacksBySubmissionId(latestSubmission.getId(), ZonedDateTime.now());
-        latestResultOptional.ifPresentOrElse(latestResult -> latestSubmission.setResults(Set.of(latestResult)), () -> latestSubmission.setResults(Set.of()));
+        Set<Result> results = new LinkedHashSet<>();
+        resultRepository.findLatestResultWithFeedbacksBySubmissionId(latestSubmission.getId(), ZonedDateTime.now()).ifPresent(results::add);
+        resultRepository.findLatestSuccessfulAthenaResultWithFeedbacksBySubmissionId(latestSubmission.getId()).ifPresent(results::add);
+        latestSubmission.setResults(results);
         participation.setSubmissions(Set.of(latestSubmission));
         return participation;
     }

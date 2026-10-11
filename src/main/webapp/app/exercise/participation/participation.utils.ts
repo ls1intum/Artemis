@@ -1,4 +1,4 @@
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { SimpleChanges } from '@angular/core';
@@ -6,7 +6,7 @@ import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { orderBy as _orderBy } from 'lodash-es';
-import { isAIResultAndIsBeingProcessed } from 'app/exercise/result/result.utils';
+import { isAIResultAndIsBeingProcessed, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 /**
@@ -97,7 +97,15 @@ export function getLatestResultOfStudentParticipation(
         results = _orderBy(results, 'completionDate', 'desc');
     }
 
+    // Preliminary AI feedback on code is not graded, so a finished one never stands for a programming participation: its latest
+    // result is its latest build or assessment, even when the AI feedback requested alongside the build completes after it.
+    const isProgramming = participation.type === ParticipationType.PROGRAMMING;
+    const isFinishedProgrammingAIFeedback = (result: Result) => isProgramming && isAthenaAIResult(result) && !isAIResultAndIsBeingProcessed(result);
+
     // The latest result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
-    const latestResult = results?.find((result) => showUngradedResults || result.rated === true || (showAthenaPreliminaryFeedback && isAIResultAndIsBeingProcessed(result)));
+    const latestResult = results?.find(
+        (result) =>
+            !isFinishedProgrammingAIFeedback(result) && (showUngradedResults || result.rated === true || (showAthenaPreliminaryFeedback && isAIResultAndIsBeingProcessed(result))),
+    );
     return latestResult ? latestResult : undefined;
 }

@@ -124,6 +124,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * extra reactivity; {@link collectFeedbackSuggestionBadges} falls back to {@link feedbackForSubmission} then.
      */
     referencedFeedback = input<Feedback[] | undefined>(undefined);
+    /**
+     * The feedback the editor shows. Left `undefined`, it shows the feedback of the participation's first result. The student
+     * container sets it, as it shows the preliminary AI feedback next to the latest result and updates both as results arrive.
+     */
+    editorFeedback = input<Feedback[] | undefined>(undefined);
     readOnlyManualFeedback = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
     disableAutoSave = input<boolean>(false);
@@ -506,9 +511,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * Returns the feedbacks for the current submission or an empty array if no feedbacks are available.
      */
     feedbackForSubmission(): Feedback[] {
-        const submission = this.participation()?.submissions?.[0];
-        const result = submission?.results?.[0];
-        return this.showInlineFeedback() && result?.feedbacks ? result.feedbacks : [];
+        const feedbacks = this.editorFeedback() ?? this.participation()?.submissions?.[0]?.results?.[0]?.feedbacks;
+        return this.showInlineFeedback() && feedbacks ? feedbacks : [];
     }
 
     /**
