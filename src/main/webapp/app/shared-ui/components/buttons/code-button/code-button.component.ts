@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
@@ -49,6 +49,12 @@ export enum RepositoryAuthenticationMethod {
     Password = 'password',
     Token = 'token',
     SSH = 'ssh',
+}
+
+export interface ProgrammingExerciseIdeConfiguration {
+    programmingLanguage?: ProgrammingLanguage;
+    allowOnlineIde?: boolean;
+    buildConfig?: ProgrammingExerciseBuildConfig;
 }
 
 @Component({
@@ -114,7 +120,7 @@ export class CodeButtonComponent implements OnInit {
     repositoryUri = input.required<string>();
     routerLinkForRepositoryView = input.required<(string | number)[]>();
     participations = input<ProgrammingExerciseStudentParticipation[]>([]);
-    exercise = input<ProgrammingExercise>();
+    programmingExerciseIdeConfiguration = input<ProgrammingExerciseIdeConfiguration>();
     hideLabelMobile = input<boolean>(false);
     hideLabelBreakpoint = input<'md' | 'xl'>('md');
     isPractice = input.required<boolean>();
@@ -140,7 +146,7 @@ export class CodeButtonComponent implements OnInit {
     doesUserHaveSSHkeys = signal(false);
     areAnySshKeysExpired = signal(false);
     // The repository-scoped VCS access token for course staff (used for base repositories and student repositories browsed by staff).
-    repositoryAccessToken = signal<string | undefined>(undefined);
+    repositoryAccessToken = signal<string | undefined>(undefined); // set exclusively through onClick and its called methods
     // The repository identity the cached repositoryAccessToken was minted for. The repository view reuses one code-button instance across base repositories (only the route
     // params change), so a token cached for the previous repository must not be reused for the next one: repository tokens are scoped to one exact repository URI and would fail
     // authentication. We therefore remember which repository the cached token belongs to and reload when it no longer matches the current repository.
@@ -454,7 +460,7 @@ export class CodeButtonComponent implements OnInit {
      * repository (identified by its participation). Does nothing when the required identifiers (exercise id, and the participation id for a student repository) are unavailable.
      */
     private loadRepositoryScopedTokenForCurrentRepository() {
-        const exerciseId = this.exercise()?.id ?? this.exerciseId() ?? this.activeParticipation()?.exercise?.id;
+        const exerciseId = this.exerciseId() ?? this.activeParticipation()?.exercise?.id;
         if (!exerciseId) {
             return;
         }
@@ -564,12 +570,14 @@ export class CodeButtonComponent implements OnInit {
         return [
             this.repositoryType(),
             this.repositoryUri(),
-            this.exercise()?.id ?? this.exerciseId() ?? this.activeParticipation()?.exercise?.id,
+            this.exerciseId() ?? this.activeParticipation()?.exercise?.id,
             this.auxiliaryRepositoryId(),
             this.participationId() ?? this.activeParticipation()?.id,
         ].join('|');
     }
 
+    // to mirror this we need either all inputs on which usesRepositoryScopedToken and hasValidRepositoryAccessToken depend and the logic for fetching and setting repositoryAccessToken
+    // or we need an activeParticipation
     private getUsedToken(alwaysUseToken = false): string | undefined {
         if (this.useToken() || alwaysUseToken) {
             if (this.usesRepositoryScopedToken()) {
@@ -614,7 +622,7 @@ export class CodeButtonComponent implements OnInit {
 
     getIde(): Ide {
         return (
-            this.programmingLanguageToIde.get(this.exercise()?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ??
+            this.programmingLanguageToIde.get(this.programmingExerciseIdeConfiguration()?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ??
             this.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY) ??
             this.vscodeFallback
         );
@@ -645,20 +653,21 @@ export class CodeButtonComponent implements OnInit {
     }
 
     private initTheia(profileInfo: ProfileInfo) {
-        if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA) && this.exercise()) {
-            const exercise = this.exercise()!;
+        const programmingExerciseIdeConfiguration = this.programmingExerciseIdeConfiguration();
+        const exerciseId = this.exerciseId();
+        if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA) && programmingExerciseIdeConfiguration && exerciseId) {
             // Theia requires the Build Config of the programming exercise to be set
-            this.programmingExerciseService.getTheiaConfig(exercise.id!).subscribe((theiaConfig) => {
+            this.programmingExerciseService.getTheiaConfig(exerciseId).subscribe((theiaConfig) => {
                 // Merge the theiaConfig (containing the theiaImage) into the buildConfig
                 // The exercise may arrive without a build config; the previous spread tolerated that, so fall back to a
                 // fresh one rather than cloning undefined.
-                this.exercise()!.buildConfig = cloneWith(exercise.buildConfig ?? new ProgrammingExerciseBuildConfig(), theiaConfig);
+                programmingExerciseIdeConfiguration.buildConfig = cloneWith(programmingExerciseIdeConfiguration.buildConfig ?? new ProgrammingExerciseBuildConfig(), theiaConfig);
 
                 // Set variables now, sanitize later on
                 this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
 
                 // Verify that all conditions are met
-                if (this.theiaPortalURL !== '' && exercise.allowOnlineIde && theiaConfig.theiaImage) {
+                if (this.theiaPortalURL !== '' && programmingExerciseIdeConfiguration.allowOnlineIde && theiaConfig.theiaImage) {
                     this.theiaEnabled.set(true);
                 }
             });
@@ -666,7 +675,7 @@ export class CodeButtonComponent implements OnInit {
     }
 
     async startOnlineIDE() {
-        const theiaImage = this.exercise()?.buildConfig?.theiaImage ?? '';
+        const theiaImage = this.programmingExerciseIdeConfiguration()?.buildConfig?.theiaImage ?? '';
         const repositoryUri = this.getHttpOrSshRepositoryUri(false, true, true);
         const userName = this.user()!.name;
         const userEmail = this.user()!.email;

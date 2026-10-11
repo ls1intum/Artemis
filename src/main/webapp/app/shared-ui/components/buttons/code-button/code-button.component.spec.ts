@@ -12,13 +12,10 @@ import * as Sentry from '@sentry/angular';
 import { By } from '@angular/platform-browser';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { User } from 'app/account/user/user.model';
 import { CodeButtonComponent, RepositoryAuthenticationMethod } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -212,7 +209,7 @@ describe('CodeButtonComponent', () => {
 
         it('should load the repository-scoped token when opening the dialog for a base repository', async () => {
             fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
-            fixture.componentRef.setInput('exercise', { id: 42 } as ProgrammingExercise);
+            fixture.componentRef.setInput('exerciseId', 42);
             fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-exercise.git');
             await component['initializeCodeButtonComponent']();
             component.onClick();
@@ -227,7 +224,7 @@ describe('CodeButtonComponent', () => {
         it('should create the repository-scoped token on demand when none exists yet (404)', async () => {
             getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
             fixture.componentRef.setInput('repositoryType', 'SOLUTION');
-            fixture.componentRef.setInput('exercise', { id: 42 } as ProgrammingExercise);
+            fixture.componentRef.setInput('exerciseId', 42);
             await component['initializeCodeButtonComponent']();
             component.onClick();
             fixture.detectChanges();
@@ -238,7 +235,7 @@ describe('CodeButtonComponent', () => {
 
         it('should not load participation tokens while in base repository mode', async () => {
             fixture.componentRef.setInput('repositoryType', 'TESTS');
-            fixture.componentRef.setInput('exercise', { id: 42 } as ProgrammingExercise);
+            fixture.componentRef.setInput('exerciseId', 42);
             fixture.componentRef.setInput('participations', [participation]);
             await component['initializeCodeButtonComponent']();
             component.onClick();
@@ -529,7 +526,7 @@ describe('CodeButtonComponent', () => {
 
             await component['initializeCodeButtonComponent']();
             router.setUrl('/course-management');
-            fixture.componentRef.setInput('exercise', { id: 99 } as ProgrammingExercise);
+            fixture.componentRef.setInput('exerciseId', 99);
             fixture.componentRef.setInput('participations', [othersParticipation]);
             fixture.detectChanges();
             await fixture.whenStable();
@@ -581,7 +578,7 @@ describe('CodeButtonComponent', () => {
 
             await component['initializeCodeButtonComponent']();
             router.setUrl('/course-management');
-            fixture.componentRef.setInput('exercise', { id: 99 } as ProgrammingExercise);
+            fixture.componentRef.setInput('exerciseId', 99);
             fixture.componentRef.setInput('participations', [othersParticipation]);
             fixture.detectChanges();
             await fixture.whenStable();
@@ -717,7 +714,7 @@ describe('CodeButtonComponent', () => {
 
         await component['initializeCodeButtonComponent']();
         router.setUrl('/course-management');
-        fixture.componentRef.setInput('exercise', { id: 77 } as ProgrammingExercise);
+        fixture.componentRef.setInput('exerciseId', 77);
         fixture.componentRef.setInput('participations', [othersTestRunParticipation]);
         fixture.detectChanges();
         await fixture.whenStable();
@@ -845,7 +842,7 @@ describe('CodeButtonComponent', () => {
 
         await component['initializeCodeButtonComponent']();
         router.setUrl('/course-management');
-        fixture.componentRef.setInput('exercise', { id: 88 } as ProgrammingExercise);
+        fixture.componentRef.setInput('exerciseId', 88);
         fixture.componentRef.setInput('participations', [othersParticipation]);
         fixture.detectChanges();
         await fixture.whenStable();
@@ -994,54 +991,27 @@ describe('CodeButtonComponent', () => {
                 { id: 1, testRun: true },
                 { id: 2, testRun: false },
             ],
-            { dueDate: dayjs().subtract(1, 'hour') } as Exercise,
             false,
             2,
         ],
-        [[{ id: 1, testRun: true }], { dueDate: dayjs().subtract(1, 'hour') } as Exercise, false, 1],
-        [[{ id: 2, testRun: false }], { dueDate: dayjs().subtract(1, 'hour') } as Exercise, false, 2],
+        [[{ id: 1, testRun: true }], false, 1],
+        [[{ id: 2, testRun: false }], false, 2],
         [
             [
                 { id: 1, testRun: true },
                 { id: 2, testRun: false },
             ],
-            { dueDate: dayjs().add(1, 'hour') } as Exercise,
-            false,
-            2,
-        ],
-        [[{ id: 2, testRun: false }], { dueDate: dayjs().add(1, 'hour') } as Exercise, false, 2],
-        [
-            [
-                { id: 1, testRun: true },
-                { id: 2, testRun: false },
-            ],
-            { dueDate: undefined } as Exercise,
-            false,
-            2,
-        ],
-        [[{ id: 2, testRun: false }], { dueDate: undefined } as Exercise, false, 2],
-        [[{ id: 1, testRun: true }], { exerciseGroup: {} } as Exercise, false, 1],
-        [
-            [
-                { id: 1, testRun: true },
-                { id: 2, testRun: false },
-            ],
-            { dueDate: dayjs().subtract(1, 'hour') } as Exercise,
             true,
             1,
         ],
-    ])(
-        'should correctly choose active participation',
-        async (participations: ProgrammingExerciseStudentParticipation[], exercise: Exercise, isPractice: boolean, expected: number) => {
-            fixture.componentRef.setInput('participations', participations);
-            fixture.componentRef.setInput('exercise', exercise);
-            fixture.componentRef.setInput('isPractice', isPractice);
+    ])('should correctly choose active participation', async (participations: ProgrammingExerciseStudentParticipation[], isPractice: boolean, expected: number) => {
+        fixture.componentRef.setInput('participations', participations);
+        fixture.componentRef.setInput('isPractice', isPractice);
 
-            fixture.detectChanges();
+        fixture.detectChanges();
 
-            expect(component.activeParticipation()?.id).toBe(expected);
-        },
-    );
+        expect(component.activeParticipation()?.id).toBe(expected);
+    });
 
     it.each([
         [
@@ -1120,9 +1090,8 @@ describe('CodeButtonComponent', () => {
         getTheiaConfigStub.mockReturnValue(of(theiaConfig as ProgrammingExerciseTheiaConfig));
 
         // Expand the programmingExercise by given properties
-        fixture.componentRef.setInput('exercise', {
-            ...programmingExercise,
-        } as any);
+        fixture.componentRef.setInput('exerciseId', 1);
+        fixture.componentRef.setInput('programmingExerciseIdeConfiguration', programmingExercise);
 
         await component['initializeCodeButtonComponent']();
 
@@ -1137,7 +1106,7 @@ describe('CodeButtonComponent', () => {
 
         const getToolTokenSpy = vi.spyOn(accountService, 'getToolToken').mockReturnValue(of('token'));
 
-        fixture.componentRef.setInput('exercise', { buildConfig: { theiaImage: 'theia-image' } } as any);
+        fixture.componentRef.setInput('programmingExerciseIdeConfiguration', { buildConfig: { theiaImage: 'theia-image' } });
         fixture.componentRef.setInput('repositoryUri', 'https://repo.uri');
         fixture.componentRef.setInput('participations', [{ repositoryUri: 'https://repo.uri', vcsAccessToken: 'token' } as any]);
 
@@ -1185,7 +1154,7 @@ describe('CodeButtonComponent', () => {
 
         const getToolTokenSpy = vi.spyOn(accountService, 'getToolToken').mockReturnValue(of('token'));
 
-        fixture.componentRef.setInput('exercise', { buildConfig: { theiaImage: 'theia-image' } } as any);
+        fixture.componentRef.setInput('programmingExerciseIdeConfiguration', { buildConfig: { theiaImage: 'theia-image' } });
         fixture.componentRef.setInput('repositoryUri', 'https://repo.uri');
         fixture.componentRef.setInput('participations', [{ repositoryUri: 'https://repo.uri', vcsAccessToken: 'token' }]);
         component.theiaPortalURL = 'https://theia.portal.url';
