@@ -38,6 +38,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
 import { map } from 'rxjs/operators';
+import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRoute';
 
 const BREAKPOINTS = {
     md: '(min-width: 768px)',
@@ -89,9 +90,8 @@ export class CodeButtonComponent implements OnInit {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly RepositoryAuthenticationMethod = RepositoryAuthenticationMethod;
 
-    loading = input<boolean>(false);
-
     // Input
+    loading = input<boolean>(false);
     smallButtons = input.required<boolean>();
     repositoryUri = input.required<string>();
     routerLinkForRepositoryView = input.required<(string | number)[]>();
@@ -108,12 +108,13 @@ export class CodeButtonComponent implements OnInit {
     // The student participation id, set by staff tables (scores, participations, feedback) that render the code button for an individual student repository without passing the
     // full participation object. It lets the repository-scoped staff token be minted for exactly that student repository.
     participationId = input<number>();
+    readonly isInCourseManagement = getSignalBasedOnRoute(this.router, (url) => url.includes('course-management'));
 
     // Fields (immutable after construction)
     sshEnabled = false;
     sshTemplateUrl?: string;
     versionControlUrl!: string; // set in ngOnInit() from profile info
-    readonly isInCourseManagement = signal<boolean>(undefined!);
+
     sshSettingsUrl!: string; // set in configureTooltips() from ngOnInit()
     user!: User; // set in ngOnInit() from accountService.identity()
     // The current user's login as a signal (set in ngOnInit alongside `user`) so the token-loading effect and the
@@ -206,8 +207,6 @@ export class CodeButtonComponent implements OnInit {
     readonly faLaptopCode = faLaptopCode;
 
     constructor() {
-        this.isInCourseManagement.set(this.router.url.includes('course-management'));
-
         // we only loadVcsAccessToken if participations exist => reduces potentially repeated HTTP calls
         effect(() => {
             if (this.isBaseRepository()) {
