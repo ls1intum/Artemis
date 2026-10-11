@@ -219,7 +219,7 @@
                 "description": "Beschreibung",
                 "updateNotificationText": "Update Benachrichtigungstext",
                 "updateNotificationTextPlaceholder": "Optionaler Benachrichtigungstext für Studierende über Änderungen.",
-                "updateNotificationTextMaxLengthValidationError": "Der Benachrichtigungstext kann maximal 1000 Zeichen lang sein.",
+                "updateNotificationTextMaxLengthValidationError": "Der Benachrichtigungstext kann maximal 255 Zeichen lang sein.",
                 "descriptionPlaceHolder": "Gib dem Inhalt eine Beschreibung",
                 "nameRequiredValidationError": "Der Name ist ein Pflichtfeld.",
                 "nameMaxLengthValidationError": "Der Name kann maximal 255 Zeichen lang sein.",

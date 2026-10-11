@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +41,8 @@ public class GroupNotificationService {
 
     /**
      * The longest message of an editor that a notification delivers. A notification is a short heads-up that links to
-     * what changed, and its stored parameter values are bounded, so a longer message is shortened with an ellipsis.
+     * what changed, and its stored parameter values are bounded, so a longer message is shortened with an ellipsis. The
+     * notification text field of the attachment form in the client takes no more than this.
      */
     private static final int MAX_NOTIFICATION_TEXT_LENGTH = 255;
 
@@ -298,6 +298,15 @@ public class GroupNotificationService {
         if (notificationText == null || notificationText.isBlank()) {
             return null;
         }
-        return StringUtils.abbreviate(notificationText.strip(), "…", MAX_NOTIFICATION_TEXT_LENGTH);
+        String text = notificationText.strip();
+        if (text.length() <= MAX_NOTIFICATION_TEXT_LENGTH) {
+            return text;
+        }
+        // Leave room for the ellipsis, and do not cut a character that takes two chars, such as an emoji, in half.
+        int end = MAX_NOTIFICATION_TEXT_LENGTH - 1;
+        if (Character.isHighSurrogate(text.charAt(end - 1))) {
+            end--;
+        }
+        return text.substring(0, end) + "…";
     }
 }

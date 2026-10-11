@@ -39,8 +39,11 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatus;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.AttachmentChangedNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.ExerciseUpdatedNotification;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationParameterDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationParameterTestRepository;
@@ -125,11 +128,9 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     private static final String NOTIFICATION_TEXT = "notificationText";
 
-    /** The database identifier of {@code ExerciseUpdatedNotification}. */
-    private static final int EXERCISE_UPDATED_NOTIFICATION_TYPE = 8;
+    private static final int EXERCISE_UPDATED_NOTIFICATION_TYPE = ExerciseUpdatedNotification.class.getAnnotation(CourseNotificationType.class).value();
 
-    /** The database identifier of {@code AttachmentChangedNotification}. */
-    private static final int ATTACHMENT_CHANGED_NOTIFICATION_TYPE = 10;
+    private static final int ATTACHMENT_CHANGED_NOTIFICATION_TYPE = AttachmentChangedNotification.class.getAnnotation(CourseNotificationType.class).value();
 
     private static final ZonedDateTime FUTURISTIC_TIME = ZonedDateTime.now().plusHours(2);
 
@@ -278,6 +279,15 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
         String storedText = storedParametersOfNotificationType(ATTACHMENT_CHANGED_NOTIFICATION_TYPE).get("notificationText");
         assertThat(storedText).hasSize(255).isEqualTo("a".repeat(254) + "…");
+    }
+
+    @Test
+    void shouldNotCutAnEmojiInHalfWhenShorteningTheNotificationText() {
+        // The emoji takes the 254th and 255th char, so cutting after 254 chars would keep only its first half.
+        groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, lecture, "a".repeat(253) + "😀" + "b".repeat(10));
+
+        String storedText = storedParametersOfNotificationType(ATTACHMENT_CHANGED_NOTIFICATION_TYPE).get("notificationText");
+        assertThat(storedText).isEqualTo("a".repeat(253) + "…");
     }
 
     @Test

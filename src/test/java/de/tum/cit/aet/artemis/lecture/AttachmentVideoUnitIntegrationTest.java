@@ -422,7 +422,8 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         updateAttachmentVideoUnitCreatedViaEndpoint("");
 
         performGetAttachmentChangedNotificationsAsStudent().andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS, hasSize(1)))
-                .andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".payload.notificationText").doesNotExist());
+                .andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".payload.notificationText").doesNotExist())
+                .andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".parameters.notificationText").doesNotExist());
     }
 
     /**

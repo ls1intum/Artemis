@@ -135,6 +135,13 @@ $notification-padding-x: 1.2rem;
     font-size: 90%;
 }
 
+// The fluid card grows vertically, so the notification list shows enough lines for the longest message an editor can
+// send with an exercise or attachment update, which the fixed size toast cuts after two lines.
+.course-notification-wrap.is-fluid .course-notification-content {
+    -webkit-line-clamp: 6;
+    line-clamp: 6;
+}
+
 .course-notification-loading-indicator {
     position: absolute;
     bottom: 0;
