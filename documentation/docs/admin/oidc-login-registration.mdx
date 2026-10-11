@@ -60,3 +60,44 @@ info:
   oidc:
     # Customizable string used for the external login selection screen button (e.g. 'TUM Login')
     buttonLabel: "${ARTEMIS_OIDC_DISPLAY_NAME:TUM Login}"
+```
+
+## Requested Scopes
+
+Artemis requests the scopes `openid`, `profile` and `email` unless you configure others. The property `spring.security.oauth2.client.registration.oidc.scope` accepts every form Spring Boot supports:
+
+- a YAML list, as in `application-oidc.yml`
+- one comma-separated value, for example `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_SCOPE='openid,profile,email'`
+- one indexed environment variable per scope, for example `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_SCOPE_0='openid'`
+
+At startup Artemis logs the scopes it requests (`OIDC login requests the scopes [...]`). Check this line first when an identity provider does not release a claim you expect.
+
+## Matriculation Number with TUM Login
+
+TUM Login releases the matriculation number through the client-specific scope `imMatrikelNr`. TUM IT has to register this scope and the attribute of the same name for your client first. Request the scope and map the claim of the same name:
+
+```yaml
+artemis:
+  user-management:
+    oidc:
+      mappings:
+        matriculation-number: "imMatrikelNr"
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          oidc:
+            scope: "openid,profile,email,imMatrikelNr"
+```
+
+Artemis stores the claim as the registration number of the account. It sets the number at the first login and updates it at later logins when it changed, unless another account already uses it. A blank or missing claim never deletes an existing number.
+
+To see which claims an identity provider releases, look for this line in the server log after a login. It lists the claim names of the ID token and of the userinfo response, never their values, and states whether the configured matriculation claim is present:
+
+```text
+OIDC login received the claims [...] in the ID token and [...] in the userinfo response. The configured matriculation claim 'imMatrikelNr' is present.
+```
+
+If the claim is missing, check the startup line for the requested scopes first, then ask the identity provider whether the scope is registered for your client.
