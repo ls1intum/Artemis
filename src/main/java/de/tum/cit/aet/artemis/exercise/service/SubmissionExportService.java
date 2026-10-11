@@ -65,40 +65,35 @@ public abstract class SubmissionExportService {
 
     /**
      * Exports student submission of an exercise to a zip file located in the submission exports folder.
-     * The zip file is deleted automatically after 30 minutes. The function throws a bad request if the
-     * export process fails.
+     * The zip file is deleted automatically after 30 minutes.
+     * <p>
+     * A bad request is thrown if there is nothing to export (no matching participation has a submitted submission).
+     * If there were submissions to export but none could be written to the zip file, an internal server error is thrown
+     * instead, so that an I/O problem on the server is not reported as a mistake of the user.
      *
      * @param exerciseId              the id of the exercise to be exported
      * @param submissionExportOptions the options for the export
      * @return the path to the zipped file with the exported submissions
      */
     public Path exportStudentSubmissionsElseThrow(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
+        final List<String> exportErrors = new ArrayList<>();
         final List<Path> zippedSubmissionsPaths;
         try {
-            zippedSubmissionsPaths = exportStudentSubmissions(exerciseId, submissionExportOptions);
+            Path outputDir = fileService.createTemporaryDirectory(submissionExportPath, "submission-export-", EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
+            zippedSubmissionsPaths = exportStudentSubmissions(exerciseId, submissionExportOptions, true, outputDir, exportErrors, new ArrayList<>());
         }
         catch (IOException e) {
             throw new InternalServerErrorException("Failed to create the export directory for exercise " + exerciseId + ": " + e.getMessage());
         }
         if (zippedSubmissionsPaths.isEmpty()) {
+            if (!exportErrors.isEmpty()) {
+                // the details, which include server file paths, are only logged; do not expose them to the client
+                throw new InternalServerErrorException("Failed to export the submissions of exercise " + exerciseId + " (" + exportErrors.size()
+                        + " error(s) while writing the export files). Please contact an administrator, the server log contains the details.");
+            }
             throw new BadRequestAlertException("Failed to export student submissions.", "SubmissionExport", "noSubmissions");
         }
         return zippedSubmissionsPaths.getFirst();
-
-    }
-
-    /**
-     * Exports student submission of an exercise to a zip file located in the submission exports folder.
-     * The zip file is deleted automatically after 30 minutes.
-     *
-     * @param exerciseId              the id of the exercise to be exported
-     * @param submissionExportOptions the options for the export
-     * @return the zipped file with the exported submissions
-     * @throws IOException if the export directory could not be created
-     */
-    public List<Path> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) throws IOException {
-        Path outputDir = fileService.createTemporaryDirectory(submissionExportPath, "submission-export-", EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
-        return exportStudentSubmissions(exerciseId, submissionExportOptions, true, outputDir, new ArrayList<>(), new ArrayList<>());
     }
 
     /**
@@ -231,6 +226,7 @@ public abstract class SubmissionExportService {
             }
             catch (IOException e) {
                 log.error("Failed to zip submissions for exercise {} to {}", exercise.getId(), zipFilePath, e);
+                exportErrors.add("Could not create zip file " + zipFilePath + " for exporting: " + e.getMessage());
                 return List.of();
             }
             finally {
