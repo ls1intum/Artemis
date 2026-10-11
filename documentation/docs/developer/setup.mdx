@@ -145,9 +145,9 @@ The server configuration does not cover the connection. MySQL Connector/J connec
 For the development environment, the default MySQL user is `root` with an empty password.
 (In case you want to use a different password, make sure to change the value in `application-local.yml` *(spring > datasource > password)* and in `liquibase.gradle` *(within the 'liquibaseCommand' as argument password)*).
 
-#### Set empty root password for MySQL 9
+#### Set empty root password for MySQL 9 and later
 
-If you have problems connecting to the MySQL 9 database using an empty root password, you can try the following command to reset the root password to an empty password:
+If you have problems connecting to a MySQL 9 or later database using an empty root password, you can try the following command to reset the root password to an empty password:
 
 ```bash
 mysql -u root --execute "ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY ''";
