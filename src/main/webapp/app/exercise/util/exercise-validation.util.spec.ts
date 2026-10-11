@@ -1,8 +1,18 @@
 import { describe, expect, it } from 'vitest';
+import { signal } from '@angular/core';
+import dayjs from 'dayjs/esm';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Exercise, ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
-import { ExerciseValidationViewState, getCommonExerciseInvalidReasons, getPlagiarismInvalidReasons } from 'app/exercise/util/exercise-validation.util';
+import {
+    ExerciseValidationViewState,
+    getCommonExerciseInvalidReasons,
+    getGeneralSectionInvalidReasons,
+    getGradingSectionInvalidReasons,
+    getModeSectionInvalidReasons,
+    getPlagiarismInvalidReasons,
+} from 'app/exercise/util/exercise-validation.util';
+import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
 describe('ExerciseValidationUtil', () => {
     const validViewState = (): ExerciseValidationViewState => ({
@@ -233,11 +243,21 @@ describe('ExerciseValidationUtil', () => {
             ]);
         });
 
-        it('should report an ordering error on the example solution publication date', () => {
+        it('should report an example solution publication date before an earlier date of the exercise', () => {
             const exercise = validExercise();
-            exercise.exampleSolutionPublicationDateError = true;
+            exercise.dueDate = dayjs().add(2, 'days');
+            exercise.exampleSolutionPublicationDate = exercise.dueDate.subtract(1, 'day');
 
             expect(translateKeys(exercise, validViewState())).toEqual(['artemisApp.exercise.exampleSolutionPublicationDateError']);
+        });
+
+        it('should take the ordering error from the dates, not from the flag the date validation of the exercise service leaves behind', () => {
+            const exercise = validExercise();
+            exercise.dueDate = dayjs().add(2, 'days');
+            exercise.exampleSolutionPublicationDate = exercise.dueDate.add(1, 'day');
+            exercise.exampleSolutionPublicationDateError = true;
+
+            expect(translateKeys(exercise, validViewState())).toEqual([]);
         });
 
         it('should report a malformed example solution publication date through the timeline', () => {
@@ -286,34 +306,70 @@ describe('ExerciseValidationUtil', () => {
     });
 
     describe('getPlagiarismInvalidReasons', () => {
-        const plagiarismComponent = (isFormValid: boolean, invalidControlNames: string[] = []) =>
-            ({
-                isFormValid: () => isFormValid,
-                form: {
-                    controls: {
-                        similarityThreshold: { invalid: invalidControlNames.includes('similarityThreshold') },
-                        minimumScore: { invalid: invalidControlNames.includes('minimumScore') },
-                        minimumSize: { invalid: invalidControlNames.includes('minimumSize') },
-                        continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: {
-                            invalid: invalidControlNames.includes('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod'),
-                        },
-                    },
-                },
-            }) as never;
+        const plagiarismComponent = (invalidControlNames: string[]) =>
+            ({ invalidControlNames: signal(invalidControlNames) }) as Partial<ExerciseUpdatePlagiarismComponent> as ExerciseUpdatePlagiarismComponent;
 
         it('should report nothing when no component is rendered', () => {
             expect(getPlagiarismInvalidReasons(undefined)).toEqual([]);
         });
 
-        it('should report nothing when the plagiarism form is valid', () => {
-            expect(getPlagiarismInvalidReasons(plagiarismComponent(true, ['minimumScore']))).toEqual([]);
+        it('should report nothing when no plagiarism control is invalid', () => {
+            expect(getPlagiarismInvalidReasons(plagiarismComponent([]))).toEqual([]);
+        });
+
+        it('should ignore an invalid control that has no message of its own', () => {
+            expect(getPlagiarismInvalidReasons(plagiarismComponent(['continuousPlagiarismControlEnabled']))).toEqual([]);
         });
 
         it('should report one reason per invalid plagiarism control', () => {
-            expect(getPlagiarismInvalidReasons(plagiarismComponent(false, ['similarityThreshold', 'minimumSize']))).toEqual([
+            expect(getPlagiarismInvalidReasons(plagiarismComponent(['similarityThreshold', 'minimumSize']))).toEqual([
                 { translateKey: 'artemisApp.exercise.form.continuousPlagiarismControl.similarityThreshold.pattern', translateValues: {} },
                 { translateKey: 'artemisApp.exercise.form.continuousPlagiarismControl.minimumSize.customMin', translateValues: {} },
             ]);
+        });
+    });
+
+    describe('sections', () => {
+        const keys = (reasons: { translateKey: string }[]) => reasons.map((reason) => reason.translateKey);
+
+        it('should split the common reasons into the sections that show them, in the same order', () => {
+            const exercise = validExercise();
+            exercise.title = undefined;
+            exercise.mode = ExerciseMode.TEAM;
+            exercise.teamAssignmentConfig = undefined;
+            exercise.maxPoints = undefined;
+            const viewState = validViewState();
+
+            const general = keys(getGeneralSectionInvalidReasons(exercise, viewState));
+            const mode = keys(getModeSectionInvalidReasons(exercise));
+            const grading = keys(getGradingSectionInvalidReasons(exercise, viewState));
+
+            expect(general).toEqual(['artemisApp.exercise.form.title.undefined']);
+            expect(mode).toEqual(['artemisApp.exercise.form.minTeamSize.required', 'artemisApp.exercise.form.maxTeamSize.required']);
+            expect(grading).toEqual(['artemisApp.exercise.form.points.undefined']);
+            expect(translateKeys(exercise, viewState)).toEqual([...general, ...mode, ...grading]);
+        });
+
+        it('should put the channel name into the general section', () => {
+            const exercise = validExercise();
+            exercise.channelName = undefined;
+
+            expect(keys(getGeneralSectionInvalidReasons(exercise, validViewState()))).toEqual(['artemisApp.exercise.form.channelName.empty']);
+            expect(getGradingSectionInvalidReasons(exercise, validViewState())).toEqual([]);
+        });
+
+        it('should leave the timeline out of the grading section in exam mode', () => {
+            const viewState: ExerciseValidationViewState = {
+                ...validViewState(),
+                isExamMode: true,
+                timelineStatus: {
+                    valid: false,
+                    empty: false,
+                    invalidItems: [{ labelStringKey: 'artemisApp.exercise.dueDate', reasonKey: 'artemisApp.exercise.form.timeline.order', dateName: 'Due Date' }],
+                },
+            };
+
+            expect(getGradingSectionInvalidReasons(validExercise(), viewState)).toEqual([]);
         });
     });
 });

@@ -304,13 +304,14 @@ public class ParticipationTeamWebsocketService {
         final Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
         // Only team exercises sync through this endpoint. It consults none of the exam gates the REST save applies, so an
         // individual or exam participation must not be saved here.
-        if (!exercise.isTeamMode() || exercise.isExamExercise()) {
+        // A practice participation of a team exercise belongs to a single student, so there is no team to sync with.
+        if (!exercise.isTeamMode() || exercise.isExamExercise() || participation.isPracticeMode()) {
             return;
         }
 
         if (submission instanceof ModelingSubmission modelingSubmission && exercise instanceof ModelingExercise modelingExercise) {
             ModelingSubmissionApi api = modelingSubmissionApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingSubmissionApi.class));
-            submission = api.handleModelingSubmission(modelingSubmission, modelingExercise, user);
+            submission = api.handleModelingSubmission(modelingSubmission, modelingExercise, user, participation);
             // The save wrote the foreign key from an id, so the saved submission carries no participation. Both the
             // filtering below and the teammates' payload read one, and this handler loaded it with its team above.
             submission.setParticipation(participation);
@@ -318,7 +319,7 @@ public class ParticipationTeamWebsocketService {
         }
         else if (submission instanceof TextSubmission textSubmission && exercise instanceof TextExercise textExercise) {
             TextSubmissionApi api = textSubmissionApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionApi.class));
-            submission = api.handleTextSubmission(textSubmission, textExercise, user);
+            submission = api.handleTextSubmission(textSubmission, textExercise, user, participation);
             submission.setParticipation(participation);
             api.hideDetails(submission, user);
         }
