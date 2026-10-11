@@ -35,7 +35,9 @@ catalog:
   '@storybook/addon-vitest': 10.6.1
   '@storybook/angular-vite': 10.6.1
   '@tailwindcss/postcss': 4.3.3
-  '@types/node': 24.13.6
+  # Node 24 is the supported runtime (.nvmrc, `engines`, the Dockerfiles and CI). Stay on the 24.x line: @types/node 25 and 26
+  # describe the APIs of Node versions we do not support yet. Move to the next major together with the Node major, not on its own.
+  '@types/node': 24.19.2
   '@types/react': 19.2.18
   '@vitest/browser': 5.0.3
   '@vitest/browser-playwright': 5.0.3
