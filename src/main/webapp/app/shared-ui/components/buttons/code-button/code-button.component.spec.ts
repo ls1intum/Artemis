@@ -171,7 +171,7 @@ describe('CodeButtonComponent', () => {
         component.onClick();
         fixture.detectChanges();
 
-        expect(component.user.vcsAccessToken).toEqual(vcsToken);
+        expect(component.user()!.vcsAccessToken).toEqual(vcsToken);
         expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
         expect(createVcsAccessTokenSpy).not.toHaveBeenCalled();
     });
@@ -183,7 +183,7 @@ describe('CodeButtonComponent', () => {
         await fixture.whenStable();
         component.onClick();
         fixture.detectChanges();
-        expect(component.user.vcsAccessToken).toEqual(vcsToken);
+        expect(component.user()!.vcsAccessToken).toEqual(vcsToken);
         expect(getVcsAccessTokenSpy).toHaveBeenCalled();
         expect(createVcsAccessTokenSpy).not.toHaveBeenCalled();
     });
@@ -420,7 +420,7 @@ describe('CodeButtonComponent', () => {
             fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
             fixture.componentRef.setInput('exerciseId', 7);
             await component['initializeCodeButtonComponent']();
-            component.isInCourseManagement.set(true);
+            router.setUrl('/course-management');
             fixture.detectChanges();
 
             fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
@@ -527,7 +527,7 @@ describe('CodeButtonComponent', () => {
             } as ProgrammingExerciseStudentParticipation;
 
             await component['initializeCodeButtonComponent']();
-            component.isInCourseManagement.set(true);
+            router.setUrl('/course-management');
             fixture.componentRef.setInput('exercise', { id: 99 } as ProgrammingExercise);
             fixture.componentRef.setInput('participations', [othersParticipation]);
             fixture.detectChanges();
@@ -535,7 +535,7 @@ describe('CodeButtonComponent', () => {
             component.onClick();
             fixture.detectChanges();
 
-            expect(component.usesStudentRepositoryStaffToken()).toBe(true);
+            expect(component.usesRepositoryScopedToken()).toBe(true);
             expect(getRepoTokenSpy).toHaveBeenCalledWith(99, 'USER', undefined, 45);
             expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
             expect(component.repositoryAccessToken()).toEqual(repoToken);
@@ -554,12 +554,12 @@ describe('CodeButtonComponent', () => {
             fixture.componentRef.setInput('participationId', 66);
             fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/COURSE/some-student.git');
             await component['initializeCodeButtonComponent']();
-            component.isInCourseManagement.set(true);
+            router.setUrl('/course-management');
             fixture.detectChanges();
             component.onClick();
             fixture.detectChanges();
 
-            expect(component.usesStudentRepositoryStaffToken()).toBe(true);
+            expect(component.usesRepositoryScopedToken()).toBe(true);
             expect(getRepoTokenSpy).toHaveBeenCalledWith(55, 'USER', undefined, 66);
             expect(component.repositoryAccessToken()).toEqual(repoToken);
             expect(component.copyEnabled()).toBe(true);
@@ -579,7 +579,7 @@ describe('CodeButtonComponent', () => {
             } as ProgrammingExerciseStudentParticipation;
 
             await component['initializeCodeButtonComponent']();
-            component.isInCourseManagement.set(true);
+            router.setUrl('/course-management');
             fixture.componentRef.setInput('exercise', { id: 99 } as ProgrammingExercise);
             fixture.componentRef.setInput('participations', [othersParticipation]);
             fixture.detectChanges();
@@ -603,7 +603,7 @@ describe('CodeButtonComponent', () => {
         await fixture.whenStable();
         component.onClick();
         fixture.detectChanges();
-        expect(component.user.vcsAccessToken).toEqual(vcsToken);
+        expect(component.user()!.vcsAccessToken).toEqual(vcsToken);
         expect(getVcsAccessTokenSpy).toHaveBeenCalled();
         expect(createVcsAccessTokenSpy).toHaveBeenCalled();
     });
@@ -624,7 +624,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should get copy the repository uri', async () => {
-        participation.repositoryUri = `https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        participation.repositoryUri = `https://${component.user()!.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         participation.team = {};
         fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
         fixture.componentRef.setInput('participations', [participation]);
@@ -632,15 +632,15 @@ describe('CodeButtonComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         let url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user()!.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         participation.team = undefined;
         url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user()!.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
     it('should insert the correct token in the repository uri', async () => {
-        participation.repositoryUri = `https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        participation.repositoryUri = `https://${component.user()!.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
         fixture.componentRef.setInput('participations', [participation]);
         localStorageState = RepositoryAuthenticationMethod.Token;
@@ -653,10 +653,10 @@ describe('CodeButtonComponent', () => {
         fixture.detectChanges();
         // Placeholder is shown
         let url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user()!.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         url = component.getHttpOrSshRepositoryUri(false);
-        expect(url).toBe(`https://${component.user.login}:${vcsToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user()!.login}:${vcsToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         // Team participation does not include user name
         fixture.componentRef.setInput('repositoryUri', `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
@@ -664,10 +664,10 @@ describe('CodeButtonComponent', () => {
 
         // Placeholder is shown
         url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user()!.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         url = component.getHttpOrSshRepositoryUri(false);
-        expect(url).toBe(`https://${component.user.login}:${vcsToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user()!.login}:${vcsToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
     it('should use the participation token for the users own test run participation in course management', async () => {
@@ -685,7 +685,7 @@ describe('CodeButtonComponent', () => {
         } as ProgrammingExerciseStudentParticipation;
 
         await component['initializeCodeButtonComponent']();
-        component.isInCourseManagement.set(true);
+        router.setUrl('/course-management');
         fixture.componentRef.setInput('participations', [ownTestRunParticipation]);
         fixture.detectChanges();
         await fixture.whenStable();
@@ -715,7 +715,7 @@ describe('CodeButtonComponent', () => {
         } as ProgrammingExerciseStudentParticipation;
 
         await component['initializeCodeButtonComponent']();
-        component.isInCourseManagement.set(true);
+        router.setUrl('/course-management');
         fixture.componentRef.setInput('exercise', { id: 77 } as ProgrammingExercise);
         fixture.componentRef.setInput('participations', [othersTestRunParticipation]);
         fixture.detectChanges();
@@ -801,7 +801,7 @@ describe('CodeButtonComponent', () => {
         freshFixture.componentRef.setInput('smallButtons', true);
         freshFixture.componentRef.setInput('repositoryUri', '');
         freshFixture.componentRef.setInput('routerLinkForRepositoryView', []);
-        freshFixture.componentInstance.isInCourseManagement.set(true);
+        router.setUrl('/course-management');
         freshFixture.componentRef.setInput('participations', [
             {
                 id: 42,
@@ -842,7 +842,7 @@ describe('CodeButtonComponent', () => {
         } as ProgrammingExerciseStudentParticipation;
 
         await component['initializeCodeButtonComponent']();
-        component.isInCourseManagement.set(true);
+        router.setUrl('/course-management');
         fixture.componentRef.setInput('exercise', { id: 88 } as ProgrammingExercise);
         fixture.componentRef.setInput('participations', [othersParticipation]);
         fixture.detectChanges();
@@ -864,7 +864,7 @@ describe('CodeButtonComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         const url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user()!.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
     it('should return http url if ssh is selected but http is forced', async () => {
@@ -877,7 +877,7 @@ describe('CodeButtonComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         const url = component.getHttpOrSshRepositoryUri(false, false, true);
-        expect(url).toBe(`https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user()!.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
     it('should handle multiple participations', async () => {

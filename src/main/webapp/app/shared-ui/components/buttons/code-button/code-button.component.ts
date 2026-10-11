@@ -116,10 +116,7 @@ export class CodeButtonComponent implements OnInit {
     versionControlUrl!: string; // set in ngOnInit() from profile info
 
     sshSettingsUrl!: string; // set in configureTooltips() from ngOnInit()
-    user!: User; // set in ngOnInit() from accountService.identity()
-    // The current user's login as a signal (set in ngOnInit alongside `user`) so the token-loading effect and the
-    // usesStudentRepositoryStaffToken computed react once the user becomes known and can detect whether a participation is the user's own.
-    private readonly userLogin = signal<string | undefined>(undefined);
+    readonly user = signal<User | undefined>(undefined);
     // Guards against reporting the same missing-token anomaly repeatedly (getHttpOrSshRepositoryUri runs on every change detection).
     private vcsAccessTokenReportedMissing = false;
     // Set once a participation VCS token request has terminally failed to yield a token (empty response or an error that
@@ -156,7 +153,6 @@ export class CodeButtonComponent implements OnInit {
     readonly programmingExercisesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
 
     // Computed/Derived States
-    readonly userInitialized = computed(() => !!this.userLogin());
     readonly displayLabel = computed(() => this.computeDisplayLabel());
     activeParticipation = computed<ProgrammingExerciseStudentParticipation | undefined>(() => {
         // Filter out undefined entries: callers that render a base repository without a student participation (e.g. the
@@ -176,24 +172,10 @@ export class CodeButtonComponent implements OnInit {
         const type = this.repositoryType();
         return type === RepositoryType.TEMPLATE || type === RepositoryType.SOLUTION || type === RepositoryType.TESTS || type === RepositoryType.AUXILIARY;
     });
-    // True when the clone URL must authenticate with a repository-scoped staff token minted on demand for a *student*
-    // repository: course staff browsing another participant's assignment (or test-run) repository in course management.
-    // A staff table can hand us the student participation id directly (no full participation object); otherwise we detect
-    // another participant's repository from the active participation. The user's OWN participation (including an exam test
-    // run they conduct, served under a course-management URL) is excluded, because its participation-scoped token is used.
-    usesStudentRepositoryStaffToken = computed(() => {
-        if (!this.isInCourseManagement() || this.isBaseRepository()) {
-            return false;
-        }
-        if (this.participationId() !== undefined) {
-            return true;
-        }
-        return !!this.activeParticipation() && !this.isOwnParticipation(this.activeParticipation());
-    });
     // True whenever the clone URL authenticates with a repository-scoped staff token that is minted on demand: for base
     // repositories (template/solution/tests/auxiliary) and for a student repository browsed by staff. Such tokens are
     // exact-URI scoped and provisioned automatically, so the personal VCS access token is never needed for cloning.
-    usesRepositoryScopedToken = computed(() => this.isBaseRepository() || this.usesStudentRepositoryStaffToken());
+    usesRepositoryScopedToken = computed(() => this.shouldUseRepositoryScopedToken());
 
     vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
     programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, this.vscodeFallback]]);
@@ -233,6 +215,13 @@ export class CodeButtonComponent implements OnInit {
         return this.hideLabelBreakpoint() === 'md' ? this.matchesMediumBreakpoint() : this.matchesExtraLargeBreakpoint();
     }
 
+    private shouldUseRepositoryScopedToken(): boolean {
+        const usesStudentRepositoryStaffToken =
+            this.isInCourseManagement() && (this.participationId() !== undefined || (!!this.activeParticipation() && !this.isOwnParticipation(this.activeParticipation())));
+        const isBaseRepository = this.isBaseRepository();
+        return isBaseRepository || usesStudentRepositoryStaffToken;
+    }
+
     ngOnInit() {
         void this.initializeCodeButtonComponent();
     }
@@ -249,8 +238,7 @@ export class CodeButtonComponent implements OnInit {
         if (!user) {
             return;
         }
-        this.user = user;
-        this.userLogin.set(user.login);
+        this.user.set(user);
 
         await this.checkForSshKeys();
 
@@ -352,7 +340,7 @@ export class CodeButtonComponent implements OnInit {
         if (useToken && !token) {
             this.reportMissingVcsAccessToken();
         }
-        const credentials = `://${this.user.login}${useToken && token ? `:${token}` : ''}@`;
+        const credentials = `://${this.user()!.login}${useToken && token ? `:${token}` : ''}@`;
 
         if (!url.includes('@')) {
             // the url has the format https://vcs-server.com
@@ -404,7 +392,7 @@ export class CodeButtonComponent implements OnInit {
      * case for the exam test run summary/conduction flows where this distinction matters.
      */
     private isOwnParticipation(participation: ProgrammingExerciseStudentParticipation | undefined): boolean {
-        const userLogin = this.userLogin();
+        const userLogin = this.user()?.login;
         return !!userLogin && participation?.student?.login === userLogin;
     }
 
@@ -686,8 +674,8 @@ export class CodeButtonComponent implements OnInit {
     async startOnlineIDE() {
         const theiaImage = this.exercise()?.buildConfig?.theiaImage ?? '';
         const repositoryUri = this.getHttpOrSshRepositoryUri(false, true, true);
-        const userName = this.user.name;
-        const userEmail = this.user.email;
+        const userName = this.user()!.name;
+        const userEmail = this.user()!.email;
 
         await this.theiaService.startOnlineIDE(this.theiaPortalURL, theiaImage, repositoryUri, userName, userEmail);
     }

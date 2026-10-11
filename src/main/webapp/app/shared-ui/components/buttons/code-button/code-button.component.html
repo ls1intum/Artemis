@@ -19,7 +19,7 @@
         }
     </button>
     <tumaet-ui-popover #popoverContent [ariaLabel]="'artemisApp.exerciseActions.codePopoverAriaLabel' | artemisTranslate" placement="bottom">
-        @if (userInitialized()) {
+        @if (user()) {
             <div class="code-popover-content">
                 <h5 jhiTranslate="artemisApp.exerciseActions.accessRepository"></h5>
 
