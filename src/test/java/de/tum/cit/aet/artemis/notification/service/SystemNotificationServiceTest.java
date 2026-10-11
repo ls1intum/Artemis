@@ -24,7 +24,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.SystemNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
@@ -49,15 +48,11 @@ class SystemNotificationServiceTest {
     @Mock
     private MailSendingService mailSendingService;
 
-    @Mock
-    private GlobalNotificationSettingService globalNotificationSettingService;
-
     private SystemNotificationService systemNotificationService;
 
     @BeforeEach
     void setUp() {
-        systemNotificationService = new SystemNotificationService(websocketMessagingService, systemNotificationRepository, maintenanceEmailRecipientRepository, mailSendingService,
-                globalNotificationSettingService);
+        systemNotificationService = new SystemNotificationService(websocketMessagingService, systemNotificationRepository, maintenanceEmailRecipientRepository, mailSendingService);
     }
 
     @AfterEach
@@ -86,7 +81,7 @@ class SystemNotificationServiceTest {
     }
 
     @Test
-    void shouldSendMaintenanceEmailToATestUserOnlyWhenItSwitchedTheNotificationOn() {
+    void shouldSendMaintenanceEmailToEveryRecipientTheQueryReturnsAndCarryTheTestUserFlag() {
         ZonedDateTime notificationDate = ZonedDateTime.now();
         SystemNotification notification = new SystemNotification();
         notification.setTitle("Maintenance");
@@ -95,20 +90,20 @@ class SystemNotificationServiceTest {
         notification.setExpireDate(notificationDate.plusHours(1));
         notification.setType(SystemNotificationType.WARNING);
 
+        // Who is eligible, including that a test user must have switched the notification on, is decided by the query (see the repository
+        // tests), the same one that the preview count uses, so every recipient it returns gets the mail.
         var optedInTestAccount = new MaintenanceEmailRecipientDTO(1L, "test_user_16", "optedin@example.com", "en", "Opted", "In", true);
-        var silentTestAccount = new MaintenanceEmailRecipientDTO(2L, "test_user_17", "silent@example.com", "en", "Silent", "Account", true);
         var regularInstructor = new MaintenanceEmailRecipientDTO(3L, "ge12abc", "instructor@example.com", "de", "Regular", "Instructor", false);
-        when(maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(any(ZonedDateTime.class)))
-                .thenReturn(Set.of(optedInTestAccount, silentTestAccount, regularInstructor));
-        when(globalNotificationSettingService.isNotificationEnabled(1L, true, GlobalNotificationType.MAINTENANCE)).thenReturn(true);
-        when(globalNotificationSettingService.isNotificationEnabled(2L, true, GlobalNotificationType.MAINTENANCE)).thenReturn(false);
+        when(maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(any(ZonedDateTime.class))).thenReturn(Set.of(optedInTestAccount, regularInstructor));
 
         systemNotificationService.sendMaintenanceEmails(notification);
 
         ArgumentCaptor<MailRecipientDTO> recipients = ArgumentCaptor.forClass(MailRecipientDTO.class);
         verify(mailSendingService, times(2)).buildAndSendAsync(recipients.capture(), eq("email.notification.maintenance.title"), eq("mail/notification/maintenanceEmail"),
                 anyMap());
-        // The flag is part of the recipient, because the mail layer needs it for the mails that have no setting of their own.
         assertThat(recipients.getAllValues()).extracting(MailRecipientDTO::login).containsExactlyInAnyOrder("test_user_16", "ge12abc");
+        // The flag is part of the recipient, because the mail layer needs it for the mails that have no setting of their own.
+        assertThat(recipients.getAllValues()).filteredOn(recipient -> "test_user_16".equals(recipient.login())).singleElement().extracting(MailRecipientDTO::testUser)
+                .isEqualTo(true);
     }
 }

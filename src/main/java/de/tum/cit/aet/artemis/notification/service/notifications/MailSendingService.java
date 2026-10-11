@@ -351,7 +351,7 @@ public class MailSendingService {
         if (canBeQueued && retryQueue.isPaused(now)) {
             // The SMTP server asked this node to stop sending. Trying each mail again would only collect the same refusal.
             log.debug("Queued email with subject '{}' because sending is paused", subject);
-            if (!retryQueue.offer(mail)) {
+            if (!retryQueue.offer(mail, now)) {
                 return Delivery.FAILED;
             }
             retryQueue.record(Outcome.QUEUED_FOR_RETRY);
@@ -386,7 +386,7 @@ public class MailSendingService {
         boolean wasPaused = retryQueue.isPaused(now);
         Instant nextAttemptAt = retryQueue.scheduleAfterFailure(failure, mail.attempts() + 1, now);
         PendingMail waiting = mail.afterFailedAttempt(nextAttemptAt);
-        if (!retryQueue.offer(waiting)) {
+        if (!retryQueue.offer(waiting, now)) {
             return Delivery.FAILED;
         }
         if (!wasQueued) {
@@ -481,6 +481,8 @@ public class MailSendingService {
         Instant clockStart = Instant.now();
         int attempted = 0;
         int sent = 0;
+        // Also while the node is paused, when the loop below stops at once: a mail that is too old to be sent must not keep taking room.
+        retryQueue.purgeExpired(startedAt);
         while (attempted < retryQueue.drainBatchSize()) {
             // Sending takes time, so the moment of each mail is read anew instead of taken from the start of the run.
             Instant now = startedAt.plus(Duration.between(clockStart, Instant.now()));
@@ -494,6 +496,7 @@ public class MailSendingService {
             attempted++;
             PendingMail mail = due.get();
             if (mail.isExpired(now)) {
+                // It expired during this run, after the purge above.
                 retryQueue.record(Outcome.EXPIRED);
                 log.warn("Email with subject '{}' was dropped after {} failed attempts, because it is too old to be sent", mail.subject(), mail.attempts());
                 continue;
@@ -505,7 +508,9 @@ public class MailSendingService {
                 log.info("Sent email with subject '{}' (message id {}) after {} failed attempts", mail.subject(), attempt.messageId(), mail.attempts());
             }
             else {
-                handleFailure(mail, attempt, now, true, true);
+                // Read the clock again, like deliver() does: an attempt that took longer than the backoff or the pause would otherwise
+                // schedule the next one in the past, and this run would try the same mail again at once.
+                handleFailure(mail, attempt, startedAt.plus(Duration.between(clockStart, Instant.now())), true, true);
             }
         }
         if (attempted > 0) {

@@ -36,15 +36,19 @@ class MailRetryQueueServiceTest {
         return queue.newPendingMail(login + "@example.org", "subject of " + login, "body of " + login, false, true, priority, NOW);
     }
 
+    private boolean offer(PendingMail mail) {
+        return queue.offer(mail, NOW);
+    }
+
     private double counted(Outcome outcome) {
         return meterRegistry.get("artemis.mail.outcome").tag("outcome", outcome.name().toLowerCase(Locale.ROOT)).counter().count();
     }
 
     @Test
     void shouldReturnTransactionalMailsBeforeBulkMailsThatWereQueuedEarlier() {
-        queue.offer(mail("bulk1", MailPriority.BULK));
-        queue.offer(mail("bulk2", MailPriority.BULK));
-        queue.offer(mail("reset", MailPriority.TRANSACTIONAL));
+        offer(mail("bulk1", MailPriority.BULK));
+        offer(mail("bulk2", MailPriority.BULK));
+        offer(mail("reset", MailPriority.TRANSACTIONAL));
 
         assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientEmail).isEqualTo("reset@example.org");
         assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientEmail).isEqualTo("bulk1@example.org");
@@ -54,8 +58,8 @@ class MailRetryQueueServiceTest {
 
     @Test
     void shouldKeepTheOrderInWhichMailsOfOnePriorityWereQueued() {
-        queue.offer(mail("first", MailPriority.BULK));
-        queue.offer(mail("second", MailPriority.BULK));
+        offer(mail("first", MailPriority.BULK));
+        offer(mail("second", MailPriority.BULK));
 
         assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientEmail).isEqualTo("first@example.org");
         assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientEmail).isEqualTo("second@example.org");
@@ -64,8 +68,8 @@ class MailRetryQueueServiceTest {
     @Test
     void shouldNotReturnAMailBeforeItsTimeButSkipToTheNextOneThatIsDue() {
         var later = mail("later", MailPriority.BULK).afterFailedAttempt(NOW.plusSeconds(60));
-        queue.offer(later);
-        queue.offer(mail("due", MailPriority.BULK));
+        offer(later);
+        offer(mail("due", MailPriority.BULK));
 
         assertThat(queue.pollDue(NOW)).get().extracting(PendingMail::recipientEmail).isEqualTo("due@example.org");
         assertThat(queue.pollDue(NOW)).isEmpty();
@@ -75,11 +79,11 @@ class MailRetryQueueServiceTest {
 
     @Test
     void shouldDropANewBulkMailWhenTheQueueIsFull() {
-        queue.offer(mail("bulk1", MailPriority.BULK));
-        queue.offer(mail("bulk2", MailPriority.BULK));
-        queue.offer(mail("bulk3", MailPriority.BULK));
+        offer(mail("bulk1", MailPriority.BULK));
+        offer(mail("bulk2", MailPriority.BULK));
+        offer(mail("bulk3", MailPriority.BULK));
 
-        assertThat(queue.offer(mail("bulk4", MailPriority.BULK))).isFalse();
+        assertThat(offer(mail("bulk4", MailPriority.BULK))).isFalse();
 
         assertThat(queue.size()).isEqualTo(3);
         assertThat(counted(Outcome.DROPPED_QUEUE_FULL)).isEqualTo(1);
@@ -87,11 +91,11 @@ class MailRetryQueueServiceTest {
 
     @Test
     void shouldMakeRoomForATransactionalMailByEvictingTheOldestBulkMail() {
-        queue.offer(mail("bulk1", MailPriority.BULK));
-        queue.offer(mail("bulk2", MailPriority.BULK));
-        queue.offer(mail("bulk3", MailPriority.BULK));
+        offer(mail("bulk1", MailPriority.BULK));
+        offer(mail("bulk2", MailPriority.BULK));
+        offer(mail("bulk3", MailPriority.BULK));
 
-        assertThat(queue.offer(mail("reset", MailPriority.TRANSACTIONAL))).isTrue();
+        assertThat(offer(mail("reset", MailPriority.TRANSACTIONAL))).isTrue();
 
         assertThat(queue.size()).isEqualTo(3);
         assertThat(counted(Outcome.DROPPED_QUEUE_FULL)).isEqualTo(1);
@@ -101,12 +105,60 @@ class MailRetryQueueServiceTest {
 
     @Test
     void shouldDropATransactionalMailWhenTheQueueHoldsOnlyTransactionalMails() {
-        queue.offer(mail("reset1", MailPriority.TRANSACTIONAL));
-        queue.offer(mail("reset2", MailPriority.TRANSACTIONAL));
-        queue.offer(mail("reset3", MailPriority.TRANSACTIONAL));
+        offer(mail("reset1", MailPriority.TRANSACTIONAL));
+        offer(mail("reset2", MailPriority.TRANSACTIONAL));
+        offer(mail("reset3", MailPriority.TRANSACTIONAL));
 
-        assertThat(queue.offer(mail("reset4", MailPriority.TRANSACTIONAL))).isFalse();
+        assertThat(offer(mail("reset4", MailPriority.TRANSACTIONAL))).isFalse();
         assertThat(queue.size()).isEqualTo(3);
+    }
+
+    @Test
+    void shouldPurgeExpiredMailsBeforeDecidingThatTheQueueIsFull() {
+        offer(mail("old1", MailPriority.BULK));
+        offer(mail("old2", MailPriority.BULK));
+        offer(mail("old3", MailPriority.TRANSACTIONAL));
+        // The node is paused, so nothing is worked off, and all three mails are past the age that their priority allows.
+        queue.pauseAfter(MailFailureKind.QUOTA_EXCEEDED, NOW);
+        Instant later = NOW.plus(properties.getRetry().getBulkMaxAge()).plusSeconds(1);
+        var fresh = queue.newPendingMail("fresh@example.org", "subject of fresh", "body of fresh", false, true, MailPriority.BULK, later);
+
+        assertThat(queue.offer(fresh, later)).as("a fresh mail is not dropped because of mails that can no longer be sent").isTrue();
+
+        assertThat(queue.size()).isEqualTo(1);
+        assertThat(counted(Outcome.EXPIRED)).isEqualTo(3);
+        assertThat(counted(Outcome.DROPPED_QUEUE_FULL)).isZero();
+        assertThat(queue.pollDue(later)).get().extracting(PendingMail::recipientEmail).isEqualTo("fresh@example.org");
+    }
+
+    @Test
+    void shouldNotEvictAMailThatCanStillBeSentWhileExpiredMailsTakeRoom() {
+        offer(mail("expiring", MailPriority.TRANSACTIONAL));
+        offer(mail("bulk1", MailPriority.BULK));
+        offer(mail("bulk2", MailPriority.BULK));
+        // Past the age of a transactional mail, before the age of a bulk mail.
+        Instant later = NOW.plus(properties.getRetry().getTransactionalMaxAge()).plusSeconds(1);
+        var reset = queue.newPendingMail("reset@example.org", "subject of reset", "body of reset", false, true, MailPriority.TRANSACTIONAL, later);
+
+        assertThat(queue.offer(reset, later)).isTrue();
+
+        assertThat(counted(Outcome.EXPIRED)).as("the expired mail made room").isEqualTo(1);
+        assertThat(counted(Outcome.DROPPED_QUEUE_FULL)).as("so the oldest bulk mail did not have to go").isZero();
+        assertThat(queue.size()).isEqualTo(3);
+    }
+
+    @Test
+    void shouldRemoveOnlyTheExpiredMailsWhenPurging() {
+        offer(mail("reset", MailPriority.TRANSACTIONAL));
+        offer(mail("announcement", MailPriority.BULK));
+
+        assertThat(queue.purgeExpired(NOW.plus(properties.getRetry().getTransactionalMaxAge()).plusSeconds(1))).isEqualTo(1);
+
+        assertThat(queue.size()).isEqualTo(1);
+        assertThat(counted(Outcome.EXPIRED)).isEqualTo(1);
+        assertThat(queue.pollDue(NOW.plus(properties.getRetry().getTransactionalMaxAge()).plusSeconds(1))).get().extracting(PendingMail::recipientEmail)
+                .isEqualTo("announcement@example.org");
+        assertThat(queue.purgeExpired(NOW)).as("nothing is purged twice").isZero();
     }
 
     @Test
@@ -173,9 +225,9 @@ class MailRetryQueueServiceTest {
         queue.record(Outcome.SENT);
         queue.record(Outcome.SENT);
         queue.record(Outcome.SUPPRESSED);
-        queue.offer(mail("reset", MailPriority.TRANSACTIONAL));
-        queue.offer(mail("announcement", MailPriority.BULK));
-        queue.offer(mail("announcement2", MailPriority.BULK));
+        offer(mail("reset", MailPriority.TRANSACTIONAL));
+        offer(mail("announcement", MailPriority.BULK));
+        offer(mail("announcement2", MailPriority.BULK));
 
         assertThat(counted(Outcome.SENT)).isEqualTo(2);
         assertThat(counted(Outcome.SUPPRESSED)).isEqualTo(1);

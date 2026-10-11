@@ -209,8 +209,9 @@ public class CourseNotificationSettingService {
      * </p>
      *
      * <p>
-     * Where the user has not chosen anything, the settings shown are the ones that apply, which for a test account (see
-     * {@link TestAccountEmailService}) means the default preset without e-mail.
+     * Where the user has not chosen anything, the settings shown are the ones that apply. For a test account (see
+     * {@link TestAccountEmailService}) that is the default preset without e-mail, which no preset describes, so the account is
+     * reported as having the custom preset (id 0) with exactly these channels until it chooses a preset or customizes.
      * </p>
      *
      * @param userId   The ID of the user whose notification settings are being retrieved
@@ -222,12 +223,16 @@ public class CourseNotificationSettingService {
     public CourseNotificationSettingInfoDTO getSettingInfo(long userId, boolean testUser, long courseId) {
         short defaultPresetId = courseNotificationSettingPresetRegistryService.getPresetId(DefaultUserCourseNotificationSettingPreset.class).shortValue();
         Short selectedPreset = userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(userId, courseId);
-        short presetId = selectedPreset != null ? selectedPreset : defaultPresetId;
+        // A test account that chose nothing gets no e-mail from the default preset, so none of the presets describes what applies to it: it
+        // is reported as "Custom" with the channels that apply. The client renders these channels for a custom preset, where it would
+        // render the e-mail of the shared default preset for the default one, and customizing then starts from what is shown.
+        boolean testAccountWithoutChoice = selectedPreset == null && testUser;
+        short presetId = testAccountWithoutChoice ? CUSTOM_PRESET_ID : selectedPreset != null ? selectedPreset : defaultPresetId;
         // Preset id 0 means "Custom", which has no channels of its own: the defaults are the base the specifications
         // below are applied on top of.
-        short presetToReadChannelsFrom = selectedPreset == null || selectedPreset == 0 ? defaultPresetId : selectedPreset;
+        short presetToReadChannelsFrom = presetId == CUSTOM_PRESET_ID ? defaultPresetId : presetId;
         // Only the base that nobody chose is the default that a test account does not get e-mail from. A preset it chose is shown as it is.
-        boolean withoutEmail = (selectedPreset == null || selectedPreset == 0) && testUser;
+        boolean withoutEmail = presetId == CUSTOM_PRESET_ID && testUser;
 
         var currentPreset = courseNotificationSettingPresetRegistryService.getPresetById(presetToReadChannelsFrom);
 
@@ -242,7 +247,7 @@ public class CourseNotificationSettingService {
             notificationTypeChannels.put(courseNotificationRegistryService.getNotificationIdentifier(entry.getKey()), channels);
         }
 
-        if (presetId == 0) {
+        if (presetId == CUSTOM_PRESET_ID && !testAccountWithoutChoice) {
             var specifications = userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(userId, courseId);
 
             // If custom is specified, we want to overwrite the settings that are present in the database. Note that not all may be present.

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -307,6 +308,61 @@ class MailSendingServiceRetryTest {
         assertThat(counted(Outcome.SENT_AFTER_RETRY)).isEqualTo(1);
         assertThat(sentSubjects()).as("the attempt that met the quota, then the announcement; the expired password reset was not sent again").containsExactly("Password reset",
                 "Announcement");
+    }
+
+    @Test
+    void shouldDropAMailThatIsTooOldEvenWhileTheNodeIsPausedAndDoesNotWorkTheQueueOff() {
+        properties.getRetry().setQuotaPause(Duration.ofHours(100));
+        doThrow(quotaFailure()).when(javaMailSender).send(any(MimeMessage.class));
+        mailSendingService.sendEmailSync(recipient("student1"), "Password reset", "Body", false, true, MailPriority.TRANSACTIONAL);
+        Instant later = Instant.now().plus(properties.getRetry().getTransactionalMaxAge()).plusSeconds(60);
+        assertThat(retryQueue.isPaused(later)).as("the pause outlasts the age of the mail").isTrue();
+
+        mailSendingService.sendQueuedMails(later);
+
+        assertThat(retryQueue.size()).as("the mail cannot be sent any more, so it must not stay and take room").isZero();
+        assertThat(counted(Outcome.EXPIRED)).isEqualTo(1);
+        verify(javaMailSender, times(1)).send(any(MimeMessage.class));
+    }
+
+    @Test
+    void shouldNotLetAFullQueueDropAFreshMailBecauseOfMailsThatCanNoLongerBeSent() {
+        properties.getRetry().setMaxQueueSize(2);
+        properties.getRetry().setQuotaPause(Duration.ofHours(100));
+        doThrow(quotaFailure()).when(javaMailSender).send(any(MimeMessage.class));
+        mailSendingService.sendEmailSync(recipient("student1"), "Announcement 1", "Body", false, true, MailPriority.BULK);
+        mailSendingService.sendEmailSync(recipient("student2"), "Announcement 2", "Body", false, true, MailPriority.BULK);
+        assertThat(retryQueue.size()).isEqualTo(2);
+
+        // Bulk mails live 48 hours. The pause is still on, so the drain job has not removed anything, and the queue is full of dead mails.
+        Instant afterTheAgeOfBulkMails = Instant.now().plus(properties.getRetry().getBulkMaxAge()).plusSeconds(60);
+        assertThat(retryQueue.offer(retryQueue.newPendingMail("student3@example.org", "Announcement 3", "Body", false, true, MailPriority.BULK, afterTheAgeOfBulkMails),
+                afterTheAgeOfBulkMails)).isTrue();
+
+        assertThat(counted(Outcome.DROPPED_QUEUE_FULL)).isZero();
+        assertThat(counted(Outcome.EXPIRED)).isEqualTo(2);
+        assertThat(retryQueue.size()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldStartTheBackoffOfAFailedRetryWhenTheAttemptFailsNotWhenItBegan() throws Exception {
+        properties.getRetry().setInitialDelay(Duration.ofMillis(100));
+        doThrow(smtpFailure(451, "451 4.3.0 Local error in processing")).when(javaMailSender).send(any(MimeMessage.class));
+        mailSendingService.sendEmailSync(recipient("student1"), "Subject", "Body", false, true, MailPriority.TRANSACTIONAL);
+        // A server that answers slowly: the attempt takes longer than the backoff that follows it.
+        doAnswer(invocation -> {
+            Thread.sleep(300);
+            throw smtpFailure(451, "451 4.3.0 Local error in processing");
+        }).when(javaMailSender).send(any(MimeMessage.class));
+
+        Instant startedAt = Instant.now().plusSeconds(10);
+        mailSendingService.sendQueuedMails(startedAt);
+
+        // One attempt when the mail was first sent and one in this run. The backoff of the second failure (200 ms) starts when it failed,
+        // after the 300 ms the attempt took, so the mail is not due again in the same run.
+        verify(javaMailSender, times(2)).send(any(MimeMessage.class));
+        var waiting = retryQueue.pollDue(Instant.MAX).orElseThrow();
+        assertThat(waiting.nextAttemptAt()).isAfter(startedAt.plusMillis(450));
     }
 
     @Test

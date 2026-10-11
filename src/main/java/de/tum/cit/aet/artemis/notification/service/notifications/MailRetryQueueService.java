@@ -192,15 +192,20 @@ public class MailRetryQueueService {
     }
 
     /**
-     * Queues a mail for another attempt. A full queue drops the mail, except that a transactional mail takes the place of the
-     * oldest bulk mail: a password reset must not wait behind or be lost to a backlog of announcements.
+     * Queues a mail for another attempt. A full queue first drops the mails that are too old to be sent anyway, which a paused
+     * node never gets to remove by working the queue off. If it is still full, the mail is dropped, except that a transactional
+     * mail takes the place of the oldest bulk mail: a password reset must not wait behind or be lost to a backlog of announcements.
      *
      * @param mail the mail to keep
+     * @param now  the current time
      * @return whether the mail was queued
      */
-    public boolean offer(PendingMail mail) {
+    public boolean offer(PendingMail mail, Instant now) {
         synchronized (lock) {
-            if (transactionalMails.size() + bulkMails.size() >= retryProperties.getMaxQueueSize()) {
+            if (isFull()) {
+                purgeExpired(now);
+            }
+            if (isFull()) {
                 if (mail.priority() == MailPriority.TRANSACTIONAL && !bulkMails.isEmpty()) {
                     PendingMail evicted = bulkMails.pollFirst();
                     record(Outcome.DROPPED_QUEUE_FULL);
@@ -215,6 +220,38 @@ public class MailRetryQueueService {
             (mail.priority() == MailPriority.TRANSACTIONAL ? transactionalMails : bulkMails).addLast(mail);
         }
         return true;
+    }
+
+    private boolean isFull() {
+        return transactionalMails.size() + bulkMails.size() >= retryProperties.getMaxQueueSize();
+    }
+
+    /**
+     * Removes the mails that waited longer than their priority allows and counts each of them as expired. They can no longer be sent,
+     * so they must neither take the room of a mail that can, nor stay in the queue while the node is paused and does not work it off.
+     *
+     * @param now the current time
+     * @return the number of mails that were removed
+     */
+    public int purgeExpired(Instant now) {
+        synchronized (lock) {
+            return removeExpired(transactionalMails, now) + removeExpired(bulkMails, now);
+        }
+    }
+
+    private int removeExpired(Deque<PendingMail> mails, Instant now) {
+        int removed = 0;
+        Iterator<PendingMail> iterator = mails.iterator();
+        while (iterator.hasNext()) {
+            PendingMail mail = iterator.next();
+            if (mail.isExpired(now)) {
+                iterator.remove();
+                record(Outcome.EXPIRED);
+                log.warn("Email with subject '{}' was dropped after {} failed attempts, because it is too old to be sent", mail.subject(), mail.attempts());
+                removed++;
+            }
+        }
+        return removed;
     }
 
     /**

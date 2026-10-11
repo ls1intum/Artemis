@@ -24,7 +24,8 @@ import de.tum.cit.aet.artemis.notification.dto.MaintenanceEmailRecipientDTO;
 @Lazy
 public interface MaintenanceEmailRecipientRepository extends ArtemisJpaRepository<User, Long> {
 
-    // Note: these two queries share identical WHERE logic; keep them in sync when modifying.
+    // Note: these two queries share identical WHERE logic; keep them in sync when modifying. A test user (see TestAccountEmailService) counts as having the
+    // notification switched off until it switched it on, which is why it needs a setting that is enabled where everybody else only needs none that is disabled.
     @Query("""
             SELECT DISTINCT new de.tum.cit.aet.artemis.notification.dto.MaintenanceEmailRecipientDTO(
                 u.id, u.login, u.email, u.langKey, u.firstName, u.lastName, u.isTestUser)
@@ -45,6 +46,12 @@ public interface MaintenanceEmailRecipientRepository extends ArtemisJpaRepositor
                         AND s.notificationType = de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType.MAINTENANCE
                         AND s.enabled = FALSE
                 )
+                AND (u.isTestUser = FALSE OR EXISTS (
+                    SELECT 1 FROM GlobalNotificationSetting e
+                    WHERE e.userId = u.id
+                        AND e.notificationType = de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType.MAINTENANCE
+                        AND e.enabled = TRUE
+                ))
             """)
     Set<MaintenanceEmailRecipientDTO> findInstructorRecipientsForMaintenanceEmail(@Param("now") ZonedDateTime now);
 
@@ -67,6 +74,12 @@ public interface MaintenanceEmailRecipientRepository extends ArtemisJpaRepositor
                         AND s.notificationType = de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType.MAINTENANCE
                         AND s.enabled = FALSE
                 )
+                AND (u.isTestUser = FALSE OR EXISTS (
+                    SELECT 1 FROM GlobalNotificationSetting e
+                    WHERE e.userId = u.id
+                        AND e.notificationType = de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType.MAINTENANCE
+                        AND e.enabled = TRUE
+                ))
             """)
     long countInstructorRecipientsForMaintenanceEmail(@Param("now") ZonedDateTime now);
 }

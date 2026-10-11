@@ -396,7 +396,7 @@ class CourseNotificationSettingServiceTest {
     }
 
     @Test
-    void shouldShowTestUserThatChoseNothingTheDefaultPresetWithoutEmail() {
+    void shouldShowTestUserThatChoseNothingACustomPresetWithTheChannelsThatApply() {
         when(courseNotificationSettingPresetRegistryService.getPresetId(DefaultUserCourseNotificationSettingPreset.class)).thenReturn(1);
         when(userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(userId, courseId)).thenReturn(null);
         when(courseNotificationSettingPresetRegistryService.getPresetById((short) 1)).thenReturn(mockPreset);
@@ -406,9 +406,26 @@ class CourseNotificationSettingServiceTest {
 
         var info = courseNotificationSettingService.getSettingInfo(userId, true, courseId);
 
-        assertThat(info.selectedPreset()).isEqualTo((short) 1);
+        // The default preset delivers e-mail, so reporting it as selected would make the client show e-mail for an account that gets none.
+        assertThat(info.selectedPreset()).isEqualTo(customPresetId);
         assertThat(info.notificationTypeChannels().get(notificationTypeId)).containsEntry(NotificationChannelOption.EMAIL, false).containsEntry(NotificationChannelOption.WEBAPP,
                 true);
+        verify(userCourseNotificationSettingSpecificationRepository, never()).findAllByUserIdAndCourseId(anyLong(), anyLong());
+    }
+
+    @Test
+    void shouldShowTestUserThatChoseThePresetsTheChosenPresetWithEmail() {
+        when(courseNotificationSettingPresetRegistryService.getPresetId(DefaultUserCourseNotificationSettingPreset.class)).thenReturn(1);
+        when(userCourseNotificationSettingPresetRepository.findSettingPresetByUserIdAndCourseId(userId, courseId)).thenReturn((short) 1);
+        when(courseNotificationSettingPresetRegistryService.getPresetById((short) 1)).thenReturn(mockPreset);
+        when(mockPreset.getPresetMap()).thenReturn(
+                Map.of(NewPostNotification.class, Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, false)));
+        when(courseNotificationRegistryService.getNotificationIdentifier(NewPostNotification.class)).thenReturn(notificationTypeId);
+
+        var info = courseNotificationSettingService.getSettingInfo(userId, true, courseId);
+
+        assertThat(info.selectedPreset()).isEqualTo((short) 1);
+        assertThat(info.notificationTypeChannels().get(notificationTypeId)).containsEntry(NotificationChannelOption.EMAIL, true);
     }
 
     @Test

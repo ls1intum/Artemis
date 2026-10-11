@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
@@ -46,16 +45,12 @@ public class SystemNotificationService {
 
     private final MailSendingService mailSendingService;
 
-    private final GlobalNotificationSettingService globalNotificationSettingService;
-
     public SystemNotificationService(WebsocketMessagingService websocketMessagingService, SystemNotificationRepository systemNotificationRepository,
-            MaintenanceEmailRecipientRepository maintenanceEmailRecipientRepository, MailSendingService mailSendingService,
-            GlobalNotificationSettingService globalNotificationSettingService) {
+            MaintenanceEmailRecipientRepository maintenanceEmailRecipientRepository, MailSendingService mailSendingService) {
         this.websocketMessagingService = websocketMessagingService;
         this.systemNotificationRepository = systemNotificationRepository;
         this.maintenanceEmailRecipientRepository = maintenanceEmailRecipientRepository;
         this.mailSendingService = mailSendingService;
-        this.globalNotificationSettingService = globalNotificationSettingService;
     }
 
     /**
@@ -119,10 +114,8 @@ public class SystemNotificationService {
     public void sendMaintenanceEmails(SystemNotification notification) {
         validateDatesElseThrow(notification);
 
-        // The query leaves out whoever switched the notification off. A test user that never configured it counts as off as well,
-        // which a query cannot know, so those are checked here: they get the mail only if they switched it on.
-        var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(ZonedDateTime.now()).stream().filter(recipient -> !recipient.testUser()
-                || globalNotificationSettingService.isNotificationEnabled(recipient.id(), recipient.testUser(), GlobalNotificationType.MAINTENANCE)).toList();
+        // The query leaves out whoever switched the notification off, and a test user that never switched it on. The count above uses the same rule.
+        var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(ZonedDateTime.now());
         log.info("Sending maintenance emails to {} instructor(s)", recipients.size());
 
         // Convert dates to server-local timezone so recipients see times relevant to the deployment location

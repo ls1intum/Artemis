@@ -345,6 +345,65 @@ describe('CourseNotificationSettingService', () => {
             expect(result?.notificationTypeChannels).toHaveProperty('newNotification');
             expect(result?.notificationTypeChannels['notification1']).toEqual(channelSetting);
         });
+
+        it('should not change the shared preset when the channels of a course are customized from it', () => {
+            const courseId = 123;
+            const preset: CourseNotificationSettingPreset = {
+                identifier: 'default',
+                typeId: 1,
+                presetMap: {
+                    notification1: { [CourseNotificationChannel.PUSH]: true, [CourseNotificationChannel.EMAIL]: true, [CourseNotificationChannel.WEBAPP]: true },
+                },
+            };
+            const customized = new CourseNotificationSettingSpecification('notification1', 1, {
+                [CourseNotificationChannel.PUSH]: false,
+                [CourseNotificationChannel.EMAIL]: true,
+                [CourseNotificationChannel.WEBAPP]: true,
+            });
+
+            service.getSettingInfo(courseId).subscribe();
+            httpMock.expectOne(`/api/notification/courses/${courseId}/settings`).flush({ selectedPreset: 1, notificationTypeChannels: {} });
+            vi.advanceTimersByTime(0);
+            service.setSettingSpecification(courseId, customized, preset);
+            httpMock.expectOne(`/api/notification/courses/${courseId}/setting-specification`).flush({});
+
+            // Another course customized from the same preset must still start from what the preset says.
+            expect(preset.presetMap['notification1'][CourseNotificationChannel.PUSH]).toBe(true);
+        });
+
+        it('should keep the channels that apply to the user when there is no preset to copy', () => {
+            const courseId = 123;
+            // What the server reports for an unconfigured test account: the custom preset, without e-mail.
+            const effectiveSettingInfo: CourseNotificationSettingInfo = {
+                selectedPreset: 0,
+                notificationTypeChannels: {
+                    '1': { [CourseNotificationChannel.PUSH]: true, [CourseNotificationChannel.EMAIL]: false, [CourseNotificationChannel.WEBAPP]: true },
+                    '2': { [CourseNotificationChannel.PUSH]: false, [CourseNotificationChannel.EMAIL]: false, [CourseNotificationChannel.WEBAPP]: true },
+                },
+            };
+            const changed = new CourseNotificationSettingSpecification('notification1', 1, {
+                [CourseNotificationChannel.PUSH]: false,
+                [CourseNotificationChannel.EMAIL]: false,
+                [CourseNotificationChannel.WEBAPP]: true,
+            });
+
+            service.getSettingInfo(courseId).subscribe();
+            httpMock.expectOne(`/api/notification/courses/${courseId}/settings`).flush(effectiveSettingInfo);
+            vi.advanceTimersByTime(0);
+            service.setSettingSpecification(courseId, changed, undefined);
+            const request = httpMock.expectOne(`/api/notification/courses/${courseId}/setting-specification`);
+            request.flush({});
+            vi.advanceTimersByTime(0);
+
+            let result: CourseNotificationSettingInfo | undefined;
+            service.getSettingInfo(courseId).subscribe((response) => (result = response));
+            vi.advanceTimersByTime(0);
+
+            // Only the changed type is submitted, with the e-mail the user was shown, and the others keep what applies to them.
+            expect(request.request.body).toEqual({ notificationTypeChannels: { 1: changed.channelSetting } });
+            expect(result?.selectedPreset).toBe(0);
+            expect(result?.notificationTypeChannels['2'][CourseNotificationChannel.EMAIL]).toBe(false);
+        });
     });
 
     describe('transformNotificationSettingSpecificationToRequestBody', () => {

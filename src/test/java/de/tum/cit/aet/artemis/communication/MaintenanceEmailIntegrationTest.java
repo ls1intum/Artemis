@@ -9,6 +9,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -122,6 +123,12 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         // invisible to findInstructorRecipientsForMaintenanceEmail, so course deletion is unnecessary
         Stream.of(TEST_PREFIX + "instructor1", TEST_PREFIX + "instructor2").flatMap(login -> userTestRepository.findOneByLogin(login).stream()).map(User::getId)
                 .forEach(userCourseRoleTestRepository::deleteByUser_Id);
+        // Some tests make the instructors test users, which would leave them out of the recipients of the tests that follow.
+        Stream.of(TEST_PREFIX + "instructor1", TEST_PREFIX + "instructor2").flatMap(login -> userTestRepository.findOneByLogin(login).stream()).filter(User::isTestUser)
+                .forEach(user -> {
+                    user.setTestUser(false);
+                    userTestRepository.save(user);
+                });
     }
 
     // ---- Template rendering tests ----
@@ -251,6 +258,59 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
         long count = maintenanceEmailRecipientRepository.countInstructorRecipientsForMaintenanceEmail(now);
         assertThat(count).isEqualTo(recipients.size());
+    }
+
+    @Test
+    void recipientsAndCount_shouldLeaveOutATestUserThatDidNotSwitchTheNotificationOnAndKeepOneThatDid() {
+        var now = ZonedDateTime.now();
+        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>());
+        courseRepository.save(ongoingCourse);
+        var silentTestUser = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        var optedInTestUser = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor2").orElseThrow();
+        silentTestUser.setTestUser(true);
+        optedInTestUser.setTestUser(true);
+        userTestRepository.saveAll(List.of(silentTestUser, optedInTestUser));
+        userUtilService.enrollUserInCourse(silentTestUser, ongoingCourse, CourseRole.INSTRUCTOR);
+        userUtilService.enrollUserInCourse(optedInTestUser, ongoingCourse, CourseRole.INSTRUCTOR);
+        var optIn = new GlobalNotificationSetting();
+        optIn.setUserId(optedInTestUser.getId());
+        optIn.setNotificationType(GlobalNotificationType.MAINTENANCE);
+        optIn.setEnabled(true);
+        globalNotificationSettingRepository.save(optIn);
+
+        var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
+        long countWithTestUsers = maintenanceEmailRecipientRepository.countInstructorRecipientsForMaintenanceEmail(now);
+
+        // A test user that never configured the notification means "do not send", so it is neither mailed nor announced by the preview.
+        assertThat(recipients).noneMatch(recipient -> recipient.id().equals(silentTestUser.getId()));
+        assertThat(recipients).anyMatch(recipient -> recipient.id().equals(optedInTestUser.getId()) && recipient.testUser());
+        assertThat(countWithTestUsers).isEqualTo(recipients.size());
+
+        // Switching it on is what makes the silent one a recipient, in the query and in the count.
+        var optInOfTheSilentOne = new GlobalNotificationSetting();
+        optInOfTheSilentOne.setUserId(silentTestUser.getId());
+        optInOfTheSilentOne.setNotificationType(GlobalNotificationType.MAINTENANCE);
+        optInOfTheSilentOne.setEnabled(true);
+        globalNotificationSettingRepository.save(optInOfTheSilentOne);
+        var recipientsAfterwards = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
+        assertThat(recipientsAfterwards).anyMatch(recipient -> recipient.id().equals(silentTestUser.getId()));
+        assertThat(maintenanceEmailRecipientRepository.countInstructorRecipientsForMaintenanceEmail(now)).isEqualTo(recipientsAfterwards.size()).isEqualTo(countWithTestUsers + 1);
+    }
+
+    @Test
+    void recipientsAndCount_shouldKeepARegularInstructorThatNeverConfiguredTheNotification() {
+        var now = ZonedDateTime.now();
+        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>());
+        courseRepository.save(ongoingCourse);
+        var regular = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        regular.setTestUser(false);
+        userTestRepository.save(regular);
+        userUtilService.enrollUserInCourse(regular, ongoingCourse, CourseRole.INSTRUCTOR);
+
+        var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
+
+        assertThat(recipients).anyMatch(recipient -> recipient.id().equals(regular.getId()));
+        assertThat(maintenanceEmailRecipientRepository.countInstructorRecipientsForMaintenanceEmail(now)).isEqualTo(recipients.size());
     }
 
     @Test

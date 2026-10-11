@@ -31,8 +31,12 @@ For a test user, the notification settings behave as follows.
   receives.
 - A setting the account chose always wins. A test that is about e-mail signs in as the test user and enables exactly what it needs,
   either in **User Settings > Notifications** or in the notification settings of a course, and receives exactly that.
-- Choosing a preset in the notification settings of a course, including the default preset, counts as a choice and switches the e-mail
-  of that preset on. Customizing the settings starts from "no e-mail" instead of copying the e-mail of the default preset.
+- In the notification settings of a course, a test user that has not chosen anything is shown the custom preset with e-mail off, not
+  the default preset, because the default preset delivers e-mail. Choosing a preset, including the default preset, counts as a
+  choice and switches the e-mail of that preset on. Customizing the settings starts from "no e-mail" instead of copying the e-mail of
+  the default preset.
+- The maintenance e-mail goes to a test user only if it switched the notification on, and the recipient count that the administration
+  shows before sending a system notification applies the same rule.
 - Mails that have no setting of their own, such as activation and password reset mails and the warnings of the data retention
   features, are not sent to a test user that has not enabled any e-mail. As soon as the account has enabled one, they are sent.
 
