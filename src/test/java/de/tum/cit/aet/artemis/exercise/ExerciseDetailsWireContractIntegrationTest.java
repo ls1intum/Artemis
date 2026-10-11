@@ -239,6 +239,37 @@ class ExerciseDetailsWireContractIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(username = STUDENT, roles = "USER")
+    void details_teamExerciseWithIndividualPracticeParticipation_reportsTeamAndPracticeParticipation() throws Exception {
+        User student = userUtilService.getUserByLogin(STUDENT);
+        User tutor = userUtilService.getUserByLogin(TUTOR);
+
+        Course textCourse = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("team practice wire text", TEST_PREFIX);
+        TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(textCourse, TextExercise.class);
+        textExercise.setMode(ExerciseMode.TEAM);
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        textExercise = exerciseRepository.save(textExercise);
+        Team team = teamUtilService.createTeam(Set.of(student, userUtilService.getUserByLogin(TEST_PREFIX + "student2")), tutor, textExercise, TEST_PREFIX + "practiceteam");
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(textExercise, team.getId());
+        StudentParticipation practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(textExercise, STUDENT);
+        TextSubmission practiceSubmission = new TextSubmission();
+        practiceSubmission.setText("practice text");
+        addSubmissionWithResult(practiceParticipation, practiceSubmission, AssessmentType.AUTOMATIC);
+
+        JsonNode response = assertDetailsMatchEntityWire(textExercise.getId());
+
+        JsonNode participations = response.at("/exercise/studentParticipations");
+        assertThat(participations).as("the team participation and the own practice participation").hasSize(2);
+        JsonNode teamNode = StreamSupport.stream(participations.spliterator(), false).filter(node -> !node.path("testRun").asBoolean(false)).findFirst().orElseThrow();
+        JsonNode practiceNode = StreamSupport.stream(participations.spliterator(), false).filter(node -> node.path("testRun").asBoolean(false)).findFirst().orElseThrow();
+        assertThat(teamNode.path("id").asLong()).isEqualTo(teamParticipation.getId());
+        assertThat(teamNode.at("/team/students/0/login").isString()).isTrue();
+        assertThat(practiceNode.path("id").asLong()).isEqualTo(practiceParticipation.getId());
+        assertThat(practiceNode.at("/student/login").asString()).isEqualTo(STUDENT);
+        assertThat(practiceNode.has("team")).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT, roles = "USER")
     void details_programmingExercise_forStudentAndTutor_matchesTheEntityWire() throws Exception {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
