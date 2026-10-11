@@ -6,11 +6,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { presentationAssessmentFeatureGuard } from 'app/presentation/manage/presentation-assessment-feature.guard';
 
 describe('presentationAssessmentFeatureGuard', () => {
     let courseManagementService: Pick<CourseManagementService, 'find'>;
+    let courseStorageService: Pick<CourseStorageService, 'getCourse'>;
     let featureToggleService: Pick<FeatureToggleService, 'getFeatureToggleActive'>;
 
     const courseId = 1;
@@ -25,6 +27,9 @@ describe('presentationAssessmentFeatureGuard', () => {
         courseManagementService = {
             find: vi.fn().mockReturnValue(of(new HttpResponse({ body: { id: courseId, presentationAssessmentsEnabled: true } as Course }))),
         };
+        courseStorageService = {
+            getCourse: vi.fn().mockReturnValue(undefined),
+        };
         featureToggleService = {
             getFeatureToggleActive: vi.fn().mockReturnValue(of(true)),
         };
@@ -32,6 +37,7 @@ describe('presentationAssessmentFeatureGuard', () => {
             providers: [
                 provideRouter([]),
                 { provide: CourseManagementService, useValue: courseManagementService },
+                { provide: CourseStorageService, useValue: courseStorageService },
                 { provide: FeatureToggleService, useValue: featureToggleService },
             ],
         });
@@ -68,6 +74,28 @@ describe('presentationAssessmentFeatureGuard', () => {
 
     it('should redirect to the course overview when loading the course fails', async () => {
         vi.mocked(courseManagementService.find).mockReturnValue(throwError(() => new Error('course load failed')));
+
+        expect(serialize(await runGuard())).toBe('/course-management/1');
+    });
+
+    it('should take an enabled setting from the stored course without loading the course again', async () => {
+        vi.mocked(courseStorageService.getCourse).mockReturnValue({ id: courseId, presentationAssessmentsEnabled: true } as Course);
+
+        await expect(runGuard()).resolves.toBe(true);
+        expect(courseStorageService.getCourse).toHaveBeenCalledWith(courseId);
+        expect(courseManagementService.find).not.toHaveBeenCalled();
+    });
+
+    it('should load the course when the stored course has the setting disabled, because it may only be the default', async () => {
+        vi.mocked(courseStorageService.getCourse).mockReturnValue({ id: courseId, presentationAssessmentsEnabled: false } as Course);
+
+        await expect(runGuard()).resolves.toBe(true);
+        expect(courseManagementService.find).toHaveBeenCalledWith(courseId);
+    });
+
+    it('should redirect when the global feature toggle is disabled even if the stored course has the setting enabled', async () => {
+        vi.mocked(courseStorageService.getCourse).mockReturnValue({ id: courseId, presentationAssessmentsEnabled: true } as Course);
+        vi.mocked(featureToggleService.getFeatureToggleActive).mockReturnValue(of(false));
 
         expect(serialize(await runGuard())).toBe('/course-management/1');
     });
