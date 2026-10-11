@@ -99,6 +99,9 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
      */
     readonly openOnClick = input(false, { transform: booleanAttribute });
 
+    /** Month the calendar opens on while the field is empty; a held value always wins. Defaults to the current month. */
+    readonly startAt = input<dayjs.Dayjs>();
+
     /** ID used to associate the input, label, validation message, and dialog. */
     readonly inputId = input(`tumaet-ui-date-picker-${nextDatePickerId++}`);
     /** Visible label text or package translation key. */
@@ -333,7 +336,7 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
         if (!trigger) {
             return;
         }
-        const anchor = this.value() ?? dayjs();
+        const anchor = this.value() ?? this.startAt() ?? dayjs();
         this.activeMonth.set(anchor.startOf('month'));
         const activeElement = this.document.activeElement;
         this.restoreFocusElement = activeElement && typeof (activeElement as HTMLElement).focus === 'function' ? (activeElement as HTMLElement) : undefined;

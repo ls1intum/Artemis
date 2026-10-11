@@ -177,6 +177,31 @@ describe('TumAetUiDatePickerComponent', () => {
         expect(document.activeElement).toBe(trigger);
     });
 
+    describe('startAt', () => {
+        function openedMonthLabel(): string | undefined {
+            fixture.debugElement.query(By.css('button[aria-haspopup="dialog"]')).nativeElement.click();
+            fixture.detectChanges();
+            return document.querySelector('tumaet-ui-calendar [role="grid"]')?.getAttribute('aria-label') ?? undefined;
+        }
+
+        it('opens the calendar on the current month when nothing is set', () => {
+            expect(openedMonthLabel()).toContain('July');
+        });
+
+        it('opens an empty picker on the month startAt names', () => {
+            fixture.componentRef.setInput('startAt', dayjs('2026-12-24T10:00'));
+            fixture.detectChanges();
+            expect(openedMonthLabel()).toContain('December');
+        });
+
+        it('lets a held value win over startAt', () => {
+            fixture.componentRef.setInput('startAt', dayjs('2026-12-24T10:00'));
+            fixture.componentRef.setInput('value', dayjs('2026-03-02T10:00'));
+            fixture.detectChanges();
+            expect(openedMonthLabel()).toContain('March');
+        });
+    });
+
     it('keeps the calendar icon out of the tab order because the input opens the same dialog', () => {
         const trigger = fixture.debugElement.query(By.css('button[aria-haspopup="dialog"]')).nativeElement as HTMLButtonElement;
         expect(trigger.tabIndex).toBe(-1);
