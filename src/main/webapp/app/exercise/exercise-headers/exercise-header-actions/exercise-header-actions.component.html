@@ -159,7 +159,7 @@
                             [repositoryUri]="repositoryUriForCode()"
                             [isPractice]="participationMode() === 'practice'"
                         />
-                        <jhi-code-button-new [repositoryUri]="activeParticipationForCode()?.repositoryUri ?? ''" />
+                        <jhi-code-button-new [repositoryUri]="repositoryUriForCode()" />
                     }
                 }
                 @if (
