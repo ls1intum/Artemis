@@ -172,9 +172,10 @@ overrides:
   # down, which failed 65 tests across two specs on teardown alone. Still broken in 30.1.2 (re-checked
   # 2026-10-10). Revisit once PrimeNG or jsdom fixes it; keep this equal to the catalog entry.
   jsdom: '30.0.1'
-  # Held at 0.18.10: 0.18.11 was published by accident with breaking changes and is deprecated on npm
-  # ("Use 0.19.0 instead"). 0.19.0 is the real release of those changes and a breaking 0.x minor.
-  katex: '0.18.10'
+  # 0.18.11 was published by accident with breaking changes and is deprecated on npm ("Use 0.19.0 instead"); 0.19.0 is the real
+  # release of those changes. They only concern the `strict` option (a glyph missing from the font is reported as
+  # `symbolNotInFont`), which the markdown renderer leaves at its default. Do not use 0.18.11.
+  katex: '0.19.0'
   # Must stay >= 0.2.119: 0.2.118 only fixes CVE-2026-102360, 0.2.119 also fixes CVE-2026-102521. Mend flags 0.2.117, reached through yjs,
   # y-protocols, y-monaco and @tumaet/apollon, none of which declare a patched range of their own yet.
   lib0: '0.2.119'

@@ -352,7 +352,7 @@ overrides:
   immutable: 5.1.9
   js-yaml: 4.3.2
   jsdom: 30.0.1
-  katex: 0.18.10
+  katex: 0.19.0
   lib0: 0.2.119
   less: 4.9.1
   minimatch: 10.2.6
@@ -507,8 +507,8 @@ importers:
         specifier: 1.4.2
         version: 1.4.2
       katex:
-        specifier: 0.18.10
-        version: 0.18.10
+        specifier: 0.19.0
+        version: 0.19.0
       lodash-es:
         specifier: 'catalog:'
         version: 4.18.1
@@ -5261,8 +5261,8 @@ packages:
   jspdf@4.2.1:
     resolution: {integrity: sha512-YyAXyvnmjTbR4bHQRLzex3CuINCDlQnBqoSYyjJwTP2x9jDLuKDzy7aKUl0hgx3uhcl7xzg32agn5vlie6HIlQ==}
 
-  katex@0.18.10:
-    resolution: {integrity: sha512-/B6p9eY9DX7aHBfpkHdpirDTZ5QH9xTwL9y837PWuzuv41O5jFdqNQwVQEQsimY0/iVNkwBY4+4hMfhQ7d4Dbw==}
+  katex@0.19.0:
+    resolution: {integrity: sha512-v6Tznz3zJ7u3niRCoDTsumM2+HA2XXcCu+WAacCeHD2z3p9A9Ks987o5FzfTGBN0e8A0vjEgIDvLbICrXpdw/Q==}
     hasBin: true
 
   keyv@5.6.0:
@@ -9839,7 +9839,7 @@ snapshots:
 
   '@vscode/markdown-it-katex@1.1.2':
     dependencies:
-      katex: 0.18.10
+      katex: 0.19.0
 
   '@vue/compiler-core@3.5.43':
     dependencies:
@@ -11068,7 +11068,7 @@ snapshots:
       html2canvas: 1.4.1
     optional: true
 
-  katex@0.18.10:
+  katex@0.19.0:
     dependencies:
       commander: 15.0.0
 
