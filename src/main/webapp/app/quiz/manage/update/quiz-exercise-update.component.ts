@@ -78,6 +78,7 @@ import { GeneratedQuestion, GeneratedQuestionType } from 'app/quiz/manage/update
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 /** Largest delay setTimeout accepts before its signed 32-bit truncation makes it fire immediately. */
 const MAX_TIMEOUT_DELAY = 2_147_483_647;
@@ -824,6 +825,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             quizExercise.duration = Number(quizExercise.duration);
             quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
         }
+        // The server sends a batch start time as an ISO string, while the date picker needs a dayjs object.
+        quizExercise.quizBatches?.forEach((batch) => (batch.startTime = convertDateFromServer(batch.startTime)));
         for (const question of quizExercise.quizQuestions ?? []) {
             if (question.type === QuizQuestionType.SHORT_ANSWER) {
                 this.shortAnswerQuestionUtil.prepareShortAnswerQuestion(question as ShortAnswerQuestion);

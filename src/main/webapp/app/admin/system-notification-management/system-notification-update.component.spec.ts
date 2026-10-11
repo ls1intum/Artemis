@@ -191,6 +191,15 @@ describe('SystemNotificationManagementUpdateComponent', () => {
             expect(pickerInput('expireDate').value).toBe(testNotification.expireDate!.format('DD.MM.YYYY HH:mm'));
         });
 
+        it('should name each date field by a visible label bound to its input', () => {
+            fixture.detectChanges();
+
+            for (const id of ['notificationDate', 'expireDate']) {
+                expect(fixture.nativeElement.querySelector(`label[for="${id}"]`)).not.toBeNull();
+                expect(pickerInput(id)).not.toBeNull();
+            }
+        });
+
         it('should write a typed date to the form control', () => {
             fixture.detectChanges();
 

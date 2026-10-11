@@ -5,15 +5,10 @@
                 <label for="title" jhiTranslate="artemisApp.lecture.title"></label>
                 <input tumAetUiInput id="title" [value]="title()" (input)="onTitleInput($event)" [tumAetUiInputInvalid]="isTitleInvalid()" />
             </div>
-            <tumaet-ui-date-picker
-                inputId="startDate"
-                [labelName]="'artemisApp.lecture.startDate' | artemisTranslate"
-                [(value)]="startDate"
-                (inputValidityChange)="isStartTextValid.set($event)"
-            />
+            <tumaet-ui-date-picker inputId="startDate" labelName="artemisApp.lecture.startDate" [(value)]="startDate" (inputValidityChange)="isStartTextValid.set($event)" />
             <tumaet-ui-date-picker
                 inputId="endDate"
-                [labelName]="'artemisApp.lecture.endDate' | artemisTranslate"
+                labelName="artemisApp.lecture.endDate"
                 [(value)]="endDate"
                 [invalid]="isEndDateInvalid()"
                 (inputValidityChange)="isEndTextValid.set($event)"

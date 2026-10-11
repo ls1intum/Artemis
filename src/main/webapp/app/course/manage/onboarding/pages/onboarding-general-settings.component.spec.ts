@@ -139,6 +139,13 @@ describe('OnboardingGeneralSettingsComponent', () => {
             fixture.debugElement
                 .queryAll(By.directive(TumAetUiDatePickerComponent))
                 .find((picker) => picker.nativeElement.querySelector(`#${id}`) || picker.componentInstance.inputId() === id)!;
+        const expectFormLabel = (inputId: string, key: string) => {
+            const label = fixture.nativeElement.querySelector(`label[for="${inputId}"]`) as HTMLLabelElement | null;
+            expect(label).not.toBeNull();
+            expect(label!.classList).toContain('form-label');
+            expect(pickerById(inputId).componentInstance.hideLabelName()).toBe(true);
+            expect(label!.getAttribute('jhiTranslate') ?? label!.getAttribute('ng-reflect-jhi-translate')).toBe(key);
+        };
         const missingMessage = (id: string) => fixture.nativeElement.querySelector(`[data-testid="${id}-missing"]`);
 
         it('should mark both dates invalid and explain it while they are missing', () => {
@@ -150,6 +157,11 @@ describe('OnboardingGeneralSettingsComponent', () => {
             expect(missingMessage('onboarding-startDate')).not.toBeNull();
             expect(pickerById('onboarding-endDate').componentInstance.invalid()).toBe(true);
             expect(missingMessage('onboarding-endDate')).not.toBeNull();
+        });
+
+        it('should label each picker with a form label bound to its input, like the fields around it', () => {
+            expectFormLabel('onboarding-startDate', 'artemisApp.course.startDate');
+            expectFormLabel('onboarding-endDate', 'artemisApp.course.endDate');
         });
 
         it('should clear the invalid state and the message once a date is set', () => {

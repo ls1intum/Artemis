@@ -310,56 +310,48 @@
                                             <label class="new-group-settings__label" for="wiz-group-release">{{
                                                 'artemisApp.exerciseVariantGeneration.wizard.placement.release' | artemisTranslate
                                             }}</label>
-                                            <input
-                                                type="datetime-local"
-                                                id="wiz-group-release"
-                                                [ngModel]="newGroupReleaseDate()"
-                                                (ngModelChange)="newGroupReleaseDate.set($event)"
-                                                tumAetUiInput
-                                                tumAetUiInputSize="small"
+                                            <tumaet-ui-date-picker
                                                 class="new-group-settings__date"
+                                                [inputId]="'wiz-group-release'"
+                                                [hideLabelName]="true"
+                                                [shouldDisplayTimeZoneWarning]="false"
+                                                [(value)]="newGroupReleaseDate"
                                             />
                                         </div>
                                         <div>
                                             <label class="new-group-settings__label" for="wiz-group-start">{{
                                                 'artemisApp.exerciseVariantGeneration.wizard.placement.start' | artemisTranslate
                                             }}</label>
-                                            <input
-                                                type="datetime-local"
-                                                id="wiz-group-start"
-                                                [ngModel]="newGroupStartDate()"
-                                                (ngModelChange)="newGroupStartDate.set($event)"
-                                                tumAetUiInput
-                                                tumAetUiInputSize="small"
+                                            <tumaet-ui-date-picker
                                                 class="new-group-settings__date"
+                                                [inputId]="'wiz-group-start'"
+                                                [hideLabelName]="true"
+                                                [shouldDisplayTimeZoneWarning]="false"
+                                                [(value)]="newGroupStartDate"
                                             />
                                         </div>
                                         <div>
                                             <label class="new-group-settings__label" for="wiz-group-due">{{
                                                 'artemisApp.exerciseVariantGeneration.wizard.placement.due' | artemisTranslate
                                             }}</label>
-                                            <input
-                                                type="datetime-local"
-                                                id="wiz-group-due"
-                                                [ngModel]="newGroupDueDate()"
-                                                (ngModelChange)="newGroupDueDate.set($event)"
-                                                tumAetUiInput
-                                                tumAetUiInputSize="small"
+                                            <tumaet-ui-date-picker
                                                 class="new-group-settings__date"
+                                                [inputId]="'wiz-group-due'"
+                                                [hideLabelName]="true"
+                                                [shouldDisplayTimeZoneWarning]="false"
+                                                [(value)]="newGroupDueDate"
                                             />
                                         </div>
                                         <div>
                                             <label class="new-group-settings__label" for="wiz-group-assessment-due">
                                                 {{ 'artemisApp.exerciseVariantGeneration.wizard.placement.assessmentDue' | artemisTranslate }}
                                             </label>
-                                            <input
-                                                type="datetime-local"
-                                                id="wiz-group-assessment-due"
-                                                [ngModel]="newGroupAssessmentDueDate()"
-                                                (ngModelChange)="newGroupAssessmentDueDate.set($event)"
-                                                tumAetUiInput
-                                                tumAetUiInputSize="small"
+                                            <tumaet-ui-date-picker
                                                 class="new-group-settings__date"
+                                                [inputId]="'wiz-group-assessment-due'"
+                                                [hideLabelName]="true"
+                                                [shouldDisplayTimeZoneWarning]="false"
+                                                [(value)]="newGroupAssessmentDueDate"
                                             />
                                         </div>
                                     </div>

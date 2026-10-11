@@ -3,7 +3,6 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_LTI } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -15,7 +14,7 @@ import { NgClass } from '@angular/common';
     selector: 'jhi-onboarding-enrollment',
     templateUrl: './onboarding-enrollment.component.html',
     styleUrls: ['./_onboarding-pages.scss'],
-    imports: [TranslateDirective, TumAetUiDatePickerComponent, MarkdownEditorMonacoComponent, ArtemisTranslatePipe, FaIconComponent, DocumentationButtonComponent, NgClass],
+    imports: [TranslateDirective, TumAetUiDatePickerComponent, MarkdownEditorMonacoComponent, FaIconComponent, DocumentationButtonComponent, NgClass],
 })
 export class OnboardingEnrollmentComponent {
     private profileService = inject(ProfileService);

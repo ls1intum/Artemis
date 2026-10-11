@@ -210,6 +210,12 @@ describe('CourseRequestFormComponent', () => {
             fixture.detectChanges();
         };
 
+        it('should hand each picker the translation key of its label, which the picker translates itself', () => {
+            const labels = fixture.debugElement.queryAll(By.directive(TumAetUiDatePickerComponent)).map((picker) => picker.componentInstance.labelName());
+
+            expect(labels).toEqual(['artemisApp.courseRequest.form.startDate', 'artemisApp.courseRequest.form.endDate']);
+        });
+
         it('should give each picker its host id and a prefixed input id', () => {
             fixture.componentRef.setInput('idPrefix', 'edit');
             fixture.detectChanges();

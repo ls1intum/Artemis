@@ -778,8 +778,10 @@ code.password:hover {
     background: $displaycolor-background;
 }
 
+// Kit overlays (calendar, select panels, tooltips) open here. PrimeNG dialogs from DialogService stack from 1100 upwards, so the layer
+// has to sit above them for an overlay opened from inside such a dialog to be visible.
 .cdk-overlay-container {
-    z-index: $zindex-modal + 5;
+    z-index: 1200;
 }
 
 .not-allowed {

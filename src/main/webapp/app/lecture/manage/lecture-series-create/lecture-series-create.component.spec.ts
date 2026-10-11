@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { LectureSeriesCreateComponent } from './lecture-series-create.component';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -54,6 +56,16 @@ describe('LectureSeriesCreateComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('passes translation keys, not translated text, as the picker labels', () => {
+        // The picker translates its label itself, so a text that was translated beforehand would be looked up as a key.
+        const pickers = fixture.debugElement.queryAll(By.directive(TumAetUiDatePickerComponent));
+        expect(pickers.map((picker) => picker.componentInstance.labelName())).toEqual([
+            'artemisApp.lecture.createSeries.inputLabel.startDate',
+            'artemisApp.lecture.createSeries.inputLabel.endDate',
+            'artemisApp.lecture.createSeries.inputLabel.seriesEndDate',
+        ]);
     });
 
     it('should create', () => {

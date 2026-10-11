@@ -5,22 +5,25 @@
             <div class="enumerator secondary">
                 {{ index + 1 }}
             </div>
-            <tumaet-ui-date-picker
-                class="min-w-0 flex-1"
-                [inputId]="'start-date-' + (index + 1)"
-                [labelName]="'artemisApp.lecture.createSeries.inputLabel.startDate' | artemisTranslate"
-                [(value)]="initialLecture.startDate"
-                [invalid]="initialLecture.isStartDateInvalid()"
-                (inputValidityChange)="initialLecture.isStartTextValid.set($event)"
-            />
-            <tumaet-ui-date-picker
-                class="min-w-0 flex-1"
-                [inputId]="'end-date-' + (index + 1)"
-                [labelName]="'artemisApp.lecture.createSeries.inputLabel.endDate' | artemisTranslate"
-                [(value)]="initialLecture.endDate"
-                [invalid]="initialLecture.isEndDateInvalid()"
-                (inputValidityChange)="initialLecture.isEndTextValid.set($event)"
-            />
+            <!-- A datetime needs about 14rem; on a narrow screen the end picker wraps below the start picker instead of truncating the text. -->
+            <div class="flex min-w-0 flex-1 flex-wrap gap-4">
+                <tumaet-ui-date-picker
+                    class="min-w-56 flex-1"
+                    [inputId]="'start-date-' + (index + 1)"
+                    labelName="artemisApp.lecture.createSeries.inputLabel.startDate"
+                    [(value)]="initialLecture.startDate"
+                    [invalid]="initialLecture.isStartDateInvalid()"
+                    (inputValidityChange)="initialLecture.isStartTextValid.set($event)"
+                />
+                <tumaet-ui-date-picker
+                    class="min-w-56 flex-1"
+                    [inputId]="'end-date-' + (index + 1)"
+                    labelName="artemisApp.lecture.createSeries.inputLabel.endDate"
+                    [(value)]="initialLecture.endDate"
+                    [invalid]="initialLecture.isEndDateInvalid()"
+                    (inputValidityChange)="initialLecture.isEndTextValid.set($event)"
+                />
+            </div>
             @if (initialLectures().length !== 1) {
                 <button
                     type="button"
@@ -62,7 +65,7 @@
     <tumaet-ui-date-picker
         class="max-w-xs"
         inputId="series-end-date"
-        [labelName]="'artemisApp.lecture.createSeries.inputLabel.seriesEndDate' | artemisTranslate"
+        labelName="artemisApp.lecture.createSeries.inputLabel.seriesEndDate"
         [dateOnly]="true"
         [shouldDisplayTimeZoneWarning]="false"
         [(value)]="seriesEndDate"

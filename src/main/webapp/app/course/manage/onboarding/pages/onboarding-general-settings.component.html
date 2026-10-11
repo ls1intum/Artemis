@@ -41,9 +41,10 @@
 
         <div class="row mb-3 g-3">
             <div class="col-md-6">
+                <label class="form-label" for="onboarding-startDate" jhiTranslate="artemisApp.course.startDate"></label>
                 <tumaet-ui-date-picker
                     inputId="onboarding-startDate"
-                    labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}"
+                    [hideLabelName]="true"
                     [value]="course().startDate"
                     [invalid]="startDateMissing()"
                     [ariaRequired]="true"
@@ -58,9 +59,10 @@
                 }
             </div>
             <div class="col-md-6">
+                <label class="form-label" for="onboarding-endDate" jhiTranslate="artemisApp.course.endDate"></label>
                 <tumaet-ui-date-picker
                     inputId="onboarding-endDate"
-                    labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}"
+                    [hideLabelName]="true"
                     [value]="course().endDate"
                     [invalid]="endDateMissing()"
                     [ariaRequired]="true"

@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -197,6 +198,39 @@ describe('ExerciseVariantAiModalWizardComponent (new-group placement availabilit
         expect(component.canGroupSourceWithVariant()).toBe(true);
         expect(component.placementChoice()).toBe('new-group');
         expect(placementOption('variant-placement-new-group')).not.toBeNull();
+    });
+
+    it('carries the dates of the source into the new group and sends them as instants', async () => {
+        const release = dayjs('2030-03-01T08:30:00');
+        const due = dayjs('2030-03-15T23:59:00');
+        await createWizard({ ...programmingExercise, releaseDate: release, dueDate: due } as Exercise);
+
+        component.goToPlacement();
+        fixture.detectChanges();
+
+        const dateInput = (id: string) => document.body.querySelector<HTMLInputElement>(`input#${id}`)!;
+        expect(dateInput('wiz-group-release').value).toBe('01.03.2030 08:30');
+        expect(dateInput('wiz-group-due').value).toBe('15.03.2030 23:59');
+        expect(dateInput('wiz-group-start').value).toBe('');
+
+        const placement = component['buildPlacement']();
+        expect(placement).toEqual({
+            type: 'NEW_GROUP',
+            newGroup: expect.objectContaining({ releaseDate: release.toISOString(), dueDate: due.toISOString(), startDate: undefined, assessmentDueDate: undefined }),
+        });
+    });
+
+    it('takes a date typed into a new-group picker', async () => {
+        await createWizard(programmingExercise);
+        component.goToPlacement();
+        fixture.detectChanges();
+
+        const input = document.body.querySelector<HTMLInputElement>('input#wiz-group-assessment-due')!;
+        input.value = '20.04.2030 10:15';
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(component.newGroupAssessmentDueDate()?.format('YYYY-MM-DD HH:mm')).toBe('2030-04-20 10:15');
     });
 
     it('offers the new-group placement for an individual-mode quiz', async () => {

@@ -7,7 +7,6 @@ import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DatePickerControlDirective } from 'app/shared-ui/date-picker-control/date-picker-control.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
@@ -46,7 +45,6 @@ interface SystemNotificationForm {
         TumAetUiDatePickerComponent,
         DatePickerControlDirective,
         FaIconComponent,
-        ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         TumAetUiCheckboxComponent,
         TumAetUiInputDirective,

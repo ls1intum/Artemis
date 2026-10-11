@@ -11,7 +11,7 @@ import dayjs from 'dayjs/esm';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { QuizExerciseUpdateComponent } from 'app/quiz/manage/update/quiz-exercise-update.component';
-import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -155,6 +155,24 @@ describe('QuizExerciseUpdateComponent schedule section', () => {
         expect(comp.quizExercise().dueDateError).toBe(true);
         expect(picker('pick-dueDate-input').invalid()).toBe(true);
         expect(fixture.nativeElement.textContent).toContain('artemisApp.quizExercise.dueDateError');
+    });
+
+    it('should show a start time that the server sent as an ISO string', async () => {
+        const exercise = createExercise(QuizMode.SYNCHRONIZED);
+        const batch = new QuizBatch();
+        // the server sends the start time as a string, not as a dayjs object
+        batch.startTime = '2030-06-02T10:00:00.000Z' as unknown as dayjs.Dayjs;
+        exercise.quizBatches = [batch];
+        comp.course = course;
+        comp.quizExercise.set(exercise);
+        comp.init();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(dayjs.isDayjs(comp.quizExercise().quizBatches![0].startTime)).toBe(true);
+        expect(picker('quiz-batch-start-time-0').value()!.isSame(dayjs('2030-06-02T10:00:00.000Z'))).toBe(true);
+        expect(fixture.nativeElement.querySelector('#quiz-batch-start-time-0').value).not.toBe('');
     });
 
     it('should mark a start time before the release date invalid and explain it', async () => {

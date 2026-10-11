@@ -202,6 +202,22 @@ describe('TumAetUiDatePickerComponent', () => {
         });
     });
 
+    it('closes only the calendar on Escape, so a dialog around the field stays open', () => {
+        const reachedDocument = vi.fn();
+        document.addEventListener('keydown', reachedDocument);
+        const trigger = fixture.debugElement.query(By.css('button[aria-haspopup="dialog"]')).nativeElement as HTMLButtonElement;
+        trigger.click();
+        fixture.detectChanges();
+        expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+
+        document.querySelector('[role="dialog"]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        fixture.detectChanges();
+        document.removeEventListener('keydown', reachedDocument);
+
+        expect(document.querySelector('[role="dialog"]')).toBeNull();
+        expect(reachedDocument).not.toHaveBeenCalled();
+    });
+
     it('keeps the calendar icon out of the tab order because the input opens the same dialog', () => {
         const trigger = fixture.debugElement.query(By.css('button[aria-haspopup="dialog"]')).nativeElement as HTMLButtonElement;
         expect(trigger.tabIndex).toBe(-1);

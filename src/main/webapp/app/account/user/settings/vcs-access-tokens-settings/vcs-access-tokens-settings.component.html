@@ -73,7 +73,7 @@
                         id="expiryDate"
                         inputId="vcs-token-expiry-date"
                         [shouldDisplayTimeZoneWarning]="false"
-                        [labelName]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate' | artemisTranslate"
+                        labelName="artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate"
                         [value]="expiryDate()"
                         [invalid]="!!expiryDate() && !validExpiryDate()"
                         (valueChange)="onExpiryDateChange($event)"

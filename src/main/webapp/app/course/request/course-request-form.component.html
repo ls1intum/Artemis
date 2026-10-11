@@ -68,7 +68,7 @@
             <tumaet-ui-date-picker
                 [id]="idPrefix() + 'startDate'"
                 [inputId]="idPrefix() + 'startDate-input'"
-                [labelName]="'artemisApp.courseRequest.form.startDate' | artemisTranslate"
+                labelName="artemisApp.courseRequest.form.startDate"
                 formControlName="startDate"
                 [invalid]="dateRangeInvalid() || isDateMissing('startDate')"
                 [ariaRequired]="true"
@@ -87,7 +87,7 @@
             <tumaet-ui-date-picker
                 [id]="idPrefix() + 'endDate'"
                 [inputId]="idPrefix() + 'endDate-input'"
-                [labelName]="'artemisApp.courseRequest.form.endDate' | artemisTranslate"
+                labelName="artemisApp.courseRequest.form.endDate"
                 formControlName="endDate"
                 [invalid]="dateRangeInvalid() || isDateMissing('endDate')"
                 [ariaRequired]="true"

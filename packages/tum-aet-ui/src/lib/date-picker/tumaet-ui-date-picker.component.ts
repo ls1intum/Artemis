@@ -345,6 +345,8 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
         this.overlayRef.backdropClick().subscribe(() => this.close());
         this.overlayRef.keydownEvents().subscribe((event) => {
             if (event.key === 'Escape') {
+                // The Escape that closes the calendar must not also reach a dialog the field sits in.
+                event.stopPropagation();
                 this.close();
             }
         });

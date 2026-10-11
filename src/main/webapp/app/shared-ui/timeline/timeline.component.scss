@@ -92,10 +92,13 @@
                 .timeline-datepicker-info-icon {
                     display: inline-flex;
                     width: 1rem;
-                    color: var(--tumaet-ui-state-danger-foreground);
+                    font-size: 1rem;
+
+                    // The state colour itself, as the border and the circle use: the -foreground tokens are for text on a state background.
+                    color: var(--tumaet-ui-state-danger);
 
                     &.warning {
-                        color: var(--tumaet-ui-state-warning-foreground);
+                        color: var(--tumaet-ui-state-warning);
                     }
                 }
             }

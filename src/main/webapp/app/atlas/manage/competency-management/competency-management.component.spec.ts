@@ -259,7 +259,6 @@ describe('CompetencyManagementComponent', () => {
                 dismissableMask: false,
                 draggable: false,
                 resizable: false,
-                baseZIndex: -50,
                 data: { courseId: 1 },
             }),
         );

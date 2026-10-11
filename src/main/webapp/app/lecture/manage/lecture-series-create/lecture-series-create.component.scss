@@ -42,16 +42,17 @@
         gap: 1rem;
         align-items: center;
 
-        // The pickers carry their label above the field, so the row sits on the field's baseline rather than its middle.
+        // The pickers carry their label above the field and an error below it, so the row is top aligned and the
+        // enumerator and delete button sit level with the field itself (label 1.5rem + gap 0.25rem above the field).
         &.picker-row {
-            align-items: flex-end;
+            align-items: flex-start;
 
             .enumerator {
-                margin-bottom: 0.6rem;
+                margin-top: 2.4rem;
             }
 
             .initial-lecture-delete-button {
-                margin-bottom: 0.2rem;
+                margin-top: 2rem;
             }
         }
 

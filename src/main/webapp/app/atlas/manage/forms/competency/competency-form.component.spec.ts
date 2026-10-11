@@ -12,6 +12,7 @@ import dayjs from 'dayjs/esm';
 import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/competency-form.component';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 import { By } from '@angular/platform-browser';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { CommonCourseCompetencyFormComponent } from 'app/atlas/manage/forms/common-course-competency-form.component';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
@@ -145,6 +146,13 @@ describe('CompetencyFormComponent', () => {
 
             expect(competencyFormComponent.softDueDateControl!.value?.format('YYYY-MM-DD')).toBe('2030-06-15');
             expect(competencyFormComponent.softDueDateControl!.dirty).toBe(true);
+        });
+
+        it('should hand the picker the translation key of its label, which the picker translates itself', () => {
+            competencyFormComponentFixture.detectChanges();
+
+            const picker = competencyFormComponentFixture.debugElement.query(By.directive(TumAetUiDatePickerComponent));
+            expect(picker.componentInstance.labelName()).toBe('artemisApp.competency.create.softDueDate');
         });
 
         it('should describe the input with the always visible hint', () => {

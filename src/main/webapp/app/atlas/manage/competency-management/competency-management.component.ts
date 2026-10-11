@@ -187,9 +187,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             draggable: false,
             resizable: false,
             showHeader: false,
-            // PrimeNG modals start at 1100, above the overlay layer (1060) that the TUM AET UI date picker opens its calendar in.
-            // 1050 keeps the dialog above the page and puts that calendar above the dialog.
-            baseZIndex: -50,
             data: { courseId: this.courseId() },
         });
         if (!dialogRef) {

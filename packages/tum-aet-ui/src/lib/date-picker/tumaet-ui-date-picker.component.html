@@ -65,7 +65,7 @@
                 (blur)="onBlur(dateInput.value)"
                 (click)="onFieldClick()"
                 (keydown.arrowdown)="openFromInput($event)"
-                class="tumaet-ui-date-picker-input tumaet:box-border tumaet:w-full tumaet:rounded-md tumaet:border tumaet:bg-control-background tumaet:py-2 tumaet:ps-3 tumaet:pe-17 tumaet:text-text tumaet:placeholder:text-muted tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus tumaet:focus-visible:outline-offset-2"
+                class="tumaet-ui-date-picker-input tumaet:box-border tumaet:w-full tumaet:rounded-md tumaet:border tumaet:bg-control-background tumaet:py-2 tumaet:ps-3 tumaet:pe-17 tumaet:text-text tumaet:placeholder:text-muted tumaet:disabled:bg-disabled-background tumaet:disabled:text-disabled tumaet:disabled:opacity-100 tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus tumaet:focus-visible:outline-offset-2"
                 [class]="showErrorBorder() ? 'tumaet:border-state-danger' : 'tumaet:border-control-border'"
             />
             @if (showClear() && !disabled()) {
@@ -81,7 +81,7 @@
             <button
                 type="button"
                 tabindex="-1"
-                class="tumaet:absolute tumaet:end-2 tumaet:flex tumaet:h-6 tumaet:w-6 tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:border-0 tumaet:bg-transparent tumaet:p-0 tumaet:text-muted tumaet:hover:text-accent"
+                class="tumaet:absolute tumaet:end-2 tumaet:flex tumaet:h-6 tumaet:w-6 tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:border-0 tumaet:bg-transparent tumaet:p-0 tumaet:text-muted tumaet:hover:text-accent tumaet:disabled:cursor-not-allowed tumaet:disabled:text-disabled"
                 [disabled]="disabled()"
                 (click)="toggle()"
                 [attr.aria-label]="openLabelKey() | tumAetUiTranslate"

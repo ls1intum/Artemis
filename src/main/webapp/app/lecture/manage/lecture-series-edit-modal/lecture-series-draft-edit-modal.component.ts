@@ -4,13 +4,12 @@ import { LectureDraft, LectureDraftState } from 'app/lecture/manage/lecture-seri
 import { Dayjs } from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { isFirstDateAfterOrEqualSecond } from 'app/foundation/util/date.utils';
 
 @Component({
     selector: 'jhi-lecture-series-draft-edit-modal',
-    imports: [TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiDatePickerComponent, TumAetUiButtonDirective, TranslateDirective, ArtemisTranslatePipe],
+    imports: [TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiDatePickerComponent, TumAetUiButtonDirective, TranslateDirective],
     templateUrl: './lecture-series-draft-edit-modal.component.html',
     styleUrl: './lecture-series-draft-edit-modal.component.scss',
 })

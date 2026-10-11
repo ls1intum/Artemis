@@ -11,7 +11,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { Router } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Dayjs } from 'dayjs/esm';
 import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import { isFirstDateAfterOrEqualSecond } from 'app/foundation/util/date.utils';
@@ -56,16 +55,7 @@ export enum LectureDraftState {
  */
 @Component({
     selector: 'jhi-lecture-series-create',
-    imports: [
-        NgClass,
-        TranslateDirective,
-        TumAetUiDatePickerComponent,
-        ArtemisTranslatePipe,
-        ButtonModule,
-        ConfirmDialogModule,
-        FaIconComponent,
-        LectureSeriesDraftEditModalComponent,
-    ],
+    imports: [NgClass, TranslateDirective, TumAetUiDatePickerComponent, ButtonModule, ConfirmDialogModule, FaIconComponent, LectureSeriesDraftEditModalComponent],
     templateUrl: './lecture-series-create.component.html',
     styleUrl: './lecture-series-create.component.scss',
 })

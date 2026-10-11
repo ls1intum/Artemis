@@ -81,17 +81,19 @@
             <div class="ms-4 mb-3">
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
+                        <label class="form-label" for="onboarding-enrollmentStartDate" jhiTranslate="artemisApp.course.enrollmentStartDate"></label>
                         <tumaet-ui-date-picker
                             inputId="onboarding-enrollmentStartDate"
-                            labelName="{{ 'artemisApp.course.enrollmentStartDate' | artemisTranslate }}"
+                            [hideLabelName]="true"
                             [value]="course().enrollmentStartDate"
                             (valueChange)="updateField('enrollmentStartDate', $event)"
                         />
                     </div>
                     <div class="col-md-6">
+                        <label class="form-label" for="onboarding-enrollmentEndDate" jhiTranslate="artemisApp.course.enrollmentEndDate"></label>
                         <tumaet-ui-date-picker
                             inputId="onboarding-enrollmentEndDate"
-                            labelName="{{ 'artemisApp.course.enrollmentEndDate' | artemisTranslate }}"
+                            [hideLabelName]="true"
                             [value]="course().enrollmentEndDate"
                             (valueChange)="updateField('enrollmentEndDate', $event)"
                         />
@@ -136,9 +138,10 @@
 
                 @if (course().unenrollmentEnabled) {
                     <div class="ms-4 mb-3">
+                        <label class="form-label" for="onboarding-unenrollmentEndDate" jhiTranslate="artemisApp.course.unenrollmentEndDate"></label>
                         <tumaet-ui-date-picker
                             inputId="onboarding-unenrollmentEndDate"
-                            labelName="{{ 'artemisApp.course.unenrollmentEndDate' | artemisTranslate }}"
+                            [hideLabelName]="true"
                             [value]="course().unenrollmentEndDate"
                             (valueChange)="updateField('unenrollmentEndDate', $event)"
                         />

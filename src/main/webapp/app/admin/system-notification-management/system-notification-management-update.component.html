@@ -15,19 +15,21 @@
                     <label for="type" class="font-bold" jhiTranslate="artemisApp.systemNotification.type"></label>
                     <tumaet-ui-select inputId="type" [options]="systemNotificationTypes" optionLabel="name" optionValue="value" formControlName="type" class="w-full" />
                 </div>
-                <div class="mb-3">
+                <div class="mb-3 flex flex-col gap-2">
+                    <label for="notificationDate" class="font-bold" jhiTranslate="artemisApp.systemNotification.notificationDate"></label>
                     <tumaet-ui-date-picker
                         inputId="notificationDate"
-                        [labelName]="'artemisApp.systemNotification.notificationDate' | artemisTranslate"
+                        [hideLabelName]="true"
                         formControlName="notificationDate"
                         [shouldDisplayTimeZoneWarning]="false"
                         [ariaRequired]="true"
                     />
                 </div>
-                <div class="mb-3">
+                <div class="mb-3 flex flex-col gap-2">
+                    <label for="expireDate" class="font-bold" jhiTranslate="artemisApp.systemNotification.expireDate"></label>
                     <tumaet-ui-date-picker
                         inputId="expireDate"
-                        [labelName]="'artemisApp.systemNotification.expireDate' | artemisTranslate"
+                        [hideLabelName]="true"
                         formControlName="expireDate"
                         [shouldDisplayTimeZoneWarning]="false"
                         [invalid]="!!expireDate?.errors?.expireMustBeAfterNotification"
