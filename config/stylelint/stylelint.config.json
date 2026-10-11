@@ -1,6 +1,6 @@
 {
     "plugins": ["stylelint-scss"],
-    "extends": ["stylelint-config-standard-scss", "stylelint-config-html"],
+    "extends": ["stylelint-config-standard-scss"],
     "overrides": [
         {
             "files": ["**/*.scss"],
