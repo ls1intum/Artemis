@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, model } from '@angular/core';
+import { Component, computed, model, output } from '@angular/core';
 import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { Dayjs } from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -28,6 +28,8 @@ export class ImportCourseCompetenciesSettingsComponent {
     protected readonly faQuestionCircle = faQuestionCircle;
 
     readonly importSettings = model.required<CourseCompetencyImportSettings>();
+    /** Emits whether the text of the reference date field is a date or empty; the picker keeps its last valid date while it is not. */
+    readonly referenceDateTextValidChange = output<boolean>();
     readonly importRelations = computed(() => this.importSettings().importRelations);
     readonly importExercises = computed(() => this.importSettings().importExercises);
     readonly importLectures = computed(() => this.importSettings().importLectures);

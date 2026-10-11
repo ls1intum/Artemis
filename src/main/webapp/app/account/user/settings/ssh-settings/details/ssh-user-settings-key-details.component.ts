@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { DocumentationLinkComponent } from 'app/shared-ui/components/documentation-link/documentation-link.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -91,6 +91,7 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     readonly displayCreationDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly displayedLastUsedDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly currentDate = signal<dayjs.Dayjs>(dayjs());
+    private readonly expiryPicker = viewChild(TumAetUiDatePickerComponent);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -170,6 +171,8 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     /** Sets the expiry to the end of the day the given number of days from today. */
     selectExpiryPreset(days: number) {
         this.onExpiryDateChange(dayjs().add(days, 'day'));
+        // Choosing the preset that is already shown must still replace text typed over it, which the bound value alone would keep.
+        this.expiryPicker()?.replaceValue(this.displayedExpiryDate());
     }
 
     onExpiryTextValidityChange(isValid: boolean) {

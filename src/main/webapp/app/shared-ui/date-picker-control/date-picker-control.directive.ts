@@ -47,7 +47,8 @@ export class DatePickerControlDirective implements ControlValueAccessor, Validat
         const next = value == undefined ? undefined : dayjs(value);
         this.writing = true;
         try {
-            this.picker.value.set(next?.isValid() ? next : undefined);
+            // Not `picker.value.set`: that keeps invalid text in the field when the new value displays like the current one.
+            this.picker.replaceValue(next?.isValid() ? next : undefined);
         } finally {
             this.writing = false;
         }

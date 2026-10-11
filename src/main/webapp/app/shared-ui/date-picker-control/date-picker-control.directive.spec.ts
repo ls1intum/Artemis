@@ -69,6 +69,30 @@ describe('DatePickerControlDirective', () => {
         expect(host.form.controls.date.errors).toBeNull();
     });
 
+    it('replaces invalid text when the control is written with the value it already shows', () => {
+        host.form.controls.date.setValue(dayjs('2026-06-13T08:30'));
+        fixture.detectChanges();
+        type('13.06.2026 08:30xx');
+        expect(host.form.controls.date.errors).toEqual(expect.objectContaining({ invalidDate: true }));
+
+        host.form.controls.date.setValue(dayjs('2026-06-13T08:30'));
+        fixture.detectChanges();
+
+        expect(input().value).toBe('13.06.2026 08:30');
+        expect(host.form.controls.date.errors).toBeNull();
+    });
+
+    it('clears invalid text typed into an empty field when the control is reset to empty', () => {
+        type('garbage');
+        expect(host.form.controls.date.errors).toEqual(expect.objectContaining({ invalidDate: true }));
+
+        host.form.controls.date.reset(undefined);
+        fixture.detectChanges();
+
+        expect(input().value).toBe('');
+        expect(host.form.controls.date.errors).toEqual({ required: true });
+    });
+
     it('keeps the required validator of the control working for an empty field', () => {
         expect(host.form.controls.date.errors).toEqual({ required: true });
     });

@@ -191,6 +191,27 @@ describe('SshUserSettingsComponent', () => {
             expect(presetButton(30).query(By.css('button')).nativeElement.getAttribute('aria-pressed')).not.toBe('true');
         });
 
+        it('should replace text typed over the shown preset when the same quick choice is chosen again', () => {
+            comp.selectedOption = 'useExpiration';
+            fixture.detectChanges();
+            const presetButton = () => fixture.debugElement.query(By.css('[data-testid="ssh-key-expiry-preset-90"] button')).nativeElement as HTMLButtonElement;
+            const input = () => fixture.nativeElement.querySelector('#ssh-key-expiry-date') as HTMLInputElement;
+            presetButton().click();
+            fixture.detectChanges();
+            const shown = input().value;
+
+            input().value = `${shown}xx`;
+            input().dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            expect(comp.isExpiryDateValid()).toBe(false);
+
+            presetButton().click();
+            fixture.detectChanges();
+
+            expect(input().value).toBe(shown);
+            expect(comp.isExpiryDateValid()).toBe(true);
+        });
+
         it('should grey out the days up to today in the calendar', () => {
             comp.selectedOption = 'useExpiration';
             fixture.detectChanges();

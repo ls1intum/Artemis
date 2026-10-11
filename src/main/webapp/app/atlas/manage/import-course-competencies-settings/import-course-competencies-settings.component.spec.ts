@@ -161,6 +161,22 @@ describe('ImportCourseCompetenciesSettingsComponent', () => {
             expect(fixture.nativeElement.querySelector('#reference-date-type-select').disabled).toBeFalsy();
         });
 
+        it('should report whether the text of the picker is a date while the stored date stays', () => {
+            const emitSpy = vi.spyOn(component.referenceDateTextValidChange, 'emit');
+            component.importSettings.update((settings) => ({ ...settings, referenceDate: dayjs('2022-02-01T14:30') }));
+            fixture.detectChanges();
+
+            type('not a date');
+
+            expect(emitSpy).toHaveBeenLastCalledWith(false);
+            // The picker keeps its last valid value, which is why the host has to be told about the text.
+            expect(component.importSettings().referenceDate?.format('YYYY-MM-DD HH:mm')).toBe('2022-02-01 14:30');
+
+            type('02.02.2022 10:00');
+
+            expect(emitSpy).toHaveBeenLastCalledWith(true);
+        });
+
         it('should show the stored reference date', () => {
             component.importSettings.update((settings) => ({ ...settings, referenceDate: dayjs('2022-02-01T14:30') }));
             fixture.detectChanges();

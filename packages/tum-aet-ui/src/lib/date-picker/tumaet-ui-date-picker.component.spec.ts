@@ -106,6 +106,52 @@ describe('TumAetUiDatePickerComponent', () => {
         expect(input().value).toBe('13.06.2026 08:30xx');
     });
 
+    describe('replaceValue', () => {
+        function type(text: string) {
+            input().value = text;
+            input().dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+        }
+
+        it('discards invalid text even when the new value displays like the current one', () => {
+            fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+            fixture.detectChanges();
+            type('13.06.2026 08:30xx');
+            expect(component.isValid()).toBe(false);
+
+            component.replaceValue(dayjs('2026-06-13T08:30'));
+            fixture.detectChanges();
+
+            expect(component.isValid()).toBe(true);
+            expect(input().value).toBe('13.06.2026 08:30');
+        });
+
+        it('discards invalid text typed into an empty picker when it is emptied again', () => {
+            type('garbage');
+            expect(component.isValid()).toBe(false);
+
+            component.replaceValue(undefined);
+            fixture.detectChanges();
+
+            expect(component.isValid()).toBe(true);
+            expect(input().value).toBe('');
+            expect(component.value()).toBeUndefined();
+        });
+
+        it('shows and reports a different value', () => {
+            const emitted: boolean[] = [];
+            component.inputValidityChange.subscribe((valid) => emitted.push(valid));
+            type('garbage');
+
+            component.replaceValue(dayjs('2026-08-01T10:00'));
+            fixture.detectChanges();
+
+            expect(input().value).toBe('01.08.2026 10:00');
+            expect(component.value()?.format('YYYY-MM-DD HH:mm')).toBe('2026-08-01 10:00');
+            expect(emitted.at(-1)).toBe(true);
+        });
+    });
+
     it('exposes external invalid state to assistive technology', () => {
         fixture.componentRef.setInput('invalid', true);
         fixture.detectChanges();

@@ -393,6 +393,23 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
         this.dateInput()?.nativeElement.focus(options);
     }
 
+    /**
+     * Replaces the value from the outside and discards text that was typed but not committed, also when the new value
+     * displays like the current one. Assigning the `value` model alone keeps invalid text in the field in that case,
+     * because the draft is keyed by the displayed value, so a form reset or a preset that sets a value on purpose uses this.
+     *
+     * @param next the value to show, or undefined to empty the field
+     */
+    replaceValue(next: dayjs.Dayjs | undefined): void {
+        this.isInputValid.set(true);
+        this.inputText.set(next ? formatDisplay(next, this.timeOnly(), this.dateOnly()) : '');
+        this.timeText.set(next?.format('HH:mm') ?? '');
+        if (next) {
+            this.activeMonth.set(next.startOf('month'));
+        }
+        this.value.set(next);
+    }
+
     private commit(next: dayjs.Dayjs): void {
         this.isInputValid.set(true);
         if (valuesEqual(this.value(), next)) {

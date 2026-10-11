@@ -53,6 +53,7 @@
                 [shouldDisplayTimeZoneWarning]="false"
                 [value]="referenceDate()"
                 (valueChange)="setReferenceDate($event)"
+                (inputValidityChange)="referenceDateTextValidChange.emit($event)"
             />
         </div>
         <div class="col p-0 ps-2 align-items-center">
