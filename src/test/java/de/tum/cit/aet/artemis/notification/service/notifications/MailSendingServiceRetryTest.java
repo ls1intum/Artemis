@@ -91,7 +91,7 @@ class MailSendingServiceRetryTest {
     }
 
     private static MailRecipientDTO recipient(String login) {
-        return new MailRecipientDTO(login + "@example.org", "en", login, "First", "Last");
+        return new MailRecipientDTO(login + "@example.org", "en", login, "First", "Last", null, null);
     }
 
     private static MailRecipientDTO testUser(String login) {

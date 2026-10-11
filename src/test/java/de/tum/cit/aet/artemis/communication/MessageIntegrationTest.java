@@ -8,6 +8,7 @@ import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -24,6 +25,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.mail.internet.MimeMessage;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -32,6 +35,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -1492,6 +1496,54 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(notifications).filteredOn(notification -> notification.getCourse().getId().equals(courseId)).filteredOn(notification -> notification.getType() == 4)
                     .isNotEmpty();
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldNotSendAnAnnouncementEmailToATestUserThatNeverConfiguredIt() throws Exception {
+        var regularMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        var testUserMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        // The recipients of an announcement are rebuilt from a projection of the members, which has to keep the flag.
+        testUserMember.setTestUser(true);
+        userTestRepository.save(testUserMember);
+        try {
+            Channel channel = conversationUtilService.createAnnouncementChannel(course, "test-announcement-email");
+            conversationUtilService.addParticipantToConversation(channel, regularMember.getLogin());
+            conversationUtilService.addParticipantToConversation(channel, testUserMember.getLogin());
+            ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "instructor1");
+
+            Post postToSave = new Post();
+            postToSave.setAuthor(author.getUser());
+            postToSave.setConversation(channel);
+            postToSave.setContent("Important announcement for the e-mail test!");
+            CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), postToSave.getTitle(), postToSave.getHasForwardedMessages(),
+                    new CreatePostConversationDTO(channel.getId()));
+
+            request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED);
+
+            // The regular member is the control: the announcement e-mail is sent, so the absence of the other one means something.
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(recipientsOfSentMails()).contains(regularMember.getEmail()));
+            await().during(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(recipientsOfSentMails()).doesNotContain(testUserMember.getEmail()));
+        }
+        finally {
+            testUserMember.setTestUser(false);
+            userTestRepository.save(testUserMember);
+        }
+    }
+
+    /**
+     * The addresses that every mail handed to the mail sender so far was sent to.
+     */
+    private List<String> recipientsOfSentMails() throws Exception {
+        ArgumentCaptor<MimeMessage> messages = ArgumentCaptor.forClass(MimeMessage.class);
+        verify(javaMailSender, atLeast(0)).send(messages.capture());
+        List<String> recipients = new ArrayList<>();
+        for (MimeMessage message : messages.getAllValues()) {
+            for (var address : message.getAllRecipients()) {
+                recipients.add(address.toString());
+            }
+        }
+        return recipients;
     }
 
     private Channel createChannelWithTwoStudents() {

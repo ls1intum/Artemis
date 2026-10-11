@@ -28,10 +28,6 @@ public record MailRecipientDTO(String email, String langKey, String login, Strin
         this(email, langKey, login, firstName, lastName, activationKey, resetKey, false);
     }
 
-    public MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName) {
-        this(email, langKey, login, firstName, lastName, null, null, false);
-    }
-
     /**
      * Returns the user's display name in the format used by the mail templates, falling back to the login when the account has no
      * name (see {@link User#displayName}).

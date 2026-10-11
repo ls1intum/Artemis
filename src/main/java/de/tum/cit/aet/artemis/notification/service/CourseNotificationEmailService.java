@@ -168,7 +168,9 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
                 return;
             }
 
-            var mailRecipient = new MailRecipientDTO(recipient.email(), recipient.langKey(), recipient.login(), recipient.firstName(), recipient.lastName());
+            // The flag has to reach the mail layer: it is what suppresses the e-mail of a test user that did not opt in, as a safety net behind the settings.
+            var mailRecipient = new MailRecipientDTO(recipient.email(), recipient.langKey(), recipient.login(), recipient.firstName(), recipient.lastName(), null, null,
+                    recipient.testUser());
             // Bulk: a mail the SMTP server does not accept now waits in the retry queue behind the transactional mails, so an
             // announcement that meets an exhausted quota is delivered later instead of being lost for every student.
             if (!mailSendingService.sendEmailSync(mailRecipient, subject, content, false, true, MailPriority.BULK)) {

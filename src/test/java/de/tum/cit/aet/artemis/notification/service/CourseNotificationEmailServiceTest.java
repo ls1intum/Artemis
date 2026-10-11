@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -109,6 +110,23 @@ class CourseNotificationEmailServiceTest {
             assertThat(capturedContext.getVariable("recipient")).isEqualTo(CourseNotificationRecipientDTO.from(recipient));
             assertThat(capturedContext.getVariable("courseId")).isEqualTo(123L);
         });
+    }
+
+    @Test
+    void shouldHandThePlainMailLayerTheTestUserFlagOfTheRecipient() {
+        User testUser = createUser("testuser1", "en");
+        testUser.setTestUser(true);
+        CourseNotificationDTO notification = createNotification("ANNOUNCEMENT", 123L);
+
+        when(messageSource.getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), any(Locale.class))).thenReturn("Test Subject");
+        when(templateEngine.process(eq("mail/course_notification/ANNOUNCEMENT"), any(Context.class))).thenReturn("Test Content");
+
+        courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(testUser)));
+
+        // Without the flag, the mail layer could not recognize a test user that has not opted in, and would send it the mail.
+        Awaitility.await().atMost(2, TimeUnit.SECONDS)
+                .untilAsserted(() -> verify(mailSendingService).sendEmailSync(argThat(mailRecipient -> mailRecipient.testUser() && "testuser1".equals(mailRecipient.login())),
+                        anyString(), anyString(), eq(false), eq(true), eq(MailPriority.BULK)));
     }
 
     @Test
@@ -347,7 +365,7 @@ class CourseNotificationEmailServiceTest {
      * {@link User} fixture happens to set an activation/reset key.
      */
     private static MailRecipientDTO expectedMailRecipient(User user) {
-        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName());
+        return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, null, user.isTestUser());
     }
 
     private CourseNotificationDTO createNotification(String notificationType, Long courseId) {

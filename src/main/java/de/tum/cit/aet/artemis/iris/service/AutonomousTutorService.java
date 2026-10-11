@@ -224,15 +224,8 @@ public class AutonomousTutorService {
     }
 
     private User toUserReference(ConversationNotificationRecipientSummary summary) {
-        // CourseNotificationService only needs the user id for delivery; a light reference avoids extra DB reads
-        User user = new User();
-        user.setId(summary.userId());
-        user.setLogin(summary.userLogin());
-        user.setFirstName(summary.firstName());
-        user.setLastName(summary.lastName());
-        user.setLangKey(summary.userLangKey());
-        user.setEmail(summary.userEmail());
-        return user;
+        // A light reference avoids extra DB reads; the summary carries what the notifications read, including the test user flag
+        return summary.toUser();
     }
 
     /**
