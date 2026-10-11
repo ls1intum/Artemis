@@ -2,10 +2,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIES;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,13 +18,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
-import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
-import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -42,18 +35,20 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
+import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 
 /**
- * Service that handles callbacks, capacity-aware dispatch, and state transitions for the lecture content processing pipeline.
+ * Service that hands out queued jobs to pulling Pyris workers and handles the callbacks and state transitions of the lecture content processing pipeline.
  * <p>
- * The {@code lecture_unit_processing_state} table acts as a database-backed job queue, dispatched via conditional atomic UPDATEs (see
- * {@link LectureUnitProcessingStateRepository#claimIdleForDispatch}) rather than row locks, for safe concurrent dispatch in clustered Artemis deployments.
+ * The {@code lecture_unit_processing_state} table acts as a database-backed job queue. A Pyris worker claims jobs through conditional atomic UPDATEs (see
+ * {@link LectureUnitProcessingStateRepository#claimIdleForDispatch}) rather than row locks, so claiming is safe in clustered Artemis deployments. Artemis never pushes a
+ * job to Pyris: a queued job waits until a worker claims it.
  * <p>
  * This service handles:
  * <ul>
- * <li>Capacity-aware dispatch: claiming IDLE jobs and sending them to Iris when slots are available</li>
+ * <li>Worker claims: claiming retry-eligible and IDLE jobs and activating them under a worker lease</li>
  * <li>Ingestion completion callbacks from Iris webhooks</li>
- * <li>Failure handling with retry logic (reset to IDLE for re-dispatch)</li>
+ * <li>Failure handling with retry logic</li>
  * </ul>
  */
 @Conditional(LectureWithIrisEnabled.class)
@@ -64,13 +59,6 @@ public class ProcessingStateCallbackService {
     private static final Logger log = LoggerFactory.getLogger(ProcessingStateCallbackService.class);
 
     /**
-     * Maximum number of concurrent processing jobs (TRANSCRIBING or INGESTING).
-     * Prevents overwhelming Iris with too many simultaneous jobs.
-     * Configurable via {@code artemis.iris.ingestion.max-concurrent-jobs}; defaults to 2.
-     */
-    private final int maxConcurrentJobs;
-
-    /**
      * How long a retry claim keeps a row out of the candidate list. It has to outlast the dispatch the claim belongs
      * to, and it doubles as the recovery window: a node killed mid-dispatch leaves the claim in place until it lapses,
      * after which the row is eligible again. Intended to match the scheduler's no-callback timeout
@@ -79,36 +67,19 @@ public class ProcessingStateCallbackService {
      */
     private final int retryClaimLeaseMinutes;
 
-    /**
-     * Name of the cluster-wide lock that serializes push dispatch, so that count + claim + send is atomic across
-     * all nodes and two nodes cannot both fill the same free capacity.
-     */
-    private static final String DISPATCH_LOCK_NAME = "lecture-ingestion-dispatch";
-
     private final LectureUnitProcessingStateRepository processingStateRepository;
 
     private final LectureTranscriptionRepository transcriptionRepository;
 
     private final AttachmentRepository attachmentRepository;
 
-    private final Optional<IrisLectureApi> irisLectureApi;
-
     private final ProcessingStateNotificationService notificationService;
 
     private final LectureUnitContentFingerprintService contentFingerprintService;
 
-    private final DistributedDataProvider distributedDataProvider;
-
     private final FeatureToggleService featureToggleService;
 
-    /**
-     * How long after the last claim or heartbeat call a pulling Pyris worker still counts as present.
-     * While a worker is present, the legacy push dispatch is suppressed and IDLE jobs simply wait in
-     * the queue for the next claim; when the worker disappears past this grace (an old Iris without
-     * worker support, or the worker gone for good), push dispatch resumes automatically. Sized as a
-     * generous multiple of the worker's heartbeat interval so one lost heartbeat never flips modes.
-     */
-    private final Duration workerModeGrace;
+    private final VideoSourceResolverService videoSourceResolver;
 
     /** Upper bound on jobs handed out per single worker claim call, purely as a sanity clamp. */
     private final int maxJobsPerClaim;
@@ -125,51 +96,23 @@ public class ProcessingStateCallbackService {
 
     private final IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository;
 
-    private static final String WORKER_MAP_NAME = "pyris-ingestion-worker";
-
-    private static final String WORKER_LAST_SEEN_KEY = "lastSeenAt";
-
-    @Nullable
-    private DistributedMap<String, String> workerMap;
-
     public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, ProcessingStateNotificationService notificationService,
-            LectureUnitContentFingerprintService contentFingerprintService, DistributedDataProvider distributedDataProvider, FeatureToggleService featureToggleService,
-            @Value("${artemis.iris.ingestion.max-concurrent-jobs:2}") int maxConcurrentJobs,
+            AttachmentRepository attachmentRepository, ProcessingStateNotificationService notificationService, LectureUnitContentFingerprintService contentFingerprintService,
+            FeatureToggleService featureToggleService, VideoSourceResolverService videoSourceResolver,
             @Value("${artemis.iris.ingestion.retry-claim-lease-minutes:20}") int retryClaimLeaseMinutes,
-            @Value("${artemis.iris.ingestion.worker-mode-grace:PT90S}") Duration workerModeGrace, @Value("${artemis.iris.ingestion.max-jobs-per-claim:8}") int maxJobsPerClaim,
-            @Value("${artemis.iris.ingestion.max-unsettled-attempts:3}") int maxUnsettledAttempts, IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository) {
+            @Value("${artemis.iris.ingestion.max-jobs-per-claim:8}") int maxJobsPerClaim, @Value("${artemis.iris.ingestion.max-unsettled-attempts:3}") int maxUnsettledAttempts,
+            IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.attachmentRepository = attachmentRepository;
-        this.irisLectureApi = irisLectureApi;
         this.notificationService = notificationService;
         this.contentFingerprintService = contentFingerprintService;
-        this.distributedDataProvider = distributedDataProvider;
         this.featureToggleService = featureToggleService;
-        this.maxConcurrentJobs = maxConcurrentJobs;
+        this.videoSourceResolver = videoSourceResolver;
         this.retryClaimLeaseMinutes = retryClaimLeaseMinutes;
-        this.workerModeGrace = workerModeGrace;
         this.maxJobsPerClaim = maxJobsPerClaim;
         this.maxUnsettledAttempts = maxUnsettledAttempts;
         this.irisLectureUnitSyncStateRepository = irisLectureUnitSyncStateRepository;
-    }
-
-    private DistributedMap<String, String> getWorkerMap() {
-        if (workerMap == null) {
-            workerMap = distributedDataProvider.getMap(WORKER_MAP_NAME);
-        }
-        return workerMap;
-    }
-
-    /**
-     * The configured maximum number of concurrent processing jobs.
-     * Exposed for the scheduler, whose backfill applies the same cap.
-     *
-     * @return the maximum number of jobs that may be TRANSCRIBING or INGESTING at once
-     */
-    int getMaxConcurrentJobs() {
-        return maxConcurrentJobs;
     }
 
     /**
@@ -191,170 +134,10 @@ public class ProcessingStateCallbackService {
         state.setNextRetryAt(ZonedDateTime.now());
     }
 
-    // -------------------- Capacity-Aware Dispatch --------------------
+    // -------------------- Claim Helpers --------------------
 
     /**
-     * Dispatch pending IDLE jobs to Iris, respecting capacity limits.
-     * <p>
-     * Claim-commit-then-send: the repository atomically claims rows (marking {@code startedAt}) in its own committed transaction before any HTTP request leaves this node, so a
-     * crash between claim and send never spawns a duplicate pipeline — it just leaves a claimed row the scheduler's claim-expiry release requeues, with no database row locks
-     * held across the calls to Pyris. Claim order implements queue priority: fresh work first, retries second, backlog last. Called from
-     * {@link LectureContentProcessingService#triggerProcessing} (right after creating IDLE state), {@link #handleIngestionComplete} (filling a freed slot), and
-     * {@link LectureContentProcessingScheduler#processScheduledRetries} (periodic backup every 5 minutes).
-     * <p>
-     * Cluster safety comes from the conditional claim on each candidate, not a transaction spanning the read and write (see
-     * {@link LectureUnitProcessingStateRepository#claimIdleForDispatch}); the cluster-wide dispatch lock serializes the capacity check with the claims so two nodes cannot both
-     * see the same free slots and together exceed the configured maximum.
-     */
-    public void dispatchPendingJobs() {
-        if (irisLectureApi.isEmpty()) {
-            log.debug("Iris API not available, skipping dispatch");
-            return;
-        }
-
-        // Pull mode: a worker claims its own capacity, so jobs wait as IDLE for its next claim; the push below survives as the fallback for an Iris without worker support.
-        if (isWorkerModeActive()) {
-            log.debug("Pyris worker active, leaving pending jobs for pull-based claim");
-            return;
-        }
-
-        // Serialize dispatch cluster-wide: without this lock, concurrent callers can each see the same activeCount and together exceed the max.
-        DistributedLock dispatchLock = distributedDataProvider.getLock(DISPATCH_LOCK_NAME);
-        dispatchLock.lock();
-        try {
-            long activeCount = processingStateRepository.countByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING));
-            int availableSlots = (int) (maxConcurrentJobs - activeCount);
-
-            if (availableSlots <= 0) {
-                log.debug("No available slots for dispatch ({} active, max {})", activeCount, maxConcurrentJobs);
-                return;
-            }
-
-            ZonedDateTime now = claimTimestamp();
-
-            List<LectureUnitProcessingState> retryJobs = processingStateRepository.findStatesReadyForRetry(ProcessingPhase.FAILED.name(), now, availableSlots);
-
-            for (LectureUnitProcessingState state : retryJobs) {
-                if (availableSlots <= 0) {
-                    break;
-                }
-                if (failIfAttemptsExhausted(state, true)) {
-                    continue;
-                }
-                ZonedDateTime leaseExpiry = now.plusMinutes(retryClaimLeaseMinutes);
-                String claimToken = newClaimToken();
-                if (processingStateRepository.claimRetryEligible(state.getId(), claimToken, now, leaseExpiry, maxUnsettledAttempts) == 0) {
-                    log.debug("Another node claimed the retry of unit {}", state.getLectureUnit().getId());
-                    continue;
-                }
-                log.info("Re-dispatching retry-eligible unit {} (attempt {}/{})", state.getLectureUnit().getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
-                // Mirror the claim onto the loaded entity, saved again further down: writing back the stale
-                // value would re-list this row. A failed dispatch leaves the lease, so the claim lapses on its own.
-                state.setRetryEligibleAt(leaseExpiry);
-                // Isolate each dispatch: one claimed unit's failure must not abort the remaining claims.
-                try {
-                    dispatchSingleJob(state, claimToken);
-                }
-                catch (Exception e) {
-                    log.error("Unexpected failure dispatching unit {}, marking as failed: {}", state.getLectureUnit() != null ? state.getLectureUnit().getId() : "null",
-                            e.getMessage());
-                    failDispatchIfStillClaimed(state, claimToken);
-                }
-                availableSlots--;
-            }
-
-            List<LectureUnitProcessingState> idleJobs = processingStateRepository.findIdleForDispatch(now, availableSlots);
-
-            if (idleJobs.isEmpty() && retryJobs.isEmpty()) {
-                log.debug("No jobs ready for dispatch");
-                return;
-            }
-            if (!idleJobs.isEmpty()) {
-                log.info("Dispatching {} IDLE jobs to Iris ({} slots available)", idleJobs.size(), availableSlots);
-            }
-
-            for (LectureUnitProcessingState state : idleJobs) {
-                if (failIfAttemptsExhausted(state, false)) {
-                    continue;
-                }
-                String claimToken = newClaimToken();
-                if (processingStateRepository.claimIdleForDispatch(state.getId(), claimToken, now, maxUnsettledAttempts) == 0) {
-                    log.debug("Another node claimed the dispatch of unit {}", state.getLectureUnit().getId());
-                    continue;
-                }
-                // Mirror the claim onto the loaded entity, for the reason given on the retry loop above.
-                state.setStartedAt(now);
-                // Isolate each dispatch: one bad unit must not strand the rest of this pass's claims.
-                try {
-                    dispatchSingleJob(state, claimToken);
-                }
-                catch (Exception e) {
-                    log.error("Unexpected failure dispatching unit {}, marking as failed: {}", state.getLectureUnit() != null ? state.getLectureUnit().getId() : "null",
-                            e.getMessage());
-                    failDispatchIfStillClaimed(state, claimToken);
-                }
-            }
-        }
-        finally {
-            dispatchLock.unlock();
-        }
-    }
-
-    /**
-     * Dispatch a single claimed job to Iris, starting as TRANSCRIBING or INGESTING based on existing transcription data.
-     *
-     * @param state      the claimed processing state
-     * @param claimToken identity of the claim that produced this dispatch; every outcome here is committed through an atomic update matching it, so a content update
-     *                       requeueing this row while the Pyris call is in flight cannot be lost to a stale write.
-     */
-    private void dispatchSingleJob(LectureUnitProcessingState state, String claimToken) {
-        PreparedDispatch prepared = prepareClaimedState(state, claimToken);
-        if (prepared == null) {
-            return;
-        }
-        AttachmentVideoUnit attachmentUnit = prepared.unit();
-        LectureUnit unit = attachmentUnit;
-        ProcessingPhase targetPhase = prepared.targetPhase();
-        String contentFingerprint = prepared.contentFingerprint();
-
-        try {
-            String jobToken = irisLectureApi.get().addLectureUnitToPyrisDB(attachmentUnit, contentFingerprint, state.isForceReingest());
-
-            if (jobToken == null) {
-                boolean applied = processingStateRepository.markSkippedIfStillClaimed(unit.getId(), claimToken, ZonedDateTime.now()) == 1;
-                log.info("Unit {} not applicable for Iris (course settings or content type){}", unit.getId(),
-                        applied ? ", marked SKIPPED" : "; claim moved on, dropping the outcome");
-                return;
-            }
-
-            if (processingStateRepository.activatePushDispatch(unit.getId(), targetPhase, jobToken, contentFingerprint, claimToken, ZonedDateTime.now()) == 0) {
-                // The claim moved on while the call above was in flight. Pyris now runs a job for content this row
-                // no longer reflects; its eventual callback fails the current token match and is dropped there,
-                // exactly like any other stale callback, so nothing further is needed beyond not touching the row.
-                log.info("Unit {} no longer holds the claim that produced this dispatch; the now-orphaned Pyris job {} will be dropped by its own stale-token check", unit.getId(),
-                        maskToken(jobToken));
-                return;
-            }
-            log.info("Dispatched unit {} as {} with token {}", unit.getId(), targetPhase, maskToken(jobToken));
-        }
-        catch (Exception e) {
-            log.error("Failed to dispatch unit {} to Iris: {}", unit.getId(), e.getMessage());
-            failDispatchIfStillClaimed(state, claimToken);
-            return;
-        }
-
-        // Outside the try above: the run is live from here on, so a notification failure must not reach
-        // dispatch-failure handling and fail a unit Pyris is working on.
-        try {
-            processingStateRepository.findByLectureUnit_Id(unit.getId()).ifPresent(notificationService::notifyWithTranscriptionStatus);
-        }
-        catch (Exception e) {
-            log.warn("Dispatched unit {} but could not push the state change to clients: {}", unit.getId(), e.getMessage());
-        }
-    }
-
-    /**
-     * The instant a claim is stamped with, on both transports. Truncated to whole seconds so the value held in memory
+     * The instant a claim is stamped with. Truncated to whole seconds so the value held in memory
      * matches what {@code started_at} and {@code retry_eligible_at} can store: they are legacy DATETIME columns
      * keeping only whole seconds on MySQL, which rounds anything finer on write.
      *
@@ -426,14 +209,13 @@ public class ProcessingStateCallbackService {
     }
 
     /**
-     * The dispatch-ready description of a claimed IDLE state, shared by both transports: the legacy
-     * push posts it to Iris, the pull-based worker claim returns it to the worker.
+     * The dispatch-ready description of a claimed state, which the worker claim returns to the worker.
      */
     private record PreparedDispatch(LectureUnitProcessingState state, AttachmentVideoUnit unit, ProcessingPhase targetPhase, String contentFingerprint) {
     }
 
     /**
-     * Run the transport-independent front half of a dispatch on a claimed state: unit type check,
+     * Run the Artemis side of a dispatch on a claimed state: unit type check,
      * target phase determination, and content fingerprinting. States that cannot be dispatched are
      * terminally handled here (FAILED with a specific key) and reported as {@code null}.
      *
@@ -451,7 +233,8 @@ public class ProcessingStateCallbackService {
             return null;
         }
 
-        boolean hasVideo = attachmentUnit.getVideoSource() != null && !attachmentUnit.getVideoSource().isBlank();
+        // Only a supported source can be transcribed; Iris ingests any other link as a unit without a video
+        boolean hasVideo = videoSourceResolver.isSupportedSource(attachmentUnit.getVideoSource());
 
         // Check if transcription already completed (e.g., retry after ingestion failure)
         Optional<LectureTranscription> existingTranscription = transcriptionRepository.findByLectureUnit_Id(unit.getId());
@@ -487,20 +270,19 @@ public class ProcessingStateCallbackService {
     // -------------------- Pull-Based Worker Dispatch --------------------
 
     /**
-     * Claim up to {@code maxJobs} pending jobs for a pulling Pyris worker: expired retries first, then IDLE work in priority order (fresh uploads before backlog), the same
-     * order as the push path. Each candidate goes through the same per-row conditional claims as the push path, so no row locks span the loop. A claim whose activation never
-     * arrives (worker died between claim and execution) recovers on its own: an IDLE claim is released by the abandoned-claim sweep, a retry claim lapses with its lease. No
-     * capacity check happens here — in pull mode capacity belongs to the worker, which only claims what it can run.
+     * Claim up to {@code maxJobs} pending jobs for a pulling Pyris worker: expired retries first, then IDLE work in priority order (fresh uploads before backlog). Each
+     * candidate goes through a per-row conditional claim, so no row locks span the loop. A claim whose activation never arrives (worker died between claim and execution)
+     * recovers on its own: an IDLE claim is released by the abandoned-claim sweep, a retry claim lapses with its lease. No capacity check happens here — capacity belongs to
+     * the worker, which only claims what it can run.
      *
      * @param workerBootId boot id of the claiming Pyris worker process
      * @param maxJobs      how many jobs the worker can take right now
      * @return the claimed units, described by scalars for the iris module to prepare and activate
      */
     public List<ClaimedIngestionUnitDTO> claimUnitsForWorker(String workerBootId, int maxJobs) {
-        markWorkerSeen(workerBootId);
         if (!featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)) {
-            // The toggle is the operator's kill switch for new work; the push path, retries, backfill and reconcile
-            // all honor it, so a pulling worker must not become a way around it.
+            // The toggle is the operator's kill switch for new work; retries, backfill and reconcile all honor it,
+            // so a pulling worker must not become a way around it.
             log.debug("LectureContentProcessing feature is disabled, handing out no jobs to worker {}", workerBootId);
             return List.of();
         }
@@ -612,9 +394,8 @@ public class ProcessingStateCallbackService {
     }
 
     /**
-     * Charge a failure to a claimed unit whose preparation for the worker failed unexpectedly, bound to that claim exactly like a failed
-     * push dispatch: the retry budget bounds a preparation error that repeats, instead of the claim being released and re-claimed for
-     * free.
+     * Charge a failure to a claimed unit whose preparation for the worker failed, bound to that claim: the retry budget bounds a
+     * preparation error that repeats, instead of the claim being released and re-claimed for free.
      *
      * @param lectureUnitId the claimed unit
      * @param claimToken    identity of the claim, from {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO#claimToken()}
@@ -632,7 +413,6 @@ public class ProcessingStateCallbackService {
      * @return the subset of tokens that no longer belong to an in-flight run
      */
     public List<String> renewWorkerLeases(String workerBootId, List<String> activeJobTokens) {
-        markWorkerSeen(workerBootId);
         List<String> revoked = new ArrayList<>();
         ZonedDateTime now = ZonedDateTime.now();
         for (String token : activeJobTokens) {
@@ -665,32 +445,11 @@ public class ProcessingStateCallbackService {
         return revoked;
     }
 
-    private void markWorkerSeen(String workerBootId) {
-        getWorkerMap().put(WORKER_LAST_SEEN_KEY, Instant.now().toString());
-        getWorkerMap().put("bootId", workerBootId);
-    }
-
-    /**
-     * Whether a pulling Pyris worker has claimed or heartbeated within {@link #workerModeGrace}.
-     */
-    boolean isWorkerModeActive() {
-        String lastSeen = getWorkerMap().get(WORKER_LAST_SEEN_KEY);
-        if (lastSeen == null) {
-            return false;
-        }
-        try {
-            return Instant.parse(lastSeen).isAfter(Instant.now().minus(workerModeGrace));
-        }
-        catch (DateTimeParseException e) {
-            return false;
-        }
-    }
-
     // -------------------- Callback Handlers --------------------
 
     /**
-     * Called when the entire processing pipeline completes (from the Iris webhook callback). Validates the job token to reject stale callbacks from old jobs, and after
-     * completion dispatches the next pending job to fill the freed slot.
+     * Called when the entire processing pipeline completes (from the Iris webhook callback). Validates the job token to reject stale callbacks from old jobs. The worker
+     * claims its next job on its own once the run frees its capacity.
      *
      * @param lectureUnitId      the ID of the lecture unit
      * @param jobToken           the job token from the callback
@@ -753,8 +512,6 @@ public class ProcessingStateCallbackService {
                 return;
             }
         }
-
-        dispatchPendingJobs();
     }
 
     /**
@@ -848,9 +605,8 @@ public class ProcessingStateCallbackService {
     }
 
     /**
-     * Delete the stored transcription for a lecture unit so stale text is not re-ingested. Called when the unit's video source changes: without this,
-     * {@link #dispatchPendingJobs()}
-     * would find the old {@code COMPLETED} transcription and dispatch the job as {@code INGESTING}, ingesting text from the previous video into the vector database.
+     * Delete the stored transcription for a lecture unit so stale text is not re-ingested. Called when the unit's video source changes: without this, the next claim
+     * would find the old {@code COMPLETED} transcription and start the job as {@code INGESTING}, ingesting text from the previous video into the vector database.
      *
      * @param unitId the ID of the lecture unit whose transcription should be removed
      */

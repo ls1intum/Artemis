@@ -119,8 +119,9 @@ public class PyrisInternalIngestionWorkerResource {
                 // claim and preparation) must not abort jobs already activated earlier in this loop.
                 // prepareLectureUnitIngestion registers its job token only after this step succeeds
                 // (see PyrisWebhookService#prepareLectureAdditionJob), so a failure here never leaks
-                // one. The failure is charged to the claim like a failed push dispatch, so an error that
-                // repeats runs out of retries instead of being released and re-claimed for free.
+                // one. The failure is charged to the claim, so an error that repeats runs out of retries
+                // instead of being released and re-claimed for free. A video link that cannot be resolved
+                // right now (TUM Live unreachable) fails here as well and is retried later.
                 log.error("Failed to prepare claimed unit {} for the worker: {}", claim.lectureUnitId(), e.getMessage());
                 processingStateCallbackApi.get().failClaimedUnitPreparation(claim.lectureUnitId(), claim.claimToken());
                 continue;

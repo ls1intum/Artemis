@@ -127,7 +127,7 @@
             "processingComplete": "Indiziert",
             "processingFailed": "Verarbeitung fehlgeschlagen",
             "processingSkipped": "Nicht indiziert",
-            "processingSkippedTooltip": "Iris ist für diese Einheit nicht verfügbar, daher wurde ihr Inhalt nicht indiziert. Sie wird automatisch verarbeitet, sobald Iris für den Kurs aktiviert ist.",
+            "processingSkippedTooltip": "Iris hat diese Einheit nicht indiziert. Entweder ist Iris für diesen Kurs nicht aktiviert, oder die Einheit hat kein PDF und ihr Video stammt nicht von YouTube oder TUM Live. Sie wird automatisch indiziert, sobald sich das ändert.",
             "videoSlideSync": {
                 "toggle": "Folien und Video synchronisieren",
                 "disabledByPointOut": "Synchronisation deaktiviert: Iris verweist auf Seite {{page}} und Zeitpunkt {{time}}."

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
-import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
@@ -27,10 +26,10 @@ public class ProcessingStateRecoveryApi extends AbstractLectureApi {
     /**
      * Handle an Iris restart notification: the jobs the restarted process lost are marked as IDLE for retry.
      *
-     * @param departedBootId the boot id of the process that restarted, or {@code null} when it is unknown
+     * @param departedBootId the boot id of the process that restarted
      * @return the number of jobs that were reset
      */
-    public int handleIrisReset(@Nullable String departedBootId) {
+    public int handleIrisReset(String departedBootId) {
         return processingStateRecoveryService.handleIrisReset(departedBootId);
     }
 }
