@@ -56,16 +56,16 @@ export class CodeButtonNewComponent {
         const requiresLogin = authenticationMethods.some(
             (authenticationMethod) => authenticationMethod === RepositoryAuthenticationMethod.Token || authenticationMethod === RepositoryAuthenticationMethod.Password,
         );
-        if (!requiresLogin) {
+        if (requiresLogin) {
+            const user = await this.accountService.identity();
+            const login = user?.login;
+            if (!login) {
+                throw new Error('Incomplete token or password authentication data');
+            }
+            return login;
+        } else {
             return undefined;
         }
-
-        const user = await this.accountService.identity();
-        const login = user?.login;
-        if (!login) {
-            throw new Error('Incomplete token or password authentication data');
-        }
-        return login;
     }
 
     private async getAuthenticationMethodData(
@@ -81,13 +81,6 @@ export class CodeButtonNewComponent {
             case RepositoryAuthenticationMethod.Password:
                 return this.getPasswordAuthenticationMethodData(repositoryUri, this.requireLogin(login));
         }
-    }
-
-    private requireLogin(login: string | undefined): string {
-        if (!login) {
-            throw new Error('Incomplete token or password authentication data');
-        }
-        return login;
     }
 
     private async getSshAuthenticationMethodData(repositoryUri: string): Promise<AuthenticationMethodData> {
@@ -118,44 +111,6 @@ export class CodeButtonNewComponent {
         return repositoryUri.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/, sshCloneUrlTemplate + '$2');
     }
 
-    private getTokenAuthenticationMethodData(repositoryUri: string, login: string): AuthenticationMethodData {
-        // TODO: derive token and insert here, move * replacement into content component
-        const credentials = `://${login}:**********@`;
-        const url = this.insertCredentialsIntoUri(repositoryUri, credentials);
-
-        return {
-            authenticationMethod: RepositoryAuthenticationMethod.Token,
-            url,
-        };
-    }
-
-    private getPasswordAuthenticationMethodData(repositoryUri: string, login: string): AuthenticationMethodData {
-        const credentials = `://${login}@`;
-        const url = this.insertCredentialsIntoUri(repositoryUri, credentials);
-
-        return {
-            authenticationMethod: RepositoryAuthenticationMethod.Password,
-            url,
-        };
-    }
-
-    /**
-     * Inserts new credentials into an HTTP(S) repository URI.
-     *
-     * If the URL contains an `@`, it has the format `https://username@vcs-server.com/repository.git`. The regular expression matches
-     * the existing `://username@` part and replaces it with the new credentials.
-     *
-     * Otherwise, the URL has the format `https://vcs-server.com/repository.git`. In that case the regex matches `://`
-     * and replaces it with the new credentials.
-     */
-    private insertCredentialsIntoUri(url: string, credentials: string): string {
-        if (url.includes('@')) {
-            return url.replace(/:\/\/.*@/, credentials);
-        } else {
-            return url.replace('://', credentials);
-        }
-    }
-
     private async getSshKeyState(): Promise<SshKeyState | undefined> {
         try {
             const sshKeys = await this.sshUserSettingsService.getCachedSshKeys();
@@ -172,6 +127,51 @@ export class CodeButtonNewComponent {
                   };
         } catch {
             return undefined;
+        }
+    }
+
+    private requireLogin(login: string | undefined): string {
+        if (!login) {
+            throw new Error('Incomplete token or password authentication data');
+        }
+        return login;
+    }
+
+    private getTokenAuthenticationMethodData(repositoryUri: string, login: string): AuthenticationMethodData {
+        // TODO: derive token and insert here, move * replacement into content component
+        const credentials = `://${login}:**********@`;
+        const url = this.insertCredentialsIntoUrl(repositoryUri, credentials);
+
+        return {
+            authenticationMethod: RepositoryAuthenticationMethod.Token,
+            url,
+        };
+    }
+
+    private getPasswordAuthenticationMethodData(repositoryUri: string, login: string): AuthenticationMethodData {
+        const credentials = `://${login}@`;
+        const url = this.insertCredentialsIntoUrl(repositoryUri, credentials);
+
+        return {
+            authenticationMethod: RepositoryAuthenticationMethod.Password,
+            url,
+        };
+    }
+
+    /**
+     * Inserts new credentials into an HTTP(S) repository URI.
+     *
+     * If the URL contains an `@`, it has the format `https://username@vcs-server.com/repository.git`. The regular expression matches
+     * the existing `://username@` part and replaces it with the new credentials.
+     *
+     * Otherwise, the URL has the format `https://vcs-server.com/repository.git`. In that case the regex matches `://`
+     * and replaces it with the new credentials.
+     */
+    private insertCredentialsIntoUrl(url: string, credentials: string): string {
+        if (url.includes('@')) {
+            return url.replace(/:\/\/.*@/, credentials);
+        } else {
+            return url.replace('://', credentials);
         }
     }
 }
