@@ -38,7 +38,6 @@
                 "src/main/webapp/app/course/request/**/*.scss",
                 "src/main/webapp/app/exercise/result/**/*.scss",
                 "src/main/webapp/app/iris/manage/settings/**/*.scss",
-                "src/main/webapp/app/shared-ui/date-time-picker/**/*.scss",
                 "src/main/webapp/app/atlas/shared/standardized-competencies/**/*.scss",
                 "src/main/webapp/app/localci/build-queue/**/*.scss",
                 "src/main/webapp/app/shared-ui/user-import/**/*.scss",
