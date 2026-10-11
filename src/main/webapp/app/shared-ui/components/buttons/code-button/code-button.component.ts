@@ -90,6 +90,24 @@ export class CodeButtonComponent implements OnInit {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly RepositoryAuthenticationMethod = RepositoryAuthenticationMethod;
 
+    // Icons
+    readonly faCircleNotch = faCircleNotch;
+    readonly faCode = faCode;
+    readonly faExternalLink = faExternalLink;
+    readonly faLaptopCode = faLaptopCode;
+
+    // Fields (immutable after construction)
+    sshEnabled = false;
+    sshTemplateUrl?: string;
+    versionControlUrl!: string; // set in ngOnInit() from profile info
+    sshSettingsUrl!: string; // set in configureTooltips() from ngOnInit()
+    // Guards against reporting the same missing-token anomaly repeatedly (getHttpOrSshRepositoryUri runs on every change detection).
+    private vcsAccessTokenReportedMissing = false;
+    sshKeys?: UserSshPublicKey[];
+    vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
+    programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, this.vscodeFallback]]);
+    theiaPortalURL!: string; // set in initTheia() from ngOnInit()
+
     // Input
     loading = input<boolean>(false);
     smallButtons = input.required<boolean>();
@@ -109,22 +127,11 @@ export class CodeButtonComponent implements OnInit {
     // full participation object. It lets the repository-scoped staff token be minted for exactly that student repository.
     participationId = input<number>();
     readonly isInCourseManagement = getSignalBasedOnRoute(this.router, (url) => url.includes('course-management'));
-
-    // Fields (immutable after construction)
-    sshEnabled = false;
-    sshTemplateUrl?: string;
-    versionControlUrl!: string; // set in ngOnInit() from profile info
-
-    sshSettingsUrl!: string; // set in configureTooltips() from ngOnInit()
     readonly user = signal<User | undefined>(undefined);
-    // Guards against reporting the same missing-token anomaly repeatedly (getHttpOrSshRepositoryUri runs on every change detection).
-    private vcsAccessTokenReportedMissing = false;
     // Set once a participation VCS token request has terminally failed to yield a token (empty response or an error that
     // is not the 404 → create fallback). Gates the missing-token Sentry report so it never fires while a token is still
     // in flight (an expected transient state during which the clone URL simply omits the token).
     private readonly participationTokenLoadFailed = signal(false);
-    sshKeys?: UserSshPublicKey[];
-
     // Signals (we ideally declare everything related to change detection/UI to signals and leave component fields
     // as they are
     wasCopied = signal(false);
@@ -151,8 +158,6 @@ export class CodeButtonComponent implements OnInit {
     private readonly matchesMediumBreakpoint = this.getMatchesBreakpointSignal(BREAKPOINTS.md);
     private readonly matchesExtraLargeBreakpoint = this.getMatchesBreakpointSignal(BREAKPOINTS.xl);
     readonly programmingExercisesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
-
-    // Computed/Derived States
     readonly displayLabel = computed(() => this.computeDisplayLabel());
     activeParticipation = computed<ProgrammingExerciseStudentParticipation | undefined>(() => {
         // Filter out undefined entries: callers that render a base repository without a student participation (e.g. the
@@ -177,17 +182,6 @@ export class CodeButtonComponent implements OnInit {
     // exact-URI scoped and provisioned automatically, so the personal VCS access token is never needed for cloning.
     usesRepositoryScopedToken = computed(() => this.shouldUseRepositoryScopedToken());
 
-    vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
-    programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, this.vscodeFallback]]);
-
-    theiaPortalURL!: string; // set in initTheia() from ngOnInit()
-
-    // Icons
-    readonly faCircleNotch = faCircleNotch;
-    readonly faCode = faCode;
-    readonly faExternalLink = faExternalLink;
-    readonly faLaptopCode = faLaptopCode;
-
     constructor() {
         // we only loadVcsAccessToken if participations exist => reduces potentially repeated HTTP calls
         effect(() => {
@@ -202,6 +196,13 @@ export class CodeButtonComponent implements OnInit {
         });
     }
 
+    private shouldUseRepositoryScopedToken(): boolean {
+        const usesStudentRepositoryStaffToken =
+            this.isInCourseManagement() && (this.participationId() !== undefined || (!!this.activeParticipation() && !this.isOwnParticipation(this.activeParticipation())));
+        const isBaseRepository = this.isBaseRepository();
+        return isBaseRepository || usesStudentRepositoryStaffToken;
+    }
+
     private getMatchesBreakpointSignal(breakpoint: string) {
         return toSignal(this.breakpointObserver.observe(breakpoint).pipe(map((result) => result.matches)), {
             initialValue: this.breakpointObserver.isMatched(breakpoint),
@@ -213,13 +214,6 @@ export class CodeButtonComponent implements OnInit {
             return true;
         }
         return this.hideLabelBreakpoint() === 'md' ? this.matchesMediumBreakpoint() : this.matchesExtraLargeBreakpoint();
-    }
-
-    private shouldUseRepositoryScopedToken(): boolean {
-        const usesStudentRepositoryStaffToken =
-            this.isInCourseManagement() && (this.participationId() !== undefined || (!!this.activeParticipation() && !this.isOwnParticipation(this.activeParticipation())));
-        const isBaseRepository = this.isBaseRepository();
-        return isBaseRepository || usesStudentRepositoryStaffToken;
     }
 
     ngOnInit() {
