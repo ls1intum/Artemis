@@ -293,6 +293,8 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
             return;
         }
         this.isSaving.set(true);
+        // The save trims the title as well, but in place; doing it here first keeps the reasons in step after a failed save.
+        this.exerciseState.update(Exercise.sanitize);
 
         const command = new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise(), this.editType());
 

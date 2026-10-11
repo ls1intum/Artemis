@@ -538,21 +538,6 @@ describe('TextExercise Management Update Component', () => {
 
             expect(openModalSpy).toHaveBeenCalledOnce();
         });
-
-        it('should keep the timeline status it is told', async () => {
-            const exercise = createExercise(createCourse());
-            routeData$.next({ textExercise: exercise });
-
-            fixture = TestBed.createComponent(TextExerciseUpdateComponent);
-            component = fixture.componentInstance;
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            component.timelineStatus.set({ valid: false, empty: true, invalidItems: [] });
-            await fixture.whenStable();
-
-            expect(component.timelineStatus()).toEqual({ valid: false, empty: true, invalidItems: [] });
-        });
     });
 
     describe('ngOnInit in import mode: Course to Course', () => {
@@ -899,6 +884,19 @@ describe('TextExercise Management Update Component', () => {
             expect(sectionOf('solution')?.empty).toBe(false);
             expect(component.textExercise.problemStatement).toBe('A problem');
         });
+        it('should trim the title through the state when saving, so that the reasons follow a failed save', async () => {
+            const exercise = filledInExercise();
+            exercise.title = 'ab ';
+            await render(exercise);
+            expect(component.invalidReasons()).toEqual([]);
+            vi.spyOn(TestBed.inject(TextExerciseService), 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+
+            component.save();
+
+            expect(exercise.title).toBe('ab');
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.title.minlength']);
+        });
+
         it('should edit the exercise in place, so that the child components keep the object they were given', async () => {
             const exercise = filledInExercise();
             await render(exercise);

@@ -370,8 +370,11 @@ describe('FileUploadExerciseUpdateComponent', () => {
             expect(openModalSpy).toHaveBeenCalledOnce();
         });
 
-        it('should keep the timeline status it is told', async () => {
+        it('should forward the timeline reasons and mark the grading section invalid', async () => {
             const exercise = createExercise(createCourse());
+            exercise.maxPoints = 10;
+            exercise.bonusPoints = 0;
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
             routeData$.next({ fileUploadExercise: exercise });
 
             fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
@@ -379,10 +382,14 @@ describe('FileUploadExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            component.timelineStatus.set({ valid: false, empty: true, invalidItems: [] });
-            await fixture.whenStable();
+            component.timelineStatus.set({
+                valid: false,
+                empty: false,
+                invalidItems: [{ labelStringKey: 'artemisApp.exercise.dueDate', reasonKey: 'artemisApp.exercise.form.timeline.order', dateName: 'Due Date' }],
+            });
 
-            expect(component.timelineStatus()).toEqual({ valid: false, empty: true, invalidItems: [] });
+            expect(component.invalidReasons()).toEqual([{ translateKey: 'artemisApp.exercise.form.timeline.order', translateValues: { dateName: 'Due Date' } }]);
+            expect(component.formStatusSections().find((section) => section.title === 'artemisApp.exercise.sections.grading')?.valid).toBe(false);
         });
 
         it('should set isExamMode to true for exam exercises', async () => {
@@ -760,6 +767,29 @@ describe('FileUploadExerciseUpdateComponent', () => {
             expect(component.fileUploadExercise().dueDate).toBeUndefined();
             expect(component.fileUploadExercise().assessmentDueDate).toBeUndefined();
             expect(component.fileUploadExercise().exampleSolutionPublicationDate).toBeUndefined();
+        });
+
+        it('should reset the imported exercise once, not again for every edit made afterwards', async () => {
+            const courseService = TestBed.inject(CourseManagementService);
+            routeData$.next({ fileUploadExercise: createExistingExercise() });
+            routeUrl$.next([{ path: 'import' } as UrlSegment]);
+            routeParams$.next({ courseId: 123 });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(courseService.find).toHaveBeenCalledOnce();
+
+            const dueDate = dayjs().add(1, 'day');
+            fixture.debugElement.query(By.directive(ExerciseTimelineComponent)).componentInstance.dueDate.set(dueDate);
+            component.exerciseState.patch('maxPoints', 5);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            // Running the import handling again would have reset the dates and loaded the course once more.
+            expect(component.fileUploadExercise().dueDate).toBe(dueDate);
+            expect(courseService.find).toHaveBeenCalledOnce();
         });
 
         it('should load exercise group when importing to exam', async () => {

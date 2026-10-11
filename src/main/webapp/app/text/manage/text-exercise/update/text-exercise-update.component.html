@@ -157,7 +157,7 @@
                 </div>
                 @if (!isExamMode()) {
                     <jhi-feature-overlay [enabled]="isPlagiarismEnabled()" placement="right">
-                        <jhi-exercise-update-plagiarism [(exercise)]="textExercise" />
+                        <jhi-exercise-update-plagiarism [exercise]="textExercise" />
                     </jhi-feature-overlay>
                 }
                 <jhi-presentation-score-checkbox [exercise]="textExercise" />

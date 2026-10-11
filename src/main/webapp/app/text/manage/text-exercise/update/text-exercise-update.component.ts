@@ -9,7 +9,7 @@ import { TextExerciseService } from '../service/text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ExerciseMode, IncludedInOverallScore, ValidationReason, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseMode, IncludedInOverallScore, ValidationReason, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -274,6 +274,8 @@ export class TextExerciseUpdateComponent implements OnInit {
             return;
         }
         this.isSaving.set(true);
+        // The save trims the title as well, but in place; doing it here first keeps the reasons in step after a failed save.
+        this.exerciseState.update(Exercise.sanitize);
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType)
             .save(this.textExercise, this.isExamMode(), this.notificationText)

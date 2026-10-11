@@ -17,7 +17,7 @@ import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { ExerciseMode, IncludedInOverallScore, ValidationReason, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseMode, IncludedInOverallScore, ValidationReason, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
@@ -380,6 +380,8 @@ export class ModelingExerciseUpdateComponent implements OnDestroy, OnInit {
             return;
         }
         this.isSaving.set(true);
+        // The save trims the title as well, but in place; doing it here first keeps the reasons in step after a failed save.
+        this.exerciseState.update(Exercise.sanitize);
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType)
             .save(this.modelingExercise, this.isExamMode(), this.notificationText)

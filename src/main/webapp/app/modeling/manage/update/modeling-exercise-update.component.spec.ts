@@ -1049,6 +1049,22 @@ describe('ModelingExerciseUpdateComponent', () => {
             expect(sectionOf('solution')?.empty).toBe(false);
         });
 
+        it('should forget the drawn example solution when the diagram type changes', async () => {
+            const exercise = filledInExercise();
+            exercise.exampleSolutionExplanation = 'An explanation';
+            await render(exercise);
+            fixture.debugElement
+                .query(By.directive(StubModelingEditorComponent))
+                .triggerEventHandler('onModelChanged', { nodes: [{ id: 'class' }], edges: [], version: '4.0.0' } as unknown as UMLModel);
+            expect(sectionOf('solution')?.empty).toBe(false);
+
+            // The model is empty as far as the editor stub reports it, so the type changes without a confirmation.
+            selectDiagramTypeOption(1);
+
+            expect(comp.modelingExercise.diagramType).toBe(UMLDiagramType.ActivityDiagram);
+            expect(sectionOf('solution')?.empty).toBe(true);
+        });
+
         it('should edit the exercise in place, so that the child components keep the object they were given', async () => {
             const exercise = filledInExercise();
             await render(exercise);
