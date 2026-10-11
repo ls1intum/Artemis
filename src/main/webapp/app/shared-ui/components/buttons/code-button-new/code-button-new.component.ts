@@ -8,6 +8,7 @@ import { AuthenticationMethodData, CodeButtonPopoverContentComponent, NonEmptyAr
 import { RepositoryAuthenticationMethod } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
 import dayjs from 'dayjs/esm';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-code-button-new',
@@ -15,6 +16,7 @@ import dayjs from 'dayjs/esm';
     imports: [TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, FaIconComponent, ArtemisTranslatePipe, CodeButtonPopoverContentComponent],
 })
 export class CodeButtonNewComponent {
+    private readonly accountService = inject(AccountService);
     private readonly profileService = inject(ProfileService);
     private readonly sshUserSettingsService = inject(SshUserSettingsService);
 
@@ -29,8 +31,12 @@ export class CodeButtonNewComponent {
     });
 
     private async loadAuthenticationMethodData(): Promise<NonEmptyArray<AuthenticationMethodData>> {
+        const repositoryUri = this.repositoryUri();
+
         const authenticationMethods = this.getAuthenticationMethods();
-        const authenticationMethodData = await Promise.all(authenticationMethods.map((authenticationMethod) => this.getAuthenticationMethodData(authenticationMethod)));
+        const authenticationMethodData = await Promise.all(
+            authenticationMethods.map((authenticationMethod) => this.getAuthenticationMethodData(authenticationMethod, repositoryUri)),
+        );
         if (authenticationMethodData.length === 0) {
             throw new Error('Incomplete code button data');
         }
@@ -44,19 +50,18 @@ export class CodeButtonNewComponent {
         );
     }
 
-    private async getAuthenticationMethodData(authenticationMethod: RepositoryAuthenticationMethod): Promise<AuthenticationMethodData> {
+    private async getAuthenticationMethodData(authenticationMethod: RepositoryAuthenticationMethod, repositoryUri: string): Promise<AuthenticationMethodData> {
         switch (authenticationMethod) {
             case RepositoryAuthenticationMethod.SSH:
-                return this.getSshAuthenticationMethodData();
+                return this.getSshAuthenticationMethodData(repositoryUri);
             case RepositoryAuthenticationMethod.Token:
-                return this.getTokenAuthenticationMethodData();
+                return this.getTokenAuthenticationMethodData(repositoryUri);
             case RepositoryAuthenticationMethod.Password:
-                return this.getPasswordAuthenticationMethodData();
+                return this.getPasswordAuthenticationMethodData(repositoryUri);
         }
     }
 
-    private async getSshAuthenticationMethodData(): Promise<AuthenticationMethodData> {
-        const repositoryUri = this.repositoryUri();
+    private async getSshAuthenticationMethodData(repositoryUri: string): Promise<AuthenticationMethodData> {
         const sshCloneUrlTemplate = this.profileService.getProfileInfo().sshCloneURLTemplate;
         const sshRepositoryUrl = this.getSshRepositoryUrl(repositoryUri, sshCloneUrlTemplate);
 
@@ -84,18 +89,47 @@ export class CodeButtonNewComponent {
         return repositoryUri.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/, sshCloneUrlTemplate + '$2');
     }
 
-    private getTokenAuthenticationMethodData(): AuthenticationMethodData {
+    private async getTokenAuthenticationMethodData(repositoryUri: string): Promise<AuthenticationMethodData> {
+        const user = await this.accountService.identity();
+        const login = user?.login;
+        if (!login) {
+            throw new Error('Incomplete token authentication data');
+        }
+
+        // TODO: derive token and insert here, move * replacement into content component
+        const credentials = `://${login}:**********@`;
+        const url = this.insertCredentialsIntoUri(repositoryUri, credentials);
+
         return {
             authenticationMethod: RepositoryAuthenticationMethod.Token,
-            url: 'https://artemis-user:**********@artemis.example.com/very-long-course-name/programming-exercises/example-repository.git',
+            url: url,
         };
     }
 
-    private getPasswordAuthenticationMethodData(): AuthenticationMethodData {
+    private async getPasswordAuthenticationMethodData(repositoryUri: string): Promise<AuthenticationMethodData> {
+        const user = await this.accountService.identity();
+        const login = user?.login;
+        if (!login) {
+            throw new Error('Incomplete password authentication data');
+        }
+
+        const credentials = `://${login}@`;
+        const url = this.insertCredentialsIntoUri(repositoryUri, credentials);
+
         return {
             authenticationMethod: RepositoryAuthenticationMethod.Password,
-            url: 'https://artemis-user@artemis.example.com/very-long-course-name/programming-exercises/example-repository.git',
+            url: url,
         };
+    }
+
+    private insertCredentialsIntoUri(url: string, credentials: string): string {
+        if (!url.includes('@')) {
+            // the url has the format https://vcs-server.com
+            return url.replace('://', credentials);
+        } else {
+            // the url has the format https://username@vcs-server.com -> replace ://username@
+            return url.replace(/:\/\/.*@/, credentials);
+        }
     }
 
     private async getSshKeyState(): Promise<SshKeyState | undefined> {
