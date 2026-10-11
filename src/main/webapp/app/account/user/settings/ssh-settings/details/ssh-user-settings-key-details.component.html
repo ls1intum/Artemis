@@ -93,26 +93,55 @@
 
                 <!-- expiry date date picker -->
                 @if (selectedOption === 'useExpiration') {
-                    <div class="mt-4 sm:w-1/3">
-                        <tumaet-ui-date-picker
-                            id="expiryDate"
-                            inputId="ssh-key-expiry-date"
-                            data-testid="ssh-key-expiry-date"
-                            [dateOnly]="true"
-                            [shouldDisplayTimeZoneWarning]="false"
-                            labelName="artemisApp.userSettings.sshSettingsPage.expiryDate"
-                            [value]="displayedExpiryDate()"
-                            [invalid]="expiryDateMissingOrInvalid()"
-                            [ariaRequired]="true"
-                            [ariaDescribedBy]="expiryDateMissingOrInvalid() ? 'ssh-key-expiry-date-error' : undefined"
-                            (valueChange)="onExpiryDateChange($event)"
-                            (inputValidityChange)="onExpiryTextValidityChange($event)"
-                        />
-                        @if (expiryDateMissingOrInvalid()) {
-                            <div id="ssh-key-expiry-date-error" class="text-state-danger text-sm mt-1 block" data-testid="ssh-key-expiry-date-error">
-                                {{ 'entity.dateMissingOrNotValid' | artemisTranslate: { labelName: 'artemisApp.userSettings.sshSettingsPage.expiryDate' | artemisTranslate } }}
-                            </div>
-                        }
+                    <div class="mt-4">
+                        <div
+                            class="mb-2 flex flex-wrap items-center gap-2"
+                            role="group"
+                            [attr.aria-label]="'artemisApp.userSettings.sshSettingsPage.expiry.presetsLabel' | artemisTranslate"
+                        >
+                            <span class="text-sm text-muted-color" jhiTranslate="artemisApp.userSettings.sshSettingsPage.expiry.presetsLabel"></span>
+                            @for (days of expiryPresetDays; track days) {
+                                <tumaet-ui-button
+                                    size="small"
+                                    severity="secondary"
+                                    [variant]="activeExpiryPresetDays() === days ? 'solid' : 'outlined'"
+                                    [ariaPressed]="activeExpiryPresetDays() === days"
+                                    [attr.data-testid]="'ssh-key-expiry-preset-' + days"
+                                    (clicked)="selectExpiryPreset(days)"
+                                >
+                                    <span>{{ 'artemisApp.userSettings.sshSettingsPage.expiry.presetDays' | artemisTranslate: { days: days } }}</span>
+                                </tumaet-ui-button>
+                            }
+                        </div>
+                        <div class="sm:w-1/3">
+                            <tumaet-ui-date-picker
+                                id="expiryDate"
+                                inputId="ssh-key-expiry-date"
+                                data-testid="ssh-key-expiry-date"
+                                [dateOnly]="true"
+                                [min]="earliestExpiryDay()"
+                                [shouldDisplayTimeZoneWarning]="false"
+                                labelName="artemisApp.userSettings.sshSettingsPage.expiryDate"
+                                [value]="displayedExpiryDate()"
+                                [invalid]="expiryDateMissingOrInvalid()"
+                                [ariaRequired]="true"
+                                [ariaDescribedBy]="expiryDateMissingOrInvalid() ? 'ssh-key-expiry-date-error' : undefined"
+                                (valueChange)="onExpiryDateChange($event)"
+                                (inputValidityChange)="onExpiryTextValidityChange($event)"
+                            />
+                            @if (expiryDateMissingOrInvalid()) {
+                                <div id="ssh-key-expiry-date-error" class="text-state-danger text-sm mt-1 block" data-testid="ssh-key-expiry-date-error">
+                                    @if (expiryDateTooEarly()) {
+                                        {{ 'artemisApp.userSettings.sshSettingsPage.expiry.mustBeInFuture' | artemisTranslate }}
+                                    } @else {
+                                        {{
+                                            'entity.dateMissingOrNotValid'
+                                                | artemisTranslate: { labelName: 'artemisApp.userSettings.sshSettingsPage.expiryDate' | artemisTranslate }
+                                        }}
+                                    }
+                                </div>
+                            }
+                        </div>
                     </div>
                 }
             } @else {

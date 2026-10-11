@@ -54,6 +54,9 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     private authStateSubscription!: Subscription; // assigned in ngOnInit(), before ngOnDestroy() unsubscribes
     readonly expiryDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly validExpiryDate = signal(false);
+    /** The calendar offers the days from today up to one year ahead; the exact instant is checked in {@link validateDate}. */
+    protected readonly earliestExpiryDay = dayjs();
+    protected readonly latestExpiryDay = dayjs().add(1, 'year');
     /** The picker keeps its last valid date while the typed text is not a date, so the text validity is tracked separately. */
     private expiryTextValid = true;
     readonly edit = signal(false);

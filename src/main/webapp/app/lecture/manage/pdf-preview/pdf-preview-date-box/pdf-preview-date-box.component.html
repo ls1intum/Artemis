@@ -31,6 +31,7 @@
             <tumaet-ui-date-picker
                 data-testid="hide-until-date"
                 [inline]="true"
+                [min]="minDate"
                 [ariaLabel]="'artemisApp.attachment.pdfPreview.dateBox.selectDate' | artemisTranslate"
                 [hideValidationMessage]="true"
                 [(value)]="defaultDate"

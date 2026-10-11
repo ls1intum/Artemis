@@ -40,7 +40,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     calendarSelected = signal<boolean>(false);
     exerciseSelected = signal<boolean>(false);
     /** The minute the box was opened in: the earliest date it offers, as the date field's `min` used to be. */
-    private readonly minDate = dayjs().startOf('minute');
+    protected readonly minDate = dayjs().startOf('minute');
     defaultDate = signal<dayjs.Dayjs | undefined>(this.minDate);
     exercises = signal<Exercise[]>([]);
     categorizedExercises = signal<CategorizedExercise[]>([]);

@@ -102,6 +102,14 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     /** Month the calendar opens on while the field is empty; a held value always wins. Defaults to the current month. */
     readonly startAt = input<dayjs.Dayjs>();
 
+    /**
+     * Days before this day are shown but cannot be selected in the calendar. Only the calendar is limited: text typed into the field
+     * is not checked against it, so the consumer validates the value and explains an error, as for any external error.
+     */
+    readonly min = input<dayjs.Dayjs>();
+    /** Days after this day are shown but cannot be selected in the calendar; see {@link min}. */
+    readonly max = input<dayjs.Dayjs>();
+
     /** ID used to associate the input, label, validation message, and dialog. */
     readonly inputId = input(`tumaet-ui-date-picker-${nextDatePickerId++}`);
     /** Visible label text or package translation key. */
@@ -336,7 +344,7 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
         if (!trigger) {
             return;
         }
-        const anchor = this.value() ?? this.startAt() ?? dayjs();
+        const anchor = this.value() ?? this.startAt() ?? this.nearestAllowedDay();
         this.activeMonth.set(anchor.startOf('month'));
         const activeElement = this.document.activeElement;
         this.restoreFocusElement = activeElement && typeof (activeElement as HTMLElement).focus === 'function' ? (activeElement as HTMLElement) : undefined;
@@ -365,6 +373,20 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
             this.restoreFocusElement.focus();
         }
         this.restoreFocusElement = undefined;
+    }
+
+    /** Today, or the closest day the calendar allows when today is outside {@link min} and {@link max}. */
+    private nearestAllowedDay(): dayjs.Dayjs {
+        const today = dayjs();
+        const min = this.min();
+        const max = this.max();
+        if (min && today.isBefore(min, 'day')) {
+            return min;
+        }
+        if (max && today.isAfter(max, 'day')) {
+            return max;
+        }
+        return today;
     }
 
     focus(options?: FocusOptions): void {

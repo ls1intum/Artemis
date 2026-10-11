@@ -72,11 +72,25 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     readonly isExpiryDateValid = signal<boolean>(false);
     /** The picker keeps its last valid date while the typed text is not a date, so the text validity is tracked separately. */
     private readonly expiryTextValid = signal(true);
-    /** The expiry date is required and must not lie in the past; while the text is not a date, the picker explains that itself. */
+    /** Days from today that the quick choices above the picker set the expiry to. */
+    protected readonly expiryPresetDays = [30, 90, 180];
+    /** The first day a key can expire on: a key that expires today would be of no use. */
+    protected readonly earliestExpiryDay = computed(() => this.currentDate().add(1, 'day').startOf('day'));
+    /** The expiry date is required and must lie in the future; while the text is not a date, the picker explains that itself. */
     protected readonly expiryDateMissingOrInvalid = computed(() => this.expiryTextValid() && !this.isExpiryDateValid());
+    /** A valid date that is too early gets its own explanation, where a missing or unreadable one gets the general one. */
+    protected readonly expiryDateTooEarly = computed(() => {
+        const date = this.displayedExpiryDate();
+        return this.expiryTextValid() && !!date?.isValid() && date.isBefore(this.earliestExpiryDay(), 'day');
+    });
+    /** The quick choice that the current expiry date equals, if any. */
+    protected readonly activeExpiryPresetDays = computed(() => {
+        const date = this.displayedExpiryDate();
+        return date ? this.expiryPresetDays.find((days) => date.isSame(this.currentDate().add(days, 'day'), 'day')) : undefined;
+    });
     readonly displayCreationDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly displayedLastUsedDate = signal<dayjs.Dayjs | undefined>(undefined);
-    readonly currentDate = signal<dayjs.Dayjs>(undefined!);
+    readonly currentDate = signal<dayjs.Dayjs>(dayjs());
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -145,9 +159,17 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
         void this.router.navigate(['/user-settings/ssh']);
     }
 
+    /**
+     * The key stays valid through the day it expires on, so the date is kept at the end of that day. The picker hands over the start of the day.
+     */
     onExpiryDateChange(date: dayjs.Dayjs | undefined) {
-        this.displayedExpiryDate.set(date);
+        this.displayedExpiryDate.set(date?.endOf('day'));
         this.validateExpiryDate();
+    }
+
+    /** Sets the expiry to the end of the day the given number of days from today. */
+    selectExpiryPreset(days: number) {
+        this.onExpiryDateChange(dayjs().add(days, 'day'));
     }
 
     onExpiryTextValidityChange(isValid: boolean) {
@@ -156,11 +178,12 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * A valid expiry date is a date that is not before today. The picker has no minimum of its own, so a date in the past is rejected here.
+     * A valid expiry date is a date from tomorrow on. The calendar greys out the days before, but text typed into the field is not limited by it, so
+     * an earlier date is rejected here.
      */
     validateExpiryDate() {
         const date = this.displayedExpiryDate();
-        this.isExpiryDateValid.set(this.expiryTextValid() && !!date?.isValid() && !date.isBefore(this.currentDate(), 'day'));
+        this.isExpiryDateValid.set(this.expiryTextValid() && !!date?.isValid() && !date.isBefore(this.earliestExpiryDay(), 'day'));
     }
 
     private setMessageBasedOnOS(os: string): void {

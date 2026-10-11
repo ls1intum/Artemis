@@ -60,6 +60,55 @@ describe('TumAetUiCalendarComponent', () => {
         expect(dayjs.isDayjs(spy.mock.calls[0][0])).toBe(true);
     });
 
+    describe('min and max', () => {
+        const dayButtonOf = (iso: string) => dayButtons().find((button) => button.getAttribute('data-date') === iso)!;
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('min', dayjs('2026-06-10T15:30'));
+            fixture.componentRef.setInput('max', dayjs('2026-06-20T08:00'));
+            fixture.detectChanges();
+        });
+
+        it('disables the days before min and after max, and only those, whatever the time of day of the limits', () => {
+            expect(dayButtonOf('2026-06-09').getAttribute('aria-disabled')).toBe('true');
+            expect(dayButtonOf('2026-06-21').getAttribute('aria-disabled')).toBe('true');
+            expect(dayButtonOf('2026-06-10').getAttribute('aria-disabled')).toBeNull();
+            expect(dayButtonOf('2026-06-15').getAttribute('aria-disabled')).toBeNull();
+            expect(dayButtonOf('2026-06-20').getAttribute('aria-disabled')).toBeNull();
+        });
+
+        it('selects an allowed day and ignores a click on a disabled one', () => {
+            const spy = vi.spyOn(component.daySelected, 'emit');
+
+            dayButtonOf('2026-06-09').click();
+            dayButtonOf('2026-06-21').click();
+            expect(spy).not.toHaveBeenCalled();
+
+            dayButtonOf('2026-06-10').click();
+            expect(spy).toHaveBeenCalledOnce();
+            expect((spy.mock.calls[0][0] as dayjs.Dayjs).format('YYYY-MM-DD')).toBe('2026-06-10');
+        });
+
+        it('ignores Enter on a disabled day but still lets the focus move onto it', () => {
+            const spy = vi.spyOn(component.daySelected, 'emit');
+            const disabled = dayButtonOf('2026-06-09');
+
+            disabled.focus();
+            disabled.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+            expect(spy).not.toHaveBeenCalled();
+            expect(document.activeElement).toBe(disabled);
+        });
+
+        it('leaves every day enabled when no limit is set', () => {
+            fixture.componentRef.setInput('min', undefined);
+            fixture.componentRef.setInput('max', undefined);
+            fixture.detectChanges();
+
+            expect(dayButtons().filter((button) => button.getAttribute('aria-disabled') === 'true')).toHaveLength(0);
+        });
+    });
+
     it('emits monthChange from the next button', () => {
         const spy = vi.spyOn(component.monthChange, 'emit');
         fixture.debugElement.query(By.css('button[aria-label^="Next month:"]')).nativeElement.click();

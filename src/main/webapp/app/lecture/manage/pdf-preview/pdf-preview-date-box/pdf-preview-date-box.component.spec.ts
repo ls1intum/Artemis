@@ -4,6 +4,8 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -134,6 +136,16 @@ describe('PdfPreviewDateBoxComponent', () => {
 
             expect(component.calendarSelected()).toBe(true);
             expect(component.exerciseSelected()).toBe(false);
+        });
+
+        it('should grey out the days before the minute the box was opened in', async () => {
+            component.selectCalendar();
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            const picker = fixture.debugElement.query(By.directive(TumAetUiDatePickerComponent)).componentInstance as TumAetUiDatePickerComponent;
+            expect(picker.min()!.isSame(dayjs(), 'minute')).toBe(true);
         });
 
         it('should handle exercise selection', () => {

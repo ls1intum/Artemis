@@ -524,7 +524,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         });
     }
 
-    /** Whether the pending individual due date lies before the due date of the exercise, which the picker cannot exclude itself. */
+    /** Whether the pending individual due date lies before the due date of the exercise. The calendar greys out earlier days, but typed text is not limited by it. */
     isBeforeExerciseDueDate(id: number): boolean {
         const pending = this.pendingDueDates.get(id);
         const dueDate = this.exercise()?.dueDate;

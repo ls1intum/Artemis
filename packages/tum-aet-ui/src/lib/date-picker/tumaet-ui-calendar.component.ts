@@ -36,6 +36,10 @@ export class TumAetUiCalendarComponent {
     readonly selected = input<dayjs.Dayjs | undefined>(undefined);
     readonly activeMonth = input.required<dayjs.Dayjs>();
     readonly focusOnInit = input(false, { transform: booleanAttribute });
+    /** Days before this day are shown but cannot be selected. Compared by day, so the time of day is ignored. */
+    readonly min = input<dayjs.Dayjs>();
+    /** Days after this day are shown but cannot be selected. Compared by day, so the time of day is ignored. */
+    readonly max = input<dayjs.Dayjs>();
     readonly daySelected = output<dayjs.Dayjs>();
     readonly monthChange = output<dayjs.Dayjs>();
 
@@ -102,7 +106,9 @@ export class TumAetUiCalendarComponent {
         const base =
             'tumaet:appearance-none tumaet:border-0 tumaet:h-8 tumaet:w-8 tumaet:rounded-full tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus';
         let color: string;
-        if (this.isSelected(day)) {
+        if (this.isDisabled(day)) {
+            color = 'tumaet:bg-transparent tumaet:text-disabled tumaet:cursor-not-allowed tumaet:line-through';
+        } else if (this.isSelected(day)) {
             color = 'tumaet:bg-primary tumaet:text-primary-contrast';
         } else if (this.isOtherMonth(day)) {
             color = 'tumaet:bg-transparent tumaet:text-muted tumaet:hover:bg-hover-background';
@@ -111,6 +117,12 @@ export class TumAetUiCalendarComponent {
         }
         const today = this.isToday(day) && !this.isSelected(day) ? 'tumaet:ring-1 tumaet:ring-primary' : '';
         return `${base} ${color} ${today}`.trim();
+    }
+
+    protected isDisabled(day: dayjs.Dayjs): boolean {
+        const min = this.min();
+        const max = this.max();
+        return (!!min && day.isBefore(min, 'day')) || (!!max && day.isAfter(max, 'day'));
     }
 
     protected isSelected(day: dayjs.Dayjs): boolean {
@@ -135,7 +147,9 @@ export class TumAetUiCalendarComponent {
     }
 
     protected selectDay(day: dayjs.Dayjs): void {
-        this.daySelected.emit(day);
+        if (!this.isDisabled(day)) {
+            this.daySelected.emit(day);
+        }
     }
 
     protected dayLabel(day: dayjs.Dayjs): string {

@@ -11,7 +11,14 @@
             <label [attr.for]="inputId()" class="tumaet:font-semibold tumaet:text-text">{{ labelName()! | tumAetUiTranslate }}</label>
         }
         @if (!timeOnly()) {
-            <tumaet-ui-calendar [selected]="value()" [activeMonth]="activeMonth()" (daySelected)="onDaySelect($event)" (monthChange)="activeMonth.set($event)" />
+            <tumaet-ui-calendar
+                [selected]="value()"
+                [min]="min()"
+                [max]="max()"
+                [activeMonth]="activeMonth()"
+                (daySelected)="onDaySelect($event)"
+                (monthChange)="activeMonth.set($event)"
+            />
         }
         @if (!dateOnly()) {
             <ng-container [ngTemplateOutlet]="timeControls" />
@@ -113,6 +120,8 @@
         @if (!timeOnly()) {
             <tumaet-ui-calendar
                 [selected]="value()"
+                [min]="min()"
+                [max]="max()"
                 [activeMonth]="activeMonth()"
                 [focusOnInit]="true"
                 (daySelected)="onDaySelect($event)"

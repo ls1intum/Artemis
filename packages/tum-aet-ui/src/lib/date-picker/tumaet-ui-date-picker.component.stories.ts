@@ -49,6 +49,23 @@ export const CalendarInteraction: Story = {
     },
 };
 
+export const LimitedRange: Story = {
+    args: {
+        value: dayjs('2026-06-15T08:30:00'),
+        min: dayjs('2026-06-10'),
+        max: dayjs('2026-06-20'),
+    },
+    play: async ({ canvas, userEvent }) => {
+        await userEvent.click(canvas.getByRole('button', { name: 'Open calendar' }));
+
+        const dialog = await screen.findByRole('dialog', { name: 'Choose date and time' });
+        const before = dialog.querySelector('button[data-date="2026-06-09"]');
+        const inside = dialog.querySelector('button[data-date="2026-06-12"]');
+        await expect(before).toHaveAttribute('aria-disabled', 'true');
+        await expect(inside).not.toHaveAttribute('aria-disabled');
+    },
+};
+
 export const TimeOnly: Story = {
     args: {
         ariaLabel: 'Session start',

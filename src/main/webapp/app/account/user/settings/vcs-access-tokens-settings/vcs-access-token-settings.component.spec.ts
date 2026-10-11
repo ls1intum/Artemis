@@ -94,6 +94,15 @@ describe('VcsAccessTokensSettingsComponent', () => {
         expect(alertServiceMock.error).toHaveBeenCalled();
     });
 
+    it('should limit the calendar to the days from today up to one year ahead', () => {
+        accountServiceMock.getAuthenticationState.mockReturnValue(of({ id: 1 } as User));
+        startTokenCreation();
+        const picker = fixture.debugElement.query(By.directive(TumAetUiDatePickerComponent)).componentInstance as TumAetUiDatePickerComponent;
+
+        expect(picker.min()!.isSame(dayjs(), 'day')).toBe(true);
+        expect(picker.max()!.isSame(dayjs().add(1, 'year'), 'day')).toBe(true);
+    });
+
     it('should only enable token creation for a picked date within the next year', () => {
         accountServiceMock.getAuthenticationState.mockReturnValue(of({ id: 1 } as User));
         startTokenCreation();

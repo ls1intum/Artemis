@@ -72,6 +72,8 @@
                     <tumaet-ui-date-picker
                         id="expiryDate"
                         inputId="vcs-token-expiry-date"
+                        [min]="earliestExpiryDay"
+                        [max]="latestExpiryDay"
                         [shouldDisplayTimeZoneWarning]="false"
                         labelName="artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate"
                         [value]="expiryDate()"

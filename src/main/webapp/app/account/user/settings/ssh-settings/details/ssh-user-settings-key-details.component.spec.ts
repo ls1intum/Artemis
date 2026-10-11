@@ -81,7 +81,7 @@ describe('SshUserSettingsComponent', () => {
         expect(sshServiceMock.getSshPublicKey).not.toHaveBeenCalled();
         expect(comp.isLoading()).toBe(false);
         comp.displayedSshKey = mockKey;
-        comp.displayedExpiryDate.set(dayjs());
+        comp.displayedExpiryDate.set(dayjs().add(1, 'day'));
         comp.displayedKeyLabel = 'label';
         comp.validateExpiryDate();
         expect(comp.isExpiryDateValid()).toBe(true);
@@ -104,7 +104,7 @@ describe('SshUserSettingsComponent', () => {
         expect(sshServiceMock.getSshPublicKey).not.toHaveBeenCalled();
         expect(comp.isLoading()).toBe(false);
         comp.displayedSshKey = mockKey;
-        comp.displayedExpiryDate.set(dayjs());
+        comp.displayedExpiryDate.set(dayjs().add(1, 'day'));
         comp.displayedKeyLabel = 'label';
         comp.validateExpiryDate();
         expect(comp.isExpiryDateValid()).toBe(true);
@@ -120,8 +120,8 @@ describe('SshUserSettingsComponent', () => {
             comp.ngOnInit();
         });
 
-        it('should accept today and later dates', () => {
-            comp.onExpiryDateChange(dayjs().startOf('day'));
+        it('should accept tomorrow and later dates', () => {
+            comp.onExpiryDateChange(dayjs().add(1, 'day').startOf('day'));
             expect(comp.isExpiryDateValid()).toBe(true);
 
             comp.onExpiryDateChange(dayjs().add(30, 'day'));
@@ -129,10 +129,21 @@ describe('SshUserSettingsComponent', () => {
             expect(comp.displayedExpiryDate()!.isSame(dayjs().add(30, 'day'), 'day')).toBe(true);
         });
 
-        it('should reject a date before today', () => {
-            comp.onExpiryDateChange(dayjs().subtract(1, 'day'));
-
+        it('should reject today and earlier dates, because a key that expires today is of no use', () => {
+            comp.onExpiryDateChange(dayjs());
             expect(comp.isExpiryDateValid()).toBe(false);
+
+            comp.onExpiryDateChange(dayjs().endOf('day'));
+            expect(comp.isExpiryDateValid()).toBe(false);
+
+            comp.onExpiryDateChange(dayjs().subtract(1, 'day'));
+            expect(comp.isExpiryDateValid()).toBe(false);
+        });
+
+        it('should keep the date at the end of the day, since the key stays valid through the day it expires on', () => {
+            comp.onExpiryDateChange(dayjs('2030-05-17T00:00:00'));
+
+            expect(comp.displayedExpiryDate()!.format('YYYY-MM-DD HH:mm:ss')).toBe('2030-05-17 23:59:59');
         });
 
         it('should reject an empty date', () => {
@@ -150,6 +161,58 @@ describe('SshUserSettingsComponent', () => {
 
             comp.onExpiryTextValidityChange(true);
             expect(comp.isExpiryDateValid()).toBe(true);
+        });
+
+        it.each([30, 90, 180])('should set the expiry to the end of the day in %s days with the quick choice', (days) => {
+            comp.selectExpiryPreset(days);
+
+            const expected = dayjs().add(days, 'day');
+            expect(comp.displayedExpiryDate()!.isSame(expected, 'day')).toBe(true);
+            expect(comp.displayedExpiryDate()!.format('HH:mm:ss')).toBe('23:59:59');
+            expect(comp.isExpiryDateValid()).toBe(true);
+        });
+
+        it('should offer the quick choices above the picker, mark the active one and fill the picker', () => {
+            comp.selectedOption = 'useExpiration';
+            fixture.detectChanges();
+
+            const presetButton = (days: number) => fixture.debugElement.query(By.css(`[data-testid="ssh-key-expiry-preset-${days}"]`));
+            const pickerDebugElement = fixture.debugElement.query(By.directive(TumAetUiDatePickerComponent));
+            const picker = pickerDebugElement.componentInstance as TumAetUiDatePickerComponent;
+            expect([30, 90, 180].map((days) => presetButton(days) !== null)).toEqual([true, true, true]);
+            expect(presetButton(90).nativeElement.compareDocumentPosition(pickerDebugElement.nativeElement) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+            expect(presetButton(30).nativeElement.getAttribute('aria-pressed')).not.toBe('true');
+
+            presetButton(90).query(By.css('button')).nativeElement.click();
+            fixture.detectChanges();
+
+            expect(picker.value()!.isSame(dayjs().add(90, 'day'), 'day')).toBe(true);
+            expect(presetButton(90).query(By.css('button')).nativeElement.getAttribute('aria-pressed')).toBe('true');
+            expect(presetButton(30).query(By.css('button')).nativeElement.getAttribute('aria-pressed')).not.toBe('true');
+        });
+
+        it('should grey out the days up to today in the calendar', () => {
+            comp.selectedOption = 'useExpiration';
+            fixture.detectChanges();
+
+            const picker = fixture.debugElement.query(By.directive(TumAetUiDatePickerComponent)).componentInstance as TumAetUiDatePickerComponent;
+            expect(picker.min()!.isSame(dayjs().add(1, 'day'), 'day')).toBe(true);
+        });
+
+        it('should explain a date that is too early differently from a missing or unreadable one', () => {
+            comp.selectedOption = 'useExpiration';
+            fixture.detectChanges();
+            const errorText = () => fixture.nativeElement.querySelector('[data-testid="ssh-key-expiry-date-error"]')?.textContent ?? '';
+
+            expect(errorText()).toContain('entity.dateMissingOrNotValid');
+
+            comp.onExpiryDateChange(dayjs());
+            fixture.detectChanges();
+            expect(errorText()).toContain('artemisApp.userSettings.sshSettingsPage.expiry.mustBeInFuture');
+
+            comp.onExpiryDateChange(dayjs().add(10, 'day'));
+            fixture.detectChanges();
+            expect(errorText()).toBe('');
         });
 
         it('should render the picker with the required state and disable saving until the date is valid', () => {

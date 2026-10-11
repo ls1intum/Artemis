@@ -193,6 +193,7 @@
                     [shouldDisplayTimeZoneWarning]="false"
                     [value]="getPendingDueDate(cell.data.participationId)"
                     [startAt]="getPendingDueDate(cell.data.participationId) ?? exercise()!.dueDate"
+                    [min]="exercise()!.dueDate"
                     [disabled]="isSaving()"
                     [invalid]="isBeforeExerciseDueDate(cell.data.participationId)"
                     [ariaDescribedBy]="isBeforeExerciseDueDate(cell.data.participationId) ? 'individual-due-date-error-' + cell.data.participationId : undefined"

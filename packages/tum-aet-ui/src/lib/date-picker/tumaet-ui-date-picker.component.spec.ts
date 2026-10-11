@@ -202,6 +202,60 @@ describe('TumAetUiDatePickerComponent', () => {
         });
     });
 
+    describe('min and max', () => {
+        const openCalendar = () => {
+            fixture.debugElement.query(By.css('button[aria-haspopup="dialog"]')).nativeElement.click();
+            fixture.detectChanges();
+        };
+        const dayButton = (iso: string) => document.querySelector(`tumaet-ui-calendar button[data-date="${iso}"]`) as HTMLButtonElement;
+
+        it('limits the days of the calendar to the range', () => {
+            fixture.componentRef.setInput('min', dayjs('2026-07-20'));
+            fixture.componentRef.setInput('max', dayjs('2026-07-25'));
+            fixture.detectChanges();
+            openCalendar();
+
+            expect(dayButton('2026-07-19').getAttribute('aria-disabled')).toBe('true');
+            expect(dayButton('2026-07-20').getAttribute('aria-disabled')).toBeNull();
+            expect(dayButton('2026-07-26').getAttribute('aria-disabled')).toBe('true');
+
+            dayButton('2026-07-19').click();
+            fixture.detectChanges();
+            expect(component.value()).toBeUndefined();
+
+            dayButton('2026-07-22').click();
+            fixture.detectChanges();
+            expect(component.value()?.format('YYYY-MM-DD')).toBe('2026-07-22');
+        });
+
+        it('opens an empty picker on the month of min when today lies before it', () => {
+            fixture.componentRef.setInput('min', dayjs('2026-11-03'));
+            fixture.detectChanges();
+            openCalendar();
+
+            expect(document.querySelector('tumaet-ui-calendar [role="grid"]')?.getAttribute('aria-label')).toContain('November');
+        });
+
+        it('opens an empty picker on the month of max when today lies after it', () => {
+            fixture.componentRef.setInput('max', dayjs('2026-02-10'));
+            fixture.detectChanges();
+            openCalendar();
+
+            expect(document.querySelector('tumaet-ui-calendar [role="grid"]')?.getAttribute('aria-label')).toContain('February');
+        });
+
+        it('does not reject text typed outside the range, which is the consumer to judge', () => {
+            fixture.componentRef.setInput('min', dayjs('2026-07-20'));
+            fixture.detectChanges();
+
+            input().value = '01.07.2026 10:00';
+            input().dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+
+            expect(component.value()?.format('YYYY-MM-DD')).toBe('2026-07-01');
+        });
+    });
+
     it('closes only the calendar on Escape, so a dialog around the field stays open', () => {
         const reachedDocument = vi.fn();
         document.addEventListener('keydown', reachedDocument);

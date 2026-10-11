@@ -101,7 +101,10 @@
                     "doNotExpire": "Kein Ablaufdatum",
                     "expireAutomatically": "Automatisch ablaufen",
                     "daysUntilExpiry": "Tage bis zum Ablauf",
-                    "keyWillExpireOn": "Der Schlüssel läuft ab am"
+                    "keyWillExpireOn": "Der Schlüssel läuft ab am",
+                    "presetsLabel": "Läuft ab in",
+                    "presetDays": "{{ days }} Tage",
+                    "mustBeInFuture": "Das Ablaufdatum muss morgen oder später sein."
                 }
             },
             "vcsAccessTokensSettingsPage": {

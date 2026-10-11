@@ -312,6 +312,10 @@ describe('ParticipationComponent', () => {
             expect(saveButton.disabled).toBe(false);
         });
 
+        it('should grey out the days before the due date of the exercise in the calendar', () => {
+            expect(picker.min()!.isSame(component.exercise()!.dueDate!)).toBe(true);
+        });
+
         it('should prevent saving text that is not a date', async () => {
             const updateSpy = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [] })));
             const successSpy = vi.spyOn(alertService, 'success');
