@@ -175,6 +175,7 @@
                     [participationId]="dto.participationId"
                     [repositoryUri]="dto.repositoryUri"
                     [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, dto.participationId]"
+                    [isPractice]="false"
                 />
             }
             @if (dto.buildPlanId && !localCIEnabled()) {

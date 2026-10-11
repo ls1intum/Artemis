@@ -115,6 +115,7 @@ describe('CodeButtonComponent', () => {
                 fixture.componentRef.setInput('participations', []);
                 fixture.componentRef.setInput('smallButtons', true);
                 fixture.componentRef.setInput('routerLinkForRepositoryView', []);
+                fixture.componentRef.setInput('isPractice', false);
                 stubServices();
                 fixture.detectChanges();
             });
@@ -801,6 +802,7 @@ describe('CodeButtonComponent', () => {
         freshFixture.componentRef.setInput('smallButtons', true);
         freshFixture.componentRef.setInput('repositoryUri', '');
         freshFixture.componentRef.setInput('routerLinkForRepositoryView', []);
+        freshFixture.componentRef.setInput('isPractice', false);
         router.setUrl('/course-management');
         freshFixture.componentRef.setInput('participations', [
             {

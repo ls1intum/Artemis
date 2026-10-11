@@ -117,7 +117,7 @@ export class CodeButtonComponent implements OnInit {
     exercise = input<ProgrammingExercise>();
     hideLabelMobile = input<boolean>(false);
     hideLabelBreakpoint = input<'md' | 'xl'>('md');
-    isPractice = input<boolean>(false);
+    isPractice = input.required<boolean>();
     // When set to a base repository type (TEMPLATE, SOLUTION, TESTS, AUXILIARY), the code button uses a repository-scoped staff VCS access token instead of a participation token.
     repositoryType = input<RepositoryType>();
     auxiliaryRepositoryId = input<number>();
