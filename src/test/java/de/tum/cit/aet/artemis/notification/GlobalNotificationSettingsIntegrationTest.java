@@ -27,7 +27,7 @@ class GlobalNotificationSettingsIntegrationTest extends AbstractSpringIntegratio
     private static final String TEST_PREFIX = "globalnotificationintegration";
 
     /**
-     * Matches {@code artemis.mail.test-account-login-patterns} of the test {@code application-artemis.yml}.
+     * A test account: {@code testAccount()} sets its {@code isTestUser} flag.
      */
     private static final String TEST_ACCOUNT_LOGIN = TEST_PREFIX + "flaggedtestuser";
 

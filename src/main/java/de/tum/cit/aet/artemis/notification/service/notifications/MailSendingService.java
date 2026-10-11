@@ -455,8 +455,11 @@ public class MailSendingService {
      * <p>
      * A run stops when the SMTP server reports that the quota is used up or cannot be reached, and after a limited number
      * of mails, so that a backlog is not sent in one burst that uses up the quota again.
+     * <p>
+     * It runs on an executor of its own, because a run sends one mail after the other and would otherwise hold a worker of the
+     * shared pool that a password reset needs while the SMTP server answers slowly.
      */
-    @Async("mailTaskExecutor")
+    @Async("mailRetryTaskExecutor")
     @Scheduled(fixedDelayString = "${artemis.mail.retry.drain-interval:PT30S}", initialDelayString = "${artemis.mail.retry.drain-interval:PT30S}")
     public void sendQueuedMails() {
         sendQueuedMails(Instant.now());

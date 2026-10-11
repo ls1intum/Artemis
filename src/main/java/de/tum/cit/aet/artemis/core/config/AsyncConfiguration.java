@@ -110,6 +110,37 @@ public class AsyncConfiguration implements AsyncConfigurer {
     }
 
     /**
+     * Executor for the job that works off the queue of mails that the SMTP server did not accept (see {@code MailSendingService}).
+     * <p>
+     * A run sends up to a batch of mails one after the other, and every send can take as long as the timeouts of the SMTP
+     * connection allow, so a run is long compared to the other {@code @Async} tasks. On the shared pool it could occupy a
+     * worker for minutes while an outage keeps every send slow, and a password reset that waits for a free worker would be
+     * delayed by the very outage the queue is for. The run has a pool of its own instead.
+     * <p>
+     * One thread is enough, because the job guards itself against overlapping runs. A trigger that finds the thread busy and the
+     * single queue place taken is discarded: the next trigger comes after the configured interval, and a run that is still
+     * working has the queue in hand anyway.
+     * <p>
+     * In the {@code test} profile it is a {@link SyncTaskExecutor}, like the executor for mail, so tests that call the job see its
+     * effect before they continue.
+     *
+     * @return a synchronous executor under the {@code test} profile, otherwise a dedicated single threaded pool
+     */
+    @Bean("mailRetryTaskExecutor")
+    public Executor mailRetryTaskExecutor() {
+        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return new SyncTaskExecutor();
+        }
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(1);
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
+        executor.setThreadNamePrefix("mail-retry-");
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
      * Executor for asynchronous exercise versioning (see {@code ExerciseVersionService}).
      * <p>
      * In production this is a dedicated, bounded thread pool rather than a delegate to the shared {@code taskExecutor}.
