@@ -1,8 +1,7 @@
 import { Component, inject, input, output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -16,16 +15,7 @@ import { NgClass } from '@angular/common';
     selector: 'jhi-onboarding-enrollment',
     templateUrl: './onboarding-enrollment.component.html',
     styleUrls: ['./_onboarding-pages.scss'],
-    imports: [
-        FormsModule,
-        TranslateDirective,
-        FormDateTimePickerComponent,
-        MarkdownEditorMonacoComponent,
-        ArtemisTranslatePipe,
-        FaIconComponent,
-        DocumentationButtonComponent,
-        NgClass,
-    ],
+    imports: [TranslateDirective, TumAetUiDatePickerComponent, MarkdownEditorMonacoComponent, ArtemisTranslatePipe, FaIconComponent, DocumentationButtonComponent, NgClass],
 })
 export class OnboardingEnrollmentComponent {
     private profileService = inject(ProfileService);

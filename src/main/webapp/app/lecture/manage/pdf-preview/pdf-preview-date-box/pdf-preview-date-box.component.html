@@ -23,15 +23,23 @@
         </button>
     </div>
     @if (calendarSelected()) {
+        <!--
+            Inline, not behind a field: the box lives in a popover that closes on any click outside it, and a picker's
+            calendar opens in an overlay outside the popover, so choosing a day there would dismiss the box.
+        -->
         <div class="calendar-container mt-3">
-            <input
-                [attr.aria-label]="'artemisApp.attachment.pdfPreview.dateBox.selectDate' | artemisTranslate"
-                type="datetime-local"
-                class="form-control"
-                [ngModel]="defaultDate()"
-                (ngModelChange)="defaultDate.set($event)"
-                [min]="defaultDate()"
+            <tumaet-ui-date-picker
+                data-testid="hide-until-date"
+                [inline]="true"
+                [ariaLabel]="'artemisApp.attachment.pdfPreview.dateBox.selectDate' | artemisTranslate"
+                [hideValidationMessage]="true"
+                [(value)]="defaultDate"
+                [invalid]="isBeforeMinDate()"
+                [ariaDescribedBy]="isBeforeMinDate() ? 'date-box-date-error' : undefined"
             />
+            @if (isBeforeMinDate()) {
+                <span id="date-box-date-error" class="mt-1 block text-sm text-state-danger" role="alert" jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.dateError"></span>
+            }
         </div>
     }
     @if (exerciseSelected()) {

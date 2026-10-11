@@ -1,54 +1,44 @@
-<p-dialog [modal]="true" [visible]="visible()" [dismissableMask]="true" [closable]="true" (onHide)="cancel()" [style]="{ width: '40rem' }" appendTo="body">
-    <ng-template pTemplate="header">
-        <span [jhiTranslate]="titleTranslationKey()"></span>
-    </ng-template>
-
-    <div class="d-flex flex-column gap-3">
-        <p-message severity="warn" [closable]="false" styleClass="w-100">
+<tumaet-ui-dialog [header]="titleTranslationKey() | artemisTranslate" [(visible)]="visible" [dismissableMask]="true" size="small">
+    <div class="flex flex-col gap-4">
+        <tumaet-ui-message severity="warn">
             <span jhiTranslate="artemisApp.deimos.modal.costWarning"></span>
-        </p-message>
+        </tumaet-ui-message>
 
-        <div class="d-flex flex-column gap-2">
-            <label for="deimos-from" jhiTranslate="artemisApp.deimos.modal.from"></label>
-            <p-datepicker
-                inputId="deimos-from"
-                [ngModel]="fromDate() ?? undefined"
-                (ngModelChange)="fromDate.set($event ?? undefined)"
-                [showTime]="true"
-                [hourFormat]="'24'"
-                [firstDayOfWeek]="1"
-                appendTo="body"
-            />
-        </div>
+        <tumaet-ui-date-picker
+            inputId="deimos-from"
+            [labelName]="'artemisApp.deimos.modal.from' | artemisTranslate"
+            [shouldDisplayTimeZoneWarning]="false"
+            [ariaRequired]="true"
+            [(value)]="fromDate"
+            [invalid]="isOrderInvalid() || isWindowTooLarge()"
+            [ariaDescribedBy]="describedBy()"
+            (inputValidityChange)="fromTextValid.set($event)"
+        />
 
-        <div class="d-flex flex-column gap-2">
-            <label for="deimos-to" jhiTranslate="artemisApp.deimos.modal.to"></label>
-            <p-datepicker
-                inputId="deimos-to"
-                [ngModel]="toDate() ?? undefined"
-                (ngModelChange)="toDate.set($event ?? undefined)"
-                [showTime]="true"
-                [hourFormat]="'24'"
-                [firstDayOfWeek]="1"
-                appendTo="body"
-            />
-        </div>
+        <tumaet-ui-date-picker
+            inputId="deimos-to"
+            [labelName]="'artemisApp.deimos.modal.to' | artemisTranslate"
+            [shouldDisplayTimeZoneWarning]="false"
+            [ariaRequired]="true"
+            [(value)]="toDate"
+            [invalid]="isOrderInvalid() || isWindowTooLarge()"
+            [ariaDescribedBy]="describedBy()"
+            (inputValidityChange)="toTextValid.set($event)"
+        />
 
         @if (!hasRequiredDates()) {
-            <small class="text-danger" jhiTranslate="artemisApp.deimos.modal.validation.required"></small>
+            <small id="deimos-required-error" class="text-state-danger" jhiTranslate="artemisApp.deimos.modal.validation.required"></small>
         }
         @if (isOrderInvalid()) {
-            <small class="text-danger" jhiTranslate="artemisApp.deimos.modal.validation.order"></small>
+            <small id="deimos-order-error" class="text-state-danger" role="alert" jhiTranslate="artemisApp.deimos.modal.validation.order"></small>
         }
         @if (isWindowTooLarge()) {
-            <small class="text-danger" jhiTranslate="artemisApp.deimos.modal.validation.window"></small>
+            <small id="deimos-window-error" class="text-state-danger" role="alert" jhiTranslate="artemisApp.deimos.modal.validation.window"></small>
         }
     </div>
 
-    <ng-template pTemplate="footer">
-        <div class="d-flex justify-content-end gap-2">
-            <button pButton type="button" severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
-            <button pButton type="button" size="small" [disabled]="isSubmitDisabled()" (click)="submit()" jhiTranslate="entity.action.submit"></button>
-        </div>
+    <ng-template #footer>
+        <button type="button" tumAetUiButton severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
+        <button type="button" tumAetUiButton size="small" [disabled]="isSubmitDisabled()" (click)="submit()" jhiTranslate="entity.action.submit"></button>
     </ng-template>
-</p-dialog>
+</tumaet-ui-dialog>

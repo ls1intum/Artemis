@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, input, output, signal, viewChild }
 import { FormsModule } from '@angular/forms';
 import { Course, Language } from 'app/course/shared/entities/course.model';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { applySemesterToDates, getSemesters } from 'app/foundation/util/semester-utils';
@@ -33,7 +33,7 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
     imports: [
         FormsModule,
         ColorSelectorComponent,
-        FormDateTimePickerComponent,
+        TumAetUiDatePickerComponent,
         TranslateDirective,
         KeyValuePipe,
         ArtemisTranslatePipe,
@@ -80,6 +80,13 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     readonly semesters = computed(() => getSemesters(this.course().semester));
     readonly semesterMissing = computed(() => !this.course().semester?.trim());
+
+    /** Start and end date are required: the field is marked while no date is set, like the missing semester above. */
+    readonly startDateMissing = computed(() => !this.course().startDate);
+    readonly endDateMissing = computed(() => !this.course().endDate);
+    /** The picker keeps its last valid value while the typed text is not a date, so the text validity is tracked separately. */
+    protected readonly startTextValid = signal(true);
+    protected readonly endTextValid = signal(true);
 
     private previousSemester?: string;
 

@@ -22,6 +22,9 @@ import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
         { provide: NG_VALUE_ACCESSOR, multi: true, useExisting: forwardRef(() => DatePickerControlDirective) },
         { provide: NG_VALIDATORS, multi: true, useExisting: forwardRef(() => DatePickerControlDirective) },
     ],
+    // Host listeners rather than subscriptions: like a listener in a template, they mark the form that declares the picker for
+    // check, which an OnPush or zoneless form needs to show the control's new value and validity. The compiler types the
+    // `$event` of a host listener as a DOM event, so the handlers check what the picker's outputs actually carry.
     host: {
         '(valueChange)': 'onPickerValueChange($event)',
         '(inputValidityChange)': 'onTextValidityChange($event)',
@@ -66,14 +69,14 @@ export class DatePickerControlDirective implements ControlValueAccessor, Validat
         return this.hasTextError() ? { invalidDate: true } : null;
     }
 
-    protected onPickerValueChange(value: dayjs.Dayjs | undefined): void {
+    protected onPickerValueChange(value: unknown): void {
         if (!this.writing) {
-            this.onChange(value);
+            this.onChange(dayjs.isDayjs(value) ? value : undefined);
         }
     }
 
-    protected onTextValidityChange(valid: boolean): void {
-        if (this.textValid() !== valid) {
+    protected onTextValidityChange(valid: unknown): void {
+        if (typeof valid === 'boolean' && this.textValid() !== valid) {
             this.textValid.set(valid);
             this.onValidatorChange();
         }

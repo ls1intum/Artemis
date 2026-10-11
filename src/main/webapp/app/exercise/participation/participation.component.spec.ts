@@ -24,7 +24,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { By } from '@angular/platform-browser';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
@@ -276,11 +276,21 @@ describe('ParticipationComponent', () => {
     });
 
     describe('Individual due date input validation', () => {
-        let picker: FormDateTimePickerComponent;
+        let picker: TumAetUiDatePickerComponent;
         let saveButton: HTMLButtonElement;
         let dto: ParticipationManagementDTO;
         const dueDate = dayjs('2030-06-01T12:00:00');
         const individualDueDate = dayjs('2030-06-03T12:00:00');
+
+        /** Types into the picker's text input like a user does. */
+        const type = async (text: string) => {
+            const input: HTMLInputElement = componentFixture.nativeElement.querySelector(`#individual-due-date-${dto.participationId}`);
+            input.value = text;
+            input.dispatchEvent(new Event('input'));
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            componentFixture.detectChanges();
+        };
 
         beforeEach(async () => {
             dto = { ...sampleDto, individualDueDate };
@@ -291,17 +301,22 @@ describe('ParticipationComponent', () => {
             componentFixture.detectChanges();
             await componentFixture.whenStable();
             componentFixture.detectChanges();
-            picker = componentFixture.debugElement.query(By.directive(FormDateTimePickerComponent)).componentInstance;
+            picker = componentFixture.debugElement.query(By.directive(TumAetUiDatePickerComponent)).componentInstance;
             saveButton = componentFixture.nativeElement.querySelector('button[title="Save"]');
         });
 
-        it.each(['invalid date', new Date('2020-01-01T12:00:00')])('should prevent saving invalid input %s', async (invalidInput) => {
+        it('should show the existing individual due date and open the calendar on it', () => {
+            expect(picker.value()!.isSame(individualDueDate)).toBe(true);
+            expect(picker.startAt()!.isSame(individualDueDate)).toBe(true);
+            expect(picker.invalid()).toBe(false);
+            expect(saveButton.disabled).toBe(false);
+        });
+
+        it('should prevent saving text that is not a date', async () => {
             const updateSpy = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [] })));
             const successSpy = vi.spyOn(alertService, 'success');
 
-            picker.updateField(invalidInput);
-            componentFixture.detectChanges();
-            await componentFixture.whenStable();
+            await type('invalid date');
 
             expect(saveButton.disabled).toBe(true);
             saveButton.click();
@@ -310,17 +325,36 @@ describe('ParticipationComponent', () => {
             expect(dto.individualDueDate).toEqual(individualDueDate);
         });
 
+        it('should prevent saving a date before the due date of the exercise and explain why', async () => {
+            const updateSpy = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [] })));
+
+            await type('01.01.2020 12:00');
+
+            expect(component.getPendingDueDate(dto.participationId)!.isSame(dayjs('2020-01-01T12:00:00'))).toBe(true);
+            expect(picker.invalid()).toBe(true);
+            expect(componentFixture.nativeElement.querySelector('[data-testid="individual-due-date-error"]')).not.toBeNull();
+            expect(picker.ariaDescribedBy()).toBe(`individual-due-date-error-${dto.participationId}`);
+            expect(saveButton.disabled).toBe(true);
+            saveButton.click();
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(dto.individualDueDate).toEqual(individualDueDate);
+        });
+
+        it('should accept a date equal to the due date of the exercise', async () => {
+            await type(dueDate.format('DD.MM.YYYY HH:mm'));
+
+            expect(picker.invalid()).toBe(false);
+            expect(componentFixture.nativeElement.querySelector('[data-testid="individual-due-date-error"]')).toBeNull();
+            expect(saveButton.disabled).toBe(false);
+        });
+
         it('should save when invalid input is corrected', async () => {
             const updateSpy = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [] })));
             const successSpy = vi.spyOn(alertService, 'success');
-            picker.updateField('invalid date');
-            componentFixture.detectChanges();
-            await componentFixture.whenStable();
+            await type('invalid date');
             expect(saveButton.disabled).toBe(true);
 
-            picker.updateField(individualDueDate.toDate());
-            componentFixture.detectChanges();
-            await componentFixture.whenStable();
+            await type(individualDueDate.format('DD.MM.YYYY HH:mm'));
 
             expect(saveButton.disabled).toBe(false);
             expect(component.getPendingDueDate(dto.participationId)).toEqual(individualDueDate);
@@ -331,19 +365,24 @@ describe('ParticipationComponent', () => {
 
         it('should allow clearing an existing individual due date after invalid input', async () => {
             const updateSpy = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [{ id: dto.participationId }] })));
-            picker.updateField('invalid date');
-            componentFixture.detectChanges();
-            await componentFixture.whenStable();
+            await type('invalid date');
             expect(saveButton.disabled).toBe(true);
 
-            picker.updateField(null);
-            componentFixture.detectChanges();
-            await componentFixture.whenStable();
+            await type('');
 
             expect(saveButton.disabled).toBe(false);
             saveButton.click();
             expect(updateSpy).toHaveBeenCalledExactlyOnceWith(component.exercise(), [expect.objectContaining({ id: dto.participationId, individualDueDate: undefined })]);
             expect(dto.individualDueDate).toBeUndefined();
+        });
+
+        it('should forget the invalid text when the edit is cancelled', async () => {
+            await type('invalid date');
+            expect(component.isPendingDueDateInvalid(dto.participationId)).toBe(true);
+
+            component.cancelEditDueDate(dto);
+
+            expect(component.isPendingDueDateInvalid(dto.participationId)).toBe(false);
         });
     });
 

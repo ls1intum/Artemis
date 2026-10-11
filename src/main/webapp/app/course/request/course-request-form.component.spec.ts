@@ -3,16 +3,18 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { provideTranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
-import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
+import { TumAetUiCheckboxComponent, TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import dayjs from 'dayjs/esm';
 
 import { CourseRequestFormComponent } from 'app/course/request/course-request-form.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { DatePickerControlDirective } from 'app/shared-ui/date-picker-control/date-picker-control.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
@@ -29,15 +31,15 @@ describe('CourseRequestFormComponent', () => {
             title: ['', [Validators.required, Validators.maxLength(255)]],
             shortName: ['', [Validators.required, Validators.minLength(3), regexValidator(SHORT_NAME_PATTERN)]],
             semester: ['WS25/26', [Validators.required]],
-            startDate: [undefined],
-            endDate: [undefined],
+            startDate: [undefined as dayjs.Dayjs | undefined, [Validators.required]],
+            endDate: [undefined as dayjs.Dayjs | undefined, [Validators.required]],
             testCourse: [false],
             gradeRelevant: [true],
             reason: ['', [Validators.required]],
         });
 
         await TestBed.configureTestingModule({
-            imports: [CourseRequestFormComponent, ReactiveFormsModule],
+            imports: [CourseRequestFormComponent, ReactiveFormsModule, FontAwesomeTestingModule],
             providers: [provideTranslateService()],
         })
             .overrideComponent(CourseRequestFormComponent, {
@@ -49,7 +51,8 @@ describe('CourseRequestFormComponent', () => {
                         TextareaModule,
                         SelectModule,
                         TumAetUiCheckboxComponent,
-                        MockComponent(FormDateTimePickerComponent),
+                        TumAetUiDatePickerComponent,
+                        DatePickerControlDirective,
                         MockDirective(TranslateDirective),
                         MockPipe(ArtemisTranslatePipe),
                     ],
@@ -196,6 +199,80 @@ describe('CourseRequestFormComponent', () => {
         fixture.detectChanges();
 
         expect(component.showReasonPlaceholder()).toBe(false);
+    });
+
+    describe('date pickers', () => {
+        const pickerInput = (id: string) => fixture.nativeElement.querySelector(`input#${id}`) as HTMLInputElement;
+        const type = (id: string, text: string) => {
+            const input = pickerInput(id);
+            input.value = text;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+        };
+
+        it('should give each picker its host id and a prefixed input id', () => {
+            fixture.componentRef.setInput('idPrefix', 'edit');
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('tumaet-ui-date-picker#editstartDate')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('tumaet-ui-date-picker#editendDate')).not.toBeNull();
+            expect(pickerInput('editstartDate-input')).not.toBeNull();
+            expect(pickerInput('editendDate-input')).not.toBeNull();
+        });
+
+        it('should show a date set on the control and write a typed date back to it', () => {
+            form.get('startDate')!.setValue(dayjs('2026-04-01T08:30'));
+            fixture.detectChanges();
+            expect(pickerInput('startDate-input').value).toBe('01.04.2026 08:30');
+
+            type('endDate-input', '30.09.2026 18:00');
+            expect(form.get('endDate')!.value?.format('YYYY-MM-DD HH:mm')).toBe('2026-09-30 18:00');
+        });
+
+        it('should not report a missing date before the field was touched', () => {
+            expect(fixture.nativeElement.querySelector('#startDate-missing')).toBeNull();
+            expect(pickerInput('startDate-input').getAttribute('aria-invalid')).toBe('false');
+        });
+
+        it('should report a missing required date once the field was touched and describe the input with the message', () => {
+            form.get('startDate')!.markAsTouched();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#startDate-missing')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('#endDate-missing')).toBeNull();
+            expect(pickerInput('startDate-input').getAttribute('aria-invalid')).toBe('true');
+            expect(pickerInput('startDate-input').getAttribute('aria-describedby')).toBe('startDate-missing');
+            expect(pickerInput('startDate-input').getAttribute('aria-required')).toBe('true');
+        });
+
+        it('should report every missing date after the form was marked as touched by a submit attempt', () => {
+            form.markAllAsTouched();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#startDate-missing')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('#endDate-missing')).not.toBeNull();
+        });
+
+        it('should leave text that is not a date to the picker and block the form', () => {
+            type('startDate-input', '13.06.');
+            form.markAllAsTouched();
+            fixture.detectChanges();
+
+            expect(form.get('startDate')!.hasError('invalidDate')).toBe(true);
+            expect(form.invalid).toBe(true);
+            expect(fixture.nativeElement.querySelector('#startDate-missing')).toBeNull();
+            expect(fixture.nativeElement.querySelector('#startDate-input-error')).not.toBeNull();
+        });
+
+        it('should mark both pickers invalid when the date range is invalid', () => {
+            form.patchValue({ startDate: dayjs('2026-09-30T08:00'), endDate: dayjs('2026-04-01T08:00') });
+            fixture.componentRef.setInput('dateRangeInvalid', true);
+            fixture.detectChanges();
+
+            expect(pickerInput('startDate-input').getAttribute('aria-invalid')).toBe('true');
+            expect(pickerInput('endDate-input').getAttribute('aria-invalid')).toBe('true');
+            expect(fixture.nativeElement.querySelector('#startDate-missing')).toBeNull();
+        });
     });
 
     describe('grade-relevant', () => {

@@ -25,6 +25,7 @@ import {
     TumAetUiButtonDirective,
     TumAetUiCheckboxComponent,
     TumAetUiChipComponent,
+    TumAetUiDatePickerComponent,
     TumAetUiDialogComponent,
     TumAetUiFormFieldComponent,
     TumAetUiInputDirective,
@@ -48,7 +49,7 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { DatePickerControlDirective } from 'app/shared-ui/date-picker-control/date-picker-control.directive';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -114,7 +115,8 @@ const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
         FaIconComponent,
         TranslateDirective,
         ColorSelectorComponent,
-        FormDateTimePickerComponent,
+        TumAetUiDatePickerComponent,
+        DatePickerControlDirective,
         MarkdownEditorMonacoComponent,
         FeatureToggleHideDirective,
         NgTemplateOutlet,

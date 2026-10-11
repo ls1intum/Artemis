@@ -2,9 +2,7 @@ import { Component, Signal, WritableSignal, computed, effect, inject, input, sig
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPenToSquare, faPlus, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { FormsModule } from '@angular/forms';
-import { DatePickerModule } from 'primeng/datepicker';
-import { FloatLabelModule } from 'primeng/floatlabel';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { LectureSeriesDraftEditModalComponent } from 'app/lecture/manage/lecture-series-edit-modal/lecture-series-draft-edit-modal.component';
@@ -13,15 +11,19 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { Router } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import dayjs, { Dayjs } from 'dayjs/esm';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { Dayjs } from 'dayjs/esm';
 import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import { isFirstDateAfterOrEqualSecond } from 'app/foundation/util/date.utils';
 import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 interface InitialLecture {
     id: string;
-    startDate: WritableSignal<Date | undefined>;
-    endDate: WritableSignal<Date | undefined>;
+    startDate: WritableSignal<Dayjs | undefined>;
+    endDate: WritableSignal<Dayjs | undefined>;
+    /** Whether the text typed into the start field is a date; the picker keeps the last committed value while it is not. */
+    isStartTextValid: WritableSignal<boolean>;
+    isEndTextValid: WritableSignal<boolean>;
     isStartDateInvalid: Signal<boolean>;
     isEndDateInvalid: Signal<boolean>;
 }
@@ -57,9 +59,8 @@ export enum LectureDraftState {
     imports: [
         NgClass,
         TranslateDirective,
-        FormsModule,
-        DatePickerModule,
-        FloatLabelModule,
+        TumAetUiDatePickerComponent,
+        ArtemisTranslatePipe,
         ButtonModule,
         ConfirmDialogModule,
         FaIconComponent,
@@ -82,7 +83,8 @@ export class LectureSeriesCreateComponent {
 
     existingLectures = input.required<Lecture[]>();
     courseId = input.required<number>();
-    seriesEndDate = signal<Date | undefined>(undefined);
+    seriesEndDate = signal<Dayjs | undefined>(undefined);
+    isSeriesEndTextValid = signal(true);
     isSeriesEndDateInvalid = computed<boolean>(() => this.computeIsSeriesEndDateInvalid());
     lectureDrafts = signal<LectureDraft[]>([]);
     noDraftsGenerated = computed(() => this.lectureDrafts().length === 0);
@@ -150,11 +152,17 @@ export class LectureSeriesCreateComponent {
     private computeLectureDraftsBasedOnSeriesEndDateAndInitialLectures(): LectureDraft[] {
         const rawSeriesEndDate = this.seriesEndDate();
         const initialLectures = this.initialLectures();
-        const anyInputInvalid = initialLectures.some((initialLecture) => initialLecture.isEndDateInvalid() || initialLecture.isStartDateInvalid()) || this.isSeriesEndDateInvalid();
+        const anyInputInvalid =
+            initialLectures.some(
+                (initialLecture) =>
+                    initialLecture.isEndDateInvalid() || initialLecture.isStartDateInvalid() || !initialLecture.isStartTextValid() || !initialLecture.isEndTextValid(),
+            ) ||
+            this.isSeriesEndDateInvalid() ||
+            !this.isSeriesEndTextValid();
         if (!rawSeriesEndDate || anyInputInvalid) {
             return [];
         }
-        const endDate = dayjs(rawSeriesEndDate).endOf('day');
+        const endDate = rawSeriesEndDate.endOf('day');
         let lectureDrafts: LectureDraft[] = [];
         for (const initialLecture of this.initialLectures()) {
             const lectureDraftsFromInitialLecture = this.computeLectureDraftsForInitialLecture(initialLecture, endDate);
@@ -182,7 +190,7 @@ export class LectureSeriesCreateComponent {
         return newDrafts;
     }
 
-    private generateDatePairs(seriesEndDate: Dayjs, startDate?: Date, endDate?: Date): [Dayjs?, Dayjs?][] {
+    private generateDatePairs(seriesEndDate: Dayjs, startDate?: Dayjs, endDate?: Dayjs): [Dayjs?, Dayjs?][] {
         if (startDate && !endDate) {
             return this.generateDatePairsWithSingleDate(seriesEndDate, startDate, 'startDate');
         } else if (!startDate && endDate) {
@@ -192,9 +200,9 @@ export class LectureSeriesCreateComponent {
         }
     }
 
-    private generateDatePairsWithBothDates(seriesEndDate: Dayjs, startDate: Date, endDate: Date): [Dayjs, Dayjs][] {
-        let currentStart = dayjs(startDate);
-        let currentEnd = dayjs(endDate);
+    private generateDatePairsWithBothDates(seriesEndDate: Dayjs, startDate: Dayjs, endDate: Dayjs): [Dayjs, Dayjs][] {
+        let currentStart = startDate;
+        let currentEnd = endDate;
         const pairs: [Dayjs, Dayjs][] = [];
         while (!currentEnd.isAfter(seriesEndDate)) {
             pairs.push([currentStart, currentEnd]);
@@ -204,9 +212,9 @@ export class LectureSeriesCreateComponent {
         return pairs;
     }
 
-    private generateDatePairsWithSingleDate(seriesEndDate: Dayjs, date: Date, dateType: 'startDate' | 'endDate'): [Dayjs?, Dayjs?][] {
+    private generateDatePairsWithSingleDate(seriesEndDate: Dayjs, date: Dayjs, dateType: 'startDate' | 'endDate'): [Dayjs?, Dayjs?][] {
         const pairs: [Dayjs?, Dayjs?][] = [];
-        let current = dayjs(date);
+        let current = date;
         while (!current.isAfter(seriesEndDate)) {
             if (dateType === 'startDate') {
                 pairs.push([current, undefined]);
@@ -292,18 +300,20 @@ export class LectureSeriesCreateComponent {
 
     private createInitialLecture(): InitialLecture {
         const id = generateUuid();
-        const startDate = signal<Date | undefined>(undefined);
-        const endDate = signal<Date | undefined>(undefined);
+        const startDate = signal<Dayjs | undefined>(undefined);
+        const endDate = signal<Dayjs | undefined>(undefined);
+        const isStartTextValid = signal(true);
+        const isEndTextValid = signal(true);
         const isStartDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(startDate(), endDate()) || isFirstDateAfterOrEqualSecond(startDate(), this.seriesEndDate()));
         const isEndDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(startDate(), endDate()) || isFirstDateAfterOrEqualSecond(endDate(), this.seriesEndDate()));
-        return { id, startDate, endDate, isStartDateInvalid, isEndDateInvalid };
+        return { id, startDate, endDate, isStartTextValid, isEndTextValid, isStartDateInvalid, isEndDateInvalid };
     }
 
     private computeIsSeriesEndDateInvalid(): boolean {
         const latestInitialLectureDate = this.initialLectures()
             .flatMap((lecture) => [lecture.startDate(), lecture.endDate()])
-            .filter((date): date is Date => date !== undefined)
-            .sort((first, second) => second.getTime() - first.getTime())[0];
+            .filter((date): date is Dayjs => date !== undefined)
+            .sort((first, second) => second.valueOf() - first.valueOf())[0];
         return isFirstDateAfterOrEqualSecond(latestInitialLectureDate, this.seriesEndDate());
     }
 }

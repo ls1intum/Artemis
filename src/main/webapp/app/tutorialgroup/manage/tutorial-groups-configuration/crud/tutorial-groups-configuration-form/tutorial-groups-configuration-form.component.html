@@ -9,37 +9,56 @@
         </div>
     </div>
     <form class="config-form" [formGroup]="form" (ngSubmit)="submitForm()">
-        <!-- Period -->
+        <!-- Period: two date pickers, start and end; the form's period control carries them as one [start, end] pair. -->
         <section class="config-field">
-            <label class="config-field-label" for="period" jhiTranslate="artemisApp.forms.configurationForm.periodInput.label"></label>
-            <div class="config-period" [class.invalid-date-input]="isPeriodInvalid">
-                <p-datepicker
-                    inputId="period"
-                    name="period"
-                    formControlName="period"
-                    selectionMode="range"
-                    [firstDayOfWeek]="1"
-                    dateFormat="dd.mm.yy"
-                    keepInvalid="true"
-                    [showIcon]="true"
-                    iconDisplay="input"
-                    showOnFocus="false"
-                    appendTo="body"
-                    [baseZIndex]="1060"
-                    styleClass="w-100"
-                    panelStyleClass="jhi-date-time-picker-panel"
-                    [invalid]="isPeriodInvalid"
-                    [attr.aria-label]="'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate"
-                    (onFocus)="markPeriodAsTouched()"
+            <span id="period-label" class="config-field-label" jhiTranslate="artemisApp.forms.configurationForm.periodInput.label"></span>
+            <div class="config-period" role="group" aria-labelledby="period-label">
+                <tumaet-ui-date-picker
+                    inputId="period-start"
+                    data-testid="period-start"
+                    [dateOnly]="true"
+                    [shouldDisplayTimeZoneWarning]="false"
+                    [ariaRequired]="true"
+                    [labelName]="'artemisApp.pages.tutorialFreePeriodsManagement.form.from' | artemisTranslate"
+                    [value]="periodStart()"
+                    (valueChange)="onPeriodStartChange($event)"
+                    (inputValidityChange)="onPeriodStartTextValidityChange($event)"
+                    (touch)="markPeriodAsTouched()"
+                    [invalid]="isPeriodStartInvalid"
+                    [ariaDescribedBy]="periodErrorId"
+                />
+                <tumaet-ui-date-picker
+                    inputId="period-end"
+                    data-testid="period-end"
+                    [dateOnly]="true"
+                    [shouldDisplayTimeZoneWarning]="false"
+                    [ariaRequired]="true"
+                    [labelName]="'artemisApp.pages.tutorialFreePeriodsManagement.form.to' | artemisTranslate"
+                    [value]="periodEnd()"
+                    (valueChange)="onPeriodEndChange($event)"
+                    (inputValidityChange)="onPeriodEndTextValidityChange($event)"
+                    (touch)="markPeriodAsTouched()"
+                    [invalid]="isPeriodEndInvalid"
+                    [ariaDescribedBy]="periodErrorId"
                 />
             </div>
             <p class="config-field-hint" jhiTranslate="artemisApp.forms.configurationForm.periodInput.explanation"></p>
             @if (periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)) {
                 @if (periodControl?.errors?.required) {
-                    <p class="config-field-error" data-testid="period-error" jhiTranslate="artemisApp.forms.configurationForm.periodInput.requiredValidationError"></p>
+                    <p
+                        id="period-required-error"
+                        class="config-field-error"
+                        data-testid="period-error"
+                        jhiTranslate="artemisApp.forms.configurationForm.periodInput.requiredValidationError"
+                    ></p>
                 }
                 @if (periodControl?.errors?.invalidRange) {
-                    <p class="config-field-error" data-testid="period-error" jhiTranslate="artemisApp.forms.configurationForm.periodInput.invalidRangeError"></p>
+                    <p
+                        id="period-range-error"
+                        class="config-field-error"
+                        data-testid="period-error"
+                        jhiTranslate="artemisApp.forms.configurationForm.periodInput.invalidRangeError"
+                    ></p>
                 }
             }
         </section>

@@ -3,6 +3,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -79,7 +81,7 @@ describe('SshUserSettingsComponent', () => {
         expect(sshServiceMock.getSshPublicKey).not.toHaveBeenCalled();
         expect(comp.isLoading()).toBe(false);
         comp.displayedSshKey = mockKey;
-        comp.displayedExpiryDate = dayjs();
+        comp.displayedExpiryDate.set(dayjs());
         comp.displayedKeyLabel = 'label';
         comp.validateExpiryDate();
         expect(comp.isExpiryDateValid()).toBe(true);
@@ -102,7 +104,7 @@ describe('SshUserSettingsComponent', () => {
         expect(sshServiceMock.getSshPublicKey).not.toHaveBeenCalled();
         expect(comp.isLoading()).toBe(false);
         comp.displayedSshKey = mockKey;
-        comp.displayedExpiryDate = dayjs();
+        comp.displayedExpiryDate.set(dayjs());
         comp.displayedKeyLabel = 'label';
         comp.validateExpiryDate();
         expect(comp.isExpiryDateValid()).toBe(true);
@@ -111,6 +113,71 @@ describe('SshUserSettingsComponent', () => {
         comp.saveSshKey();
         expect(alertServiceMock.error).toHaveBeenCalled();
         expect(router.navigate).not.toHaveBeenCalled();
+    });
+
+    describe('expiry date', () => {
+        beforeEach(() => {
+            comp.ngOnInit();
+        });
+
+        it('should accept today and later dates', () => {
+            comp.onExpiryDateChange(dayjs().startOf('day'));
+            expect(comp.isExpiryDateValid()).toBe(true);
+
+            comp.onExpiryDateChange(dayjs().add(30, 'day'));
+            expect(comp.isExpiryDateValid()).toBe(true);
+            expect(comp.displayedExpiryDate()!.isSame(dayjs().add(30, 'day'), 'day')).toBe(true);
+        });
+
+        it('should reject a date before today', () => {
+            comp.onExpiryDateChange(dayjs().subtract(1, 'day'));
+
+            expect(comp.isExpiryDateValid()).toBe(false);
+        });
+
+        it('should reject an empty date', () => {
+            comp.onExpiryDateChange(dayjs().add(1, 'day'));
+            comp.onExpiryDateChange(undefined);
+
+            expect(comp.isExpiryDateValid()).toBe(false);
+            expect(comp.displayedExpiryDate()).toBeUndefined();
+        });
+
+        it('should reject a date while the typed text is not a date', () => {
+            comp.onExpiryDateChange(dayjs().add(1, 'day'));
+            comp.onExpiryTextValidityChange(false);
+            expect(comp.isExpiryDateValid()).toBe(false);
+
+            comp.onExpiryTextValidityChange(true);
+            expect(comp.isExpiryDateValid()).toBe(true);
+        });
+
+        it('should render the picker with the required state and disable saving until the date is valid', () => {
+            comp.displayedSshKey = mockKey;
+            comp.selectedOption = 'useExpiration';
+            fixture.detectChanges();
+
+            const picker = fixture.debugElement.query(By.directive(TumAetUiDatePickerComponent)).componentInstance as TumAetUiDatePickerComponent;
+            const saveButton = () => fixture.debugElement.query(By.css('[data-testid="saveSshKeyButton"]')).componentInstance;
+            expect(picker.dateOnly()).toBe(true);
+            expect(picker.ariaRequired()).toBe(true);
+            expect(picker.invalid()).toBe(true);
+            expect(fixture.nativeElement.querySelector('[data-testid="ssh-key-expiry-date-error"]')).not.toBeNull();
+            expect(saveButton().disabled()).toBe(true);
+
+            picker.value.set(dayjs().add(1, 'day'));
+            fixture.detectChanges();
+
+            expect(picker.invalid()).toBe(false);
+            expect(fixture.nativeElement.querySelector('[data-testid="ssh-key-expiry-date-error"]')).toBeNull();
+            expect(saveButton().disabled()).toBe(false);
+
+            picker.value.set(dayjs().subtract(2, 'day'));
+            fixture.detectChanges();
+
+            expect(picker.invalid()).toBe(true);
+            expect(saveButton().disabled()).toBe(true);
+        });
     });
 
     it('should initialize key details view with key loaded', async () => {

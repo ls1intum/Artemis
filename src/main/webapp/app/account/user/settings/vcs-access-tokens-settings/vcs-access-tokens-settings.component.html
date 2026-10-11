@@ -69,14 +69,15 @@
                 <h4 jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.addTokenTitle"></h4>
 
                 <div class="mb-3 sm:w-1/2">
-                    <jhi-date-time-picker
-                        [shouldDisplayTimeZoneWarning]="false"
-                        labelName="{{ 'artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate' | artemisTranslate }}"
-                        [(ngModel)]="expiryDate"
-                        (valueChange)="validateDate()"
-                        [error]="!!expiryDate && !validExpiryDate()"
-                        name="expiryDate"
+                    <tumaet-ui-date-picker
                         id="expiryDate"
+                        inputId="vcs-token-expiry-date"
+                        [shouldDisplayTimeZoneWarning]="false"
+                        [labelName]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate' | artemisTranslate"
+                        [value]="expiryDate()"
+                        [invalid]="!!expiryDate() && !validExpiryDate()"
+                        (valueChange)="onExpiryDateChange($event)"
+                        (inputValidityChange)="onExpiryTextValidityChange($event)"
                     />
                 </div>
 

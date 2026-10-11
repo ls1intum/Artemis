@@ -37,6 +37,7 @@
                                 [class]="dayButtonClasses(day)"
                                 [attr.tabindex]="focusedIndex() === w * 7 + d ? 0 : -1"
                                 [attr.aria-label]="dayLabel(day)"
+                                [attr.data-date]="day.format('YYYY-MM-DD')"
                                 (click)="selectDay(day)"
                                 (keydown)="onKeydown($event, w * 7 + d)"
                             >

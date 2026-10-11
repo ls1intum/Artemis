@@ -51,9 +51,7 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-        <!-- No gap between the label and the control: jhi-date-time-picker renders its label right above its input,
-             so an extra gap here would push the semester dropdown below the two date fields next to it. -->
-        <div class="flex flex-col">
+        <div class="flex flex-col gap-1">
             <label class="font-semibold" [for]="idPrefix() + 'semester'" jhiTranslate="artemisApp.courseRequest.form.semester"></label>
             <p-select
                 [inputId]="idPrefix() + 'semester'"
@@ -67,22 +65,42 @@
             }
         </div>
         <div class="flex flex-col gap-2">
-            <jhi-date-time-picker
+            <tumaet-ui-date-picker
                 [id]="idPrefix() + 'startDate'"
-                labelName="{{ 'artemisApp.courseRequest.form.startDate' | artemisTranslate }}"
+                [inputId]="idPrefix() + 'startDate-input'"
+                [labelName]="'artemisApp.courseRequest.form.startDate' | artemisTranslate"
                 formControlName="startDate"
-                [error]="dateRangeInvalid()"
-                [requiredField]="true"
+                [invalid]="dateRangeInvalid() || isDateMissing('startDate')"
+                [ariaRequired]="true"
+                [ariaDescribedBy]="isDateMissing('startDate') ? idPrefix() + 'startDate-missing' : undefined"
             />
+            @if (isDateMissing('startDate')) {
+                <small
+                    [id]="idPrefix() + 'startDate-missing'"
+                    class="text-state-danger"
+                    jhiTranslate="entity.dateMissingOrNotValid"
+                    [translateValues]="{ labelName: 'artemisApp.courseRequest.form.startDate' | artemisTranslate }"
+                ></small>
+            }
         </div>
         <div class="flex flex-col gap-2">
-            <jhi-date-time-picker
+            <tumaet-ui-date-picker
                 [id]="idPrefix() + 'endDate'"
-                labelName="{{ 'artemisApp.courseRequest.form.endDate' | artemisTranslate }}"
+                [inputId]="idPrefix() + 'endDate-input'"
+                [labelName]="'artemisApp.courseRequest.form.endDate' | artemisTranslate"
                 formControlName="endDate"
-                [error]="dateRangeInvalid()"
-                [requiredField]="true"
+                [invalid]="dateRangeInvalid() || isDateMissing('endDate')"
+                [ariaRequired]="true"
+                [ariaDescribedBy]="isDateMissing('endDate') ? idPrefix() + 'endDate-missing' : undefined"
             />
+            @if (isDateMissing('endDate')) {
+                <small
+                    [id]="idPrefix() + 'endDate-missing'"
+                    class="text-state-danger"
+                    jhiTranslate="entity.dateMissingOrNotValid"
+                    [translateValues]="{ labelName: 'artemisApp.courseRequest.form.endDate' | artemisTranslate }"
+                ></small>
+            }
         </div>
     </div>
     @if (dateRangeInvalid()) {

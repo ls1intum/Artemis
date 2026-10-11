@@ -1,7 +1,6 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
-import { DatePickerModule } from 'primeng/datepicker';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBuilding, faCircleInfo, faCompass, faHashtag, faLanguage, faUser } from '@fortawesome/free-solid-svg-icons';
@@ -12,6 +11,7 @@ import {
     TumAetUiButtonDirective,
     TumAetUiConfirmDialogComponent,
     TumAetUiConfirmationService,
+    TumAetUiDatePickerComponent,
     TumAetUiInputDirective,
     TumAetUiInputGroupAddonComponent,
     TumAetUiInputGroupComponent,
@@ -49,10 +49,8 @@ export interface UpdateTutorialGroupEvent {
     selector: 'jhi-tutorial-edit',
     imports: [
         FormsModule,
-        // Contained PrimeNG fallback: a filterable tutor select and three date fields that sit inside an
-        // input group. See the note at the top of the template.
+        // Contained PrimeNG fallback: a filterable tutor select. See the note at the top of the template.
         SelectModule,
-        DatePickerModule,
         RouterLink,
         TumAetUiButtonDirective,
         TumAetUiInputDirective,
@@ -65,6 +63,7 @@ export interface UpdateTutorialGroupEvent {
         TumAetUiInputGroupComponent,
         TumAetUiInputGroupAddonComponent,
         TumAetUiConfirmDialogComponent,
+        TumAetUiDatePickerComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
     ],
@@ -111,15 +110,19 @@ export class TutorialCreateOrEditComponent {
     additionalInformationValidationResult = computed<Validation>(() => this.computeAdditionalInformationValidation());
 
     configureSessionPlan = signal(false);
-    firstSessionStart = signal<Date | undefined>(undefined);
+    firstSessionStart = signal<dayjs.Dayjs | undefined>(undefined);
     firstSessionStartInputTouched = signal(false);
+    // A picker keeps its last committed value while its text is not a date; a save must wait for the text to parse.
+    firstSessionStartTextValid = signal(true);
     firstSessionStartValidationResult = computed<Validation>(() => this.computeFirstSessionStartValidation());
-    firstSessionEnd = signal<Date | undefined>(undefined);
+    firstSessionEnd = signal<dayjs.Dayjs | undefined>(undefined);
     firstSessionEndInputTouched = signal(false);
+    firstSessionEndTextValid = signal(true);
     firstSessionEndValidationResult = computed<Validation>(() => this.computeFirstSessionEndValidation());
     repetitionFrequency = signal<number>(1);
-    tutorialPeriodEnd = signal<Date | undefined>(undefined);
+    tutorialPeriodEnd = signal<dayjs.Dayjs | undefined>(undefined);
     tutorialPeriodEndInputTouched = signal(false);
+    tutorialPeriodEndTextValid = signal(true);
     tutorialPeriodEndValidationResult = computed<Validation>(() => this.computeTeachingPeriodEndValidation());
     location = signal('');
     locationInputTouched = signal(false);
@@ -153,10 +156,10 @@ export class TutorialCreateOrEditComponent {
         effect(() => {
             const schedule = this.schedule();
             if (schedule) {
-                this.firstSessionStart.set(dayjs(schedule.firstSessionStart).toDate());
-                this.firstSessionEnd.set(dayjs(schedule.firstSessionEnd).toDate());
+                this.firstSessionStart.set(dayjs(schedule.firstSessionStart));
+                this.firstSessionEnd.set(dayjs(schedule.firstSessionEnd));
                 this.repetitionFrequency.set(schedule.repetitionFrequency);
-                this.tutorialPeriodEnd.set(dayjs(schedule.tutorialPeriodEnd).toDate());
+                this.tutorialPeriodEnd.set(dayjs(schedule.tutorialPeriodEnd));
                 this.location.set(schedule.location);
                 this.configureSessionPlan.set(true);
             }
@@ -293,18 +296,13 @@ export class TutorialCreateOrEditComponent {
             };
         }
         const firstSessionStart = this.firstSessionStart();
-        if (firstSessionStart && firstSessionEnd <= firstSessionStart) {
+        if (firstSessionStart && !firstSessionEnd.isAfter(firstSessionStart)) {
             return {
                 status: ValidationStatus.INVALID,
                 message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionEndNotAfterStart',
             };
         }
-        if (
-            firstSessionStart &&
-            (firstSessionStart.getFullYear() !== firstSessionEnd.getFullYear() ||
-                firstSessionStart.getMonth() !== firstSessionEnd.getMonth() ||
-                firstSessionStart.getDate() !== firstSessionEnd.getDate())
-        ) {
+        if (firstSessionStart && !firstSessionStart.isSame(firstSessionEnd, 'day')) {
             return {
                 status: ValidationStatus.INVALID,
                 message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionEndNotOnSameDayAsStart',
@@ -322,20 +320,20 @@ export class TutorialCreateOrEditComponent {
             };
         }
         const firstSessionStart = this.firstSessionStart();
-        if (firstSessionStart && teachingPeriodEnd <= firstSessionStart) {
+        if (firstSessionStart && !teachingPeriodEnd.isAfter(firstSessionStart)) {
             return {
                 status: ValidationStatus.INVALID,
                 message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodNotAfterFirstSessionStart',
             };
         }
-        if (firstSessionStart && teachingPeriodEnd > dayjs(firstSessionStart).add(2, 'year').toDate()) {
+        if (firstSessionStart && teachingPeriodEnd.isAfter(firstSessionStart.add(2, 'year'))) {
             return {
                 status: ValidationStatus.INVALID,
                 message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodMoreThanTwoYearsAfterFirstSessionStart',
             };
         }
         const firstSessionEnd = this.firstSessionEnd();
-        if (firstSessionEnd && teachingPeriodEnd <= firstSessionEnd) {
+        if (firstSessionEnd && !teachingPeriodEnd.isAfter(firstSessionEnd)) {
             return {
                 status: ValidationStatus.INVALID,
                 message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodNotAfterFirstSessionEnd',
@@ -397,12 +395,12 @@ export class TutorialCreateOrEditComponent {
         const tutorialGroupChanged = titleChanged || tutorChanged || languageChanged || modeChanged || campusChanged || capacityChanged || additionalInformationChanged;
         if (schedule) {
             const firstSessionStart = this.firstSessionStart();
-            const firstSessionStartChanged = firstSessionStart ? firstSessionStart.getTime() !== dayjs(schedule.firstSessionStart).toDate().getTime() : true;
+            const firstSessionStartChanged = firstSessionStart ? firstSessionStart.valueOf() !== dayjs(schedule.firstSessionStart).valueOf() : true;
             const firstSessionEnd = this.firstSessionEnd();
-            const firstSessionEndChanged = firstSessionEnd ? firstSessionEnd.getTime() !== dayjs(schedule.firstSessionEnd).toDate().getTime() : true;
+            const firstSessionEndChanged = firstSessionEnd ? firstSessionEnd.valueOf() !== dayjs(schedule.firstSessionEnd).valueOf() : true;
             const repetitionFrequencyChanged = this.repetitionFrequency() !== schedule.repetitionFrequency;
             const tutorialPeriodEnd = this.tutorialPeriodEnd();
-            const tutorialPeriodEndChanged = tutorialPeriodEnd ? tutorialPeriodEnd.getTime() !== dayjs(schedule.tutorialPeriodEnd).toDate().getTime() : true;
+            const tutorialPeriodEndChanged = tutorialPeriodEnd ? tutorialPeriodEnd.valueOf() !== dayjs(schedule.tutorialPeriodEnd).valueOf() : true;
             const locationChanged = this.location() !== schedule.location;
             const scheduleChanged =
                 !this.configureSessionPlan() || firstSessionStartChanged || firstSessionEndChanged || repetitionFrequencyChanged || tutorialPeriodEndChanged || locationChanged;
@@ -423,7 +421,8 @@ export class TutorialCreateOrEditComponent {
         const firstSessionEndInvalid = this.firstSessionEndValidationResult().status === ValidationStatus.INVALID;
         const tutorialPeriodEndInvalid = this.tutorialPeriodEndValidationResult().status === ValidationStatus.INVALID;
         const locationInvalid = this.locationValidationResult().status === ValidationStatus.INVALID;
-        const scheduleInvalid = firstSessionStartInvalid || firstSessionEndInvalid || tutorialPeriodEndInvalid || locationInvalid;
+        const dateTextInvalid = !this.firstSessionStartTextValid() || !this.firstSessionEndTextValid() || !this.tutorialPeriodEndTextValid();
+        const scheduleInvalid = firstSessionStartInvalid || firstSessionEndInvalid || tutorialPeriodEndInvalid || locationInvalid || dateTextInvalid;
 
         return generalInformationInvalid || (this.configureSessionPlan() && scheduleInvalid);
     }

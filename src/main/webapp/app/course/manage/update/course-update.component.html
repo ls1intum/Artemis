@@ -196,19 +196,23 @@
 
                 <div class="grid gap-4 md:grid-cols-2">
                     <tumaet-ui-form-field
+                        #startDateField
                         class="min-w-0"
                         [label]="'artemisApp.course.startDate' | artemisTranslate"
                         required
                         controlId="field_startDate_input"
                         [invalid]="showDateMissing('startDate') || isDateOrderInvalid"
                     >
-                        <jhi-date-time-picker
+                        <tumaet-ui-date-picker
                             id="field_startDate"
                             inputId="field_startDate_input"
                             formControlName="startDate"
-                            inputRequired
+                            [hideLabelName]="true"
+                            [ariaLabelledBy]="startDateField.labelId()"
+                            [ariaDescribedBy]="startDateField.describedBy()"
+                            [ariaRequired]="true"
                             [shouldDisplayTimeZoneWarning]="false"
-                            [error]="showDateMissing('startDate') || isDateOrderInvalid"
+                            [invalid]="showDateMissing('startDate') || isDateOrderInvalid"
                         />
                         <ng-container tumAetUiFormFieldError>
                             @if (showDateMissing('startDate')) {
@@ -219,19 +223,23 @@
                         </ng-container>
                     </tumaet-ui-form-field>
                     <tumaet-ui-form-field
+                        #endDateField
                         class="min-w-0"
                         [label]="'artemisApp.course.endDate' | artemisTranslate"
                         required
                         controlId="field_endDate_input"
                         [invalid]="showDateMissing('endDate') || isDateOrderInvalid"
                     >
-                        <jhi-date-time-picker
+                        <tumaet-ui-date-picker
                             id="field_endDate"
                             inputId="field_endDate_input"
                             formControlName="endDate"
-                            inputRequired
+                            [hideLabelName]="true"
+                            [ariaLabelledBy]="endDateField.labelId()"
+                            [ariaDescribedBy]="endDateField.describedBy()"
+                            [ariaRequired]="true"
                             [shouldDisplayTimeZoneWarning]="false"
-                            [error]="showDateMissing('endDate') || isDateOrderInvalid"
+                            [invalid]="showDateMissing('endDate') || isDateOrderInvalid"
                         />
                         <ng-container tumAetUiFormFieldError>
                             @if (showDateMissing('endDate')) {
@@ -652,33 +660,41 @@
                         <div class="course-form-nested">
                             <div class="grid gap-4 md:grid-cols-2">
                                 <tumaet-ui-form-field
+                                    #enrollmentStartDateField
                                     class="min-w-0"
                                     [label]="'artemisApp.course.enrollmentStartDate' | artemisTranslate"
                                     controlId="field_enrollmentStartDate_input"
                                     [invalid]="!isValidEnrollmentPeriod"
                                     [error]="'artemisApp.course.form.enrollmentStartDate.invalid' | artemisTranslate"
                                 >
-                                    <jhi-date-time-picker
+                                    <tumaet-ui-date-picker
                                         id="field_enrollmentStartDate"
                                         inputId="field_enrollmentStartDate_input"
                                         formControlName="enrollmentStartDate"
+                                        [hideLabelName]="true"
+                                        [ariaLabelledBy]="enrollmentStartDateField.labelId()"
+                                        [ariaDescribedBy]="enrollmentStartDateField.describedBy()"
                                         [shouldDisplayTimeZoneWarning]="false"
-                                        [error]="!isValidEnrollmentPeriod"
+                                        [invalid]="!isValidEnrollmentPeriod"
                                     />
                                 </tumaet-ui-form-field>
                                 <tumaet-ui-form-field
+                                    #enrollmentEndDateField
                                     class="min-w-0"
                                     [label]="'artemisApp.course.enrollmentEndDate' | artemisTranslate"
                                     controlId="field_enrollmentEndDate_input"
                                     [invalid]="!isValidEnrollmentPeriod"
                                     [error]="'artemisApp.course.form.enrollmentEndDate.invalid' | artemisTranslate"
                                 >
-                                    <jhi-date-time-picker
+                                    <tumaet-ui-date-picker
                                         id="field_enrollmentEndDate"
                                         inputId="field_enrollmentEndDate_input"
                                         formControlName="enrollmentEndDate"
+                                        [hideLabelName]="true"
+                                        [ariaLabelledBy]="enrollmentEndDateField.labelId()"
+                                        [ariaDescribedBy]="enrollmentEndDateField.describedBy()"
                                         [shouldDisplayTimeZoneWarning]="false"
-                                        [error]="!isValidEnrollmentPeriod"
+                                        [invalid]="!isValidEnrollmentPeriod"
                                     />
                                 </tumaet-ui-form-field>
                             </div>
@@ -707,18 +723,22 @@
                             @if (course.unenrollmentEnabled) {
                                 <div class="course-form-nested">
                                     <tumaet-ui-form-field
+                                        #unenrollmentEndDateField
                                         class="min-w-0 md:w-1/2"
                                         [label]="'artemisApp.course.unenrollmentEndDate' | artemisTranslate"
                                         controlId="field_unenrollmentEndDate_input"
                                         [invalid]="!isValidUnenrollmentEndDate"
                                         [error]="'artemisApp.course.form.unenrollmentEndDate.invalid' | artemisTranslate"
                                     >
-                                        <jhi-date-time-picker
+                                        <tumaet-ui-date-picker
                                             id="field_unenrollmentEndDate"
                                             inputId="field_unenrollmentEndDate_input"
                                             formControlName="unenrollmentEndDate"
+                                            [hideLabelName]="true"
+                                            [ariaLabelledBy]="unenrollmentEndDateField.labelId()"
+                                            [ariaDescribedBy]="unenrollmentEndDateField.describedBy()"
                                             [shouldDisplayTimeZoneWarning]="false"
-                                            [error]="!isValidUnenrollmentEndDate"
+                                            [invalid]="!isValidUnenrollmentEndDate"
                                         />
                                     </tumaet-ui-form-field>
                                 </div>

@@ -71,25 +71,29 @@
             </div>
             <div class="finished-build-jobs-filter-background-accent px-3 my-0 py-2">
                 <div class="flex items-center gap-2">
-                    <span class="form-item-prepend" jhiTranslate="artemisApp.buildQueue.filter.buildSubmissionDate.from"></span>
-                    <jhi-date-time-picker
+                    <span id="finished-builds-filter-from-label" class="form-item-prepend" jhiTranslate="artemisApp.buildQueue.filter.buildSubmissionDate.from"></span>
+                    <tumaet-ui-date-picker
                         id="field_startDate"
+                        inputId="finished-builds-filter-from"
                         [shouldDisplayTimeZoneWarning]="false"
-                        [labelName]="''"
-                        [(ngModel)]="finishedBuildJobFilter.buildSubmissionDateFilterFrom"
-                        [error]="!finishedBuildJobFilter.areDatesValid"
-                        (valueChange)="filterDateChanged()"
+                        [ariaLabelledBy]="'finished-builds-filter-from-label'"
+                        [value]="finishedBuildJobFilter.buildSubmissionDateFilterFrom"
+                        [invalid]="!finishedBuildJobFilter.areDatesValid"
+                        (valueChange)="onFromDateChange($event)"
+                        (inputValidityChange)="isFromTextValid.set($event)"
                     />
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="form-item-prepend" jhiTranslate="artemisApp.buildQueue.filter.buildSubmissionDate.to"></span>
-                    <jhi-date-time-picker
+                    <span id="finished-builds-filter-to-label" class="form-item-prepend" jhiTranslate="artemisApp.buildQueue.filter.buildSubmissionDate.to"></span>
+                    <tumaet-ui-date-picker
                         id="field_endDate"
+                        inputId="finished-builds-filter-to"
                         [shouldDisplayTimeZoneWarning]="false"
-                        [labelName]="''"
-                        [(ngModel)]="finishedBuildJobFilter.buildSubmissionDateFilterTo"
-                        [error]="!finishedBuildJobFilter.areDatesValid"
-                        (valueChange)="filterDateChanged()"
+                        [ariaLabelledBy]="'finished-builds-filter-to-label'"
+                        [value]="finishedBuildJobFilter.buildSubmissionDateFilterTo"
+                        [invalid]="!finishedBuildJobFilter.areDatesValid"
+                        (valueChange)="onToDateChange($event)"
+                        (inputValidityChange)="isToTextValid.set($event)"
                     />
                     @if (!finishedBuildJobFilter.areDatesValid) {
                         <span class="text-state-danger" jhiTranslate="artemisApp.buildQueue.filter.buildSubmissionDate.invalidDate"></span>

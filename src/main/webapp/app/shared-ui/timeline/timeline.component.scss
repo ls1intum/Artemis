@@ -35,10 +35,10 @@
                 box-sizing: border-box;
 
                 &.required {
-                    border: 3px solid var(--bs-danger);
+                    border: 3px solid var(--tumaet-ui-state-danger);
 
                     &.valid {
-                        border-color: var(--bs-success);
+                        border-color: var(--tumaet-ui-state-success);
                     }
                 }
 
@@ -47,14 +47,14 @@
                         position: absolute;
                         inset: 0;
                         border-radius: 50%;
-                        background: repeating-conic-gradient(var(--bs-success) -19deg 19deg, transparent 19deg 41deg);
+                        background: repeating-conic-gradient(var(--tumaet-ui-state-success) -19deg 19deg, transparent 19deg 41deg);
                         content: '';
                         mask: radial-gradient(farthest-side, transparent calc(100% - 3px), black calc(100% - 3px));
                     }
 
                     &.invalid {
                         &::before {
-                            background: repeating-conic-gradient(var(--bs-danger) -19deg 19deg, transparent 19deg 41deg);
+                            background: repeating-conic-gradient(var(--tumaet-ui-state-danger) -19deg 19deg, transparent 19deg 41deg);
                         }
                     }
                 }
@@ -64,10 +64,10 @@
                     width: 0.8rem;
                     height: 0.8rem;
                     border-radius: 50%;
-                    background-color: var(--bs-success);
+                    background-color: var(--tumaet-ui-state-success);
 
                     &.invalid {
-                        background-color: var(--bs-danger);
+                        background-color: var(--tumaet-ui-state-danger);
                     }
                 }
             }
@@ -90,17 +90,23 @@
                 gap: 0.5rem;
 
                 .timeline-datepicker-info-icon {
+                    display: inline-flex;
                     width: 1rem;
-                    color: var(--bs-danger);
+                    color: var(--tumaet-ui-state-danger-foreground);
 
                     &.warning {
-                        color: var(--warning);
+                        color: var(--tumaet-ui-state-warning-foreground);
                     }
                 }
             }
 
             .timeline-datepicker {
                 width: 16rem;
+
+                // The picker marks errors itself; a warning only recolours the border.
+                &.warning ::ng-deep .tumaet-ui-date-picker-input {
+                    border-color: var(--tumaet-ui-state-warning);
+                }
             }
         }
     }

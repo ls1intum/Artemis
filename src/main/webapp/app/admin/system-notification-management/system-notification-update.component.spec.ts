@@ -11,13 +11,21 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDatePickerComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiSelectComponent,
+} from '@tumaet/ui-angular';
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
 import { SystemNotification, SystemNotificationType } from 'app/admin/system-notification-management/system-notification.model';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { DatePickerControlDirective } from 'app/shared-ui/date-picker-control/date-picker-control.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -47,7 +55,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, SystemNotificationManagementUpdateComponent],
+            imports: [ReactiveFormsModule, SystemNotificationManagementUpdateComponent, FontAwesomeTestingModule],
             providers: [
                 { provide: ActivatedRoute, useValue: mockRoute },
                 MockProvider(ArtemisNavigationUtilService),
@@ -64,7 +72,8 @@ describe('SystemNotificationManagementUpdateComponent', () => {
                         FormsModule,
                         FaIconComponent,
                         MockPipe(ArtemisTranslatePipe),
-                        MockComponent(FormDateTimePickerComponent),
+                        TumAetUiDatePickerComponent,
+                        DatePickerControlDirective,
                         TumAetUiSelectComponent,
                         TumAetUiCheckboxComponent,
                         TumAetUiInputDirective,
@@ -162,6 +171,60 @@ describe('SystemNotificationManagementUpdateComponent', () => {
 
         await vi.waitFor(() => {
             expect(saveSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('date pickers', () => {
+        const pickerInput = (id: string) => fixture.nativeElement.querySelector(`input#${id}`) as HTMLInputElement;
+        const type = (id: string, text: string) => {
+            const input = pickerInput(id);
+            input.value = text;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+        };
+        const saveButton = () => fixture.nativeElement.querySelector('#saveButton') as HTMLButtonElement;
+
+        it('should show the dates of the loaded notification', () => {
+            fixture.detectChanges();
+
+            expect(pickerInput('notificationDate').value).toBe(testNotification.notificationDate!.format('DD.MM.YYYY HH:mm'));
+            expect(pickerInput('expireDate').value).toBe(testNotification.expireDate!.format('DD.MM.YYYY HH:mm'));
+        });
+
+        it('should write a typed date to the form control', () => {
+            fixture.detectChanges();
+
+            type('notificationDate', '01.02.2030 10:15');
+
+            expect(component.form.get('notificationDate')?.value?.format('YYYY-MM-DD HH:mm')).toBe('2030-02-01 10:15');
+        });
+
+        it('should block saving while a date field holds text that is not a date', () => {
+            fixture.detectChanges();
+            expect(saveButton().disabled).toBe(false);
+
+            type('expireDate', '13.06.');
+
+            expect(component.form.get('expireDate')?.hasError('invalidDate')).toBe(true);
+            expect(saveButton().disabled).toBe(true);
+
+            type('expireDate', '01.02.2099 10:15');
+
+            expect(saveButton().disabled).toBe(false);
+        });
+
+        it('should explain and mark the expire date when it is not after the notification date', () => {
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('#expireDate-order-error')).toBeNull();
+
+            component.form.get('notificationDate')?.setValue(dayjs());
+            component.form.get('expireDate')?.setValue(dayjs().subtract(1, 'hour'));
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#expireDate-order-error')).not.toBeNull();
+            expect(pickerInput('expireDate').getAttribute('aria-invalid')).toBe('true');
+            expect(pickerInput('expireDate').getAttribute('aria-describedby')).toBe('expireDate-order-error');
+            expect(saveButton().disabled).toBe(true);
         });
     });
 });

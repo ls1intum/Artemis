@@ -41,20 +41,38 @@
 
         <div class="row mb-3 g-3">
             <div class="col-md-6">
-                <jhi-date-time-picker
+                <tumaet-ui-date-picker
+                    inputId="onboarding-startDate"
                     labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}"
-                    [ngModel]="course().startDate"
-                    (ngModelChange)="updateField('startDate', $event)"
-                    [requiredField]="true"
+                    [value]="course().startDate"
+                    [invalid]="startDateMissing()"
+                    [ariaRequired]="true"
+                    [ariaDescribedBy]="startDateMissing() ? 'onboarding-startDate-missing' : undefined"
+                    (valueChange)="updateField('startDate', $event)"
+                    (inputValidityChange)="startTextValid.set($event)"
                 />
+                @if (startDateMissing() && startTextValid()) {
+                    <div id="onboarding-startDate-missing" class="text-state-danger text-sm mt-1 block" data-testid="onboarding-startDate-missing">
+                        {{ 'entity.dateMissingOrNotValid' | artemisTranslate: { labelName: 'artemisApp.course.startDate' | artemisTranslate } }}
+                    </div>
+                }
             </div>
             <div class="col-md-6">
-                <jhi-date-time-picker
+                <tumaet-ui-date-picker
+                    inputId="onboarding-endDate"
                     labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}"
-                    [ngModel]="course().endDate"
-                    (ngModelChange)="updateField('endDate', $event)"
-                    [requiredField]="true"
+                    [value]="course().endDate"
+                    [invalid]="endDateMissing()"
+                    [ariaRequired]="true"
+                    [ariaDescribedBy]="endDateMissing() ? 'onboarding-endDate-missing' : undefined"
+                    (valueChange)="updateField('endDate', $event)"
+                    (inputValidityChange)="endTextValid.set($event)"
                 />
+                @if (endDateMissing() && endTextValid()) {
+                    <div id="onboarding-endDate-missing" class="text-state-danger text-sm mt-1 block" data-testid="onboarding-endDate-missing">
+                        {{ 'entity.dateMissingOrNotValid' | artemisTranslate: { labelName: 'artemisApp.course.endDate' | artemisTranslate } }}
+                    </div>
+                }
             </div>
         </div>
 

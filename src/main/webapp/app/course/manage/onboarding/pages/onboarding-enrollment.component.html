@@ -81,17 +81,19 @@
             <div class="ms-4 mb-3">
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <jhi-date-time-picker
+                        <tumaet-ui-date-picker
+                            inputId="onboarding-enrollmentStartDate"
                             labelName="{{ 'artemisApp.course.enrollmentStartDate' | artemisTranslate }}"
-                            [ngModel]="course().enrollmentStartDate"
-                            (ngModelChange)="updateField('enrollmentStartDate', $event)"
+                            [value]="course().enrollmentStartDate"
+                            (valueChange)="updateField('enrollmentStartDate', $event)"
                         />
                     </div>
                     <div class="col-md-6">
-                        <jhi-date-time-picker
+                        <tumaet-ui-date-picker
+                            inputId="onboarding-enrollmentEndDate"
                             labelName="{{ 'artemisApp.course.enrollmentEndDate' | artemisTranslate }}"
-                            [ngModel]="course().enrollmentEndDate"
-                            (ngModelChange)="updateField('enrollmentEndDate', $event)"
+                            [value]="course().enrollmentEndDate"
+                            (valueChange)="updateField('enrollmentEndDate', $event)"
                         />
                     </div>
                 </div>
@@ -134,10 +136,11 @@
 
                 @if (course().unenrollmentEnabled) {
                     <div class="ms-4 mb-3">
-                        <jhi-date-time-picker
+                        <tumaet-ui-date-picker
+                            inputId="onboarding-unenrollmentEndDate"
                             labelName="{{ 'artemisApp.course.unenrollmentEndDate' | artemisTranslate }}"
-                            [ngModel]="course().unenrollmentEndDate"
-                            (ngModelChange)="updateField('unenrollmentEndDate', $event)"
+                            [value]="course().unenrollmentEndDate"
+                            (valueChange)="updateField('unenrollmentEndDate', $event)"
                         />
                     </div>
                 }

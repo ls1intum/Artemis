@@ -11,7 +11,9 @@ import { Course, Language } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { By } from '@angular/platform-browser';
+import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -76,10 +78,10 @@ describe('OnboardingGeneralSettingsComponent', () => {
         })
             .overrideComponent(OnboardingGeneralSettingsComponent, {
                 remove: {
-                    imports: [TranslateDirective, ArtemisTranslatePipe, ColorSelectorComponent, FormDateTimePickerComponent],
+                    imports: [TranslateDirective, ArtemisTranslatePipe, ColorSelectorComponent, TumAetUiDatePickerComponent],
                 },
                 add: {
-                    imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(ColorSelectorComponent), MockComponent(FormDateTimePickerComponent)],
+                    imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(ColorSelectorComponent), MockComponent(TumAetUiDatePickerComponent)],
                 },
             })
             .compileComponents();
@@ -129,6 +131,61 @@ describe('OnboardingGeneralSettingsComponent', () => {
             fixture.detectChanges();
 
             expect(comp.semesterMissing()).toBe(false);
+        });
+    });
+
+    describe('required dates', () => {
+        const pickerById = (id: string) =>
+            fixture.debugElement
+                .queryAll(By.directive(TumAetUiDatePickerComponent))
+                .find((picker) => picker.nativeElement.querySelector(`#${id}`) || picker.componentInstance.inputId() === id)!;
+        const missingMessage = (id: string) => fixture.nativeElement.querySelector(`[data-testid="${id}-missing"]`);
+
+        it('should mark both dates invalid and explain it while they are missing', () => {
+            expect(comp.startDateMissing()).toBe(true);
+            expect(comp.endDateMissing()).toBe(true);
+            expect(pickerById('onboarding-startDate').componentInstance.invalid()).toBe(true);
+            expect(pickerById('onboarding-startDate').componentInstance.ariaRequired()).toBe(true);
+            expect(pickerById('onboarding-startDate').componentInstance.ariaDescribedBy()).toBe('onboarding-startDate-missing');
+            expect(missingMessage('onboarding-startDate')).not.toBeNull();
+            expect(pickerById('onboarding-endDate').componentInstance.invalid()).toBe(true);
+            expect(missingMessage('onboarding-endDate')).not.toBeNull();
+        });
+
+        it('should clear the invalid state and the message once a date is set', () => {
+            course.startDate = dayjs('2025-10-01');
+            fixture.componentRef.setInput('course', Course.from(course));
+            fixture.detectChanges();
+
+            expect(comp.startDateMissing()).toBe(false);
+            expect(pickerById('onboarding-startDate').componentInstance.invalid()).toBe(false);
+            expect(pickerById('onboarding-startDate').componentInstance.ariaDescribedBy()).toBeUndefined();
+            expect(missingMessage('onboarding-startDate')).toBeNull();
+            expect(comp.endDateMissing()).toBe(true);
+            expect(missingMessage('onboarding-endDate')).not.toBeNull();
+        });
+
+        it('should leave the message to the picker while the typed text is not a date', () => {
+            pickerById('onboarding-startDate').componentInstance.inputValidityChange.emit(false);
+            fixture.detectChanges();
+
+            expect(pickerById('onboarding-startDate').componentInstance.invalid()).toBe(true);
+            expect(missingMessage('onboarding-startDate')).toBeNull();
+
+            pickerById('onboarding-startDate').componentInstance.inputValidityChange.emit(true);
+            fixture.detectChanges();
+
+            expect(missingMessage('onboarding-startDate')).not.toBeNull();
+        });
+
+        it('should write a picked date back to the course', () => {
+            const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
+            const picked = dayjs('2025-10-01T08:00:00');
+
+            pickerById('onboarding-endDate').componentInstance.valueChange.emit(picked);
+
+            expect(emitSpy).toHaveBeenCalledOnce();
+            expect(emitSpy.mock.calls[0][0].endDate).toBe(picked);
         });
     });
 

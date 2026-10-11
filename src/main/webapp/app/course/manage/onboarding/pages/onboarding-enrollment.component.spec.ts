@@ -1,13 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { MockDirective } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { OnboardingEnrollmentComponent } from './onboarding-enrollment.component';
 import { Course } from 'app/course/shared/entities/course.model';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { By } from '@angular/platform-browser';
+import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -27,7 +29,7 @@ describe('OnboardingEnrollmentComponent', () => {
         course.onlineCourse = false;
 
         await TestBed.configureTestingModule({
-            imports: [OnboardingEnrollmentComponent, FormsModule],
+            imports: [OnboardingEnrollmentComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -36,8 +38,8 @@ describe('OnboardingEnrollmentComponent', () => {
             ],
         })
             .overrideComponent(OnboardingEnrollmentComponent, {
-                remove: { imports: [TranslateDirective] },
-                add: { imports: [MockDirective(TranslateDirective)] },
+                remove: { imports: [TranslateDirective, TumAetUiDatePickerComponent] },
+                add: { imports: [MockDirective(TranslateDirective), MockComponent(TumAetUiDatePickerComponent)] },
             })
             .compileComponents();
 
@@ -54,6 +56,46 @@ describe('OnboardingEnrollmentComponent', () => {
     it('should initialize with the provided course', () => {
         expect(comp).toBeTruthy();
         expect(comp.course()).toEqual(course);
+    });
+
+    describe('date pickers', () => {
+        const pickers = () => fixture.debugElement.queryAll(By.directive(TumAetUiDatePickerComponent));
+        const pickerById = (id: string) => pickers().find((picker) => picker.componentInstance.inputId() === id)!;
+
+        it('should only render the enrollment dates when enrollment is enabled', () => {
+            expect(pickers()).toHaveLength(0);
+
+            course.enrollmentEnabled = true;
+            fixture.componentRef.setInput('course', Course.from(course));
+            fixture.detectChanges();
+
+            expect(pickers().map((picker) => picker.componentInstance.inputId())).toEqual(['onboarding-enrollmentStartDate', 'onboarding-enrollmentEndDate']);
+        });
+
+        it('should render the unenrollment end date once unenrollment is enabled', () => {
+            course.enrollmentEnabled = true;
+            course.unenrollmentEnabled = true;
+            course.unenrollmentEndDate = dayjs('2025-12-01T10:00:00');
+            fixture.componentRef.setInput('course', Course.from(course));
+            fixture.detectChanges();
+
+            const picker = pickerById('onboarding-unenrollmentEndDate');
+            expect(picker.componentInstance.value().isSame(course.unenrollmentEndDate)).toBe(true);
+        });
+
+        it('should write a picked date back to the course', () => {
+            course.enrollmentEnabled = true;
+            fixture.componentRef.setInput('course', Course.from(course));
+            fixture.detectChanges();
+            const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
+            const picked = dayjs('2025-10-01T08:00:00');
+
+            pickerById('onboarding-enrollmentStartDate').componentInstance.valueChange.emit(picked);
+            pickerById('onboarding-enrollmentEndDate').componentInstance.valueChange.emit(undefined);
+
+            expect(emitSpy.mock.calls[0][0].enrollmentStartDate).toBe(picked);
+            expect(emitSpy.mock.calls[1][0].enrollmentEndDate).toBeUndefined();
+        });
     });
 
     describe('updateField', () => {

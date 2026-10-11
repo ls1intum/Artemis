@@ -2045,7 +2045,121 @@ describe('Course Management Update Component Create', () => {
 
         expect(component.showError('title')).toBe(false);
         expect(component.showDateMissing('startDate')).toBe(false);
-        expect(fixture.nativeElement.querySelector('[data-testid="date-picker-validation-message"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#field_startDate_input-error')).toBeNull();
+    });
+
+    describe('date pickers', () => {
+        const pickerInput = (name: string) => fixture.nativeElement.querySelector(`tumaet-ui-date-picker#field_${name} input#field_${name}_input`) as HTMLInputElement;
+        const type = (name: string, text: string) => {
+            const input = pickerInput(name);
+            input.value = text;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+        };
+        const render = () => {
+            fixture.detectChanges();
+            httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+            fixture.detectChanges();
+        };
+
+        it('keeps the ids of the course date fields and labels the inputs by their form field', () => {
+            render();
+
+            for (const name of ['startDate', 'endDate']) {
+                const input = pickerInput(name);
+                expect(input).not.toBeNull();
+                expect(input.getAttribute('aria-required')).toBe('true');
+                const label = fixture.nativeElement.querySelector(`label[for="field_${name}_input"]`) as HTMLElement;
+                expect(label).not.toBeNull();
+                expect(input.getAttribute('aria-labelledby')).toBe(label.id);
+            }
+        });
+
+        it('writes a typed start and end date to the form and the course', () => {
+            render();
+
+            type('startDate', '01.04.2030 08:00');
+            type('endDate', '30.09.2030 18:30');
+
+            expect(component.courseForm.get('startDate')!.value?.format('YYYY-MM-DD HH:mm')).toBe('2030-04-01 08:00');
+            expect(component.course.startDate?.format('YYYY-MM-DD HH:mm')).toBe('2030-04-01 08:00');
+            expect(component.course.endDate?.format('YYYY-MM-DD HH:mm')).toBe('2030-09-30 18:30');
+            expect(component.isValidDate).toBe(true);
+        });
+
+        it('shows a date set on the form control', () => {
+            render();
+
+            component.courseForm.get('startDate')!.setValue(dayjs('2030-04-01T08:00'));
+            fixture.detectChanges();
+
+            expect(pickerInput('startDate').value).toBe('01.04.2030 08:00');
+        });
+
+        it('reports a missing required date after the field was left and describes the input with the message', () => {
+            render();
+            const input = pickerInput('startDate');
+            expect(input.getAttribute('aria-invalid')).toBe('false');
+
+            input.dispatchEvent(new Event('blur'));
+            fixture.detectChanges();
+
+            expect(component.showDateMissing('startDate')).toBe(true);
+            expect(input.getAttribute('aria-invalid')).toBe('true');
+            const error = fixture.nativeElement.querySelector('tumaet-ui-form-field [role="alert"]:not([hidden])') as HTMLElement;
+            expect(error.textContent).toContain('artemisApp.course.form.startDate.required');
+            expect(input.getAttribute('aria-describedby')).toBe(error.id);
+        });
+
+        it('leaves text that is not a date to the picker, keeps the control invalid and blocks saving', () => {
+            render();
+
+            type('startDate', '13.06.');
+
+            expect(component.courseForm.get('startDate')!.hasError('invalidDate')).toBe(true);
+            expect(component.courseForm.invalid).toBe(true);
+            expect(fixture.nativeElement.querySelector('#field_startDate_input-error')).not.toBeNull();
+            expect(pickerInput('startDate').getAttribute('aria-invalid')).toBe('true');
+        });
+
+        it('marks both pickers invalid when the end date is not after the start date', () => {
+            render();
+
+            type('startDate', '30.09.2030 18:00');
+            type('endDate', '01.04.2030 08:00');
+
+            expect(component.isDateOrderInvalid).toBe(true);
+            expect(pickerInput('startDate').getAttribute('aria-invalid')).toBe('true');
+            expect(pickerInput('endDate').getAttribute('aria-invalid')).toBe('true');
+
+            type('endDate', '30.10.2030 18:00');
+
+            expect(component.isDateOrderInvalid).toBe(false);
+            expect(pickerInput('startDate').getAttribute('aria-invalid')).toBe('false');
+            expect(pickerInput('endDate').getAttribute('aria-invalid')).toBe('false');
+        });
+
+        it('renders the enrollment and unenrollment pickers and marks them invalid outside the course period', () => {
+            render();
+            type('startDate', '01.04.2030 08:00');
+            type('endDate', '30.09.2030 18:00');
+
+            component.changeEnrollmentEnabled();
+            component.changeUnenrollmentEnabled();
+            fixture.detectChanges();
+
+            expect(pickerInput('enrollmentStartDate').value).toBe('01.04.2030 08:00');
+            expect(pickerInput('enrollmentEndDate').value).toBe('30.09.2030 17:59');
+            expect(pickerInput('unenrollmentEndDate').value).toBe('30.09.2030 18:00');
+            expect(pickerInput('enrollmentStartDate').getAttribute('aria-invalid')).toBe('false');
+
+            type('enrollmentEndDate', '01.10.2030 08:00');
+
+            expect(component.isValidEnrollmentPeriod).toBe(false);
+            expect(pickerInput('enrollmentStartDate').getAttribute('aria-invalid')).toBe('true');
+            expect(pickerInput('enrollmentEndDate').getAttribute('aria-invalid')).toBe('true');
+            expect(pickerInput('unenrollmentEndDate').getAttribute('aria-invalid')).toBe('true');
+        });
     });
 });
 

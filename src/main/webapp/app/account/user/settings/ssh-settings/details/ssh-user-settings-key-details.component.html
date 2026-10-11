@@ -94,17 +94,25 @@
                 <!-- expiry date date picker -->
                 @if (selectedOption === 'useExpiration') {
                     <div class="mt-4 sm:w-1/3">
-                        <jhi-date-time-picker
-                            labelName="{{ 'artemisApp.userSettings.sshSettingsPage.expiryDate' | artemisTranslate }}"
-                            [(ngModel)]="displayedExpiryDate"
-                            [pickerType]="DateTimePickerType.CALENDAR"
-                            [shouldDisplayTimeZoneWarning]="false"
-                            [min]="currentDate()"
-                            [requiredField]="true"
-                            (valueChange)="validateExpiryDate()"
-                            name="expiryDate"
+                        <tumaet-ui-date-picker
                             id="expiryDate"
+                            inputId="ssh-key-expiry-date"
+                            data-testid="ssh-key-expiry-date"
+                            [dateOnly]="true"
+                            [shouldDisplayTimeZoneWarning]="false"
+                            [labelName]="'artemisApp.userSettings.sshSettingsPage.expiryDate' | artemisTranslate"
+                            [value]="displayedExpiryDate()"
+                            [invalid]="expiryDateMissingOrInvalid()"
+                            [ariaRequired]="true"
+                            [ariaDescribedBy]="expiryDateMissingOrInvalid() ? 'ssh-key-expiry-date-error' : undefined"
+                            (valueChange)="onExpiryDateChange($event)"
+                            (inputValidityChange)="onExpiryTextValidityChange($event)"
                         />
+                        @if (expiryDateMissingOrInvalid()) {
+                            <div id="ssh-key-expiry-date-error" class="text-state-danger text-sm mt-1 block" data-testid="ssh-key-expiry-date-error">
+                                {{ 'entity.dateMissingOrNotValid' | artemisTranslate: { labelName: 'artemisApp.userSettings.sshSettingsPage.expiryDate' | artemisTranslate } }}
+                            </div>
+                        }
                     </div>
                 }
             } @else {
@@ -125,11 +133,11 @@
                         </div>
                     </div>
                 }
-                @if (displayedExpiryDate) {
+                @if (displayedExpiryDate()) {
                     <div class="text-and-date large-text mt-2">
                         <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.{{ hasExpired() ? 'hasExpiredOn' : 'expiresOn' }}"></div>
                         <div>
-                            {{ displayedExpiryDate | artemisDate: 'long-date' }}
+                            {{ displayedExpiryDate() | artemisDate: 'long-date' }}
                         </div>
                     </div>
                 }
@@ -138,7 +146,7 @@
                 @if (isCreateMode()) {
                     <tumaet-ui-button
                         [disabled]="
-                            !(displayedSshKey && ((selectedOption === 'useExpiration' && displayedExpiryDate && isExpiryDateValid()) || selectedOption !== 'useExpiration'))
+                            !(displayedSshKey && ((selectedOption === 'useExpiration' && displayedExpiryDate() && isExpiryDateValid()) || selectedOption !== 'useExpiration'))
                         "
                         size="small"
                         [icon]="faSave"

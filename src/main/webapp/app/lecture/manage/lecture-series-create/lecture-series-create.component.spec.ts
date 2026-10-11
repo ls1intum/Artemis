@@ -61,8 +61,8 @@ describe('LectureSeriesCreateComponent', () => {
     });
 
     it('should set isSeriesEndDateInvalid to true when an initial lecture endDate is after or equal to seriesEndDate', async () => {
-        const initialLectureEndDate = new Date('2025-01-11T00:00:00Z');
-        const seriesEndDate = new Date('2025-01-10T00:00:00Z');
+        const initialLectureEndDate = dayjs('2025-01-11T00:00:00Z');
+        const seriesEndDate = dayjs('2025-01-10T00:00:00Z');
 
         component.seriesEndDate.set(seriesEndDate);
         const initialLecture = component.initialLectures()[0];
@@ -78,8 +78,8 @@ describe('LectureSeriesCreateComponent', () => {
     });
 
     it('should set isSeriesEndDateInvalid to true when an initial lecture startDate is after or equal to seriesEndDate', async () => {
-        const initialLectureStartDate = new Date('2025-01-11T00:00:00Z');
-        const seriesEndDate = new Date('2025-01-10T00:00:00Z');
+        const initialLectureStartDate = dayjs('2025-01-11T00:00:00Z');
+        const seriesEndDate = dayjs('2025-01-10T00:00:00Z');
 
         component.seriesEndDate.set(seriesEndDate);
         const initialLecture = component.initialLectures()[0];
@@ -95,8 +95,8 @@ describe('LectureSeriesCreateComponent', () => {
     });
 
     it('should set isStartDateInvalid to true when same or after seriesEndDate', async () => {
-        const initialLectureStartDate = new Date('2025-01-11T00:00:00Z');
-        const seriesEndDate = new Date('2025-01-10T00:00:00Z');
+        const initialLectureStartDate = dayjs('2025-01-11T00:00:00Z');
+        const seriesEndDate = dayjs('2025-01-10T00:00:00Z');
 
         component.seriesEndDate.set(seriesEndDate);
         const initialLecture = component.initialLectures()[0];
@@ -112,8 +112,8 @@ describe('LectureSeriesCreateComponent', () => {
     });
 
     it('should set isStartDateInvalid to true when same or after endDate', async () => {
-        const initialLectureStartDate = new Date('2025-01-11T00:00:00Z');
-        const initialLectureEndDate = new Date('2025-01-10T00:00:00Z');
+        const initialLectureStartDate = dayjs('2025-01-11T00:00:00Z');
+        const initialLectureEndDate = dayjs('2025-01-10T00:00:00Z');
 
         const initialLecture = component.initialLectures()[0];
         initialLecture.startDate.set(initialLectureStartDate);
@@ -129,8 +129,8 @@ describe('LectureSeriesCreateComponent', () => {
     });
 
     it('should set isEndDateInvalid to true when same or before startDate', async () => {
-        const initialLectureStartDate = new Date('2025-01-11T00:00:00Z');
-        const initialLectureEndDate = new Date('2025-01-10T00:00:00Z');
+        const initialLectureStartDate = dayjs('2025-01-11T00:00:00Z');
+        const initialLectureEndDate = dayjs('2025-01-10T00:00:00Z');
 
         const initialLecture = component.initialLectures()[0];
         initialLecture.startDate.set(initialLectureStartDate);
@@ -146,8 +146,8 @@ describe('LectureSeriesCreateComponent', () => {
     });
 
     it('should set isEndDateInvalid to true when same or after seriesEndDate', async () => {
-        const initialLectureEndDate = new Date('2025-01-11T00:00:00Z');
-        const seriesEndDate = new Date('2025-01-10T00:00:00Z');
+        const initialLectureEndDate = dayjs('2025-01-11T00:00:00Z');
+        const seriesEndDate = dayjs('2025-01-10T00:00:00Z');
 
         component.seriesEndDate.set(seriesEndDate);
         const initialLecture = component.initialLectures()[0];
@@ -163,9 +163,9 @@ describe('LectureSeriesCreateComponent', () => {
     });
 
     it('should set all validation flags to false when dates are in correct order', async () => {
-        const initialLectureStartDate = new Date('2025-01-11T11:00:00Z');
-        const initialLectureEndDate = new Date('2025-01-11T12:00:00Z');
-        const seriesEndDate = new Date('2025-01-25T00:00:00Z');
+        const initialLectureStartDate = dayjs('2025-01-11T11:00:00Z');
+        const initialLectureEndDate = dayjs('2025-01-11T12:00:00Z');
+        const seriesEndDate = dayjs('2025-01-25T00:00:00Z');
 
         component.seriesEndDate.set(seriesEndDate);
         const initialLecture = component.initialLectures()[0];
@@ -182,8 +182,8 @@ describe('LectureSeriesCreateComponent', () => {
         expect(component.noDraftsGenerated()).toBe(true);
 
         const today = dayjs();
-        const seriesEndDate = today.add(30, 'day').toDate();
-        const initialLectureStartDate = today.add(1, 'day').toDate();
+        const seriesEndDate = today.add(30, 'day');
+        const initialLectureStartDate = today.add(1, 'day');
         component.seriesEndDate.set(seriesEndDate);
         const initialLecture = component.initialLectures()[0];
         initialLecture.startDate.set(initialLectureStartDate);
@@ -243,8 +243,8 @@ describe('LectureSeriesCreateComponent', () => {
 
     it('should delete lectureDraft', async () => {
         const today = dayjs();
-        const seriesEndDate = today.add(14, 'day').toDate();
-        const initialLectureStartDate = today.add(3, 'day').toDate();
+        const seriesEndDate = today.add(14, 'day');
+        const initialLectureStartDate = today.add(3, 'day');
         component.seriesEndDate.set(seriesEndDate);
         const initialLecture = component.initialLectures()[0];
         initialLecture.startDate.set(initialLectureStartDate);
@@ -283,8 +283,8 @@ describe('LectureSeriesCreateComponent', () => {
         const now = dayjs();
         const inThreeWeeks = now.add(2, 'weeks');
         const firstInitialLecture = initialLectures[0];
-        firstInitialLecture.startDate.set(now.toDate());
-        component.seriesEndDate.set(inThreeWeeks.toDate());
+        firstInitialLecture.startDate.set(now);
+        component.seriesEndDate.set(inThreeWeeks);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
@@ -298,21 +298,78 @@ describe('LectureSeriesCreateComponent', () => {
         const now = dayjs();
         const inThreeWeeks = now.add(2, 'weeks');
         const firstInitialLecture = initialLectures[0];
-        firstInitialLecture.endDate.set(now.toDate());
-        component.seriesEndDate.set(inThreeWeeks.toDate());
+        firstInitialLecture.endDate.set(now);
+        component.seriesEndDate.set(inThreeWeeks);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         expect(component.lectureDrafts()).toHaveLength(3);
     });
 
+    describe('date pickers', () => {
+        function field(id: string): HTMLInputElement {
+            return fixture.nativeElement.querySelector(`#${id}`);
+        }
+
+        function type(input: HTMLInputElement, text: string) {
+            input.value = text;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+        }
+
+        it('should render a labelled picker for start, end and series end date with stable ids', () => {
+            expect(field('start-date-1')).not.toBeNull();
+            expect(field('end-date-1')).not.toBeNull();
+            expect(field('series-end-date')).not.toBeNull();
+            const labelTargets = Array.from(fixture.nativeElement.querySelectorAll('label')).map((label) => (label as HTMLLabelElement).htmlFor);
+            expect(labelTargets).toEqual(['start-date-1', 'end-date-1', 'series-end-date']);
+        });
+
+        it('should write typed dates into the initial lecture and series end signals', () => {
+            type(field('start-date-1'), '10.03.2025 10:00');
+            type(field('end-date-1'), '10.03.2025 11:30');
+            type(field('series-end-date'), '31.03.2025');
+
+            const initialLecture = component.initialLectures()[0];
+            expect(initialLecture.startDate()?.format('YYYY-MM-DD HH:mm')).toBe('2025-03-10 10:00');
+            expect(initialLecture.endDate()?.format('YYYY-MM-DD HH:mm')).toBe('2025-03-10 11:30');
+            expect(component.seriesEndDate()?.format('YYYY-MM-DD HH:mm')).toBe('2025-03-31 00:00');
+        });
+
+        it('should mark the end field invalid when it is not after the start', async () => {
+            type(field('start-date-1'), '10.03.2025 10:00');
+            type(field('end-date-1'), '10.03.2025 09:00');
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(field('end-date-1').getAttribute('aria-invalid')).toBe('true');
+            expect(field('start-date-1').getAttribute('aria-invalid')).toBe('true');
+        });
+
+        it('should not generate drafts while a typed date is not a date yet', async () => {
+            const initialLecture = component.initialLectures()[0];
+            initialLecture.startDate.set(dayjs('2025-03-10T10:00'));
+            component.seriesEndDate.set(dayjs('2025-03-31'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(component.lectureDrafts().length).toBeGreaterThan(0);
+
+            type(field('start-date-1'), '10.03.');
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(initialLecture.isStartTextValid()).toBe(false);
+            expect(component.lectureDrafts()).toHaveLength(0);
+        });
+    });
+
     describe('save()', () => {
         const todayAt14 = dayjs().hour(14).minute(0).second(0).millisecond(0);
-        const seriesEndDate = todayAt14.add(14, 'day').toDate();
-        const firstInitialLectureStartDate = todayAt14.add(2, 'day').toDate();
-        const firstInitialLectureEndDate = todayAt14.add(2, 'day').add(2, 'hour').toDate();
-        const secondInitialLectureStartDate = todayAt14.add(5, 'day').toDate();
-        const secondInitialLectureEndDate = todayAt14.add(5, 'day').add(2, 'hour').toDate();
+        const seriesEndDate = todayAt14.add(14, 'day');
+        const firstInitialLectureStartDate = todayAt14.add(2, 'day');
+        const firstInitialLectureEndDate = todayAt14.add(2, 'day').add(2, 'hour');
+        const secondInitialLectureStartDate = todayAt14.add(5, 'day');
+        const secondInitialLectureEndDate = todayAt14.add(5, 'day').add(2, 'hour');
         const createLecture = (id: number, title: string, startDate?: Dayjs, endDate?: Dayjs): Lecture => {
             const lecture = new Lecture();
             lecture.id = id;

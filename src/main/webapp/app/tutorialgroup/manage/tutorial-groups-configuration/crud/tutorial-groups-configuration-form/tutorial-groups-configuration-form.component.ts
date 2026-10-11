@@ -1,11 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, output } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, effect, inject, input, output, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
+import dayjs, { Dayjs } from 'dayjs/esm';
 import { Course, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { DatePickerModule } from 'primeng/datepicker';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiMessageComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDatePickerComponent, TumAetUiMessageComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faGear } from '@fortawesome/free-solid-svg-icons';
 
@@ -16,9 +17,9 @@ export interface TutorialGroupsConfigurationFormData {
 }
 
 /**
- * Validates the tutorial period selected via the range p-datepicker.
- * Replaces owl's range validators: returns `{ required }` when the range is missing/incomplete and
- * `{ invalidRange }` when the start date is after the end date.
+ * Validates the tutorial period, a `[start, end]` pair of dates picked in the form's start and end date pickers.
+ * Returns `{ required }` when the period is missing/incomplete and `{ invalidRange }` when the start date is after
+ * the end date.
  */
 export function tutorialPeriodRangeValidator(control: AbstractControl): ValidationErrors | null {
     const value = control.value;
@@ -32,16 +33,19 @@ export function tutorialPeriodRangeValidator(control: AbstractControl): Validati
     return null;
 }
 
+function isValidDate(value: unknown): value is Date {
+    return value instanceof Date && !isNaN(value.getTime());
+}
+
 @Component({
     selector: 'jhi-tutorial-groups-configuration-form',
     templateUrl: './tutorial-groups-configuration-form.component.html',
     styleUrl: './tutorial-groups-configuration-form.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
-        DatePickerModule,
+        TumAetUiDatePickerComponent,
         ArtemisTranslatePipe,
         TumAetUiButtonDirective,
         TumAetUiCheckboxComponent,
@@ -52,6 +56,7 @@ export function tutorialPeriodRangeValidator(control: AbstractControl): Validati
 })
 export class TutorialGroupsConfigurationFormComponent implements OnInit {
     private fb = inject(FormBuilder);
+    private destroyRef = inject(DestroyRef);
 
     protected readonly faGear = faGear;
 
@@ -74,6 +79,17 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit {
     ];
 
     existingChannelSetting?: boolean;
+
+    /**
+     * The two ends of the period as the pickers hold them. The form's `period` control stays the one source of truth
+     * for validation and for the parent: it holds `[start, end]` once both are set and nothing else, so a half-filled
+     * or half-typed period reads as missing.
+     */
+    protected readonly periodStart = signal<Dayjs | undefined>(undefined);
+    protected readonly periodEnd = signal<Dayjs | undefined>(undefined);
+    // A picker keeps its last committed date while its text is not a date, so the period must not use it meanwhile.
+    private readonly periodStartTextValid = signal(true);
+    private readonly periodEndTextValid = signal(true);
 
     form!: FormGroup; // built by initializeForm() in the constructor effect and ngOnInit, before any template/getter read
 
@@ -133,10 +149,29 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit {
             useTutorialGroupChannels: [false],
             usePublicTutorialGroupChannels: [false],
         });
+        this.periodControl?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((period) => this.pullPeriodFromControl(period));
     }
 
     submitForm() {
         this.formSubmitted.emit(deepClone(this.form.value));
+    }
+
+    /** Id of the message below the pickers that explains the invalid period, for the pickers to point at. */
+    get periodErrorId(): string | undefined {
+        if (!this.isPeriodInvalid) {
+            return undefined;
+        }
+        return this.periodControl?.errors?.invalidRange ? 'period-range-error' : 'period-required-error';
+    }
+
+    /** The start is flagged when it is missing or when the end falls before it. */
+    get isPeriodStartInvalid(): boolean {
+        return this.isPeriodInvalid && (!this.periodStart() || !!this.periodControl?.errors?.invalidRange);
+    }
+
+    /** The end is flagged when it is missing or when it falls before the start. */
+    get isPeriodEndInvalid(): boolean {
+        return this.isPeriodInvalid && (!this.periodEnd() || !!this.periodControl?.errors?.invalidRange);
     }
 
     get isPeriodInvalid() {
@@ -145,6 +180,47 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit {
         } else {
             return false;
         }
+    }
+
+    protected onPeriodStartChange(start?: Dayjs) {
+        this.periodStart.set(start);
+        this.pushPeriodToControl();
+        this.periodControl?.markAsDirty();
+    }
+
+    protected onPeriodEndChange(end?: Dayjs) {
+        this.periodEnd.set(end);
+        this.pushPeriodToControl();
+        this.periodControl?.markAsDirty();
+    }
+
+    protected onPeriodStartTextValidityChange(valid: boolean) {
+        if (this.periodStartTextValid() !== valid) {
+            this.periodStartTextValid.set(valid);
+            this.pushPeriodToControl();
+        }
+    }
+
+    protected onPeriodEndTextValidityChange(valid: boolean) {
+        if (this.periodEndTextValid() !== valid) {
+            this.periodEndTextValid.set(valid);
+            this.pushPeriodToControl();
+        }
+    }
+
+    /** Writes the pickers' dates to the period control without echoing them back to the pickers. */
+    private pushPeriodToControl() {
+        const start = this.periodStart();
+        const end = this.periodEnd();
+        const complete = !!start && !!end && this.periodStartTextValid() && this.periodEndTextValid();
+        this.periodControl?.setValue(complete ? [start.toDate(), end.toDate()] : undefined, { emitEvent: false });
+    }
+
+    /** Shows what the period control holds, when it was set from outside the pickers, such as when editing. */
+    private pullPeriodFromControl(period?: unknown) {
+        const [start, end] = Array.isArray(period) ? period : [];
+        this.periodStart.set(isValidDate(start) ? dayjs(start) : undefined);
+        this.periodEnd.set(isValidDate(end) ? dayjs(end) : undefined);
     }
 
     markPeriodAsTouched() {

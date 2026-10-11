@@ -32,24 +32,24 @@ describe('DeimosDateRangeModalComponent', () => {
     });
 
     it('should disable submit when from is after to', () => {
-        component.fromDate.set(dayjs('2026-01-10T12:00:00Z').toDate());
-        component.toDate.set(dayjs('2026-01-01T12:00:00Z').toDate());
+        component.fromDate.set(dayjs('2026-01-10T12:00:00Z'));
+        component.toDate.set(dayjs('2026-01-01T12:00:00Z'));
 
         expect(component.isOrderInvalid()).toBe(true);
         expect(component.isSubmitDisabled()).toBe(true);
     });
 
     it('should disable submit when window exceeds maxWindowDays', () => {
-        component.fromDate.set(dayjs('2026-01-01T00:00:00Z').toDate());
-        component.toDate.set(dayjs('2026-02-15T00:00:00Z').toDate());
+        component.fromDate.set(dayjs('2026-01-01T00:00:00Z'));
+        component.toDate.set(dayjs('2026-02-15T00:00:00Z'));
 
         expect(component.isWindowTooLarge()).toBe(true);
         expect(component.isSubmitDisabled()).toBe(true);
     });
 
     it('should disable submit while parent reports submitting', () => {
-        component.fromDate.set(dayjs('2026-01-01T00:00:00Z').toDate());
-        component.toDate.set(dayjs('2026-01-07T00:00:00Z').toDate());
+        component.fromDate.set(dayjs('2026-01-01T00:00:00Z'));
+        component.toDate.set(dayjs('2026-01-07T00:00:00Z'));
         fixture.componentRef.setInput('isSubmitting', true);
         fixture.detectChanges();
 
@@ -57,8 +57,8 @@ describe('DeimosDateRangeModalComponent', () => {
     });
 
     it('should enable submit for a valid range within maxWindowDays', () => {
-        component.fromDate.set(dayjs('2026-01-01T00:00:00Z').toDate());
-        component.toDate.set(dayjs('2026-01-07T00:00:00Z').toDate());
+        component.fromDate.set(dayjs('2026-01-01T00:00:00Z'));
+        component.toDate.set(dayjs('2026-01-07T00:00:00Z'));
 
         expect(component.isSubmitDisabled()).toBe(false);
     });
@@ -70,14 +70,14 @@ describe('DeimosDateRangeModalComponent', () => {
         component.open(from, to);
 
         expect(component.visible()).toBe(true);
-        expect(dayjs(component.fromDate()!).toISOString()).toBe(from.toISOString());
-        expect(dayjs(component.toDate()!).toISOString()).toBe(to.toISOString());
+        expect(component.fromDate()!.toISOString()).toBe(from.toISOString());
+        expect(component.toDate()!.toISOString()).toBe(to.toISOString());
     });
 
     it('submit should emit selection and close when valid', () => {
         const emitSpy = vi.spyOn(component.confirmSelection, 'emit');
-        component.fromDate.set(dayjs('2026-01-01T00:00:00Z').toDate());
-        component.toDate.set(dayjs('2026-01-07T00:00:00Z').toDate());
+        component.fromDate.set(dayjs('2026-01-01T00:00:00Z'));
+        component.toDate.set(dayjs('2026-01-07T00:00:00Z'));
         component.visible.set(true);
 
         component.submit();
@@ -102,5 +102,64 @@ describe('DeimosDateRangeModalComponent', () => {
         component.cancel();
 
         expect(component.visible()).toBe(false);
+    });
+    describe('with the dialog open', () => {
+        function field(id: string): HTMLInputElement | null {
+            return document.querySelector(`#${id}`);
+        }
+
+        function type(input: HTMLInputElement, text: string) {
+            input.value = text;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+        }
+
+        async function openDialog(from?: dayjs.Dayjs, to?: dayjs.Dayjs) {
+            component.open(from, to);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        }
+
+        afterEach(() => {
+            component.cancel();
+            fixture.detectChanges();
+        });
+
+        it('should render both pickers filled with the default range', async () => {
+            await openDialog(dayjs('2026-01-01T08:30'), dayjs('2026-01-08T17:45'));
+
+            expect(field('deimos-from')?.value).toBe('01.01.2026 08:30');
+            expect(field('deimos-to')?.value).toBe('08.01.2026 17:45');
+        });
+
+        it('should write typed dates into the signals and enable submit', async () => {
+            await openDialog();
+
+            type(field('deimos-from')!, '01.01.2026 08:00');
+            type(field('deimos-to')!, '03.01.2026 08:00');
+
+            expect(component.fromDate()?.format('YYYY-MM-DD HH:mm')).toBe('2026-01-01 08:00');
+            expect(component.toDate()?.format('YYYY-MM-DD HH:mm')).toBe('2026-01-03 08:00');
+            expect(component.isSubmitDisabled()).toBe(false);
+        });
+
+        it('should flag both pickers and explain the order error when from is after to', async () => {
+            await openDialog(dayjs('2026-01-10T12:00'), dayjs('2026-01-01T12:00'));
+
+            expect(field('deimos-from')?.getAttribute('aria-invalid')).toBe('true');
+            expect(field('deimos-to')?.getAttribute('aria-describedby')).toBe('deimos-order-error');
+            expect(document.querySelector('#deimos-order-error')).not.toBeNull();
+        });
+
+        it('should keep submit disabled while a typed date does not parse', async () => {
+            await openDialog(dayjs('2026-01-01T08:00'), dayjs('2026-01-03T08:00'));
+            expect(component.isSubmitDisabled()).toBe(false);
+
+            type(field('deimos-to')!, '03.01.');
+
+            expect(component.toTextValid()).toBe(false);
+            expect(component.isSubmitDisabled()).toBe(true);
+        });
     });
 });

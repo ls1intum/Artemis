@@ -26,14 +26,13 @@ async function selectTaxonomy(page: Page, taxonomy: string) {
 }
 
 async function selectDateInPicker(page: Page, pickerId: string, monthsAhead: number, day: number) {
-    const picker = page.locator(`jhi-date-time-picker#${pickerId}`);
+    const picker = page.locator(`tumaet-ui-date-picker#${pickerId}`);
     await expect(picker).toHaveCount(1);
 
-    const input = picker.locator('input#date-input-field');
+    const input = picker.locator(`input#${pickerId}-input`);
     await expect(input).toBeVisible();
 
-    // The CALENDAR-mode p-datepicker renders dates as DD.MM.YYYY. Type the value (the picker ignores
-    // programmatic fills that aren't preceded by a keydown) and tab out to commit it to the form.
+    // The date-only picker renders dates as DD.MM.YYYY. Type the value and tab out to commit it to the form.
     const targetDate = dayjs().add(monthsAhead, 'months').date(day);
     await fillDateTimePicker(input, targetDate, 'DD.MM.YYYY');
 }

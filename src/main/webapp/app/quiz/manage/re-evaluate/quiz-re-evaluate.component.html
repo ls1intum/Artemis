@@ -57,10 +57,11 @@
                     <div class="col-12 col-lg-7">
                         <div class="row">
                             <div class="form-group">
-                                <jhi-date-time-picker
+                                <tumaet-ui-date-picker
                                     class="start-time"
-                                    labelName="{{ 'artemisApp.quizExercise.startTime' | artemisTranslate }}"
-                                    [(ngModel)]="quizExercise().releaseDate"
+                                    inputId="quiz-re-evaluate-start-time"
+                                    [labelName]="'artemisApp.quizExercise.startTime' | artemisTranslate"
+                                    [value]="quizExercise().releaseDate"
                                     [disabled]="true"
                                 />
                             </div>

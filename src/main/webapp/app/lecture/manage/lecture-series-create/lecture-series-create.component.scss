@@ -42,6 +42,19 @@
         gap: 1rem;
         align-items: center;
 
+        // The pickers carry their label above the field, so the row sits on the field's baseline rather than its middle.
+        &.picker-row {
+            align-items: flex-end;
+
+            .enumerator {
+                margin-bottom: 0.6rem;
+            }
+
+            .initial-lecture-delete-button {
+                margin-bottom: 0.2rem;
+            }
+        }
+
         .initial-lecture-delete-button {
             flex-shrink: 0;
 

@@ -45,6 +45,14 @@ describe('TumAetUiCalendarComponent', () => {
         expect(dayButtons().length).toBe(42);
     });
 
+    it('gives every day cell its ISO date, independent of the locale, so a test can find it', () => {
+        const dates = dayButtons().map((button) => button.getAttribute('data-date'));
+
+        expect(dates).toHaveLength(42);
+        expect(dates).toContain('2026-06-15');
+        expect(new Set(dates).size).toBe(42);
+    });
+
     it('emits daySelected on click', () => {
         const spy = vi.spyOn(component.daySelected, 'emit');
         dayButtons()[10].click();

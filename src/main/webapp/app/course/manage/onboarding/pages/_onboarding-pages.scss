@@ -100,7 +100,7 @@
         background-color: var(--onboarding-input-bg, #fff);
     }
 
-    // ::ng-deep needed to reach form controls inside child components (e.g. date-time-picker, markdown editor)
+    // ::ng-deep needed to reach form controls inside child components (e.g. the markdown editor)
     // stylelint-disable-next-line no-descending-specificity
     ::ng-deep .form-control,
     ::ng-deep .form-select {

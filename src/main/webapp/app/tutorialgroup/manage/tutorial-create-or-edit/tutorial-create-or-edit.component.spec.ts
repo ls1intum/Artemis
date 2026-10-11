@@ -117,10 +117,10 @@ describe('TutorialCreateOrEditComponent', () => {
 
     function setValidScheduleInputs() {
         component.configureSessionPlan.set(true);
-        component.firstSessionStart.set(new Date(2026, 3, 20, 10, 15));
-        component.firstSessionEnd.set(new Date(2026, 3, 20, 11, 45));
+        component.firstSessionStart.set(dayjs('2026-04-20T10:15'));
+        component.firstSessionEnd.set(dayjs('2026-04-20T11:45'));
         component.repetitionFrequency.set(2);
-        component.tutorialPeriodEnd.set(new Date(2026, 6, 20));
+        component.tutorialPeriodEnd.set(dayjs('2026-07-20T00:00'));
         component.location.set('Room 101');
     }
 
@@ -163,10 +163,10 @@ describe('TutorialCreateOrEditComponent', () => {
         expect(component.capacity()).toBe(15);
         expect(component.additionalInformation()).toBe('Bring laptop');
         expect(component.configureSessionPlan()).toBe(true);
-        expect(component.firstSessionStart()).toEqual(dayjs(schedule.firstSessionStart).toDate());
-        expect(component.firstSessionEnd()).toEqual(dayjs(schedule.firstSessionEnd).toDate());
+        expect(component.firstSessionStart()).toEqual(dayjs(schedule.firstSessionStart));
+        expect(component.firstSessionEnd()).toEqual(dayjs(schedule.firstSessionEnd));
         expect(component.repetitionFrequency()).toBe(2);
-        expect(component.tutorialPeriodEnd()).toEqual(dayjs(schedule.tutorialPeriodEnd).toDate());
+        expect(component.tutorialPeriodEnd()).toEqual(dayjs(schedule.tutorialPeriodEnd));
         expect(component.location()).toBe('Room 101');
     });
 
@@ -260,7 +260,7 @@ describe('TutorialCreateOrEditComponent', () => {
             message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionStartRequired',
         });
 
-        component.firstSessionStart.set(new Date(2026, 3, 20, 10, 15));
+        component.firstSessionStart.set(dayjs('2026-04-20T10:15'));
 
         expect(component.firstSessionStartValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
@@ -273,20 +273,20 @@ describe('TutorialCreateOrEditComponent', () => {
             message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionEndRequired',
         });
 
-        component.firstSessionStart.set(new Date(2026, 3, 20, 10, 15));
-        component.firstSessionEnd.set(new Date(2026, 3, 20, 10, 15));
+        component.firstSessionStart.set(dayjs('2026-04-20T10:15'));
+        component.firstSessionEnd.set(dayjs('2026-04-20T10:15'));
         expect(component.firstSessionEndValidationResult()).toEqual({
             status: ValidationStatus.INVALID,
             message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionEndNotAfterStart',
         });
 
-        component.firstSessionEnd.set(new Date(2026, 3, 21, 11, 45));
+        component.firstSessionEnd.set(dayjs('2026-04-21T11:45'));
         expect(component.firstSessionEndValidationResult()).toEqual({
             status: ValidationStatus.INVALID,
             message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionEndNotOnSameDayAsStart',
         });
 
-        component.firstSessionEnd.set(new Date(2026, 3, 20, 11, 45));
+        component.firstSessionEnd.set(dayjs('2026-04-20T11:45'));
         expect(component.firstSessionEndValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
 
@@ -298,27 +298,27 @@ describe('TutorialCreateOrEditComponent', () => {
             message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodRequired',
         });
 
-        component.firstSessionStart.set(new Date(2026, 3, 20, 10, 15));
-        component.tutorialPeriodEnd.set(new Date(2026, 3, 20, 9, 0));
+        component.firstSessionStart.set(dayjs('2026-04-20T10:15'));
+        component.tutorialPeriodEnd.set(dayjs('2026-04-20T09:00'));
         expect(component.tutorialPeriodEndValidationResult()).toEqual({
             status: ValidationStatus.INVALID,
             message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodNotAfterFirstSessionStart',
         });
 
-        component.firstSessionEnd.set(new Date(2026, 3, 20, 11, 45));
-        component.tutorialPeriodEnd.set(new Date(2026, 3, 20, 11, 0));
+        component.firstSessionEnd.set(dayjs('2026-04-20T11:45'));
+        component.tutorialPeriodEnd.set(dayjs('2026-04-20T11:00'));
         expect(component.tutorialPeriodEndValidationResult()).toEqual({
             status: ValidationStatus.INVALID,
             message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodNotAfterFirstSessionEnd',
         });
 
-        component.tutorialPeriodEnd.set(new Date(2028, 3, 21));
+        component.tutorialPeriodEnd.set(dayjs('2028-04-21T00:00'));
         expect(component.tutorialPeriodEndValidationResult()).toEqual({
             status: ValidationStatus.INVALID,
             message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodMoreThanTwoYearsAfterFirstSessionStart',
         });
 
-        component.tutorialPeriodEnd.set(new Date(2028, 3, 20));
+        component.tutorialPeriodEnd.set(dayjs('2028-04-20T00:00'));
         expect(component.tutorialPeriodEndValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
 
@@ -490,6 +490,101 @@ describe('TutorialCreateOrEditComponent', () => {
                     location: 'Room 202',
                 },
             },
+        });
+    });
+    describe('session plan date pickers', () => {
+        function field(id: string): HTMLInputElement {
+            return fixture.nativeElement.querySelector(`#${id}`);
+        }
+
+        function type(input: HTMLInputElement, text: string) {
+            input.value = text;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+        }
+
+        function blur(input: HTMLInputElement) {
+            input.dispatchEvent(new Event('blur'));
+            fixture.detectChanges();
+        }
+
+        async function createWithSessionPlan() {
+            await createComponentWithLanguageValues(of(['English', 'German']));
+            component.configureSessionPlan.set(true);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        }
+
+        it('should render a labelled picker for each date with its stable id', async () => {
+            await createWithSessionPlan();
+
+            for (const id of ['first-session-start-input', 'first-session-end-input', 'tutorial-period-end-input']) {
+                expect(field(id)).not.toBeNull();
+                expect(fixture.nativeElement.querySelector(`label[for="${id}"]`)).not.toBeNull();
+            }
+        });
+
+        it('should write typed values into the signals', async () => {
+            await createWithSessionPlan();
+
+            type(field('first-session-start-input'), '20.04.2026 10:15');
+            type(field('first-session-end-input'), '20.04.2026 11:45');
+            type(field('tutorial-period-end-input'), '20.07.2026');
+
+            expect(component.firstSessionStart()?.format('YYYY-MM-DDTHH:mm')).toBe('2026-04-20T10:15');
+            expect(component.firstSessionEnd()?.format('YYYY-MM-DDTHH:mm')).toBe('2026-04-20T11:45');
+            expect(component.tutorialPeriodEnd()?.format('YYYY-MM-DD HH:mm')).toBe('2026-07-20 00:00');
+        });
+
+        it('should show the stored schedule in the pickers', async () => {
+            await createComponentWithLanguageValues(of(['English']));
+            fixture.componentRef.setInput('tutorialGroup', createTutorialGroupDetailData());
+            fixture.componentRef.setInput('schedule', createTutorialGroupSchedule());
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(field('first-session-start-input').value).toBe('20.04.2026 10:15');
+            expect(field('first-session-end-input').value).toBe('20.04.2026 11:45');
+            expect(field('tutorial-period-end-input').value).toBe('20.07.2026');
+        });
+
+        it('should explain a missing first session start once the field was touched', async () => {
+            await createWithSessionPlan();
+            expect(fixture.nativeElement.querySelector('[data-testid="first-session-start-error"]')).toBeNull();
+
+            blur(field('first-session-start-input'));
+
+            const error: HTMLElement = fixture.nativeElement.querySelector('[data-testid="first-session-start-error"]');
+            expect(error).not.toBeNull();
+            expect(field('first-session-start-input').getAttribute('aria-describedby')).toBe('first-session-start-error');
+        });
+
+        it('should explain an end that is not on the start day', async () => {
+            await createWithSessionPlan();
+
+            type(field('first-session-start-input'), '20.04.2026 10:15');
+            type(field('first-session-end-input'), '21.04.2026 11:45');
+            blur(field('first-session-end-input'));
+
+            const error: HTMLElement = fixture.nativeElement.querySelector('[data-testid="first-session-end-error"]');
+            expect(error.textContent).toContain('firstSessionEndNotOnSameDayAsStart');
+        });
+
+        it('should keep saving disabled while a typed date does not parse', async () => {
+            await createWithSessionPlan();
+            setValidGeneralInputs();
+            setValidScheduleInputs();
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            expect(component.saveButtonDisabled()).toBe(false);
+
+            type(field('tutorial-period-end-input'), '20.07.');
+
+            expect(component.tutorialPeriodEndTextValid()).toBe(false);
+            expect(component.saveButtonDisabled()).toBe(true);
         });
     });
 });

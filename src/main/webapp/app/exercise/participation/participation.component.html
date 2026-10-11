@@ -186,30 +186,39 @@
 
 <ng-template #individualDueDateCellTemplate let-cell>
     @if (isEditingDueDate(cell.data.participationId)) {
-        <div class="btn-group" style="min-width: 250px">
-            <jhi-date-time-picker
-                #individualDueDate="ngModel"
-                [ngModel]="getPendingDueDate(cell.data.participationId)"
-                (ngModelChange)="setPendingDueDate(cell.data.participationId, $event)"
-                [shouldDisplayTimeZoneWarning]="false"
-                [min]="exercise()!.dueDate!"
-                [startAt]="getPendingDueDate(cell.data.participationId) ?? exercise()!.dueDate"
-                [disabled]="isSaving()"
-                [labelName]="'artemisApp.participation.individualDueDate' | artemisTranslate"
-                [hideLabelName]="true"
-            />
-            <button
-                type="button"
-                class="btn btn-outline-success btn-sm"
-                [disabled]="isSaving() || individualDueDate.invalid"
-                (click)="saveIndividualDueDate(cell.data)"
-                title="Save"
-            >
-                <fa-icon [icon]="faCheck" />
-            </button>
-            <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="isSaving()" (click)="cancelEditDueDate(cell.data)" title="Discard">
-                <fa-icon [icon]="faTimes" />
-            </button>
+        <div style="min-width: 250px">
+            <div class="btn-group w-100">
+                <tumaet-ui-date-picker
+                    [inputId]="'individual-due-date-' + cell.data.participationId"
+                    [shouldDisplayTimeZoneWarning]="false"
+                    [value]="getPendingDueDate(cell.data.participationId)"
+                    [startAt]="getPendingDueDate(cell.data.participationId) ?? exercise()!.dueDate"
+                    [disabled]="isSaving()"
+                    [invalid]="isBeforeExerciseDueDate(cell.data.participationId)"
+                    [ariaDescribedBy]="isBeforeExerciseDueDate(cell.data.participationId) ? 'individual-due-date-error-' + cell.data.participationId : undefined"
+                    [hideLabelName]="true"
+                    [ariaLabel]="'artemisApp.participation.individualDueDate' | artemisTranslate"
+                    (valueChange)="setPendingDueDate(cell.data.participationId, $event)"
+                    (inputValidityChange)="setDueDateTextValidity(cell.data.participationId, $event)"
+                />
+                <button
+                    type="button"
+                    class="btn btn-outline-success btn-sm"
+                    [disabled]="isSaving() || isPendingDueDateInvalid(cell.data.participationId)"
+                    (click)="saveIndividualDueDate(cell.data)"
+                    title="Save"
+                >
+                    <fa-icon [icon]="faCheck" />
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="isSaving()" (click)="cancelEditDueDate(cell.data)" title="Discard">
+                    <fa-icon [icon]="faTimes" />
+                </button>
+            </div>
+            @if (isBeforeExerciseDueDate(cell.data.participationId)) {
+                <div [id]="'individual-due-date-error-' + cell.data.participationId" class="text-state-danger text-sm mt-1 block" data-testid="individual-due-date-error">
+                    {{ 'entity.dateMissingOrNotValid' | artemisTranslate: { labelName: 'artemisApp.participation.individualDueDate' | artemisTranslate } }}
+                </div>
+            }
         </div>
     } @else {
         <span class="d-flex align-items-center gap-2">

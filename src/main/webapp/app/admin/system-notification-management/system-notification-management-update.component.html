@@ -16,22 +16,26 @@
                     <tumaet-ui-select inputId="type" [options]="systemNotificationTypes" optionLabel="name" optionValue="value" formControlName="type" class="w-full" />
                 </div>
                 <div class="mb-3">
-                    <jhi-date-time-picker
+                    <tumaet-ui-date-picker
+                        inputId="notificationDate"
                         [labelName]="'artemisApp.systemNotification.notificationDate' | artemisTranslate"
                         formControlName="notificationDate"
                         [shouldDisplayTimeZoneWarning]="false"
-                        name="notificationDate"
+                        [ariaRequired]="true"
                     />
                 </div>
                 <div class="mb-3">
-                    <jhi-date-time-picker
+                    <tumaet-ui-date-picker
+                        inputId="expireDate"
                         [labelName]="'artemisApp.systemNotification.expireDate' | artemisTranslate"
                         formControlName="expireDate"
                         [shouldDisplayTimeZoneWarning]="false"
-                        name="expireDate"
+                        [invalid]="!!expireDate?.errors?.expireMustBeAfterNotification"
+                        [ariaRequired]="true"
+                        [ariaDescribedBy]="expireDate?.errors?.expireMustBeAfterNotification ? 'expireDate-order-error' : undefined"
                     />
                     @if (expireDate?.errors?.expireMustBeAfterNotification) {
-                        <small class="text-state-danger text-sm" jhiTranslate="error.systemNotificationNeedsNotificationBeforeExpiration"></small>
+                        <small id="expireDate-order-error" class="text-state-danger text-sm" jhiTranslate="error.systemNotificationNeedsNotificationBeforeExpiration"></small>
                     }
                 </div>
                 @if (!form.get('id')?.value) {

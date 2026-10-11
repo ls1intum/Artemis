@@ -50,13 +50,15 @@
         </div>
     }
     <div class="form-group">
-        <jhi-date-time-picker
+        <tumaet-ui-date-picker
             id="softDueDate"
+            inputId="softDueDate-input"
             [labelName]="'artemisApp.' + courseCompetency()?.type + '.create.softDueDate' | artemisTranslate"
-            [labelTooltip]="'artemisApp.' + courseCompetency()?.type + '.create.softDueDateHint' | artemisTranslate"
+            ariaDescribedBy="softDueDate-hint"
             formControlName="softDueDate"
-            [pickerType]="DateTimePickerType.CALENDAR"
+            [dateOnly]="true"
         />
+        <small id="softDueDate-hint" class="text-muted-color" [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.create.softDueDateHint'"></small>
     </div>
     @if (!isInConnectMode()) {
         <div class="form-group">

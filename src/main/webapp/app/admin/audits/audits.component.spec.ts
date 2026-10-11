@@ -7,6 +7,7 @@ import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/ht
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { DatePipe } from '@angular/common';
+import dayjs from 'dayjs/esm';
 
 import { AuditsComponent } from 'app/admin/audits/audits.component';
 import { AuditsService } from 'app/admin/audits/audits.service';
@@ -110,21 +111,21 @@ describe('AuditsComponent', () => {
     });
 
     describe('picker value round-trip', () => {
-        // The picker emits a Date/dayjs; the audits filter stores yyyy-MM-dd strings in the URL. The conversion
+        // The picker emits a dayjs; the audits filter stores yyyy-MM-dd strings in the URL. The conversion
         // must use dayjs format tokens (YYYY-MM-DD), not Angular DatePipe tokens, or the URL value is malformed
         // (e.g. "yyyy-06-We") and the picker can never round-trip it back.
         it('stores a picker date as a yyyy-MM-dd string', () => {
-            comp.updateFromDate(new Date(2026, 5, 17, 0, 0, 0));
+            comp.updateFromDate(dayjs(new Date(2026, 5, 17, 0, 0, 0)));
             expect(comp.fromDate()).toBe('2026-06-17');
-            comp.updateToDate(new Date(2026, 5, 20, 0, 0, 0));
+            comp.updateToDate(dayjs(new Date(2026, 5, 20, 0, 0, 0)));
             expect(comp.toDate()).toBe('2026-06-20');
         });
 
         it('clears the filter for an invalid picker value instead of keeping the previous date', () => {
-            comp.updateFromDate(new Date(2026, 5, 17, 0, 0, 0));
+            comp.updateFromDate(dayjs(new Date(2026, 5, 17, 0, 0, 0)));
 
-            // The template passes undefined when fromPicker.isValid() is false (an invalid manual entry the picker
-            // keeps visible via keepInvalid). The previous valid date must not be written back.
+            // The template clears the filter when the typed text is not a date (an invalid manual entry the picker
+            // keeps visible). The previous valid date must not be written back.
             comp.updateFromDate(undefined);
 
             expect(comp.fromDate()).toBe('');
@@ -206,6 +207,79 @@ describe('AuditsComponent', () => {
             const queryParams = navigate.mock.calls.at(-1)![1]!.queryParams!;
             expect(queryParams['to']).toBeUndefined();
             expect(queryParams['from']).toBe(getDate(false));
+        });
+    });
+
+    describe('date picker events', () => {
+        let navigate: ReturnType<typeof vi.fn>;
+
+        beforeEach(() => {
+            comp.ngOnInit();
+            navigate = TestBed.inject(Router).navigate as unknown as ReturnType<typeof vi.fn>;
+            navigate.mockClear();
+        });
+
+        it('exposes the filter dates to the pickers as dayjs values', () => {
+            expect(comp.fromDateValue()!.format('YYYY-MM-DD')).toBe(getDate(false));
+            expect(comp.toDateValue()!.format('YYYY-MM-DD')).toBe(getDate());
+
+            comp.updateFromDate(undefined);
+
+            expect(comp.fromDateValue()).toBeUndefined();
+        });
+
+        it('applies a picked date and navigates', () => {
+            comp.onFromDateChange(dayjs('2026-06-17'));
+            comp.onToDateChange(dayjs('2026-06-20'));
+
+            expect(comp.fromDate()).toBe('2026-06-17');
+            expect(comp.toDate()).toBe('2026-06-20');
+            expect(navigate).toHaveBeenCalledTimes(2);
+            expect(navigate.mock.calls.at(-1)![1].queryParams).toEqual(expect.objectContaining({ from: '2026-06-17', to: '2026-06-20' }));
+        });
+
+        it('clears the filter and navigates when a picker is emptied', () => {
+            comp.onFromDateChange(undefined);
+
+            expect(comp.fromDate()).toBe('');
+            expect(comp.hasDateRange()).toBe(false);
+            expect(navigate.mock.calls.at(-1)![1].queryParams.from).toBeUndefined();
+        });
+
+        it('does not navigate when the text validity reports the initial valid state', () => {
+            comp.onFromTextValidityChange(true, dayjs('2026-06-17'));
+            comp.onToTextValidityChange(true, dayjs('2026-06-20'));
+
+            expect(navigate).not.toHaveBeenCalled();
+            expect(comp.fromDate()).toBe(getDate(false));
+            expect(comp.toDate()).toBe(getDate());
+        });
+
+        it('only pushes a date to the filter when the typed text is valid', () => {
+            comp.onFromTextValidityChange(false, dayjs(getDate(false)));
+
+            // The picker still holds its last valid date, but the text is not a date: the filter is cleared.
+            expect(comp.fromDate()).toBe('');
+            expect(navigate).toHaveBeenCalledOnce();
+
+            // A date committed while the text is still reported invalid is applied once the text is valid again.
+            navigate.mockClear();
+            comp.onFromDateChange(dayjs('2026-06-17'));
+            expect(comp.fromDate()).toBe('');
+            expect(navigate).not.toHaveBeenCalled();
+
+            comp.onFromTextValidityChange(true, dayjs('2026-06-17'));
+            expect(comp.fromDate()).toBe('2026-06-17');
+            expect(navigate).toHaveBeenCalledOnce();
+        });
+
+        it('restores the held date when the text becomes valid again without a new date', () => {
+            comp.onToTextValidityChange(false, dayjs(getDate()));
+            expect(comp.toDate()).toBe('');
+
+            comp.onToTextValidityChange(true, dayjs(getDate()));
+
+            expect(comp.toDate()).toBe(getDate());
         });
     });
 

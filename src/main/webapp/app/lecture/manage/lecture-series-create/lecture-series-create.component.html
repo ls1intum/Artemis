@@ -1,38 +1,26 @@
 <div class="frame">
     <p jhiTranslate="artemisApp.lecture.createSeries.startAndEndDateExplanation"></p>
     @for (initialLecture of initialLectures(); track initialLecture.id; let index = $index) {
-        <div class="input-row">
+        <div class="input-row picker-row">
             <div class="enumerator secondary">
                 {{ index + 1 }}
             </div>
-            <p-floatlabel variant="on">
-                <p-datepicker
-                    [inputId]="'start-date-' + (index + 1)"
-                    [ngModel]="initialLecture.startDate() ?? null"
-                    (ngModelChange)="initialLecture.startDate.set($event ?? undefined)"
-                    [firstDayOfWeek]="1"
-                    [invalid]="initialLecture.isStartDateInvalid()"
-                    [showTime]="true"
-                    hourFormat="24"
-                    [appendTo]="'body'"
-                    [baseZIndex]="100000"
-                />
-                <label [for]="'start-date-' + (index + 1)" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.startDate"></label>
-            </p-floatlabel>
-            <p-floatlabel variant="on">
-                <p-datepicker
-                    [inputId]="'end-date-' + (index + 1)"
-                    [ngModel]="initialLecture.endDate() ?? null"
-                    (ngModelChange)="initialLecture.endDate.set($event ?? undefined)"
-                    [firstDayOfWeek]="1"
-                    [invalid]="initialLecture.isEndDateInvalid()"
-                    [showTime]="true"
-                    hourFormat="24"
-                    [appendTo]="'body'"
-                    [baseZIndex]="100000"
-                />
-                <label [for]="'end-date-' + (index + 1)" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.endDate"></label>
-            </p-floatlabel>
+            <tumaet-ui-date-picker
+                class="min-w-0 flex-1"
+                [inputId]="'start-date-' + (index + 1)"
+                [labelName]="'artemisApp.lecture.createSeries.inputLabel.startDate' | artemisTranslate"
+                [(value)]="initialLecture.startDate"
+                [invalid]="initialLecture.isStartDateInvalid()"
+                (inputValidityChange)="initialLecture.isStartTextValid.set($event)"
+            />
+            <tumaet-ui-date-picker
+                class="min-w-0 flex-1"
+                [inputId]="'end-date-' + (index + 1)"
+                [labelName]="'artemisApp.lecture.createSeries.inputLabel.endDate' | artemisTranslate"
+                [(value)]="initialLecture.endDate"
+                [invalid]="initialLecture.isEndDateInvalid()"
+                (inputValidityChange)="initialLecture.isEndTextValid.set($event)"
+            />
             @if (initialLectures().length !== 1) {
                 <button
                     type="button"
@@ -71,17 +59,16 @@
         }
     }
     <p jhiTranslate="artemisApp.lecture.createSeries.seriesEndDateExplanation"></p>
-    <p-floatlabel variant="on">
-        <p-datepicker
-            inputId="series-end-date"
-            [ngModel]="seriesEndDate() ?? null"
-            (ngModelChange)="seriesEndDate.set($event ?? undefined)"
-            [firstDayOfWeek]="1"
-            [invalid]="isSeriesEndDateInvalid()"
-            [appendTo]="'body'"
-        />
-        <label for="series-end-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.seriesEndDate"></label>
-    </p-floatlabel>
+    <tumaet-ui-date-picker
+        class="max-w-xs"
+        inputId="series-end-date"
+        [labelName]="'artemisApp.lecture.createSeries.inputLabel.seriesEndDate' | artemisTranslate"
+        [dateOnly]="true"
+        [shouldDisplayTimeZoneWarning]="false"
+        [(value)]="seriesEndDate"
+        [invalid]="isSeriesEndDateInvalid()"
+        (inputValidityChange)="isSeriesEndTextValid.set($event)"
+    />
     @let drafts = lectureDrafts();
     @if (drafts.length > 0) {
         <h3 jhiTranslate="artemisApp.lecture.createSeries.generatedLecturesHeading"></h3>

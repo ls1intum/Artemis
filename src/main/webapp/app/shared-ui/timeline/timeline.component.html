@@ -1,8 +1,7 @@
 <div class="frame">
     @for (internalItem of internalTimelineItems(); track $index; let index = $index) {
         <div class="timeline-item-row">
-            @let isInvalid =
-                internalItem.isInvalidInput || internalItem.hasInvalidDateOrder || internalItem.hasExternalError || (dateModel.touched && internalItem.isInputRequiredButUndefined);
+            @let isInvalid = internalItem.isInvalid;
             <div class="timeline-graphic">
                 <div class="timeline-graphic-line"></div>
                 <div
@@ -12,7 +11,7 @@
                     [class.valid]="!isInvalid"
                     [class.invalid]="isInvalid"
                 >
-                    @if (internalItem.internalDate !== undefined) {
+                    @if (internalItem.date() !== undefined) {
                         <div class="timeline-graphic-circle-dot" [class.invalid]="isInvalid"></div>
                     }
                 </div>
@@ -24,41 +23,35 @@
                 }
                 <label class="label" [for]="'datepicker-' + index" [jhiTranslate]="internalItem.labelStringKey"></label>
                 <div class="datepicker-and-info">
-                    <p-datepicker
-                        styleClass="timeline-datepicker"
-                        [inputStyle]="{
-                            width: '100%',
-                            'box-sizing': 'border-box',
-                            'border-color': internalItem.hasWarning && !isInvalid ? 'var(--warning)' : undefined,
-                        }"
-                        [inputId]="'datepicker-' + index"
-                        [ngModel]="internalItem.internalDate"
-                        (onInput)="handleManualInput(internalItem, $event)"
-                        (onBlur)="handleBlur(internalItem, $event)"
-                        (onSelect)="updateDate(internalItem, $event)"
-                        (onClear)="updateDate(internalItem, null)"
-                        #dateModel="ngModel"
-                        [showTime]="true"
-                        dateFormat="dd.mm.yy"
-                        timeSeparator=":"
-                        placeholder="dd.mm.yyyy hh:mm"
-                        keepInvalid="true"
-                        showClear="true"
-                        [showIcon]="!internalItem.isDisabled"
-                        iconDisplay="input"
-                        appendTo="body"
-                        showOnFocus="false"
-                        [baseZIndex]="1060"
-                        [invalid]="isInvalid"
-                        [disabled]="internalItem.isDisabled"
-                    />
+                    <div class="timeline-datepicker" [class.warning]="internalItem.hasWarning && !isInvalid">
+                        <tumaet-ui-date-picker
+                            [inputId]="'datepicker-' + index"
+                            [hideLabelName]="true"
+                            [shouldDisplayTimeZoneWarning]="false"
+                            [hideValidationMessage]="true"
+                            [ariaRequired]="internalItem.kind === 'required'"
+                            [ariaDescribedBy]="isInvalid || internalItem.hasWarning ? 'datepicker-' + index + '-info' : undefined"
+                            [(value)]="internalItem.date"
+                            [invalid]="isInvalid"
+                            [disabled]="internalItem.isDisabled"
+                            (inputValidityChange)="setInputValidity(internalItem, $event)"
+                            (touch)="markTouched(internalItem)"
+                        />
+                    </div>
                     @if (isInvalid || internalItem.hasWarning) {
-                        <i
-                            class="pi pi-info-circle timeline-datepicker-info-icon"
+                        @let tooltip = internalItem.tooltip ?? '';
+                        <span
+                            class="timeline-datepicker-info-icon"
                             [class.warning]="internalItem.hasWarning && !isInvalid"
-                            [pTooltip]="internalItem.tooltip"
-                            tooltipPosition="right"
-                        ></i>
+                            [id]="'datepicker-' + index + '-info'"
+                            tabindex="0"
+                            role="img"
+                            [attr.aria-label]="tooltip"
+                            [tumAetUiTooltip]="tooltip"
+                            tumAetUiTooltipPlacement="right"
+                        >
+                            <fa-icon [icon]="faCircleInfo" />
+                        </span>
                     }
                 </div>
             </div>

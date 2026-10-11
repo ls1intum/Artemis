@@ -1,33 +1,27 @@
-<p-dialog [header]="headerTitle()" [modal]="true" [visible]="show()" [closable]="false" [focusOnShow]="false" appendTo="body">
+<tumaet-ui-dialog [header]="headerTitle()" size="small" [closable]="false" [(visible)]="show" (hidden)="cancel()">
     <div class="frame">
         <div class="form-grid">
-            <label for="title" jhiTranslate="artemisApp.lecture.title"></label>
-            <input pInputText id="title" [pAutoFocus]="true" [ngModel]="title()" (ngModelChange)="this.title.set($event)" [invalid]="isTitleInvalid()" />
-            <label for="startDate" jhiTranslate="artemisApp.lecture.startDate"></label>
-            <p-datepicker
+            <div class="field">
+                <label for="title" jhiTranslate="artemisApp.lecture.title"></label>
+                <input tumAetUiInput id="title" [value]="title()" (input)="onTitleInput($event)" [tumAetUiInputInvalid]="isTitleInvalid()" />
+            </div>
+            <tumaet-ui-date-picker
                 inputId="startDate"
-                [ngModel]="startDate() ?? null"
-                (ngModelChange)="startDate.set($event ?? undefined)"
-                [showTime]="true"
-                [hourFormat]="'24'"
-                [firstDayOfWeek]="1"
-                appendTo="body"
+                [labelName]="'artemisApp.lecture.startDate' | artemisTranslate"
+                [(value)]="startDate"
+                (inputValidityChange)="isStartTextValid.set($event)"
             />
-            <label for="endDate" jhiTranslate="artemisApp.lecture.endDate"></label>
-            <p-datepicker
+            <tumaet-ui-date-picker
                 inputId="endDate"
-                [ngModel]="endDate() ?? null"
-                (ngModelChange)="endDate.set($event ?? undefined)"
-                [showTime]="true"
-                [hourFormat]="'24'"
-                [firstDayOfWeek]="1"
+                [labelName]="'artemisApp.lecture.endDate' | artemisTranslate"
+                [(value)]="endDate"
                 [invalid]="isEndDateInvalid()"
-                appendTo="body"
+                (inputValidityChange)="isEndTextValid.set($event)"
             />
         </div>
         <div class="controls-section">
-            <button type="button" pButton severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
-            <button type="button" pButton size="small" [disabled]="areInputsInvalid()" (click)="save()" jhiTranslate="entity.action.save"></button>
+            <button type="button" tumAetUiButton severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
+            <button type="button" tumAetUiButton size="small" [disabled]="areInputsInvalid()" (click)="save()" jhiTranslate="entity.action.save"></button>
         </div>
     </div>
-</p-dialog>
+</tumaet-ui-dialog>
