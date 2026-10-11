@@ -21,13 +21,13 @@
                                             [tile]="true"
                                             [withExplanation]="true"
                                             [problemStatement]="modelingExercise().problemStatement"
-                                            [collaborationEnabled]="modelingExercise().teamMode ?? false"
+                                            [collaborationEnabled]="teamCollaborationEnabled()"
                                             [collaborationUser]="apollonCollaborationUser()"
                                             [(explanation)]="explanation"
-                                            [savedStatus]="modelingExercise().teamMode ? undefined : { isChanged: isChanged(), isSaving: isSaving() }"
+                                            [savedStatus]="teamCollaborationEnabled() ? undefined : { isChanged: isChanged(), isSaving: isSaving() }"
                                             (onModelPatch)="onModelPatch($event)"
                                         />
-                                        @if (modelingExercise().teamMode && apollonCollaborationUser()) {
+                                        @if (teamCollaborationEnabled() && apollonCollaborationUser()) {
                                             <jhi-team-submission-sync
                                                 [exerciseType]="modelingExercise().type!"
                                                 [submissionObservable]="submissionObservable"

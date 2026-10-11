@@ -15,6 +15,7 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
+import { withPracticeParticipations } from 'app/exercise/util/exercise.utils';
 
 /**
  * Loads the exercise data of the course overview on demand and publishes it through the {@link CourseStorageService}.
@@ -279,7 +280,10 @@ export class CourseOverviewExercisesService implements OnDestroy {
                     return exercise;
                 }
                 didUpdate = true;
-                return cloneWith(exercise, { studentAssignedTeamId: teamAssignment.teamId, studentParticipations: teamAssignment.studentParticipations });
+                return cloneWith(exercise, {
+                    studentAssignedTeamId: teamAssignment.teamId,
+                    studentParticipations: withPracticeParticipations(exercise.studentParticipations, teamAssignment.studentParticipations),
+                });
             });
             return didUpdate ? updated : exercises;
         });

@@ -294,6 +294,10 @@ export function resetForImport(exercise: Exercise) {
     exercise.allowComplaintsForAutomaticAssessments = false;
 
     exercise.competencyLinks = [];
+
+    // The copy starts outside any variant group. With the source's group, the import form would lock its dates to that
+    // group, and the group dialog of the form would edit the group of the source exercise.
+    exercise.exerciseVariantGroup = undefined;
 }
 
 /**
