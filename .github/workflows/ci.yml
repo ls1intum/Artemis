@@ -61,7 +61,7 @@ jobs:
       has_skills: ${{ steps.decide.outputs.has_skills }}
       has_tum_aet_ui: ${{ steps.decide.outputs.has_tum_aet_ui }}
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 2
 
@@ -297,7 +297,7 @@ jobs:
       group: coverage-inrun-${{ github.event.pull_request.number }}
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Detect changed files
@@ -328,7 +328,7 @@ jobs:
           path: build/test-results/vitest/coverage/
       - name: Setup Node.js
         if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
       - name: Generate coverage table
@@ -467,7 +467,7 @@ jobs:
     # so a second group would only add a way for the job to be cancelled while pending.
     steps:
       - name: Check out the badge tooling
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           sparse-checkout: supporting_scripts/code-coverage/coverage-badge
           # This checkout only supplies the script; the push happens from the `badges` checkout below.
@@ -478,7 +478,7 @@ jobs:
         # `continue-on-error` keeps the job advisory: if the orphan branch is missing or unreadable,
         # the guard step below warns and every later step no-ops.
         continue-on-error: true
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: badges
           path: badges-branch
@@ -512,7 +512,7 @@ jobs:
       # a warning and the badge would silently stop updating.
       - name: Setup Node.js
         if: steps.badges-checkout.outcome == 'success'
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
 
