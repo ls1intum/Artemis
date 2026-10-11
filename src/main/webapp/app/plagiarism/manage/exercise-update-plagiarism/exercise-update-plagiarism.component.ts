@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, Signal, effect, inject, model, signal } f
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { Subscription, tap } from 'rxjs';
+import { Subscription, map, tap } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -29,6 +29,8 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
     isCPCCollapsed = true;
     readonly faQuestionCircle = faQuestionCircle;
     isFormValid = signal(false);
+    /** Names of the controls that fail validation, as a signal so that a host's computed() follows them. */
+    readonly invalidControlNames: Signal<string[]>;
 
     static integerValidator(control: AbstractControl): ValidationErrors | null {
         const value = control.value;
@@ -63,6 +65,12 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
         this.formStatus = toSignal(this.form.statusChanges, { initialValue: this.form.status });
 
         effect(() => this.isFormValid.set(this.formStatus() === 'VALID'));
+
+        // The group reports its status after its controls have taken theirs, so their validity is current here.
+        this.invalidControlNames = toSignal(this.form.statusChanges.pipe(map(() => this.collectInvalidControlNames())), {
+            initialValue: this.collectInvalidControlNames(),
+            equal: (previous, current) => previous.length === current.length && previous.every((name, index) => name === current[index]),
+        });
 
         this.formSubscription = this.form.valueChanges
             .pipe(
@@ -103,6 +111,12 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
                 this.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod ??
                 DEFAULT_PLAGIARISM_DETECTION_CONFIG.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod,
         });
+    }
+
+    private collectInvalidControlNames(): string[] {
+        return Object.entries(this.form.controls)
+            .filter(([, control]) => control.invalid)
+            .map(([name]) => name);
     }
 
     getMinimumSizeLabel(): string {

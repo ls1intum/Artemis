@@ -63,6 +63,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.localci.service.BuildAgentAddressRegistryService;
 import de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService;
@@ -859,12 +860,16 @@ public class LocalVCServletService {
             try {
                 // check participation vcs access token. For an individual exercise this is the participation behind the
                 // requested repository, which authorization resolves anyway, so it is shared rather than looked up again.
+                // The same holds for a practice repository of a team exercise: it belongs to the student alone, not to the team.
+                Optional<ProgrammingExerciseParticipation> requestedParticipation = resolveQuietly(participationForRepository);
+                boolean practiceRepository = requestedParticipation
+                        .filter(participation -> participation instanceof StudentParticipation studentParticipation && studentParticipation.isPracticeMode()).isPresent();
                 Optional<Long> participationId;
-                if (exercise.isTeamMode()) {
+                if (exercise.isTeamMode() && !practiceRepository) {
                     participationId = programmingExerciseParticipationService.findTeamParticipationByExerciseAndUser(exercise.exerciseId(), user).map(DomainObject::getId);
                 }
                 else {
-                    participationId = resolveQuietly(participationForRepository).map(ProgrammingExerciseParticipation::getId);
+                    participationId = requestedParticipation.map(ProgrammingExerciseParticipation::getId);
                 }
                 if (participationId.isPresent()) {
                     // Only the token itself is compared, so only the token is read.
