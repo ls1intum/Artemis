@@ -36,6 +36,7 @@ import { ExampleSolutionInfo } from 'app/exercise/services/exercise.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { AccountService } from 'app/core/auth/account.service';
+import { TeamPracticeHintComponent } from 'app/course/overview/exercise-details/team-practice-hint/team-practice-hint.component';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Component({
@@ -62,6 +63,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
         ArtemisTranslatePipe,
         DiscussionSectionComponent,
         PanelModule,
+        TeamPracticeHintComponent,
     ],
 })
 export class ExerciseSplitPanelComponent {
@@ -114,6 +116,8 @@ export class ExerciseSplitPanelComponent {
     readonly irisEnabled = input<boolean>(false);
     readonly courseId = input.required<number>();
     readonly gradedStudentParticipation = input<StudentParticipation>();
+    /** The practice participation of the student, which tells the details whether practice can still be started. */
+    readonly practiceParticipation = input<StudentParticipation>();
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
     readonly latestRatedResult = input<Result>();
     readonly resultWithComplaint = input<Result>();
