@@ -111,7 +111,7 @@ test.describe('Date-time picker', { tag: '@fast' }, () => {
         await expect(page.locator('#field_startDate_input-error')).toHaveCount(0);
 
         // 6) The clear (×) button empties the field
-        await picker(page, pickerId).getByRole('button', { name: 'Clear date' }).click();
+        await picker(page, pickerId).getByRole('button', { name: 'Clear', exact: true }).click();
         await expect(input).toHaveValue('');
     });
 
@@ -149,7 +149,7 @@ test.describe('Date-time picker', { tag: '@fast' }, () => {
         // 5) Restoring a valid value and clearing it empties the field
         await fillDateTimePicker(input, typedDate, 'DD.MM.YYYY');
         await expect(input).toHaveValue(typedDate.format('DD.MM.YYYY'));
-        await picker(page, pickerId).getByRole('button', { name: 'Clear date' }).click();
+        await picker(page, pickerId).getByRole('button', { name: 'Clear', exact: true }).click();
         await expect(input).toHaveValue('');
     });
 });
