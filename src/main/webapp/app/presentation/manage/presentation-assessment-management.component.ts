@@ -54,13 +54,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import {
     AssessmentStatusFilter,
     FilterOption,
     PresentationStudentRow,
     PresentationTypeFilter,
     PresentationViewMode,
-    SelectedPresentationStudentRow,
     createPresentationSidebarData,
     hasResultPoints,
 } from 'app/presentation/manage/presentation-assessment-management.helper';
@@ -72,11 +72,16 @@ const PRESENTATION_SIDEBAR_ALWAYS_SHOW = presentationSidebarAlwaysShowRecord as 
 /** Time without typing before the search term is sent to the server. */
 const STUDENT_SEARCH_DEBOUNCE_MS = 300;
 
-function studentRowKey(row: PresentationStudentRow | SelectedPresentationStudentRow): string {
-    return `${row.instance?.id ?? 'new'}:${row.studentLogin}`;
+function studentRowKey(row: PresentationStudentRow): string {
+    return `${row.instance.id}:${row.studentLogin}`;
 }
 
-function decorateStudentRow(row: PresentationStudentRow | SelectedPresentationStudentRow, expandedRows: string[]) {
+function studentDisplayName(row: PresentationStudentRow): string {
+    const fullName = `${row.student.firstName ?? ''} ${row.student.lastName ?? ''}`.trim();
+    return row.student.name || fullName || row.studentLogin;
+}
+
+function decorateStudentRow(row: PresentationStudentRow, expandedRows: string[]) {
     const rowKey = studentRowKey(row);
     return {
         studentLogin: row.studentLogin,
@@ -84,7 +89,8 @@ function decorateStudentRow(row: PresentationStudentRow | SelectedPresentationSt
         presentationAssessment: row.presentationAssessment,
         instance: row.instance,
         rowKey,
-        assessed: hasResultPoints(row.instance?.resultPoints),
+        displayName: studentDisplayName(row),
+        assessed: hasResultPoints(row.instance.resultPoints),
         expanded: expandedRows.includes(rowKey),
     };
 }
@@ -122,6 +128,7 @@ function positiveRouteId(value: string | null): number | undefined {
         TumAetUiTagComponent,
         SidebarComponent,
         DeleteButtonDirective,
+        ProfilePictureComponent,
     ],
 })
 export class PresentationAssessmentManagementComponent implements OnInit {
@@ -476,10 +483,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.overviewPage.set(0);
     }
 
-    toggleStudentRowDetails(row: PresentationStudentRow | SelectedPresentationStudentRow): void {
-        if (!row.instance) {
-            return;
-        }
+    toggleStudentRowDetails(row: PresentationStudentRow): void {
         const key = studentRowKey(row);
         this.expandedStudentRows.update((keys) => (keys.includes(key) ? keys.filter((value) => value !== key) : [...keys, key]));
     }
@@ -571,7 +575,8 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                 },
                 error: (error: HttpErrorResponse) => {
                     if (generation === this.courseContextGeneration) {
-                        this.dialogErrorSource.next(error.message);
+                        // The server already shows its own message for errors that carry an error key, so the dialog only reports other failures.
+                        this.dialogErrorSource.next(isErrorAlert(error) ? '' : error.message);
                     }
                 },
             });

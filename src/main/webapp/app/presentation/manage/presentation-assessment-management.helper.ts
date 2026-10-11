@@ -20,8 +20,6 @@ export interface PresentationStudentRow {
     instance: PresentationAssessmentInstance;
 }
 
-export type SelectedPresentationStudentRow = PresentationStudentRow;
-
 export function createPresentationSidebarData(
     presentationAssessments: PresentationAssessment[],
     courseId: number,

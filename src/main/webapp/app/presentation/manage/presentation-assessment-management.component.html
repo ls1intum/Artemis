@@ -100,27 +100,23 @@
                                                         <button
                                                             type="button"
                                                             class="presentation-student-details-button flex items-center gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--primary)"
-                                                            [disabled]="!row.instance"
-                                                            [attr.aria-expanded]="row.instance ? row.expanded : null"
-                                                            [attr.aria-controls]="row.instance ? 'presentation-detail-' + row.rowKey : null"
+                                                            [attr.aria-expanded]="row.expanded"
+                                                            [attr.aria-controls]="'presentation-detail-' + row.rowKey"
                                                             [attr.aria-label]="
                                                                 (row.expanded ? 'artemisApp.presentationAssessment.hideDetails' : 'artemisApp.presentationAssessment.showDetails')
                                                                     | artemisTranslate
                                                             "
                                                             (click)="toggleStudentRowDetails(row)"
                                                         >
-                                                            <span class="student-avatar rounded-md bg-(--primary)/10 text-(--primary)">{{
-                                                                row.studentLogin.slice(0, 2).toUpperCase()
-                                                            }}</span>
+                                                            <jhi-profile-picture
+                                                                imageSizeInRem="2"
+                                                                fontSizeInRem="0.75"
+                                                                [imageId]="'presentation-student-profile-picture-' + row.rowKey"
+                                                                [defaultPictureId]="'presentation-student-default-picture-' + row.rowKey"
+                                                                [authorName]="row.displayName"
+                                                            />
                                                             <div class="flex flex-col">
-                                                                <strong>
-                                                                    {{
-                                                                        row.student.name ||
-                                                                            (row.student.firstName || row.student.lastName
-                                                                                ? (row.student.firstName ?? '') + ' ' + (row.student.lastName ?? '')
-                                                                                : row.studentLogin)
-                                                                    }}
-                                                                </strong>
+                                                                <strong>{{ row.displayName }}</strong>
                                                                 <small class="text-muted-color">{{ row.student.email || row.studentLogin }}</small>
                                                             </div>
                                                         </button>
@@ -143,8 +139,8 @@
                                                             <span class="text-muted-color">-</span>
                                                         }
                                                     </td>
-                                                    <td>{{ row.instance?.presentationDate ? (row.instance?.presentationDate | artemisDate) : '-' }}</td>
-                                                    <td class="text-muted-color">{{ row.instance?.remark || '-' }}</td>
+                                                    <td>{{ row.instance.presentationDate ? (row.instance.presentationDate | artemisDate) : '-' }}</td>
+                                                    <td class="text-muted-color">{{ row.instance.remark || '-' }}</td>
                                                     <td>
                                                         @if (row.instance; as instance) {
                                                             <div class="flex justify-end gap-2">
@@ -339,11 +335,15 @@
                                                         (click)="toggleStudentRowDetails(row)"
                                                         data-testid="toggle-overview-row-details"
                                                     >
-                                                        <span class="student-avatar rounded-md bg-(--primary)/10 text-(--primary)">{{
-                                                            row.studentLogin.slice(0, 2).toUpperCase()
-                                                        }}</span>
+                                                        <jhi-profile-picture
+                                                            imageSizeInRem="2"
+                                                            fontSizeInRem="0.75"
+                                                            [imageId]="'presentation-overview-profile-picture-' + row.rowKey"
+                                                            [defaultPictureId]="'presentation-overview-default-picture-' + row.rowKey"
+                                                            [authorName]="row.displayName"
+                                                        />
                                                         <div class="flex min-w-0 flex-col">
-                                                            <strong class="truncate">{{ row.student.name || row.studentLogin }}</strong>
+                                                            <strong class="truncate">{{ row.displayName }}</strong>
                                                             <small class="truncate text-muted-color">{{ row.student.email || row.studentLogin }}</small>
                                                         </div>
                                                     </button>

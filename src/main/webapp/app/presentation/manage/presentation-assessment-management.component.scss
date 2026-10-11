@@ -164,17 +164,6 @@
     gap: 1rem 2rem;
 }
 
-.student-avatar {
-    display: inline-flex;
-    width: 2rem;
-    height: 2rem;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    font-size: 0.75rem;
-    font-weight: 400;
-}
-
 @media (max-width: 48rem) {
     .instance-detail-grid {
         grid-template-columns: 1fr;

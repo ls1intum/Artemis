@@ -391,6 +391,26 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.studentRows()[0].assessed).toBe(true);
     });
 
+    it.each([
+        ['the full name', { login: 'ab12cde', name: 'Ada King Lovelace' }, 'Ada King Lovelace', 'AL'],
+        ['the first and last name', { login: 'ab12cde', firstName: 'Grace', lastName: 'Hopper' }, 'Grace Hopper', 'GH'],
+    ])('should show the name and its initials from %s instead of the login', (_description, student, expectedName, expectedInitials) => {
+        presentationAssessmentService.findStudentRows.mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [{ presentationAssessment, instance: { ...instances[0], student } }],
+                    headers: new HttpHeaders({ 'X-Total-Count': '1' }),
+                }),
+            ),
+        );
+        applySearch('ab12cde');
+        fixture.detectChanges();
+
+        const studentButton = query('[data-testid="toggle-overview-row-details"]')!;
+        expect(studentButton.querySelector('strong.truncate')!.textContent!.trim()).toBe(expectedName);
+        expect(query('#presentation-overview-default-picture-11\\:ab12cde')!.textContent!.trim()).toBe(expectedInitials);
+    });
+
     it('should request and display rows for the selected presentation', () => {
         const instance = instances[1];
         presentationAssessmentService.findStudentRows.mockReturnValue(
@@ -924,6 +944,19 @@ describe('PresentationAssessmentManagementComponent', () => {
 
         expect(alertService.addAlert).toHaveBeenCalledTimes(expectedAlerts);
         expect(component.instanceDialogVisible()).toBe(true);
+    });
+
+    it.each([
+        ['should not add a raw message when deleting a presentation fails with a server message', { errorKey: 'concurrentModification' }, ''],
+        ['should report a deletion failure without a server message in the dialog', undefined, 'Http failure response for (unknown url): 409 undefined'],
+    ])('%s', (_description, errorBody, expectedDialogError) => {
+        const dialogErrors: string[] = [];
+        component.dialogError$.subscribe((message) => dialogErrors.push(message));
+        presentationAssessmentService.delete.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409, error: errorBody })));
+
+        component.deletePresentationAssessment(presentationAssessment);
+
+        expect(dialogErrors).toEqual([expectedDialogError]);
     });
 
     it('should keep the instance dialog open when create instance fails', () => {
