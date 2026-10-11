@@ -326,7 +326,7 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
         irisRequestMockProvider.mockAutonomousTutorResponse(dto -> pipelineCalled.set(true));
 
         // Trigger via the messaging service (async) - this tests the wiring
-        conversationMessagingService.notifyAboutMessageCreation(new CreatedConversationMessage(post, channel, Set.of()));
+        conversationMessagingService.notifyAboutMessageCreation(new CreatedConversationMessage(post, channel, Set.of(), false));
 
         await().atMost(Duration.ofSeconds(5)).until(pipelineCalled::get);
     }
