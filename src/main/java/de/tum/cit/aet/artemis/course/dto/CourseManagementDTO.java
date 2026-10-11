@@ -100,6 +100,21 @@ public record CourseManagementDTO(long id, String title, String shortName, @Null
      * @return the course management response
      */
     public static CourseManagementDTO of(Course course, @Nullable OnlineCourseConfiguration onlineConfiguration, @Nullable TutorialGroupsConfiguration tutorialConfiguration) {
+        return of(course, onlineConfiguration, tutorialConfiguration, course.getPresentationAssessmentsEnabled());
+    }
+
+    /**
+     * Maps a course like {@link #of(Course, OnlineCourseConfiguration, TutorialGroupsConfiguration)}, but with the presentation assessment switch read
+     * separately, for course staff that works with presentation assessments without seeing the rest of the course configuration.
+     *
+     * @param course                         the authorized course to map
+     * @param onlineConfiguration            the online course configuration, or null when the course has none or the user may not see it
+     * @param tutorialConfiguration          the tutorial groups configuration, or null when the course has none or the user may not see it
+     * @param presentationAssessmentsEnabled whether presentation assessments are enabled in the course
+     * @return the course management response
+     */
+    public static CourseManagementDTO of(Course course, @Nullable OnlineCourseConfiguration onlineConfiguration, @Nullable TutorialGroupsConfiguration tutorialConfiguration,
+            boolean presentationAssessmentsEnabled) {
         CourseConfiguration configuration = course.getCourseConfiguration();
         return new CourseManagementDTO(course.getId(), course.getTitle(), course.getShortName(), course.getDescription(), course.getSemester(), course.getStartDate(),
                 course.getEndDate(), course.getEnrollmentStartDate(), course.getEnrollmentEndDate(), course.getUnenrollmentEndDate(), course.isTestCourse(), course.getLanguage(),
@@ -109,8 +124,8 @@ public record CourseManagementDTO(long id, String title, String shortName, @Null
                 course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(), course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(),
                 course.getMaxComplaintResponseTextLimit(), course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getComplaintsEnabled(),
                 course.getRequestMoreFeedbackEnabled(), course.isAthenaGradingFeedbackEnabled(), course.isAthenaFormativeFeedbackEnabled(), course.getLearningPathsEnabled(),
-                course.getPresentationAssessmentsEnabled(), course.isTrainingEnabled(), course.getNumberOfStudents(), course.getNumberOfTeachingAssistants(),
-                course.getNumberOfEditors(), course.getNumberOfInstructors(), onlineConfiguration != null ? OnlineCourseConfigurationResponseDTO.of(onlineConfiguration) : null,
+                presentationAssessmentsEnabled, course.isTrainingEnabled(), course.getNumberOfStudents(), course.getNumberOfTeachingAssistants(), course.getNumberOfEditors(),
+                course.getNumberOfInstructors(), onlineConfiguration != null ? OnlineCourseConfigurationResponseDTO.of(onlineConfiguration) : null,
                 tutorialConfiguration != null ? TutorialGroupsConfigurationResponseDTO.of(tutorialConfiguration) : null,
                 configuration == null ? null : CourseConfigurationResponseDTO.of(configuration));
     }

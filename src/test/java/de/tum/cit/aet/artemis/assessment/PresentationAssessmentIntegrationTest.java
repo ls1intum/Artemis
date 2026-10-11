@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -587,6 +588,34 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         setPresentationAssessmentsEnabled(course, false);
 
         request.getList(getBaseUrl(course), HttpStatus.FORBIDDEN, PresentationAssessmentDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getCourse_asTutor_shouldTellThatPresentationAssessmentsAreEnabled() throws Exception {
+        CourseManagementDTO loadedCourse = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+
+        assertThat(loadedCourse.presentationAssessmentsEnabled()).isTrue();
+        assertThat(loadedCourse.courseConfiguration()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void getCourse_asEditor_shouldTellThatPresentationAssessmentsAreEnabled() throws Exception {
+        CourseManagementDTO loadedCourse = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+
+        assertThat(loadedCourse.presentationAssessmentsEnabled()).isTrue();
+        assertThat(loadedCourse.courseConfiguration()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getCourse_asTutor_shouldTellThatPresentationAssessmentsAreDisabled() throws Exception {
+        setPresentationAssessmentsEnabled(course, false);
+
+        CourseManagementDTO loadedCourse = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+
+        assertThat(loadedCourse.presentationAssessmentsEnabled()).isFalse();
     }
 
     private void setPresentationAssessmentsEnabled(Course course, boolean enabled) {
