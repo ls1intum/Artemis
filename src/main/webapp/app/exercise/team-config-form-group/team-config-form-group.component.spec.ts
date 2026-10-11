@@ -90,6 +90,23 @@ describe('Team Config Form Group Component', () => {
         expect(exercise.teamAssignmentConfig).not.toBe(teamAssignmentConfig);
     });
 
+    it('should hand the exercise back after every change it writes onto it, so that the host notices', () => {
+        component.ngOnInit();
+        const emitted: Exercise[] = [];
+        component.exerciseChange.subscribe((changed) => emitted.push(changed));
+
+        component.onExerciseModeChange(ExerciseMode.TEAM);
+        component.updateMinTeamSize(3);
+        component.updateMaxTeamSize(4);
+        component.onExerciseModeChange(ExerciseMode.INDIVIDUAL);
+
+        // The same object every time: the host's exercise is edited in place, not replaced.
+        expect(emitted).toHaveLength(4);
+        expect(emitted.every((changed) => changed === exercise)).toBe(true);
+        expect(exercise.mode).toBe(ExerciseMode.INDIVIDUAL);
+        expect(exercise.teamAssignmentConfig).toBeUndefined();
+    });
+
     it('should not change maxTeamSize if the new value for minTeamSize is lower', () => {
         component.config = teamAssignmentConfig;
         component.config.minTeamSize = 2;
