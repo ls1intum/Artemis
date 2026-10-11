@@ -26,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.ResourceUtils;
@@ -74,8 +73,6 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     @BeforeEach
     void initTestCase() {
         irisRequestMockProvider.enableMockingOfRequests();
-        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
-        }, ExpectedCount.manyTimes());
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.lecture1 = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);

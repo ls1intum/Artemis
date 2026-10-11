@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -109,7 +111,8 @@ public class PyrisWebhookService {
             // Only a stored PDF is page content; any other attachment (no file, an external link, another file type) is sent like a unit without one, so a
             // video next to it is still ingested instead of the whole unit failing preparation on every claim.
             base64EncodedPdf = PyrisLectureUnitEligibility.hasPdf(attachmentVideoUnit) ? attachmentToBase64(attachmentVideoUnit) : "";
-            lectureUnitLink = attachmentVideoUnit.getAttachment().getLink() != null ? artemisBaseUrl + "/" + attachmentVideoUnit.getAttachment().getLink() : "";
+            lectureUnitLink = attachmentVideoUnit.getAttachment().getLink() != null ? artemisBaseUrl + ARTEMIS_FILE_PATH_PREFIX + attachmentVideoUnit.getAttachment().getLink()
+                    : "";
         }
         else {
             base64EncodedPdf = "";
@@ -123,6 +126,11 @@ public class PyrisWebhookService {
         // Resolve TUM Live watch page URLs to HLS playlist URLs for Iris/FFmpeg, and tag video source type.
         // If the type is null (unsupported source), pass null URL so Pyris doesn't try to process it.
         ResolvedVideo resolved = resolveVideoUrl(attachmentVideoUnit.getVideoSource());
+        if (resolved.type() == null && videoSourceResolver.isSupportedSource(attachmentVideoUnit.getVideoSource())) {
+            // A supported source that cannot be resolved right now (TUM Live unreachable) is not a unit without a video: sent without one, Iris would
+            // delete the unit's transcript. Failing the preparation retries it later instead.
+            throw new IrisInternalPyrisErrorException("The video of lecture unit " + attachmentVideoUnit.getId() + " cannot be resolved right now, retrying later");
+        }
         String videoUrl = resolved.type() != null ? resolved.url() : null;
 
         if (lectureTranscription.isPresent()) {
@@ -182,31 +190,16 @@ public class PyrisWebhookService {
     }
 
     /**
-     * adds the lectures to the vector database in Pyris
-     *
-     * @param attachmentVideoUnit The attachmentVideoUnit that got Updated
-     * @param contentFingerprint  fingerprint of the unit's source content; stamped verbatim into the vector store by Pyris
-     * @param forceReingest       true for quality re-ingestions: Iris bypasses its structural skip checks so unchanged content is genuinely re-processed
-     * @return jobToken if the job was created else null
-     */
-    public String addLectureUnitToPyrisDB(AttachmentVideoUnit attachmentVideoUnit, String contentFingerprint, boolean forceReingest) {
-        if (isLectureUnitProcessableForPyris(attachmentVideoUnit)) {
-            return executeLectureAdditionWebhook(processAttachmentVideoUnitForUpdate(attachmentVideoUnit, contentFingerprint, forceReingest),
-                    attachmentVideoUnit.getLecture().getCourse());
-        }
-        return null;
-    }
-
-    /**
-     * Whether an ingestion request for this unit would actually be dispatched: Iris is enabled for the
+     * Whether an ingestion job for this unit would actually be prepared: Iris is enabled for the
      * course and the unit's content is eligible. The reconciler uses this to decide whether a SKIPPED
      * unit is worth requeueing after the course's Iris settings changed.
      *
      * @param attachmentVideoUnit the unit to check
-     * @return true if {@link #addLectureUnitToPyrisDB} would dispatch this unit
+     * @return true if {@link #prepareLectureUnitIngestion} would prepare a job for this unit
      */
     public boolean isLectureUnitProcessableForPyris(AttachmentVideoUnit attachmentVideoUnit) {
-        return irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse()) && PyrisLectureUnitEligibility.isProcessable(attachmentVideoUnit);
+        return irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse())
+                && PyrisLectureUnitEligibility.isProcessable(attachmentVideoUnit, videoSourceResolver);
     }
 
     /**
@@ -242,22 +235,8 @@ public class PyrisWebhookService {
     }
 
     /**
-     * executes executeLectureAdditionWebhook add lecture from to the vector database on pyris
-     *
-     * @param toUpdateAttachmentVideoUnit The attachmentVideoUnit that are going to be updated
-     * @param course                      The course of the attachment video unit
-     * @return jobToken if the job was created
-     */
-    private String executeLectureAdditionWebhook(PyrisLectureUnitWebhookDTO toUpdateAttachmentVideoUnit, Course course) {
-        PyrisPreparedLectureIngestionJobDTO prepared = prepareLectureAdditionJob(toUpdateAttachmentVideoUnit, course);
-        pyrisConnectorService.executeLectureAdditionWebhook(prepared.executionDTO());
-        return prepared.jobToken();
-    }
-
-    /**
-     * Prepare a lecture ingestion job without delivering it: register the job token and assemble the
-     * execution payload. The pull-based worker claim returns this payload to Pyris directly instead
-     * of POSTing it, so both transports run byte-identical jobs.
+     * Prepare a lecture ingestion job for a pulling Pyris worker: register the job token and assemble the
+     * execution payload, which the worker claim returns to Pyris.
      *
      * @param attachmentVideoUnit the attachment video unit to ingest
      * @param contentFingerprint  fingerprint of the unit's source content, stamped into the vector store
