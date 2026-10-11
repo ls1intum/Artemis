@@ -90,6 +90,10 @@ export class CourseNotificationService implements OnDestroy {
 
     // Parameter keys that should be rendered as markdown
     public static readonly NOTIFICATION_MARKDOWN_PARAMETERS = ['postMarkdownContent', 'replyMarkdownContent'];
+
+    // Parameter key of the message an editor wrote for students. It is plain text, so it is rendered literally and never
+    // as markup, and a notification carrying it is shown with the `contentWithNotificationText` translation of its type.
+    public static readonly NOTIFICATION_TEXT_PARAMETER = 'notificationText';
     private http = inject(HttpClient);
     private readonly accountService = inject(AccountService);
 
