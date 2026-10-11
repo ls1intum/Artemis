@@ -13,7 +13,7 @@
     <jhi-form-status-bar [formStatusSections]="formSectionStatus()" />
     <div>
         <h3 jhiTranslate="artemisApp.exercise.sections.general" id="artemisApp.exercise.sections.general"></h3>
-        <jhi-exercise-title-channel-name [exercise]="textExercise" [course]="textExercise.course" [minTitleLength]="3" [isImport]="isImport()" [isExamMode]="isExamMode()" />
+        <jhi-exercise-title-channel-name [(exercise)]="textExercise" [course]="textExercise.course" [minTitleLength]="3" [isImport]="isImport()" [isExamMode]="isExamMode()" />
         @if (!isExamMode()) {
             <div class="form-group position-relative">
                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
@@ -29,7 +29,7 @@
                 <jhi-difficulty-picker [exercise]="textExercise" />
             </div>
         </div>
-        <jhi-team-config-form-group #teamConfigFormGroup class="form-element" [exercise]="textExercise" [isImport]="isImport()" />
+        <jhi-team-config-form-group class="form-element" [(exercise)]="textExercise" [isImport]="isImport()" />
         <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem"></h3>
         <div class="form-group">
@@ -38,8 +38,8 @@
                 id="problemStatement"
                 class="markdown-editor"
                 [domainActions]="domainActionsProblemStatement"
-                [(markdown)]="textExercise.problemStatement"
-                (markdownChange)="calculateFormSectionStatus()"
+                [markdown]="textExercise.problemStatement"
+                (markdownChange)="exerciseState.patch('problemStatement', $event)"
             />
         </div>
         @if (!isExamMode()) {
@@ -49,7 +49,8 @@
                     [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                     [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
                     [exerciseDescription]="textExercise.problemStatement || textExercise.title"
-                    [(ngModel)]="textExercise.competencyLinks"
+                    [ngModel]="textExercise.competencyLinks"
+                    (ngModelChange)="exerciseState.patch('competencyLinks', $event)"
                     name="competencyLinks"
                 />
             </div>
@@ -62,8 +63,8 @@
                 id="exampleSolution"
                 class="markdown-editor"
                 [domainActions]="domainActionsExampleSolution"
-                [(markdown)]="textExercise.exampleSolution"
-                (markdownChange)="calculateFormSectionStatus()"
+                [markdown]="textExercise.exampleSolution"
+                (markdownChange)="exerciseState.patch('exampleSolution', $event)"
             />
         </div>
         <hr class="mb-5" />
@@ -72,11 +73,16 @@
             @if (!isExamMode()) {
                 <jhi-exercise-timeline
                     class="exercise-timeline"
-                    [(releaseDate)]="textExercise.releaseDate"
-                    [(startDate)]="textExercise.startDate"
-                    [(dueDate)]="textExercise.dueDate"
-                    [(assessmentDueDate)]="textExercise.assessmentDueDate"
-                    [(exampleSolutionPublicationDate)]="textExercise.exampleSolutionPublicationDate"
+                    [releaseDate]="textExercise.releaseDate"
+                    (releaseDateChange)="exerciseState.patch('releaseDate', $event)"
+                    [startDate]="textExercise.startDate"
+                    (startDateChange)="exerciseState.patch('startDate', $event)"
+                    [dueDate]="textExercise.dueDate"
+                    (dueDateChange)="exerciseState.patch('dueDate', $event)"
+                    [assessmentDueDate]="textExercise.assessmentDueDate"
+                    (assessmentDueDateChange)="exerciseState.patch('assessmentDueDate', $event)"
+                    [exampleSolutionPublicationDate]="textExercise.exampleSolutionPublicationDate"
+                    (exampleSolutionPublicationDateChange)="exerciseState.patch('exampleSolutionPublicationDate', $event)"
                     [exampleSolutionPublicationDateErrorStringKey]="
                         textExercise.exampleSolutionPublicationDate && !textExercise.exampleSolution
                             ? 'artemisApp.exercise.exampleSolutionPublicationDateRequiresExampleSolution'
@@ -95,8 +101,8 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ textExercise.course ? 'Course' : 'Exam' }}Label"></label>
                     <div>
                         <jhi-included-in-overall-score-picker
-                            [(includedInOverallScore)]="textExercise.includedInOverallScore"
-                            (includedInOverallScoreChange)="validateDate()"
+                            [includedInOverallScore]="textExercise.includedInOverallScore"
+                            (includedInOverallScoreChange)="exerciseState.patch('includedInOverallScore', $event)"
                             [allowNotIncluded]="!isExamMode()"
                         />
                     </div>
@@ -114,7 +120,8 @@
                             name="points"
                             #points="ngModel"
                             id="field_points"
-                            [(ngModel)]="textExercise.maxPoints"
+                            [ngModel]="textExercise.maxPoints"
+                            (ngModelChange)="exerciseState.patch('maxPoints', $event)"
                         />
                         @if (points?.invalid && (points?.dirty || points?.touched) && points?.errors) {
                             <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.pointsError"></div>
@@ -138,7 +145,8 @@
                                 max="9999"
                                 name="bonusPoints"
                                 id="field_bonusPoints"
-                                [(ngModel)]="textExercise.bonusPoints"
+                                [ngModel]="textExercise.bonusPoints"
+                                (ngModelChange)="exerciseState.patch('bonusPoints', $event)"
                                 #bonusPoints="ngModel"
                             />
                             @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
@@ -149,7 +157,7 @@
                 </div>
                 @if (!isExamMode()) {
                     <jhi-feature-overlay [enabled]="isPlagiarismEnabled()" placement="right">
-                        <jhi-exercise-update-plagiarism [(exercise)]="textExercise" />
+                        <jhi-exercise-update-plagiarism [exercise]="textExercise" />
                     </jhi-feature-overlay>
                 }
                 <jhi-presentation-score-checkbox [exercise]="textExercise" />
@@ -171,7 +179,7 @@
         [isImport]="isImport()"
         [isSaving]="isSaving()"
         [isDisabled]="!!(editForm.form.invalid || !timelineStatus().valid)"
-        [invalidReasons]="getInvalidReasons()"
+        [invalidReasons]="invalidReasons()"
         (onCancel)="previousState()"
         (save)="save()"
         [(notificationText)]="notificationText"

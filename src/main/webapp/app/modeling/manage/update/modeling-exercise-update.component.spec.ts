@@ -26,8 +26,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
-import { Component, input, model, output, signal, viewChild } from '@angular/core';
-import { FormsModule, NgModel, ValidationErrors } from '@angular/forms';
+import { Component, forwardRef, input, model, output, signal, viewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -35,6 +35,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseGroupTimelineLockStubComponent } from 'test/helpers/stubs/exercise/exercise-group-timeline-lock-stub.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
+import { ExerciseTitleChannelNamePrimengComponent } from 'app/exercise/exercise-title-channel-name-primeng/exercise-title-channel-name-primeng.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
@@ -65,21 +66,16 @@ global.ResizeObserver = MockResizeObserverClass as unknown as typeof ResizeObser
 @Component({ selector: 'jhi-title-channel-name', template: '' })
 class StubTitleChannelNameComponent {
     isValid = signal(true);
+    isChannelFieldDisplayed = signal(true);
+    isTitleDisallowed = signal(false);
 }
 
-class MockTitleChannelNameComponent {
-    channelFieldDisplayed = true;
-    isChannelFieldDisplayed = () => this.channelFieldDisplayed;
-    titleErrors: ValidationErrors | undefined = undefined;
-    get field_title(): NgModel {
-        return { control: { errors: this.titleErrors } } as NgModel;
-    }
-}
-
+// Provided under the real class, so that the host's viewChild(ExerciseTitleChannelNamePrimengComponent) finds it.
 @Component({
     selector: 'jhi-exercise-title-channel-name-primeng',
     template: '<jhi-title-channel-name />',
     imports: [StubTitleChannelNameComponent],
+    providers: [{ provide: ExerciseTitleChannelNamePrimengComponent, useExisting: forwardRef(() => StubExerciseTitleChannelNamePrimengComponent) }],
 })
 class StubExerciseTitleChannelNamePrimengComponent {
     exercise = input<ModelingExercise>();
@@ -93,6 +89,7 @@ class StubExerciseTitleChannelNamePrimengComponent {
     courseId = input<number>();
     onTitleChange = output<string>();
     onChannelNameChange = output<string>();
+    exerciseChange = output<ModelingExercise>();
     readonly titleChannelNameComponent = viewChild.required(StubTitleChannelNameComponent);
 }
 
@@ -471,9 +468,9 @@ describe('ModelingExerciseUpdateComponent', () => {
         expect(timeline.exampleSolutionPublicationDate()).toBe(modelingExercise.exampleSolutionPublicationDate);
         expect(timeline.exampleSolutionPublicationDateErrorStringKey()).toBe('artemisApp.exercise.exampleSolutionPublicationDateRequiresExampleSolution');
 
-        modelingExercise.exampleSolutionExplanation = 'Example solution explanation';
-        await comp.calculateFormSectionStatus();
+        fixture.debugElement.query(By.directive(StubModelingMarkdownExplanationEditorComponent)).triggerEventHandler('markdownChange', 'Example solution explanation');
         fixture.detectChanges();
+        expect(modelingExercise.exampleSolutionExplanation).toBe('Example solution explanation');
         expect(timeline.exampleSolutionPublicationDateErrorStringKey()).toBeUndefined();
     });
 
@@ -566,13 +563,15 @@ describe('ModelingExerciseUpdateComponent', () => {
             });
 
             it('should synchronize live diagram changes for assessment criteria context', () => {
-                const changedModel = { elements: { changed: true }, relationships: {}, version: '3.0.0' } as unknown as UMLModel;
-                const statusSpy = vi.spyOn(comp, 'calculateFormSectionStatus');
+                const changedModel = { nodes: [{ id: 'class' }], edges: [], version: '4.0.0' } as unknown as UMLModel;
+                comp.exerciseState.patch('exampleSolutionExplanation', 'Explained');
+                const solutionSection = () => comp.formSectionStatus().find((section) => section.title === 'artemisApp.exercise.sections.solution');
+                expect(solutionSection()?.empty).toBe(true);
 
                 comp.onModelChanged(changedModel);
 
                 expect(comp.modelingExercise.exampleSolutionModel).toBe(JSON.stringify(changedModel));
-                expect(statusSpy).toHaveBeenCalled();
+                expect(solutionSection()?.empty).toBe(false);
             });
 
             it('should provide all modeling-specific assessment criteria context', () => {
@@ -776,18 +775,6 @@ describe('ModelingExerciseUpdateComponent', () => {
         expect(comp.modelingExercise.categories).toEqual(newCategories);
     });
 
-    it('should call exercise service to validate date', async () => {
-        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
-        comp = fixture.componentInstance;
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        vi.spyOn(exerciseService, 'validateDate');
-        comp.validateDate();
-
-        expect(exerciseService.validateDate).toHaveBeenCalledWith(comp.modelingExercise);
-    });
-
     it('should navigate back from the exercise update form', async () => {
         fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
         comp = fixture.componentInstance;
@@ -812,20 +799,6 @@ describe('ModelingExerciseUpdateComponent', () => {
 
         expect(comp.modelingExercise.categories).toEqual(newCategories);
         expect(comp.exerciseCategories()).toEqual(newCategories);
-    });
-
-    it('should properly clean up subscriptions on destroy', async () => {
-        vi.spyOn(console, 'error').mockImplementation(() => {});
-
-        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
-        comp = fixture.componentInstance;
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        comp.ngOnDestroy();
-
-        expect(comp.bonusPointsSubscription?.closed ?? true).toBe(true);
-        expect(comp.pointsSubscription?.closed ?? true).toBe(true);
     });
 
     describe('handleEnterKeyNavigation', () => {
@@ -884,11 +857,11 @@ describe('ModelingExerciseUpdateComponent', () => {
         });
     });
 
-    describe('getInvalidReasons', () => {
+    describe('invalidReasons', () => {
         let course: Course;
-        let titleChannelNameComponentMock: MockTitleChannelNameComponent;
+        let titleChannelName: StubTitleChannelNameComponent;
 
-        const filledInExercise = (title: string) => {
+        const filledInExercise = (title = 'Valid title') => {
             const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             exercise.title = title;
             exercise.channelName = 'valid-title';
@@ -898,92 +871,214 @@ describe('ModelingExerciseUpdateComponent', () => {
             exercise.bonusPoints = 0;
             return exercise;
         };
+        const reasonKeys = () => comp.invalidReasons().map((reason) => reason.translateKey);
+        const sectionOf = (title: string) => comp.formSectionStatus().find((section) => section.title === `artemisApp.exercise.sections.${title}`);
 
-        beforeEach(async () => {
-            course = createCourse();
-            const modelingExercise = createModelingExercise(course);
-
-            routeData$.next({ modelingExercise });
+        async function render(exercise: ModelingExercise) {
+            routeData$.next({ modelingExercise: exercise });
             routeUrl$.next([{ path: 'new' }] as UrlSegment[]);
-
             fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
             comp = fixture.componentInstance;
             fixture.detectChanges();
             await fixture.whenStable();
-
-            titleChannelNameComponentMock = new MockTitleChannelNameComponent();
-            (comp as unknown as { exerciseTitleChannelNameComponent: unknown }).exerciseTitleChannelNameComponent = () => ({
-                titleChannelNameComponent: () => titleChannelNameComponentMock,
-            });
-        });
-
-        it('should report the mandatory fields of an untouched creation form', () => {
-            comp.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-            comp.isExamMode.set(false);
-
-            const translateKeys = comp.getInvalidReasons().map((reason) => reason.translateKey);
-
-            expect(translateKeys).toContain('artemisApp.exercise.form.title.undefined');
-            expect(translateKeys).toContain('artemisApp.exercise.form.points.undefined');
-        });
-
-        it('should report a title shorter than the minimum length', () => {
-            comp.modelingExercise = filledInExercise('ab');
-            comp.isExamMode.set(false);
+            titleChannelName = fixture.debugElement.query(By.directive(StubTitleChannelNameComponent)).componentInstance;
             comp.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            // Read once, so that every later read has to be invalidated by the change under test rather than computed fresh.
+            fixture.detectChanges();
+            comp.invalidReasons();
+            comp.formSectionStatus();
+        }
 
-            const translateKeys = comp.getInvalidReasons().map((reason) => reason.translateKey);
+        async function typeInto(selector: string, value: string) {
+            const input: HTMLInputElement = fixture.debugElement.query(By.css(selector)).nativeElement;
+            input.value = value;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+        }
 
-            expect(translateKeys).toContain('artemisApp.exercise.form.title.minlength');
+        /** Switches the score mode the way the picker does: it emits the new mode. */
+        async function switchScoreMode(mode: IncludedInOverallScore): Promise<void> {
+            fixture.debugElement.query(By.directive(IncludedInOverallScorePickerComponent)).componentInstance.includedInOverallScoreChange.emit(mode);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        }
+
+        beforeEach(() => {
+            course = createCourse();
         });
 
-        it('should forward the timeline reasons', () => {
-            comp.modelingExercise = filledInExercise('Valid title');
-            comp.isExamMode.set(false);
+        it('should report the mandatory fields of an untouched creation form', async () => {
+            await render(new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined));
+
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.undefined');
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.points.undefined');
+        });
+
+        it('should report a title shorter than the minimum length', async () => {
+            await render(filledInExercise('ab'));
+
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.minlength');
+        });
+
+        it('should forward the timeline reasons', async () => {
+            await render(filledInExercise());
             comp.timelineStatus.set({
                 valid: false,
                 empty: true,
                 invalidItems: [{ labelStringKey: 'artemisApp.exercise.dueDate', reasonKey: 'artemisApp.exercise.form.timeline.required', dateName: 'Due Date' }],
             });
 
-            expect(comp.getInvalidReasons()).toEqual([{ translateKey: 'artemisApp.exercise.form.timeline.required', translateValues: { dateName: 'Due Date' } }]);
+            expect(comp.invalidReasons()).toEqual([{ translateKey: 'artemisApp.exercise.form.timeline.required', translateValues: { dateName: 'Due Date' } }]);
         });
 
-        it('should report a disallowed title', () => {
-            comp.modelingExercise = filledInExercise('Valid title');
-            comp.isExamMode.set(false);
-            comp.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
-            titleChannelNameComponentMock.titleErrors = { disallowedValue: true };
+        it('should follow the title field when it reports a title as already used', async () => {
+            await render(filledInExercise());
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.form.title.disallowedValue');
 
-            const translateKeys = comp.getInvalidReasons().map((reason) => reason.translateKey);
+            titleChannelName.isTitleDisallowed.set(true);
 
-            expect(translateKeys).toContain('artemisApp.exercise.form.title.disallowedValue');
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.disallowedValue');
+            expect(sectionOf('general')?.valid).toBe(false);
         });
 
-        it('should require a channel name when the channel field is displayed', () => {
-            const exercise = filledInExercise('Valid title');
+        it('should require a channel name only while the channel field is displayed', async () => {
+            const exercise = filledInExercise();
             exercise.channelName = undefined;
-            comp.modelingExercise = exercise;
-            comp.isExamMode.set(false);
-            comp.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
-            titleChannelNameComponentMock.channelFieldDisplayed = true;
+            await render(exercise);
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.channelName.empty');
 
-            const translateKeys = comp.getInvalidReasons().map((reason) => reason.translateKey);
+            titleChannelName.isChannelFieldDisplayed.set(false);
 
-            expect(translateKeys).toContain('artemisApp.exercise.form.channelName.empty');
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.form.channelName.empty');
         });
 
-        it('should not require a channel name when the channel field is hidden', () => {
-            const exercise = filledInExercise('Valid title');
-            exercise.channelName = undefined;
-            comp.modelingExercise = exercise;
-            comp.isExamMode.set(false);
-            comp.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
-            titleChannelNameComponentMock.channelFieldDisplayed = false;
+        // The bug class a computed() can introduce: a reason that stays after the user fixed the field, or does not come back.
+        it('should drop the points reason once points are typed and bring it back when they are cleared', async () => {
+            const exercise = filledInExercise();
+            exercise.maxPoints = undefined;
+            await render(exercise);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.points.undefined']);
+            expect(sectionOf('grading')?.valid).toBe(false);
 
-            const translateKeys = comp.getInvalidReasons().map((reason) => reason.translateKey);
+            await typeInto('#field_points', '10');
+            expect(comp.invalidReasons()).toEqual([]);
+            expect(sectionOf('grading')?.valid).toBe(true);
 
-            expect(translateKeys).not.toContain('artemisApp.exercise.form.channelName.empty');
+            await typeInto('#field_points', '');
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.points.undefined']);
+            expect(sectionOf('grading')?.valid).toBe(false);
+        });
+
+        it('should take the verdict on the bonus points with the field when the score mode changes', async () => {
+            await render(filledInExercise());
+            await typeInto('#field_bonusPoints', '-1');
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.bonusPoints.customMin']);
+            expect(sectionOf('grading')?.valid).toBe(false);
+
+            // The field goes with the score mode, and so does what it said: the grading section used to stay invalid here.
+            await switchScoreMode(IncludedInOverallScore.NOT_INCLUDED);
+            expect(fixture.debugElement.query(By.css('#field_bonusPoints'))).toBeNull();
+            expect(comp.invalidReasons()).toEqual([]);
+            expect(sectionOf('grading')?.valid).toBe(true);
+
+            // Back again, the value it still holds is out of range, which the grading section used to call valid.
+            await switchScoreMode(IncludedInOverallScore.INCLUDED_COMPLETELY);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.bonusPoints.customMin']);
+            expect(sectionOf('grading')?.valid).toBe(false);
+        });
+
+        it('should follow the team config component when it changes the mode and the team size', async () => {
+            await render(filledInExercise());
+            const teamConfig = fixture.debugElement.query(By.directive(TeamConfigFormGroupComponent)).componentInstance as TeamConfigFormGroupComponent;
+            const exercise = comp.modelingExercise;
+
+            exercise.mode = ExerciseMode.TEAM;
+            exercise.teamAssignmentConfig = undefined;
+            teamConfig.exerciseChange.emit(exercise);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.minTeamSize.required', 'artemisApp.exercise.form.maxTeamSize.required']);
+            expect(sectionOf('mode')?.valid).toBe(false);
+
+            exercise.mode = ExerciseMode.INDIVIDUAL;
+            teamConfig.exerciseChange.emit(exercise);
+            expect(comp.invalidReasons()).toEqual([]);
+            expect(sectionOf('mode')?.valid).toBe(true);
+        });
+
+        it('should follow the title component when it writes a new title', async () => {
+            await render(filledInExercise());
+            const titleComponent: StubExerciseTitleChannelNamePrimengComponent = fixture.debugElement.query(
+                By.directive(StubExerciseTitleChannelNamePrimengComponent),
+            ).componentInstance;
+
+            comp.modelingExercise.title = 'ab';
+            titleComponent.exerciseChange.emit(comp.modelingExercise);
+
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.title.minlength']);
+            expect(sectionOf('general')?.valid).toBe(false);
+        });
+
+        it('should report an example solution publication date before the due date, and stop once it is moved', async () => {
+            await render(filledInExercise());
+            const timeline: ExerciseTimelineComponent = fixture.debugElement.query(By.directive(ExerciseTimelineComponent)).componentInstance;
+            const dueDate = dayjs().add(2, 'days');
+
+            timeline.dueDate.set(dueDate);
+            timeline.exampleSolutionPublicationDate.set(dueDate.subtract(1, 'day'));
+            expect(reasonKeys()).toContain('artemisApp.exercise.exampleSolutionPublicationDateError');
+
+            timeline.exampleSolutionPublicationDate.set(dueDate.add(1, 'day'));
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.exampleSolutionPublicationDateError');
+        });
+
+        it('should mark the problem and solution sections empty until they are written', async () => {
+            await render(filledInExercise());
+            expect(sectionOf('problem')?.empty).toBe(true);
+            expect(sectionOf('solution')?.empty).toBe(true);
+
+            fixture.debugElement.query(By.directive(StubMarkdownEditorMonacoComponent)).triggerEventHandler('markdownChange', 'A problem');
+            fixture.debugElement.query(By.directive(StubModelingMarkdownExplanationEditorComponent)).triggerEventHandler('markdownChange', 'An explanation');
+            expect(sectionOf('problem')?.empty).toBe(false);
+            // The explanation alone does not make a solution; the diagram is missing.
+            expect(sectionOf('solution')?.empty).toBe(true);
+
+            fixture.debugElement
+                .query(By.directive(StubModelingEditorComponent))
+                .triggerEventHandler('onModelChanged', { nodes: [{ id: 'class' }], edges: [], version: '4.0.0' } as unknown as UMLModel);
+            expect(sectionOf('solution')?.empty).toBe(false);
+        });
+
+        it('should forget the drawn example solution when the diagram type changes', async () => {
+            const exercise = filledInExercise();
+            exercise.exampleSolutionExplanation = 'An explanation';
+            await render(exercise);
+            fixture.debugElement
+                .query(By.directive(StubModelingEditorComponent))
+                .triggerEventHandler('onModelChanged', { nodes: [{ id: 'class' }], edges: [], version: '4.0.0' } as unknown as UMLModel);
+            expect(sectionOf('solution')?.empty).toBe(false);
+
+            // The model is empty as far as the editor stub reports it, so the type changes without a confirmation.
+            selectDiagramTypeOption(1);
+
+            expect(comp.modelingExercise.diagramType).toBe(UMLDiagramType.ActivityDiagram);
+            expect(sectionOf('solution')?.empty).toBe(true);
+        });
+
+        it('should edit the exercise in place, so that the child components keep the object they were given', async () => {
+            const exercise = filledInExercise();
+            await render(exercise);
+            const titleComponent: StubExerciseTitleChannelNamePrimengComponent = fixture.debugElement.query(
+                By.directive(StubExerciseTitleChannelNamePrimengComponent),
+            ).componentInstance;
+
+            await typeInto('#field_points', '7');
+            selectDiagramTypeOption(1);
+
+            expect(comp.modelingExercise).toBe(exercise);
+            expect(titleComponent.exercise()).toBe(exercise);
+            expect(exercise.maxPoints).toBe(7);
+            expect(exercise.diagramType).toBe(UMLDiagramType.ActivityDiagram);
         });
     });
 });
