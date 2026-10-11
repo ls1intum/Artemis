@@ -18,9 +18,10 @@ is not pinned this way, so you can run it locally before pushing a workflow chan
 PyYAML, `pip install pyyaml`). The checker accepts three kinds of reference: an action or a
 remote reusable workflow pinned to a commit SHA with its version comment, a local path such as
 `./.github/actions/e2e-setup` or `./.github/workflows/ci-build.yml`, and a Docker image pinned by
-its `sha256` digest (`docker://image@sha256:...`). It parses the files as YAML, so it finds a
-`uses` entry however it is written, ignores text in comments and `run:` scripts, and reports a
-file that is not valid YAML instead of skipping it.
+its `sha256` digest (`docker://image@sha256:...`). It parses the files as YAML and checks the
+`uses` of jobs and steps, so it finds an entry however it is written, ignores text in comments and
+`run:` scripts as well as ordinary keys such as `env.uses`, and reports a file that is not valid
+YAML instead of skipping it. The version comment has to follow the reference itself.
 
 Renovate uses `helpers:pinGitHubActionDigests` to propose hash updates and pin new references.
 Review those pull requests so actions continue receiving security fixes. Local actions and

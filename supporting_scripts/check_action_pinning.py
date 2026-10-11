@@ -15,11 +15,15 @@ Every `uses:` entry in `.github/workflows` and `.github/actions` must be one of:
   for an action of a step as well as for a reusable workflow of a job,
 * `docker://image@sha256:<64 hex characters>`.
 
-The files are parsed as YAML, so a `uses` key is found however it is written (block or flow style, quoted, spread
-over several lines), and text that only looks like one (a comment, a `run:` script) is not mistaken for a
-reference. The parser's node marks give the line of each reference and the original line, from which the trailing
-`# vX.Y.Z` comment is read, because the parser itself drops comments. A `uses` key whose value is not a plain
-string, and a file that is not valid YAML, are reported instead of skipped.
+The files are parsed as YAML and only the places where GitHub reads an action reference are checked: `jobs.<id>.uses`
+(a reusable workflow), `jobs.<id>.steps[*].uses` and, in a composite action, `runs.steps[*].uses`. A `uses` is found
+however it is written (block or flow style, quoted, spread over several lines), while text that only looks like one
+(a comment, a `run:` script) and ordinary keys named `uses` (in `env` or `with`, or an input) are not mistaken for a
+reference. The parser's node marks give the line of each reference and the original line, from which the `# vX.Y.Z`
+comment is read, because the parser itself drops comments. The comment must follow that very reference: nothing but
+a comma or the closing brackets of a flow collection may stand between them, so a `#` inside a quoted value or a
+comment that belongs to another entry of the same line does not count. A `uses` value that is not a plain string,
+and a file that is not valid YAML, are reported instead of skipped.
 
 Needs PyYAML, which the GitHub-hosted Ubuntu runners and most developer machines provide (`pip install pyyaml`).
 
@@ -45,7 +49,11 @@ SEARCH_ROOTS = (".github/workflows", ".github/actions")
 
 YAML_SUFFIXES = (".yml", ".yaml")
 
-TRAILING_COMMENT = re.compile(r"(?:^|\s)(?P<comment>#.*)$")
+# What may stand between a reference and its release comment on the line where the reference ends: the comma that
+# separates it from the next entry of a flow mapping and the brackets that close the flow collections around it.
+# Anything else (another entry of the flow mapping, for example) means that a `#` further right is not the comment of
+# this reference: it could be text inside a quoted scalar, or belong to a later entry.
+COMMENT_AFTER_REFERENCE = re.compile(r"^\s*,?\s*[}\]]*\s*(?P<comment>#.*)?$")
 
 PINNED_ACTION = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_./-]+)?@[0-9a-f]{40}$")
 
@@ -87,40 +95,55 @@ def violation_reason(reference: str, comment: str) -> str | None:
 
 
 def uses_entries(text: str) -> list[tuple[int, str, str]]:
-    """Return the line, the reference and the trailing comment of every `uses` entry of a YAML document.
+    """Return the line, the reference and the release comment of every action reference of a YAML document.
 
-    The line numbers start at 1. Raises `yaml.YAMLError` if the text is not valid YAML.
+    The action references are the `uses` of a job (a reusable workflow), of a step of a job and of a step of a
+    composite action. A key named `uses` anywhere else, in `env` or `with` or as the name of an input, is an ordinary
+    key and not a reference. The line numbers start at 1. Raises `yaml.YAMLError` if the text is not valid YAML.
     """
     lines = text.splitlines()
     entries: list[tuple[int, str, str]] = []
     seen: set[int] = set()
 
-    def visit(node: yaml.Node) -> None:
-        if id(node) in seen:  # an anchor used several times, or a cyclic alias
+    def values(mapping: yaml.Node, name: str) -> list[yaml.Node]:
+        if not isinstance(mapping, yaml.MappingNode):
+            return []
+        return [value for key, value in mapping.value if isinstance(key, yaml.ScalarNode) and key.value == name]
+
+    def add(node: yaml.Node) -> None:
+        if id(node) in seen:  # an anchor that several jobs or steps share is checked once
             return
         seen.add(id(node))
-        if isinstance(node, yaml.MappingNode):
-            for key, value in node.value:
-                if isinstance(key, yaml.ScalarNode) and key.value == "uses":
-                    entries.append(entry(value))
-                visit(key)
-                visit(value)
-        elif isinstance(node, yaml.SequenceNode):
-            for item in node.value:
-                visit(item)
+        entries.append(entry(node))
+
+    def add_uses_of(owner: yaml.Node) -> None:
+        for reference in values(owner, "uses"):
+            add(reference)
+
+    def add_steps_of(owner: yaml.Node) -> None:
+        for steps in values(owner, "steps"):
+            if isinstance(steps, yaml.SequenceNode):
+                for step in steps.value:
+                    add_uses_of(step)
 
     def entry(value: yaml.Node) -> tuple[int, str, str]:
         line_index = value.start_mark.line
         if not isinstance(value, yaml.ScalarNode):
             return line_index + 1, UNREADABLE_REFERENCE, ""
-        # The comment follows the end of the value on the line where it ends, behind a closing `}` of a flow mapping, if any.
         end_line = lines[value.end_mark.line] if value.end_mark.line < len(lines) else ""
-        comment = TRAILING_COMMENT.search(end_line, value.end_mark.column)
-        return line_index + 1, value.value.strip(), comment.group("comment") if comment else ""
+        comment = COMMENT_AFTER_REFERENCE.match(end_line[value.end_mark.column :])
+        return line_index + 1, value.value.strip(), (comment.group("comment") or "") if comment else ""
 
     for document in yaml.compose_all(text):
-        if document is not None:
-            visit(document)
+        if document is None:
+            continue
+        for jobs in values(document, "jobs"):
+            if isinstance(jobs, yaml.MappingNode):
+                for _, job in jobs.value:
+                    add_uses_of(job)
+                    add_steps_of(job)
+        for runs in values(document, "runs"):
+            add_steps_of(runs)
     return entries
 
 
