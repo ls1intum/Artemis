@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { TumAetUiAutoCompleteComponent } from '@tumaet/ui-angular';
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { User } from 'app/account/user/user.model';
@@ -61,6 +61,15 @@ describe('PresentationAssessmentPresenterSelectorComponent', () => {
 
         expect(searchStudents).toHaveBeenCalledWith(7, 'alice', 0, 25);
         expect(result).toEqual([availablePresenter]);
+    });
+
+    it('should report a failed search instead of showing no students', async () => {
+        searchStudents.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+        const result = await firstValueFrom(component.searchPresenters(of('alice')));
+
+        expect(result).toEqual([]);
+        expect(TestBed.inject(AlertService).error).toHaveBeenCalledExactlyOnceWith('artemisApp.presentationAssessment.studentSearchFailed');
     });
 
     it('should provide presenter suggestions with name and login', async () => {

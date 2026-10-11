@@ -9,6 +9,7 @@ import { User } from 'app/account/user/user.model';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -30,6 +31,7 @@ import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-p
 })
 export class PresentationAssessmentPresenterSelectorComponent {
     private readonly courseManagementService = inject(CourseManagementService);
+    private readonly alertService = inject(AlertService);
 
     readonly courseId = input.required<number>();
     readonly presenters = model<User[]>([]);
@@ -75,7 +77,10 @@ export class PresentationAssessmentPresenterSelectorComponent {
                         const assignedIds = new Set(this.presenters().map((presenter) => presenter.id));
                         return (response.body ?? []).filter((user) => !assignedIds.has(user.id));
                     }),
-                    catchError(() => of([])),
+                    catchError(() => {
+                        this.alertService.error('artemisApp.presentationAssessment.studentSearchFailed');
+                        return of([]);
+                    }),
                 );
             }),
         );

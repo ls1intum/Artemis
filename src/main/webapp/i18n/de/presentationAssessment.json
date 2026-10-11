@@ -47,6 +47,7 @@
             "searchStudent": "Studierende Person suchen",
             "searchOverview": "Name, E-Mail oder Präsentation suchen",
             "noMatchingStudents": "Keine Studierenden entsprechen der Suche.",
+            "studentSearchFailed": "Bei der Suche nach Studierenden ist ein Fehler aufgetreten.",
             "date": "Datum",
             "type": "Typ",
             "typeStandalone": "Eigenständig",

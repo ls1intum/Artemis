@@ -47,6 +47,7 @@
             "searchStudent": "Search for a student",
             "searchOverview": "Search name, email, or presentation",
             "noMatchingStudents": "No students match your search.",
+            "studentSearchFailed": "An error occurred while searching for students.",
             "date": "Date",
             "type": "Type",
             "typeStandalone": "Standalone",
