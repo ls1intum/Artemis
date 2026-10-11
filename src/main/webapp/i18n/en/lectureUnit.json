@@ -127,7 +127,7 @@
             "processingComplete": "Indexed",
             "processingFailed": "Processing Failed",
             "processingSkipped": "Not indexed",
-            "processingSkippedTooltip": "Iris is not available for this unit, so its content was not indexed. It is picked up automatically once Iris is enabled for the course.",
+            "processingSkippedTooltip": "Iris did not index this unit. Either Iris is not enabled for this course, or the unit has no PDF and its video is not from YouTube or TUM Live. It is indexed automatically once this changes.",
             "videoSlideSync": {
                 "toggle": "Synchronize slides and video",
                 "disabledByPointOut": "Synchronization disabled: Iris points to page {{page}} and timestamp {{time}}."

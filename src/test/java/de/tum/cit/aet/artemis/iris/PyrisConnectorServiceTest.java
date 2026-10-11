@@ -17,8 +17,6 @@ import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitVisibilityWebhookDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 
 class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
 
@@ -60,16 +58,6 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockRunError(httpStatus);
 
         assertThatThrownBy(() -> pyrisConnectorService.executePipeline("programming-exercise-chat", null, Optional.empty())).isInstanceOf(exceptionClass);
-    }
-
-    @ParameterizedTest
-    @MethodSource("irisExceptions")
-    void testExceptionIngestionV2(int httpStatus, Class<?> exceptionClass) {
-        irisRequestMockProvider.mockIngestionWebhookRunError(httpStatus);
-        PyrisLectureUnitWebhookDTO pyrisLectureUnitWebhookDTO = new PyrisLectureUnitWebhookDTO("example.pdf", 1, null, 123L, "Lecture Unit Name", 456L, "Lecture Name", 789L,
-                "Course Name", "Course Description", "/example/test.pdf", "", null, null);
-        PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(pyrisLectureUnitWebhookDTO, 123L, null);
-        assertThatThrownBy(() -> pyrisConnectorService.executeLectureAdditionWebhook(executionDTO)).isInstanceOf(exceptionClass);
     }
 
     @ParameterizedTest
