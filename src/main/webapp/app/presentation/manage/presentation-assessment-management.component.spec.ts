@@ -33,6 +33,7 @@ import {
     PresentationAssessmentStudentRow,
 } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -1409,5 +1410,56 @@ describe('PresentationAssessmentManagementComponent', () => {
         presentationDialog().deleteRequested.emit(presentationAssessment);
 
         expect(presentationAssessmentService.delete).toHaveBeenCalledExactlyOnceWith(courseId, presentationAssessment.id);
+    });
+
+    /** Visits course 2, then course 3, then course 2 again, the way sidebar or browser navigation does. */
+    function visitCourseTwoThenThreeThenTwoAgain(): void {
+        for (const visitedCourseId of [2, 3, 2]) {
+            routeParamMap.next(convertToParamMap({ courseId: visitedCourseId }));
+            fixture.detectChanges();
+        }
+    }
+
+    it('should keep the presentations of the current visit when a delayed load of an earlier visit arrives', () => {
+        const firstVisit = new Subject<HttpResponse<PresentationAssessment[]>>();
+        const secondVisit = new Subject<HttpResponse<PresentationAssessment[]>>();
+        presentationAssessmentService.findAllByCourseId
+            .mockReturnValueOnce(firstVisit)
+            .mockReturnValueOnce(of(new HttpResponse({ body: [] })))
+            .mockReturnValueOnce(secondVisit);
+        visitCourseTwoThenThreeThenTwoAgain();
+        const current: PresentationAssessment = { id: 99, courseId: 2, title: 'Current', maxPoints: 10 };
+
+        secondVisit.next(new HttpResponse({ body: [current] }));
+        firstVisit.next(new HttpResponse({ body: [{ id: 98, courseId: 2, title: 'Stale', maxPoints: 10 }] }));
+        fixture.detectChanges();
+
+        expect(component.presentationAssessments()).toEqual([current]);
+    });
+
+    it('should not show the load error of an earlier visit after the current visit loaded', () => {
+        const firstVisit = new Subject<HttpResponse<PresentationAssessment[]>>();
+        presentationAssessmentService.findAllByCourseId
+            .mockReturnValueOnce(firstVisit)
+            .mockReturnValueOnce(of(new HttpResponse({ body: [] })))
+            .mockReturnValueOnce(of(new HttpResponse({ body: [presentationAssessment] })));
+        visitCourseTwoThenThreeThenTwoAgain();
+
+        firstVisit.error(new HttpErrorResponse({ status: 500 }));
+        fixture.detectChanges();
+
+        expect(component.presentationLoadFailed()).toBe(false);
+        expect(countByTestId('presentation-load-error')).toBe(0);
+    });
+
+    it('should keep the exercise titles of the current visit when a delayed load of an earlier visit arrives', () => {
+        const firstVisit = new Subject<ExerciseTitle[]>();
+        const current: ExerciseTitle[] = [{ id: 7, title: 'Current exercise' }];
+        vi.mocked(TestBed.inject(ExerciseService).getTitlesForCourse).mockReturnValueOnce(firstVisit).mockReturnValueOnce(of([])).mockReturnValueOnce(of(current));
+        visitCourseTwoThenThreeThenTwoAgain();
+
+        firstVisit.next([{ id: 8, title: 'Stale exercise' }]);
+
+        expect(component.exercises()).toEqual(current);
     });
 });

@@ -338,13 +338,18 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                     this.studentSortField.set('studentLogin');
                     this.studentSortOrder.set(1);
                     this.loadAll();
+                    const generation = this.courseContextGeneration;
                     this.exerciseService.getTitlesForCourse(courseId).subscribe({
                         next: (exercises) => {
-                            if (this.courseId() === courseId) {
+                            if (generation === this.courseContextGeneration) {
                                 this.exercises.set(exercises);
                             }
                         },
-                        error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                        error: (res: HttpErrorResponse) => {
+                            if (generation === this.courseContextGeneration) {
+                                onError(this.alertService, res);
+                            }
+                        },
                     });
                     return;
                 }
@@ -391,10 +396,12 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     loadAll(): void {
         const courseId = this.courseId();
+        // A response from an earlier visit of the same course must not replace this one, so compare visits rather than course ids.
+        const generation = this.courseContextGeneration;
         this.presentationLoadFailed.set(false);
         this.presentationAssessmentService.findAllByCourseId(courseId).subscribe({
             next: (res: HttpResponse<PresentationAssessment[]>) => {
-                if (this.courseId() !== courseId) {
+                if (generation !== this.courseContextGeneration) {
                     return;
                 }
                 const assessments = res.body ?? [];
@@ -405,7 +412,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                 }
             },
             error: (res: HttpErrorResponse) => {
-                if (this.courseId() !== courseId) {
+                if (generation !== this.courseContextGeneration) {
                     return;
                 }
                 this.presentationLoadFailed.set(true);
