@@ -206,7 +206,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void canStartExerciseWithPracticeParticipationAfterDueDateChange() throws URISyntaxException {
-        Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
 
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
@@ -345,7 +345,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @ValueSource(booleans = { true, false })
     void testStartPracticeMode(boolean useGradedParticipation) throws URISyntaxException {
         exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusMinutes(2));
-        Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
 
         participationUtilService.mockCreationOfExerciseParticipation(useGradedParticipation, gradedResult, programmingExercise, uriService, versionControlService,
