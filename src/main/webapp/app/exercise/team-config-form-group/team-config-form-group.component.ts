@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, OnDestroy, OnInit, input, signal, viewChild } from '@angular/core';
+import { AfterViewChecked, Component, OnDestroy, OnInit, input, output, signal, viewChild } from '@angular/core';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { Exercise, ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
@@ -23,6 +23,8 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
 
     readonly exercise = input.required<Exercise>();
     readonly isImport = input(false);
+    /** Emits the exercise after its mode or team assignment config was written onto it, so that a host can bind `[(exercise)]`. */
+    readonly exerciseChange = output<Exercise>();
 
     readonly minTeamSizeField = viewChild<NgModel>('minTeamSize');
     readonly maxTeamsizeField = viewChild<NgModel>('maxTeamSize');
@@ -109,6 +111,7 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
             exercise.teamAssignmentConfig = undefined;
         }
         this.calculateFormValid();
+        this.exerciseChange.emit(exercise);
     }
 
     /**
@@ -119,6 +122,7 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
         this.config.maxTeamSize = Math.max(this.config.maxTeamSize!, minTeamSize);
         this.commitConfig();
         this.applyCurrentConfig();
+        this.exerciseChange.emit(this.exercise());
     }
 
     /**
@@ -129,6 +133,7 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
         this.config.minTeamSize = Math.min(this.config.minTeamSize!, maxTeamSize);
         this.commitConfig();
         this.applyCurrentConfig();
+        this.exerciseChange.emit(this.exercise());
     }
 
     private applyCurrentConfig() {

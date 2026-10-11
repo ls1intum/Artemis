@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -25,7 +25,7 @@ import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
-import { FormsModule, NgModel } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -42,7 +42,14 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
-import { getCommonExerciseInvalidReasons } from 'app/exercise/util/exercise-validation.util';
+import {
+    ExerciseValidationViewState,
+    getCommonExerciseInvalidReasons,
+    getGeneralSectionInvalidReasons,
+    getGradingSectionInvalidReasons,
+    getModeSectionInvalidReasons,
+} from 'app/exercise/util/exercise-validation.util';
+import { ExerciseFormState } from 'app/exercise/util/exercise-form-state';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const MIN_FILE_PATTERN_LENGTH = 2;
@@ -76,7 +83,7 @@ const MIN_FILE_PATTERN_LENGTH = 2;
         ExerciseGroupDateNoticeComponent,
     ],
 })
-export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit {
+export class FileUploadExerciseUpdateComponent implements OnInit {
     private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
     private readonly modalService = inject(NgbModal);
     private readonly popupService = inject(ExerciseUpdateWarningService);
@@ -93,14 +100,12 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'FileUpload';
 
-    bonusPoints = viewChild<NgModel>('bonusPoints');
-    points = viewChild<NgModel>('points');
     exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
-    teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
     gradingInstructionsDetails = viewChild(GradingInstructionsDetailsComponent);
 
-    // Signals for state
-    fileUploadExercise = signal<FileUploadExercise>(new FileUploadExercise(undefined, undefined));
+    /** Every write to the exercise goes through this, so that {@link invalidReasons} and {@link formStatusSections} follow it. */
+    readonly exerciseState = new ExerciseFormState<FileUploadExercise>(new FileUploadExercise(undefined, undefined));
+    readonly fileUploadExercise = this.exerciseState.exercise;
     backupExercise = signal<FileUploadExercise>(new FileUploadExercise(undefined, undefined));
     isSaving = signal(false);
     isExamMode = signal(false);
@@ -111,7 +116,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     timelineStatus = signal<TimelineStatus>({ valid: true, empty: false, invalidItems: [] });
 
     examCourseId = signal<number | undefined>(undefined);
-    formStatusSections = signal<FormSectionStatus[]>([]);
 
     domainActionsProblemStatement = [new FormulaAction()];
     domainActionsExampleSolution = [new FormulaAction()];
@@ -128,21 +132,59 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     private routeUrl = toSignal(this.activatedRoute.url);
     private routeParams = toSignal(this.activatedRoute.params);
 
+    /** What the shared checks need to know beyond the exercise itself. */
+    private readonly validationViewState = computed<ExerciseValidationViewState>(() => {
+        const titleChannelName = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
+        return {
+            isExamMode: this.isExamMode(),
+            minTitleLength: 3,
+            isTitleDisallowed: !!titleChannelName?.isTitleDisallowed(),
+            isChannelNameRequired: !!titleChannelName?.isChannelFieldDisplayed(),
+            timelineStatus: this.timelineStatus(),
+        };
+    });
+
+    private readonly filePatternInvalidReasons = computed<ValidationReason[]>(() => {
+        const filePattern = this.fileUploadExercise().filePattern;
+        if (!filePattern) {
+            return [{ translateKey: 'artemisApp.fileUploadExercise.form.filePattern.undefined', translateValues: {} }];
+        }
+        if (filePattern.length < MIN_FILE_PATTERN_LENGTH) {
+            return [{ translateKey: 'artemisApp.fileUploadExercise.form.filePattern.minlength', translateValues: { min: MIN_FILE_PATTERN_LENGTH } }];
+        }
+        return [];
+    });
+
+    /** Every reason the exercise cannot be saved; drives the footer's disabled state and its tooltip. */
+    readonly invalidReasons = computed<ValidationReason[]>(() => [
+        ...getCommonExerciseInvalidReasons(this.fileUploadExercise(), this.validationViewState()),
+        ...this.filePatternInvalidReasons(),
+    ]);
+
+    readonly formStatusSections = computed<FormSectionStatus[]>(() => {
+        const exercise = this.fileUploadExercise();
+        const viewState = this.validationViewState();
+        return [
+            { title: 'artemisApp.exercise.sections.general', valid: getGeneralSectionInvalidReasons(exercise, viewState).length === 0 },
+            { title: 'artemisApp.exercise.sections.mode', valid: getModeSectionInvalidReasons(exercise).length === 0 },
+            { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !exercise.problemStatement },
+            { title: 'artemisApp.exercise.sections.solution', valid: true, empty: !exercise.exampleSolution },
+            {
+                // The example solution publication date lives in the timeline (as for programming exercises), and the file
+                // pattern is entered next to the points, so both count for the grading section.
+                title: 'artemisApp.exercise.sections.grading',
+                valid: getGradingSectionInvalidReasons(exercise, viewState).length === 0 && this.filePatternInvalidReasons().length === 0,
+                empty: !viewState.isExamMode && viewState.timelineStatus.empty,
+            },
+        ];
+    });
+
     constructor() {
-        effect(() => {
-            this.updateFormSectionsOnIsValidChange();
-        });
-
-        effect(() => {
-            this.timelineStatus();
-            this.validateDate();
-        });
-
         // Effect to handle route data loading
         effect(() => {
             const data = this.routeData();
             if (data?.fileUploadExercise) {
-                this.fileUploadExercise.set(data.fileUploadExercise);
+                this.exerciseState.set(data.fileUploadExercise);
                 this.backupExercise.set(deepClone(data.fileUploadExercise));
                 this.examCourseId.set(getCourseId(data.fileUploadExercise));
             }
@@ -160,11 +202,16 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
         // Effect to handle params (import/config)
         effect(() => {
             const params = this.routeParams();
+            // Runs again for a new exercise or a new mode. The exercise itself is read untracked below: both handlers write
+            // to it, every write notifies, and tracking it would run this again on every edit.
+            this.routeData();
+            this.isImport();
+            this.isExamMode();
             if (params) {
-                // We depend on isImport/isExamMode being set first.
-                // Since signals update effectively, we can check them.
-                this.handleExerciseSettings();
-                this.handleImport(params);
+                untracked(() => {
+                    this.handleExerciseSettings();
+                    this.handleImport(params);
+                });
             }
         });
 
@@ -179,104 +226,11 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     }
 
     /**
-     * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
-     */
-    private updateFormSectionsOnIsValidChange() {
-        // Guard against viewChild not being available yet (before view init)
-        const titleComponent = this.exerciseTitleChannelNameComponent?.();
-        if (titleComponent?.titleChannelNameComponent) {
-            titleComponent.titleChannelNameComponent().isValid(); // trigger the effect
-        }
-        this.calculateFormSectionStatus();
-    }
-
-    /**
      * Initializes information relevant to file upload exercise
      */
     ngOnInit() {
         scrollToTopOfPage();
         this.isSaving.set(false);
-    }
-
-    /**
-     * Follows the bonus field as the score mode creates and destroys it.
-     *
-     * The wiring used to run once, when the view was first built, which was enough while the field merely hid itself.
-     * Now that it is removed and rebuilt, a subscription to the control that happened to exist then would stop
-     * reporting the moment the reader switched modes - and the section status would sit on whatever it last heard.
-     * Recalculated on every appearance and disappearance too, since both change what the section is worth.
-     */
-    protected readonly followBonusPointsControl = effect((onCleanup) => {
-        const control = this.bonusPoints();
-        // Untracked: the calculation reads half the form, and tracking all of it here would re-run this on every
-        // keystroke rather than when the control itself comes or goes.
-        untracked(() => this.calculateFormSectionStatus());
-        const subscription = control?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        onCleanup(() => subscription?.unsubscribe());
-    });
-
-    ngAfterViewInit() {
-        this.points()
-            ?.valueChanges?.pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe(() => this.calculateFormSectionStatus());
-        this.teamConfigFormGroupComponent()
-            ?.formValidChanges?.pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe(() => this.calculateFormSectionStatus());
-    }
-
-    calculateFormSectionStatus() {
-        const exercise = this.fileUploadExercise();
-        const titleComponent = this.exerciseTitleChannelNameComponent?.();
-        const teamConfig = this.teamConfigFormGroupComponent?.();
-        this.formStatusSections.set([
-            {
-                title: 'artemisApp.exercise.sections.general',
-                valid: titleComponent?.titleChannelNameComponent()?.isValid() ?? true,
-            },
-            { title: 'artemisApp.exercise.sections.mode', valid: teamConfig?.formValid ?? true },
-            { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !exercise.problemStatement },
-            {
-                title: 'artemisApp.exercise.sections.solution',
-                valid: true,
-                empty: !exercise.exampleSolution,
-            },
-            {
-                // The example solution publication date lives in the timeline (as for programming exercises), so its
-                // validity is part of the grading section.
-                title: 'artemisApp.exercise.sections.grading',
-                valid: Boolean(
-                    (this.points()?.valid ?? true) &&
-                    (this.bonusPoints()?.valid ?? true) &&
-                    (this.isExamMode() || (this.timelineStatus().valid && !exercise.exampleSolutionPublicationDateError)),
-                ),
-                empty: !this.isExamMode() && this.timelineStatus().empty,
-            },
-        ]);
-    }
-
-    /** Every reason the exercise cannot be saved; drives the footer's disabled state and its tooltip. */
-    getInvalidReasons(): ValidationReason[] {
-        const exercise = this.fileUploadExercise();
-        if (!exercise) {
-            return [];
-        }
-        const titleChannelNameComponent = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
-        const reasons = getCommonExerciseInvalidReasons(exercise, {
-            isExamMode: this.isExamMode(),
-            minTitleLength: 3,
-            isTitleDisallowed: !!titleChannelNameComponent?.field_title?.control?.errors?.disallowedValue,
-            isChannelNameRequired: !!titleChannelNameComponent?.isChannelFieldDisplayed(),
-            timelineStatus: this.timelineStatus(),
-        });
-
-        const filePattern = exercise.filePattern;
-        if (!filePattern) {
-            reasons.push({ translateKey: 'artemisApp.fileUploadExercise.form.filePattern.undefined', translateValues: {} });
-        } else if (filePattern.length < MIN_FILE_PATTERN_LENGTH) {
-            reasons.push({ translateKey: 'artemisApp.fileUploadExercise.form.filePattern.minlength', translateValues: { min: MIN_FILE_PATTERN_LENGTH } });
-        }
-
-        return reasons;
     }
 
     /**
@@ -288,36 +242,35 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
 
     private handleImport(params: Params) {
         if (this.isImport()) {
-            const exercise = this.fileUploadExercise();
-            // Mutating the object in the signal - careful, but effective for this logic
             if (this.isExamMode()) {
                 const exerciseGroupId = params['exerciseGroupId'];
                 const courseId = params['courseId'];
                 const examId = params['examId'];
 
-                this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (exercise.exerciseGroup = res.body ?? undefined));
-                exercise.course = undefined;
+                this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => this.exerciseState.patch('exerciseGroup', res.body ?? undefined));
+                this.exerciseState.patch('course', undefined);
             } else {
                 const targetCourseId = params['courseId'];
-                this.courseService.find(targetCourseId).subscribe((res) => (exercise.course = res.body ?? undefined));
-                exercise.exerciseGroup = undefined;
+                this.courseService.find(targetCourseId).subscribe((res) => this.exerciseState.patch('course', res.body ?? undefined));
+                this.exerciseState.patch('exerciseGroup', undefined);
             }
-            resetForImport(exercise);
+            this.exerciseState.update(resetForImport);
         }
     }
 
     private handleExerciseSettings() {
-        const exercise = this.fileUploadExercise();
         if (!this.isExamMode()) {
-            this.exerciseCategories.set(exercise.categories || []);
+            this.exerciseCategories.set(this.fileUploadExercise().categories || []);
         } else {
-            // Lock individual mode for exam exercises
-            exercise.mode = ExerciseMode.INDIVIDUAL;
-            exercise.teamAssignmentConfig = undefined;
-            exercise.teamMode = false;
-            if (exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
-                exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
-            }
+            this.exerciseState.update((exercise) => {
+                // Lock individual mode for exam exercises
+                exercise.mode = ExerciseMode.INDIVIDUAL;
+                exercise.teamAssignmentConfig = undefined;
+                exercise.teamMode = false;
+                if (exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+                    exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+                }
+            });
         }
     }
 
@@ -356,19 +309,11 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     }
 
     /**
-     * Validates if the date is correct
-     */
-    validateDate() {
-        this.exerciseService.validateDate(this.fileUploadExercise());
-        this.calculateFormSectionStatus();
-    }
-
-    /**
      * Updates categories for file upload exercise
      * @param categories list of exercise categories
      */
     updateCategories(categories: ExerciseCategory[]) {
-        this.fileUploadExercise().categories = categories;
+        this.exerciseState.patch('categories', categories);
         this.exerciseCategories.set(categories);
     }
 

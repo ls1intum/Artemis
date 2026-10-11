@@ -155,4 +155,28 @@ describe('TitleChannelNamePrimengComponent', () => {
 
         expect(component.channelName()).toBeUndefined();
     });
+    describe('isTitleDisallowed', () => {
+        it('should report the title as already used exactly while it is one of the used titles', () => {
+            fixture.componentRef.setInput('alreadyUsedTitles', new Set(['Taken']));
+            expect(component.isTitleDisallowed()).toBe(false);
+
+            // What typing into the title field does.
+            component.updateTitle('Taken');
+            expect(component.isTitleDisallowed()).toBe(true);
+
+            component.updateTitle('Free');
+            expect(component.isTitleDisallowed()).toBe(false);
+        });
+
+        it('should not count the title the form was opened with, as the title field does not', () => {
+            component.titleOnPageLoad.set('Original');
+            fixture.componentRef.setInput('alreadyUsedTitles', new Set(['Original', 'Taken']));
+
+            component.updateTitle('Original');
+            expect(component.isTitleDisallowed()).toBe(false);
+
+            component.updateTitle('Taken');
+            expect(component.isTitleDisallowed()).toBe(true);
+        });
+    });
 });

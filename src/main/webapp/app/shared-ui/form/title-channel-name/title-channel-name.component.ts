@@ -50,6 +50,15 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     fieldTitleSubscription?: Subscription;
     fieldChannelNameSubscription?: Subscription;
 
+    /**
+     * Whether the title is one of the {@link alreadyUsedTitles}, as the title field's validator decides it, but as a signal so
+     * that a host's computed() follows it. The title the form was opened with does not count, as the field does not count it.
+     */
+    readonly isTitleDisallowed = computed(() => {
+        const title = this.title();
+        return title !== undefined && title !== this.titleOnPageLoad() && this.alreadyUsedTitles().has(title);
+    });
+
     isChannelFieldDisplayed = computed(() => {
         return !this.hideChannelName() && (!this.isEditFieldDisplayedRecord() || this.isEditFieldDisplayedRecord()?.channelName);
     });

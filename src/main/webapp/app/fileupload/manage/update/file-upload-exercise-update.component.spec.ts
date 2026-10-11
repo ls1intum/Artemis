@@ -76,7 +76,7 @@ import dayjs from 'dayjs/esm';
 
 import 'app/foundation/util/array.extension';
 
-import { FormsModule, NgModel, ValidationErrors } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -112,10 +112,11 @@ import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/diffic
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 // NOTE: Do NOT import MarkdownEditorMonacoComponent here - it transitively imports monaco-editor
 // which causes static initializers to run before mocks are applied.
-import { Component, input, output, signal, viewChild } from '@angular/core';
+import { Component, forwardRef, input, output, signal, viewChild } from '@angular/core';
 
 // Mock component to replace MarkdownEditorMonacoComponent without importing the real one
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '', standalone: true })
@@ -128,10 +129,19 @@ class MockMarkdownEditorMonacoComponent {
 @Component({ selector: 'jhi-title-channel-name', template: '', standalone: true })
 class StubTitleChannelNameComponent {
     isValid = signal(true);
+    isChannelFieldDisplayed = signal(true);
+    isTitleDisallowed = signal(false);
 }
 
-// Stub for ExerciseTitleChannelNameComponent - ng-mocks MockComponent doesn't handle viewChild.required properly
-@Component({ selector: 'jhi-exercise-title-channel-name', template: '<jhi-title-channel-name />', standalone: true, imports: [StubTitleChannelNameComponent] })
+// Stub for ExerciseTitleChannelNameComponent - ng-mocks MockComponent doesn't handle viewChild.required properly.
+// Provided under the real class, so that the host's viewChild(ExerciseTitleChannelNameComponent) finds it.
+@Component({
+    selector: 'jhi-exercise-title-channel-name',
+    template: '<jhi-title-channel-name />',
+    standalone: true,
+    imports: [StubTitleChannelNameComponent],
+    providers: [{ provide: ExerciseTitleChannelNameComponent, useExisting: forwardRef(() => StubExerciseTitleChannelNameComponent) }],
+})
 class StubExerciseTitleChannelNameComponent {
     exercise = input<FileUploadExercise | undefined>();
     titlePattern = input<string>('');
@@ -144,16 +154,8 @@ class StubExerciseTitleChannelNameComponent {
     courseId = input<number>();
     onTitleChange = output<string>();
     onChannelNameChange = output<string>();
+    exerciseChange = output<FileUploadExercise>();
     readonly titleChannelNameComponent = viewChild.required(StubTitleChannelNameComponent);
-}
-
-class MockTitleChannelNameComponent {
-    channelFieldDisplayed = true;
-    isChannelFieldDisplayed = () => this.channelFieldDisplayed;
-    titleErrors: ValidationErrors | undefined = undefined;
-    get field_title(): NgModel {
-        return { control: { errors: this.titleErrors } } as NgModel;
-    }
 }
 
 describe('FileUploadExerciseUpdateComponent', () => {
@@ -163,7 +165,6 @@ describe('FileUploadExerciseUpdateComponent', () => {
     let alertService: AlertService;
     let navigationService: ArtemisNavigationUtilService;
     let calendarService: CalendarService;
-    let exerciseService: ExerciseService;
 
     let routeData$: BehaviorSubject<Data>;
     let routeUrl$: BehaviorSubject<UrlSegment[]>;
@@ -292,7 +293,6 @@ describe('FileUploadExerciseUpdateComponent', () => {
         alertService = TestBed.inject(AlertService);
         navigationService = TestBed.inject(ArtemisNavigationUtilService);
         calendarService = TestBed.inject(CalendarService);
-        exerciseService = TestBed.inject(ExerciseService);
     });
 
     afterEach(() => {
@@ -370,7 +370,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
             expect(openModalSpy).toHaveBeenCalledOnce();
         });
 
-        it('should validate dates when the timeline status changes', async () => {
+        it('should keep the timeline status it is told', async () => {
             const exercise = createExercise(createCourse());
             routeData$.next({ fileUploadExercise: exercise });
 
@@ -378,12 +378,10 @@ describe('FileUploadExerciseUpdateComponent', () => {
             component = fixture.componentInstance;
             fixture.detectChanges();
             await fixture.whenStable();
-            vi.mocked(exerciseService.validateDate).mockClear();
 
             component.timelineStatus.set({ valid: false, empty: true, invalidItems: [] });
             await fixture.whenStable();
 
-            expect(exerciseService.validateDate).toHaveBeenCalledWith(exercise);
             expect(component.timelineStatus()).toEqual({ valid: false, empty: true, invalidItems: [] });
         });
 
@@ -680,31 +678,6 @@ describe('FileUploadExerciseUpdateComponent', () => {
         });
     });
 
-    describe('validateDate', () => {
-        beforeEach(async () => {
-            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
-            component = fixture.componentInstance;
-            fixture.detectChanges();
-            await fixture.whenStable();
-        });
-
-        it('should call exercise service validate date', () => {
-            const exerciseService = TestBed.inject(ExerciseService);
-
-            component.validateDate();
-
-            expect(exerciseService.validateDate).toHaveBeenCalledWith(component.fileUploadExercise());
-        });
-
-        it('should recalculate form section status after validation', () => {
-            const calculateSpy = vi.spyOn(component, 'calculateFormSectionStatus');
-
-            component.validateDate();
-
-            expect(calculateSpy).toHaveBeenCalled();
-        });
-    });
-
     describe('updateCategories', () => {
         beforeEach(async () => {
             fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
@@ -828,10 +801,9 @@ describe('FileUploadExerciseUpdateComponent', () => {
         const footerIsDisabled = () => fixture.debugElement.query(By.directive(FormFooterComponent)).componentInstance.isDisabled();
         const gradingSectionIsValid = () => component.formStatusSections().find((section) => section.title === 'artemisApp.exercise.sections.grading')?.valid;
 
-        /** Switches the score mode the way the picker does: it writes onto the exercise, then emits. */
+        /** Switches the score mode the way the picker does: it emits the new mode. */
         async function switchScoreMode(mode: IncludedInOverallScore): Promise<void> {
             const picker = fixture.debugElement.query(By.directive(IncludedInOverallScorePickerComponent));
-            component.fileUploadExercise().includedInOverallScore = mode;
             picker.componentInstance.includedInOverallScoreChange.emit(mode);
             fixture.detectChanges();
             await fixture.whenStable();
@@ -915,9 +887,9 @@ describe('FileUploadExerciseUpdateComponent', () => {
         });
     });
 
-    describe('getInvalidReasons', () => {
+    describe('invalidReasons', () => {
         let course: Course;
-        let titleChannelNameComponentMock: MockTitleChannelNameComponent;
+        let titleChannelName: StubTitleChannelNameComponent;
 
         const filledInExercise = () => {
             const exercise = new FileUploadExercise(course, undefined);
@@ -930,97 +902,164 @@ describe('FileUploadExerciseUpdateComponent', () => {
             exercise.filePattern = 'png,pdf';
             return exercise;
         };
+        const reasonKeys = () => component.invalidReasons().map((reason) => reason.translateKey);
+        const sectionOf = (title: string) => component.formStatusSections().find((section) => section.title === `artemisApp.exercise.sections.${title}`);
 
-        beforeEach(async () => {
-            course = createCourse();
-
+        async function render(exercise: FileUploadExercise) {
+            routeData$.next({ fileUploadExercise: exercise });
             fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
             component = fixture.componentInstance;
             fixture.detectChanges();
             await fixture.whenStable();
-
-            titleChannelNameComponentMock = new MockTitleChannelNameComponent();
-            component.exerciseTitleChannelNameComponent = (() => ({
-                titleChannelNameComponent: () => titleChannelNameComponentMock,
-            })) as unknown as typeof component.exerciseTitleChannelNameComponent;
-        });
-
-        it('should report the mandatory fields of an untouched creation form', () => {
-            component.fileUploadExercise.set(new FileUploadExercise(course, undefined));
-            component.isExamMode.set(false);
-
-            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
-
-            expect(translateKeys).toContain('artemisApp.exercise.form.title.undefined');
-            expect(translateKeys).toContain('artemisApp.exercise.form.points.undefined');
-            expect(translateKeys).toContain('artemisApp.fileUploadExercise.form.filePattern.undefined');
-        });
-
-        it('should report no reason for a completely filled in exercise', () => {
-            component.fileUploadExercise.set(filledInExercise());
-            component.isExamMode.set(false);
+            titleChannelName = fixture.debugElement.query(By.directive(StubTitleChannelNameComponent)).componentInstance;
             component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            // Read once, so that every later read has to be invalidated by the change under test rather than computed fresh.
+            fixture.detectChanges();
+            component.invalidReasons();
+            component.formStatusSections();
+        }
 
-            expect(component.getInvalidReasons()).toEqual([]);
+        async function typeInto(selector: string, value: string) {
+            const input: HTMLInputElement = fixture.debugElement.query(By.css(selector)).nativeElement;
+            input.value = value;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+        }
+
+        beforeEach(() => {
+            course = createCourse();
         });
 
-        it('should report a file pattern shorter than two characters', () => {
-            const exercise = filledInExercise();
-            exercise.filePattern = 'p';
-            component.fileUploadExercise.set(exercise);
-            component.isExamMode.set(false);
-            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+        it('should report the mandatory fields of an untouched creation form', async () => {
+            await render(new FileUploadExercise(course, undefined));
 
-            expect(component.getInvalidReasons()).toEqual([{ translateKey: 'artemisApp.fileUploadExercise.form.filePattern.minlength', translateValues: { min: 2 } }]);
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.undefined');
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.points.undefined');
+            expect(reasonKeys()).toContain('artemisApp.fileUploadExercise.form.filePattern.undefined');
         });
 
-        it('should report a title shorter than the minimum length', () => {
+        it('should report no reason for a completely filled in exercise', async () => {
+            await render(filledInExercise());
+
+            expect(component.invalidReasons()).toEqual([]);
+        });
+
+        it('should report a title shorter than the minimum length', async () => {
             const exercise = filledInExercise();
             exercise.title = 'ab';
-            component.fileUploadExercise.set(exercise);
-            component.isExamMode.set(false);
-            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            await render(exercise);
 
-            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
-
-            expect(translateKeys).toContain('artemisApp.exercise.form.title.minlength');
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.minlength');
         });
 
-        it('should report a disallowed title', () => {
-            component.fileUploadExercise.set(filledInExercise());
-            component.isExamMode.set(false);
-            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
-            titleChannelNameComponentMock.titleErrors = { disallowedValue: true };
+        it('should follow the title field when it reports a title as already used', async () => {
+            await render(filledInExercise());
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.form.title.disallowedValue');
 
-            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+            titleChannelName.isTitleDisallowed.set(true);
 
-            expect(translateKeys).toContain('artemisApp.exercise.form.title.disallowedValue');
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.title.disallowedValue');
+            expect(sectionOf('general')?.valid).toBe(false);
         });
 
-        it('should require a channel name when the channel field is displayed', () => {
+        it('should require a channel name only while the channel field is displayed', async () => {
             const exercise = filledInExercise();
             exercise.channelName = undefined;
-            component.fileUploadExercise.set(exercise);
-            component.isExamMode.set(false);
-            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
-            titleChannelNameComponentMock.channelFieldDisplayed = true;
+            await render(exercise);
+            expect(reasonKeys()).toContain('artemisApp.exercise.form.channelName.empty');
 
-            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+            titleChannelName.isChannelFieldDisplayed.set(false);
 
-            expect(translateKeys).toContain('artemisApp.exercise.form.channelName.empty');
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.form.channelName.empty');
         });
 
-        it('should not require a channel name when the channel field is hidden', () => {
+        // The bug class a computed() can introduce: a reason that stays after the user fixed the field, or does not come back.
+        it('should drop the points reason once points are typed and bring it back when they are cleared', async () => {
             const exercise = filledInExercise();
-            exercise.channelName = undefined;
-            component.fileUploadExercise.set(exercise);
-            component.isExamMode.set(false);
-            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
-            titleChannelNameComponentMock.channelFieldDisplayed = false;
+            exercise.maxPoints = undefined;
+            await render(exercise);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.points.undefined']);
+            expect(sectionOf('grading')?.valid).toBe(false);
 
-            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+            await typeInto('#field_points', '10');
+            expect(component.invalidReasons()).toEqual([]);
+            expect(sectionOf('grading')?.valid).toBe(true);
 
-            expect(translateKeys).not.toContain('artemisApp.exercise.form.channelName.empty');
+            await typeInto('#field_points', '');
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.points.undefined']);
+            expect(sectionOf('grading')?.valid).toBe(false);
+        });
+
+        it('should follow the file pattern as it is typed, in the reasons and in the grading section it is entered in', async () => {
+            await render(filledInExercise());
+
+            await typeInto('#field_filePattern', 'p');
+            expect(component.invalidReasons()).toEqual([{ translateKey: 'artemisApp.fileUploadExercise.form.filePattern.minlength', translateValues: { min: 2 } }]);
+            expect(sectionOf('grading')?.valid).toBe(false);
+
+            await typeInto('#field_filePattern', '');
+            expect(reasonKeys()).toEqual(['artemisApp.fileUploadExercise.form.filePattern.undefined']);
+
+            await typeInto('#field_filePattern', 'pdf');
+            expect(component.invalidReasons()).toEqual([]);
+            expect(sectionOf('grading')?.valid).toBe(true);
+            expect(component.fileUploadExercise().filePattern).toBe('pdf');
+        });
+
+        it('should follow the team config component when it changes the mode and the team size', async () => {
+            await render(filledInExercise());
+            const teamConfig = fixture.debugElement.query(By.directive(TeamConfigFormGroupComponent)).componentInstance as TeamConfigFormGroupComponent;
+            const exercise = component.fileUploadExercise();
+
+            exercise.mode = ExerciseMode.TEAM;
+            exercise.teamAssignmentConfig = undefined;
+            teamConfig.exerciseChange.emit(exercise);
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.minTeamSize.required', 'artemisApp.exercise.form.maxTeamSize.required']);
+            expect(sectionOf('mode')?.valid).toBe(false);
+
+            exercise.mode = ExerciseMode.INDIVIDUAL;
+            teamConfig.exerciseChange.emit(exercise);
+            expect(component.invalidReasons()).toEqual([]);
+            expect(sectionOf('mode')?.valid).toBe(true);
+        });
+
+        it('should follow the title component when it writes a new title', async () => {
+            await render(filledInExercise());
+            const titleComponent: StubExerciseTitleChannelNameComponent = fixture.debugElement.query(By.directive(StubExerciseTitleChannelNameComponent)).componentInstance;
+
+            component.fileUploadExercise().title = 'ab';
+            titleComponent.exerciseChange.emit(component.fileUploadExercise());
+
+            expect(reasonKeys()).toEqual(['artemisApp.exercise.form.title.minlength']);
+            expect(sectionOf('general')?.valid).toBe(false);
+        });
+
+        it('should report an example solution publication date before the due date, and stop once it is moved', async () => {
+            await render(filledInExercise());
+            const timeline: ExerciseTimelineComponent = fixture.debugElement.query(By.directive(ExerciseTimelineComponent)).componentInstance;
+            const dueDate = dayjs().add(2, 'days');
+
+            timeline.dueDate.set(dueDate);
+            timeline.exampleSolutionPublicationDate.set(dueDate.subtract(1, 'day'));
+            expect(reasonKeys()).toContain('artemisApp.exercise.exampleSolutionPublicationDateError');
+
+            timeline.exampleSolutionPublicationDate.set(dueDate.add(1, 'day'));
+            expect(reasonKeys()).not.toContain('artemisApp.exercise.exampleSolutionPublicationDateError');
+        });
+
+        it('should edit the exercise in place, so that the child components keep the object they were given', async () => {
+            const exercise = filledInExercise();
+            await render(exercise);
+            const titleComponent: StubExerciseTitleChannelNameComponent = fixture.debugElement.query(By.directive(StubExerciseTitleChannelNameComponent)).componentInstance;
+
+            await typeInto('#field_points', '7');
+            await typeInto('#field_filePattern', 'zip');
+
+            expect(component.fileUploadExercise()).toBe(exercise);
+            expect(titleComponent.exercise()).toBe(exercise);
+            expect(exercise.maxPoints).toBe(7);
+            expect(exercise.filePattern).toBe('zip');
         });
     });
 });

@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
-import { FormsModule, NgModel } from '@angular/forms';
+import { Component, ElementRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
@@ -42,12 +42,18 @@ import { parseJson } from 'app/foundation/util/json.util';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { isEmpty } from 'lodash-es';
-import { Subscription } from 'rxjs';
 import { switchMap, take, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
-import { getCommonExerciseInvalidReasons } from 'app/exercise/util/exercise-validation.util';
+import {
+    ExerciseValidationViewState,
+    getCommonExerciseInvalidReasons,
+    getGeneralSectionInvalidReasons,
+    getGradingSectionInvalidReasons,
+    getModeSectionInvalidReasons,
+} from 'app/exercise/util/exercise-validation.util';
+import { ExerciseFormState } from 'app/exercise/util/exercise-form-state';
 import { countModelElements } from 'app/modeling/shared/apollon-model.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { TranslateService } from '@ngx-translate/core';
@@ -90,7 +96,7 @@ import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-da
     ],
     providers: [TumAetUiConfirmationService],
 })
-export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
+export class ModelingExerciseUpdateComponent implements OnDestroy, OnInit {
     private static readonly SCROLL_SNAP_CLASS = 'modeling-exercise-editor-scroll-snap';
     private static readonly DIAGRAM_TYPE_CONFIRMATION_KEY = 'modeling-diagram-type-change';
 
@@ -112,14 +118,10 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     timelineStatus = signal<TimelineStatus>({ valid: true, empty: false, invalidItems: [] });
 
     readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNamePrimengComponent);
-    readonly teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
     readonly modelingEditor = viewChild(ModelingEditorComponent);
     readonly gradingInstructionsDetails = viewChild(GradingInstructionsDetailsComponent);
 
-    readonly bonusPoints = viewChild<NgModel>('bonusPoints');
-    readonly points = viewChild<NgModel>('points');
     readonly editFormEl = viewChild<ElementRef<HTMLFormElement>>('editForm');
-    protected readonly hasExampleSolution = signal(false);
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Model';
     protected readonly diagramTypes = [
@@ -144,15 +146,21 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         }));
     });
 
-    private readonly _modelingExercise = signal<ModelingExercise>(undefined!);
+    /** Every write to the exercise goes through this, so that {@link invalidReasons} and {@link formSectionStatus} follow it. */
+    readonly exerciseState = new ExerciseFormState<ModelingExercise>();
     get modelingExercise(): ModelingExercise {
-        return this._modelingExercise();
+        return this.exerciseState.exercise();
     }
     set modelingExercise(value: ModelingExercise) {
-        this._modelingExercise.set(value);
+        this.exerciseState.set(value);
     }
     backupExercise!: ModelingExercise;
+    /** The example solution the exercise was opened with, imported for the editor; cleared when the diagram type changes. */
     readonly exampleSolution = signal<UMLModel | undefined>(undefined);
+    /** The example solution as the editor last reported it, which is undefined until the editor reports a change. */
+    private readonly editedExampleSolution = signal<UMLModel | undefined>(undefined);
+    private readonly hasExampleSolutionDiagram = computed(() => !isEmpty((this.editedExampleSolution() ?? this.exampleSolution())?.nodes));
+    protected readonly hasExampleSolution = computed(() => this.hasExampleSolutionDiagram() || !!this.exerciseState.exercise()?.exampleSolutionExplanation);
     protected readonly selectedDiagramType = signal<UMLDiagramType>(UMLDiagramType.ClassDiagram);
     readonly isSaving = signal(false);
     readonly exerciseCategories = signal<ExerciseCategory[]>([]);
@@ -163,11 +171,42 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     readonly isImport = signal<boolean>(undefined!);
     readonly isExamMode = signal<boolean>(undefined!);
 
-    readonly formSectionStatus = signal<FormSectionStatus[]>(undefined!);
+    /** What the shared checks need to know beyond the exercise itself. */
+    private readonly validationViewState = computed<ExerciseValidationViewState>(() => {
+        const titleChannelName = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
+        return {
+            isExamMode: this.isExamMode(),
+            minTitleLength: 3,
+            isTitleDisallowed: !!titleChannelName?.isTitleDisallowed(),
+            isChannelNameRequired: !!titleChannelName?.isChannelFieldDisplayed(),
+            timelineStatus: this.timelineStatus(),
+        };
+    });
 
-    pointsSubscription?: Subscription;
-    bonusPointsSubscription?: Subscription;
-    teamSubscription?: Subscription;
+    /** Every reason the exercise cannot be saved; drives the footer's disabled state and its tooltip. */
+    readonly invalidReasons = computed<ValidationReason[]>(() => {
+        const exercise = this.exerciseState.exercise();
+        return exercise ? getCommonExerciseInvalidReasons(exercise, this.validationViewState()) : [];
+    });
+
+    readonly formSectionStatus = computed<FormSectionStatus[]>(() => {
+        const exercise = this.exerciseState.exercise();
+        if (!exercise) {
+            return [];
+        }
+        const viewState = this.validationViewState();
+        return [
+            { title: 'artemisApp.exercise.sections.general', valid: getGeneralSectionInvalidReasons(exercise, viewState).length === 0 },
+            { title: 'artemisApp.exercise.sections.mode', valid: getModeSectionInvalidReasons(exercise).length === 0 },
+            { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !exercise.problemStatement },
+            { title: 'artemisApp.exercise.sections.solution', valid: true, empty: !this.hasExampleSolutionDiagram() || !exercise.exampleSolutionExplanation },
+            {
+                title: 'artemisApp.exercise.sections.grading',
+                valid: getGradingSectionInvalidReasons(exercise, viewState).length === 0,
+                empty: !viewState.isExamMode && viewState.timelineStatus.empty,
+            },
+        ];
+    });
 
     get editType(): EditType {
         if (this.isImport()) {
@@ -175,31 +214,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         }
 
         return this.modelingExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
-    }
-
-    ngAfterViewInit() {
-        this.pointsSubscription = this.points()?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.bonusPointsSubscription = this.bonusPoints()?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.teamSubscription = this.teamConfigFormGroupComponent()?.formValidChanges?.subscribe(() => this.calculateFormSectionStatus());
-    }
-
-    constructor() {
-        effect(() => {
-            this.updateFormSectionsOnIsValidChange();
-        });
-        effect(() => {
-            this.timelineStatus();
-            this.validateDate();
-        });
-    }
-
-    private updateFormSectionsOnIsValidChange() {
-        const titleComponent = this.exerciseTitleChannelNameComponent?.();
-        if (titleComponent?.titleChannelNameComponent) {
-            titleComponent.titleChannelNameComponent().isValid();
-        }
-
-        void this.calculateFormSectionStatus();
     }
 
     ngOnInit(): void {
@@ -234,12 +248,14 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                             courseId = this.modelingExercise.exerciseGroup!.exam!.course!.id!;
                         }
                     } else {
-                        this.modelingExercise.mode = ExerciseMode.INDIVIDUAL;
-                        this.modelingExercise.teamAssignmentConfig = undefined;
-                        this.modelingExercise.teamMode = false;
-                        if (this.modelingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
-                            this.modelingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
-                        }
+                        this.exerciseState.update((exercise) => {
+                            exercise.mode = ExerciseMode.INDIVIDUAL;
+                            exercise.teamAssignmentConfig = undefined;
+                            exercise.teamMode = false;
+                            if (exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+                                exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+                            }
+                        });
                     }
                     if (this.isImport()) {
                         courseId = params['courseId'];
@@ -247,13 +263,13 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                         if (this.isExamMode()) {
                             const { exerciseGroupId, examId } = params;
 
-                            this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.modelingExercise.exerciseGroup = res.body!));
-                            this.modelingExercise.course = undefined;
+                            this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => this.exerciseState.patch('exerciseGroup', res.body!));
+                            this.exerciseState.patch('course', undefined);
                         } else {
-                            this.courseService.find(courseId).subscribe((res) => (this.modelingExercise.course = res.body!));
-                            this.modelingExercise.exerciseGroup = undefined;
+                            this.courseService.find(courseId).subscribe((res) => this.exerciseState.patch('course', res.body!));
+                            this.exerciseState.patch('exerciseGroup', undefined);
                         }
-                        resetForImport(this.modelingExercise);
+                        this.exerciseState.update(resetForImport);
                     }
 
                     loadCourseExerciseCategories(courseId, this.courseService, this.exerciseService, this.alertService).subscribe((existingCategories) => {
@@ -269,64 +285,11 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     ngOnDestroy() {
         this.document.documentElement.classList.remove(ModelingExerciseUpdateComponent.SCROLL_SNAP_CLASS);
-        this.pointsSubscription?.unsubscribe();
-        this.bonusPointsSubscription?.unsubscribe();
-    }
-
-    async calculateFormSectionStatus() {
-        const modelingEditor = this.modelingEditor();
-        // Before Apollon has mounted, fall back to the model imported from the exercise so the example solution is recognized on the first render.
-        const currentModel = (modelingEditor?.isApollonEditorMounted ? modelingEditor.getCurrentModel() : undefined) ?? this.exampleSolution();
-        const hasExampleSolutionDiagram = !isEmpty(currentModel?.nodes);
-        this.hasExampleSolution.set(hasExampleSolutionDiagram || !!this.modelingExercise.exampleSolutionExplanation);
-
-        this.formSectionStatus.set([
-            {
-                title: 'artemisApp.exercise.sections.general',
-                valid: this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent()?.isValid() ?? true,
-            },
-            { title: 'artemisApp.exercise.sections.mode', valid: Boolean(this.teamConfigFormGroupComponent()?.formValid) },
-            { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },
-            {
-                title: 'artemisApp.exercise.sections.solution',
-                valid: true,
-                empty: !hasExampleSolutionDiagram || !this.modelingExercise.exampleSolutionExplanation,
-            },
-            {
-                title: 'artemisApp.exercise.sections.grading',
-                valid: Boolean(
-                    (this.points()?.valid ?? true) &&
-                    (this.bonusPoints()?.valid ?? true) &&
-                    (this.isExamMode() || (this.timelineStatus().valid && !this.modelingExercise.exampleSolutionPublicationDateError)),
-                ),
-                empty: !this.isExamMode() && this.timelineStatus().empty,
-            },
-        ]);
-    }
-
-    /** Every reason the exercise cannot be saved; drives the footer's disabled state and its tooltip. */
-    getInvalidReasons(): ValidationReason[] {
-        if (!this.modelingExercise) {
-            return [];
-        }
-        const titleChannelNameComponent = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
-        return getCommonExerciseInvalidReasons(this.modelingExercise, {
-            isExamMode: this.isExamMode(),
-            minTitleLength: 3,
-            isTitleDisallowed: !!titleChannelNameComponent?.field_title?.control?.errors?.disallowedValue,
-            isChannelNameRequired: !!titleChannelNameComponent?.isChannelFieldDisplayed(),
-            timelineStatus: this.timelineStatus(),
-        });
     }
 
     updateCategories(categories: ExerciseCategory[]): void {
-        this.modelingExercise.categories = categories;
+        this.exerciseState.patch('categories', categories);
         this.exerciseCategories.set(categories);
-    }
-
-    validateDate(): void {
-        this.exerciseService.validateDate(this.modelingExercise);
-        void this.calculateFormSectionStatus();
     }
 
     protected requestDiagramTypeChange(nextDiagramType: UMLDiagramType): void {
@@ -372,12 +335,10 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     private applyDiagramTypeChange(diagramType: UMLDiagramType): void {
-        const updatedExercise = deepClone(this.modelingExercise);
-        updatedExercise.diagramType = diagramType;
         this.exampleSolution.set(undefined);
-        this.modelingExercise = updatedExercise;
+        this.editedExampleSolution.set(undefined);
+        this.exerciseState.patch('diagramType', diagramType);
         this.selectedDiagramType.set(diagramType);
-        void this.calculateFormSectionStatus();
     }
 
     handleEnterKeyNavigation(event: Event): void {
@@ -412,7 +373,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     save() {
-        this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor()?.getCurrentModel());
+        this.exerciseState.patch('exampleSolutionModel', JSON.stringify(this.modelingEditor()?.getCurrentModel()));
         // Flush text-mode Monaco before isSaving disables the child (editable becomes false). A
         // rejected parse aborts the save: the model still holds the previous grading criteria.
         if (this.gradingInstructionsDetails()?.prepareForSave() === false) {
@@ -433,7 +394,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     /** Copies the latest modeling-editor content to the exercise before criteria generation. */
     readonly synchronizeForAssessmentCriteriaGeneration = () => {
-        this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor()?.getCurrentModel());
+        this.exerciseState.patch('exampleSolutionModel', JSON.stringify(this.modelingEditor()?.getCurrentModel()));
     };
 
     /**
@@ -441,8 +402,8 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
      * @param model Latest model emitted by the editor.
      */
     readonly onModelChanged = (model: UMLModel): void => {
-        this.modelingExercise.exampleSolutionModel = JSON.stringify(model);
-        void this.calculateFormSectionStatus();
+        this.editedExampleSolution.set(model);
+        this.exerciseState.patch('exampleSolutionModel', JSON.stringify(model));
     };
 
     /** Supplies modeling-specific example-solution context for assessment-criteria generation. */

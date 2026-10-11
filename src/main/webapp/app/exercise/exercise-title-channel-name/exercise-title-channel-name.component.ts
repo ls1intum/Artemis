@@ -41,6 +41,8 @@ export class ExerciseTitleChannelNameComponent {
 
     readonly onTitleChange = output<string>();
     readonly onChannelNameChange = output<string>();
+    /** Emits the exercise after the title or the channel name was written onto it, so that a host can bind `[(exercise)]`. */
+    readonly exerciseChange = output<Exercise>();
 
     /**
      * Titles already used in the course (to validate uniqueness). Replaces the former
@@ -68,11 +70,13 @@ export class ExerciseTitleChannelNameComponent {
     updateTitle(newTitle: string | undefined) {
         this.exercise().title = newTitle;
         this.onTitleChange.emit(newTitle ?? '');
+        this.exerciseChange.emit(this.exercise());
     }
 
     updateChannelName(newName: string | undefined) {
         this.exercise().channelName = newName;
         this.onChannelNameChange.emit(newName ?? '');
+        this.exerciseChange.emit(this.exercise());
     }
 
     /**
