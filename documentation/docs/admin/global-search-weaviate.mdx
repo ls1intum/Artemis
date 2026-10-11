@@ -66,7 +66,7 @@ docker compose --env-file .env -f deployment/docker/weaviate-embeddings.yml buil
 docker compose --env-file .env -f deployment/docker/weaviate-embeddings.yml up -d
 ```
 
-The shipped image is pinned to **Weaviate 1.37.17** (`cr.weaviate.io/semitechnologies/weaviate:1.37.17`).
+The shipped image is pinned to **Weaviate 1.38.20** (`cr.weaviate.io/semitechnologies/weaviate:1.38.20`).
 
 **Ports exposed by both files:**
 
@@ -343,9 +343,9 @@ Weaviate backups capture the full data volume (all collections, vectors, and met
 
 ### Upgrades
 
-Weaviate follows semantic versioning. The shipped Compose files pin the image to **1.37.x**. When upgrading:
+Weaviate follows semantic versioning. The shipped Compose files pin the image to **1.38.x**. When upgrading:
 
-1. **Upgrade one minor version at a time** — do not skip minor versions (e.g., 1.37 → 1.38 → 1.39, not 1.37 → 1.39). Each minor release may include schema or storage migrations that must run in order.
+1. **Upgrade one minor version at a time** — do not skip minor versions (e.g., 1.38 → 1.39 → 1.40, not 1.38 → 1.40). Each minor release may include schema or storage migrations that must run in order.
 2. Stop the Weaviate container, update the image tag in the Compose file or Ansible vars, then restart.
 3. Check the [Weaviate release notes](https://github.com/weaviate/weaviate/releases) for breaking changes before each step, especially changes to module APIs or authentication config.
 4. After upgrading, verify the instance with the readiness probe and the `/management/health` endpoint described in [Enable and verify Artemis global search](#enable-and-verify-artemis-global-search).
