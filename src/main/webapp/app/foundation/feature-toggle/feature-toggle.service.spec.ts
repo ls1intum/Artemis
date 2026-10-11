@@ -67,7 +67,7 @@ describe('FeatureToggleService', () => {
     });
 
     describe('getFeatureToggles', () => {
-        it('should return all feature toggles by default', async () => {
+        it('should activate all features by default', async () => {
             const result = await firstValueFrom(service.getFeatureToggles());
             expect(result).toEqual(Object.values(FeatureToggle));
         });

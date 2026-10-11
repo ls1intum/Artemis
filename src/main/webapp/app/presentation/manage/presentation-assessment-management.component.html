@@ -1,0 +1,536 @@
+<div class="presentation-page flex flex-col">
+    <div *titleBarActions class="flex items-center justify-end">
+        @if (isAtLeastEditor()) {
+            <tumaet-ui-button id="create-presentation-assessment" data-testid="create-presentation-button" size="small" [icon]="faPlus" (clicked)="startCreate()">
+                <span jhiTranslate="artemisApp.presentationAssessment.home.createLabel"></span>
+            </tumaet-ui-button>
+        }
+    </div>
+
+    <div class="flex horizontal-scroll presentation-workspace" data-testid="presentation-master-detail">
+        <div class="presentation-sidebar">
+            <jhi-sidebar
+                [fitContainerHeight]="true"
+                [courseId]="courseId()"
+                [sidebarData]="sidebarData()"
+                searchFieldSize="small"
+                [collapseState]="sidebarCollapseState"
+                [sidebarItemAlwaysShow]="sidebarItemAlwaysShow"
+                [itemSelected]="viewMode() === 'presentations'"
+            />
+        </div>
+
+        <main
+            class="presentation-content rounded-md border border-(--border-color) bg-(--module-bg)"
+            [attr.aria-busy]="(!contentReady() || isLoadingStudentRows()) && !presentationLoadFailed()"
+        >
+            @if (presentationLoadFailed() || (contentReady() && studentRowsLoadFailed())) {
+                <div class="flex flex-1 items-center justify-center" data-testid="presentation-load-error">
+                    <tumaet-ui-button (clicked)="retryLoading()">
+                        <span jhiTranslate="entity.action.retry"></span>
+                    </tumaet-ui-button>
+                </div>
+            } @else if (contentReady()) {
+                @if (presentationAssessments().length) {
+                    @if (viewMode() === 'presentations') {
+                        @if (selectedPresentation(); as presentationAssessment) {
+                            <section class="presentation-detail">
+                                <header class="presentation-detail-header">
+                                    <strong class="presentation-detail-title">{{ presentationAssessment.title }}</strong>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        @if (selectedPresentationExerciseRoute(); as exerciseRoute) {
+                                            <a tumAetUiButton size="small" severity="secondary" variant="outlined" [routerLink]="exerciseRoute">
+                                                <fa-icon [icon]="faArrowUpRightFromSquare" />
+                                                <span>{{ presentationAssessment.exerciseTitle }}</span>
+                                            </a>
+                                        }
+                                        @if (isAtLeastEditor()) {
+                                            <tumaet-ui-button
+                                                size="small"
+                                                severity="secondary"
+                                                variant="outlined"
+                                                [icon]="faPencilAlt"
+                                                (clicked)="startEdit(presentationAssessment)"
+                                                data-testid="edit-presentation-button"
+                                            >
+                                                <span jhiTranslate="entity.action.edit"></span>
+                                            </tumaet-ui-button>
+                                        }
+                                    </div>
+                                </header>
+
+                                <div class="presentation-summary text-(--text-body-secondary)">{{ presentationAssessment.description || '-' }}</div>
+
+                                <div class="presentation-grading-toolbar">
+                                    <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
+                                        <input
+                                            tumAetUiInput
+                                            tumAetUiInputSize="small"
+                                            type="search"
+                                            class="student-search-input w-full"
+                                            [ngModel]="studentSearchTerm()"
+                                            (ngModelChange)="updateStudentSearch($event)"
+                                            placeholder="{{ 'artemisApp.presentationAssessment.searchStudent' | artemisTranslate }}"
+                                            data-testid="selected-presentation-student-search"
+                                        />
+                                    </tumaet-ui-icon-field>
+                                    <div class="flex items-center">
+                                        <tumaet-ui-button size="small" (clicked)="startCreateInstance(presentationAssessment)" data-testid="create-instance-button">
+                                            <span jhiTranslate="artemisApp.presentationAssessment.enterGrade"></span>
+                                        </tumaet-ui-button>
+                                    </div>
+                                </div>
+
+                                <div class="presentation-table-scroll">
+                                    <table tumAetUiTable data-testid="presentation-instances-table">
+                                        <thead>
+                                            <tr>
+                                                <th><span jhiTranslate="artemisApp.presentationAssessment.student"></span></th>
+                                                <th><span jhiTranslate="artemisApp.presentationAssessment.status"></span></th>
+                                                <th><span jhiTranslate="artemisApp.presentationAssessment.assessment"></span></th>
+                                                <th><span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span></th>
+                                                <th><span jhiTranslate="artemisApp.presentationAssessment.remark"></span></th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @for (row of studentRows(); track row.rowKey) {
+                                                <tr>
+                                                    <td>
+                                                        <button
+                                                            type="button"
+                                                            class="presentation-student-details-button flex items-center gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--primary)"
+                                                            [disabled]="!row.instance"
+                                                            [attr.aria-expanded]="row.instance ? row.expanded : null"
+                                                            [attr.aria-controls]="row.instance ? 'presentation-detail-' + row.rowKey : null"
+                                                            [attr.aria-label]="
+                                                                (row.expanded ? 'artemisApp.presentationAssessment.hideDetails' : 'artemisApp.presentationAssessment.showDetails')
+                                                                    | artemisTranslate
+                                                            "
+                                                            (click)="toggleStudentRowDetails(row)"
+                                                        >
+                                                            <span class="student-avatar rounded-md bg-(--primary)/10 text-(--primary)">{{
+                                                                row.studentLogin.slice(0, 2).toUpperCase()
+                                                            }}</span>
+                                                            <div class="flex flex-col">
+                                                                <strong>
+                                                                    {{
+                                                                        row.student.name ||
+                                                                            (row.student.firstName || row.student.lastName
+                                                                                ? (row.student.firstName ?? '') + ' ' + (row.student.lastName ?? '')
+                                                                                : row.studentLogin)
+                                                                    }}
+                                                                </strong>
+                                                                <small class="text-muted-color">{{ row.student.email || row.studentLogin }}</small>
+                                                            </div>
+                                                        </button>
+                                                    </td>
+                                                    <td>
+                                                        @if (row.assessed) {
+                                                            <tumaet-ui-tag severity="success" size="sm" [value]="'artemisApp.presentationAssessment.assessed' | artemisTranslate" />
+                                                        } @else {
+                                                            <tumaet-ui-tag severity="warn" size="sm" [value]="'artemisApp.presentationAssessment.pending' | artemisTranslate" />
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @if (row.assessed) {
+                                                            <tumaet-ui-tag
+                                                                severity="info"
+                                                                size="sm"
+                                                                [value]="row.instance!.resultPoints + ' / ' + presentationAssessment.maxPoints"
+                                                            />
+                                                        } @else {
+                                                            <span class="text-muted-color">-</span>
+                                                        }
+                                                    </td>
+                                                    <td>{{ row.instance?.presentationDate ? (row.instance?.presentationDate | artemisDate) : '-' }}</td>
+                                                    <td class="text-muted-color">{{ row.instance?.remark || '-' }}</td>
+                                                    <td>
+                                                        @if (row.instance; as instance) {
+                                                            <div class="flex justify-end gap-2">
+                                                                <tumaet-ui-button
+                                                                    size="small"
+                                                                    variant="text"
+                                                                    [icon]="faPencilAlt"
+                                                                    [ariaLabel]="'entity.action.edit' | artemisTranslate"
+                                                                    (clicked)="startEditInstance(presentationAssessment, instance)"
+                                                                    data-testid="edit-instance-button"
+                                                                />
+                                                                @if (isAtLeastEditor()) {
+                                                                    <tumaet-ui-button
+                                                                        size="small"
+                                                                        severity="danger"
+                                                                        variant="text"
+                                                                        [icon]="faTrash"
+                                                                        [ariaLabel]="'entity.action.delete' | artemisTranslate"
+                                                                        jhiDeleteButton
+                                                                        [renderButtonStyle]="false"
+                                                                        [renderButtonText]="false"
+                                                                        [actionType]="ActionType.Delete"
+                                                                        deleteQuestion="artemisApp.presentationAssessment.delete.instanceQuestion"
+                                                                        (delete)="deleteInstance(presentationAssessment, instance)"
+                                                                        data-testid="delete-instance-button"
+                                                                    />
+                                                                }
+                                                            </div>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                                @if (row.instance && row.expanded) {
+                                                    <tr class="presentation-detail-row" [id]="'presentation-detail-' + row.rowKey">
+                                                        <td colspan="6">
+                                                            <div class="instance-detail-grid">
+                                                                <div>
+                                                                    <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.language"></span>:
+                                                                    {{ row.instance.language || '-' }}
+                                                                </div>
+                                                                <div>
+                                                                    <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.mode.label"></span>:
+                                                                    {{
+                                                                        row.instance.mode === PresentationAssessmentMode.ONLINE
+                                                                            ? ('artemisApp.presentationAssessment.mode.online' | artemisTranslate)
+                                                                            : ('artemisApp.presentationAssessment.mode.inPerson' | artemisTranslate)
+                                                                    }}
+                                                                </div>
+                                                                @if (row.instance.mode === PresentationAssessmentMode.ONLINE) {
+                                                                    <div>
+                                                                        <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.meetingLink"></span>:
+                                                                        <a [href]="row.instance.meetingLink" target="_blank" rel="noopener noreferrer">{{
+                                                                            row.instance.meetingLink || '-'
+                                                                        }}</a>
+                                                                    </div>
+                                                                } @else {
+                                                                    <div>
+                                                                        <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.location"></span>:
+                                                                        {{ row.instance.location || '-' }}
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            } @empty {
+                                                <tr>
+                                                    <td colspan="6" class="text-center text-muted-color" jhiTranslate="artemisApp.presentationAssessment.noMatchingStudents"></td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
+                        }
+                    } @else {
+                        <section class="presentation-overview">
+                            <div class="presentation-statistics" data-testid="presentation-overview-statistics">
+                                <div class="presentation-statistic">
+                                    <strong class="text-base leading-tight text-(--primary)">{{ statistics()?.totalCount ?? '-' }}</strong>
+                                    <span class="text-[0.6875rem] text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.statistics.total"></span>
+                                </div>
+                                <div class="presentation-statistic">
+                                    <strong class="text-base leading-tight text-state-success">{{ assessedStudentCount() ?? '-' }}</strong>
+                                    <span class="text-[0.6875rem] text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.assessed"></span>
+                                </div>
+                                <div class="presentation-statistic">
+                                    <strong class="text-base leading-tight text-state-warning">{{ pendingStudentCount() ?? '-' }}</strong>
+                                    <span class="text-[0.6875rem] text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.pending"></span>
+                                </div>
+                            </div>
+
+                            <div class="presentation-overall-toolbar border-y border-(--border-color)">
+                                <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
+                                    <input
+                                        tumAetUiInput
+                                        tumAetUiInputSize="small"
+                                        type="search"
+                                        class="student-search-input w-full"
+                                        [ngModel]="studentSearchTerm()"
+                                        (ngModelChange)="updateStudentSearch($event)"
+                                        placeholder="{{ 'artemisApp.presentationAssessment.searchOverview' | artemisTranslate }}"
+                                        data-testid="student-search"
+                                    />
+                                </tumaet-ui-icon-field>
+                                <tumaet-ui-button-group class="presentation-status-filter" [attr.aria-label]="'artemisApp.presentationAssessment.status' | artemisTranslate">
+                                    <tumaet-ui-button
+                                        size="small"
+                                        variant="text"
+                                        [severity]="assessmentStatusFilter() === 'all' ? 'primary' : 'secondary'"
+                                        [ariaPressed]="assessmentStatusFilter() === 'all'"
+                                        (clicked)="setAssessmentStatusFilter('all')"
+                                        data-testid="status-filter-all"
+                                        ><span jhiTranslate="artemisApp.presentationAssessment.filter.all"></span
+                                    ></tumaet-ui-button>
+                                    <tumaet-ui-button
+                                        size="small"
+                                        variant="text"
+                                        [severity]="assessmentStatusFilter() === 'assessed' ? 'primary' : 'secondary'"
+                                        [ariaPressed]="assessmentStatusFilter() === 'assessed'"
+                                        (clicked)="setAssessmentStatusFilter('assessed')"
+                                        data-testid="status-filter-assessed"
+                                        ><span jhiTranslate="artemisApp.presentationAssessment.assessed"></span
+                                    ></tumaet-ui-button>
+                                    <tumaet-ui-button
+                                        size="small"
+                                        variant="text"
+                                        [severity]="assessmentStatusFilter() === 'pending' ? 'primary' : 'secondary'"
+                                        [ariaPressed]="assessmentStatusFilter() === 'pending'"
+                                        (clicked)="setAssessmentStatusFilter('pending')"
+                                        data-testid="status-filter-pending"
+                                        ><span jhiTranslate="artemisApp.presentationAssessment.pending"></span
+                                    ></tumaet-ui-button>
+                                </tumaet-ui-button-group>
+                                <span class="presentation-toolbar-divider border-l border-(--border-color)" aria-hidden="true"></span>
+                                <tumaet-ui-select
+                                    size="small"
+                                    class="presentation-filter-select"
+                                    [options]="presentationFilterOptions()"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    [ngModel]="presentationFilter()"
+                                    (ngModelChange)="updatePresentationFilter($event)"
+                                    [ariaLabel]="'artemisApp.presentationAssessment.filter.presentation' | artemisTranslate"
+                                />
+                                <tumaet-ui-select
+                                    size="small"
+                                    class="presentation-filter-select"
+                                    [options]="typeFilterOptions()"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    [ngModel]="presentationTypeFilter()"
+                                    (ngModelChange)="updatePresentationTypeFilter($event)"
+                                    [ariaLabel]="'artemisApp.presentationAssessment.filter.type' | artemisTranslate"
+                                />
+                                <span class="presentation-row-count text-muted-color">
+                                    {{ totalStudentRows() }} <span jhiTranslate="artemisApp.presentationAssessment.rows"></span>
+                                </span>
+                            </div>
+                            <div class="presentation-table-scroll">
+                                <table
+                                    tumAetUiTable
+                                    size="small"
+                                    [sortField]="studentSortField()"
+                                    [sortOrder]="studentSortOrder()"
+                                    (sortChange)="onStudentSort($event)"
+                                    data-testid="presentation-student-overview-table"
+                                >
+                                    <thead>
+                                        <tr>
+                                            <th tumAetUiSortableColumn="studentLogin"><span jhiTranslate="artemisApp.presentationAssessment.presenter"></span></th>
+                                            <th tumAetUiSortableColumn="presentationTitle"><span jhiTranslate="artemisApp.presentationAssessment.presentation"></span></th>
+                                            <th><span jhiTranslate="artemisApp.presentationAssessment.type"></span></th>
+                                            <th tumAetUiSortableColumn="presentationDate"><span jhiTranslate="artemisApp.presentationAssessment.date"></span></th>
+                                            <th><span jhiTranslate="artemisApp.presentationAssessment.status"></span></th>
+                                            <th tumAetUiSortableColumn="resultPoints"><span jhiTranslate="artemisApp.presentationAssessment.assessment"></span></th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (row of studentRows(); track row.instance.id + ':' + row.studentLogin) {
+                                            <tr>
+                                                <td>
+                                                    <button
+                                                        type="button"
+                                                        class="presentation-student-details-button flex items-center gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--primary)"
+                                                        [attr.aria-expanded]="row.expanded"
+                                                        [attr.aria-controls]="'presentation-overview-detail-' + row.rowKey"
+                                                        [attr.aria-label]="
+                                                            (row.expanded ? 'artemisApp.presentationAssessment.hideDetails' : 'artemisApp.presentationAssessment.showDetails')
+                                                                | artemisTranslate
+                                                        "
+                                                        (click)="toggleStudentRowDetails(row)"
+                                                        data-testid="toggle-overview-row-details"
+                                                    >
+                                                        <span class="student-avatar rounded-md bg-(--primary)/10 text-(--primary)">{{
+                                                            row.studentLogin.slice(0, 2).toUpperCase()
+                                                        }}</span>
+                                                        <div class="flex min-w-0 flex-col">
+                                                            <strong class="truncate">{{ row.student.name || row.studentLogin }}</strong>
+                                                            <small class="truncate text-muted-color">{{ row.student.email || row.studentLogin }}</small>
+                                                        </div>
+                                                    </button>
+                                                </td>
+                                                <td>
+                                                    <div class="flex flex-col">
+                                                        <span>{{ row.presentationAssessment.title }}</span>
+                                                        @if (row.presentationAssessment.exerciseTitle) {
+                                                            <small class="text-muted-color">{{ row.presentationAssessment.exerciseTitle }}</small>
+                                                        }
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <tumaet-ui-tag
+                                                        [severity]="row.presentationAssessment.exerciseId ? 'success' : 'info'"
+                                                        size="sm"
+                                                        [value]="
+                                                            (row.presentationAssessment.exerciseId
+                                                                ? 'artemisApp.presentationAssessment.typeExercise'
+                                                                : 'artemisApp.presentationAssessment.typeStandalone'
+                                                            ) | artemisTranslate
+                                                        "
+                                                    />
+                                                </td>
+                                                <td>{{ row.instance.presentationDate | artemisDate }}</td>
+                                                <td>
+                                                    <tumaet-ui-tag
+                                                        [severity]="row.assessed ? 'success' : 'warn'"
+                                                        size="sm"
+                                                        [value]="
+                                                            (row.assessed ? 'artemisApp.presentationAssessment.assessed' : 'artemisApp.presentationAssessment.pending')
+                                                                | artemisTranslate
+                                                        "
+                                                    />
+                                                </td>
+                                                <td>
+                                                    @if (row.assessed) {
+                                                        <tumaet-ui-tag
+                                                            severity="success"
+                                                            size="sm"
+                                                            [value]="row.instance.resultPoints + ' / ' + row.presentationAssessment.maxPoints"
+                                                        />
+                                                    } @else {
+                                                        <span class="text-muted-color">—</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="flex justify-end gap-2">
+                                                        <tumaet-ui-button
+                                                            size="small"
+                                                            variant="text"
+                                                            [icon]="faPencilAlt"
+                                                            [ariaLabel]="'entity.action.edit' | artemisTranslate"
+                                                            (clicked)="startEditInstance(row.presentationAssessment, row.instance)"
+                                                            data-testid="edit-instance-button"
+                                                        />
+                                                        @if (isAtLeastEditor()) {
+                                                            <tumaet-ui-button
+                                                                size="small"
+                                                                severity="danger"
+                                                                variant="text"
+                                                                [icon]="faTrash"
+                                                                [ariaLabel]="'entity.action.delete' | artemisTranslate"
+                                                                jhiDeleteButton
+                                                                [renderButtonStyle]="false"
+                                                                [renderButtonText]="false"
+                                                                [actionType]="ActionType.Delete"
+                                                                deleteQuestion="artemisApp.presentationAssessment.delete.instanceQuestion"
+                                                                (delete)="deleteInstance(row.presentationAssessment, row.instance)"
+                                                                data-testid="delete-instance-button"
+                                                            />
+                                                        }
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            @if (row.expanded) {
+                                                <tr class="presentation-detail-row" [id]="'presentation-overview-detail-' + row.rowKey">
+                                                    <td colspan="7">
+                                                        <div class="instance-detail-grid">
+                                                            <div>
+                                                                <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.description"></span>:
+                                                                {{ row.presentationAssessment.description || '-' }}
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.exercise"></span>:
+                                                                {{ row.presentationAssessment.exerciseTitle || '-' }}
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.language"></span>:
+                                                                {{ row.instance.language || '-' }}
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.mode.label"></span>:
+                                                                {{
+                                                                    row.instance.mode === PresentationAssessmentMode.ONLINE
+                                                                        ? ('artemisApp.presentationAssessment.mode.online' | artemisTranslate)
+                                                                        : ('artemisApp.presentationAssessment.mode.inPerson' | artemisTranslate)
+                                                                }}
+                                                            </div>
+                                                            @if (row.instance.mode === PresentationAssessmentMode.ONLINE) {
+                                                                <div>
+                                                                    <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.meetingLink"></span>:
+                                                                    <a [href]="row.instance.meetingLink" target="_blank" rel="noopener noreferrer">{{
+                                                                        row.instance.meetingLink || '-'
+                                                                    }}</a>
+                                                                </div>
+                                                            } @else {
+                                                                <div>
+                                                                    <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.location"></span>:
+                                                                    {{ row.instance.location || '-' }}
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        } @empty {
+                                            <tr>
+                                                <td colspan="7" class="text-center text-muted-color" jhiTranslate="artemisApp.presentationAssessment.noMatchingStudents"></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    }
+                    <tumaet-ui-paginator
+                        class="presentation-paginator"
+                        [page]="overviewPage()"
+                        [pageSize]="overviewPageSize()"
+                        [pageSizeOptions]="[10, 25, 50, 100]"
+                        [totalRecords]="totalStudentRows()"
+                        (pageChange)="overviewPage.set($event)"
+                        (pageSizeChange)="updateOverviewPageSize($event)"
+                    />
+                } @else {
+                    <tumaet-ui-message severity="secondary" data-testid="presentation-assessments-empty-message">
+                        <span jhiTranslate="artemisApp.presentationAssessment.noExisting"></span>
+                    </tumaet-ui-message>
+                }
+            }
+        </main>
+    </div>
+
+    <tumaet-ui-dialog
+        [(visible)]="presentationDialogVisible"
+        size="medium"
+        [closable]="!isSaving()"
+        [closeOnEscape]="!isSaving()"
+        [dismissableMask]="false"
+        [header]="(dialogPresentationAssessment() ? 'artemisApp.presentationAssessment.home.editLabel' : 'artemisApp.presentationAssessment.home.createLabel') | artemisTranslate"
+        [closeButtonAriaLabel]="'entity.action.close' | artemisTranslate"
+    >
+        @if (presentationDialogVisible()) {
+            <jhi-presentation-assessment-form-dialog
+                [courseId]="courseId()"
+                [presentationAssessment]="dialogPresentationAssessment()"
+                [exercises]="exercises()"
+                [isSaving]="isSaving()"
+                [canDelete]="isAtLeastInstructor()"
+                [dialogError]="dialogError$"
+                (saved)="handlePresentationDialogSave($event)"
+                (deleteRequested)="handlePresentationDialogDelete($event)"
+                (cancelled)="handlePresentationDialogCancel()"
+            />
+        }
+    </tumaet-ui-dialog>
+
+    <tumaet-ui-dialog
+        [(visible)]="instanceDialogVisible"
+        size="large"
+        [closable]="!isSaving()"
+        [closeOnEscape]="!isSaving()"
+        [dismissableMask]="false"
+        [header]="(dialogInstance() ? 'artemisApp.presentationAssessment.instance.editLabel' : 'artemisApp.presentationAssessment.instance.createLabel') | artemisTranslate"
+        [closeButtonAriaLabel]="'entity.action.close' | artemisTranslate"
+    >
+        @if (instanceDialogVisible() && dialogInstancePresentationAssessment(); as presentationAssessment) {
+            <jhi-presentation-assessment-instance-form-dialog
+                [courseId]="courseId()"
+                [presentationAssessment]="presentationAssessment"
+                [instance]="dialogInstance()"
+                [initialAssignedStudents]="dialogAssignedStudents()"
+                [isSaving]="isSaving()"
+                (saved)="handleInstanceDialogSave($event)"
+                (cancelled)="handleInstanceDialogCancel()"
+            />
+        }
+    </tumaet-ui-dialog>
+</div>

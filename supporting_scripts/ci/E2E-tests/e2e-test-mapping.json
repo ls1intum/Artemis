@@ -130,7 +130,8 @@
         "assessment": {
             "sourcePaths": [
                 "src/main/java/de/tum/cit/aet/artemis/assessment/",
-                "src/main/webapp/app/assessment/"
+                "src/main/webapp/app/assessment/",
+                "src/main/webapp/app/presentation/"
             ],
             "testPaths": [
                 "e2e/exercise/file-upload/FileUploadExerciseAssessment.spec.ts",
@@ -138,7 +139,8 @@
                 "e2e/exercise/programming/ProgrammingExerciseAssessment.spec.ts",
                 "e2e/exercise/quiz-exercise/QuizExerciseAssessment.spec.ts",
                 "e2e/exercise/text/TextExerciseAssessment.spec.ts",
-                "e2e/exam/ExamAssessment.spec.ts"
+                "e2e/exam/ExamAssessment.spec.ts",
+                "e2e/course/PresentationAssessments.spec.ts"
             ]
         },
         "core": {

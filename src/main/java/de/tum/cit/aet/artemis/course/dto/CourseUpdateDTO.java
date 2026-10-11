@@ -64,7 +64,8 @@ public record CourseUpdateDTO(
         boolean unenrollmentEnabled, @Nullable String courseInformationSharingMessagingCodeOfConduct,
 
         // Course features
-        boolean learningPathsEnabled, @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
+        boolean learningPathsEnabled, @Nullable Boolean presentationAssessmentsEnabled,
+        @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
         @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Nullable @Min(0) @Max(5) Integer accuracyOfScores, @Nullable String timeZone,
         @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
 
@@ -152,10 +153,14 @@ public record CourseUpdateDTO(
         // Fail safe to keeping an existing hold: an omitted flag must never lift a legal hold and expose the course to
         // the cleanup again.
         configuration.setDataRetentionHold(dataRetentionHold == null ? configuration.isDataRetentionHold() : dataRetentionHold);
+        if (presentationAssessmentsEnabled != null) {
+            configuration.setPresentationAssessmentsEnabled(presentationAssessmentsEnabled);
+        }
         configuration.setAutoOrchestratorEnabled(autoOrchestratorEnabled);
         configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
         configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
 
         return course;
     }
+
 }

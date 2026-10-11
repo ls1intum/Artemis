@@ -84,6 +84,20 @@ describe('SidebarComponent', () => {
         fixture.componentRef.setInput('sidebarItemAlwaysShow', {});
     });
 
+    it('should only enable container-height layout when requested', () => {
+        fixture.changeDetectorRef.detectChanges();
+        const host = fixture.nativeElement as HTMLElement;
+        expect(host.classList.contains('fit-container-height')).toBe(false);
+
+        fixture.componentRef.setInput('fitContainerHeight', true);
+        fixture.changeDetectorRef.detectChanges();
+        expect(host.classList.contains('fit-container-height')).toBe(true);
+
+        fixture.componentRef.setInput('fitContainerHeight', false);
+        fixture.changeDetectorRef.detectChanges();
+        expect(host.classList.contains('fit-container-height')).toBe(false);
+    });
+
     describe('selected entity params', () => {
         /**
          * The sidebar renders on the list route ('exercises'), which carries no entity id of its own. The id lives on
@@ -196,6 +210,20 @@ describe('SidebarComponent', () => {
         expect(noDataMessageElement).toBeTruthy();
         const directiveInstance = noDataMessageElement.injector.get(TranslateDirective);
         expect(directiveInstance.jhiTranslate()).toBe('artemisApp.courseOverview.general.noDataFound');
+    });
+
+    it('should not show an empty state when only pinned cards exist', () => {
+        fixture.componentRef.setInput('sidebarData', {
+            groupByCategory: false,
+            ungroupedData: [],
+            pinnedData: [{ title: 'Pinned presentation', id: 1, size: 'M' }],
+        });
+        fixture.changeDetectorRef.detectChanges();
+        const emptyMessages = fixture.debugElement.queryAll(By.directive(TranslateDirective)).filter((element) => {
+            const key = element.injector.get(TranslateDirective).jhiTranslate();
+            return key === 'artemisApp.courseOverview.general.noDataFound' || key === 'artemisApp.courseOverview.general.noElementFoundWithAppliedFilter';
+        });
+        expect(emptyMessages).toHaveLength(0);
     });
 
     it('should give the correct size for exercises', () => {

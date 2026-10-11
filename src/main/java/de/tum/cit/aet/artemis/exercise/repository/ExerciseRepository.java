@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseCategoryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForCourseOverviewDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseIdAndTitleDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTitleDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCourseDTO;
@@ -529,6 +530,23 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.id = :exerciseId
             """)
     Optional<Exercise> findByIdWithExerciseGroupExamAndCourse(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Finds the id and title of an exercise directly assigned to the course.
+     *
+     * @param exerciseId the exercise id
+     * @param courseId   the owning course id
+     * @return the matching exercise's id and title
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseIdAndTitleDTO(
+                exercise.id, exercise.title)
+            FROM Exercise exercise
+            WHERE exercise.id = :exerciseId
+                AND exercise.course.id = :courseId
+                AND exercise.exerciseGroup IS NULL
+            """)
+    Optional<ExerciseIdAndTitleDTO> findIdAndTitleByIdAndCourseId(@Param("exerciseId") long exerciseId, @Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "categories", "exerciseVariantGroup" })
     Optional<Exercise> findWithEagerCategoriesById(Long exerciseId);

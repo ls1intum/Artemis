@@ -1,0 +1,25 @@
+import { CanActivateFn, Router } from '@angular/router';
+import { inject } from '@angular/core';
+import { catchError, map } from 'rxjs/operators';
+import { combineLatest, of } from 'rxjs';
+
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+
+export const presentationAssessmentFeatureGuard: CanActivateFn = (route) => {
+    const courseId = Number(route.parent?.paramMap.get('courseId') ?? route.paramMap.get('courseId'));
+    const router = inject(Router);
+    const courseManagementService = inject(CourseManagementService);
+    const featureToggleService = inject(FeatureToggleService);
+
+    return combineLatest([courseManagementService.find(courseId), featureToggleService.getFeatureToggleActive(FeatureToggle.PresentationAssessments)]).pipe(
+        map(([response, presentationAssessmentsActive]) => {
+            if (presentationAssessmentsActive && response.body?.presentationAssessmentsEnabled) {
+                return true;
+            }
+            // The course overview is open to every role that may open this page; the lectures page is not available to tutors.
+            return router.createUrlTree(['/course-management', courseId]);
+        }),
+        catchError(() => of(router.createUrlTree(['/course-management', courseId]))),
+    );
+};

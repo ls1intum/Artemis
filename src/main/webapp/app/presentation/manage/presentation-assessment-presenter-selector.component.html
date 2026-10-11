@@ -1,0 +1,77 @@
+<div class="relative flex flex-col gap-2">
+    <h2 id="presentation-presenters-heading">
+        <span jhiTranslate="artemisApp.presentationAssessment.presenters"></span>
+        <span aria-hidden="true">*</span>
+        ({{ presenters().length }})
+    </h2>
+
+    @if (editable()) {
+        <tumaet-ui-autocomplete
+            #presenterAutocomplete
+            inputId="presentation-presenter-search"
+            data-testid="presenter-search"
+            class="w-full"
+            optionLabel="label"
+            [suggestions]="presenterOptions()"
+            [minLength]="0"
+            [debounceMs]="0"
+            [placeholder]="'artemisApp.presentationAssessment.searchStudent' | artemisTranslate"
+            [ariaLabel]="'artemisApp.presentationAssessment.searchStudent' | artemisTranslate"
+            (searchRequested)="searchPresentersByQuery($event.query)"
+            (optionSelected)="selectPresenterOption($event.value, presenterAutocomplete)"
+        />
+    }
+
+    <div class="overflow-x-auto">
+        <table tumAetUiTable size="small" [sortField]="sortField()" [sortOrder]="sortAscending() ? 1 : -1" (sortChange)="onSortChange($event)">
+            <thead>
+                <tr>
+                    <th scope="col"><span jhiTranslate="artemisApp.presentationAssessment.picture"></span></th>
+                    <th scope="col" tumAetUiSortableColumn="login"><span jhiTranslate="artemisApp.course.courseGroup.login"></span></th>
+                    <th scope="col" tumAetUiSortableColumn="name"><span jhiTranslate="artemisApp.course.courseGroup.name"></span></th>
+                    @if (editable()) {
+                        <th scope="col">
+                            <span class="sr-only">{{ 'artemisApp.presentationAssessment.students.removeQuestion' | artemisTranslate }}</span>
+                        </th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @for (presenter of sortedPresenters(); track presenter.id ?? presenter.login) {
+                    <tr>
+                        <td>
+                            <jhi-profile-picture
+                                imageSizeInRem="2"
+                                fontSizeInRem="0.8"
+                                [imageId]="'presentation-presenter-profile-picture-' + presenter.login"
+                                [defaultPictureId]="'presentation-presenter-default-picture-' + presenter.login"
+                                [authorId]="presenter.id"
+                                [authorName]="presenter.name"
+                                [imageUrl]="addPublicFilePrefix(presenter.imageUrl)"
+                            />
+                        </td>
+                        <td>{{ presenter.login }}</td>
+                        <td>{{ presenter.name }}</td>
+                        @if (editable()) {
+                            <td>
+                                <tumaet-ui-button
+                                    size="small"
+                                    severity="danger"
+                                    variant="text"
+                                    [icon]="faUserMinus"
+                                    jhiDeleteButton
+                                    [renderButtonStyle]="false"
+                                    [renderButtonText]="false"
+                                    [actionType]="ActionType.Remove"
+                                    [entityTitle]="presenter.login"
+                                    deleteQuestion="artemisApp.presentationAssessment.students.removeQuestion"
+                                    (delete)="removePresenter(presenter)"
+                                />
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

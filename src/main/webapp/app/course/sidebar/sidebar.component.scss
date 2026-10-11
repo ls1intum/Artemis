@@ -1,5 +1,35 @@
 @import 'src/main/webapp/content/scss/artemis-mixins';
 
+:host(.fit-container-height) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+
+    .sidebar-wrap,
+    .sidebar,
+    .sidebar > .w-100,
+    .sidebar-content,
+    .sidebar-body {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    .sidebar-content > :not(.sidebar-body),
+    .sidebar-body > :not(.scrollable-item-content) {
+        flex-shrink: 0;
+    }
+
+    .scrollable-item-content {
+        height: auto;
+        min-height: 0;
+        flex: 1 1 0;
+        overflow-y: auto;
+    }
+}
+
 .scrollable-item-content {
     --search-height: 47px;
 

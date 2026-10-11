@@ -1,0 +1,206 @@
+.presentation-page {
+    height: 100%;
+    min-height: 0;
+}
+
+.presentation-workspace {
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+.presentation-sidebar {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+    min-width: 0;
+    min-height: 0;
+}
+
+.presentation-content {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex: 1 1 0;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.presentation-detail {
+    display: flex;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+}
+
+.presentation-detail-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+
+    &::after {
+        position: absolute;
+        right: 1rem;
+        bottom: 0;
+        left: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        content: '';
+    }
+}
+
+.presentation-detail-title {
+    font-size: 1rem;
+}
+
+.presentation-summary {
+    min-height: 2.75rem;
+    padding: 0.75rem 1rem;
+    white-space: pre-wrap;
+}
+
+.presentation-grading-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+}
+
+.presentation-overall-toolbar {
+    display: flex;
+    min-height: 3rem;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+}
+
+.presentation-content thead th {
+    background: var(--hover-slightly-darker-body-bg);
+}
+
+.student-search {
+    width: min(100%, 19rem);
+}
+
+.student-search-input {
+    padding-left: 2.25rem;
+    background: var(--hover-slightly-darker-body-bg);
+}
+
+.presentation-detail-row > td {
+    padding: 1rem 1.5rem;
+    background: var(--module-bg);
+}
+
+.presentation-overview {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+}
+
+.presentation-statistics {
+    display: flex;
+    min-height: 3.75rem;
+    align-items: center;
+    padding: 0.5rem 1rem;
+}
+
+.presentation-statistic {
+    display: grid;
+    min-width: 4.75rem;
+    gap: 0;
+    text-align: center;
+}
+
+.presentation-status-filter {
+    flex: 0 0 auto;
+}
+
+.presentation-toolbar-divider {
+    align-self: stretch;
+}
+
+.presentation-filter-select {
+    width: 12rem;
+}
+
+.presentation-row-count {
+    margin-left: auto;
+    white-space: nowrap;
+    font-size: 0.75rem;
+}
+
+.presentation-table-scroll {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow: auto;
+}
+
+.presentation-student-details-button {
+    display: inline-flex;
+    align-items: center;
+    border: 0;
+    padding: 0;
+    color: inherit;
+    background: transparent;
+    text-align: left;
+}
+
+.presentation-paginator {
+    display: block;
+    flex: 0 0 auto;
+    margin-top: auto;
+    padding: 0.5rem 1rem 0.75rem;
+}
+
+.instance-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 2rem;
+}
+
+.student-avatar {
+    display: inline-flex;
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+@media (max-width: 48rem) {
+    .instance-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .presentation-detail-header,
+    .presentation-grading-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .presentation-overall-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .presentation-filter-select,
+    .student-search {
+        width: 100%;
+    }
+
+    .presentation-toolbar-divider {
+        display: none;
+    }
+
+    .presentation-row-count {
+        margin-left: 0;
+    }
+}

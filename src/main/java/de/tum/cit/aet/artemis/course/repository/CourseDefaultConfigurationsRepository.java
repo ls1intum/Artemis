@@ -43,8 +43,9 @@ public interface CourseDefaultConfigurationsRepository {
         }
         var courseConfiguration = course.getCourseConfiguration();
         if (courseConfiguration != null) {
-            updateCourseConfiguration(courseId, courseConfiguration.isGradeRelevant(), courseConfiguration.isDataRetentionHold(), courseConfiguration.isAutoOrchestratorEnabled(),
-                    courseConfiguration.getDebounceWindowSecondsOverride(), courseConfiguration.getMaxDailyOrchestrationOverride());
+            updateCourseConfiguration(courseId, courseConfiguration.isGradeRelevant(), courseConfiguration.isDataRetentionHold(),
+                    courseConfiguration.isPresentationAssessmentsEnabled(), courseConfiguration.isAutoOrchestratorEnabled(), courseConfiguration.getDebounceWindowSecondsOverride(),
+                    courseConfiguration.getMaxDailyOrchestrationOverride());
         }
     }
 
@@ -68,23 +69,26 @@ public interface CourseDefaultConfigurationsRepository {
     /**
      * Changes the general settings of a course in place.
      *
-     * @param courseId                      the id of the course
-     * @param gradeRelevant                 whether the course is grade-relevant
-     * @param dataRetentionHold             whether the course is under a data-retention hold
-     * @param autoOrchestratorEnabled       whether the auto-orchestration pipeline is on
-     * @param debounceWindowSecondsOverride the debounce override, or null for the global default
-     * @param maxDailyOrchestrationOverride the daily run cap override, or null for the global default
+     * @param courseId                       the id of the course
+     * @param gradeRelevant                  whether the course is grade-relevant
+     * @param dataRetentionHold              whether the course is under a data-retention hold
+     * @param presentationAssessmentsEnabled whether presentation assessments are enabled
+     * @param autoOrchestratorEnabled        whether the auto-orchestration pipeline is on
+     * @param debounceWindowSecondsOverride  the debounce override, or null for the global default
+     * @param maxDailyOrchestrationOverride  the daily run cap override, or null for the global default
      */
     @Modifying
     @Transactional // ok because of the update
     @Query("""
             UPDATE CourseConfiguration config
             SET config.gradeRelevant = :gradeRelevant, config.dataRetentionHold = :dataRetentionHold, config.autoOrchestratorEnabled = :autoOrchestratorEnabled,
+                config.presentationAssessmentsEnabled = :presentationAssessmentsEnabled,
                 config.debounceWindowSecondsOverride = :debounceWindowSecondsOverride, config.maxDailyOrchestrationOverride = :maxDailyOrchestrationOverride
             WHERE config.course.id = :courseId
             """)
     void updateCourseConfiguration(@Param("courseId") long courseId, @Param("gradeRelevant") boolean gradeRelevant, @Param("dataRetentionHold") boolean dataRetentionHold,
-            @Param("autoOrchestratorEnabled") boolean autoOrchestratorEnabled, @Param("debounceWindowSecondsOverride") @Nullable Integer debounceWindowSecondsOverride,
+            @Param("presentationAssessmentsEnabled") boolean presentationAssessmentsEnabled, @Param("autoOrchestratorEnabled") boolean autoOrchestratorEnabled,
+            @Param("debounceWindowSecondsOverride") @Nullable Integer debounceWindowSecondsOverride,
             @Param("maxDailyOrchestrationOverride") @Nullable Integer maxDailyOrchestrationOverride);
 
     /**

@@ -59,6 +59,7 @@ export class CourseManagementAPIRequests {
      *   - allowCommunication: if communication should be enabled for the course
      *   - allowMessaging: if messaging should be enabled for the course
      *   - timeZone: the IANA time zone of the course (default: undefined; required before tutorial groups can be added)
+     *   - presentationAssessmentsEnabled: whether presentation assessments are enabled in the course (default: false)
      *   - testCourse: whether the course is a test course (default: true); exams of test courses are left out of the admin overview of upcoming exams
      * @returns Promise<Course> representing the course created
      */
@@ -74,6 +75,7 @@ export class CourseManagementAPIRequests {
             allowCommunication?: boolean;
             allowMessaging?: boolean;
             timeZone?: string;
+            presentationAssessmentsEnabled?: boolean;
             testCourse?: boolean;
         } = {},
     ): Promise<Course> {
@@ -90,6 +92,7 @@ export class CourseManagementAPIRequests {
             allowCommunication = true,
             allowMessaging = true,
             timeZone,
+            presentationAssessmentsEnabled = false,
             testCourse = true,
         } = options;
 
@@ -101,6 +104,7 @@ export class CourseManagementAPIRequests {
         course.endDate = asModelDate(end);
         course.semester = semester;
         course.timeZone = timeZone;
+        course.presentationAssessmentsEnabled = presentationAssessmentsEnabled;
 
         if (allowCommunication && allowMessaging) {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
@@ -574,6 +578,7 @@ function courseUpdateDTOFromManagementDTO(course: CourseManagementDTO): CourseUp
         unenrollmentEnabled: course.unenrollmentEnabled,
         courseInformationSharingMessagingCodeOfConduct: course.courseInformationSharingMessagingCodeOfConduct,
         learningPathsEnabled: course.learningPathsEnabled,
+        presentationAssessmentsEnabled: course.presentationAssessmentsEnabled ?? false,
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
