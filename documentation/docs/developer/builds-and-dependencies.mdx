@@ -14,7 +14,12 @@ including actions maintained by GitHub. A trailing `# vX.Y.Z` comment records th
 version. Resolve the upstream release tag to its commit when adding an action; a major-version
 tag alone is mutable and does not provide the same guarantee. The workflow lint job runs
 `python3 supporting_scripts/check_action_pinning.py`, which fails the build for any reference that
-is not pinned this way, so you can run it locally before pushing a workflow change.
+is not pinned this way, so you can run it locally before pushing a workflow change. The checker
+accepts three kinds of reference: a commit-SHA-pinned action with its version comment, a local path
+such as `./.github/actions/e2e-setup`, and a Docker image pinned by its `sha256` digest
+(`docker://image@sha256:...`). It also finds `uses` entries written in flow style
+(`- { uses: ... }`) or with a quoted key, and it reports a `uses` entry whose reference it cannot
+read instead of skipping it.
 
 Renovate uses `helpers:pinGitHubActionDigests` to propose hash updates and pin new references.
 Review those pull requests so actions continue receiving security fixes. Local actions and

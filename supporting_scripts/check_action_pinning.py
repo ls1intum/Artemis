@@ -14,8 +14,10 @@ Every `uses:` entry in `.github/workflows` and `.github/actions` must be one of:
   tag), the shape Renovate reads to update the SHA and the comment together (`helpers:pinGitHubActionDigests`),
 * `docker://image@sha256:<64 hex characters>`.
 
-The check is line based and needs no YAML parser: a `uses:` key only appears as a mapping key at the
-start of a line, optionally behind a list dash.
+The check is line based and needs no YAML parser. It finds a `uses` key at the start of a line (behind
+an optional list dash), in a flow mapping (`- { uses: actions/checkout@v6 }`), and when the key is
+quoted (`"uses": actions/checkout@v6`). It fails closed: a `uses` key whose reference it cannot read, for
+example one on the next line, is reported instead of skipped.
 
 Usage:
     python3 supporting_scripts/check_action_pinning.py
@@ -33,7 +35,13 @@ SEARCH_ROOTS = (".github/workflows", ".github/actions")
 
 YAML_SUFFIXES = (".yml", ".yaml")
 
-USES_LINE = re.compile(r"^\s*(?:-\s+)?uses:\s*(?P<reference>[^\s#]+)\s*(?P<comment>#.*)?$")
+# Where a `uses` key can start: at the beginning of a line behind an optional list dash, or inside a flow
+# mapping after `{` or `,`. The key may be quoted. `name: uses: x` and `run: echo uses: x` do not qualify.
+USES_KEY = re.compile(r"""(?P<prefix>^\s*(?:-\s+)?|[{,]\s*)["']?uses["']?\s*:""")
+
+USES_VALUE = re.compile(r"""\s*(?P<reference>"[^"]*"|'[^']*'|[^\s#,}]+)""")
+
+TRAILING_COMMENT = re.compile(r"(?:^|\s)(?P<comment>#.*)$")
 
 PINNED_ACTION = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_./-]+)?@[0-9a-f]{40}$")
 
@@ -42,6 +50,9 @@ PINNED_DOCKER_IMAGE = re.compile(r"^docker://\S+@sha256:[0-9a-f]{64}$")
 # `# v6`, `# v1.1.0`, `# v6.5.0`, `# 1.0.2`, `# v2.1.0-rc.1`: what Renovate recognises as the release a SHA belongs to.
 # Some upstream repositories tag their releases without the `v` prefix, so it is optional.
 VERSION_COMMENT = re.compile(r"^#\s*v?\d+(?:\.\d+){0,2}\S*(?:\s.*)?$")
+
+# Stands in for a `uses` key whose reference the line based parser could not read.
+UNREADABLE_REFERENCE = "uses"
 
 
 @dataclass(frozen=True)
@@ -54,16 +65,29 @@ class Violation:
     reason: str
 
 
-def parse_uses(line: str) -> tuple[str, str] | None:
-    """Return the unquoted reference and the trailing comment of a `uses:` entry, or None if the line is not one."""
-    match = USES_LINE.match(line)
-    if match is None:
-        return None
-    return match.group("reference").strip("'\""), match.group("comment") or ""
+def parse_uses(line: str) -> list[tuple[str, str]]:
+    """Return the unquoted reference and the trailing comment of every `uses` entry in the line.
+
+    A `uses` key whose reference cannot be read yields the pseudo reference `uses` with an empty comment, which
+    `violation_reason` rejects, so an unusual layout never slips through unnoticed.
+    """
+    entries: list[tuple[str, str]] = []
+    for key in USES_KEY.finditer(line):
+        if key.group("prefix").startswith(",") and "{" not in line[: key.start()]:
+            continue  # a comma outside of a flow mapping, e.g. in the text of an echo
+        value = USES_VALUE.match(line, key.end())
+        if value is None:
+            entries.append((UNREADABLE_REFERENCE, ""))
+            continue
+        comment = TRAILING_COMMENT.search(line, value.end())
+        entries.append((value.group("reference").strip("'\""), comment.group("comment") if comment else ""))
+    return entries
 
 
 def violation_reason(reference: str, comment: str) -> str | None:
     """Return why the reference breaks the pinning policy, or None if it complies."""
+    if reference == UNREADABLE_REFERENCE:
+        return "write the reference on the same line as `uses:` so that it can be checked"
     if reference.startswith("./"):
         return None
     if reference.startswith("docker://"):
@@ -78,9 +102,8 @@ def violation_reason(reference: str, comment: str) -> str | None:
 
 
 def check_line(line: str) -> str | None:
-    """Return why the line violates the policy, or None if it is not a `uses:` entry or is compliant."""
-    uses = parse_uses(line)
-    return None if uses is None else violation_reason(*uses)
+    """Return why the first violating `uses` entry of the line breaks the policy, or None if there is none."""
+    return next((reason for reason in (violation_reason(*entry) for entry in parse_uses(line)) if reason is not None), None)
 
 
 def workflow_files(root: Path) -> list[Path]:
@@ -98,10 +121,10 @@ def find_violations(root: Path) -> list[Violation]:
     violations: list[Violation] = []
     for path in workflow_files(root):
         for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
-            uses = parse_uses(line)
-            reason = None if uses is None else violation_reason(*uses)
-            if uses is not None and reason is not None:
-                violations.append(Violation(path.relative_to(root), line_number, uses[0], reason))
+            for reference, comment in parse_uses(line):
+                reason = violation_reason(reference, comment)
+                if reason is not None:
+                    violations.append(Violation(path.relative_to(root), line_number, reference, reason))
     return violations
 
 
