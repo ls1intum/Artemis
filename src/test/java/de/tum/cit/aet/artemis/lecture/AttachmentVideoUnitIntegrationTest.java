@@ -404,7 +404,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentVideoUnit_withNotificationText_deliversTheTextToStudents() throws Exception {
-        updateAttachmentVideoUnitCreatedViaEndpoint("  Please re-download, slide 4 was corrected  ");
+        updateAttachmentVideoUnitWithNotificationText("  Please re-download, slide 4 was corrected  ");
 
         // What a student's client reads: the stored notification, rebuilt from its parameter rows. The editor's text is
         // trimmed, and it is in the flat parameters too, which is what the released iOS app reads.
@@ -419,7 +419,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     void updateAttachmentVideoUnit_withEmptyNotificationText_notifiesStudentsWithoutText() throws Exception {
         // The in-place lecture editor asks for a notification without a text by sending an empty one: students are
         // notified, and the notification carries no text, so the client shows its generic message.
-        updateAttachmentVideoUnitCreatedViaEndpoint("");
+        updateAttachmentVideoUnitWithNotificationText("");
 
         performGetAttachmentChangedNotificationsAsStudent().andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS, hasSize(1)))
                 .andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".payload.notificationText").doesNotExist())
@@ -427,14 +427,15 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     /**
-     * Creates an attachment video unit through the REST endpoint and updates its attachment with the given notification text.
+     * Updates the attachment of a released attachment video unit with the given notification text.
+     * <p>
+     * The unit is stored directly rather than created through the REST endpoint: creating one splits its file into slides
+     * in the background, and that work would outlive the test and reach the Iris mock of the next one.
      */
-    private void updateAttachmentVideoUnitCreatedViaEndpoint(String notificationText) throws Exception {
-        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
-        var persisted = request.getObjectMapper().readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
-        attachmentVideoUnit.setId(persisted.id());
-        attachment.setId(persisted.attachment().id());
-        MockMultipartHttpServletRequestBuilder updateBuilder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, null);
+    private void updateAttachmentVideoUnitWithNotificationText(String notificationText) throws Exception {
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(unit));
+        MockMultipartHttpServletRequestBuilder updateBuilder = buildUpdateAttachmentVideoUnit(unit, unit.getAttachment(), null);
         updateBuilder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("notificationText", notificationText);
         request.performMvcRequest(updateBuilder).andExpect(status().isOk());
     }
