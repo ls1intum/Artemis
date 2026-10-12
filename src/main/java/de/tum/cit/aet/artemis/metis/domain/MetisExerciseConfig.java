@@ -6,11 +6,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.Parent;
@@ -24,9 +26,14 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
  * asked, how long an answer may take and how demanding the questions should be.
  *
  * <p>
- * One row per exercise that has Metis configured. The primary key is the exercise id itself, which expresses the
- * one-to-one in the schema and needs no additional unique index; the exercise has no field pointing back here. The row
- * is kept when the check is switched off so that the settings survive, and it cascades away with its exercise.
+ * A permanent configuration row: every programming exercise owns exactly one, from the moment it is stored, whether or not
+ * the Metis module is enabled on the server. Since the repositories of this module exist only while it is enabled, the
+ * exercise module inserts the row with the column defaults when it stores the exercise ({@code ExerciseConfigurationService}
+ * through {@code ExerciseDefaultConfigurationsRepository}), and the changelog gave every programming exercise that existed
+ * before its row. The next update of an exercise whose creation failed half-way adds the row that creation left out.
+ * Switching the check on or off only changes {@link #enabled}; a setting never inserts or deletes the row.
+ * The primary key is the exercise id itself, which expresses the one-to-one in the schema and needs no additional unique
+ * index; the exercise has no field pointing back here. The row cascades away with its exercise.
  *
  * <p>
  * Version 1 is formative: the check writes no Result and no grade.
@@ -42,10 +49,10 @@ public class MetisExerciseConfig {
     /** Highest value of the five-step scales {@link #answerLength} and {@link #complexity}. */
     public static final int MAX_SCALE_VALUE = 5;
 
-    /** Smallest Likert scale the LLM may rate answers on. */
+    /** The smaller of the two Likert scales the LLM may rate answers on, five points, and the default. */
     public static final int MIN_LIKERT_POINTS = 5;
 
-    /** Largest Likert scale the LLM may rate answers on. */
+    /** The larger of the two Likert scales the LLM may rate answers on, seven points. No scale between the two is supported. */
     public static final int MAX_LIKERT_POINTS = 7;
 
     /**
@@ -99,11 +106,12 @@ public class MetisExerciseConfig {
     @Column(name = "complexity", nullable = false)
     private int complexity = 3;
 
-    /** Number of points of the Likert scale the LLM rates answers on: 5 or 7. */
-    @Min(MIN_LIKERT_POINTS)
-    @Max(MAX_LIKERT_POINTS)
+    /**
+     * Number of points of the Likert scale the LLM rates answers on: {@value #MIN_LIKERT_POINTS} or {@value #MAX_LIKERT_POINTS},
+     * nothing in between, which {@link #isLikertScaleSupported()} checks.
+     */
     @Column(name = "likert_scale_points", nullable = false)
-    private int likertScalePoints = 5;
+    private int likertScalePoints = MIN_LIKERT_POINTS;
 
     /** A score at or below this value triggers a follow-up question. */
     @Column(name = "follow_up_threshold", nullable = false)
@@ -206,6 +214,19 @@ public class MetisExerciseConfig {
 
     public void setLikertScalePoints(int likertScalePoints) {
         this.likertScalePoints = likertScalePoints;
+    }
+
+    /**
+     * Whether the number of Likert points is one of the two supported scales. A range from five to seven would also admit six,
+     * a scale no rating is defined for, so Bean Validation checks membership instead. The database refuses any other value as
+     * well, for the writes that do not pass through validation.
+     *
+     * @return true for {@value #MIN_LIKERT_POINTS} or {@value #MAX_LIKERT_POINTS} points
+     */
+    @JsonIgnore
+    @AssertTrue(message = "A Likert scale has " + MIN_LIKERT_POINTS + " or " + MAX_LIKERT_POINTS + " points")
+    public boolean isLikertScaleSupported() {
+        return likertScalePoints == MIN_LIKERT_POINTS || likertScalePoints == MAX_LIKERT_POINTS;
     }
 
     public int getFollowUpThreshold() {
