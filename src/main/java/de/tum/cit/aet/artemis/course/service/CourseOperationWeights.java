@@ -77,6 +77,8 @@ public final class CourseOperationWeights {
 
     private static final double WEIGHT_TUTORIAL_REGISTRATIONS = 1.0;
 
+    private static final double WEIGHT_PER_PRESENTATION_ASSESSMENT_INSTANCE = 0.1;
+
     private CourseOperationWeights() {
         // Utility class - no instantiation
     }
@@ -334,5 +336,9 @@ public final class CourseOperationWeights {
 
     public static double getWeightTutorialRegistrations() {
         return WEIGHT_TUTORIAL_REGISTRATIONS;
+    }
+
+    public static double getWeightPerPresentationAssessmentInstance() {
+        return WEIGHT_PER_PRESENTATION_ASSESSMENT_INSTANCE;
     }
 }

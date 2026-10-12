@@ -281,6 +281,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         settings: 'global.menu.account.settings',
         course_management: 'overview.title',
         exercises: 'artemisApp.course.exercises',
+        presentations: 'artemisApp.presentationAssessment.home.title',
         text_exercises: 'artemisApp.course.exercises',
         programming_exercises: 'artemisApp.course.exercises',
         modeling_exercises: 'artemisApp.course.exercises',
@@ -430,6 +431,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 } else {
                     this.addBreadcrumbForUrlSegment(currentPath, segment);
                     this.lastRouteUrlSegment = segment;
+                    // The selected presentation and its linked exercise are part of the page, not of the navigation hierarchy.
+                    // Following them would add a crumb for a route that does not exist and load the exercise on every navigation.
+                    if (segment === 'presentations') {
+                        break;
+                    }
                 }
             }
         } catch (e) {
