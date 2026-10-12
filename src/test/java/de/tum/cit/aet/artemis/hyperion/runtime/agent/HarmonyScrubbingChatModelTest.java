@@ -1,0 +1,173 @@
+package de.tum.cit.aet.artemis.hyperion.runtime.agent;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.ChatOptions;
+import org.springframework.ai.chat.prompt.Prompt;
+
+import reactor.core.publisher.Flux;
+
+class HarmonyScrubbingChatModelTest {
+
+    @Test
+    void sanitizeHarmonyTokens_removesEveryControlToken() {
+        String raw = "<|start|>assistant<|channel|>commentary<|message|>real answer<|end|>";
+
+        assertThat(HarmonyScrubbingChatModel.sanitizeHarmonyTokens(raw)).isEqualTo("assistantcommentaryreal answer");
+    }
+
+    @Test
+    void sanitizeHarmonyTokens_withoutToken_returnsSameReference() {
+        String clean = "a perfectly ordinary assistant reply";
+
+        assertThat(HarmonyScrubbingChatModel.sanitizeHarmonyTokens(clean)).isSameAs(clean);
+        assertThat(HarmonyScrubbingChatModel.sanitizeHarmonyTokens(null)).isNull();
+    }
+
+    @Test
+    void scrub_stripsTokensFromContentButPreservesToolCallsAndMetadata() {
+        AssistantMessage.ToolCall toolCall = new AssistantMessage.ToolCall("call_1", "function", "bash", "{\"command\":\"ls\"}");
+        AssistantMessage dirty = AssistantMessage.builder().content("plan<|channel|>commentary next").properties(Map.of("finishReason", "tool_calls")).toolCalls(List.of(toolCall))
+                .build();
+        ChatResponseMetadata metadata = ChatResponseMetadata.builder().model("openai/gpt-oss-120b").build();
+        ChatResponse response = new ChatResponse(List.of(new Generation(dirty)), metadata);
+
+        ChatResponse scrubbed = HarmonyScrubbingChatModel.scrub(response);
+
+        AssistantMessage cleaned = scrubbed.getResult().getOutput();
+        assertThat(cleaned.getText()).isEqualTo("plancommentary next");
+        assertThat(cleaned.getToolCalls()).containsExactly(toolCall);
+        assertThat(cleaned.getMetadata()).containsEntry("finishReason", "tool_calls");
+        assertThat(scrubbed.getMetadata()).isSameAs(metadata);
+    }
+
+    @Test
+    void scrub_cleanResponse_returnsSameInstance() {
+        ChatResponse clean = new ChatResponse(List.of(new Generation(new AssistantMessage("nothing to strip here"))));
+
+        assertThat(HarmonyScrubbingChatModel.scrub(clean)).isSameAs(clean);
+    }
+
+    @Test
+    void scrub_nullOrEmptyResults_returnedUnchanged() {
+        assertThat(HarmonyScrubbingChatModel.scrub(null)).isNull();
+
+        ChatResponse empty = new ChatResponse(List.of());
+        assertThat(HarmonyScrubbingChatModel.scrub(empty)).isSameAs(empty);
+    }
+
+    @Test
+    void call_scrubsTheDelegateResponse() {
+        ChatModel delegate = mock(ChatModel.class);
+        ChatResponse dirty = new ChatResponse(List.of(new Generation(new AssistantMessage("answer<|end|>"))));
+        when(delegate.call(any(Prompt.class))).thenReturn(dirty);
+        HarmonyScrubbingChatModel model = new HarmonyScrubbingChatModel(delegate);
+
+        ChatResponse result = model.call(new Prompt("hi"));
+
+        assertThat(result.getResult().getOutput().getText()).isEqualTo("answer");
+    }
+
+    @Test
+    void getOptions_delegatesUnchanged() {
+        ChatModel delegate = mock(ChatModel.class);
+        ChatOptions options = mock(ChatOptions.class);
+        when(delegate.getOptions()).thenReturn(options);
+        HarmonyScrubbingChatModel model = new HarmonyScrubbingChatModel(delegate);
+
+        assertThat(model.getOptions()).isSameAs(options);
+    }
+
+    @Test
+    void stream_scrubsEachChunk() {
+        ChatModel delegate = mock(ChatModel.class);
+        Prompt prompt = new Prompt("hi");
+        ChatResponse dirtyChunk = new ChatResponse(List.of(new Generation(new AssistantMessage("chunk<|end|>"))));
+        when(delegate.stream(prompt)).thenReturn(Flux.just(dirtyChunk));
+        HarmonyScrubbingChatModel model = new HarmonyScrubbingChatModel(delegate);
+
+        List<ChatResponse> chunks = model.stream(prompt).collectList().block();
+        assertThat(chunks).hasSize(1);
+        assertThat(chunks.getFirst().getResult().getOutput().getText()).isEqualTo("chunk");
+    }
+
+    @Test
+    void streamHandlesEveryTokenSplitAndIsolatesSubscriptions() {
+        for (String token : HarmonyScrubbingChatModel.CONTROL_TOKENS) {
+            String raw = "before" + token + "after";
+            for (int split = 1; split < raw.length(); split++) {
+                ChatModel delegate = mock(ChatModel.class);
+                Prompt prompt = new Prompt("hi");
+                when(delegate.stream(prompt)).thenReturn(Flux.just(chunk(raw.substring(0, split)), chunk(raw.substring(split))));
+                Flux<ChatResponse> stream = new HarmonyScrubbingChatModel(delegate).stream(prompt);
+                assertThat(join(stream)).isEqualTo("beforeafter");
+                assertThat(join(stream)).isEqualTo("beforeafter");
+            }
+        }
+    }
+
+    @Test
+    void streamPreservesOrdinaryAndIncompleteDelimiters() {
+        for (String text : List.of("a < b", "text<", "text<|unfinished", "a<|bad>tail")) {
+            ChatModel delegate = mock(ChatModel.class);
+            Prompt prompt = new Prompt("hi");
+            when(delegate.stream(prompt)).thenReturn(Flux.fromIterable(text.chars().mapToObj(c -> chunk(String.valueOf((char) c))).toList()));
+            assertThat(join(new HarmonyScrubbingChatModel(delegate).stream(prompt))).isEqualTo(text);
+        }
+    }
+
+    @Test
+    void streamFlushesPendingTextBeforePropagatingFailure() {
+        for (String text : List.of("text<", "text<|unfinished", "text<|end|>")) {
+            ChatModel delegate = mock(ChatModel.class);
+            Prompt prompt = new Prompt("hi");
+            RuntimeException failure = new IllegalStateException("provider disconnected");
+            when(delegate.stream(prompt)).thenReturn(Flux.concat(Flux.just(chunk(text)), Flux.error(failure)));
+            var signals = new HarmonyScrubbingChatModel(delegate).stream(prompt).materialize().collectList().block();
+            String content = signals.stream().filter(signal -> signal.isOnNext()).map(signal -> signal.get().getResult().getOutput().getText())
+                    .collect(java.util.stream.Collectors.joining());
+            assertThat(content).isEqualTo(text.equals("text<|end|>") ? "text" : text);
+            assertThat(signals.getLast().getThrowable()).isSameAs(failure);
+        }
+    }
+
+    @Test
+    void ordinaryTokenLikeTextIsForwardedBeforeCompletion() {
+        ChatModel delegate = mock(ChatModel.class);
+        Prompt prompt = new Prompt("hi");
+        var input = reactor.core.publisher.Sinks.many().unicast().<ChatResponse>onBackpressureBuffer();
+        when(delegate.stream(prompt)).thenReturn(input.asFlux());
+        var chunks = new java.util.ArrayList<String>();
+        var subscription = new HarmonyScrubbingChatModel(delegate).stream(prompt).subscribe(response -> chunks.add(response.getResult().getOutput().getText()));
+        try {
+            input.tryEmitNext(chunk("<|"));
+            input.tryEmitNext(chunk("ordinary prose"));
+            assertThat(String.join("", chunks)).isEqualTo("<|ordinary prose");
+            input.tryEmitNext(chunk("x".repeat(100_000)));
+            assertThat(String.join("", chunks)).endsWith("x".repeat(100_000));
+        }
+        finally {
+            subscription.dispose();
+        }
+    }
+
+    private static ChatResponse chunk(String text) {
+        return new ChatResponse(List.of(new Generation(new AssistantMessage(text))));
+    }
+
+    private static String join(Flux<ChatResponse> stream) {
+        return stream.map(response -> response.getResult().getOutput().getText()).collectList().map(parts -> String.join("", parts)).block();
+    }
+}

@@ -497,7 +497,7 @@
             <ng-container *ngTemplateOutlet="nextSteps" />
             <ng-container *ngTemplateOutlet="stepSummary" />
             <div class="flex justify-end gap-2">
-                <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()">{{
+                <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()" data-testid="variant-wizard-close">{{
                     'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                 }}</tumaet-ui-button>
                 @if (generatedVariant()) {
@@ -519,7 +519,7 @@
                 </div>
             </div>
             <div class="flex justify-end gap-2">
-                <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()">{{
+                <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()" data-testid="variant-wizard-close">{{
                     'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                 }}</tumaet-ui-button>
                 @if (generatedVariant()) {
@@ -576,7 +576,7 @@
             </div>
 
             <div class="flex justify-end gap-2 mt-4">
-                <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()">{{
+                <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()" data-testid="variant-wizard-close">{{
                     'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                 }}</tumaet-ui-button>
                 <tumaet-ui-button

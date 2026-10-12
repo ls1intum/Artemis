@@ -677,6 +677,8 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         QuizExercise quiz = QuizExerciseFactory.generateQuizExercise(release, due, QuizMode.INDIVIDUAL, course);
         QuizExerciseFactory.addQuestionsToQuizExercise(quiz);
         course.addExercises(quiz);
+        // A new exercise is always stored outside any group, so the quiz exists before it joins one.
+        quiz = exerciseRepository.save(quiz);
 
         ExerciseVariantGroup group = new ExerciseVariantGroup();
         group.setTitle("Loop variants");
