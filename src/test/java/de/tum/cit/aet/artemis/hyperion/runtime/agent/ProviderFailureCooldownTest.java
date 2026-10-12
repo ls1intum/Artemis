@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -18,6 +19,23 @@ import com.openai.errors.RateLimitException;
 import com.openai.errors.UnauthorizedException;
 
 class ProviderFailureCooldownTest {
+
+    @Test
+    void disabledCooldownDoesNotRetainHardFailuresOrBlockSubsequentCalls() {
+        var cooldown = ProviderFailureCooldown.disabled();
+        var error = new IllegalStateException("credentials rejected", UnauthorizedException.builder().headers(Headers.builder().build()).build());
+        var calls = new AtomicInteger();
+
+        for (int attempt = 0; attempt < 2; attempt++) {
+            assertThatThrownBy(() -> cooldown.execute("model", Duration.ofMinutes(1), () -> {
+                calls.incrementAndGet();
+                throw error;
+            })).isSameAs(error);
+        }
+
+        assertThat(calls).hasValue(2);
+        assertThat(cooldown.cooldownUntil("model")).isNull();
+    }
 
     @Test
     void expiredStoredDeadlineDoesNotBlockExecution() {
