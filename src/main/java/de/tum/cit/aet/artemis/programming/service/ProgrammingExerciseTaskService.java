@@ -87,12 +87,13 @@ public class ProgrammingExerciseTaskService {
      * Instructors can change the color of UML elements by using e.g {@code <color:testsColor(testConstructors[LinkedList])>+ LinkedList()</color>}
      * <p>
      * The first capture group of this pattern will contain the test name, in the example above {@code testConstructors[LinkedList]}.
+     * The test name may contain spaces (e.g. a JUnit DisplayName such as {@code Test Attributes of Class}), but no parentheses except a trailing parameter list.
      * It's currently not possible to assign multiple test cases to a single UML element.
      * <p>
      * This is coupled to the value used in `ProgrammingExercisePlantUmlExtensionWrapper` in the client.
      * If you change the regex, make sure to change it in all places!
      */
-    private static final Pattern TESTSCOLOR_PATTERN = Pattern.compile("testsColor\\((\\s*+[^()\\s]++(\\([^()]*+\\))?)\\)");
+    private static final Pattern TESTSCOLOR_PATTERN = Pattern.compile("testsColor\\((\\s*+[^()\\s]++(?:[ \\t]++[^()\\s]++)*+(\\([^()]*+\\))?)\\)");
 
     private static final String TESTID_START = "<testid>";
 

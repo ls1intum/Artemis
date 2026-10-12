@@ -5,6 +5,9 @@ import { ProgrammingExerciseInstructionService } from 'app/programming/shared/in
 import { ProgrammingExercisePlantUmlService } from 'app/programming/shared/instructions-render/services/programming-exercise-plant-uml.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { of } from 'rxjs';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 
 /**
  * Tests for ProgrammingExercisePlantUmlExtensionWrapper.
@@ -321,6 +324,47 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
             expect(result).toBe(text);
             // A callback is still emitted, but it should be a no-op (empty forEach)
             expect(callbackCaptures).toHaveLength(1);
+        });
+    });
+
+    describe('testsColor', () => {
+        const testCases = [
+            { id: 1, testName: 'testBubbleSort' },
+            { id: 2, testName: 'Test Attributes of Class' },
+            { id: 3, testName: 'Test Methods of Class(1, 2)' },
+            { id: 4, testName: 'Failing Test With Spaces' },
+        ] as ProgrammingExerciseTestCase[];
+        const latestResult = {
+            successful: false,
+            feedbacks: [
+                { testCase: { id: 1 }, positive: true },
+                { testCase: { id: 2 }, positive: true },
+                { testCase: { id: 3 }, positive: true },
+                { testCase: { id: 4 }, positive: false },
+            ],
+        } as Result;
+
+        function renderedPlantUml(diagram: string): string {
+            const getPlantUmlSvg = vi.spyOn(TestBed.inject(ProgrammingExercisePlantUmlService), 'getPlantUmlSvg').mockReturnValue(of('<svg></svg>'));
+            extension.subscribeForInjectableElementsFound().subscribe((inject) => inject());
+            extension.setTestCases(testCases);
+            extension.setLatestResult(latestResult);
+            extension.replaceText(`@startuml\n${diagram}\n@enduml`);
+            expect(getPlantUmlSvg).toHaveBeenCalledOnce();
+            return getPlantUmlSvg.mock.calls[0][0];
+        }
+
+        it('should resolve a test name without spaces', () => {
+            expect(renderedPlantUml('<color:testsColor(testBubbleSort)>+ sort()</color>')).toBe('@startuml\n<color:green>+ sort()</color>\n@enduml');
+        });
+
+        it('should resolve a test name that contains spaces', () => {
+            expect(renderedPlantUml('<color:testsColor(Test Attributes of Class)>-foo: String</color>')).toBe('@startuml\n<color:green>-foo: String</color>\n@enduml');
+        });
+
+        it('should resolve a failing test name that contains spaces and parameters', () => {
+            const rendered = renderedPlantUml('class A #testsColor(Failing Test With Spaces)\nclass B #text:testsColor(Test Methods of Class(1, 2))');
+            expect(rendered).toBe('@startuml\nclass A #red\nclass B #text:green\n@enduml');
         });
     });
 });

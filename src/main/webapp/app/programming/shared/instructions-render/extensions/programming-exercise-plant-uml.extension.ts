@@ -10,7 +10,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import DOMPurify from 'dompurify';
 
 // This regex is the same as in the server: ProgrammingExerciseTaskService.java
-const testsColorRegex = /testsColor\((\s*[^()\s]+(\([^()]*\))?)\)/g;
+const testsColorRegex = /testsColor\((\s*[^()\s]+(?:[ \t]+[^()\s]+)*(\([^()]*\))?)\)/g;
 
 /**
  * Singleton service that handles rendering of PlantUML diagrams embedded in programming exercise problem statements.

@@ -272,6 +272,38 @@ class ProgrammingExerciseTaskServiceTest {
     }
 
     @Test
+    void replaceTestNamesWithIds_alsoRewritesATestsColorReferenceWhoseNameContainsSpaces() {
+        // Java DisplayNames routinely contain spaces, and the diagram must still end up referring to the test by id, otherwise PlantUML receives the raw name and fails to render.
+        ProgrammingExercise exercise = exerciseWith("""
+                @startuml
+                class BubbleSort #testsColor(Test Attributes of Class) {
+                  <color:testsColor(Test Methods of Class(1, 2))>+ sort()</color>
+                  <color:testsColor(testSort)>+ swap()</color>
+                }
+                @enduml
+                """, testCase(1L, "Test Attributes of Class"), testCase(2L, "Test Methods of Class(1, 2)"), testCase(3L, "testSort"));
+
+        taskService.replaceTestNamesWithIds(exercise);
+
+        assertThat(exercise.getProblemStatement()).contains("#testsColor(<testid>1</testid>)").contains("<color:testsColor(<testid>2</testid>)>")
+                .contains("<color:testsColor(<testid>3</testid>)>");
+    }
+
+    @Test
+    void replaceTestIdsWithNames_restoresATestsColorReferenceWhoseNameContainsSpaces() {
+        ProgrammingExercise exercise = exerciseWith("""
+                @startuml
+                class BubbleSort #testsColor(<testid>1</testid>) {
+                }
+                @enduml
+                """, testCase(1L, "Test Attributes of Class"));
+
+        taskService.replaceTestIdsWithNames(exercise);
+
+        assertThat(exercise.getProblemStatement()).contains("#testsColor(Test Attributes of Class)");
+    }
+
+    @Test
     void replaceTestNamesWithIds_forAProblemStatementWithoutTasks_changesNothing() {
         ProgrammingExercise exercise = exerciseWith("Implement the sorting strategies. There is no task here.", testCase(1L, "testBubbleSort()"));
 
