@@ -125,6 +125,62 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(body).contains("account/activate");
     }
 
+    @Test
+    void activationEmail_shouldStateTheConfiguredDeadlineInMinutesInEnglish() throws Exception {
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 45L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "abc123-activation-key"));
+
+        assertThat(getDeliveredEmailBody()).contains("within 45 minutes").contains("deleted automatically");
+    }
+
+    @Test
+    void activationEmail_shouldStateTheConfiguredDeadlineInHoursInEnglish() throws Exception {
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 120L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "abc123-activation-key"));
+
+        assertThat(getDeliveredEmailBody()).contains("within 2 hours");
+    }
+
+    @Test
+    void activationEmail_shouldUseTheSingularForOneHour() throws Exception {
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 60L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "abc123-activation-key"));
+
+        assertThat(getDeliveredEmailBody()).contains("within 1 hour,");
+    }
+
+    @Test
+    void activationEmail_shouldStateTheConfiguredDeadlineInGerman() throws Exception {
+        recipient.setLangKey("de");
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 90L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "de-activation-key-456"));
+
+        assertThat(getDeliveredEmailBody()).contains("innerhalb von 90 Minuten").contains("automatisch gelöscht");
+    }
+
+    @Test
+    void activationEmail_shouldStateTheConfiguredDeadlineInHoursInGerman() throws Exception {
+        recipient.setLangKey("de");
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 180L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "de-activation-key-456"));
+
+        assertThat(getDeliveredEmailBody()).contains("innerhalb von 3 Stunden");
+    }
+
+    @Test
+    void activationEmail_shouldNotMentionADeadlineWhenCleanupIsDisabled() throws Exception {
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 0L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "abc123-activation-key"));
+
+        assertThat(getDeliveredEmailBody()).contains("abc123-activation-key").doesNotContain("deleted automatically");
+    }
+
     // -- Password reset email --
 
     @Test
