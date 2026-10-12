@@ -17,6 +17,7 @@
                 <span data-testid="assessment-result-not-found">
                     <fa-icon [icon]="faTimesCircle" class="text-state-danger" />
                     <span jhiTranslate="artemisApp.programmingAssessment.resultNotFound"></span>
+                    <a [routerLink]="exerciseDashboardLink()" class="ms-2" jhiTranslate="entity.action.exerciseDashboard"></a>
                 </span>
             }
             @if (lockLimitReached()) {
@@ -29,45 +30,48 @@
     </nav>
 }
 <div [id]="'exercise-' + exercise()?.id">
-    <jhi-assessment-layout
-        [isLoading]="loadingParticipation()"
-        [saveBusy]="saveBusy()"
-        [submitBusy]="submitBusy()"
-        [cancelBusy]="cancelBusy()"
-        [nextSubmissionBusy]="nextSubmissionBusy()"
-        [isTeamMode]="!!exercise()?.teamMode"
-        [isAssessor]="isAssessor()"
-        [isTestRun]="isTestRun()"
-        [exerciseDashboardLink]="exerciseDashboardLink()"
-        [canOverride]="canOverride"
-        [result]="manualResult()"
-        [assessmentsAreValid]="assessmentsAreValid()"
-        [complaint]="complaint()"
-        [exercise]="exercise()"
-        [submission]="submission()"
-        [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed()"
-        [correctionRound]="correctionRound()"
-        [isProgrammingExercise]="true"
-        (save)="save()"
-        (onSubmit)="submit()"
-        (onCancel)="cancel()"
-        (nextSubmission)="nextSubmission()"
-        (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
-    >
-        <jhi-feedback-suggestions-banner
-            jhiBannerSlot
-            [isLoading]="loadingFeedbackSuggestions()"
-            [hasAutomaticFeedback]="hasAutomaticFeedback()"
+    <!-- without a result there is nothing to save or submit, so the header with its buttons stays away -->
+    @if (!resultNotFound()) {
+        <jhi-assessment-layout
+            [isLoading]="loadingParticipation()"
+            [saveBusy]="saveBusy()"
+            [submitBusy]="submitBusy()"
+            [cancelBusy]="cancelBusy()"
+            [nextSubmissionBusy]="nextSubmissionBusy()"
+            [isTeamMode]="!!exercise()?.teamMode"
             [isAssessor]="isAssessor()"
-            [resultCompletionDate]="manualResult()?.completionDate"
-            [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled()"
-        />
-        @if (submission()) {
-            <ng-container *ngTemplateOutlet="assessment" />
-        } @else {
-            <ng-container *ngTemplateOutlet="noSubmission" />
-        }
-    </jhi-assessment-layout>
+            [isTestRun]="isTestRun()"
+            [exerciseDashboardLink]="exerciseDashboardLink()"
+            [canOverride]="canOverride"
+            [result]="manualResult()"
+            [assessmentsAreValid]="assessmentsAreValid()"
+            [complaint]="complaint()"
+            [exercise]="exercise()"
+            [submission]="submission()"
+            [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed()"
+            [correctionRound]="correctionRound()"
+            [isProgrammingExercise]="true"
+            (save)="save()"
+            (onSubmit)="submit()"
+            (onCancel)="cancel()"
+            (nextSubmission)="nextSubmission()"
+            (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
+        >
+            <jhi-feedback-suggestions-banner
+                jhiBannerSlot
+                [isLoading]="loadingFeedbackSuggestions()"
+                [hasAutomaticFeedback]="hasAutomaticFeedback()"
+                [isAssessor]="isAssessor()"
+                [resultCompletionDate]="manualResult()?.completionDate"
+                [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled()"
+            />
+            @if (submission()) {
+                <ng-container *ngTemplateOutlet="assessment" />
+            } @else {
+                <ng-container *ngTemplateOutlet="noSubmission" />
+            }
+        </jhi-assessment-layout>
+    }
 
     <ng-template #assessment>
         @if (!loadingParticipation() && !participationCouldNotBeFetched()) {

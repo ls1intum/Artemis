@@ -1138,6 +1138,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             expect(comp.submission()).toBeUndefined();
             expect(comp.loadingParticipation()).toBe(false);
             expect(debugElement.query(By.css('[data-testid="assessment-result-not-found"]'))).not.toBeNull();
+            // nothing can be saved or submitted without a result, so neither the notes nor the header with its buttons are shown
+            expect(debugElement.query(By.css('jhi-assessment-layout'))).toBeNull();
             expect(debugElement.query(By.css('jhi-assessment-note'))).toBeNull();
             expect(debugElement.query(By.css('[jhiTranslate="artemisApp.programmingAssessment.notFound"]'))).toBeNull();
             expect(findExerciseSpy).not.toHaveBeenCalled();
