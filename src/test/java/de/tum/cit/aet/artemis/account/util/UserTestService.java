@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -567,6 +568,33 @@ public class UserTestService {
         List<UserDTO> users = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
         assertThat(users).hasSize(1);
         assertThat(users.getFirst().getEmail()).isEqualTo(student.getEmail());
+    }
+
+    // Test
+    public void getUsersViaAuthorityFilter_pageSmallerThanMatches_totalCountIsCorrect() throws Exception {
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("page", "0");
+        params.add("pageSize", "2");
+        params.add("searchTerm", TEST_PREFIX);
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "id");
+        params.add("authorities", "USER");
+        params.add("origins", "");
+        params.add("status", "");
+        params.add("registrationNumbers", "");
+        params.add("courseIds", "");
+        // Only the first page fits, so the total has to come from the count query
+        MvcResult result = request.performMvcRequest(MockMvcRequestBuilders.get("/api/account/admin/users").params(params)).andExpect(status().isOk()).andReturn();
+        List<UserDTO> users = request.getObjectMapper().readValue(result.getResponse().getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, UserDTO.class));
+        assertThat(users).hasSize(2);
+        assertThat(result.getResponse().getHeader("X-Total-Count")).isEqualTo(String.valueOf(NUMBER_OF_STUDENTS + NUMBER_OF_TUTORS + NUMBER_OF_EDITORS + NUMBER_OF_INSTRUCTORS));
+
+        // Selected roles are combined with AND: tutors, editors and instructors are TAs, but only the instructor has both
+        params.set("pageSize", "100");
+        params.set("authorities", "TA,INSTRUCTOR");
+        List<UserDTO> instructors = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
+        assertThat(instructors).extracting(UserDTO::getLogin).containsExactly(TEST_PREFIX + "instructor1");
     }
 
     // Test
