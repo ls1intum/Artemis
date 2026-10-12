@@ -16,9 +16,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
 /**
- * A programming submission as the tutor assessment surfaces serialize it.
+ * A programming submission as the assessment dashboard lists it. The submission a tutor opens for assessment is
+ * {@link ProgrammingSubmissionForTutorAssessmentDTO}.
  * <p>
- * The results stay at the top level of the submission, where the assessment dashboard and the tutor editor read them:
+ * The results stay at the top level of the submission, where the assessment dashboard reads them:
  * the dashboard indexes {@code results[correctionRound]} positionally, so a slot that holds no result for the
  * requested round must survive as an explicit {@code null}. That is why this record uses the bare
  * {@code @JsonInclude()} — under {@code NON_EMPTY} an empty result list would vanish entirely instead of arriving as
@@ -31,7 +32,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
  * @param submissionDate         when the submission was created
  * @param commitHash             the git commit hash of the submission
  * @param buildFailed            whether the build for this submission failed
- * @param participation          the participation the submission belongs to, with its nested exercise
+ * @param participation          the participation the submission belongs to
  * @param results                the results relevant for the requested correction round; entries may be {@code null}
  */
 @JsonInclude()
@@ -58,37 +59,34 @@ public record ProgrammingSubmissionForAssessmentDTO(Long id, String submissionEx
      * pick a specific correction round.
      *
      * @param submission the submission to convert (may be {@code null})
-     * @param exercise   the already-mapped nested exercise (may be {@code null})
      * @return the converted DTO, or {@code null} if the input was {@code null}
      */
-    public static ProgrammingSubmissionForAssessmentDTO ofWithLoadedResults(ProgrammingSubmission submission, ProgrammingExerciseResponseDTO exercise) {
+    public static ProgrammingSubmissionForAssessmentDTO ofWithLoadedResults(ProgrammingSubmission submission) {
         if (submission == null) {
             return null;
         }
         // Hibernate.isInitialized(null) is true, so the null check has to stand next to it.
         Collection<Result> results = submission.getResults() != null && Hibernate.isInitialized(submission.getResults()) ? submission.getResults() : null;
-        return of(submission, exercise, results);
+        return of(submission, results);
     }
 
     /**
-     * Converts a submission together with the results that should be shown for the requested correction round.
+     * Converts a submission together with the results that should be shown.
      * <p>
-     * The submission list of the nested participation is left {@code null} on purpose: the client re-attaches the
-     * submission itself ({@code participation.submissions = [submission]}), so re-emitting it here would only repeat
-     * the payload.
+     * The submission list of the nested participation is left {@code null} on purpose: the submission is the root of
+     * the response, so re-emitting it there would only repeat the payload.
      *
      * @param submission the submission to convert (may be {@code null})
-     * @param exercise   the already-mapped nested exercise (may be {@code null})
      * @param results    the results to nest under the submission; null elements are skipped
      * @return the converted DTO, or {@code null} if the input was {@code null}
      */
-    public static ProgrammingSubmissionForAssessmentDTO of(ProgrammingSubmission submission, ProgrammingExerciseResponseDTO exercise, Collection<Result> results) {
+    private static ProgrammingSubmissionForAssessmentDTO of(ProgrammingSubmission submission, Collection<Result> results) {
         if (submission == null) {
             return null;
         }
         ProgrammingExerciseStudentParticipationDTO participation = null;
         if (submission.getParticipation() instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-            participation = ProgrammingExerciseStudentParticipationDTO.of(studentParticipation, exercise, null);
+            participation = ProgrammingExerciseStudentParticipationDTO.of(studentParticipation, null, null);
         }
         List<ProgrammingAssessmentResultDTO> resultDTOs = results == null ? null : results.stream().filter(Objects::nonNull).map(ProgrammingAssessmentResultDTO::of).toList();
         return new ProgrammingSubmissionForAssessmentDTO(submission.getId(), SUBMISSION_EXERCISE_TYPE, submission.getType(), submission.isSubmitted(),

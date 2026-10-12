@@ -1,4 +1,4 @@
-@if (participationCouldNotBeFetched() || lockLimitReached() || assessmentNotPossibleYet()) {
+@if (participationCouldNotBeFetched() || lockLimitReached() || assessmentNotPossibleYet() || resultNotFound()) {
     <nav class="card">
         <div class="card-body">
             @if (assessmentNotPossibleYet(); as assessmentNotPossibleYetReason) {
@@ -11,6 +11,12 @@
                 <span>
                     <fa-icon [icon]="faTimesCircle" class="text-danger" />
                     <span jhiTranslate="artemisApp.editor.errors.participationNotFound"></span>
+                </span>
+            }
+            @if (resultNotFound()) {
+                <span data-testid="assessment-result-not-found">
+                    <fa-icon [icon]="faTimesCircle" class="text-state-danger" />
+                    <span jhiTranslate="artemisApp.programmingAssessment.resultNotFound"></span>
                 </span>
             }
             @if (lockLimitReached()) {
@@ -157,7 +163,7 @@
 
     <ng-template #noSubmission>
         <!-- while assessment is not possible yet the submission does exist, so the card above explains that instead -->
-        @if (!loadingInitialSubmission() && !assessmentNotPossibleYet()) {
+        @if (!loadingInitialSubmission() && !assessmentNotPossibleYet() && !resultNotFound()) {
             <div class="alert alert-warning text-center mt-4" role="alert">
                 <p jhiTranslate="artemisApp.programmingAssessment.notFound"></p>
                 <a [routerLink]="exerciseDashboardLink()" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">

@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -35,9 +36,11 @@ import tools.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
@@ -554,6 +557,57 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(responseSubmission).isEqualTo(submission);
     }
 
+    /**
+     * A complaint about an automatic result turns it into the manual result of the first correction round, so the
+     * tutor who opens the complaint receives it instead of a submission without any result.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testLockAndGetProgrammingSubmissionForAComplaintAboutAnAutomaticResult() throws Exception {
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        exercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        exercise.setAllowComplaintsForAutomaticAssessments(true);
+        exercise = programmingExerciseRepository.save(exercise);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusDays(2));
+        exerciseUtilService.updateAssessmentDueDate(exercise.getId(), ZonedDateTime.now().minusDays(1));
+        Result automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), submission);
+
+        request.post("/api/assessment/complaints", new ComplaintRequestDTO(automaticResult.getId(), "The tests are wrong", ComplaintType.COMPLAINT, Optional.empty()),
+                HttpStatus.CREATED);
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        JsonNode response = objectMapper.readTree(request.get("/api/programming/programming-submissions/" + submission.getId() + "/lock", HttpStatus.OK, String.class));
+
+        assertThat(response.get("results")).as("the complaint is answered through the result it is about").hasSize(1);
+        assertThat(response.get("results").get(0).get("id").asLong()).isEqualTo(automaticResult.getId());
+        assertThat(resultRepository.findById(automaticResult.getId()).orElseThrow().getCorrectionRound()).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testLockAndGetProgrammingSubmissionResponseCarriesOnlyWhatTheTutorPageReads() throws Exception {
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise = programmingExerciseRepository.save(exercise);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        JsonNode response = objectMapper.readTree(request.get("/api/programming/programming-submissions/" + submission.getId() + "/lock", HttpStatus.OK, String.class));
+
+        var participation = response.get("participation");
+        var exerciseNode = participation.get("exercise");
+        assertThat(exerciseNode.get("id").asLong()).isEqualTo(exercise.getId());
+        assertThat(exerciseNode.get("type").asString()).isEqualTo("programming");
+        assertThat(exerciseNode.has("problemStatement")).isTrue();
+        assertThat(exerciseNode.get("course").get("id").asLong()).isEqualTo(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        // the management view of the exercise and the participant stay out of the response
+        assertThat(exerciseNode.propertyNames()).doesNotContain("templateParticipation", "buildConfig", "plagiarismDetectionConfig", "studentParticipations", "competencyLinks");
+        assertThat(exerciseNode.get("course").propertyNames()).doesNotContain("description", "enrollmentConfirmationMessage", "courseArchivePath");
+        assertThat(participation.propertyNames()).doesNotContain("student", "participantName", "participantIdentifier", "repositoryUri");
+        assertThat(response.has("results")).isTrue();
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionWithManualResult() throws Exception {
@@ -742,14 +796,11 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
         ProgrammingSubmission storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
 
-        // Pin the fields the assessment surfaces read instead of a recursive comparison against the entity: the
+        // Pin the fields the tutor assessment page reads instead of a recursive comparison against the entity: the
         // response is a DTO now, so a recursive comparison would only assert which entity fields it happens to omit.
         assertThat(storedSubmission.getId()).as("submission was found").isEqualTo(submission.getId());
-        assertThat(storedSubmission.isSubmitted()).isEqualTo(submission.isSubmitted());
-        assertThat(storedSubmission.getType()).isEqualTo(submission.getType());
-        assertThat(storedSubmission.getCommitHash()).isEqualTo(submission.getCommitHash());
         assertThat(storedSubmission.isBuildFailed()).isEqualTo(submission.isBuildFailed());
-        assertThat(storedSubmission.getSubmissionDate()).as("submission date is correct").isCloseTo(submission.getSubmissionDate(), HalfSecond());
+        assertThat(storedSubmission.getSubmissionDate()).as("the dashboard shows the submission date").isCloseTo(submission.getSubmissionDate(), HalfSecond());
         assertThat(storedSubmission.getParticipation()).as("participation is set").isNotNull();
         assertThat(storedSubmission.getParticipation().getId()).isEqualTo(submission.getParticipation().getId());
         assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();

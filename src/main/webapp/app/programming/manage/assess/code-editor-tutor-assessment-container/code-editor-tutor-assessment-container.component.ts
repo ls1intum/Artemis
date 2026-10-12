@@ -26,7 +26,7 @@ import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import { Feedback, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { catchError, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -124,6 +124,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // Kept as key + raw ISO date (not a translated string, and not a pre-formatted date) so that both the sentence and
     // the date follow language changes; the template formats the date with the artemisDate pipe.
     readonly assessmentNotPossibleYet = signal<AssessmentNotPossibleYetState | undefined>(undefined);
+    // Set when the server answered with a submission that carries no result for the requested correction round. Without a
+    // result there is nothing to assess or to answer a complaint with, so the editor is replaced by an explanation.
+    readonly resultNotFound = signal(false);
     // Written only synchronously / never reassigned — may stay plain.
     showEditorInstructions = true;
     readonly hasAssessmentDueDatePassed = signal(false);
@@ -237,6 +240,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             // Angular reuses this component for param-only navigations (e.g. to the next submission), so both fatal
             // error states have to be cleared here — otherwise the panel of the previous submission hides the new one.
             this.assessmentNotPossibleYet.set(undefined);
+            this.resultNotFound.set(false);
 
             this.courseId = Number(params['courseId']);
             this.exerciseId = Number(params['exerciseId']);
@@ -269,6 +273,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         return EMPTY;
                     }),
                     // The following is needed for highlighting changed code lines
+                    // Without a submission there is no exercise to load the template for: the next one was not found, or it holds no result
+                    filter(() => !!this.submission()),
                     switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise().id!, false, true)),
                     tap((response) => {
                         const programmingExercise = response.body!;
@@ -310,6 +316,16 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (!submission) {
             // there are no unassessed submissions
             this.submission.set(submission);
+            return;
+        }
+        if (!getLatestSubmissionResult(submission)) {
+            // Reading the result below would throw and leave a half-initialised page: the notes box next to an empty editor and no complaint form.
+            this.loadingInitialSubmission.set(false);
+            this.submission.set(undefined);
+            // the reused component must not keep showing the complaint and the result of the previous submission
+            this.complaint.set(undefined!);
+            this.manualResult.set(undefined);
+            this.resultNotFound.set(true);
             return;
         }
 

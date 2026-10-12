@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+                   logicalFilePath="config/liquibase/changelog/20261012151949_changelog.xml">
+
+    <!--
+        Give the manual results that still have no correction round one.
+
+        When a student complains about an automatic result, the result is changed to SEMI_AUTOMATIC so that a tutor can
+        handle the complaint. An automatic result holds no correction round, and the complaint did not assign one, so
+        from then on the result counted as a manual result without belonging to any round. Opening the complaint asked
+        the server for the result of round 0, found none, and the tutor was shown a page without editor and without the
+        complaint form. The complaint now assigns round 0 itself; this repairs the results that were changed before.
+
+        A result gets the rounds after the highest one its submission already holds, in the order of the ids. For a
+        submission that only holds the changed result that is round 0.
+    -->
+
+    <changeSet id="20261012151949-01-backfill-correction-round-of-complained-results" author="krusche">
+        <sql dbms="postgresql">
+            UPDATE result
+            SET correction_round = ranked.new_round
+            FROM (SELECT r.id,
+                         COALESCE(taken.max_round, -1) + ROW_NUMBER() OVER (PARTITION BY r.submission_id ORDER BY r.id) AS new_round
+                  FROM result r
+                           LEFT JOIN (SELECT submission_id, MAX(correction_round) AS max_round
+                                      FROM result
+                                      WHERE submission_id IS NOT NULL
+                                        AND assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')
+                                      GROUP BY submission_id) taken ON taken.submission_id = r.submission_id
+                  WHERE r.submission_id IS NOT NULL
+                    AND r.correction_round IS NULL
+                    AND r.assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')) AS ranked
+            WHERE result.id = ranked.id
+        </sql>
+        <sql dbms="mysql">
+            UPDATE result
+                JOIN (SELECT r.id,
+                             COALESCE(taken.max_round, -1) + ROW_NUMBER() OVER (PARTITION BY r.submission_id ORDER BY r.id) AS new_round
+                      FROM result r
+                               LEFT JOIN (SELECT submission_id, MAX(correction_round) AS max_round
+                                          FROM result
+                                          WHERE submission_id IS NOT NULL
+                                            AND assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')
+                                          GROUP BY submission_id) taken ON taken.submission_id = r.submission_id
+                      WHERE r.submission_id IS NOT NULL
+                        AND r.correction_round IS NULL
+                        AND r.assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')) AS ranked
+                ON result.id = ranked.id
+            SET result.correction_round = ranked.new_round
+        </sql>
+        <rollback/>
+    </changeSet>
+
+</databaseChangeLog>

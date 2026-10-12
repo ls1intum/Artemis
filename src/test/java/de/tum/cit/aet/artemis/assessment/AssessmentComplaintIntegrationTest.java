@@ -218,6 +218,24 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
+    void submitComplaintAboutAutomaticResult_turnsItIntoTheManualResultOfTheFirstCorrectionRound() throws Exception {
+        exerciseUtilService.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
+        exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
+        // an automatic result belongs to no correction round
+        modelingAssessment.setAssessmentType(AssessmentType.AUTOMATIC);
+        modelingAssessment.setCorrectionRound(null);
+        resultRepository.save(modelingAssessment);
+
+        request.post("/api/assessment/complaints", complaintRequest, HttpStatus.CREATED);
+
+        // a tutor opens the complaint through the result of round 0, a manual result without a round would be found by nobody
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        assertThat(storedResult.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        assertThat(storedResult.getCorrectionRound()).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
         complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getSubmission(), 3, ComplaintType.COMPLAINT);
 

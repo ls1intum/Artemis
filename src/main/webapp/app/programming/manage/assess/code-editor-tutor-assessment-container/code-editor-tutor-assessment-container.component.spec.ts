@@ -1121,4 +1121,26 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             expect(comp.submission()).toEqual(submission);
         });
     });
+
+    describe('when the locked submission has no result', () => {
+        // The server answers with an empty result list when the submission holds no result for the requested correction round.
+        // Reading the result used to throw halfway through the initialisation and left the notes box beside an empty page.
+        it('should explain it instead of showing a half-initialised page', async () => {
+            const findExerciseSpy = vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
+            const submissionWithoutResult = { ...submission, results: [] } as ProgrammingSubmission;
+            lockAndGetProgrammingSubmissionParticipationStub.mockReturnValue(scheduled([submissionWithoutResult], asapScheduler));
+
+            fixture.detectChanges();
+            await flushMicrotasks();
+            fixture.detectChanges();
+
+            expect(comp.resultNotFound()).toBe(true);
+            expect(comp.submission()).toBeUndefined();
+            expect(comp.loadingParticipation()).toBe(false);
+            expect(debugElement.query(By.css('[data-testid="assessment-result-not-found"]'))).not.toBeNull();
+            expect(debugElement.query(By.css('jhi-assessment-note'))).toBeNull();
+            expect(debugElement.query(By.css('[jhiTranslate="artemisApp.programmingAssessment.notFound"]'))).toBeNull();
+            expect(findExerciseSpy).not.toHaveBeenCalled();
+        });
+    });
 });
