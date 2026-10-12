@@ -415,6 +415,30 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         request.getList(pagedUrl(exam1), HttpStatus.FORBIDDEN, ExamStudentDTO.class, pageParams(""));
     }
 
+    /**
+     * A page above the bound, including one whose offset would overflow {@code int} in the JPA pagination pipeline, is rejected with 400 instead of a 500.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStudentsPaged_rejectsPageAboveBound() throws Exception {
+        var params = pageParams("");
+        params.set("page", "100001");
+        request.getList(pagedUrl(exam1), HttpStatus.BAD_REQUEST, ExamStudentDTO.class, params);
+
+        params.set("page", String.valueOf(Integer.MAX_VALUE));
+        params.set("pageSize", "200");
+        request.getList(pagedUrl(exam1), HttpStatus.BAD_REQUEST, ExamStudentDTO.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStudentsPaged_acceptsPageAtBound() throws Exception {
+        var params = pageParams("");
+        params.set("page", "100000");
+        List<ExamStudentDTO> result = request.getList(pagedUrl(exam1), HttpStatus.OK, ExamStudentDTO.class, params);
+        assertThat(result).isEmpty();
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamStudentsPaged_filterSubmitted_returnsOnlySubmittedStudents() throws Exception {
