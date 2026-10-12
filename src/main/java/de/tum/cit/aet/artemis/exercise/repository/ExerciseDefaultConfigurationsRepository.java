@@ -22,8 +22,8 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
  * repositories exist only while the module is enabled on this server, but its configuration row is permanent all the same:
  * it is created together with the exercise, also on a server that has the module switched off, so that switching the module
  * on later only changes a flag in a row that is already there. The rows are therefore written here, in the exercise module,
- * with native statements against the module's table that name no class of the module, and every setting comes from the
- * column defaults of the changelog.
+ * with JPQL statements that name the module's entity only by its entity name, so no class of the module is referenced, and
+ * every setting comes from the column defaults of the changelog.
  * <p>
  * Today this is the configuration of Metis, the comprehension check, which every programming exercise owns. The rows every
  * server has, the team assignment and the plagiarism detection configuration, are written through their own repositories.
@@ -73,23 +73,12 @@ public interface ExerciseDefaultConfigurationsRepository extends ArtemisJpaRepos
      * @param exerciseId the id of the exercise
      * @return true if the row exists
      */
-    default boolean hasMetisExerciseConfig(long exerciseId) {
-        // a native query is not converted to a boolean on MySQL, so the statement counts and the comparison happens here
-        return countMetisExerciseConfigs(exerciseId) > 0;
-    }
-
-    /**
-     * Counts the Metis configuration rows of an exercise, which is zero or one because the exercise id is their primary key.
-     *
-     * @param exerciseId the id of the exercise
-     * @return the number of rows
-     */
-    @Query(value = """
-            SELECT COUNT(*)
-            FROM metis_exercise_config
-            WHERE exercise_id = :exerciseId
-            """, nativeQuery = true)
-    long countMetisExerciseConfigs(@Param("exerciseId") long exerciseId);
+    @Query("""
+            SELECT COUNT(config) > 0
+            FROM MetisExerciseConfig config
+            WHERE config.exerciseId = :exerciseId
+            """)
+    boolean hasMetisExerciseConfig(@Param("exerciseId") long exerciseId);
 
     /**
      * Creates the Metis configuration of a newly stored programming exercise. Only the key is written, so the column defaults
@@ -100,9 +89,9 @@ public interface ExerciseDefaultConfigurationsRepository extends ArtemisJpaRepos
      */
     @Modifying
     @Transactional // ok because of the insert
-    @Query(value = """
-            INSERT INTO metis_exercise_config (exercise_id)
+    @Query("""
+            INSERT INTO MetisExerciseConfig (exerciseId)
             VALUES (:exerciseId)
-            """, nativeQuery = true)
+            """)
     void initializeMetisExerciseConfig(@Param("exerciseId") long exerciseId);
 }
