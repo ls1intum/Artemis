@@ -150,6 +150,7 @@ class SubmissionExportServiceElseThrowTest {
 
         assertThatExceptionOfType(InternalServerErrorException.class)
                 .isThrownBy(() -> service.exportStudentSubmissionsElseThrow(EXERCISE_ID, SubmissionExportOptionsDTO.exportAll()))
-                .satisfies(exception -> assertThat(exception.getBody().getTitle()).contains("Failed to create the export directory for exercise " + EXERCISE_ID));
+                .satisfies(exception -> assertThat(exception.getBody().getTitle()).contains("Failed to create the export directory for exercise " + EXERCISE_ID)
+                        .doesNotContain("read-only file system"));
     }
 }

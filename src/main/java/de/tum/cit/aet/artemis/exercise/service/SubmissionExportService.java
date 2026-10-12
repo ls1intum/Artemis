@@ -83,7 +83,10 @@ public abstract class SubmissionExportService {
             zippedSubmissionsPaths = exportStudentSubmissions(exerciseId, submissionExportOptions, true, outputDir, exportErrors, new ArrayList<>());
         }
         catch (IOException e) {
-            throw new InternalServerErrorException("Failed to create the export directory for exercise " + exerciseId + ": " + e.getMessage());
+            // the message of the exception usually contains the export path of the server, so only the log gets it
+            log.error("Failed to create the export directory for exercise {}", exerciseId, e);
+            throw new InternalServerErrorException(
+                    "Failed to create the export directory for exercise " + exerciseId + ". Please contact an administrator, the server log contains the details.");
         }
         if (zippedSubmissionsPaths.isEmpty()) {
             if (!exportErrors.isEmpty()) {
