@@ -1419,12 +1419,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // the message is created, nobody is left to ping
         assertThat(postWithoutRecipients.content()).isEqualTo("@all is anybody there?");
-        // the member who unmutes the group chat is pinged by the next message, which shows that the notifications work and that the first message did not notify anybody
-        updateParticipant(groupChat, mutedMember, participant -> participant.setIsMuted(false));
-        var postWithRecipient = postMessage(groupChat, "@all is anybody there now?");
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(notificationRecipientIds(3, "postId", postWithRecipient.id())).containsExactly(mutedMember.getId()));
-        assertThat(notificationRecipientIds(3, "postId", postWithoutRecipients.id())).isEmpty();
-        assertThat(notificationRecipientIds(1, "postId", postWithoutRecipients.id())).isEmpty();
+        // The notifications are created asynchronously and read the muted and hidden state of the members when they run, so the members keep their state for the whole test.
+        // That notifications are sent to unmuted members is checked by shouldNotifyEveryUnmutedGroupChatMemberExceptTheAuthorForAtAll.
+        await().during(Duration.ofMillis(500)).atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            assertThat(notificationRecipientIds(3, "postId", postWithoutRecipients.id())).isEmpty();
+            assertThat(notificationRecipientIds(1, "postId", postWithoutRecipients.id())).isEmpty();
+        });
     }
 
     private Conversation nameGroupChat(Conversation groupChat, String name) {
