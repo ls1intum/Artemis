@@ -484,7 +484,7 @@
                 <div class="flex flex-col gap-3">
                     <jhi-feature-overlay [enabled]="atlasEnabled()">
                         <div class="flex flex-col gap-3">
-                            <div class="course-form-option" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
+                            <div id="learning-paths-setting" class="course-form-option" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
                                 <tumaet-ui-checkbox inputId="field_learningPathsEnabled" name="learningPathsEnabled" formControlName="learningPathsEnabled" />
                                 <label class="course-form-option-label" jhiTranslate="artemisApp.course.learningPaths.label" for="field_learningPathsEnabled"></label>
                                 <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.course.learningPaths.tooltip' | artemisTranslate" />
@@ -574,6 +574,16 @@
                             }
                         </div>
                     </jhi-feature-overlay>
+                    <div id="presentation-assessments-setting" class="course-form-option" [jhiFeatureToggleHide]="FeatureToggle.PresentationAssessments">
+                        <tumaet-ui-checkbox inputId="field_presentationAssessmentsEnabled" name="presentationAssessmentsEnabled" formControlName="presentationAssessmentsEnabled" />
+                        <label class="course-form-option-label" jhiTranslate="artemisApp.course.presentationAssessments.label" for="field_presentationAssessmentsEnabled"></label>
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="text-muted-color"
+                            [tumAetUiTooltip]="'artemisApp.course.presentationAssessments.tooltip' | artemisTranslate"
+                            tumAetUiTooltipPlacement="right"
+                        />
+                    </div>
                     <!-- Not part of model -->
                     <div class="course-form-option">
                         <tumaet-ui-checkbox
