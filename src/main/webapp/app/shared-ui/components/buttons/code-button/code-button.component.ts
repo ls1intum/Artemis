@@ -353,10 +353,9 @@ export class CodeButtonComponent implements OnInit {
             return;
         }
         this.vcsAccessTokenReportedMissing = true;
-        const participation = this.participation();
         captureException(
             new Error(
-                `A VCS access token was expected but missing while building the clone URL (participationId=${participation?.id}, isInCourseManagement=${this.isInCourseManagement()}); the token was omitted from the URL.`,
+                `A VCS access token was expected but missing while building the clone URL (participationId=${this.participation()?.id}, isInCourseManagement=${this.isInCourseManagement()}); the token was omitted from the URL.`,
             ),
         );
     }
