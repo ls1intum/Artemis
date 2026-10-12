@@ -1,5 +1,5 @@
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
-import { Component, OnInit, input, signal } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { faAngleDown, faAngleUp, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackGroup, isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
@@ -11,15 +11,16 @@ import { TooltipModule } from 'primeng/tooltip';
 import { FeedbackCollapseComponent } from '../collapse/feedback-collapse.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import hljs from 'app/foundation/util/highlight-languages.util';
 
 @Component({
     selector: 'jhi-feedback-node',
     templateUrl: './feedback-node.component.html',
     styleUrls: ['./feedback-node.scss'],
-    imports: [FaIconComponent, MessageModule, TooltipModule, FeedbackCollapseComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [TumAetUiTagComponent, FaIconComponent, MessageModule, TooltipModule, FeedbackCollapseComponent, TranslateDirective, ArtemisTranslatePipe],
 })
-export class FeedbackNodeComponent implements OnInit {
+export class FeedbackNodeComponent {
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     readonly feedbackItemNode = input<FeedbackNode>(undefined!);
@@ -27,24 +28,14 @@ export class FeedbackNodeComponent implements OnInit {
     /** While the exam summary is being printed, every group renders expanded regardless of its `open` flag. */
     readonly isPrinting = input(false);
 
-    // This is a workaround for type safety in the template
-    readonly feedbackItem = signal<FeedbackItem>(undefined!);
-    readonly feedbackItemGroup = signal<FeedbackGroup>(undefined!);
+    readonly feedbackItem = computed(() => (isFeedbackGroup(this.feedbackItemNode()) ? undefined : (this.feedbackItemNode() as FeedbackItem)));
+    readonly feedbackItemGroup = computed(() => (isFeedbackGroup(this.feedbackItemNode()) ? (this.feedbackItemNode() as FeedbackGroup) : undefined));
     private readonly highlightedCodeCache = new Map<string, string>();
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
-
-    ngOnInit(): void {
-        const feedbackItemNode = this.feedbackItemNode();
-        if (isFeedbackGroup(feedbackItemNode)) {
-            this.feedbackItemGroup.set(feedbackItemNode);
-        } else {
-            this.feedbackItem.set(feedbackItemNode as FeedbackItem);
-        }
-    }
 
     /**
      * Whether the group's members should be shown. A group is expanded while printing (so the exam summary PDF
@@ -81,7 +72,7 @@ export class FeedbackNodeComponent implements OnInit {
      * handler runs synchronously, so change detection picks up the new open state.
      */
     toggleFeedbackItemGroupOpen(): void {
-        const group = this.feedbackItemGroup();
+        const group = this.feedbackItemGroup()!;
         group.open = !group.open;
     }
 

@@ -3,17 +3,24 @@ package de.tum.cit.aet.artemis.exercise.participation;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
@@ -52,6 +59,12 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ResultTestRepository resultRepository;
+
+    @Autowired
+    private TeamRepository teamRepository;
 
     private ZonedDateTime now;
 
@@ -102,6 +115,67 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
         var grades = studentParticipationRepository.findIndividualQuizGradesByCourseId(course.getId());
 
         assertThat(grades).extracting(CourseGradeScoreDTO::score).containsExactly(30.0);
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = { "false,MANUAL", "true,MANUAL", "false,NULL", "true,NULL" }, nullValues = "NULL")
+    void shouldKeepOfficialGradesDuringAndAfterAthenaGeneration(boolean teamExercise, AssessmentType officialType) {
+        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise(TEST_PREFIX + "athena");
+        TextExercise exercise = (TextExercise) course.getExercises().iterator().next();
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        StudentParticipation participation;
+        if (teamExercise) {
+            Team team = new Team();
+            team.setShortName(TEST_PREFIX + "athena");
+            team.setExercise(exercise);
+            team.addStudents(student);
+            team = teamRepository.save(team);
+            participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
+        }
+        else {
+            participation = participationUtilService.createAndSaveParticipationForExercise(exercise, student.getLogin());
+        }
+        var submission = addTextSubmissionWithResult(participation, now.minusHours(1), now.minusMinutes(30), 80.0);
+        var official = resultRepository.findDistinctBySubmissionId(submission.getId()).orElseThrow();
+        official.setAssessmentType(officialType);
+        resultRepository.save(official);
+        Result ai = new Result().submission(submission).assessmentType(AssessmentType.AUTOMATIC_ATHENA).rated(true);
+        ai.setExerciseId(exercise.getId());
+        ai = resultRepository.save(ai);
+        assertOfficialGrade(course, exercise, student.getId(), teamExercise);
+
+        ai.setCompletionDate(now.minusMinutes(10));
+        ai.setSuccessful(true);
+        ai = resultRepository.save(ai);
+        assertOfficialGrade(course, exercise, student.getId(), teamExercise);
+
+        ai.setScore(60.0);
+        resultRepository.save(ai);
+        assertOfficialGrade(course, exercise, student.getId(), teamExercise);
+
+        resultRepository.deleteById(official.getId());
+        if (teamExercise) {
+            assertThat(studentParticipationRepository.findTeamGradesByCourseId(course.getId())).isEmpty();
+            assertThat(studentParticipationRepository.findTeamGradesByCourseIdAndStudentId(Set.of(course.getId()), student.getId())).isEmpty();
+            assertThat(studentParticipationRepository.findTeamGradesForCourseOverview(Set.of(exercise.getId()), student.getId())).isEmpty();
+        }
+        else {
+            assertThat(studentParticipationRepository.findIndividualGradesByCourseId(course.getId())).isEmpty();
+            assertThat(studentParticipationRepository.findIndividualGradesByCourseIdAndStudentId(Set.of(course.getId()), student.getId())).isEmpty();
+            assertThat(studentParticipationRepository.findIndividualGradesForCourseOverview(Set.of(exercise.getId()), student.getId())).isEmpty();
+        }
+    }
+
+    private void assertOfficialGrade(Course course, TextExercise exercise, long studentId, boolean teamExercise) {
+        var courseGrades = teamExercise ? studentParticipationRepository.findTeamGradesByCourseId(course.getId())
+                : studentParticipationRepository.findIndividualGradesByCourseId(course.getId());
+        var studentGrades = teamExercise ? studentParticipationRepository.findTeamGradesByCourseIdAndStudentId(Set.of(course.getId()), studentId)
+                : studentParticipationRepository.findIndividualGradesByCourseIdAndStudentId(Set.of(course.getId()), studentId);
+        var overviewGrades = teamExercise ? studentParticipationRepository.findTeamGradesForCourseOverview(Set.of(exercise.getId()), studentId)
+                : studentParticipationRepository.findIndividualGradesForCourseOverview(Set.of(exercise.getId()), studentId);
+        assertThat(courseGrades).extracting(CourseGradeScoreDTO::score).containsExactly(80.0);
+        assertThat(studentGrades).extracting(CourseGradeScoreDTO::score).containsExactly(80.0);
+        assertThat(overviewGrades).extracting(CourseGradeScoreDTO::score).containsExactly(80.0);
     }
 
     private TextSubmission addTextSubmissionWithResult(StudentParticipation participation, ZonedDateTime submissionDate, ZonedDateTime completionDate, double score) {

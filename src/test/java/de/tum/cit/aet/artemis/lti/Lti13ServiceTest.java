@@ -394,6 +394,7 @@ class Lti13ServiceTest {
     @Test
     void onNewResultNoResultForUser() {
         Course course = createOnlineCourse();
+        course.setOnlineCourse(true);
         User user = new User();
         user.setId(1L);
         Exercise exercise = new ProgrammingExercise();
@@ -408,11 +409,13 @@ class Lti13ServiceTest {
         doReturn(course).when(courseRepository).findByIdElseThrow(course.getId());
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
         doReturn(List.of(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
-        doReturn(Optional.empty()).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(Optional.empty()).when(resultRepository).findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId());
         doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
         lti13Service.onNewResult(participation);
 
+        verify(resultRepository).findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId());
+        verifyNoInteractions(tokenRetriever);
         verifyNoInteractions(restTemplate);
     }
 
@@ -427,6 +430,7 @@ class Lti13ServiceTest {
         result.addFeedback(feedback);
 
         Course course = createOnlineCourse();
+        course.setOnlineCourse(true);
         User user = new User();
         user.setId(1L);
         Exercise exercise = new ProgrammingExercise();
@@ -441,11 +445,13 @@ class Lti13ServiceTest {
         doReturn(course).when(courseRepository).findByIdElseThrow(course.getId());
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
         doReturn(List.of(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
-        doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(Optional.of(result)).when(resultRepository).findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId());
         doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
         lti13Service.onNewResult(participation);
 
+        verify(resultRepository).findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId());
+        verifyNoInteractions(tokenRetriever);
         verifyNoInteractions(restTemplate);
     }
 
@@ -465,17 +471,20 @@ class Lti13ServiceTest {
         Exercise exercise = state.exercise();
         StudentParticipation participation = state.participation();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        course.setOnlineCourse(true);
         ClientRegistration clientRegistration = state.clientRegistration();
 
         doReturn(course).when(courseRepository).findByIdElseThrow(course.getId());
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
         doReturn(List.of(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
-        doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(Optional.of(result)).when(resultRepository).findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId());
         doReturn(null).when(tokenRetriever).getToken(eq(clientRegistration), eq(Scopes.AGS_SCORE));
         doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
         lti13Service.onNewResult(participation);
 
+        verify(resultRepository).findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId());
+        verify(tokenRetriever).getToken(clientRegistration, Scopes.AGS_SCORE);
         verifyNoInteractions(restTemplate);
     }
 
@@ -504,7 +513,7 @@ class Lti13ServiceTest {
         ClientRegistration clientRegistration = state.clientRegistration();
 
         doReturn(List.of(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
-        doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(Optional.of(result)).when(resultRepository).findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId());
         doReturn(course).when(courseRepository).findByIdElseThrow(course.getId());
         doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(clientRegistrationId);
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());

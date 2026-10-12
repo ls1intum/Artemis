@@ -13,6 +13,7 @@ import { getAllFeedbackGroups } from 'app/exercise/feedback/group/programming-fe
 import { FeedbackItem, type FeedbackItemCodeReference } from 'app/exercise/feedback/item/feedback-item';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 
 @Service()
@@ -24,15 +25,19 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
     }
 
     group(feedbackItems: FeedbackItem[], exercise: Exercise): FeedbackNode[] {
+        const aiFeedbackItems = feedbackItems.filter((item) => item.isAiFeedback);
+        const severityOrder = { high: 0, medium: 1, low: 2, unclassified: 3 };
+        aiFeedbackItems.sort((a, b) => severityOrder[a.feedbackReference.severity ?? 'unclassified'] - severityOrder[b.feedbackReference.severity ?? 'unclassified']);
+        const otherFeedbackItems = feedbackItems.filter((item) => !item.isAiFeedback);
         const feedbackGroups = getAllFeedbackGroups(exercise)
-            .map((group: FeedbackGroup) => group.addAllItems(feedbackItems.filter(group.shouldContain)))
+            .map((group: FeedbackGroup) => group.addAllItems(otherFeedbackItems.filter(group.shouldContain)))
             .filter((group: FeedbackGroup) => !group.isEmpty());
 
         if (feedbackGroups.length === 1) {
             feedbackGroups[0].open = true;
         }
 
-        return feedbackGroups;
+        return [...aiFeedbackItems, ...feedbackGroups];
     }
 
     /**
@@ -41,6 +46,14 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      * @param showTestDetails
      */
     private createFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
+        if (feedback.result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA || Feedback.isNonGradedFeedbackSuggestion(feedback)) {
+            const item = this.createNonGradedFeedbackItem(feedback);
+            item.isAiFeedback = true;
+            item.name = '';
+            item.credits = undefined;
+            item.color = feedback.severity === 'high' ? 'danger' : feedback.severity === 'medium' ? 'warning' : feedback.severity === 'low' ? 'info' : undefined;
+            return item;
+        }
         if (Feedback.isSubmissionPolicyFeedback(feedback)) {
             return this.createSubmissionPolicyFeedbackItem(feedback);
         } else if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
@@ -49,8 +62,6 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             return this.createFeedbackSuggestionItem(feedback, showTestDetails);
         } else if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isNonGradedFeedbackSuggestion(feedback)) {
             return this.createAutomaticFeedbackItem(feedback, showTestDetails);
-        } else if (feedback.type === FeedbackType.AUTOMATIC && Feedback.isNonGradedFeedbackSuggestion(feedback)) {
-            return this.createNonGradedFeedbackItem(feedback);
         } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
             return this.createGradingInstructionFeedbackItem(feedback, showTestDetails);
         } else {
@@ -159,7 +170,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         return {
             type: 'Reviewer',
             name: this.translateService.instant('artemisApp.result.detail.feedback'),
-            title: feedback.text?.slice(NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER.length),
+            title: Feedback.isNonGradedFeedbackSuggestion(feedback) ? feedback.text?.slice(NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER.length) : feedback.text,
             text: feedback.detailText,
             positive: feedback.positive,
             credits: feedback.credits,

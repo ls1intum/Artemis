@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -533,6 +534,54 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
             assertThat(resultWithPoints.totalPoints()).isEqualTo(6.1);
             assertThat(resultWithPoints.pointsPerCriterion()).hasSize(1).containsEntry(criterion1.getId(), 5.0);
         }
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "60,true,false", ",true,false", ",,false", "60,true,true", ",true,true", ",,true" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetResultsWithPointsExcludesAthena(Double aiScore, Boolean successful, boolean separateSubmission) throws Exception {
+        var now = ZonedDateTime.now();
+        Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation,
+                new ProgrammingSubmission().submitted(true).submissionDate(now.minusHours(2)));
+        submission = participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 80.0, true, now.minusHours(2));
+        Result official = submission.getLatestResult();
+        Feedback officialFeedback = new Feedback().text("Official feedback").credits(8.0).type(FeedbackType.MANUAL);
+        officialFeedback.setResult(official);
+        feedbackRepository.save(officialFeedback);
+
+        Submission aiSubmission = separateSubmission
+                ? participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission().submitted(true).submissionDate(now.minusHours(1)))
+                : submission;
+        aiSubmission = participationUtilService.addResultToSubmission(aiSubmission, AssessmentType.AUTOMATIC_ATHENA, null, aiScore, true, now.minusHours(1));
+        Result ai = aiSubmission.getLatestResult();
+        ai.setSuccessful(successful);
+        resultRepository.save(ai);
+        Feedback aiFeedback = new Feedback().text("AI feedback").credits(6.0).type(FeedbackType.AUTOMATIC);
+        aiFeedback.setResult(ai);
+        feedbackRepository.save(aiFeedback);
+
+        // Also exclude a participant who has AI feedback but no official result at all.
+        Submission aiOnly = participationUtilService.addSubmission(programmingExerciseStudentParticipation2, new ProgrammingSubmission().submitted(true).submissionDate(now));
+        participationUtilService.addResultToSubmission(aiOnly, AssessmentType.AUTOMATIC_ATHENA, null, 60.0, true);
+
+        for (boolean withSubmissions : List.of(false, true)) {
+            List<ResultWithPointsPerGradingCriterionDTO> rows = request.getList(
+                    "/api/assessment/exercises/" + programmingExercise.getId() + "/results-with-points-per-criterion?withSubmissions=" + withSubmissions, HttpStatus.OK,
+                    ResultWithPointsPerGradingCriterionDTO.class);
+            assertThat(rows).singleElement().satisfies(row -> {
+                assertThat(row.result().id()).isEqualTo(official.getId());
+                assertThat(row.result().score()).isEqualTo(80.0);
+                assertThat(row.totalPoints()).isEqualTo(8.0);
+                assertThat(row.result().feedbacks()).singleElement().satisfies(feedback -> {
+                    assertThat(feedback.text()).isEqualTo("Official feedback");
+                    assertThat(feedback.credits()).isEqualTo(8.0);
+                });
+                assertThat(row.result().submission().participation().participantIdentifier()).isEqualTo(TEST_PREFIX + "student1");
+            });
+        }
+        // Export filtering must not delete student-facing AI feedback.
+        assertThat(resultRepository.findById(ai.getId())).isPresent();
+        assertThat(feedbackRepository.findByResult(ai)).hasSize(1);
     }
 
     private FileUploadExercise setupFileUploadExerciseWithResults() {
