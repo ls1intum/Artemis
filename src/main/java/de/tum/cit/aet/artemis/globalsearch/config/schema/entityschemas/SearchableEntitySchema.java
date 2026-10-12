@@ -144,6 +144,12 @@ public final class SearchableEntitySchema {
 
         public static final String UNIT_TYPE = "unit_type";
 
+        /**
+         * The title of the lecture a lecture unit belongs to (lecture_unit rows only). Part of the header of the
+         * unit's embedding inputs, so the chunks can be rebuilt from the stored row.
+         */
+        public static final String LECTURE_TITLE = "lecture_title";
+
         // Post-specific properties
         public static final String CHANNEL_ID = "channel_id";
 
