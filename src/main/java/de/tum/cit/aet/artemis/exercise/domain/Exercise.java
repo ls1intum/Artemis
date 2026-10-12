@@ -26,6 +26,7 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
@@ -355,8 +356,24 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return exerciseVariantGroup;
     }
 
+    /**
+     * Sets the variant group. On an exercise that is not stored yet this has no effect on the database, see {@link #dropVariantGroupOfNewExercise()}.
+     *
+     * @param exerciseVariantGroup the group, or {@code null} for none
+     */
     public void setExerciseVariantGroup(@Nullable ExerciseVariantGroup exerciseVariantGroup) {
         this.exerciseVariantGroup = exerciseVariantGroup;
+    }
+
+    /**
+     * A new exercise is always stored outside any variant group. An existing exercise joins a group through
+     * {@link de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService#assignToGroup}, which stamps the group's timeline onto it; its callers
+     * first reject exam exercises, exercises of another course and quizzes that are not in individual mode. A copy built from a loaded source exercise
+     * carries the source's group, so it is dropped here, in the step every insert of an exercise goes through.
+     */
+    @PrePersist
+    private void dropVariantGroupOfNewExercise() {
+        exerciseVariantGroup = null;
     }
 
     @JsonIgnore

@@ -316,6 +316,8 @@ intended local concurrency; it defaults to `2`. Worker slots do not override
 per-user token admission quotas or individual run budgets. A full worker rejects
 additional admission rather than accumulating an unbounded queue.
 
+Rolling admission budgets count raw input and output tokens. The per-job token limit is weighted: cached input counts at `artemis.hyperion.agent.cached-input-token-weight` (default `0.5`). Admission reserves `ceil(weighted job limit / cached input weight)` raw tokens, then reduces that reservation as raw usage is stored. Each enabled user, course, or global budget must fit the raw-token ceiling of the largest configured effort profile. With a weighted job limit of 3,000,000 and a cache weight of 0.5, one job needs a 6,000,000-token admission reservation. Cache weights must be finite and greater than zero, and must not exceed one.
+
 Budget RAM for all simultaneously active sandboxes plus the worker JVM and host
 services. Sandbox CPU, RAM and PID limits remain per execution. Slots are a bounded
 concurrency setting, not automatic host scaling. Keep generation outside the core

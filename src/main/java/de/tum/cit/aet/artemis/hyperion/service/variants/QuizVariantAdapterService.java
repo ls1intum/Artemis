@@ -147,7 +147,8 @@ public class QuizVariantAdapterService implements VariantTypeAdapters {
         QuizExercise importSource = quizExerciseRepository.findWithEagerQuestionsAndCompetenciesAndBatchesAndGradingCriteriaById(source.getId())
                 .orElseThrow(() -> new EntityNotFoundException("QuizExercise", source.getId()));
         // The detached instance doubles as the "imported exercise carrying the new values": only the fields the
-        // variant changes are overwritten; course/exam group, dates, mode, and duration are copied as-is.
+        // variant changes are overwritten; course/exam group, dates, mode, and duration are copied as-is. Its variant
+        // group is not: a new exercise is always stored outside any group, and only the placement step adds one.
         original.setTitle(plan.variantTitle());
         if (request.targetDifficulty() != null) {
             original.setDifficulty(request.targetDifficulty());
