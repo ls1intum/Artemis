@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeInformationDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
+import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
@@ -450,6 +451,28 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         assertThat(participantScoreScheduleService.isIdle()).as("an individual exercise keeps scheduling the score update for practice results").isFalse();
         await().until(participantScoreScheduleService::isIdle);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getGradeScoresForCourse_excludesTutorsEditorsAndInstructors() throws Exception {
+        User student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        User tutor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        User instructor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        User editor1 = userUtilService.addEditorToCourse(TEST_PREFIX + "editor1", course);
+        // student2 left the course after taking part: the results are legitimate and must stay in the scores
+        userUtilService.unenrollUserFromCourse(student2, course);
+
+        for (User participant : List.of(student2, tutor1, editor1, instructor1)) {
+            participationUtilService.createParticipationSubmissionAndResult(idOfIndividualTextExercise, participant, 10.0, 10.0, 80, true);
+        }
+
+        CourseGradeInformationDTO gradeInformation = request.get("/api/assessment/courses/" + courseId + "/grade-scores", HttpStatus.OK, CourseGradeInformationDTO.class);
+
+        assertThat(gradeInformation).isNotNull();
+        // student1 (individual and team participation) and the former student2 stay, nobody from the teaching staff is returned
+        assertThat(gradeInformation.gradeScores()).extracting(CourseGradeScoreDTO::userId).containsOnly(student1.getId(), student2.getId());
+        assertThat(gradeInformation.students()).extracting(StudentDTO::id).containsExactlyInAnyOrder(student1.getId(), student2.getId());
     }
 
     @Test
