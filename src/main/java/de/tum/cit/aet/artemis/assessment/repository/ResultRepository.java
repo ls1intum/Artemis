@@ -232,24 +232,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     Optional<Result> findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsById(@Param("resultId") long resultId);
 
     /**
-     * counts the number of assessments of a course, which are either rated or not rated (excluding test run participations)
-     *
-     * @param exerciseIdsWithManualAssessment - the ids of the exercises of the course (should be filtered to only include exercises with manual assessment)
-     * @return the number of assessments for the course
-     */
-    @Query("""
-            SELECT COUNT(r)
-            FROM Result r
-                JOIN r.submission s
-                JOIN s.participation p
-            WHERE r.completionDate IS NOT NULL
-                AND r.assessor IS NOT NULL
-                AND p.testRun = FALSE
-                AND r.exerciseId IN :exerciseIds
-            """)
-    long countAssessmentsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIdsWithManualAssessment);
-
-    /**
      * Load a result from the database by its id together with the associated submission and the list of feedback items.
      *
      * @param resultId the id of the result to load from the database
@@ -303,7 +285,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /**
      * Counts the number of finished assessments for a set of exercise IDs, ignoring test runs.
-     * Only submissions that have been submitted before the due date (if set) are considered.
+     * Every submitted submission with at least one finished manual result counts exactly once, no matter whether it was submitted in time or late,
+     * and no matter how many results it has (e.g. after a complaint response). This matches how the submissions of the same exercises are counted.
      *
      * @param exerciseIds set of exercise IDs
      * @return the number of finished assessments for the given exercise IDs, ignoring test runs
@@ -320,7 +303,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.rated = TRUE
                 AND s.submitted = TRUE
                 AND r.completionDate IS NOT NULL
-                AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
     long countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
@@ -650,7 +632,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
+     * Given a courseId, return the number of assessed submissions for that course that have been completed (e.g. no draft!)
      *
      * @param exerciseIds - the exercise ids of the course we are interested in (should be filtered to only include exercises with manual assessment)
      * @return a number of assessments for the course
@@ -660,7 +642,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         if (exerciseIds == null || exerciseIds.isEmpty()) {
             return 0;
         }
-        return countAssessmentsForExerciseIdsIgnoreTestRuns(exerciseIds);
+        return countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns(exerciseIds);
     }
 
     /**

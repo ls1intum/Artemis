@@ -247,19 +247,20 @@ public class CourseStatsService {
 
         Set<Long> exerciseIds = courseExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
         start = System.currentTimeMillis();
-        long numberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns(courseExerciseIdsWithManualAssessments);
-        log.debug("resultRepository.countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns took {} ms for exercises with ids {}", System.currentTimeMillis() - start,
-                courseExerciseIdsWithManualAssessments);
+        long numberOfAssessments = resultRepository.countNumberOfAssessments(courseExerciseIdsWithManualAssessments);
+        log.debug("resultRepository.countNumberOfAssessments took {} ms for exercises with ids {}", System.currentTimeMillis() - start, courseExerciseIdsWithManualAssessments);
+        // the submissions are counted over the same exercises as the assessments, so that the assessment progress is consistent
         start = System.currentTimeMillis();
-        long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIds)
-                + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIds);
+        long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(courseExerciseIdsWithManualAssessments)
+                + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(courseExerciseIdsWithManualAssessments);
         log.debug("number of in time submissions: {}", numberOfInTimeSubmissions);
         log.debug(
                 "submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate and programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted took {} ms for exercises with ids {}",
-                System.currentTimeMillis() - start, exerciseIds);
+                System.currentTimeMillis() - start, courseExerciseIdsWithManualAssessments);
         start = System.currentTimeMillis();
-        long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(exerciseIds);
-        log.debug("submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate took {} ms for exercises with ids {}", System.currentTimeMillis() - start, exerciseIds);
+        long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(courseExerciseIdsWithManualAssessments);
+        log.debug("submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate took {} ms for exercises with ids {}", System.currentTimeMillis() - start,
+                courseExerciseIdsWithManualAssessments);
 
         long numberOfSubmissions = numberOfInTimeSubmissions + numberOfLateSubmissions;
         log.debug("number of late submissions: {}, total number of submissions: {}", numberOfLateSubmissions, numberOfSubmissions);
@@ -321,10 +322,11 @@ public class CourseStatsService {
 
         StatsForDashboardDTO stats = new StatsForDashboardDTO();
 
-        long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(courseExerciseIds);
-        numberOfInTimeSubmissions += programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(courseExerciseIds);
+        // the submissions are counted over the same exercises as the assessments, so that the assessment progress is consistent
+        long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(courseExerciseIdsWithManualAssessments);
+        numberOfInTimeSubmissions += programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(courseExerciseIdsWithManualAssessments);
 
-        final long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(courseExerciseIds);
+        final long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(courseExerciseIdsWithManualAssessments);
         long numberOfAssessments = resultRepository.countNumberOfAssessments(courseExerciseIdsWithManualAssessments);
         stats.setTotalNumberOfAssessments(numberOfAssessments);
 

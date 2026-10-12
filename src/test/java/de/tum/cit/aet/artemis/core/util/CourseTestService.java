@@ -1851,6 +1851,75 @@ public class CourseTestService {
         assertThat(stats.getTotalNumberOfAssessmentLocks()).as("only a started but unfinished assessment counts as an assessment lock").isEqualTo(1L);
     }
 
+    /**
+     * Creates a course with a manual text exercise and an automatically assessed programming exercise.
+     * The text exercise has two in-time submissions (one assessed, one open) and one assessed late submission.
+     * The in-time assessment additionally got a second result, like a complaint response creates one.
+     * The programming exercise has one submission with an automatic result and no assessor, which must not be counted anywhere.
+     *
+     * @return the created course
+     */
+    private Course createCourseForAssessmentCounterTests() {
+        Course course = courseUtilService.createCourse();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        User tutor = userUtilService.getUserByLogin(userPrefix + "tutor1");
+
+        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime dueDate = now.minusDays(2);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(now.minusDays(7), dueDate, now.minusDays(1), course);
+        textExercise.setAssessmentType(AssessmentType.MANUAL);
+        textExercise = exerciseRepo.save(textExercise);
+
+        TextSubmission assessedInTime = textExerciseUtilService.createSubmissionForTextExercise(textExercise, userUtilService.getUserByLogin(userPrefix + "student1"), "text");
+        assessedInTime.setSubmissionDate(dueDate.minusHours(2));
+        assessedInTime = submissionRepository.save(assessedInTime);
+        TextSubmission openInTime = textExerciseUtilService.createSubmissionForTextExercise(textExercise, userUtilService.getUserByLogin(userPrefix + "student2"), "text");
+        openInTime.setSubmissionDate(dueDate.minusHours(1));
+        submissionRepository.save(openInTime);
+        TextSubmission assessedLate = textExerciseUtilService.createSubmissionForTextExercise(textExercise, userUtilService.getUserByLogin(userPrefix + "student3"), "text");
+        assessedLate.setSubmissionDate(dueDate.plusHours(1));
+        assessedLate = submissionRepository.save(assessedLate);
+
+        participationUtilService.addResultToSubmission(assessedInTime, AssessmentType.MANUAL, tutor, 100D, true, now.minusHours(5));
+        // a complaint response adds a second result to the same submission
+        participationUtilService.addResultToSubmission(assessedInTime, AssessmentType.MANUAL, tutor, 90D, true, now.minusHours(4));
+        participationUtilService.addResultToSubmission(assessedLate, AssessmentType.MANUAL, tutor, 100D, true, now.minusHours(3));
+
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+        programmingSubmission.setSubmissionDate(dueDate.minusHours(1));
+        programmingSubmission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, programmingSubmission, userPrefix + "student1");
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, now.minusHours(1), programmingSubmission);
+        return course;
+    }
+
+    // Test
+    public void testGetAssessmentDashboardStats_assessmentCounterMatchesSubmissionsOfManualExercises() throws Exception {
+        Course course = createCourseForAssessmentCounterTests();
+
+        StatsForDashboardDTO stats = request.get("/api/course/courses/" + course.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
+
+        // the automatically assessed programming exercise is neither part of the submissions nor of the assessments
+        assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(2L);
+        assertThat(stats.getNumberOfSubmissions().late()).isEqualTo(1L);
+        // two assessed submissions: the in-time one counts once although it has two results, and the late one counts as well
+        assertThat(stats.getTotalNumberOfAssessments()).as("assessments are counted per submission, like the submissions they relate to").isEqualTo(2L);
+    }
+
+    // Test
+    public void testGetCourseManagementDetailData_assessmentCounterMatchesSubmissionsOfManualExercises() throws Exception {
+        Course course = createCourseForAssessmentCounterTests();
+
+        var courseDTO = request.get("/api/course/courses/" + course.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
+
+        // the automatically assessed programming exercise is neither part of the submissions nor of the assessments
+        assertThat(courseDTO.currentMaxAssessments()).isEqualTo(3L);
+        assertThat(courseDTO.currentAbsoluteAssessments()).as("the assessed late submission is part of the submissions and therefore of the assessments").isEqualTo(2L);
+        assertThat(courseDTO.currentPercentageAssessments()).isEqualTo(66.7);
+    }
+
     // Test
     public void testGetAssessmentDashboardStats_withAssessments() throws Exception {
         String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
