@@ -52,12 +52,16 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
@@ -148,6 +152,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private ResultTestRepository resultRepository;
+
+    @Autowired
+    private PageableSearchUtilService pageableSearchUtilService;
 
     @Autowired
     private DataSource dataSource;
@@ -522,6 +529,49 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         // and the explicit save of the result must not each write a row of their own
         assertThat(resultTestRepository.findAllBySubmissionParticipationExerciseId(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
 
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testExerciseScoresDurationIsNotDerivedFromPracticeAttempts() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8),
+                QuizMode.SYNCHRONIZED);
+        quizExercise.setDuration(2);
+        quizExerciseService.save(quizExercise);
+
+        // a graded participation is a single attempt that started 30 minutes ago and was submitted 25 minutes ago
+        var gradedSubmission = new QuizSubmission();
+        gradedSubmission.submitted(true);
+        participationUtilService.addSubmission(quizExercise, gradedSubmission, TEST_PREFIX + "student2");
+        var gradedParticipation = gradedSubmission.getParticipation();
+        gradedParticipation.setInitializationDate(ZonedDateTime.now().minusMinutes(30));
+        participationRepository.save(gradedParticipation);
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(25), gradedSubmission);
+
+        // the student practices the quiz twice, the practice participation is reused for every attempt
+        for (int attempt = 1; attempt <= 2; attempt++) {
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
+            request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/practice", QuizSubmissionFromStudentDTO.of(quizSubmission), Result.class,
+                    HttpStatus.OK);
+        }
+        var practiceParticipation = participationRepository.findByExerciseId(quizExercise.getId()).stream().filter(participation -> participation.isPracticeMode()).findFirst()
+                .orElseThrow();
+        // the participation was created with the first attempt, an hour before the second one
+        practiceParticipation.setInitializationDate(ZonedDateTime.now().minusHours(1));
+        participationRepository.save(practiceParticipation);
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var search = new ParticipationScoreSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null);
+        var scores = request.getList("/api/exercise/exercises/" + quizExercise.getId() + "/participations/scores", HttpStatus.OK, ParticipationScoreDTO.class,
+                pageableSearchUtilService.searchMapping(search));
+
+        assertThat(scores).hasSize(2);
+        var gradedScore = scores.stream().filter(score -> !score.testRun()).findFirst().orElseThrow();
+        assertThat(gradedScore.durationInSeconds()).as("a graded attempt shows the time between its start and its submission").isBetween(299L, 301L);
+        // the start of a single practice attempt is not recorded, so the time since the first attempt must not be shown as the duration of the last one
+        var practiceScore = scores.stream().filter(ParticipationScoreDTO::testRun).findFirst().orElseThrow();
+        assertThat(practiceScore.submissionCount()).isEqualTo(2);
+        assertThat(practiceScore.durationInSeconds()).as("the duration of the latest practice attempt is unknown").isNull();
     }
 
     @Test
