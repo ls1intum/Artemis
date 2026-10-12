@@ -6,7 +6,10 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -124,6 +127,21 @@ public final class SearchableEntityChunker {
             return List.of(single);
         }
         return chunks(header, body);
+    }
+
+    /**
+     * Returns the key under which a chunk's vector may be reused: the lower-case hex SHA-256 of its UTF-8 text.
+     *
+     * @param chunk a chunk text
+     * @return the hex digest
+     */
+    public static String hash(String chunk) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(chunk.getBytes(StandardCharsets.UTF_8)));
+        }
+        catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is required by every Java platform", e);
+        }
     }
 
     /**
