@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, signal, untracked, viewChild, viewChildren } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Observable, Subject, catchError, filter, map, of, switchMap, tap, timeout, timer } from 'rxjs';
@@ -34,6 +35,12 @@ interface SearchState {
     query: string;
 }
 
+/**
+ * Keys that move between or remove keyboard-highlighted chips, and that the text needs once the user moved on. Enter
+ * is left out: it has its own guards, and re-picking the chip that is still visibly highlighted is what it shows.
+ */
+const CHIP_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'Backspace', 'Delete']);
+
 @Component({
     selector: 'jhi-global-search-modal',
     standalone: true,
@@ -46,6 +53,7 @@ interface SearchState {
 export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly overlay = inject(SearchOverlayService);
     private readonly osDetector = inject(OsDetectorService);
+    private readonly document = inject(DOCUMENT);
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
     private readonly searchService = inject(GlobalSearchApi);
@@ -69,6 +77,8 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly excludeCourseIdsParam = this.filter.excludeCourseIdsParam;
     protected readonly activeFilters = this.filter.activeFilters;
     protected readonly selectedChip = this.filter.selectedChip;
+    /** Focus and cursor when a chip got highlighted; Backspace/Delete removes the chip only while both stay put. */
+    private chipKeyOrigin?: { target: Element | null; selectionStart: number | null; selectionEnd: number | null };
     protected readonly chips = this.filter.chips;
     protected readonly operator = this.filter.operator;
     protected readonly menuActiveIndex = this.filter.menuActiveIndex;
@@ -378,6 +388,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     /** Backspace with the cursor at the start of the input selects the last chip; a second Backspace removes it. */
     protected onBackspaceAtStart(event: KeyboardEvent) {
         if (this.filter.selectLastChipOnBackspace(event)) {
+            this.recordChipKeyOrigin();
             // The chips row is now the active zone, so no result row stays highlighted alongside the chip.
             this.selectedIndex.set(-1);
         }
@@ -538,6 +549,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     private resetSearch() {
         this.lastSearchText = '';
+        this.chipKeyOrigin = undefined;
         this.searchSubject.next(null);
         this.filter.reset();
         this.results.set([]);
@@ -553,6 +565,14 @@ export class GlobalSearchModalComponent implements OnDestroy {
         setTimeout(() => {
             this.searchInputComponent()?.focusInput();
         }, 0);
+    }
+
+    /** A click anywhere ends the keyboard highlight of a chip; clicking a chip itself still re-picks or removes it. */
+    @HostListener('document:pointerdown')
+    onPointerDown() {
+        if (this.selectedChip() >= 0) {
+            this.selectedChip.set(-1);
+        }
     }
 
     @HostListener('window:keydown', ['$event'])
@@ -579,6 +599,13 @@ export class GlobalSearchModalComponent implements OnDestroy {
         if (this.filterMenuOpen()) {
             this.filter.handleMenuKey(event);
             return;
+        }
+
+        if (this.selectedChip() >= 0 && CHIP_KEYS.has(event.key) && (!this.isFromChipKeyOrigin(event) || this.isTextNavigation(event))) {
+            // Clicking into the text, moving the cursor, selecting text or focusing another element leaves the chip
+            // highlighted, but the key is meant for what the user moved to: the chip lets go and the key acts natively.
+            // The same goes for a modified arrow (word or line jumps, selecting), which only ever means the text.
+            this.selectedChip.set(-1);
         }
 
         switch (event.key) {
@@ -623,14 +650,42 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 break;
             case 'Backspace':
             case 'Delete':
-                // A handled event is the keystroke that just selected the chip, and a held key must not keep
-                // removing chips: each removal takes its own press.
-                if (this.selectedChip() >= 0 && !event.defaultPrevented && !event.repeat) {
+                // A handled event is the keystroke that just selected the chip. A held key keeps removing, one chip per
+                // key repeat, as in Gmail.
+                if (this.selectedChip() >= 0 && !event.defaultPrevented) {
                     event.preventDefault();
                     this.removeSelectedChip();
                 }
                 break;
         }
+    }
+
+    /** An arrow with a modifier jumps or selects within the text; only a plain arrow moves between chips. */
+    private isTextNavigation(event: KeyboardEvent): boolean {
+        const arrow = event.key === 'ArrowLeft' || event.key === 'ArrowRight';
+        return arrow && (event.metaKey || event.altKey || event.ctrlKey || event.shiftKey);
+    }
+
+    /** Highlights a chip from the keyboard and remembers where focus and the cursor were at that moment. */
+    private highlightChip(index: number) {
+        this.selectedChip.set(index);
+        this.recordChipKeyOrigin();
+    }
+
+    private recordChipKeyOrigin() {
+        const target = this.document.activeElement;
+        const input = target instanceof HTMLInputElement ? target : undefined;
+        this.chipKeyOrigin = { target, selectionStart: input?.selectionStart ?? null, selectionEnd: input?.selectionEnd ?? null };
+    }
+
+    /** Whether the key comes from where the chip was highlighted, with the cursor and text selection unchanged. */
+    private isFromChipKeyOrigin(event: KeyboardEvent): boolean {
+        const origin = this.chipKeyOrigin;
+        if (!origin || event.target !== origin.target) {
+            return false;
+        }
+        const input = event.target instanceof HTMLInputElement ? event.target : undefined;
+        return (input?.selectionStart ?? null) === origin.selectionStart && (input?.selectionEnd ?? null) === origin.selectionEnd;
     }
 
     /** Down walks the zones: search input -> chips row -> results list. */
@@ -644,7 +699,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         if (this.selectedIndex() < 0) {
             // Search input -> chips (if any), otherwise straight to results.
             if (this.tokens().length > 0) {
-                this.selectedChip.set(0);
+                this.highlightChip(0);
             } else {
                 this.selectedIndex.set(this.maxIndex() >= 0 ? 0 : -1);
             }
@@ -669,7 +724,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
             // Top of results -> chips (if any), otherwise back to the search input.
             this.selectedIndex.set(-1);
             if (this.tokens().length > 0) {
-                this.selectedChip.set(this.tokens().length - 1);
+                this.highlightChip(this.tokens().length - 1);
             } else {
                 this.focusInput();
             }

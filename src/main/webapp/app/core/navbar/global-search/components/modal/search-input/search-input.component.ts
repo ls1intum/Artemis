@@ -49,6 +49,11 @@ export class SearchInputComponent {
     protected searchInputElement = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
     protected hasChips = computed(() => this.chips().length > 0);
+    /** The keyboard-highlighted chip as screen readers announce it; the highlight itself is only visual. */
+    protected selectedChipLabel = computed(() => {
+        const chip = this.chips().find((candidate) => candidate.selected);
+        return chip ? `${chip.facetLabel} ${chip.label}` : undefined;
+    });
     /**
      * The search text in front of the operator. The operator is only the trailing token, so the overlay has to
      * paint the query in ordinary ink before it and colour only the operator itself.

@@ -112,6 +112,7 @@
             "enterToActivate": "Press Enter to activate",
             "courseFallbackLabel": "Course {{ id }}",
             "editFilter": "Edit filter",
+            "filterSelected": "Filter {{ filter }} selected. Press Backspace to remove it.",
             "noFilterMatches": "No matches",
             "loadingCourses": "Loading your courses...",
             "noCoursesToFilter": "You have no courses to filter by",

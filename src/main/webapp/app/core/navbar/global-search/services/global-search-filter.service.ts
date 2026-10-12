@@ -494,14 +494,15 @@ export class GlobalSearchFilterService {
     /**
      * Backspace with the cursor at the start of the input selects the last chip instead of removing it, so a filter
      * never disappears from one stray keystroke; a second Backspace removes the selected chip through the modal's
-     * chip-navigation keydown handler. A held key does not select, so holding Backspace to clear the text stops
-     * before the chips. Marks the event as handled so that same handler does not remove the chip it just selected.
+     * chip-navigation keydown handler. A held key selects as well, so holding Backspace clears the text, then selects
+     * and removes the chips one after another, as in Gmail. Marks the event as handled so that same handler does not
+     * remove the chip it just selected.
      *
      * @returns whether a chip was selected
      */
     selectLastChipOnBackspace(event: KeyboardEvent): boolean {
         const tokenCount = this.tokens().length;
-        if (event.repeat || tokenCount === 0 || this.selectedChip() >= 0 || this.filterMenuOpen()) {
+        if (tokenCount === 0 || this.selectedChip() >= 0 || this.filterMenuOpen()) {
             return false;
         }
         event.preventDefault();

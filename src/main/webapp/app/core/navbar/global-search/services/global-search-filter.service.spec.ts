@@ -457,9 +457,9 @@ describe('GlobalSearchFilterService', () => {
                 expect(event.defaultPrevented).toBe(false);
             });
 
-            it('ignores a held key', () => {
-                expect(service.selectLastChipOnBackspace(backspace(true))).toBe(false);
-                expect(service.selectedChip()).toBe(-1);
+            it('selects on a held key too', () => {
+                expect(service.selectLastChipOnBackspace(backspace(true))).toBe(true);
+                expect(service.selectedChip()).toBe(1);
             });
 
             it('does nothing without chips', () => {

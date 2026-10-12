@@ -1129,9 +1129,11 @@ describe('GlobalSearchModalComponent', () => {
         });
 
         describe('Backspace at the start of the input', () => {
+            const searchInput = () => fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
             const pressBackspace = (repeat = false) => {
-                const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
-                input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true, repeat }));
+                const event = new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true, repeat });
+                searchInput().dispatchEvent(event);
+                return event;
             };
 
             beforeEach(() => {
@@ -1140,6 +1142,8 @@ describe('GlobalSearchModalComponent', () => {
                     { facet: 'course', value: '5' },
                 ]);
                 fixture.detectChanges();
+                // The user types into the focused input, so the keys come from where the chip gets highlighted.
+                searchInput().focus();
             });
 
             it('selects the last chip on the first press and removes it on the second', () => {
@@ -1157,16 +1161,109 @@ describe('GlobalSearchModalComponent', () => {
                 expect((component as any).selectedChip()).toBe(0);
             });
 
-            it('does not select or remove chips while the key is held down', () => {
+            it('selects and then removes every chip while the key is held down, as in Gmail', () => {
+                pressBackspace();
+                expect((component as any).selectedChip()).toBe(1);
+                expect((component as any).tokens()).toHaveLength(2);
+
                 pressBackspace(true);
+                expect((component as any).tokens()).toEqual([{ facet: 'type', value: 'exercise' }]);
+                expect((component as any).selectedChip()).toBe(0);
+
+                pressBackspace(true);
+                expect((component as any).tokens()).toEqual([]);
+                expect((component as any).selectedChip()).toBe(-1);
+            });
+
+            it('deletes selected text instead of the selected chip', () => {
+                const input = searchInput();
+                input.value = 'query';
+                input.setSelectionRange(0, 0);
+                pressBackspace();
+                expect((component as any).selectedChip()).toBe(1);
+
+                input.setSelectionRange(0, input.value.length);
+                const event = pressBackspace();
+
+                expect(event.defaultPrevented).toBe(false);
+                expect((component as any).tokens()).toHaveLength(2);
+                expect((component as any).selectedChip()).toBe(-1);
+            });
+
+            it('edits the text instead of removing the chip once the cursor moved', () => {
+                const input = searchInput();
+                input.value = 'query';
+                input.setSelectionRange(0, 0);
+                pressBackspace();
+                expect((component as any).selectedChip()).toBe(1);
+
+                input.setSelectionRange(3, 3);
+                const event = pressBackspace();
+
+                expect(event.defaultPrevented).toBe(false);
+                expect((component as any).tokens()).toHaveLength(2);
+                expect((component as any).selectedChip()).toBe(-1);
+            });
+
+            it('leaves the chip alone when the key comes from another element in the modal', () => {
+                pressBackspace();
+                expect((component as any).selectedChip()).toBe(1);
+                const elsewhere = document.createElement('button');
+                fixture.nativeElement.appendChild(elsewhere);
+                elsewhere.focus();
+
+                const event = new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true });
+                elsewhere.dispatchEvent(event);
+
+                expect(event.defaultPrevented).toBe(false);
+                expect((component as any).tokens()).toHaveLength(2);
+                expect((component as any).selectedChip()).toBe(-1);
+                elsewhere.remove();
+            });
+
+            it('lets ArrowLeft move the cursor once it moved away from the highlighted chip', () => {
+                const input = searchInput();
+                input.value = 'query';
+                input.setSelectionRange(0, 0);
+                pressBackspace();
+                input.setSelectionRange(5, 5);
+
+                const event = new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true });
+                input.dispatchEvent(event);
+
+                expect(event.defaultPrevented).toBe(false);
+                expect((component as any).selectedChip()).toBe(-1);
+            });
+
+            it('leaves a modified arrow to the text, so word and line jumps keep working', () => {
+                const input = searchInput();
+                input.value = 'query';
+                input.setSelectionRange(0, 0);
+                pressBackspace();
+
+                const event = new KeyboardEvent('keydown', { key: 'ArrowRight', metaKey: true, bubbles: true, cancelable: true });
+                input.dispatchEvent(event);
+
+                expect(event.defaultPrevented).toBe(false);
+                expect((component as any).selectedChip()).toBe(-1);
+            });
+
+            it('ends the chip highlight on a click anywhere', () => {
+                pressBackspace();
+                expect((component as any).selectedChip()).toBe(1);
+
+                document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
 
                 expect((component as any).selectedChip()).toBe(-1);
+            });
 
-                pressBackspace();
-                pressBackspace(true);
+            it('still removes a chip highlighted with ArrowDown on Delete', () => {
+                searchInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+                expect((component as any).selectedChip()).toBe(0);
 
-                expect((component as any).tokens()).toHaveLength(2);
-                expect((component as any).selectedChip()).toBe(1);
+                searchInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }));
+
+                expect((component as any).tokens()).toEqual([{ facet: 'course', value: '5' }]);
             });
         });
     });

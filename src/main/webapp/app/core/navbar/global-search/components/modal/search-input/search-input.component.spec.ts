@@ -56,6 +56,22 @@ describe('SearchInputComponent', () => {
         expect(fixture.nativeElement.querySelector('.tok-value-text.tok-strike')).toBeTruthy();
     });
 
+    describe('highlighted chip announcement', () => {
+        it('names the keyboard-highlighted chip for screen readers and nothing otherwise', () => {
+            fixture.componentRef.setInput('chips', [chip('Exercises'), chip('Lectures')]);
+            expect(component['selectedChipLabel']()).toBeUndefined();
+
+            fixture.componentRef.setInput('chips', [chip('Exercises'), { ...chip('Lectures'), selected: true }]);
+
+            expect(component['selectedChipLabel']()).toBe('type Lectures');
+        });
+
+        it('keeps the polite live region in the DOM even without a highlighted chip', () => {
+            const region = fixture.nativeElement.querySelector('[data-testid="global-search-chip-announcement"]');
+            expect(region?.getAttribute('aria-live')).toBe('polite');
+        });
+    });
+
     describe('value-menu combobox a11y', () => {
         it('wires the input as a combobox pointing aria-activedescendant at the highlighted option', () => {
             // The menu listbox renders in the results pane (a sibling component); the input references it by id.
