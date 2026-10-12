@@ -150,7 +150,9 @@ To inspect or change the phases:
    splits the build into further steps, for example a separate compile phase for the test code.
 
 Artemis joins the scripts of the active phases in order into one build, so a phase that fails stops the ones after
-it, unless that phase has **Execute at end regardless of previous failures** switched on. See
+it. A phase with **Execute at end regardless of previous failures** switched on is the exception: Artemis moves it
+behind all the other phases and runs it even if one of them failed. The switch applies to the phase it is set on and
+does not keep later phases running, so switch it on for each phase that must run despite an earlier failure. See
 [Adapt Build Phases](/instructor/exercises/programming-exercise/configure-the-build#adapt-build-phases-optional)
 for every option of a phase and for how Artemis decides whether a build succeeded.
 
