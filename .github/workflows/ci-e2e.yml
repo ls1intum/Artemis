@@ -179,7 +179,7 @@ jobs:
 
       - name: Upload slow-query report artifact (Phase 1)
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         continue-on-error: true
         with:
           name: Slow Query Report Phase 1
@@ -412,7 +412,7 @@ jobs:
 
       - name: Upload slow-query report artifact (Phase 2)
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         continue-on-error: true
         with:
           name: Slow Query Report Phase 2
@@ -645,7 +645,7 @@ jobs:
 
       - name: Upload slow-query report artifact (All PR)
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         continue-on-error: true
         with:
           name: Slow Query Report All PR
@@ -831,7 +831,7 @@ jobs:
 
       - name: Upload slow-query report artifact (Non-PR)
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         continue-on-error: true
         with:
           name: Slow Query Report Non-PR
@@ -840,7 +840,7 @@ jobs:
 
       - name: Upload slow-query baseline (develop)
         if: ${{ !cancelled() && inputs.branch_name == 'develop' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         continue-on-error: true
         with:
           name: Slow Query Baseline
