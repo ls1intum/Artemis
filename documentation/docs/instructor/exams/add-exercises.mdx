@@ -109,17 +109,32 @@ runs the suite once over every submission after the date you set.
 With Integrated Code Lifecycle a build is a list of phases, each with an **Inclusion condition** of **Always** or
 **After due date**. Before a build starts, Artemis drops the phases whose condition is not met and runs the rest. A
 programming exercise created inside an exam starts with **After due date** on every phase that collects test
-results, and **Always** on the others. With the default templates that means a compile phase that runs on every
-push and a test phase that waits for the end of the exam. This gives the exam two steps without any manual set-up:
+results, and **Always** on the others. Most default templates have a compile, build or syntax-check phase that runs
+on every push and a test phase that waits for the end of the exam (see the exceptions below). This gives the exam
+two steps without any manual set-up:
 
-1. **During the exam**, each push to a student repository builds the code and nothing else. The student sees whether
-   it compiles, and no test runs, so there is no need to replace the real tests in the test repository with a
-   placeholder test and revert that commit afterwards.
+1. **During the exam**, each push to a student repository runs only the phases that are not deferred, which in most
+   templates is the compile, build or syntax-check step. The student sees whether the code compiles, and no test
+   runs, so there is no need to replace the real tests in the test repository with a placeholder test and revert
+   that commit afterwards.
 2. **After the exam**, Artemis rebuilds the latest submission of every student with all phases active, and the
    results of that run are graded. The rebuild starts 15 minutes after the latest individual exam end including the
    grace period, so a student with extra working time is not cut short. You can change this date in the timeline of
    the exercise's edit form, where it is labelled **Date for running tests after due date**. When you change the
    exam's times, Artemis moves the date along by the same offset.
+
+Two default templates do not follow this pattern:
+
+- **MATLAB** has a single phase, the one that runs the tests, so after the exam defaults no phase runs during the
+  exam. The student gets no compilation or syntax feedback until the tests run after the exam. If you want such
+  feedback, add a phase with the **Always** condition that checks the code.
+- **Empty** has no compile phase. Its placeholder phase **run_tests** does not collect results itself, because the
+  results are moved in a later phase, so it keeps **Always**. Once you replace the placeholder with the real test
+  command, those tests would run on every push during the exam. Set that phase to **After due date** yourself.
+
+In the other default templates, including their static code analysis and sequential test run variants, the
+**Always** phase is a compile or build step (for Python it byte-compiles the code, for Dart it runs the analyzer),
+except for JavaScript, R, Ruby and Bash, where it is a syntax check. A syntax check reports syntax errors only.
 
 The template and solution builds ignore the conditions and always run every phase. They are how you check an
 exercise before the exam: the solution build should pass every test, and the template build shows how the tests
