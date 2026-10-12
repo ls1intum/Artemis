@@ -252,7 +252,7 @@ public class LearningObjectImportService {
             programmingExercise.setGradingCriteria(gradingCriteria);
 
             ProgrammingExercise newExercise = programmingExerciseRepository
-                    .findByIdWithTemplateAndSolutionParticipationCategoriesCompetenciesAndVariantGroupElseThrow(programmingExercise.getId());
+                    .findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesElseThrow(programmingExercise.getId());
             // The team assignment and plagiarism detection settings are not part of the exercise, so they are read here for the
             // import to copy; without them the copy would silently get the defaults.
             exerciseConfigurationService.attachTeamAssignmentConfig(newExercise);

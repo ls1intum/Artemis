@@ -170,11 +170,11 @@ public class PyrisPipelineService {
             ChatPipelineDTOBuilder dtoBuilder) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var pyrisUser = toPyrisUserDTO(user);
-        // The run's user message, which gets the memories the run reports. A run started by an event has no new user message, so the last row can be a stored conversation
-        // summary; it must not get memories, because that would push the summary to the client.
-        var lastMessageId = session.getMessages().reversed().stream().filter(message -> message.getSender() != IrisMessageSender.SUMMARY).findFirst().map(IrisMessage::getId)
-                .orElse(null);
-        var jobToken = pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId, clientId);
+        // The run's user message, which gets the memories the run reports. Event-triggered runs (e.g. build failure, stalled progress) are not caused by a user message, so
+        // they carry no user message id. The last row of a session can be a stored conversation summary, which must not get memories, because that would push it to the client.
+        var userMessageId = eventVariant.isPresent() ? null
+                : session.getMessages().reversed().stream().filter(message -> message.getSender() != IrisMessageSender.SUMMARY).findFirst().map(IrisMessage::getId).orElse(null);
+        var jobToken = pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), userMessageId, clientId);
         materialVersionService.capture(jobToken, session.getCourseId());
         // @formatter:off
         executePipeline("chat", userAiPreferenceService.findDecision(user.getId()), variant, supportLevel, eventVariant,

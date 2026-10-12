@@ -35,6 +35,8 @@ export interface AttachmentChangedPayload {
     unitName?: string;
     exerciseId?: number;
     lectureId?: number;
+    /** The message the editor wrote for students about the change, absent when they wrote none. Plain text. */
+    notificationText?: string;
 }
 
 /** The values a channelDeletedNotification carries. */
@@ -83,6 +85,8 @@ export interface ExerciseUpdatedPayload {
     examId?: number;
     exerciseGroupId?: number;
     exerciseType?: string;
+    /** The message the editor wrote about the update, absent when they wrote none. Plain text. */
+    notificationText?: string;
 }
 
 /** The values a irisResponseNeedsReviewNotification carries. */
@@ -97,6 +101,13 @@ export interface IrisResponseNeedsReviewPayload {
     replyConfidence?: number;
     channelName?: string;
     channelId?: number;
+}
+
+/** The values a irisResponseNotification carries. */
+export interface IrisResponsePayload {
+    sessionId?: number;
+    messagePreview?: string;
+    chatTitle?: string;
 }
 
 /** The values a newAnnouncementNotification carries. */
@@ -270,6 +281,7 @@ export interface CourseNotificationPayloadByType {
     exerciseOpenForPracticeNotification: ExerciseOpenForPracticePayload;
     exerciseUpdatedNotification: ExerciseUpdatedPayload;
     irisResponseNeedsReviewNotification: IrisResponseNeedsReviewPayload;
+    irisResponseNotification: IrisResponsePayload;
     newAnnouncementNotification: NewAnnouncementPayload;
     newAnswerNotification: NewAnswerPayload;
     newCpcPlagiarismCaseNotification: NewCpcPlagiarismCasePayload;

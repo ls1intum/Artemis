@@ -779,7 +779,7 @@
                 }
             },
             "reset": {
-                "question": "Are you sure you want to permanently reset the Exam <strong>{{ title }}</strong>? All Student Exams will be deleted. Registered students and the exercise configurations will remain. This action can NOT be undone!",
+                "question": "Are you sure you want to permanently reset the Exam <strong>{{ title }}</strong>? All Student Exams will be deleted and all registered students will be removed from the exam. The exam itself and the exercise configurations will remain. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the exam to confirm:",
                 "success": "The exam has been successfully reset."
             },
@@ -808,6 +808,7 @@
                     "examDetails": "Fill out all exam details",
                     "conductExam": "Conduct the exam",
                     "assessAllSubmissions": "Assess all submissions",
+                    "plagiarismCases": "Handle the plagiarism cases",
                     "publishResults": "Publish the exam results",
                     "examReview": "Plan the exam review",
                     "resolveComplaints": "Resolve all complaints",
@@ -825,6 +826,7 @@
                     "examDetails": "Before conducting an exam, please make sure to have filled out all exam details. (Start text, dates, etc.)",
                     "conductExam": "On the student exam page you can see which students have already submitted their exam.",
                     "assessAllSubmissions": "The number of correction rounds per exercise depends on the exam's number of correction rounds.",
+                    "plagiarismCases": "Review the plagiarism cases of the exam, inform the affected students and decide on a verdict for each case.",
                     "publishResults": "Publishing the results makes them available to students. Student exams are published on the publishing date for results within the exam.",
                     "examReview": "Make sure to have all dates specified correctly.",
                     "resolveComplaints": "Complaints can be resolved from the Assessment Dashboard.",

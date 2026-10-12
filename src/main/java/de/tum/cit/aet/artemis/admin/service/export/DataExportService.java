@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.admin.service.export;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneId;
@@ -90,23 +91,50 @@ public class DataExportService {
 
     /**
      * Download the data export for the given data export id.
+     * <p>
+     * The export only counts as downloaded once its file has been found: a request that finds none leaves the state and the
+     * download date as they were.
      *
      * @param dataExport the data export to download
-     * @return the file path where the data export is stored
-     * @throws EntityNotFoundException  if the data export or the user could not be found
-     * @throws AccessForbiddenException if the user is not allowed to download the data export
+     * @return the resource that streams the data export file
+     * @throws EntityNotFoundException      if the file of the data export does not exist on this instance, either because it is gone or because it was written to
+     *                                          a folder that the instances do not share
+     * @throws InternalServerErrorException if the file exists but could not be opened
      */
     public Resource downloadDataExport(DataExport dataExport) {
-        dataExport.setDownloadDate(ZonedDateTime.now());
-        dataExport.setDataExportState(DataExportState.DOWNLOADED);
-        dataExport = dataExportRepository.save(dataExport);
         var filePath = Path.of(dataExport.getFilePath());
+        if (!Files.isReadable(filePath)) {
+            log.warn("The file of data export {} cannot be read on this instance: {}. If the instances do not share artemis.data-export-path, it is on another one.",
+                    dataExport.getId(), filePath);
+            throw new EntityNotFoundException("Data export file", dataExport.getId());
+        }
+        // Open the file before recording the download: the check above does not guarantee that the file can still be opened.
+        InputStream inputStream;
         try {
-            return new InputStreamResource(Files.newInputStream(filePath));
+            inputStream = Files.newInputStream(filePath);
         }
         catch (IOException e) {
-            log.error("Could not find data export file", e);
+            log.error("Could not open data export file", e);
             throw new InternalServerErrorException("Could not find data export file");
+        }
+        try {
+            dataExport.setDownloadDate(ZonedDateTime.now());
+            dataExport.setDataExportState(DataExportState.DOWNLOADED);
+            dataExportRepository.save(dataExport);
+        }
+        catch (RuntimeException e) {
+            closeQuietly(inputStream, e);
+            throw e;
+        }
+        return new InputStreamResource(inputStream);
+    }
+
+    private static void closeQuietly(InputStream inputStream, RuntimeException cause) {
+        try {
+            inputStream.close();
+        }
+        catch (IOException closeException) {
+            cause.addSuppressed(closeException);
         }
     }
 

@@ -9,16 +9,15 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLe
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureUnitNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.countRowsForEntity;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryCourseProperties;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.seedRow;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
@@ -107,7 +106,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     void testUpsert_isDispatchedWritesSyncStateAndRemovesOutboxRow() {
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryCourseProperties(weaviateService, course.getId());
             assertThat(properties).as("course indexed in Weaviate").isNotNull();
             assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).as("sync ledger row written").isPresent()
@@ -128,13 +127,12 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         // must not feed the hash. If they did, every write would produce a new hash and a reconcile pass would see
         // permanent drift on entities that never changed.
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
-        await().atMost(Duration.ofSeconds(30))
-                .untilAsserted(() -> assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).as("first write recorded").isPresent());
+        awaitIndexing(() -> assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).as("first write recorded").isPresent());
         String firstHash = syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId()).orElseThrow().getContentHash();
 
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             assertThat(hasOutboxRowFor(COURSE_TYPE, course.getId())).as("second write dispatched").isFalse();
             assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).isPresent()
                     .hasValueSatisfying(state -> assertThat(state.getContentHash()).as("hash unchanged for an unchanged entity").isEqualTo(firstHash));
@@ -154,8 +152,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         searchableEntityWeaviateService.deleteEntityAsync(COURSE_TYPE, course.getId());
 
         assertCourseNotInWeaviate(weaviateService, course.getId());
-        await().atMost(Duration.ofSeconds(30))
-                .untilAsserted(() -> assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).as("sync ledger row cleared on delete").isEmpty());
+        awaitIndexing(() -> assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).as("sync ledger row cleared on delete").isEmpty());
     }
 
     @ParameterizedTest
@@ -169,7 +166,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         WeaviateOutboxEntry staleDelete = outboxRepository.save(WeaviateOutboxEntry.forDeleteEntity(COURSE_TYPE, absentCourseId, origin));
         weaviateOutboxDispatcher.drain();
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             assertThat(queryCourseProperties(weaviateService, absentCourseId)).as("an absent source remains a deletion").isNull();
             assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, absentCourseId)).isEmpty();
             assertThat(outboxRepository.existsById(staleDelete.getId())).as("the confirmed reconcile row is acknowledged").isFalse();
@@ -188,7 +185,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
         weaviateOutboxDispatcher.drain();
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryCourseProperties(weaviateService, course.getId());
             assertThat(properties).as("the later live upsert must remain indexed").isNotNull();
             assertThat(((Number) properties.get(SearchableEntitySchema.Properties.SOURCE_SEQ)).longValue()).isGreaterThan(queuedDelete[0].getId());
@@ -205,7 +202,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         searchableEntityWeaviateService.upsertCourseAsync(dto);
         searchableEntityWeaviateService.upsertCourseAsync(dto);
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             assertThat(queryCourseProperties(weaviateService, course.getId())).isNotNull();
             assertThat(countRowsForEntity(weaviateService, COURSE_TYPE, course.getId())).isEqualTo(1);
             assertThat(hasOutboxRowFor(COURSE_TYPE, course.getId())).isFalse();

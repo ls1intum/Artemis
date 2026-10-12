@@ -5,7 +5,7 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { of } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -176,5 +176,20 @@ describe('ExerciseTitleChannelNameComponent', () => {
 
         expect(component.exercise().channelName).toBe(newChannelName);
         expect(onChannelNameChangeSpy).toHaveBeenCalledWith(newChannelName);
+    });
+    it('should hand the exercise it wrote the title and the channel name onto back to the host', () => {
+        const exercise = new TextExercise(new Course(), undefined);
+        fixture.componentRef.setInput('exercise', exercise);
+        const emitted: Exercise[] = [];
+        component.exerciseChange.subscribe((changed) => emitted.push(changed));
+
+        component.updateTitle('A title');
+        component.updateChannelName('a-channel');
+
+        // The same object both times: the host edits its exercise in place and only needs to hear that it changed.
+        expect(emitted).toEqual([exercise, exercise]);
+        expect(emitted[0]).toBe(exercise);
+        expect(exercise.title).toBe('A title');
+        expect(exercise.channelName).toBe('a-channel');
     });
 });

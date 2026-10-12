@@ -49,7 +49,15 @@ public class PlagiarismDetectionConfig extends DomainObject {
     public PlagiarismDetectionConfig() {
     }
 
+    /**
+     * Copies the settings of another configuration. The copy belongs to no exercise yet: the exercise and its key are not
+     * taken over, because they identify the source's exercise. The caller attaches the copy to the exercise it is for.
+     *
+     * @param inputConfig the configuration whose settings are copied
+     */
     public PlagiarismDetectionConfig(PlagiarismDetectionConfig inputConfig) {
+        this.exercise = null;
+        this.exerciseId = null;
         this.continuousPlagiarismControlEnabled = inputConfig.continuousPlagiarismControlEnabled;
         this.continuousPlagiarismControlPostDueDateChecksEnabled = inputConfig.continuousPlagiarismControlPostDueDateChecksEnabled;
         this.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod = inputConfig.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod;

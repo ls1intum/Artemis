@@ -59,6 +59,7 @@ describe('ReviewCommentWidgetManager', () => {
             submittedSubscription,
             cancelSubscription,
             location: { nativeElement: document.createElement('div') },
+            componentType: ReviewCommentDraftWidgetComponent,
             setInput: vi.fn(),
             destroy: vi.fn(),
         } as any;
@@ -75,6 +76,7 @@ describe('ReviewCommentWidgetManager', () => {
         return {
             instance,
             location: { nativeElement: document.createElement('div') },
+            componentType: ReviewCommentThreadWidgetComponent,
             setInput: vi.fn(),
             destroy: vi.fn(),
         } as any;

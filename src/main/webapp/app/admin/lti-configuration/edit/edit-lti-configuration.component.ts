@@ -11,6 +11,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { LTI_PLATFORM_CUSTOM_NAME_MAX_LENGTH, LTI_PLATFORM_FIELD_MAX_LENGTH } from 'app/foundation/constants/input.constants';
 
 /**
  * Admin component for creating and editing LTI platform configurations.
@@ -50,6 +51,8 @@ export class EditLtiConfigurationComponent implements OnInit {
     /** Whether loading the configuration failed in edit mode */
     readonly loadFailed = signal(false);
 
+    protected readonly fieldMaxLength = LTI_PLATFORM_FIELD_MAX_LENGTH;
+    protected readonly customNameMaxLength = LTI_PLATFORM_CUSTOM_NAME_MAX_LENGTH;
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
 
@@ -146,7 +149,8 @@ export class EditLtiConfigurationComponent implements OnInit {
             id: new FormControl(null),
             registrationId: new FormControl({ value: '', disabled: true }),
             originalUrl: new FormControl(''),
-            customName: new FormControl(''),
+            // the pattern rejects a whitespace-only name, which the server rejects as blank as well
+            customName: new FormControl('', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(LTI_PLATFORM_CUSTOM_NAME_MAX_LENGTH)]),
             clientId: new FormControl('', [Validators.required]),
             authorizationUri: new FormControl('', [Validators.required]),
             tokenUri: new FormControl('', [Validators.required]),

@@ -141,8 +141,9 @@
     }
 </ng-template>
 
+<!-- A team exercise lists the participations of teams and the practice participations of single students, which have a student and no team. -->
 <ng-template #participantNameCellTemplate let-cell>
-    @if (exercise()!.teamMode) {
+    @if (exercise()!.teamMode && cell.data.teamId !== undefined) {
         <a [routerLink]="['/course-management', exercise()!.course?.id, 'exercises', exercise()!.id, 'teams', cell.data.teamId]">
             {{ cell.data.participantName }}
         </a>
@@ -152,13 +153,22 @@
         } @else {
             {{ cell.data.participantName }}
         }
+        @if (exercise()!.teamMode && cell.data.testRun) {
+            <tumaet-ui-tag class="ms-2" severity="info" data-testid="participation-practice-tag">
+                <span jhiTranslate="artemisApp.participation.practice"></span>
+            </tumaet-ui-tag>
+        }
     }
 </ng-template>
 
 <ng-template #teamStudentsCellTemplate let-cell>
-    <div style="max-width: 20vw; overflow-x: auto">
-        <jhi-team-students-list [students]="cell.data.teamStudents ?? []" />
-    </div>
+    @if (cell.data.teamId !== undefined) {
+        <div style="max-width: 20vw; overflow-x: auto">
+            <jhi-team-students-list [students]="cell.data.teamStudents ?? []" />
+        </div>
+    } @else if (cell.data.studentLogin) {
+        <span data-testid="participation-practice-student">{{ cell.data.participantName }} ({{ cell.data.studentLogin }})</span>
+    }
 </ng-template>
 
 <ng-template #practiceCellTemplate let-cell>

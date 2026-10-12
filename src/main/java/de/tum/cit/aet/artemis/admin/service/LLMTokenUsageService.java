@@ -179,16 +179,9 @@ public class LLMTokenUsageService {
                 log.warn("Failed to store token usage for pipeline [{}]: chat response is missing.", pipelineId);
                 return;
             }
+            // Spring AI declares the metadata and its usage as never null, so only the token counts below can be missing.
             ChatResponseMetadata metadata = chatResponse.getMetadata();
-            if (metadata == null) {
-                log.warn("Failed to store token usage for pipeline [{}]: response metadata is missing.", pipelineId);
-                return;
-            }
             Usage usage = metadata.getUsage();
-            if (usage == null) {
-                log.warn("Failed to store token usage for pipeline [{}]: usage metadata is missing.", pipelineId);
-                return;
-            }
             if (usage instanceof org.springframework.ai.chat.metadata.EmptyUsage) {
                 return;
             }

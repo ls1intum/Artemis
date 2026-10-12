@@ -20,7 +20,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install bats
         run: |
           set -Eeuo pipefail
@@ -45,7 +45,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Run actionlint
         # The install script is pinned to a release tag AND to its SHA-256, because piping it
         # straight into bash would execute whatever that URL returns. A tag can be moved; the
@@ -82,6 +82,15 @@ jobs:
             fi
             echo "${key}: ${values[0]} (consistent across ${files[*]})"
           done
+
+      - name: Check every action is pinned to a commit SHA
+        # A version tag is mutable, so `uses:` must name a full commit SHA with a `# vX.Y.Z` comment
+        # (see "Action pinning policy" in .github/workflows/README.md). The unit test pins what the
+        # checker accepts, so a loosened rule fails here instead of silently letting tags back in.
+        run: |
+          set -Eeuo pipefail
+          python3 supporting_scripts/test_check_action_pinning.py
+          python3 supporting_scripts/check_action_pinning.py
 
       - name: Check area filters exercise their own implementations
         run: |

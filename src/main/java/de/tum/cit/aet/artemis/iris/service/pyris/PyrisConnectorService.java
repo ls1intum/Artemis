@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
@@ -44,7 +46,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWe
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitMetadataWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitVisibilityWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisLearningDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryConnectionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryDTO;
@@ -55,6 +56,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAns
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 import de.tum.cit.aet.artemis.iris.web.internal.PyrisInternalStatusUpdateResource;
+import de.tum.cit.aet.artemis.lecture.dto.IngestionCensusDTO;
 
 /**
  * This service connects to the Python implementation of Iris (called Pyris).
@@ -80,6 +82,8 @@ public class PyrisConnectorService {
 
     private final RestTemplate restTemplate;
 
+    private final RestTemplate censusRestTemplate;
+
     private final JsonMapper objectMapper;
 
     @Value("${server.url}")
@@ -88,9 +92,51 @@ public class PyrisConnectorService {
     @Value("${artemis.iris.url}")
     private String pyrisUrl;
 
-    public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, JsonMapper objectMapper) {
+    public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, @Qualifier("censusPyrisRestTemplate") RestTemplate censusRestTemplate,
+            JsonMapper objectMapper) {
         this.restTemplate = restTemplate;
+        this.censusRestTemplate = censusRestTemplate;
         this.objectMapper = objectMapper;
+    }
+
+    /**
+     * Fetch the per-course ingestion census from Pyris: the aggregated vector index state of every
+     * lecture unit of the course, including the stamped content fingerprints.
+     * <p>
+     * The census is a read-only capability introduced together with the fingerprint stamping. An older
+     * Pyris without the endpoint answers 404; that case and every transport failure return {@code null}
+     * so callers treat the census as unavailable instead of failing their reconcile pass.
+     *
+     * @param courseId the id of the course to take the census for
+     * @return the census, or {@code null} when Pyris does not offer or cannot answer the endpoint
+     */
+    @Nullable
+    public IngestionCensusDTO getIngestionCensus(long courseId) {
+        try {
+            // Built as a URI and passed as one, so the base URL is encoded exactly once: the String overload of getForEntity
+            // treats its argument as a template and encodes an already encoded value a second time.
+            URI url = UriComponentsBuilder.fromUriString(pyrisUrl).path("/api/v1/courses/{courseId}/ingestion-census").queryParam("base_url", "{baseUrl}").encode()
+                    .buildAndExpand(courseId, artemisBaseUrl).toUri();
+            var response = censusRestTemplate.getForEntity(url, IngestionCensusDTO.class);
+            if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
+                log.warn("Ingestion census for course {} returned status {} without a usable body", courseId, response.getStatusCode());
+                return null;
+            }
+            return response.getBody();
+        }
+        catch (HttpStatusCodeException e) {
+            if (e.getStatusCode().value() == 404) {
+                log.debug("Pyris does not offer the ingestion census endpoint (404), skipping census for course {}", courseId);
+            }
+            else {
+                log.warn("Ingestion census for course {} failed with status {}", courseId, e.getStatusCode());
+            }
+            return null;
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.warn("Ingestion census for course {} failed: {}", courseId, e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -318,26 +364,6 @@ public class PyrisConnectorService {
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send request to Pyris", e);
             throw new PyrisConnectorException("Could not fetch response from Iris");
-        }
-    }
-
-    /**
-     * Executes a webhook and send lectures to the webhook with the given variant
-     *
-     * @param executionDTO The DTO sent as a body for the execution
-     */
-    public void executeLectureAdditionWebhook(PyrisWebhookLectureIngestionExecutionDTO executionDTO) {
-        var endpoint = "/api/v1/webhooks/lectures/ingest";
-        try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
-        }
-        catch (HttpStatusCodeException e) {
-            log.error("Failed to send lecture unit {} to Pyris: {}", executionDTO.pyrisLectureUnit().lectureUnitId(), e.getMessage());
-            throw toIrisException(e);
-        }
-        catch (RestClientException | IllegalArgumentException e) {
-            log.error("Failed to send lecture unit {} to Pyris: {}", executionDTO.pyrisLectureUnit().lectureUnitId(), e.getMessage());
-            throw new PyrisConnectorException("Could not fetch response from Pyris");
         }
     }
 

@@ -1,4 +1,9 @@
 <ng-container>
+    <!-- A team exercise is practiced individually: the hint is a tooltip, and a permanent description for assistive technology, which does not hover. -->
+    @let teamHint = isTeamExercise() ? ('artemisApp.exerciseActions.practiceMode.teamHint' | artemisTranslate) : '';
+    @if (isTeamExercise()) {
+        <span class="sr-only" data-testid="start-practice-team-hint" [id]="teamHintId">{{ teamHint }}</span>
+    }
     @if (isProgrammingExercise()) {
         <button
             type="button"
@@ -9,7 +14,11 @@
             [buttonLoading]="startingPracticeMode()"
             [smallButton]="smallButtons()"
             [hideLabelMobile]="false"
+            [tumAetUiTooltip]="teamHint"
+            tumAetUiTooltipDescribesHost="false"
+            [attr.aria-describedby]="isTeamExercise() ? teamHintId : null"
             [ngbPopover]="popContent"
+            (hidden)="restoreTeamHintDescription()"
             [autoClose]="'outside'"
             placement="right auto"
             container="body"
@@ -18,6 +27,9 @@
             <div class="start-practice-popover">
                 <h5 jhiTranslate="artemisApp.exerciseActions.practiceMode.title"></h5>
                 <p jhiTranslate="artemisApp.exerciseActions.practiceMode.explanation"></p>
+                @if (isTeamExercise()) {
+                    <p data-testid="start-practice-popover-team-hint" jhiTranslate="artemisApp.exerciseActions.practiceMode.teamHint"></p>
+                }
                 @if (gradedStudentParticipation()) {
                     <p jhiTranslate="artemisApp.exerciseActions.practiceMode.repositoryChoice"></p>
                 }
@@ -62,6 +74,9 @@
             [buttonLoading]="startingPracticeMode()"
             [smallButton]="smallButtons()"
             [hideLabelMobile]="false"
+            [tumAetUiTooltip]="teamHint"
+            tumAetUiTooltipDescribesHost="false"
+            [attr.aria-describedby]="isTeamExercise() ? teamHintId : null"
             (click)="startPractice(false)"
         ></button>
     }

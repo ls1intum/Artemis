@@ -8,12 +8,17 @@ import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.DENIED;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -37,6 +42,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.util.LinkedMultiValueMap;
 
 import tools.jackson.databind.node.ObjectNode;
 
@@ -111,6 +119,9 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "textexerciseintegration";
+
+    /** The exercise updated notifications in a page of course notifications, as a JSON path filter. */
+    private static final String EXERCISE_UPDATED_NOTIFICATIONS = "$.content[?(@.notificationType == 'exerciseUpdatedNotification')]";
 
     @Autowired
     private TeamAssignmentConfigRepository teamAssignmentConfigRepository;
@@ -855,6 +866,35 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         verify(groupNotificationScheduleService, timeout(2000).times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any(), any());
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of()), any());
         assertExerciseExistsInWeaviate(weaviateService, textExerciseRepository.findById(updatedTextExercise.id()).orElseThrow());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateTextExercise_withNotificationText_deliversTheTextToStudents() throws Exception {
+        textExercise = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(textExercise.getId());
+
+        // Without a notification text, an update does not notify students at all.
+        request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.OK);
+        performGetExerciseUpdatedNotificationsAsStudent().andExpect(jsonPath(EXERCISE_UPDATED_NOTIFICATIONS).doesNotExist());
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("notificationText", "  Task 2 now asks for 300 words instead of 200  ");
+        request.putWithResponseBodyAndParams("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.OK, params);
+
+        // The student receives the editor's text, trimmed, next to the exercise it is about. The flat parameters carry it
+        // too, because that is what the released iOS app reads.
+        performGetExerciseUpdatedNotificationsAsStudent().andExpect(jsonPath(EXERCISE_UPDATED_NOTIFICATIONS, hasSize(1)))
+                .andExpect(jsonPath(EXERCISE_UPDATED_NOTIFICATIONS + ".payload.notificationText", contains("Task 2 now asks for 300 words instead of 200")))
+                .andExpect(jsonPath(EXERCISE_UPDATED_NOTIFICATIONS + ".parameters.notificationText", contains("Task 2 now asks for 300 words instead of 200")))
+                .andExpect(jsonPath(EXERCISE_UPDATED_NOTIFICATIONS + ".payload.exerciseTitle", contains(textExercise.getTitle())));
+    }
+
+    private ResultActions performGetExerciseUpdatedNotificationsAsStudent() throws Exception {
+        var result = request
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/notification/courses/" + course.getId() + "?page=0&size=20").with(user(TEST_PREFIX + "student1").roles("USER")))
+                .andExpect(status().isOk());
+        request.restoreSecurityContext();
+        return result;
     }
 
     @Test

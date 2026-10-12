@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
@@ -11,6 +13,7 @@ import { SEED_COURSES } from '../../../support/seedData';
 import { generateUUID, readResponseJson } from '../../../support/utils';
 
 const course = { id: SEED_COURSES.quizParticipation.id } as any;
+const dragAndDropBackground = fs.readFileSync(path.resolve(__dirname, '../../../fixtures/exercise/quiz/drag_and_drop/background.jpg'));
 
 /**
  * The answer options of a multiple choice question. `QuizExercise.quizQuestions` is typed as the abstract question,
@@ -585,6 +588,152 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
                     .toBeLessThan(before.scrollTop);
             } finally {
                 // Always release the pointer, so a failure here cannot leave a held drag behind for the next assertion.
+                await page.mouse.up();
+            }
+        });
+    });
+
+    test.describe('DnD Quiz with several drag items', () => {
+        const dragItemTexts = ['+ attribute: Type', '+ method()', 'Case 1', 'Case 2', 'Case 3', 'Enumeration', 'Class', 'Interface'];
+        let quizExercise: QuizExercise;
+
+        test.beforeEach('Create DnD quiz', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
+            quizExercise = await exerciseAPIRequests.createQuizExercise({
+                body: { course },
+                quizQuestions: [
+                    {
+                        type: 'drag-and-drop',
+                        title: 'Where do the items belong?',
+                        text: 'Put each item where it belongs.',
+                        points: 1,
+                        scoringType: 'ALL_OR_NOTHING',
+                        randomizeOrder: false,
+                        backgroundFilePath: 'background.jpg',
+                        dropLocations: [{ tempID: 1, posX: 10, posY: 10, width: 60, height: 60 }],
+                        dragItems: dragItemTexts.map((text, index) => ({ tempID: 11 + index, text })),
+                        correctMappings: [{ dragItem: { tempID: 11 }, dropLocation: { tempID: 1 } }],
+                    },
+                ],
+                backgroundFile: { name: 'background.jpg', mimeType: 'image/jpeg', buffer: dragAndDropBackground },
+            });
+            await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
+            await exerciseAPIRequests.startQuizNow(quizExercise.id!);
+        });
+
+        /**
+         * Regression test for https://github.com/ls1intum/Artemis/issues/13205: while a student holds a dragged item and the view
+         * scrolls (by the auto-scroll at the edge, the wheel or the scroll bar), the drag items that are still in the list must stay
+         * where they are. The order of that list carries no meaning, but when the list let the CDK sort it, the CDK moved the other
+         * items out of the way on every scroll step. It assumes a single vertical column, so in the wrapped rows of a small screen
+         * the items jumped up and down by the height of a row.
+         */
+        test('Drag items keep their place when the view scrolls during a drag', async ({ login, page }) => {
+            // Below 1200px the drag items wrap into rows of several items each. The size is set before the page opens: the text of a drag
+            // item is fitted to its box again after every window resize, which would move the items while they are measured.
+            await page.setViewportSize({ width: 800, height: 600 });
+            await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
+            const list = page.getByTestId('drag-items');
+            const draggables = list.getByTestId('drag-item-draggable');
+            await expect(draggables).toHaveCount(dragItemTexts.length);
+            await expect(draggables.first()).toBeVisible();
+
+            // The question overflows its scroll container only once the background image has loaded, so wait for that and mark the container.
+            // It must be registered with the CDK as cdkScrollable, because the CDK only reacts to scrolling of the containers it knows about.
+            await page.waitForFunction(
+                () => {
+                    let element = document.querySelector('[data-testid="drag-items"]')?.parentElement;
+                    while (element) {
+                        const style = getComputedStyle(element);
+                        const scrollable = element.scrollHeight > element.clientHeight && ['auto', 'scroll'].includes(style.overflowY);
+                        if (scrollable && element.hasAttribute('cdkscrollable')) {
+                            element.setAttribute('data-e2e-scroll-container', 'true');
+                            return true;
+                        }
+                        element = element.parentElement;
+                    }
+                    return false;
+                },
+                undefined,
+                { timeout: 30_000 },
+            );
+
+            // Bring the top of the list into view, with room to scroll the container further down while the pointer stays over the list.
+            const scrollRange = 60;
+            const geometry = await page.evaluate((range) => {
+                const scroller = document.querySelector('[data-e2e-scroll-container]')!;
+                const listElement = document.querySelector('[data-testid="drag-items"]')!;
+                const maxScrollTop = scroller.scrollHeight - scroller.clientHeight;
+                const listTopInContent = listElement.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+                scroller.scrollTop = Math.max(0, Math.min(listTopInContent - scroller.clientHeight / 4, maxScrollTop - range));
+                const listRect = listElement.getBoundingClientRect();
+                const scrollerRect = scroller.getBoundingClientRect();
+                return {
+                    room: maxScrollTop - scroller.scrollTop,
+                    list: { left: listRect.left, top: listRect.top, width: listRect.width, height: listRect.height },
+                    scrollerTop: scrollerRect.top,
+                    scrollerBottom: scrollerRect.bottom,
+                };
+            }, scrollRange);
+            expect(geometry.room, 'precondition: the container must be able to scroll while the item is held').toBeGreaterThanOrEqual(scrollRange);
+            expect(geometry.list.height, 'precondition: the pointer must stay over the list while the container scrolls').toBeGreaterThan(scrollRange + 20);
+            const holdX = geometry.list.left + geometry.list.width / 2;
+            const holdY = geometry.list.top + 10;
+            // Near the edges of the container the CDK would start scrolling on its own.
+            expect(holdY, 'precondition: the pointer must stay clear of the top edge of the container').toBeGreaterThan(geometry.scrollerTop + scrollRange);
+            expect(holdY, 'precondition: the pointer must stay clear of the bottom edge of the container').toBeLessThan(geometry.scrollerBottom - scrollRange);
+
+            const box = await draggables.first().boundingBox();
+            if (!box) {
+                throw new Error('the first drag item must be visible and have a bounding box');
+            }
+            await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+            await page.mouse.down();
+            try {
+                await page.mouse.move(box.x + box.width / 2 + 10, box.y + box.height / 2 + 10, { steps: 5 });
+                await page.mouse.move(holdX, holdY, { steps: 10 });
+                // The CDK takes the picked item out of the list while it is dragged, which proves that the drag is in progress, and marks
+                // the list as the container the item is held over. The CDK exposes that state only through this class.
+                await expect(draggables).toHaveCount(dragItemTexts.length - 1);
+                await expect(list).toHaveClass(/cdk-drop-list-dragging/);
+
+                // Scroll the container in small steps while the pointer stays where it is, as the auto-scroll does, and record how far each
+                // remaining item moves relative to the list. Positions are relative to the list, so the scrolling itself does not count.
+                const maxDisplacements = await page.evaluate(
+                    async ({ range, step }) => {
+                        const scroller = document.querySelector('[data-e2e-scroll-container]')!;
+                        const listElement = document.querySelector('[data-testid="drag-items"]')!;
+                        const positions = () => {
+                            const listRect = listElement.getBoundingClientRect();
+                            return [...listElement.querySelectorAll('[data-testid="drag-item-draggable"]')].map((element) => {
+                                const rect = element.getBoundingClientRect();
+                                return { text: element.textContent!.trim(), x: rect.left - listRect.left, y: rect.top - listRect.top };
+                            });
+                        };
+                        // Scroll events are delivered with the next frame, and the CDK reacts to them right away.
+                        const nextFrames = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+                        const start = new Map(positions().map((item) => [item.text, item]));
+                        const maxima: Record<string, number> = Object.fromEntries([...start.keys()].map((text) => [text, 0]));
+                        for (const direction of [1, -1]) {
+                            for (let scrolled = 0; scrolled < range; scrolled += step) {
+                                scroller.scrollTop += direction * step;
+                                await nextFrames();
+                                for (const item of positions()) {
+                                    const origin = start.get(item.text)!;
+                                    const displacement = Math.max(Math.abs(item.x - origin.x), Math.abs(item.y - origin.y));
+                                    maxima[item.text] = Math.max(maxima[item.text], Math.round(displacement * 100) / 100);
+                                }
+                            }
+                        }
+                        return maxima;
+                    },
+                    { range: scrollRange, step: 3 },
+                );
+                for (const [text, displacement] of Object.entries(maxDisplacements)) {
+                    expect(displacement, `"${text}" must not move while the view scrolls during the drag`).toBeLessThanOrEqual(0.5);
+                }
+            } finally {
+                // Always release the pointer, so a failure cannot leave a held drag behind.
                 await page.mouse.up();
             }
         });

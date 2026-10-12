@@ -105,19 +105,19 @@ class ExerciseNotificationUrlTest {
 
     @Test
     void testExerciseUpdatedNotification_courseExercise() {
-        var notification = new ExerciseUpdatedNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, null, null, "text");
+        var notification = new ExerciseUpdatedNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, null, null, "text", null);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/courses/1/exercises/10");
     }
 
     @Test
     void testExerciseUpdatedNotification_examExercise() {
-        var notification = new ExerciseUpdatedNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, EXAM_ID, EXERCISE_GROUP_ID, "text");
+        var notification = new ExerciseUpdatedNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, EXAM_ID, EXERCISE_GROUP_ID, "text", null);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/exercise-groups/50/text-exercises/10");
     }
 
     @Test
     void testExerciseUpdatedNotification_examProgrammingExercise() {
-        var notification = new ExerciseUpdatedNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, EXAM_ID, EXERCISE_GROUP_ID, "programming");
+        var notification = new ExerciseUpdatedNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, EXAM_ID, EXERCISE_GROUP_ID, "programming", null);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/exercise-groups/50/programming-exercises/10");
     }
 
@@ -238,7 +238,7 @@ class ExerciseNotificationUrlTest {
 
     @Test
     void testExerciseUpdatedNotification_examFileUploadExercise() {
-        var notification = new ExerciseUpdatedNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, EXAM_ID, EXERCISE_GROUP_ID, "file-upload");
+        var notification = new ExerciseUpdatedNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, EXAM_ID, EXERCISE_GROUP_ID, "file-upload", null);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/course-management/1/exams/100/exercise-groups/50/file-upload-exercises/10");
     }
 
@@ -246,13 +246,13 @@ class ExerciseNotificationUrlTest {
 
     @Test
     void testExerciseUpdatedNotification_partialExamData_noExerciseGroupId() {
-        var notification = new ExerciseUpdatedNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, EXAM_ID, null, "text");
+        var notification = new ExerciseUpdatedNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, EXAM_ID, null, "text", null);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/courses/1/exercises/10");
     }
 
     @Test
     void testExerciseUpdatedNotification_partialExamData_noExerciseType() {
-        var notification = new ExerciseUpdatedNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, EXAM_ID, EXERCISE_GROUP_ID, null);
+        var notification = new ExerciseUpdatedNotification(COURSE_ID, COURSE_TITLE, COURSE_ICON, EXERCISE_ID, EXERCISE_TITLE, EXAM_ID, EXERCISE_GROUP_ID, null, null);
         assertThat(notification.getRelativeWebAppUrl()).isEqualTo("/courses/1/exercises/10");
     }
 
