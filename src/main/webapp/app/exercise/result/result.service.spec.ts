@@ -352,10 +352,12 @@ describe('ResultService', () => {
             });
         });
 
-        it('should return correct string for completed Athena feedback without a score', () => {
+        it.each([undefined, null, NaN, Infinity, -Infinity])('should treat the Athena score %s as unavailable', (score) => {
             programmingExercise.assessmentDueDate = dayjs().subtract(5, 'minutes');
 
-            expect(resultService.getResultString(result6, programmingExercise, participation1)).toBe(
+            const result: Result = { ...result6 };
+            Object.assign(result, { score });
+            expect(resultService.getResultString(result, programmingExercise, participation1)).toBe(
                 'artemisApp.result.resultString.automaticAIFeedbackSuccessful (artemisApp.result.preliminary)',
             );
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);

@@ -348,7 +348,7 @@ export class FeedbackComponent implements OnInit {
         const aiScore = this.completedAiScore();
         if (aiScore !== undefined) {
             this.chartData.set({
-                xScaleMax: 100,
+                xScaleMax: Math.max(100, aiScore),
                 colors: ['var(--tumaet-ui-state-success)'],
                 results: [{ name: 'scores', series: [{ name: this.translateService.instant('artemisApp.result.detail.feedback'), value: aiScore }] }],
             });
