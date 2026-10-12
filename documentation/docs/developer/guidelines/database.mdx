@@ -259,8 +259,8 @@ not the Metis module is enabled on the server. The module's repositories only ex
 module writes the row itself, the way `CourseDefaultConfigurationsRepository` writes the Iris and tutorial-group rows of a
 course: `ExerciseConfigurationService.initialize` calls `ExerciseDefaultConfigurationsRepository.ensureDefaultConfigurations`,
 which decides from the exercise type, checks for the row with a plain read and inserts it with a plain `INSERT ... VALUES`
-that names only the exercise, so every setting comes from the column defaults and Metis starts switched off. Native
-statements against the table keep the exercise module free of any Metis class. A concurrent insert of the same row is
+that names only the exercise, so every setting comes from the column defaults and Metis starts switched off. Both
+statements are JPQL that names the entity only by its name, which keeps the exercise module free of any Metis class. A concurrent insert of the same row is
 tolerated, and a call that finds the row changes nothing. The programming import, which goes to the repositories directly,
 makes the same call, and so does `ProgrammingExerciseCreationUpdateService.updateProgrammingExercise` next to the `applyTo`
 calls of the team and plagiarism rows, so the next update of a programming exercise whose creation failed half-way adds the
