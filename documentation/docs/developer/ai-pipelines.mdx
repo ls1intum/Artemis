@@ -84,8 +84,19 @@ Three properties of that design carry weight, and a change that drops one of the
 
 ### Citations in Iris answers
 
-Artemis receives citations embedded in answer text, as `[cite:L:ENTITY_ID:PAGE:START:END:KEYWORD:SUMMARY]`. `L`
-identifies a lecture unit and `F` an FAQ; the client renders both as source chips. The lecture fields have these
+Citations are embedded in answer text and pass through two forms. Iris emits a citation without a version:
+
+```
+[cite:L:ENTITY_ID:PAGE:START:END:KEYWORD:SUMMARY]
+```
+
+and Artemis appends one before the answer is stored, so the stored and rendered form carries a version field:
+
+```
+[cite:L:42:3:::Sorting:Pivot placement:va3]
+```
+
+`L` identifies a lecture unit and `F` an FAQ; the client renders both as source chips. The lecture fields have these
 roles:
 
 | Field | Meaning |
@@ -96,11 +107,16 @@ roles:
 | `KEYWORD` | The citation chip's short label. |
 | `SUMMARY` | The explanation shown in the chip's tooltip. It may contain colons. |
 
-Before storing an answer, `IrisCitationService` appends one version field to each positioned lecture citation: `va3`
-pins a slide to attachment version 3, `vt3` pins a video moment to transcription version 3, and `0` means the
-position could not be verified against the run snapshot. A version is recognized only by its leading `va` or `vt`
-tag, because the summary is everything up to the closing bracket and may itself end in a number. Citations stored
-before versioning have no field and still navigate directly.
+`IrisCitationService` stamps the version in `stampCitationVersions`, on the incoming answer before it is persisted:
+`va3` pins a slide to attachment version 3, `vt3` pins a video moment to transcription version 3, and `0` means the
+position could not be verified against the run snapshot. Only a positioned citation is stamped — one naming neither a
+page nor a start time stays as it came. A version is recognized only by its leading `va` or `vt` tag, because the
+summary is everything up to the closing bracket and may itself end in a number. Citations stored before versioning
+have no field and still navigate directly.
+
+The version is Artemis's, not the model's. A citation that already arrives with a version field — the model echoing
+an older answer — has it stripped and is stamped `0`, so a pin can only come from the snapshot of the run that
+produced the citation.
 
 This format is the contract between three codebases: the Pyris pipeline that emits it, the server pattern in
 `IrisCitationService`, and the client pattern in `iris-citation-text.model.ts`. The two Artemis patterns carry
