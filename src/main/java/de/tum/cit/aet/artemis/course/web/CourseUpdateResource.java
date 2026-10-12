@@ -232,8 +232,9 @@ public class CourseUpdateResource {
         // this form are written, in place, so the retention bookkeeping a cleanup run wrote meanwhile is not overwritten with the
         // values read at the start. An omitted retention hold is left as it is.
         var requestedConfiguration = existingCourse.getCourseConfiguration();
-        courseConfigurationRepository.updateEditableSettings(courseId, requestedConfiguration.isGradeRelevant(), requestedConfiguration.isAutoOrchestratorEnabled(),
-                requestedConfiguration.getDebounceWindowSecondsOverride(), requestedConfiguration.getMaxDailyOrchestrationOverride());
+        courseConfigurationRepository.updateEditableSettings(courseId, requestedConfiguration.isGradeRelevant(), requestedConfiguration.isPresentationAssessmentsEnabled(),
+                requestedConfiguration.isAutoOrchestratorEnabled(), requestedConfiguration.getDebounceWindowSecondsOverride(),
+                requestedConfiguration.getMaxDailyOrchestrationOverride());
         if (courseUpdateDTO.dataRetentionHold() != null) {
             courseConfigurationRepository.updateDataRetentionHold(courseId, courseUpdateDTO.dataRetentionHold());
         }
