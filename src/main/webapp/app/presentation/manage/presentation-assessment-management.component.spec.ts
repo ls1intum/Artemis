@@ -310,10 +310,11 @@ describe('PresentationAssessmentManagementComponent', () => {
         component.presentationAssessments.set([linkedPresentation]);
         navigateSpy.mockClear();
 
-        component.selectPresentation(linkedPresentation);
+        // the route names the presentation without its exercise, so the url is corrected without adding a history entry
+        routeParamMap.next(convertToParamMap({ presentationId: 43 }));
         fixture.detectChanges();
 
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'presentations', 43, 'exercises', 7], { replaceUrl: false });
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'presentations', 43, 'exercises', 7], { replaceUrl: true });
 
         navigateSpy.mockClear();
         component.setViewMode('students');

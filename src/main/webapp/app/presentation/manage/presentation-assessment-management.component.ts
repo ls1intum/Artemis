@@ -432,13 +432,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.openPresentationDialog();
     }
 
-    selectPresentation(presentationAssessment: PresentationAssessment): void {
-        this.overviewPage.set(0);
-        this.selectedPresentationId.set(presentationAssessment.id);
-        this.viewMode.set('presentations');
-        this.navigateToPresentation(presentationAssessment);
-    }
-
     setViewMode(viewMode: PresentationViewMode): void {
         if (this.viewMode() !== viewMode) {
             this.overviewPage.set(0);
