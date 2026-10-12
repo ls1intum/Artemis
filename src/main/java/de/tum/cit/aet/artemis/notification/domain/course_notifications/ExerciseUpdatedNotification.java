@@ -19,12 +19,13 @@ public class ExerciseUpdatedNotification extends CourseNotification {
     private final ExerciseUpdatedPayloadDTO payload;
 
     /**
-     * Default constructor used when creating a new post notification.
+     * Default constructor used when creating a new exercise updated notification. The notification text is the message
+     * the editor wrote about the update, {@code null} when they wrote none.
      */
     public ExerciseUpdatedNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, Long examId, Long exerciseGroupId,
-            String exerciseType) {
+            String exerciseType, String notificationText) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new ExerciseUpdatedPayloadDTO(exerciseId, exerciseTitle, examId, exerciseGroupId, exerciseType);
+        this.payload = new ExerciseUpdatedPayloadDTO(exerciseId, exerciseTitle, examId, exerciseGroupId, exerciseType, notificationText);
     }
 
     /**
