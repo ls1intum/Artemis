@@ -32,6 +32,8 @@ import { CourseAccessStorageService } from 'app/course/shared/services/course-ac
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { TeamService } from 'app/exercise/team/team.service';
+import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { By } from '@angular/platform-browser';
@@ -95,10 +97,13 @@ describe('CoursesComponent', () => {
     let location: Location;
     let httpMock: HttpTestingController;
     let accountService: AccountService;
+    let teamAssignmentSubscribeSpy: ReturnType<typeof vi.spyOn>;
 
     const route = { data: of({ courseId: course1.id }), children: [] } as any as ActivatedRoute;
 
     beforeEach(async () => {
+        const teamAssignmentUpdates = of<TeamAssignmentPayload>();
+        teamAssignmentSubscribeSpy = vi.spyOn(teamAssignmentUpdates, 'subscribe');
         TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }]),
@@ -115,6 +120,7 @@ describe('CoursesComponent', () => {
                 { provide: CourseExerciseRowComponent },
                 MockProvider(AlertService),
                 MockProvider(WebsocketService),
+                { provide: TeamService, useValue: { teamAssignmentUpdates: Promise.resolve(teamAssignmentUpdates) } },
                 MockProvider(FeatureToggleService),
                 MockProvider(CourseAccessStorageService),
                 provideHttpClient(),
@@ -143,6 +149,12 @@ describe('CoursesComponent', () => {
     });
 
     describe('onInit', () => {
+        it('should subscribe to the injected team assignment stream on init', async () => {
+            await fixture.whenStable();
+
+            expect(teamAssignmentSubscribeSpy).toHaveBeenCalledOnce();
+        });
+
         it('should call loadAndFilterCourses on init', () => {
             const loadAndFilterCoursesSpy = vi.spyOn(component, 'loadAndFilterCourses');
 
