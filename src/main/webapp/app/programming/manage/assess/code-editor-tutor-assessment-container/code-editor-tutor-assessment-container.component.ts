@@ -36,7 +36,7 @@ import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalReposi
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { breakCircularResultBackReferences } from 'app/exercise/result/result.utils';
-import { faCircleInfo, faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo, faClockRotateLeft, faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -141,6 +141,17 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     exerciseGroupId!: number; // set in ngOnInit() from route params (exam mode only)
     readonly exerciseDashboardLink = signal<string[]>([]);
     readonly localRepositoryLink = signal<string[]>([]);
+    /**
+     * Link to the commit history of the assessed student repository. Unlike {@link localRepositoryLink} it does not
+     * depend on the editor-only template participation request, because every tutor may inspect the commit history.
+     */
+    readonly commitHistoryLink = computed(() => {
+        const participationId = this.participation()?.id;
+        if (participationId === undefined) {
+            return undefined;
+        }
+        return [...getLocalRepositoryLink(this.courseId, this.exerciseId, RepositoryType.USER, participationId, this.exerciseGroupId, this.examId), 'commit-history'];
+    });
     readonly loadingInitialSubmission = signal(true);
     highlightDifferences = false;
     readonly loadingFeedbackSuggestions = signal(false);
@@ -187,6 +198,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // Icons
     faTimesCircle = faTimesCircle;
     faExternalLink = faExternalLink;
+    faClockRotateLeft = faClockRotateLeft;
     faCircleInfo = faCircleInfo;
 
     /**
