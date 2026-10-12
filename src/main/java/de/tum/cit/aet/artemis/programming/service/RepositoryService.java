@@ -47,6 +47,7 @@ import org.springframework.util.FileSystemUtils;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
@@ -157,6 +158,110 @@ public class RepositoryService {
             return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, selectedFilePaths, BinaryFileFilter.CONTENT, MAX_SELECTED_FILE_SIZE_BYTES,
                     MAX_SELECTED_FILES_TOTAL_SIZE_BYTES);
         }
+    }
+
+    /**
+     * Lists the files and folders of a participation repository exactly as they are in the given commit.
+     * <p>
+     * The commit is read from the bare repository, so neither the checked-out working copy (which the online editor may have left with uncommitted or locally committed edits)
+     * nor a pull into it has any influence on the result. Symbolic links and submodules are left out, as in the working copy listing. Folders are derived from the file paths,
+     * because git does not track empty folders.
+     *
+     * @param participation the participation whose repository is read
+     * @param commitId      the full hash of the commit to read
+     * @return a map with the repository-relative path as key and whether it is a file or a folder as value
+     * @throws IOException             if the repository cannot be read
+     * @throws EntityNotFoundException if the commit does not exist in the repository
+     */
+    public Map<String, FileType> getFilesAtCommit(ProgrammingExerciseParticipation participation, String commitId) throws IOException {
+        try (Repository bareRepository = bareGitRepositoryService.getBareRepository(participation.getVcsRepositoryUri(), false)) {
+            Map<String, FileType> files = new HashMap<>();
+            for (String path : getBlobIdsAtCommit(bareRepository, commitId).keySet()) {
+                files.put(path, FileType.FILE);
+                for (int slash = path.indexOf('/'); slash >= 0; slash = path.indexOf('/', slash + 1)) {
+                    files.put(path.substring(0, slash), FileType.FOLDER);
+                }
+            }
+            return files;
+        }
+    }
+
+    /**
+     * Reads one file of a participation repository exactly as it is in the given commit, see {@link #getFilesAtCommit}.
+     *
+     * @param participation the participation whose repository is read
+     * @param commitId      the full hash of the commit to read
+     * @param filename      the repository-relative path of the file
+     * @return the file content as an attachment, so that the browser does not interpret it as HTML when it is opened directly
+     * @throws IOException           if the repository cannot be read
+     * @throws FileNotFoundException if the commit has no file with this path
+     */
+    public ResponseEntity<byte[]> getFileAtCommit(ProgrammingExerciseParticipation participation, String commitId, String filename) throws IOException {
+        try (Repository bareRepository = bareGitRepositoryService.getBareRepository(participation.getVcsRepositoryUri(), false)) {
+            ObjectId blobId = getBlobIdsAtCommit(bareRepository, commitId).get(filename);
+            if (blobId == null) {
+                throw new FileNotFoundException("File not found in commit " + commitId + ": " + filename);
+            }
+            byte[] content;
+            try (InputStream inputStream = bareRepository.open(blobId).openStream()) {
+                content = inputStream.readAllBytes();
+            }
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.setContentDisposition(ContentDisposition.builder("attachment").filename(filename).build());
+            return new ResponseEntity<>(content, responseHeaders, HttpStatus.OK);
+        }
+    }
+
+    /**
+     * Like {@link #getFilesWithInformationAboutChange(Repository, Repository)}, but for the files as they are in the given commit of the participation repository, compared with
+     * the latest commit of the template repository. Both repositories are read from their bare repositories, so no working copy is involved.
+     *
+     * @param participation         the participation whose repository is read
+     * @param commitId              the full hash of the commit to read
+     * @param templateParticipation the template participation of the exercise
+     * @return a map of files with the information if they were changed or are new
+     * @throws IOException if one of the repositories cannot be read
+     */
+    public Map<String, Boolean> getFilesWithInformationAboutChangeAtCommit(ProgrammingExerciseParticipation participation, String commitId,
+            ProgrammingExerciseParticipation templateParticipation) throws IOException {
+        try (Repository bareRepository = bareGitRepositoryService.getBareRepository(participation.getVcsRepositoryUri(), false);
+                Repository bareTemplateRepository = bareGitRepositoryService.getBareRepository(templateParticipation.getVcsRepositoryUri(), false)) {
+            ObjectId templateCommitId = bareTemplateRepository.resolve(Constants.HEAD + "^{commit}");
+            Map<String, ObjectId> templateBlobIds = templateCommitId == null ? Map.of() : getBlobIdsAtCommit(bareTemplateRepository, templateCommitId);
+            Map<String, Boolean> filesWithInformationAboutChange = new HashMap<>();
+            getBlobIdsAtCommit(bareRepository, commitId).forEach((path, blobId) -> filesWithInformationAboutChange.put(path, !blobId.equals(templateBlobIds.get(path))));
+            return filesWithInformationAboutChange;
+        }
+    }
+
+    private Map<String, ObjectId> getBlobIdsAtCommit(Repository bareRepository, String commitId) throws IOException {
+        ObjectId commitObjectId;
+        try {
+            commitObjectId = resolveCommit(bareRepository, commitId);
+        }
+        catch (MissingObjectException e) {
+            // a full object id is not looked up when it is parsed, only when it is resolved to a commit
+            commitObjectId = null;
+        }
+        if (commitObjectId == null) {
+            throw new EntityNotFoundException("Commit", commitId);
+        }
+        return getBlobIdsAtCommit(bareRepository, commitObjectId);
+    }
+
+    private Map<String, ObjectId> getBlobIdsAtCommit(Repository bareRepository, ObjectId commitObjectId) throws IOException {
+        Map<String, ObjectId> blobIds = new HashMap<>();
+        try (RevWalk revWalk = new RevWalk(bareRepository); TreeWalk treeWalk = new TreeWalk(bareRepository)) {
+            treeWalk.addTree(revWalk.parseCommit(commitObjectId).getTree());
+            treeWalk.setRecursive(true);
+            while (treeWalk.next()) {
+                FileMode fileMode = treeWalk.getFileMode(0);
+                if (fileMode != FileMode.SYMLINK && fileMode.getObjectType() == Constants.OBJ_BLOB) {
+                    blobIds.put(treeWalk.getPathString(), treeWalk.getObjectId(0));
+                }
+            }
+        }
+        return blobIds;
     }
 
     /**

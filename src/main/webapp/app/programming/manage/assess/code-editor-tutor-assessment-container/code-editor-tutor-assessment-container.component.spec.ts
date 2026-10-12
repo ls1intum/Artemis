@@ -37,6 +37,7 @@ import { ActivatedRoute, ParamMap, Router, UrlTree, convertToParamMap, provideRo
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
+import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -175,6 +176,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         submission.results = [result];
         submission.participation = participation;
         submission.id = 1234;
+        submission.commitHash = '0123456789abcdef0123456789abcdef01234567';
         submission.latestResult = result;
         participation.submissions = [submission];
 
@@ -311,6 +313,23 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         getFilesWithContentStub.mockRestore();
         getFileStub.mockRestore();
+        fixture.destroy();
+    });
+
+    it('should show exactly the submitted commit and not the working copy of the repository', async () => {
+        vi.spyOn(repositoryFileService, 'getFilesWithContent').mockReturnValue(of(templateFileSessionReturn));
+        const feedbackLoaded = firstValueFrom(outputToObservable(comp.onFeedbackLoaded));
+        fixture.detectChanges();
+        await feedbackLoaded;
+        await flushMicrotasks();
+        fixture.changeDetectorRef.detectChanges();
+
+        const codeEditorContainer: CodeEditorContainerComponent = fixture.debugElement.query(By.directive(CodeEditorContainerComponent)).componentInstance;
+        expect(codeEditorContainer.commitId()).toBe(submission.commitHash);
+        const codeEditorFileBrowser: CodeEditorFileBrowserComponent = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
+        expect(codeEditorFileBrowser.commitId()).toBe(submission.commitHash);
+        const codeEditorMonaco: CodeEditorMonacoComponent = fixture.debugElement.query(By.directive(CodeEditorMonacoComponent)).componentInstance;
+        expect(codeEditorMonaco.commitId()).toBe(submission.commitHash);
         fixture.destroy();
     });
 

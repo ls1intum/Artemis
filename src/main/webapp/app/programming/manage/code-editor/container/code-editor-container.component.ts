@@ -93,6 +93,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     buildable = input<boolean>(true);
     showEditorInstructions = input<boolean>(true);
     isTutorAssessment = input<boolean>(false);
+    /**
+     * The full hash of the commit to show, read-only and independent of the working copy on the server. Set it where a specific submission is shown, e.g. in the manual
+     * assessment; leave it unset to show the repository as it currently is, e.g. in the online editor.
+     */
+    commitId = input<string | undefined>(undefined);
     highlightFileChanges = input<boolean>(false);
     allowHiddenFiles = input<boolean>(false);
     /**
