@@ -3,6 +3,7 @@
  * Tests the text assessment area functionality with signal-based inputs.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ErrorHandler } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
@@ -17,6 +18,7 @@ import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
 
 describe('TextAssessmentAreaComponent', () => {
@@ -216,6 +218,13 @@ describe('TextAssessmentAreaComponent', () => {
 
         const feedbackTextareas = (): HTMLTextAreaElement[] => Array.from(fixture.nativeElement.querySelectorAll('textarea.unified-feedback-detail-input'));
 
+        const deleteFeedbackOfNewBlock = () => {
+            // an empty feedback is dismissed without confirmation when Escape is pressed in its editor
+            const unifiedFeedback = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent));
+            unifiedFeedback.nativeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            fixture.detectChanges();
+        };
+
         const selectWordsManually = () => {
             pressAlt('keydown');
             const manualSelection = fixture.debugElement.query(By.directive(ManualTextblockSelectionComponent)).componentInstance as ManualTextblockSelectionComponent;
@@ -248,6 +257,50 @@ describe('TextAssessmentAreaComponent', () => {
             pressAlt('keyup');
             await fixture.whenStable();
 
+            expect(feedbackTextareas()).toHaveLength(0);
+            expect(document.activeElement).toBe(document.body);
+        });
+
+        it('should not throw when the feedback of the new block is deleted while Alt is still held', async () => {
+            const handleErrorSpy = vi.spyOn(TestBed.inject(ErrorHandler), 'handleError');
+            selectWordsManually();
+            deleteFeedbackOfNewBlock();
+            expect(feedbackTextareas()).toHaveLength(0);
+
+            pressAlt('keyup');
+            await fixture.whenStable();
+
+            expect(handleErrorSpy).not.toHaveBeenCalled();
+            expect(feedbackTextareas()).toHaveLength(0);
+            expect(document.activeElement).toBe(document.body);
+            expect(component.blockToFocus()).toBeUndefined();
+        });
+
+        it('should not move the focus again after the feedback textarea was focused and the assessment is toggled read-only', async () => {
+            selectWordsManually();
+            pressAlt('keyup');
+            await fixture.whenStable();
+            feedbackTextareas()[0].blur();
+
+            fixture.componentRef.setInput('readOnly', true);
+            fixture.detectChanges();
+            fixture.componentRef.setInput('readOnly', false);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(document.activeElement).toBe(document.body);
+        });
+
+        it('should skip the focus without an error when the text block refs are replaced while Alt is still held', async () => {
+            const handleErrorSpy = vi.spyOn(TestBed.inject(ErrorHandler), 'handleError');
+            selectWordsManually();
+            fixture.componentRef.setInput('textBlockRefs', [new TextBlockRef(newBlock(0, submission.text!.length))]);
+            fixture.detectChanges();
+
+            pressAlt('keyup');
+            await fixture.whenStable();
+
+            expect(handleErrorSpy).not.toHaveBeenCalled();
             expect(feedbackTextareas()).toHaveLength(0);
             expect(document.activeElement).toBe(document.body);
         });

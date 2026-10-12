@@ -34,13 +34,24 @@ export class TextBlockAssessmentCardComponent {
     didSelect = output<OptionalTextBlockRef>();
     didChange = output<TextBlockRef>();
     didDelete = output<TextBlockRef>();
-    feedbackEditor = viewChild.required(TextBlockFeedbackEditorComponent);
+    /** Emits once a requested focus was handled, whether or not an editor was available to receive it. */
+    didHandleFocusFeedback = output<TextBlockRef>();
+    // optional, because the editor is only rendered while the block has feedback or is selected
+    feedbackEditor = viewChild(TextBlockFeedbackEditorComponent);
 
     constructor() {
         this.textAssessmentAnalytics.setComponentRoute(this.route);
         effect(() => {
-            if (this.focusFeedback() && !this.readOnly()) {
-                afterNextRender(() => this.feedbackEditor().focus(), { injector: this.injector });
+            if (this.focusFeedback()) {
+                afterNextRender(
+                    () => {
+                        if (!this.readOnly()) {
+                            this.feedbackEditor()?.focus();
+                        }
+                        this.didHandleFocusFeedback.emit(this.textBlockRef());
+                    },
+                    { injector: this.injector },
+                );
             }
         });
     }
@@ -62,7 +73,7 @@ export class TextBlockAssessmentCardComponent {
         textBlockRef.initFeedback();
 
         if (autofocus) {
-            setTimeout(() => this.feedbackEditor().focus());
+            setTimeout(() => this.feedbackEditor()?.focus());
             if (!this.selected() && textBlockRef.feedback?.type === FeedbackType.MANUAL) {
                 this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
             }
