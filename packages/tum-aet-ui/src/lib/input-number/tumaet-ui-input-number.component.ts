@@ -54,6 +54,8 @@ export class TumAetUiInputNumberComponent implements ControlValueAccessor {
     readonly maxFractionDigits = input(0, { transform: numberAttribute });
     /** Locale used for formatting; omit it to use the browser locale. */
     readonly locale = input<string>();
+    /** Additional symbols accepted as decimal separators while typing. */
+    readonly acceptedDecimalSeparators = input<readonly string[]>([]);
     /**
      * `id` of the inner `<input>`, so an external `<label for>` associates. Defaults to the id of an enclosing
      * `tumaet-ui-form-field`, and to a unique per-instance id outside one.
@@ -124,15 +126,16 @@ export class TumAetUiInputNumberComponent implements ControlValueAccessor {
                     .map((part) => part.value),
             ]),
         ].sort((left, right) => right.length - left.length);
-        // Only the locale's own decimal symbol counts, never a hardcoded `.`: German uses `.` to group
-        // thousands, so accepting it would read `1.234` as a fraction instead of a grouped integer.
+        // By default only the locale's own decimal symbol counts. Consumers can opt into alternatives for
+        // fields that deliberately do not support digit grouping and therefore have no separator ambiguity.
         const decimalSeparators = [
-            ...new Set(
-                new Intl.NumberFormat(this.locale(), { minimumFractionDigits: 1 })
+            ...new Set([
+                ...new Intl.NumberFormat(this.locale(), { minimumFractionDigits: 1 })
                     .formatToParts(1.1)
                     .filter((part) => part.type === 'decimal')
                     .map((part) => part.value),
-            ),
+                ...this.acceptedDecimalSeparators(),
+            ]),
         ].sort((left, right) => right.length - left.length);
         return { digitBySymbol, digitSymbols, groupSeparators, decimalSeparators, minusSigns };
     }
