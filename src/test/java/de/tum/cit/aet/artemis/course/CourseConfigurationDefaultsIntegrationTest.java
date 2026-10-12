@@ -10,11 +10,15 @@ import java.util.HashSet;
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
+import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
@@ -31,6 +35,22 @@ class CourseConfigurationDefaultsIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     private DataSource dataSource;
+
+    @Autowired
+    private CourseConfigurationRepository courseConfigurationRepository;
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void courseCreationPersistsRequestedPresentationAssessmentsEnabled(boolean enabled) {
+        var course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>());
+        var configuration = new CourseConfiguration();
+        configuration.setPresentationAssessmentsEnabled(enabled);
+        course.setCourseConfiguration(configuration);
+
+        var saved = courseRepository.saveWithDefaultConfigurations(course);
+
+        assertThat(courseConfigurationRepository.findByCourseId(saved.getId()).orElseThrow().isPresentationAssessmentsEnabled()).isEqualTo(enabled);
+    }
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;

@@ -271,6 +271,13 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `PlagiarismSubmission` | PlagiarismComparison `plagiarism_comparison_id` | Required | No | Cascades. `comparison_side` says which half of the pair it is; the plagiarism case is a reference, not a parent. |
 | `PlagiarismSubmissionElement` | PlagiarismSubmission `plagiarism_submission_id` | Optional | **Yes** | Nullable, though it cascades when set. |
 
+### Presentation
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `PresentationAssessment` | Course `course_id` | Required | No | Cascades on course deletion. The linked exercise is an optional reference. |
+| `PresentationAssessmentInstance` | PresentationAssessment `presentation_assessment_id` | Required | No | Cascades on assessment deletion. |
+
 ### Programming
 
 | Entity | Belongs to | Parent required | Orphan possible | Notes |
@@ -461,7 +468,7 @@ name.
 
 ## Where orphans are still possible
 
-Of the 147 tables behind the 186 entities, 94 have a required parent, 24 are roots by design, 18 are
+Of the 149 tables behind the 188 entities, 96 have a required parent, 24 are roots by design, 18 are
 join entities whose parents are all required and five carry a check constraint over alternative
 parents. That leaves **6 tables where the schema permits an orphan**, in two shapes.
 
