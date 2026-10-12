@@ -17,6 +17,8 @@ import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import de.tum.cit.aet.artemis.aiworker.config.WorkerSettings;
 import de.tum.cit.aet.artemis.aiworker.domain.WorkerCommandType;
@@ -55,12 +57,17 @@ class WorkerCommandListenerTest {
             }
             return null;
         }).when(transport).receiveCommands(eq("worker-1"), any(), any());
-        new ApplicationContextRunner().withPropertyValues("spring.profiles.active=aiworker").withUserConfiguration(TaskSchedulingConfiguration.class, WorkerCommandListener.class)
-                .withBean(WorkerTransport.class, () -> transport).withBean(WorkerSettings.class, () -> settings)
-                .withBean("testSupervisor", WorkerSupervisorService.class, () -> supervisor).withBean(DistributedDataProvider.class, () -> provider)
-                .withPropertyValues("spring.threads.virtual.enabled=true", "artemis.aiworker.heartbeat-interval=PT0.1S").run(context -> {
+        new ApplicationContextRunner().withPropertyValues("spring.profiles.active=aiworker").withInitializer(context -> context.getEnvironment().setActiveProfiles("aiworker"))
+                .withUserConfiguration(TaskSchedulingConfiguration.class, WorkerCommandListener.class).withBean(WorkerTransport.class, () -> transport)
+                .withBean(WorkerSettings.class, () -> settings).withBean("testSupervisor", WorkerSupervisorService.class, () -> supervisor)
+                .withBean(DistributedDataProvider.class, () -> provider).withPropertyValues("spring.threads.virtual.enabled=true", "artemis.aiworker.heartbeat-interval=PT0.1S")
+                .run(context -> {
                     try {
                         assertThat(context).hasNotFailed();
+                        assertThat(context.getEnvironment().getActiveProfiles()).containsExactly("aiworker");
+                        assertThat(context).hasSingleBean(TaskScheduler.class);
+                        assertThat(context.getBean(TaskScheduler.class)).isInstanceOf(ThreadPoolTaskScheduler.class);
+                        assertThat(((ThreadPoolTaskScheduler) context.getBean(TaskScheduler.class)).getScheduledThreadPoolExecutor().getCorePoolSize()).isEqualTo(4);
                         assertThat(publishing.await(5, TimeUnit.SECONDS)).isTrue();
                         var identity = new ExecutionIdentityDTO("job", "token", UUID.randomUUID(), "worker-1", UUID.randomUUID(), 0);
                         var renew = new WorkerCommandDTO(WorkerCommandDTO.PROTOCOL_VERSION, WorkerCommandType.RENEW, identity, null);
