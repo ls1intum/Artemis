@@ -4,7 +4,7 @@
                    logicalFilePath="config/liquibase/changelog/20261012151949_changelog.xml">
 
     <!--
-        Give the manual results that still have no correction round one.
+        Give the manual results that still have no correction round their round, with the original before its answer.
 
         When a student complains about an automatic result, the result is changed to SEMI_AUTOMATIC so that a tutor can
         handle the complaint. An automatic result holds no correction round, and the complaint did not assign one, so
@@ -12,8 +12,16 @@
         the server for the result of round 0, found none, and the tutor was shown a page without editor and without the
         complaint form. The complaint now assigns round 0 itself; this repairs the results that were changed before.
 
-        A result gets the rounds after the highest one its submission already holds, in the order of the ids. For a
-        submission that only holds the changed result that is round 0.
+        Answering such a complaint creates a second result, the answer, which gets the round after the highest one the
+        submission holds. A result without a round does not count there, so the answer got round 0 while the original
+        still had none. The original has to come first again: the page of an accepted complaint asks for round 1 and has
+        to receive the answer, not the original.
+
+        The first result without a round and every result after it, in the order of the ids, get consecutive rounds. They
+        start after the highest round held by a result that was created before the first result without a round, or at
+        round 0 if there is none. The ids order the results the way they were created, so an original always precedes
+        its answer. A submission without a result lacking a round is not touched, and once the rounds are set none lacks
+        one, so running the statement again changes nothing.
     -->
 
     <changeSet id="20261012151949-01-backfill-correction-round-of-complained-results" author="krusche">
@@ -21,30 +29,44 @@
             UPDATE result
             SET correction_round = ranked.new_round
             FROM (SELECT r.id,
-                         COALESCE(taken.max_round, -1) + ROW_NUMBER() OVER (PARTITION BY r.submission_id ORDER BY r.id) AS new_round
+                         COALESCE(affected.prior_max_round + 1, 0) + ROW_NUMBER() OVER (PARTITION BY r.submission_id ORDER BY r.id) - 1 AS new_round
                   FROM result r
-                           LEFT JOIN (SELECT submission_id, MAX(correction_round) AS max_round
-                                      FROM result
-                                      WHERE submission_id IS NOT NULL
-                                        AND assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')
-                                      GROUP BY submission_id) taken ON taken.submission_id = r.submission_id
-                  WHERE r.submission_id IS NOT NULL
-                    AND r.correction_round IS NULL
+                           JOIN (SELECT first_without_round.submission_id,
+                                        first_without_round.first_id,
+                                        (SELECT MAX(prior.correction_round)
+                                         FROM result prior
+                                         WHERE prior.submission_id = first_without_round.submission_id
+                                           AND prior.id &lt; first_without_round.first_id
+                                           AND prior.assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')) AS prior_max_round
+                                 FROM (SELECT submission_id, MIN(id) AS first_id
+                                       FROM result
+                                       WHERE submission_id IS NOT NULL
+                                         AND correction_round IS NULL
+                                         AND assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')
+                                       GROUP BY submission_id) first_without_round) affected ON affected.submission_id = r.submission_id
+                  WHERE r.id &gt;= affected.first_id
                     AND r.assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')) AS ranked
             WHERE result.id = ranked.id
         </sql>
         <sql dbms="mysql">
             UPDATE result
                 JOIN (SELECT r.id,
-                             COALESCE(taken.max_round, -1) + ROW_NUMBER() OVER (PARTITION BY r.submission_id ORDER BY r.id) AS new_round
+                             COALESCE(affected.prior_max_round + 1, 0) + ROW_NUMBER() OVER (PARTITION BY r.submission_id ORDER BY r.id) - 1 AS new_round
                       FROM result r
-                               LEFT JOIN (SELECT submission_id, MAX(correction_round) AS max_round
-                                          FROM result
-                                          WHERE submission_id IS NOT NULL
-                                            AND assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')
-                                          GROUP BY submission_id) taken ON taken.submission_id = r.submission_id
-                      WHERE r.submission_id IS NOT NULL
-                        AND r.correction_round IS NULL
+                               JOIN (SELECT first_without_round.submission_id,
+                                            first_without_round.first_id,
+                                            (SELECT MAX(prior.correction_round)
+                                             FROM result prior
+                                             WHERE prior.submission_id = first_without_round.submission_id
+                                               AND prior.id &lt; first_without_round.first_id
+                                               AND prior.assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')) AS prior_max_round
+                                     FROM (SELECT submission_id, MIN(id) AS first_id
+                                           FROM result
+                                           WHERE submission_id IS NOT NULL
+                                             AND correction_round IS NULL
+                                             AND assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')
+                                           GROUP BY submission_id) first_without_round) affected ON affected.submission_id = r.submission_id
+                      WHERE r.id &gt;= affected.first_id
                         AND r.assessment_type IN ('MANUAL', 'SEMI_AUTOMATIC')) AS ranked
                 ON result.id = ranked.id
             SET result.correction_round = ranked.new_round

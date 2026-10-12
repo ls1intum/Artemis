@@ -38,6 +38,19 @@ jobs:
           shellcheck -e SC1091 deployment/kubernetes/install-localci-kubernetes-ubuntu.sh supporting_scripts/update_python_dependency_locks.sh
           python3 supporting_scripts/test_verified_installers.py
 
+  # The test templates are copied verbatim into every new exercise's test repository, so their
+  # unit test lives under supporting_scripts/ instead of next to them.
+  programming-template-tests:
+    name: programming exercise template tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Test requirement handling of the C and C++ test templates
+        run: python3 supporting_scripts/test_template_test_requirements.py
+
   actionlint:
     name: actionlint
     runs-on: ubuntu-latest
