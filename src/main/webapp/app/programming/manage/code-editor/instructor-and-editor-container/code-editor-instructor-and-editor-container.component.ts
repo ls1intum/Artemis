@@ -273,6 +273,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
         this.generationActivity.generationCompleted.pipe(takeUntilDestroyed()).subscribe((event) => this.onHyperionGenerationCompleted(event));
         this.generationActivity.generationReverted.pipe(takeUntilDestroyed()).subscribe(() => this.refreshAfterHyperionRepositoryChange());
+        this.generationActivity.exerciseContentsInvalidated.pipe(takeUntilDestroyed()).subscribe((jobId) => {
+            this.pendingGenerationRefreshJobId = jobId;
+            this.refreshAfterHyperionRepositoryChange();
+        });
         // Review threads offer feedback selection and the adaptation shortcut through the shared review service, so the
         // generic editors between here and the thread widgets carry no Hyperion inputs.
         this.exerciseReviewCommentService.connectAdaptation({ offered: this.adaptOffered, blockedReason: this.adaptBlockedReason });

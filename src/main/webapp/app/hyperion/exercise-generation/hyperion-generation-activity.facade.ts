@@ -95,6 +95,7 @@ export class HyperionGenerationActivityFacade {
     readonly exerciseId = computed(() => this.inputs().exerciseId());
     readonly refreshingEditor = computed(() => this.inputs().refreshingEditor());
     readonly generationReverted = new Subject<string>();
+    readonly exerciseContentsInvalidated = new Subject<string>();
     readonly generationCompleted = new Subject<HyperionGenerationCompletedEvent>();
 
     readonly jobId = signal<string | undefined>(undefined);
@@ -353,6 +354,10 @@ export class HyperionGenerationActivityFacade {
                             return;
                         }
                         if (expectedJobId === undefined || !this.ownedByCaller()) {
+                            const savedJobId = this.revertJobId() ?? this.jobId();
+                            if (savedJobId !== undefined && !this.reverted() && (this.revertAvailable() || this.liveExerciseChanged() === true)) {
+                                this.exerciseContentsInvalidated.next(savedJobId);
+                            }
                             this.reset();
                             this.ownershipResolved = true;
                             this.scheduleIdleStatusRefresh(exerciseId);
