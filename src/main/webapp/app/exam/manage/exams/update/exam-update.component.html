@@ -27,6 +27,9 @@
                 @if (!exam.title?.trim()) {
                     <div class="-mt-2 block text-sm text-state-danger" data-testid="title-validation-message" jhiTranslate="artemisApp.examManagement.titleMissingOrNotValid"></div>
                 }
+                @if (isChannelNameMissing) {
+                    <div class="-mt-2 block text-sm text-state-danger" data-testid="channel-name-validation-message" jhiTranslate="error.examChannelNameMissing"></div>
+                }
             </div>
             <div class="mb-4">
                 <div>
@@ -187,6 +190,11 @@
                             @if (gracePeriodInput.errors?.['max']) {
                                 <tumaet-ui-message severity="error"><span jhiTranslate="error.examGracePeriodTooHigh"></span></tumaet-ui-message>
                             }
+                            @if (isGracePeriodNegative) {
+                                <tumaet-ui-message severity="error" data-testid="grace-period-low-error"
+                                    ><span jhiTranslate="error.examGracePeriodNegative"></span
+                                ></tumaet-ui-message>
+                            }
                         </div>
                     </div>
                 </div>
@@ -219,6 +227,9 @@
                     @if (examMaxPointsInput.errors?.['pattern']) {
                         <tumaet-ui-message severity="error"><span jhiTranslate="error.examMaxPointsWholeNumber"></span></tumaet-ui-message>
                     }
+                    @if (isMaxPointsMissingOrTooLow) {
+                        <tumaet-ui-message severity="error" data-testid="max-points-low-error"><span jhiTranslate="error.examMaxPointsMissingOrTooLow"></span></tumaet-ui-message>
+                    }
                 </div>
                 <div class="flex flex-col gap-1">
                     <div>
@@ -238,6 +249,11 @@
                     />
                     @if (numberOfExercisesInput.errors?.['max']) {
                         <tumaet-ui-message severity="error"><span jhiTranslate="error.examNumberOfExercisesTooHigh"></span></tumaet-ui-message>
+                    }
+                    @if (isNumberOfExercisesTooLow) {
+                        <tumaet-ui-message severity="error" data-testid="number-of-exercises-low-error"
+                            ><span jhiTranslate="error.examNumberOfExercisesTooLow"></span
+                        ></tumaet-ui-message>
                     }
                 </div>
             </div>
@@ -274,6 +290,11 @@
                                     max="2"
                                     [(ngModel)]="exam.numberOfCorrectionRoundsInExam"
                                 />
+                                @if (!isValidNumberOfCorrectionRounds) {
+                                    <tumaet-ui-message severity="error" data-testid="correction-rounds-error"
+                                        ><span jhiTranslate="error.examCorrectionRoundsInvalid"></span
+                                    ></tumaet-ui-message>
+                                }
                             </div>
                             <div>
                                 <tumaet-ui-date-picker
@@ -283,6 +304,11 @@
                                     [(value)]="exam.publishResultsDate"
                                     [invalid]="!isValidPublishResultsDate"
                                 />
+                                @if (publishResultsDateErrorKey; as errorKey) {
+                                    <tumaet-ui-message severity="error" class="mt-1" data-testid="publishResultsDate-error"
+                                        ><span [jhiTranslate]="errorKey"></span
+                                    ></tumaet-ui-message>
+                                }
                             </div>
                         </div>
                         <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -301,6 +327,11 @@
                                     [(value)]="exam.examSummaryPublicationDate"
                                     [invalid]="!isValidExamSummaryPublicationDate"
                                 />
+                                @if (examSummaryPublicationDateErrorKey; as errorKey) {
+                                    <tumaet-ui-message severity="error" class="mt-1" data-testid="examSummaryPublicationDate-error"
+                                        ><span [jhiTranslate]="errorKey"></span
+                                    ></tumaet-ui-message>
+                                }
                             </div>
                         </div>
                     }
@@ -313,6 +344,11 @@
                                 [(value)]="exam.examStudentReviewStart"
                                 [invalid]="!isValidExamStudentReviewStart"
                             />
+                            @if (examStudentReviewStartErrorKey; as errorKey) {
+                                <tumaet-ui-message severity="error" class="mt-1" data-testid="examStudentReviewStart-error"
+                                    ><span [jhiTranslate]="errorKey"></span
+                                ></tumaet-ui-message>
+                            }
                         </div>
                         <div>
                             <tumaet-ui-date-picker
@@ -345,6 +381,11 @@
                         [(value)]="exam.exampleSolutionPublicationDate"
                         [invalid]="!isValidExampleSolutionPublicationDate"
                     />
+                    @if (exampleSolutionPublicationDateErrorKey; as errorKey) {
+                        <tumaet-ui-message severity="error" class="mt-1" data-testid="exampleSolutionPublicationDate-error"
+                            ><span [jhiTranslate]="errorKey"></span
+                        ></tumaet-ui-message>
+                    }
                 </div>
             </div>
             <hr class="my-4 border-(--border-color)" />

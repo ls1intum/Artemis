@@ -181,6 +181,139 @@ describe('ExamUpdateComponent', () => {
             expect(fixture.debugElement.query(titleValidationSelector)).toBeNull();
         });
 
+        describe('explanations of invalid fields', () => {
+            const hours = (offset: number) => dayjs().add(offset, 'hours');
+
+            /** Renders the form with the given changes applied to a copy of the exam. */
+            function renderWith(changes: Partial<Exam>) {
+                fixture.detectChanges();
+                component.exam = Object.assign(new Exam(), component.exam, changes);
+                fixture.detectChanges();
+            }
+
+            /** Returns the key of the message shown for the field, or undefined if the field shows none. */
+            function shownMessage(testId: string): string | undefined {
+                const message: HTMLElement | null = fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
+                return message === null ? undefined : message.textContent!.trim();
+            }
+
+            const validDates = () => ({ visibleDate: hours(1), startDate: hours(2), endDate: hours(3), workingTime: 3600 });
+
+            it('should explain a release date of results that is not after the end of the exam', () => {
+                renderWith({ ...validDates(), publishResultsDate: hours(2) });
+                expect(shownMessage('publishResultsDate-error')).toBe('error.examPublishResultsDateAfterEnd');
+
+                renderWith({ publishResultsDate: hours(4) });
+                expect(shownMessage('publishResultsDate-error')).toBeUndefined();
+
+                renderWith({ publishResultsDate: undefined });
+                expect(shownMessage('publishResultsDate-error')).toBeUndefined();
+            });
+
+            it('should explain a release date of results that is set while the end of the exam is missing', () => {
+                renderWith({ ...validDates(), endDate: undefined, publishResultsDate: hours(4) });
+                expect(shownMessage('publishResultsDate-error')).toBe('error.examPublishResultsDateEndMissing');
+            });
+
+            it('should explain a submission overview date before the end of the exam, after the release of results or without an end', () => {
+                renderWith({ ...validDates(), publishResultsDate: hours(5), examSummaryPublicationDate: hours(3) });
+                expect(shownMessage('examSummaryPublicationDate-error')).toBe('error.examSummaryPublicationDateAfterEnd');
+
+                renderWith({ examSummaryPublicationDate: hours(6) });
+                expect(shownMessage('examSummaryPublicationDate-error')).toBe('error.examSummaryPublicationDateBeforeRelease');
+
+                renderWith({ endDate: undefined, examSummaryPublicationDate: hours(4) });
+                expect(shownMessage('examSummaryPublicationDate-error')).toBe('error.examSummaryPublicationDateEndMissing');
+
+                renderWith({ endDate: hours(3), examSummaryPublicationDate: hours(4) });
+                expect(shownMessage('examSummaryPublicationDate-error')).toBeUndefined();
+
+                renderWith({ examSummaryPublicationDate: undefined });
+                expect(shownMessage('examSummaryPublicationDate-error')).toBeUndefined();
+            });
+
+            it('should explain a start of the student review that is not after the release of results or has no release date', () => {
+                renderWith({ ...validDates(), publishResultsDate: hours(5), examStudentReviewStart: hours(4), examStudentReviewEnd: hours(7) });
+                expect(shownMessage('examStudentReviewStart-error')).toBe('error.examStudentReviewStartAfterRelease');
+
+                renderWith({ publishResultsDate: undefined });
+                expect(shownMessage('examStudentReviewStart-error')).toBe('error.examStudentReviewStartReleaseMissing');
+
+                renderWith({ publishResultsDate: hours(5), examStudentReviewStart: hours(6) });
+                expect(shownMessage('examStudentReviewStart-error')).toBeUndefined();
+
+                renderWith({ examStudentReviewStart: undefined, examStudentReviewEnd: undefined });
+                expect(shownMessage('examStudentReviewStart-error')).toBeUndefined();
+            });
+
+            it('should explain an example solution publication date before the end of the exam or before the visible date', () => {
+                renderWith({ ...validDates(), exampleSolutionPublicationDate: hours(2) });
+                expect(shownMessage('exampleSolutionPublicationDate-error')).toBe('error.examExampleSolutionPublicationDateAfterEnd');
+
+                renderWith({ endDate: undefined, exampleSolutionPublicationDate: hours(0) });
+                expect(shownMessage('exampleSolutionPublicationDate-error')).toBe('error.examExampleSolutionPublicationDateAfterVisible');
+
+                renderWith({ endDate: hours(3), exampleSolutionPublicationDate: hours(4) });
+                expect(shownMessage('exampleSolutionPublicationDate-error')).toBeUndefined();
+
+                renderWith({ exampleSolutionPublicationDate: undefined });
+                expect(shownMessage('exampleSolutionPublicationDate-error')).toBeUndefined();
+            });
+
+            it('should explain a number of correction rounds other than 1 or 2 for a real exam', () => {
+                for (const invalidRounds of [0, 3, undefined]) {
+                    renderWith({ numberOfCorrectionRoundsInExam: invalidRounds });
+                    expect(shownMessage('correction-rounds-error')).toBe('error.examCorrectionRoundsInvalid');
+                }
+                for (const validRounds of [1, 2]) {
+                    renderWith({ numberOfCorrectionRoundsInExam: validRounds });
+                    expect(shownMessage('correction-rounds-error')).toBeUndefined();
+                }
+            });
+
+            it('should explain a negative grace period', () => {
+                renderWith({ gracePeriod: -1 });
+                expect(shownMessage('grace-period-low-error')).toBe('error.examGracePeriodNegative');
+
+                renderWith({ gracePeriod: 0 });
+                expect(shownMessage('grace-period-low-error')).toBeUndefined();
+            });
+
+            it('should explain missing or too low maximum points', () => {
+                for (const invalidPoints of [0, -5, undefined]) {
+                    renderWith({ examMaxPoints: invalidPoints });
+                    expect(shownMessage('max-points-low-error')).toBe('error.examMaxPointsMissingOrTooLow');
+                }
+                renderWith({ examMaxPoints: 1 });
+                expect(shownMessage('max-points-low-error')).toBeUndefined();
+            });
+
+            it('should explain a number of exercises below 1 but accept an empty one', () => {
+                renderWith({ numberOfExercisesInExam: 0 });
+                expect(shownMessage('number-of-exercises-low-error')).toBe('error.examNumberOfExercisesTooLow');
+
+                renderWith({ numberOfExercisesInExam: undefined });
+                expect(shownMessage('number-of-exercises-low-error')).toBeUndefined();
+
+                renderWith({ numberOfExercisesInExam: 1 });
+                expect(shownMessage('number-of-exercises-low-error')).toBeUndefined();
+            });
+
+            it('should explain an emptied channel name', () => {
+                fixture.detectChanges();
+                component.hideChannelNameInput.set(false);
+                renderWith({ channelName: '' });
+                expect(shownMessage('channel-name-validation-message')).toBe('error.examChannelNameMissing');
+
+                renderWith({ channelName: 'exam-test' });
+                expect(shownMessage('channel-name-validation-message')).toBeUndefined();
+
+                component.hideChannelNameInput.set(true);
+                renderWith({ channelName: '' });
+                expect(shownMessage('channel-name-validation-message')).toBeUndefined();
+            });
+        });
+
         it('should not allow saving while a date field holds text that is not a date', () => {
             examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
             examWithoutExercises.startDate = dayjs().add(2, 'hours');
