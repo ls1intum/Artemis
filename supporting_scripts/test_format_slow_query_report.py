@@ -45,11 +45,11 @@ class StaticConfirmationTest(unittest.TestCase):
         matches = {g["callerMethod"]: g["static_matches"] for g in groups}
         self.assertEqual(matches, {"ResultService.loadAll": [1], "OtherService.run": []})
 
-    def test_query_shape_finding_on_the_repository_method_confirms(self):
+    def test_query_shape_finding_on_the_same_repository_method_does_not_confirm(self):
         groups = report.group_repeated_queries([repeated()])
         shape = {"type": "multiple_collection_fetch", "key": "k", "member": "ResultRepository.findByParticipationId"}
         report.link_static_confirmations(groups, [shape])
-        self.assertEqual(groups[0]["static_matches"], [0])
+        self.assertEqual(groups[0]["static_matches"], [])
 
 
 class BaselineTest(unittest.TestCase):

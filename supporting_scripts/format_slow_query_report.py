@@ -134,21 +134,18 @@ def group_repeated_queries(findings: list) -> list:
 
 
 def link_static_confirmations(groups: list, static_findings: list):
-    """Attach to each repeated-query group the static findings about the very code that issued it:
-    a query-shape rule on the same repository method, or a repository-call-in-loop finding for the
-    same repository method inside the same calling method. An exact match on method names -- both
-    sides name code by Class.method -- not a guess from table names."""
-    by_member = {}
+    """Attach to each repeated-query group the repository-call-in-loop findings for the same
+    repository method inside the same calling method. An exact match on method names -- both
+    sides name code by Class.method -- not a guess from table names. Only this rule describes a
+    query issued once per item; a query-shape rule (several collections fetched, a collection
+    fetched with paging) is about a single query and is not evidence of a repeated one, even
+    when it is on the same repository method."""
     by_loop_call = {}
     for i, f in enumerate(static_findings):
-        if f.get("type") in ("multiple_collection_fetch", "pageable_collection_fetch") and f.get("member"):
-            by_member.setdefault(f["member"], []).append(i)
         if f.get("type") == "repository_call_in_loop":
             by_loop_call.setdefault((f.get("member"), f.get("repositoryMethod")), []).append(i)
     for g in groups:
-        matches = list(by_member.get(g["repositoryMethod"], []))
-        matches += by_loop_call.get((g["callerMethod"], g["repositoryMethod"]), [])
-        g["static_matches"] = sorted(set(matches))
+        g["static_matches"] = sorted(set(by_loop_call.get((g["callerMethod"], g["repositoryMethod"]), [])))
 
 
 def rank_repeated(groups: list) -> list:
