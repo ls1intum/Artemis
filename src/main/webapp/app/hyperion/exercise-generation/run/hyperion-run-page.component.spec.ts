@@ -177,12 +177,12 @@ describe('HyperionRunPageComponent', () => {
     });
 
     it('requires confirmation before undo and refreshes the restored exercise afterwards', () => {
-        render(status({ revertAvailable: true, revertMode: 'GENERATE', mode: 'GENERATE' }));
+        render(status({ revertAvailable: true, revertJobId: 'job-1', revertMode: 'GENERATE', mode: 'GENERATE' }));
         const find = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'find').mockReturnValue(of(new HttpResponse({ body: { ...exercise(), title: 'Restored draft' } })));
         clickButton('hyperion-run-undo');
         expect(service.revertExerciseGeneration).not.toHaveBeenCalled();
         clickButton('hyperion-run-undo-confirm');
-        expect(service.revertExerciseGeneration).toHaveBeenCalledExactlyOnceWith(EXERCISE_ID);
+        expect(service.revertExerciseGeneration).toHaveBeenCalledExactlyOnceWith(EXERCISE_ID, 'job-1');
         expect(find).toHaveBeenCalledWith(EXERCISE_ID);
         expect(fixture.nativeElement.textContent).toContain('Restored draft');
         expect(testId('hyperion-run-undone')).not.toBeNull();
@@ -190,7 +190,7 @@ describe('HyperionRunPageComponent', () => {
     });
 
     it('keeps the exercise unchanged when the undo confirmation is dismissed', () => {
-        render(status({ revertAvailable: true, revertMode: 'GENERATE' }));
+        render(status({ revertAvailable: true, revertJobId: 'job-1', revertMode: 'GENERATE' }));
         clickButton('hyperion-run-undo');
         fixture.componentInstance['dismissRevert']();
         fixture.detectChanges();
@@ -430,7 +430,7 @@ describe('HyperionRunPageComponent', () => {
     it('allows a new generation after replay expires while preserving the undo baseline', () => {
         TestBed.inject(TranslateService).setTranslation('en', hyperionGenerationEn, true);
         TestBed.inject(TranslateService).use('en');
-        render(status({ revertAvailable: true, revertMode: 'GENERATE', events: [] }));
+        render(status({ revertAvailable: true, revertJobId: 'job-1', revertMode: 'GENERATE', events: [] }));
         expect(fixture.componentInstance['status']()).toBe('historyExpired');
         expect(fixture.componentInstance['canRevert']()).toBe(true);
         expect(fixture.componentInstance['jobId']()).toBe('job-1');

@@ -40,6 +40,7 @@ function normalizeStatus(status: TestGenerationStatus): HyperionGenerationStatus
         ...status,
         events: status.events.map(normalizeEvent),
         revertAvailable: status.revertAvailable ?? false,
+        revertJobId: status.revertJobId ?? (status.revertAvailable ? status.jobId : undefined),
         ownedByCaller: status.ownedByCaller ?? true,
         cancellable: status.cancellable ?? status.running,
         accountingState: status.accountingState ?? (status.running ? 'PENDING' : 'COMPLETE'),
@@ -65,7 +66,7 @@ class MockService {
 
     revertCalls: number[] = [];
 
-    revertExerciseGeneration(exerciseId: number): Observable<ExerciseGenerationRevertResult> {
+    revertExerciseGeneration(exerciseId: number, _runId: string): Observable<ExerciseGenerationRevertResult> {
         this.revertCalls.push(exerciseId);
         return of({ fullyReverted: true, revertedRepositories: ['template', 'solution', 'tests'], completedAt: '2026-07-10T20:00:00Z' });
     }
@@ -694,6 +695,7 @@ describe('HyperionGenerationActivityFacade', () => {
         const errorAlert = vi.spyOn(TestBed.inject(AlertService), 'error');
         const reverted = vi.fn();
         component.generationReverted.subscribe(reverted);
+        component.confirmRevert();
         component.acceptRevert();
 
         service.status = { jobId: 'current', fileChanges: [], running: true, events: [{ type: 'PROGRESS', message: 'Current exercise' }] };
@@ -722,6 +724,7 @@ describe('HyperionGenerationActivityFacade', () => {
         const component = fixture.componentInstance.facade;
         const response = new Subject<ExerciseGenerationRevertResult>();
         vi.spyOn(service, 'revertExerciseGeneration').mockReturnValue(response);
+        component.confirmRevert();
         component.acceptRevert();
         if (outcome === 'success') {
             response.next({ fullyReverted: true, revertedRepositories: ['template'], completedAt: '2026-07-10T20:00:00Z' });
@@ -763,6 +766,7 @@ describe('HyperionGenerationActivityFacade', () => {
         const component = fixture.componentInstance.facade;
         const response = new Subject<ExerciseGenerationRevertResult>();
         vi.spyOn(service, 'revertExerciseGeneration').mockReturnValue(response);
+        component.confirmRevert();
         component.acceptRevert();
         expect(component.reverting()).toBe(true);
         service.status = { jobId: 'current', fileChanges: [], running: true, events: [] };
@@ -935,6 +939,23 @@ describe('HyperionGenerationActivityFacade', () => {
             completedAt: '',
         });
     });
+    it('keeps undo bound to the run shown when confirmation opened', () => {
+        const fixture = createWith({ jobId: 'old', running: false, events: [], fileChanges: [], revertAvailable: true });
+        const component = fixture.componentInstance.facade;
+        const revert = vi.spyOn(service, 'revertExerciseGeneration');
+        component.confirmRevert();
+        component.revertJobId.set('newer-save');
+        component.acceptRevert();
+        expect(revert).toHaveBeenCalledExactlyOnceWith(42, 'old');
+    });
+
+    it('does not execute undo without confirming a specific run', () => {
+        const fixture = createWith({ jobId: 'old', running: false, events: [], fileChanges: [], revertAvailable: true });
+        const revert = vi.spyOn(service, 'revertExerciseGeneration');
+        fixture.componentInstance.facade.acceptRevert();
+        expect(revert).not.toHaveBeenCalled();
+    });
+
     it('stops running on a CANCELLED terminal event from the stream', () => {
         const fixture = createWith({ jobId: 'j1', running: true, mode: 'ADAPT', events: [], fileChanges: [] });
         const component = fixture.componentInstance.facade;
@@ -965,7 +986,7 @@ describe('HyperionGenerationActivityFacade', () => {
             .fn()
             .mockReturnValueOnce(of(runningStatus))
             .mockReturnValueOnce(of(stoppedStatus))
-            .mockReturnValueOnce(of({ ...stoppedStatus, revertAvailable: true }));
+            .mockReturnValueOnce(of({ ...stoppedStatus, revertAvailable: true, revertJobId: 'prior-adaptation' }));
         component.attachToJob('later-run', 'GENERATE');
 
         service.stream$.next({ type: 'CANCELLED', message: 'Cancelled' });

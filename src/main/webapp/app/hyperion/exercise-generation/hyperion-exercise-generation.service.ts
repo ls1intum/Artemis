@@ -38,8 +38,8 @@ export class HyperionExerciseGenerationService {
         return this.api.cancelExerciseGeneration(exerciseId, jobId);
     }
 
-    revertExerciseGeneration(exerciseId: number): Observable<ExerciseGenerationRevertResult> {
-        return this.api.revertExerciseGeneration(exerciseId);
+    revertExerciseGeneration(exerciseId: number, runId: string): Observable<ExerciseGenerationRevertResult> {
+        return this.api.revertExerciseGeneration(exerciseId, runId);
     }
 
     subscribeToStream(jobId: string): Observable<HyperionGenerationMessage> {

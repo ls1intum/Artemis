@@ -112,6 +112,8 @@ export class HyperionGenerationActivityFacade {
     readonly completionStatus = signal<HyperionGenerationCompletionStatus | undefined>(undefined);
     readonly liveExerciseChanged = signal<boolean | undefined>(undefined);
     readonly revertAvailable = signal<boolean>(false);
+    private confirmedRevertJobId?: string;
+
     readonly revertJobId = signal<string | undefined>(undefined);
     readonly revertMode = signal<HyperionGenerationMode | undefined>(undefined);
     readonly ownedByCaller = signal<boolean>(true);
@@ -125,7 +127,7 @@ export class HyperionGenerationActivityFacade {
     readonly reverted = signal<boolean>(false);
     readonly revertPartialRepositories = signal<string | undefined>(undefined);
 
-    readonly canRevert = computed(() => !this.running() && !this.refreshingEditor() && !this.reverted() && this.revertAvailable());
+    readonly canRevert = computed(() => !this.running() && !this.refreshingEditor() && !this.reverted() && this.revertAvailable() && !!this.revertJobId());
     readonly effectiveRevertMode = computed(() => this.revertMode() ?? this.revertedMode() ?? this.mode());
 
     /** Owner-only usage: provisional while running, sealed after completion. */
@@ -206,19 +208,23 @@ export class HyperionGenerationActivityFacade {
         if (!this.canRevert() || this.reverting()) {
             return;
         }
+        this.confirmedRevertJobId = this.revertJobId();
         this.confirmRevertVisible.set(true);
     }
 
     dismissRevert(): void {
+        this.confirmedRevertJobId = undefined;
         this.confirmRevertVisible.set(false);
     }
 
     acceptRevert(): void {
         this.confirmRevertVisible.set(false);
-        this.revert();
+        const runId = this.confirmedRevertJobId;
+        this.confirmedRevertJobId = undefined;
+        if (runId) this.revert(runId);
     }
 
-    private revert(): void {
+    private revert(runId: string): void {
         const id = this.exerciseId();
         if (this.destroyRef.destroyed || id === undefined || !this.canRevert() || this.reverting()) {
             return;
@@ -226,7 +232,7 @@ export class HyperionGenerationActivityFacade {
         const job = this.jobId();
         this.reverting.set(true);
         this.service
-            .revertExerciseGeneration(id)
+            .revertExerciseGeneration(id, runId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (result) => {
@@ -751,6 +757,7 @@ export class HyperionGenerationActivityFacade {
         this.reverted.set(false);
         this.revertedMode.set(undefined);
         this.revertPartialRepositories.set(undefined);
+        this.confirmedRevertJobId = undefined;
         this.confirmRevertVisible.set(false);
     }
 

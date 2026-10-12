@@ -1567,7 +1567,7 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
-  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert:
+  /api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}/revert:
     post:
       tags: [hyperion-exercise-generation]
       operationId: revertExerciseGeneration
@@ -1576,6 +1576,10 @@ paths:
         in: path
         required: true
         schema: {type: integer, format: int64}
+      - name: runId
+        in: path
+        required: true
+        schema: {type: string}
       responses:
         '200':
           description: OK

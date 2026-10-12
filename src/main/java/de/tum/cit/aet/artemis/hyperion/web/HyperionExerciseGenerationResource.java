@@ -299,23 +299,28 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * POST programming-exercises/{exerciseId}/generate-exercise/revert : reverts the most recent saved generation or adaptation, resetting its template/solution/tests repositories
+     * POST programming-exercises/{exerciseId}/generation/runs/{runId}/revert : restores the selected saved run only if it is still the latest mutation, resetting its repositories
      * back to the state captured before persistence.
      *
      * @param exerciseId the programming exercise id
+     * @param runId      the exact run selected by the instructor
      * @return 200 if a baseline was found and fully reverted; 409 if at least one repository failed to revert; 404 if there is nothing to revert
      */
-    @PostMapping("programming-exercises/{exerciseId}/generate-exercise/revert")
+    @PostMapping("programming-exercises/{exerciseId}/generation/runs/{runId}/revert")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<ExerciseGenerationRevertResultDTO> revertExerciseGeneration(@PathVariable long exerciseId) {
+    public ResponseEntity<ExerciseGenerationRevertResultDTO> revertExerciseGeneration(@PathVariable long exerciseId, @PathVariable String runId) {
         log.debug("REST request to revert the last saved agentic generation run of exercise [{}]", exerciseId);
         ProgrammingExercise exercise = loadExercise(exerciseId);
         validateDraftExercise(exercise);
         User user = userRepository.getUserWithAuthorities();
-        Optional<String> revertibleJobId = generationRevertService.findRevertibleJobId(exerciseId);
         String revertSlot = jobService.claimRevertSlot(user, exerciseId);
         var consistent = new java.util.concurrent.atomic.AtomicBoolean();
         try {
+            Optional<String> revertibleJobId = generationRevertService.findRevertibleJobId(exerciseId);
+            if (revertibleJobId.isEmpty() || !runId.equals(revertibleJobId.get())) {
+                consistent.set(!jobService.isRevertRecoveryRetry(revertSlot));
+                return revertibleJobId.isEmpty() ? ResponseEntity.notFound().build() : ResponseEntity.status(HttpStatus.CONFLICT).build();
+            }
             return generationRevertService
                     .revert(exercise, user,
                             () -> jobService.isOwnedActiveJob(exerciseId, revertSlot) && programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId))
