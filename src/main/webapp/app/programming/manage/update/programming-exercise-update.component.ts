@@ -621,7 +621,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                                 this.isExamMode.set(false);
                                 this.courseService.find(this.courseId()).subscribe((res) => {
                                     this.programmingExercise.course = res.body!;
-                                    if (!params['exerciseId'] && this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
+                                    if (
+                                        !params['exerciseId'] &&
+                                        this.programmingExercise.course?.defaultProgrammingLanguage &&
+                                        !this.isImportFromFile &&
+                                        !this.isImportFromSharing
+                                    ) {
                                         this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
                                     }
                                     this.exerciseCategories = this.programmingExercise.categories || [];

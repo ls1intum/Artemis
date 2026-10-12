@@ -15,7 +15,12 @@
                 (ngModelChange)="select.model = programmingExerciseCreationConfig().onProgrammingLanguageChange($event)"
                 name="programmingLanguage"
                 id="field_programmingLanguage"
-                [disabled]="programmingExerciseCreationConfig().isImportFromExistingExercise || !!programmingExercise().id || programmingExerciseCreationConfig().isImportFromFile"
+                [disabled]="
+                    programmingExerciseCreationConfig().isImportFromExistingExercise ||
+                    !!programmingExercise().id ||
+                    programmingExerciseCreationConfig().isImportFromFile ||
+                    programmingExerciseCreationConfig().isImportFromSharing
+                "
             >
                 @for (supportedLanguage of programmingExerciseCreationConfig().supportedLanguages; track supportedLanguage) {
                     <option [value]="supportedLanguage" [jhiTranslate]="'artemisApp.ProgrammingLanguage.' + supportedLanguage"></option>

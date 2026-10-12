@@ -144,6 +144,44 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         });
     });
 
+    describe('programming language selector', () => {
+        const getLanguageSelect = (): HTMLSelectElement => fixture.nativeElement.querySelector('#field_programmingLanguage');
+
+        const setUp = async (configOverrides: Partial<ProgrammingExerciseCreationConfig>, exerciseId?: number) => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = exerciseId;
+            exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            exercise.buildConfig = new ProgrammingExerciseBuildConfig();
+            fixture.componentRef.setInput('programmingExercise', exercise);
+            fixture.componentRef.setInput(
+                'programmingExerciseCreationConfig',
+                Object.assign({}, programmingExerciseCreationConfigMock, { supportedLanguages: [ProgrammingLanguage.JAVA, ProgrammingLanguage.PYTHON] }, configOverrides),
+            );
+            fixture.detectChanges();
+            // NgModel applies the disabled state in a microtask
+            await fixture.whenStable();
+        };
+
+        it('should be enabled when a new exercise is created', async () => {
+            await setUp({});
+            expect(getLanguageSelect().disabled).toBe(false);
+        });
+
+        it('should be disabled when editing an existing exercise', async () => {
+            await setUp({}, 42);
+            expect(getLanguageSelect().disabled).toBe(true);
+        });
+
+        it.each([
+            ['importing an existing exercise', { isImportFromExistingExercise: true }],
+            ['importing from a file', { isImportFromFile: true }],
+            ['importing from the sharing platform', { isImportFromSharing: true }],
+        ])('should be disabled when %s', async (_description, configOverrides) => {
+            await setUp(configOverrides);
+            expect(getLanguageSelect().disabled).toBe(true);
+        });
+    });
+
     describe('project type picker', () => {
         const getProjectTypeButtons = (): HTMLButtonElement[] => Array.from(fixture.nativeElement.querySelectorAll('jhi-mode-picker button'));
 
