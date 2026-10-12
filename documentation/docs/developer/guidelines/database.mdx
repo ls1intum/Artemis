@@ -254,6 +254,19 @@ team settings are exposed only for team-mode exercises (`Exercise.getTeamAssignm
 import persist the build settings after the exercise exists through
 `ProgrammingExerciseBuildConfigRepository.saveForExercise`.
 
+A programming exercise also owns one `MetisExerciseConfig` row, the settings of the Metis comprehension check, whether or
+not the Metis module is enabled on the server. The module's repositories only exist while it is enabled, so the exercise
+module writes the row itself, the way `CourseDefaultConfigurationsRepository` writes the Iris and tutorial-group rows of a
+course: `ExerciseConfigurationService.initialize` calls `ExerciseDefaultConfigurationsRepository.ensureDefaultConfigurations`,
+which decides from the exercise type, checks for the row with a plain read and inserts it with a plain `INSERT ... VALUES`
+that names only the exercise, so every setting comes from the column defaults and Metis starts switched off. Native
+statements against the table keep the exercise module free of any Metis class. A concurrent insert of the same row is
+tolerated, and a call that finds the row changes nothing. The programming import, which goes to the repositories directly,
+makes the same call, and so does `ProgrammingExerciseCreationUpdateService.updateProgrammingExercise` next to the `applyTo`
+calls of the team and plagiarism rows, so the next update of a programming exercise whose creation failed half-way adds the
+row that creation left out. The migration that created the table gave every existing programming exercise its row.
+Switching Metis on or off later only changes the row's `enabled` flag.
+
 #### Turning an existing association lazy
 
 `open-in-view` is disabled, so the persistence context is already closed when a response is serialized. An association the query did not fetch reads as **absent** - which surfaces either as a `LazyInitializationException` or, where the getter guards with `Hibernate.isInitialized`, as a silently wrong value.

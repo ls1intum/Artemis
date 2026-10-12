@@ -246,9 +246,9 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | Entity | Belongs to | Parent required | Orphan possible | Notes |
 | --- | --- | --- | --- | --- |
 | `MetisCheck` | Participation `participation_id` | Required | No | Cascades. Reached by every participation deletion path, so course reset and account deletion need no hook. |
-| `MetisExerciseConfig` | Exercise `exercise_id` | Required | No | Holds the exercise key as its primary key; cascades. |
+| `MetisExerciseConfig` | Exercise `exercise_id` | Required | No | Holds the exercise key as its primary key; cascades. Every programming exercise owns one from the moment it is stored, also while the module is disabled. |
 | `MetisGroupWindow` | MetisExerciseConfig `exercise_id` and TutorialGroup `tutorial_group_id` | Required (all) | No | Cascades on both. |
-| `MetisQuestion` | MetisCheck `check_id` | Required | No | Cascades. Follow-ups also cascade from their main question. |
+| `MetisQuestion` | MetisCheck `check_id` | Required | No | Cascades. Follow-ups also cascade from their main question, which their key requires to be in the same check. |
 
 ### Modeling
 
@@ -483,7 +483,7 @@ name.
 
 ## Where orphans are still possible
 
-Of the 149 tables behind the 188 entities, 96 have a required parent, 24 are roots by design, 18 are
+Of the 153 tables behind the 192 entities, 99 have a required parent, 24 are roots by design, 19 are
 join entities whose parents are all required and five carry a check constraint over alternative
 parents. That leaves **6 tables where the schema permits an orphan**, in two shapes.
 
@@ -525,8 +525,9 @@ with its readers, onto its own repository read at the decision point — the sha
 Moving the key does not make the row optional. Every course and every exercise owns exactly one row of each
 configuration, created together with its owner and updated in place from then on, so a setting that changes never
 inserts or deletes anything and no flow needs a lock or a transaction around it. A course gets its rows from
-`CourseRepository.saveWithDefaultConfigurations`; an exercise gets its team assignment and plagiarism detection rows from
-`ExerciseConfigurationService.initialize`, which every path that stores a new exercise calls right after the first save.
+`CourseRepository.saveWithDefaultConfigurations`; an exercise gets its team assignment and plagiarism detection rows, and a
+programming exercise also its Metis configuration row, from `ExerciseConfigurationService.initialize`, which every path that
+stores a new exercise calls right after the first save.
 The rows are inserted with a plain insert after an unlocked existence read, so a path that already ran it is not an error, and a row that is
 missing is reported with an `EntityNotFoundException` rather than created behind the caller's back.
 

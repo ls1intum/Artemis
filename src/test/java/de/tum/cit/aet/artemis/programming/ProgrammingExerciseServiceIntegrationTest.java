@@ -29,6 +29,7 @@ import tools.jackson.databind.node.ObjectNode;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseDefaultConfigurationsRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -63,6 +64,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
     @Autowired
     private ProgrammingExerciseTaskTestRepository programmingExerciseTaskTestRepository;
+
+    @Autowired
+    private ExerciseDefaultConfigurationsRepository exerciseDefaultConfigurationsRepository;
 
     @BeforeEach
     void setUp() {
@@ -114,6 +118,17 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         final var newStaticCodeAnalysisCategoriesIDs = newlyImported.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toSet());
         assertThat(newlyImported.getStaticCodeAnalysisCategories()).hasSameSizeAs(programmingExercise.getStaticCodeAnalysisCategories());
         assertThat(programmingExercise.getStaticCodeAnalysisCategories()).noneMatch(category -> newStaticCodeAnalysisCategoriesIDs.contains(category.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importProgrammingExerciseBasis_givesTheImportItsOwnMetisConfiguration() {
+        final var imported = importExerciseBase();
+
+        // The import goes to the configuration repositories directly rather than through ExerciseConfigurationService.initialize, so it has to give the new
+        // exercise its permanent Metis configuration itself.
+        assertThat(imported.getId()).isNotEqualTo(programmingExercise.getId());
+        assertThat(exerciseDefaultConfigurationsRepository.hasMetisExerciseConfig(imported.getId())).isTrue();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

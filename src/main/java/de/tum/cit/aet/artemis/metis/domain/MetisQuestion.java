@@ -26,7 +26,9 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
  *
  * <p>
  * The check is the parent, and a follow-up is additionally removed with its main question. The pair (check, order) is
- * unique in the schema.
+ * unique in the schema, and the key from a follow-up to its main question covers the check as well, so a follow-up can only
+ * point at a question of its own check. The schema does not check that this question is a main question; keeping follow-ups
+ * one level deep is up to the code that writes them.
  */
 @Entity
 @Table(name = "metis_question")
@@ -41,14 +43,20 @@ public class MetisQuestion extends DomainObject {
     @Column(name = "question_order", nullable = false)
     private int questionOrder;
 
-    /** The main question this is a follow-up to, or null for a main question. A follow-up is removed with its main question. */
+    /**
+     * The main question this is a follow-up to, or null for a main question. The main question belongs to the same check, which
+     * the schema enforces, and a follow-up is removed with it.
+     */
     @Nullable
     @Column(name = "parent_question_id")
     private Long parentQuestionId;
 
-    /** Path of the file in the student's diff the question is about. Main questions only; null for follow-ups. */
+    /**
+     * Repository-relative path of the file in the student's diff the question is about, up to 1024 characters like the paths the
+     * repository file endpoints accept. Main questions only; null for follow-ups.
+     */
     @Nullable
-    @Column(name = "focus_file_path", length = 255)
+    @Column(name = "focus_file_path", length = 1024)
     private String focusFilePath;
 
     /** Added plus deleted lines of the focus file at generation time. Main questions only; null for follow-ups. */
