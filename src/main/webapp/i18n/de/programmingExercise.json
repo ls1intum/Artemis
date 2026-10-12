@@ -318,6 +318,7 @@
             "checkPlagiarism": "Plagiatsprüfung",
             "checkPlagiarismSuccess": "Plagiatsprüfung abgeschlossen. Ergebnisse sind in der zip-Datei enthalten.",
             "repositoryFilesError": "Repository-Dateien konnten nicht abgerufen werden.",
+            "problemStatementCouldNotBeUpdated": "Die Aufgabenstellung der Übung konnte nicht aktualisiert werden.",
             "editable": {
                 "unsaved": "Ungespeichert.",
                 "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",

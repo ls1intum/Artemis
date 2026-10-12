@@ -1,4 +1,4 @@
-PyGithub==2.9.1
+PyGithub==2.10.0
 urllib3>=2.8.0
-pyjwt==2.15.0
-idna==3.18
+pyjwt==2.15.1
+idna==3.20

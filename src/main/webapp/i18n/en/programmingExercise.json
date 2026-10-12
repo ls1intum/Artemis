@@ -318,6 +318,7 @@
             "checkPlagiarism": "Plagiarism",
             "checkPlagiarismSuccess": "Plagiarism check finished. Results are included in the zip file.",
             "repositoryFilesError": "Repository files could not be retrieved.",
+            "problemStatementCouldNotBeUpdated": "The problem statement of this exercise could not be updated.",
             "editable": {
                 "unsaved": "Unsaved.",
                 "unsavedTooltip": "There are unsaved changes in the problem statement.",

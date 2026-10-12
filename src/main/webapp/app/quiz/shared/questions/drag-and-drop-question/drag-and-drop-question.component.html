@@ -110,6 +110,7 @@
                     @if (!showResult()) {
                         <div>
                             @for (dropLocation of dragAndDropQuestion().dropLocations; track dropLocation) {
+                                <!-- A drop location holds at most one item, so there is nothing to sort (see the list of unassigned items below) -->
                                 <div
                                     id="drop-location"
                                     data-testid="drop-location"
@@ -123,6 +124,7 @@
                                     }"
                                     (cdkDropListDropped)="onDragDrop(dropLocation, $event)"
                                     cdkDropList
+                                    cdkDropListSortingDisabled
                                     [cdkDropListAutoScrollStep]="dragAutoScrollStep"
                                 >
                                     @if (dragItemForDropLocation(dropLocation)) {
@@ -276,12 +278,20 @@
                     <div></div>
                 }
                 @if (!showResult()) {
+                    <!--
+                        Sorting is disabled because the order of the unassigned items carries no meaning: onDragDrop ignores the drop index, and the
+                        list is rebuilt from the question. With sorting, the CDK moves the other items out of the way of the dragged one whenever the
+                        pointer moves or the view scrolls. It assumes a single column, so in the wrapped rows of a small screen the items jumped up
+                        and down while the view scrolled during a drag.
+                    -->
                     <div
                         class="drag-items"
                         id="drag-items"
+                        data-testid="drag-items"
                         [ngClass]="dropAllowed() ? 'drop-allowed' : ''"
                         (cdkDropListDropped)="onDragDrop(undefined, $event)"
                         cdkDropList
+                        cdkDropListSortingDisabled
                         [cdkDropListAutoScrollStep]="dragAutoScrollStep"
                     >
                         @for (dragItem of getUnassignedDragItems(); track dragItem; let i = $index) {

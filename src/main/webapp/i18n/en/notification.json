@@ -238,6 +238,7 @@
             "exerciseUpdatedNotification": {
                 "title": "Exercise updated",
                 "content": "{{exerciseTitle}} was updated.",
+                "contentWithNotificationText": "{{exerciseTitle}}: {{notificationText}}",
                 "settingsTitle": "Exercise updated"
             },
             "quizExerciseStartedNotification": {
@@ -248,6 +249,7 @@
             "attachmentChangedNotification": {
                 "title": "Attachment changed",
                 "content": "An attachment in {{unitName}} changed.",
+                "contentWithNotificationText": "{{unitName}}: {{notificationText}}",
                 "settingsTitle": "Attachment changed"
             },
             "newManualFeedbackRequestNotification": {
