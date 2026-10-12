@@ -1119,7 +1119,7 @@ describe('GlobalSearchModalComponent', () => {
                 { facet: 'type', value: 'exercise' },
                 { facet: 'course', value: '5' },
             ]);
-            (component as any).selectedChip.set(1);
+            (component as any).highlightChip(1);
 
             component.handleKeyboardEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
 
@@ -1255,6 +1255,21 @@ describe('GlobalSearchModalComponent', () => {
                 document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
 
                 expect((component as any).selectedChip()).toBe(-1);
+            });
+
+            it('lets Enter activate the Filter button after Tab moved focus away from the highlighted chip', () => {
+                pressBackspace();
+                expect((component as any).selectedChip()).toBe(1);
+                const filterButton = fixture.nativeElement.querySelector('.filter-trigger') as HTMLButtonElement;
+                // Tab moves focus; jsdom does not move it for a dispatched Tab key, so focus the next control directly.
+                filterButton.focus();
+
+                const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+                filterButton.dispatchEvent(event);
+
+                expect(event.defaultPrevented).toBe(false);
+                expect((component as any).editingChip()).toBe(-1);
+                expect((component as any).searchQuery()).toBe('');
             });
 
             it('still removes a chip highlighted with ArrowDown on Delete', () => {

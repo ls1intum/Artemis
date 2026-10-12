@@ -639,8 +639,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 }
                 break;
             case 'Enter':
-                // Enter on a keyboard-selected chip re-picks it, the same as clicking it.
-                if (event.defaultPrevented || (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))) {
+                // Enter on a keyboard-selected chip re-picks it, the same as clicking it. Once focus moved on, for example
+                // with Tab to the Filter button, Enter belongs to the focused control and the chip only stays highlighted.
+                if (event.defaultPrevented || !this.isFocusUnmovedSinceHighlight() || (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))) {
                     break;
                 }
                 if (this.selectedChip() >= 0) {
@@ -676,6 +677,11 @@ export class GlobalSearchModalComponent implements OnDestroy {
         const target = this.document.activeElement;
         const input = target instanceof HTMLInputElement ? target : undefined;
         this.chipKeyOrigin = { target, selectionStart: input?.selectionStart ?? null, selectionEnd: input?.selectionEnd ?? null };
+    }
+
+    /** Whether focus is still on the element that had it when the chip was highlighted. */
+    private isFocusUnmovedSinceHighlight(): boolean {
+        return this.chipKeyOrigin !== undefined && this.document.activeElement === this.chipKeyOrigin.target;
     }
 
     /** Whether the key comes from where the chip was highlighted, with the cursor and text selection unchanged. */
