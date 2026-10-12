@@ -381,6 +381,10 @@
                         "name": "Results and feedback analysis",
                         "description": "Aggregated feedback across all submissions of an exercise."
                     },
+                    "PRESENTATION_ASSESSMENT": {
+                        "name": "Presentation assessments",
+                        "description": "Managing presentation assessments, presentation instances, presenters, and their grades."
+                    },
                     "EXAM_TAKE": {
                         "name": "Take an exam",
                         "description": "Starting an exam, working on it and handing it in."
