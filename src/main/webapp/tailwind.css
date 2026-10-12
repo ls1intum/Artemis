@@ -58,6 +58,7 @@
 
 /* Scanning may precede a module becoming fully Bootstrap-free; the migration rule checks locked paths are covered. */
 @source './app/admin';
+@source './app/presentation';
 @source './app/atlas/shared/standardized-competencies';
 @source './app/atlas/manage/import-standardized-competencies';
 @source './app/exercise/feedback';
@@ -112,6 +113,11 @@
 @source './app/account';
 @source './app/course/manage/update';
 @source './app/assessment/shared/assessment-dashboard';
+@source './app/assessment/overview';
+@source './app/assessment/manage/complaints-for-tutor';
+@source './app/assessment/manage/complaint-response';
+@source './app/text/overview/text-editor';
+@source './app/fileupload/overview/file-upload-submission';
 @source './app/exercise/dashboards/tutor-leaderboard';
 @source './app/exercise/exercise-action-bar';
 @source './app/exercise/exam-exercise-row-buttons';

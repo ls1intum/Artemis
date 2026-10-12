@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    A team assignment configuration had no key of its own. The exercise pointed at it through a nullable column, so nothing tied the configuration to
+    the exercise it configures, and deleting the exercise could leave the row behind for good.
+
+    Every exercise owns exactly one permanent row. The configuration holds the key, a deleted exercise takes it along through the
+    database, and a configuration that belongs to no exercise can no longer be written. Settings never insert or delete the row,
+    they only update it.
+
+    DDL commits implicitly on MySQL, so every step is its own changeset and can be repeated after an interruption: the
+    structural steps check for themselves, and the statements only touch what is still unfinished.
+    -->
+
+    <changeSet id="20261005140003-01-stop-on-a-configuration-shared-by-several-exercises" author="krusche">
+        <!-- Two exercises cannot share a configuration. If they do, nothing says which one owns it, so the upgrade stops rather than guessing. -->
+        <preConditions onFail="HALT" onFailMessage="Several exercises point at the same row of team_assignment_config. Give each exercise its own row (copy the row and update exercise.team_assignment_config_id) or remove the duplicate pointer, then start the server again.">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM (SELECT team_assignment_config_id FROM exercise WHERE team_assignment_config_id IS NOT NULL
+                GROUP BY team_assignment_config_id HAVING COUNT(*) &gt; 1) shared</sqlCheck>
+        </preConditions>
+        <comment>Only checks the precondition; the statement changes nothing.</comment>
+        <sql>DELETE FROM team_assignment_config WHERE 1 = 0;</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20261005140003-02-add-exercise-key-to-team-assignment-config" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="team_assignment_config" columnName="exercise_id"/></not>
+        </preConditions>
+        <comment>The key of the exercise moves onto the configuration, so that it cannot outlive the exercise it configures.</comment>
+        <addColumn tableName="team_assignment_config">
+            <column name="exercise_id" type="BIGINT"/>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="team_assignment_config" columnName="exercise_id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261005140003-04-set-exercise-key-of-team-assignment-config" author="krusche">
+        <comment>The exercise that pointed at a configuration becomes its key. Only configurations without a key are filled, so a repeated run changes nothing.</comment>
+        <sql>UPDATE team_assignment_config SET exercise_id =
+            (SELECT MIN(exercise.id) FROM exercise WHERE exercise.team_assignment_config_id = team_assignment_config.id)
+            WHERE exercise_id IS NULL;</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20261005140003-06-remove-team-assignment-config-no-exercise-points-at" author="krusche">
+        <comment>Remove the team assignment configurations that no exercise points at.</comment>
+        <!--
+        A configuration no exercise points at configures nothing. It carried no key of its own, and nothing lists one except through
+        the exercise that named it, so it has been unreachable from the moment the exercise stopped naming it. Nothing else references
+        the table, so the statement removes nothing but the rows themselves.
+        -->
+        <sql>DELETE FROM team_assignment_config WHERE exercise_id IS NULL;</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20261005140003-07-one-team-assignment-config-per-exercise" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="team_assignment_config" indexName="UK_TEAM_ASSIGNMENT_CONFIG_EXERCISE"/></not>
+        </preConditions>
+        <addUniqueConstraint tableName="team_assignment_config" columnNames="exercise_id" constraintName="UK_TEAM_ASSIGNMENT_CONFIG_EXERCISE"/>
+        <rollback>
+            <dropUniqueConstraint tableName="team_assignment_config" constraintName="UK_TEAM_ASSIGNMENT_CONFIG_EXERCISE"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261005140003-09-team-assignment-config-exercise-key-not-null" author="krusche">
+        <addNotNullConstraint tableName="team_assignment_config" columnName="exercise_id" columnDataType="BIGINT"/>
+        <rollback>
+            <dropNotNullConstraint tableName="team_assignment_config" columnName="exercise_id" columnDataType="BIGINT"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261005140003-10-team-assignment-config-follows-its-exercise" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><foreignKeyConstraintExists foreignKeyTableName="team_assignment_config" foreignKeyName="FK_TEAM_ASSIGNMENT_CONFIG_EXERCISE"/></not>
+        </preConditions>
+        <addForeignKeyConstraint baseTableName="team_assignment_config" baseColumnNames="exercise_id" constraintName="FK_TEAM_ASSIGNMENT_CONFIG_EXERCISE"
+                                 referencedTableName="exercise" referencedColumnNames="id" onDelete="CASCADE"/>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="team_assignment_config" constraintName="FK_TEAM_ASSIGNMENT_CONFIG_EXERCISE"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261005140003-11-exercises-stop-pointing-at-their-team-assignment-config-constraint" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyTableName="exercise" foreignKeyName="fk_exercise_team_assignment_config_id"/>
+        </preConditions>
+        <comment>The configuration holds the key, so the exercise no longer points at it.</comment>
+        <dropForeignKeyConstraint baseTableName="exercise" constraintName="fk_exercise_team_assignment_config_id"/>
+        <rollback>
+            <addForeignKeyConstraint baseTableName="exercise" baseColumnNames="team_assignment_config_id" constraintName="fk_exercise_team_assignment_config_id"
+                                     referencedTableName="team_assignment_config" referencedColumnNames="id" onDelete="RESTRICT"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261005140003-12-exercises-stop-pointing-at-their-team-assignment-config" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="exercise" columnName="team_assignment_config_id"/>
+        </preConditions>
+        <comment>Dropping the column also drops the indexes that only cover it.</comment>
+        <dropColumn tableName="exercise" columnName="team_assignment_config_id"/>
+        <rollback>
+            <addColumn tableName="exercise">
+                <column name="team_assignment_config_id" type="BIGINT"/>
+            </addColumn>
+            <sql>UPDATE exercise SET team_assignment_config_id =
+                (SELECT config.id FROM team_assignment_config config WHERE config.exercise_id = exercise.id);</sql>
+            <createIndex indexName="fk_exercise_team_assignment_config_id" tableName="exercise">
+                <column name="team_assignment_config_id"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

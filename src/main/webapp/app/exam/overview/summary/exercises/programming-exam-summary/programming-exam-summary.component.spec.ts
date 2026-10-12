@@ -26,6 +26,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MockComponent } from 'ng-mocks';
+import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 
 const user = { id: 1, name: 'Test User' } as User;
 
@@ -107,7 +109,12 @@ describe('ProgrammingExamSummaryComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(ProgrammingExamSummaryComponent, {
+                remove: { imports: [ProgrammingExerciseInstructionComponent] },
+                add: { imports: [MockComponent(ProgrammingExerciseInstructionComponent)] },
+            })
+            .compileComponents();
         fixture = TestBed.createComponent(ProgrammingExamSummaryComponent);
         component = fixture.componentInstance;
 
@@ -154,5 +161,69 @@ describe('ProgrammingExamSummaryComponent', () => {
     it('should display code button', () => {
         const codeButtonComponent = fixture.debugElement.query(By.directive(CodeButtonComponent))?.componentInstance;
         expect(codeButtonComponent).toBeTruthy();
+    });
+
+    describe('layout', () => {
+        const getGrid = (): HTMLElement => fixture.nativeElement.querySelector('.grid');
+
+        it('should not render a hard-coded page heading above the code button', () => {
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('h1')).toBeNull();
+            expect(fixture.nativeElement.textContent).not.toContain('Programming exam summary');
+        });
+
+        it('should stack the columns by the width of its container instead of the viewport', () => {
+            fixture.detectChanges();
+
+            const grid = getGrid();
+            expect(grid.parentElement!.classList).toContain('@container');
+            expect(grid.classList).toContain('grid-cols-1');
+            expect(grid.classList).toContain('@4xl:grid-cols-3');
+            expect(grid.className).not.toContain('md:');
+            const [submissionColumn, problemStatementColumn] = Array.from(grid.children);
+            expect(submissionColumn.classList).toContain('@4xl:col-span-1');
+            expect(problemStatementColumn.classList).toContain('@4xl:col-span-2');
+        });
+
+        it('should render the section headings with the 16px semibold heading style', () => {
+            fixture.componentRef.setInput('isAfterResultsArePublished', true);
+            fixture.detectChanges();
+
+            const headings: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('h5'));
+            // 'Your Submission', 'Assessment' and 'Problem Statement'
+            expect(headings).toHaveLength(3);
+            headings.forEach((heading) => {
+                expect(heading.classList).toContain('text-base!');
+                expect(heading.classList).toContain('font-semibold!');
+            });
+            // the first heading sits in a flex column that already provides the gap to the code button
+            expect(headings[0].classList).toContain('m-0!');
+            expect(headings[0].parentElement!.classList).toContain('flex-col');
+            expect(headings[0].parentElement!.classList).toContain('gap-2');
+        });
+
+        it('should remove the horizontal padding of the problem statement markdown', () => {
+            fixture.componentRef.setInput('exercise', { ...programmingExercise, problemStatement: 'Write a program' } as ProgrammingExercise);
+            fixture.detectChanges();
+
+            const instructions = fixture.nativeElement.querySelector('jhi-programming-exercise-instructions');
+            expect(instructions).toBeTruthy();
+            expect(instructions.parentElement.className).toContain('instructions\\_\\_content\\_\\_markdown]:px-0!');
+        });
+
+        it('should render the complaint section as a block without margins that would create an empty line', () => {
+            fixture.componentRef.setInput('exercise', { ...programmingExercise, allowComplaintsForAutomaticAssessments: true } as ProgrammingExercise);
+            fixture.componentRef.setInput('isAfterStudentReviewStart', true);
+            programmingSubmission.results = [result];
+            fixture.detectChanges();
+
+            const complaintView: HTMLElement = fixture.nativeElement.querySelector('jhi-complaint-student-view');
+            expect(complaintView).toBeTruthy();
+            expect(complaintView.classList).toContain('block');
+            expect(complaintView.classList).not.toContain('mt-2');
+            expect(complaintView.classList).not.toContain('mb-2');
+            expect(complaintView.classList).not.toContain('ml-4');
+        });
     });
 });

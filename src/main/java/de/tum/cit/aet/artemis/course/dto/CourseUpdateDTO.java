@@ -64,7 +64,8 @@ public record CourseUpdateDTO(
         boolean unenrollmentEnabled, @Nullable String courseInformationSharingMessagingCodeOfConduct,
 
         // Course features
-        boolean learningPathsEnabled, @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
+        boolean learningPathsEnabled, @Nullable Boolean presentationAssessmentsEnabled,
+        @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
         @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Nullable @Min(0) @Max(5) Integer accuracyOfScores, @Nullable String timeZone,
         @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
 
@@ -145,24 +146,21 @@ public record CourseUpdateDTO(
             course.setOnboardingDone(true);
         }
 
-        // Update the course's configuration (data-retention flags plus the Atlas auto-orchestration settings), creating
-        // it if absent. The course must be loaded with its (lazy) configuration for this to update in place instead of
-        // creating a duplicate.
+        // Update the permanent settings row loaded through its own repository by the caller.
         CourseConfiguration configuration = course.getCourseConfiguration();
-        if (configuration == null) {
-            configuration = new CourseConfiguration();
-            configuration.setCourse(course);
-            course.setCourseConfiguration(configuration);
-        }
         // Fail safe to grade-relevant (longer retention) when the client omits the flag.
         configuration.setGradeRelevant(gradeRelevant == null || gradeRelevant);
         // Fail safe to keeping an existing hold: an omitted flag must never lift a legal hold and expose the course to
         // the cleanup again.
         configuration.setDataRetentionHold(dataRetentionHold == null ? configuration.isDataRetentionHold() : dataRetentionHold);
+        if (presentationAssessmentsEnabled != null) {
+            configuration.setPresentationAssessmentsEnabled(presentationAssessmentsEnabled);
+        }
         configuration.setAutoOrchestratorEnabled(autoOrchestratorEnabled);
         configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
         configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
 
         return course;
     }
+
 }

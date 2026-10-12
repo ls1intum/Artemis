@@ -38,5 +38,12 @@ public enum ProcessingPhase {
      * Processing failed after maximum retry attempts.
      * Manual intervention (retry button) is required.
      */
-    FAILED
+    FAILED,
+
+    /**
+     * Iris declined the unit: the course has Iris disabled or the content is not eligible for processing.
+     * Distinct from {@link #DONE} so a unit that was never ingested is not recorded as successfully processed.
+     * Re-entered into the queue when the unit's content changes.
+     */
+    SKIPPED
 }

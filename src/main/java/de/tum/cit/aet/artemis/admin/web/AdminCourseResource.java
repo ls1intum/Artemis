@@ -62,7 +62,6 @@ import de.tum.cit.aet.artemis.course.service.CourseResetService;
 import de.tum.cit.aet.artemis.course.service.CourseValidator;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
-import de.tum.cit.aet.artemis.lti.api.LtiApi;
 
 /**
  * REST controller for administrative course management operations.
@@ -112,8 +111,6 @@ public class AdminCourseResource {
 
     private final FileService fileService;
 
-    private final Optional<LtiApi> ltiApi;
-
     private final CourseDeletionService courseDeletionService;
 
     private final CourseResetService courseResetService;
@@ -123,14 +120,13 @@ public class AdminCourseResource {
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public AdminCourseResource(UserRepository userRepository, CourseAdminService courseAdminService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService, CourseResetService courseResetService,
+            FileService fileService, ChannelService channelService, CourseDeletionService courseDeletionService, CourseResetService courseResetService,
             CourseOperationProgressService progressService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.courseAdminService = courseAdminService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
         this.userRepository = userRepository;
         this.fileService = fileService;
-        this.ltiApi = ltiApi;
         this.channelService = channelService;
         this.courseDeletionService = courseDeletionService;
         this.courseResetService = courseResetService;
@@ -150,7 +146,7 @@ public class AdminCourseResource {
      * <li>Date range validation (start date before end date)</li>
      * </ul>
      * <p>
-     * For online courses with LTI enabled, an online course configuration is automatically created.
+     * Permanent default configurations are created for every course, including offline courses.
      * Default channels (announcements, general, etc.) are created for the course.
      *
      * @param courseDTO the DTO containing the course data to create (multipart form part "course")
@@ -190,11 +186,7 @@ public class AdminCourseResource {
         CourseValidator.validateSemester(course);
         CourseValidator.validateTimeZone(course.getTimeZone());
 
-        if (course.isOnlineCourse() && ltiApi.isPresent()) {
-            ltiApi.get().createOnlineCourseConfiguration(course);
-        }
-
-        Course createdCourse = courseRepository.save(course);
+        Course createdCourse = courseRepository.saveWithDefaultConfigurations(course);
 
         if (file != null) {
             Path basePath = FilePathConverter.getCourseIconFilePath();

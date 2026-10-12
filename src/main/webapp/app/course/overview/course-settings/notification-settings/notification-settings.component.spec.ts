@@ -21,6 +21,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { CourseNotificationSettingsMap } from 'app/notification/shared/entities/course-notification/course-notification-settings-map';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('NotificationSettingsComponent', () => {
     let component: NotificationSettingsComponent;
@@ -110,6 +112,7 @@ describe('NotificationSettingsComponent', () => {
                 { provide: CourseNotificationSettingService, useValue: courseNotificationSettingServiceMock },
                 { provide: ActivatedRoute, useValue: activatedRouteMock },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .overrideComponent(NotificationSettingsComponent, {
@@ -249,5 +252,44 @@ describe('NotificationSettingsComponent', () => {
         expect(component['notificationSpecifications']()[0].identifier).toBe('newPostNotification');
         expect(component['notificationSpecifications']()[0].typeId).toBe(1);
         expect(component['notificationSpecifications']()[0].channelSetting).toEqual(testMapWithIds['1']);
+    });
+
+    describe('instructor-only notification types', () => {
+        const channelSetting = {
+            [CourseNotificationChannel.PUSH]: false,
+            [CourseNotificationChannel.EMAIL]: false,
+            [CourseNotificationChannel.WEBAPP]: false,
+        };
+        const mapWithInstructorOnlyType: CourseNotificationSettingsMap = {
+            newPostNotification: channelSetting,
+            atlasCompetencyUpdateNotification: channelSetting,
+        };
+
+        beforeEach(() => {
+            component['info'] = {
+                notificationTypes: { 1: 'newPostNotification', 27: 'atlasCompetencyUpdateNotification' },
+                presets: [],
+            };
+        });
+
+        it('should hide instructor-only types from users below instructor', () => {
+            const instructorCheck = vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(false);
+
+            component['updateSpecificationArrayByNotificationMap'](mapWithInstructorOnlyType, true);
+
+            expect(instructorCheck).toHaveBeenCalledWith(courseId);
+            expect(component['notificationSpecifications']().map((specification) => specification.identifier)).toEqual(['newPostNotification']);
+        });
+
+        it('should show instructor-only types to instructors', () => {
+            vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(true);
+
+            component['updateSpecificationArrayByNotificationMap'](mapWithInstructorOnlyType, true);
+
+            expect(component['notificationSpecifications']().map((specification) => specification.identifier)).toEqual([
+                'newPostNotification',
+                'atlasCompetencyUpdateNotification',
+            ]);
+        });
     });
 });

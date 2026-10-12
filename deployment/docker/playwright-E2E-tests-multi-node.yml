@@ -21,6 +21,10 @@ services:
         condition: service_healthy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      # The instance that creates a data export is rarely the one that serves its download, so the folder has to be shared
+      # between the nodes, as in the test-server multi-node stacks. Without it, a download that nginx routes to another
+      # node finds no file.
+      - artemis-data-exports:/opt/artemis/data-exports
     container_name: artemis-app-node-1
     env_file:
       - ./artemis/config/prod-multinode.env
@@ -146,3 +150,5 @@ volumes:
     name: artemis-postgres-data
   artemis-data:
     name: artemis-data
+  artemis-data-exports:
+    name: artemis-data-exports

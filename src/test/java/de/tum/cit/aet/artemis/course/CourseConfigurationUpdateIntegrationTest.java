@@ -4,11 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.sql.SQLException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
+import javax.sql.DataSource;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -34,8 +39,8 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
  * <ul>
  * <li>the read path must return the persisted configuration, otherwise the settings form initializes its controls from
  * the defaults and posts those back;</li>
- * <li>the write path must load the (lazy) configuration, otherwise {@code CourseUpdateDTO.applyTo} attaches a
- * replacement and {@code orphanRemoval} deletes the persisted row along with its retention bookkeeping.</li>
+ * <li>the write path must load the permanent configuration before {@code CourseUpdateDTO.applyTo} can update its
+ * settings while preserving its identity and retention bookkeeping.</li>
  * </ul>
  */
 class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -44,6 +49,9 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     private CourseConfigurationRepository courseConfigurationRepository;
+
+    @Autowired
+    private DataSource dataSource;
 
     private Course course;
 
@@ -63,7 +71,7 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
         configuration.setDataRetentionHold(true);
         configuration.setResetWarningSentDate(warningSentDate);
         course.setCourseConfiguration(configuration);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
     }
 
     private CourseManagementDTO updateCourse(long courseId, Object courseToUpdate) throws Exception {
@@ -72,6 +80,39 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + courseId).file(coursePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         MvcResult result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
         return mapper.readValue(result.getResponse().getContentAsString(), CourseManagementDTO.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateCoursePersistsPresentationAssessmentsEnabled(boolean enabled) throws Exception {
+        var configuration = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
+        configuration.setPresentationAssessmentsEnabled(!enabled);
+        courseConfigurationRepository.save(configuration);
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        ObjectNode update = request.getObjectMapper().valueToTree(loaded);
+        update.put("presentationAssessmentsEnabled", enabled);
+
+        updateCourse(course.getId(), update);
+
+        assertThat(courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow().isPresentationAssessmentsEnabled()).isEqualTo(enabled);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateCoursePreservesOmittedPresentationAssessmentsEnabled(boolean enabled) throws Exception {
+        var configuration = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
+        configuration.setPresentationAssessmentsEnabled(enabled);
+        courseConfigurationRepository.save(configuration);
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        ObjectNode update = request.getObjectMapper().valueToTree(loaded);
+        update.remove("presentationAssessmentsEnabled");
+        update.put("description", "Unrelated change preserving presentation settings");
+
+        updateCourse(course.getId(), update);
+
+        assertThat(courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow().isPresentationAssessmentsEnabled()).isEqualTo(enabled);
     }
 
     @Test
@@ -115,6 +156,38 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
         assertThat(persisted.getResetWarningSentDate()).isNotNull();
         // Compared with a tolerance because the database rounds to millisecond precision.
         assertThat(persisted.getResetWarningSentDate().toInstant()).isCloseTo(warningSentDate.toInstant(), within(1, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateCourse_missingConfigurationRow_shouldRepairItInsteadOfFailing() throws Exception {
+        // The form is opened while the course is complete, then the row goes missing like after a creation that failed half-way.
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        assertThat(loaded.courseConfiguration()).isNotNull();
+        ObjectNode update = request.getObjectMapper().valueToTree(loaded);
+        update.put("description", "Edited after the repair");
+        copyConfigurationToUpdateRequest(update, loaded.courseConfiguration());
+        deleteConfigurationRow(course.getId());
+        assertThat(courseConfigurationRepository.findByCourseId(course.getId())).isEmpty();
+
+        CourseManagementDTO updated = updateCourse(course.getId(), update);
+
+        assertThat(updated.description()).isEqualTo("Edited after the repair");
+        CourseConfiguration persisted = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
+        assertThat(persisted.isGradeRelevant()).as("the submitted settings are stored on the repaired row").isFalse();
+        assertThat(persisted.isDataRetentionHold()).isTrue();
+    }
+
+    private void deleteConfigurationRow(long courseId) {
+        // The test pool disables auto-commit, so the delete is committed on a connection of its own.
+        try (var connection = dataSource.getConnection(); var statement = connection.prepareStatement("DELETE FROM course_configuration WHERE course_id = ?")) {
+            connection.setAutoCommit(true);
+            statement.setLong(1, courseId);
+            statement.executeUpdate();
+        }
+        catch (SQLException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private static void copyConfigurationToUpdateRequest(ObjectNode update, CourseConfigurationResponseDTO configuration) {

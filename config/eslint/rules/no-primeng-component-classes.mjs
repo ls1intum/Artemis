@@ -17,6 +17,7 @@
  * separate concern). Matched in static `class="..."`, `[class.<root>]`, and the bound source of `[class]`/`[ngClass]`.
  * See documentation/docs/developer/guidelines/client-development.mdx (### Styling).
  */
+import { isClassListAttribute } from './class-list.mjs';
 
 // NOTE: this list is hand-curated and must be re-curated on every PrimeNG major upgrade (new/renamed/removed root
 // classes). Drift only ever UNDER-enforces (a missed root goes unflagged) — it never breaks the build — so a stale
@@ -84,17 +85,16 @@ export default {
     create(context) {
         // `class` plus PrimeNG class inputs (`styleClass`, component-specific `*StyleClass`): a root class
         // hand-painted via styleClass (`<p-message styleClass="p-button">`) hits the same lazy-CSS footgun.
-        const isClassListAttr = (name) => name === 'class' || name === 'styleClass' || name.endsWith('StyleClass');
         return {
             // Static class="..." / styleClass="...".
             TextAttribute(node) {
-                if (isClassListAttr(node.name)) {
+                if (isClassListAttribute(node.name)) {
                     scan(node.value, node, context);
                 }
             },
             // [class.p-button]="x" (root is the attribute name); [class]/[ngClass]/[styleClass] (root in the source).
             BoundAttribute(node) {
-                if (isClassListAttr(node.name) || node.name === 'ngClass') {
+                if (isClassListAttribute(node.name) || node.name === 'ngClass') {
                     scan(node.value?.source, node, context);
                 } else if (node.keySpan?.details?.startsWith('class.')) {
                     // [class.p-button]="x" — the root is the attribute name. Gate on the `class.` key so a

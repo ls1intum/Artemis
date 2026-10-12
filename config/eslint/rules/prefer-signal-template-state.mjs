@@ -169,6 +169,22 @@ function getTemplateText(classNode, filename) {
 }
 
 /**
+ * Removes HTML comments so that commented-out bindings are not mistaken for live ones. A single `replace`
+ * pass is not enough: removing an inner comment can join the surrounding text into a new one
+ * (`<!<!-- a -->-- x -->` becomes `<!-- x -->`), so repeat until the text stops changing. Every pass that
+ * changes the text shortens it, which guarantees termination.
+ */
+function stripHtmlComments(html) {
+    let previous;
+    let current = html;
+    do {
+        previous = current;
+        current = current.replace(/<!--[\s\S]*?-->/g, '');
+    } while (current !== previous);
+    return current;
+}
+
+/**
  * Field names that are the direct target of a two-way binding `[(x)]="field"` (optionally `field!`).
  * A signal cannot back a `[(x)]` binding, so such a field is exempt (use a getter/setter-over-signal facade
  * if the value must still drive rendering). Only a bare-identifier target is matched; `[(ngModel)]="obj.prop"`
@@ -179,7 +195,7 @@ function templateTwoWayBoundNames(html) {
     if (!html) {
         return names;
     }
-    const cleaned = html.replace(/<!--[\s\S]*?-->/g, '');
+    const cleaned = stripHtmlComments(html);
     const addBareTarget = (raw) => {
         const expr = raw.trim().replace(/!$/, '').trim();
         if (/^[a-zA-Z_$][\w$]*$/.test(expr)) {
@@ -201,7 +217,7 @@ function templateReferencedNames(html) {
     if (!html) {
         return names;
     }
-    const cleaned = html.replace(/<!--[\s\S]*?-->/g, '');
+    const cleaned = stripHtmlComments(html);
     const expressions = [];
     // {{ interpolation }}
     for (const m of cleaned.matchAll(/\{\{([\s\S]*?)\}\}/g)) {

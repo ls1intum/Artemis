@@ -514,6 +514,136 @@ the page - use <code>waitFor()</code> function of a locator instead.
 
 </Callout>
 
+### Layout contract tests
+
+Some rules about a page are not about what a control does but about how big it is and where it sits: every page of a
+running exam starts with a title row of the same height at the same position, a button in that row is 30px high with air
+above and below it, a card keeps 12px to its content, the panels of a page are set apart by the 6px divider of the
+application, the toolbar of the code editor sits in the row where there is room for it, the sidebar and the content end
+on the same line, the summary scroller ends inside the window instead of growing with its content, and no page scrolls
+sideways. A layout contract test states such a rule as numbers and checks it in the browser, at several window sizes.
+The exam has two: `e2e/exam/ExamLayoutContract.spec.ts` walks a running exam, and the text complaint test of
+`ExamAssessment.spec.ts` checks that the Complain button leaves the page where it is, that the complaint is in a box and
+the rating is quiet, and ends by checking the summary with a result and a complaint in it.
+
+#### Measure instead of comparing screenshots
+
+A screenshot comparison fails on anti-aliasing, fonts, a date that changed or any other pixel nobody cares about. It
+needs a tolerance and a reviewer to decide whether a difference is a bug, and it does not say which rule broke. A
+measured contract fails with the element, the viewport and the numbers, and it needs no reference images to review or to
+update:
+
+```text
+title row of the quiz page at 1280x800: height is 41px, expected 40px (tolerance 0.5px)
+```
+
+#### The helpers
+
+`support/layout.ts` measures in the browser and retries until the client has finished laying out, so a test does not
+sleep after a resize or a navigation. The assertions retry a violated expectation until it holds or the timeout runs
+out, which defaults to the expect timeout of the project (ten seconds). Where they apply, they take
+`{ name, tolerance, timeout }`: `name` says what the element is for and replaces its selector in the message,
+`tolerance` defaults to half a pixel, which covers sub-pixel rounding and nothing more. A helper refuses to compare
+what is not there: an element that never comes fails with its name, and a comparison of fewer than two elements or
+values, or of no edges, throws instead of passing.
+
+| Helper                                                    | Expects                                                                                                                                               |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `forEachViewport(page, check)`                            | the check to hold at every viewport of the matrix; each runs as a `test.step`, and the viewport is restored                                           |
+| `expectHeight(locator, height)`                           | an element to have the given height                                                                                                                   |
+| `expectAligned(locators, property)`                       | the elements to share a `top`, `right`, `bottom`, `left`, `width` or `height`                                                                         |
+| `expectFillsParent(child, parent, edges)`                 | the child to reach the given edges of its parent, for example a scroller that ends at the bottom of its card                                          |
+| `expectInside(child, container, edges, { margin })`       | the child to lie inside the container and keep at least `margin` px of space to the given edges, for example the air above and below a button         |
+| `expectInset(child, container, edge, px)`                 | the child to start exactly `px` inside the container at one edge, for example a title 12px from the edge of its card                                  |
+| `expectGap(first, second, axis, px)`                      | the space between two neighbours to be `px`, side by side or one above the other, for example the divider between two panels                          |
+| `expectBelow(locators, reference)`                        | every element to start at or below the bottom of the reference, for example a toolbar that wrapped below its title row                                |
+| `expectNoOverlap(locators)`                               | no element to cover another, for example a title and the buttons next to it                                                                           |
+| `expectInsideOrBelow(locators, container)`                | the elements to be all inside the container or all below it, never half in; returns which, for a layout that depends on the room                      |
+| `expectScrollPositionKept(scroller, action, options)`     | a scroll container to stay where it is while the action runs, for example a click that must not carry the page away; smooth scrolls are waited for    |
+| `expectWithinViewport(locator, edges)`                    | the element not to reach beyond the given edges of the window, for example a scroller that ends above the bottom of the window                        |
+| `measure(locator)`, `expectSameValue(page, what, values)` | a position to stay the same while the page changes: record it page by page, then compare the recorded values                                          |
+| `expectNoHorizontalOverflow(page, scrollers)`             | neither the document nor the given scroll containers to scroll sideways; the failure names the elements                                               |
+| `expectNoHorizontalScrollAround(locator)`                 | none of the scroll containers the element sits in to scroll sideways, for a page in a card that scrolls on its own while the document keeps its width |
+| `expectComputedStyle`, `expectSameComputedStyle`          | a CSS property to have the given computed value, or elements that look alike to compute the same value                                                |
+
+A scroll container takes the room of its scrollbar at the right and bottom edge, as much as the platform draws, and always
+with `scrollbar-gutter: stable`. That room is no inset of the content, so `expectInset` takes the scroll containers
+between the child and the container as `options.scrollers` and does not count their scrollbars, which keeps the number
+the same on every platform. `expectGap` fails for elements that overlap, so a divider that is too narrow is told from
+one that is missing.
+
+```typescript
+import { expectAligned, expectHeight, expectNoHorizontalOverflow, expectNoHorizontalScrollAround, forEachViewport } from '../../support/layout';
+
+await forEachViewport(page, async () => {
+    await expectHeight(page.getByTestId('exam-bar'), 40, { name: 'exam bar' });
+    await expectAligned([page.getByTestId('exam-sidebar'), page.getByTestId('exam-content')], 'bottom', { name: 'the sidebar card and the content card' });
+    // A page that is too wide widens the document, or the card it sits in when that scrolls on its own: check both.
+    await expectNoHorizontalOverflow(page);
+    await expectNoHorizontalScrollAround(page.getByTestId('exam-start-header'), { name: 'the title row' });
+});
+```
+
+What belongs to the exam rather than to layout in general lives in `support/examLayoutAssertions.ts`: the sizes the
+exam agrees on (the 40px title row and exam bar, the 30px button in a title row, which includes the hand-in early button
+of the bar, and the 34px small button elsewhere, the 12px inset between a card and its content on every side, the 6px
+divider), the checks of the summary, of the complaint boxes, of the rating and of the programming actions, which two
+specs share, the checks of the dividers (also with the problem statement collapsed, and by dragging them) and of the
+file upload row, and `expectPageNotToScrollSideways`, which pairs the two sideways-scroll helpers for a page of the exam.
+
+#### The viewport matrix
+
+`LAYOUT_VIEWPORTS` holds the five window sizes a contract has to hold at. A rule that holds at some of them only says
+so in its test. The welcome page and the summary sit directly in the course shell, which keeps its sidebars on a phone
+and leaves them a 200px column, so their sideways-scroll contract, and the back button of the summary, hold from 800px
+(`COURSE_SHELL_MIN_WIDTH`). The complaint of a student and the response to it are side by side from 1200px and one above
+the other below it. The Code button, the result, Refresh and Submit of the programming page are in its title row from
+1280px and below it at 480px; in between they are in the row where the title keeps its room next to them and below it
+where it does not, so the contract only asks for one of the two there. The file input of the file upload page and its
+Upload button are in one row from 1280px; below it the panel has no room for both and the button is below the input, at
+the same edge. The solution and the problem statement are 6px apart at every viewport, although below 993px the divider
+has no handle to drag.
+
+| Viewport  | Stands for                                                                         |
+| --------- | ---------------------------------------------------------------------------------- |
+| 1728x1000 | a large laptop screen                                                              |
+| 1280x800  | a small laptop screen, still wide enough for two column layouts                    |
+| 1024x768  | a tablet in landscape, just below the 1200px breakpoint at which two columns stack |
+| 800x700   | a tablet in portrait                                                               |
+| 480x800   | a phone                                                                            |
+
+#### Add a contract
+
+1. State the rule as a number or as a relation between elements: "the title row is 40px", "the scroller ends where its
+   card ends". A rule that cannot be put like that is a matter for a reviewer, not for a test.
+2. Find the elements by `data-testid`, and add one to the template when the element has none. Name it after what the
+   element is, such as `exam-bar` or `exam-summary-scroll`.
+3. Pick the helper from the table and give the assertion a `name`.
+4. Run it inside `forEachViewport`. In a flow that visits several pages, wrap each page in a `test.step`, so that the
+   report names the page that broke the rule.
+5. Add it to a flow that has already reached the state. A spec that creates data through the API requests, and does not
+   wait for builds, is cheap; a new exam is not. `ExamLayoutContract.spec.ts` already builds one with an exercise of
+   each type, so extend it instead of creating another.
+6. Tag the spec like any other (see [Test projects: fast and slow tests](#test-projects-fast-and-slow-tests)): `@slow`
+   when the flow does not fit the time of a fast test, as the exam flow does, otherwise `@fast`.
+
+A new or changed helper gets a case in `e2e/shared/LayoutHelpers.spec.ts`: a small document of known geometry for which
+the helper passes, and one for which it must fail. A helper that cannot fail makes every contract that uses it
+worthless, and that file proves they can. It renders the documents itself with `page.setContent`, so no case needs a
+login or a page of the application.
+
+#### What not to do
+
+- Do not compare screenshots, and do not assert pixel positions as absolute numbers. Compare elements with each other,
+  or record a value on one page and compare it on the next.
+- Do not sleep after a resize or a navigation. If a helper needs more than its retry, the layout is still changing
+  after it has loaded, and that is the finding.
+- Do not widen the tolerance until a contract passes. A difference of one pixel is a different layout.
+- Do not find elements by Bootstrap, Tailwind or PrimeNG classes. Ask for what the class stands for with
+  `expectComputedStyle`.
+- Do not write a contract for what a unit test can state. jsdom has no layout engine, so a contract about sizes and
+  positions is exactly what needs a browser; whether a template binds a class is not.
+
 ### AI-assisted test authoring with a Playwright MCP server
 
 You can optionally use a Playwright Model Context Protocol (MCP) server as an external tool to expose the live
@@ -558,6 +688,10 @@ When Phase 1 detects a failure, developers receive feedback within approximately
 does not consume compute resources.
 
 **For pushes to `develop` or `main`:** the pipeline skips the two-phase logic and runs the full suite in a single job.
+That job uses the multi-node stack (three Artemis nodes behind nginx) with Redis (Valkey) as distributed data provider, so
+no Hazelcast instance is created. The suite runs once, not once per provider, because the E2E cleanup stops every
+container on its host. Locally, `run-e2e-tests-local-multinode.sh --middleware redis` (or the `-fast` variant) runs the
+same configuration, and the default `hazelcast` middleware runs the embedded cluster.
 
 ### Selective test execution and `e2e-test-mapping.json`
 

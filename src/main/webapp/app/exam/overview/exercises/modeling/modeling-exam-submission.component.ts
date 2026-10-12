@@ -6,7 +6,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
@@ -14,7 +14,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { parseJson } from 'app/foundation/util/json.util';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
+import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-exercise-header/exam-exercise-header.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -30,7 +30,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
-        IncludedInScoreBadgeComponent,
+        ExamExerciseHeaderComponent,
         ExerciseSaveButtonComponent,
         ResizeableContainerComponent,
         ModelingEditorComponent,
@@ -61,11 +61,22 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     readonly explanationText = signal<string>(undefined!); // current explanation text
 
-    readonly IncludedInOverallScore = IncludedInOverallScore;
-    protected readonly savedStatus = computed(() => ({
-        isChanged: !this.studentSubmission().isSynced,
-        isSaving: this.examParticipationService.isSubmissionSaving(this.studentSubmission()),
-    }));
+    // nodes and edges of the diagram as last loaded from the submission or handed to a save; Apollon also notifies on
+    // selection and focus changes, and only a difference to this content is an edit that leaves the answer unsaved
+    private syncedDiagram = ModelingExamSubmissionComponent.diagramContent();
+
+    // `isSynced` is mutated in place, so the overlay only follows it when this reads the service-wide sync-state version
+    // (see ExerciseSaveButtonComponent and the exam navigation sidebar, which show the same state).
+    protected readonly savedStatus = computed(
+        () => {
+            this.examParticipationService.submissionSyncVersion();
+            return {
+                isChanged: !this.studentSubmission().isSynced,
+                isSaving: this.examParticipationService.isSubmissionSaving(this.studentSubmission()),
+            };
+        },
+        { equal: (a, b) => a.isChanged === b.isChanged && a.isSaving === b.isSaving },
+    );
 
     // Icons
     protected readonly faListAlt = faListAlt;
@@ -101,6 +112,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
             if (this.studentSubmission().model) {
                 // Updates the Apollon editor model state (view) with the latest modeling submission
                 this.umlModel.set(importDiagram(parseJson(this.studentSubmission().model!)));
+                this.syncedDiagram = ModelingExamSubmissionComponent.diagramContent(this.umlModel());
             }
             // Updates explanation text with the latest submission
             this.explanationText.set(this.studentSubmission().explanationText ?? '');
@@ -112,15 +124,17 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
      * Updates the explanation text of the submission with the current explanation
      */
     public updateSubmissionFromView(): void {
-        if (!this.modelingEditor() || !this.modelingEditor().getCurrentModel()) {
+        const currentModel = this.modelingEditor()?.getCurrentModel();
+        if (!currentModel) {
             return;
         }
 
-        const diagramJson = JSON.stringify(this.modelingEditor().getCurrentModel());
+        const diagramJson = JSON.stringify(currentModel);
 
         if (this.studentSubmission()) {
             if (diagramJson) {
                 this.studentSubmission().model = diagramJson;
+                this.syncedDiagram = ModelingExamSubmissionComponent.diagramContent(currentModel);
             }
             this.studentSubmission().explanationText = this.explanationText();
         }
@@ -140,7 +154,10 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         return this.exercise() && (!this.exercise().dueDate || dayjs(this.exercise().dueDate).isSameOrAfter(dayjs()));
     }
 
-    modelChanged(_model: UMLModel) {
+    modelChanged(model: UMLModel) {
+        if (ModelingExamSubmissionComponent.diagramContent(model) === this.syncedDiagram) {
+            return;
+        }
         this.studentSubmission().isSynced = false;
         // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate reactively.
         this.examParticipationService.notifySubmissionSyncStateChanged();
@@ -182,5 +199,9 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
      */
     notifyTriggerSave() {
         this.saveCurrentExercise.emit();
+    }
+
+    private static diagramContent(model?: Pick<UMLModel, 'nodes' | 'edges'>): string {
+        return JSON.stringify([model?.nodes ?? [], model?.edges ?? []]);
     }
 }
