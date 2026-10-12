@@ -111,7 +111,12 @@ not confirmed.
 
 A file you choose is uploaded right away as the next version, and Artemis processes the content again. The form says
 which version the file becomes before you choose it, so select **Notify students about the new version** first if
-students should hear about it. While the file is uploaded, the item shows **Uploading…**; **Keep current file** goes
+students should hear about it. A file whose content turns out to be unchanged is the exception: Artemis compares the
+uploaded file against the current one, keeps the version as it is, and does not process the content again. Saving a
+deck from the slide editor rewrites the file even when nothing on it moved, so without that comparison every such save
+would count as a new version and send the deck through processing for nothing.
+
+While the file is uploaded, the item shows **Uploading…**; **Keep current file** goes
 back after a failed upload. A video item without a file gets its first one the same way; **Discard file** goes back
 after a failed upload. A new video URL is saved only when you confirm it, because Artemis then processes the video
 again: select **Save video URL** or **Keep current URL**. Until you do, **Done**, opening another item and adding one
@@ -179,6 +184,10 @@ To add a video with automatic transcription:
 
 Either all Attachment Video Units of a lecture or specific Attachment Video Units can be sent to Iris, over the ingestion button in the lecture unit overview.
 Those transcriptions can be used to answer students' questions in the Iris chat.
+
+Iris can cite the ingested slides and video transcripts in its answers. Students can open a citation at its page or
+video moment. If you replace the slides or video, a citation pinned to the older version still opens the lecture unit, but
+does not jump to the old position: that position may now refer to different content.
 
 <div style={{display: 'flex', gap: '1rem', flexWrap: 'wrap'}}>
     <Image src={sendAllLecturesToIris} alt="Send All Lectures to Iris" size={ImageSize.large} caption={"Lecture Management Page (with Send All Lectures To Iris Button)"}></Image>
