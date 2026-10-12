@@ -117,6 +117,9 @@ export class CodeButtonComponent implements OnInit {
     smallButtons = input.required<boolean>();
     repositoryUri = input.required<string>();
     routerLinkForRepositoryView = input.required<(string | number)[]>();
+    // The student participation id, set by staff tables (scores, participations, feedback) that render the code button for an individual student repository without passing the
+    // full participation object. It lets the repository-scoped staff token be minted for exactly that student repository.
+    participationId = input<number>();
     participation = input<ProgrammingExerciseStudentParticipation>();
     programmingExerciseIdeConfiguration = input<ProgrammingExerciseIdeConfiguration>();
     hideLabelMobile = input<boolean>(false);
@@ -126,9 +129,6 @@ export class CodeButtonComponent implements OnInit {
     auxiliaryRepositoryId = input<number>();
     // The exercise id, used as a fallback to load the repository-scoped staff token when the full exercise object is not available (e.g. in the exercise detail view).
     exerciseId = input<number>();
-    // The student participation id, set by staff tables (scores, participations, feedback) that render the code button for an individual student repository without passing the
-    // full participation object. It lets the repository-scoped staff token be minted for exactly that student repository.
-    participationId = input<number>();
     readonly isInCourseManagement = getSignalBasedOnRoute(this.router, (url) => url.includes('course-management'));
     readonly user = signal<User | undefined>(undefined);
     // Set once a participation VCS token request has terminally failed to yield a token (empty response or an error that
