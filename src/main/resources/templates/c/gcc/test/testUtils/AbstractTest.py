@@ -114,7 +114,7 @@ class AbstractTest(ABC):
         Checks if all requirements (i.e. other test cases were successfull) are fulfilled.
         """
 
-        return all(req in testResults or testResults[req] != Result.SUCCESS for req in self.requirements)
+        return all(testResults.get(req) == Result.SUCCESS for req in self.requirements)
 
     @contextmanager
     def __timeout(self, timeoutSec: int):
