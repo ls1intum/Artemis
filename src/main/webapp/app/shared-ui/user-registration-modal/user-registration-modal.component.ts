@@ -146,7 +146,7 @@ export class UserRegistrationModalComponent {
         this.debounceTimer = setTimeout(() => {
             this.hasSearched.set(true);
             // A new search term always starts from page 0 — reload() defaults to the current page, which would be wrong here.
-            this.tableViewRef()?.reload(0);
+            this.tableViewRef()?.reload({ page: 0 });
         }, UserRegistrationModalComponent.SEARCH_DEBOUNCE_MS);
     }
 
