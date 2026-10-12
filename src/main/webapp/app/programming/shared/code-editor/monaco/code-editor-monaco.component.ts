@@ -134,7 +134,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      */
     readonly feedbackForSelectedFile = computed<Feedback[]>(() => this.filterFeedbackForSelectedFile(this.feedbackInternal()));
 
-    /** The 0-based editor line a referenced feedback belongs to; -1 for the (unreachable, since already filtered by reference) fallback case. */
+    /** The 0-based editor line a referenced feedback belongs to; -1 for the (unreachable, since {@link filterFeedbackForSelectedFile} requires a line) fallback case. */
     protected getFeedbackLine = (feedback: Feedback): number => {
         return Feedback.getReferenceLine(feedback) ?? -1;
     };
@@ -909,14 +909,16 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     }
 
     /**
-     * Returns the feedbacks that refer to the currently selected file, or an empty array if no file is selected.
+     * Returns the feedbacks that refer to a line of the currently selected file, or an empty array if no file is selected.
+     * A feedback whose line cannot be resolved is left out: it has no line to render a widget at, and letting it through
+     * would abort {@link renderFeedbackWidgets} before the inline feedback after it in the file is placed.
      * @param feedbacks The feedbacks to filter.
      */
     filterFeedbackForSelectedFile(feedbacks: Feedback[]): Feedback[] {
         if (!this.selectedFile()) {
             return [];
         }
-        return feedbacks.filter((feedback) => feedback.reference && Feedback.getReferenceFilePath(feedback) === this.selectedFile());
+        return feedbacks.filter((feedback) => Feedback.getReferenceFilePath(feedback) === this.selectedFile() && Feedback.getReferenceLine(feedback) !== undefined);
     }
 
     /**

@@ -17,12 +17,29 @@ describe('Feedback', () => {
             expect(Feedback.getReferenceLineRange({ reference: 'file:src/Main.java_line:3' })).toEqual({ start: 3, end: 3 });
         });
 
-        it.each(['file:_line:1', 'file:   _line:1', 'file:src/Main.java_line:0', 'file:src/Main.java_line:0-2', 'file:src/Main.java_line:1-0'])(
+        // The online code editor stores the line of an inline feedback 0-based, so line 0 is the first line of the file
+        it('should parse references to the first line of a file', () => {
+            expect(Feedback.getReferenceLineRange({ reference: 'file:src/Main.java_line:0' })).toEqual({ start: 0, end: 0 });
+            expect(Feedback.getReferenceLineRange({ reference: 'file:src/Main.java_line:0-2' })).toEqual({ start: 0, end: 2 });
+        });
+
+        it.each(['file:_line:1', 'file:   _line:1', 'file:src/Main.java_line:1-0', 'file:src/Main.java_line:-1', 'file:src/Main.java_line:abc', 'file:src/Main.java'])(
             'should reject malformed programming reference %s',
             (reference) => {
                 expect(Feedback.getReferenceLineRange({ reference })).toBeUndefined();
             },
         );
+    });
+
+    describe('getReferenceLine', () => {
+        it('should return the 0-based line of an inline feedback on the first line of a file', () => {
+            expect(Feedback.getReferenceLine({ reference: 'file:src/Main.java_line:0' })).toBe(0);
+        });
+
+        it('should return undefined for feedback without a programming reference', () => {
+            expect(Feedback.getReferenceLine({ reference: 'GCC' })).toBeUndefined();
+            expect(Feedback.getReferenceLine({})).toBeUndefined();
+        });
     });
 
     describe('getFeedbackSuggestionType', () => {
