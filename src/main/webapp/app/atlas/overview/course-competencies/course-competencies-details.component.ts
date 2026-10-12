@@ -103,7 +103,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
                     this.loadData();
                 }
 
-                this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN, this.competencyId);
+                this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN, this.competencyId, this.courseId());
             });
         }
     }

@@ -311,6 +311,7 @@
                     "notifications": "Mitteilungen",
                     "examRooms": "Prüfungsräume",
                     "dependencies": "Abhängigkeiten",
+                    "science": "Science",
                     "irisDashboard": "Iris Dashboard",
                     "courseIngestionDashboard": "Index-Dashboard"
                 },

@@ -46,7 +46,7 @@ export const routes: Routes = [
                 path: 'science',
                 loadComponent: () => import('app/account/user/settings/science-settings/science-settings.component').then((m) => m.ScienceSettingsComponent),
                 data: {
-                    pageTitle: 'artemisApp.userSettings.categories.SCIENCE_SETTINGS',
+                    pageTitle: 'artemisApp.userSettings.scienceSettingsPage.title',
                 },
                 canActivate: [scienceSettingsGuard],
             },

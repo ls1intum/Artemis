@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService
 import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
 import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
+import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -68,10 +69,12 @@ public class UserCreationService {
 
     private final UserActivityService userActivityService;
 
+    private final Optional<ScienceEventApi> scienceEventApi;
+
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
             OrganizationRepository organizationRepository, AccountCredentialRevocationService accountCredentialRevocationService,
             AccountSecurityNotificationService accountSecurityNotificationService, AuditEventRepository auditEventRepository, UserRecoveryKeyService userRecoveryKeyService,
-            UserActivityService userActivityService) {
+            UserActivityService userActivityService, Optional<ScienceEventApi> scienceEventApi) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
@@ -81,6 +84,7 @@ public class UserCreationService {
         this.auditEventRepository = auditEventRepository;
         this.userRecoveryKeyService = userRecoveryKeyService;
         this.userActivityService = userActivityService;
+        this.scienceEventApi = scienceEventApi;
     }
 
     /**
@@ -262,6 +266,7 @@ public class UserCreationService {
      */
     @NonNull
     public User updateUser(@NonNull User user, ManagedUserVM updatedUserDTO) {
+        final String previousLogin = user.getLogin();
         updateEmailIfChanged(user, updatedUserDTO.getEmail());
         user.setLogin(updatedUserDTO.getLogin().toLowerCase(Locale.ENGLISH));
         user.setFirstName(updatedUserDTO.getFirstName());
@@ -352,6 +357,9 @@ public class UserCreationService {
             CredentialRevocationChoiceDTO revoked = credentialsRevoked ? new CredentialRevocationChoiceDTO(true, true, true) : CredentialRevocationChoiceDTO.none();
             accountSecurityNotificationService.passwordChanged(savedUser, revoked, AccountSecurityNotificationService.PasswordChangeActor.ADMINISTRATOR);
         }
+        // Last, after every security consequence of the update above: the rename can fail, and the save has committed by
+        // now, so a failure here must not be able to skip recording the credential change or revoking the old credentials.
+        renameScienceEventIdentityIfLoginChanged(previousLogin, savedUser);
         return savedUser;
     }
 
@@ -484,6 +492,34 @@ public class UserCreationService {
                 : userRepository.existsByEmailIgnoreCaseAndIdNot(canonicalEmail, currentUserId);
         if (emailAlreadyUsed) {
             throw new EmailAlreadyUsedException();
+        }
+    }
+
+    /**
+     * Renames the identity of already collected science events when a login changes, so the events stay attached to the
+     * account they were recorded for. {@code science_event} stores the login rather than the user id, so a rename that
+     * skips this leaves the old rows unreachable.
+     * <p>
+     * The account has been saved under its new login before this runs, and the two cannot share a transaction across the
+     * modules. If the rename fails, the account therefore gets its previous login back: the events stay reachable under it,
+     * and retrying the update renames them, which it could not do once the logins already matched. The rename is a single
+     * statement, so it has either renamed every event or none.
+     *
+     * @param previousLogin the login the account had before the update
+     * @param savedUser     the account as saved with its new login
+     */
+    public void renameScienceEventIdentityIfLoginChanged(String previousLogin, User savedUser) {
+        String newLogin = savedUser.getLogin();
+        if (Objects.equals(previousLogin, newLogin) || scienceEventApi.isEmpty()) {
+            return;
+        }
+        try {
+            scienceEventApi.get().renameIdentity(previousLogin, newLogin);
+        }
+        catch (RuntimeException e) {
+            savedUser.setLogin(previousLogin);
+            userRepository.save(savedUser);
+            throw e;
         }
     }
 

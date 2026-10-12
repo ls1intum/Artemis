@@ -50,7 +50,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
         const courseIdParams$ = this.activatedRoute.parent?.parent?.params;
         if (courseIdParams$) {
             this.parentParamSubscription = courseIdParams$.subscribe((params) => {
-                this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN_OVERVIEW, Number(params.courseId));
+                this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN_OVERVIEW, Number(params.courseId), Number(params.courseId));
             });
         }
 

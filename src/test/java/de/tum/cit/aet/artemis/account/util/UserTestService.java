@@ -361,6 +361,8 @@ public class UserTestService {
 
         assertThat(userInDB.getLogin()).isEqualTo(student.getLogin());
         assertThat(userInDB.getId()).isEqualTo(student.getId());
+        // Science events are keyed by login, so a rename that skipped them would leave them unreachable for deletion and export.
+        assertThat(scienceEventRepository.findById(scienceEvent.getId()).orElseThrow().getIdentity()).isEqualTo(student.getLogin());
     }
 
     // NOTE: updateUserGroups test removed — the admin user update API (ManagedUserVM) no longer

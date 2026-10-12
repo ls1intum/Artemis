@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.account.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -751,6 +753,31 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         assertThat(update.isRevokeCredentials()).isTrue();
         request.put("/api/account/admin/users", update, HttpStatus.OK);
 
+        assertPasswordChangedTo(oldPasswordHash, "new-Password-123");
+        assertAllCredentialsRevoked();
+    }
+
+    /**
+     * The science identities follow a login change last, once the credential change has taken effect. When that rename
+     * fails, the password change and its revocation stand, and the account gets its previous login back: its events stay
+     * reachable under it, and retrying the update renames them, which it could not do once the logins matched.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void aFailedScienceRenameKeepsTheRevocationAndRestoresTheLogin() {
+        giveUserCredentials();
+        String oldPasswordHash = user.getPassword();
+        String previousLogin = user.getLogin();
+        doThrow(new IllegalStateException("science rename failed")).when(scienceEventApi).renameIdentity(anyString(), anyString());
+
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(previousLogin).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities, "new-Password-123");
+        update.setLogin(previousLogin + "renamed");
+        update.setRevokeCredentials(true);
+
+        assertThatThrownBy(() -> userCreationService.updateUser(userWithAuthorities, update)).hasMessage("science rename failed");
+
+        assertThat(reloadUser().getLogin()).isEqualTo(previousLogin);
         assertPasswordChangedTo(oldPasswordHash, "new-Password-123");
         assertAllCredentialsRevoked();
     }
