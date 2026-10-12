@@ -106,6 +106,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticip
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.CourseRoleMemberDTO;
 import de.tum.cit.aet.artemis.core.dto.DomainObjectDTO;
@@ -1853,8 +1854,9 @@ public class CourseTestService {
 
     /**
      * Creates a course with a manual text exercise and an automatically assessed programming exercise.
-     * The text exercise has two in-time submissions (one assessed, one open) and one assessed late submission.
-     * The in-time assessment additionally got a second result, like a complaint response creates one.
+     * The text exercise has three in-time submissions (two assessed submissions of the same participation, one open) and one assessed late submission.
+     * The late result is not rated, like {@code submitResult()} sets it for a submission after the due date.
+     * The first in-time assessment additionally got a second result, like a complaint response creates one.
      * The programming exercise has one submission with an automatic result and no assessor, which must not be counted anywhere.
      *
      * @return the created course
@@ -1880,10 +1882,17 @@ public class CourseTestService {
         assessedLate.setSubmissionDate(dueDate.plusHours(1));
         assessedLate = submissionRepository.save(assessedLate);
 
+        // a text participation can hold several submitted submissions, e.g. when the student submits again after the first one was assessed
+        TextSubmission secondAssessedInTime = ParticipationFactory.generateTextSubmission("second text", Language.ENGLISH, true);
+        secondAssessedInTime.setSubmissionDate(dueDate.minusMinutes(30));
+        secondAssessedInTime.setParticipation(assessedInTime.getParticipation());
+        secondAssessedInTime = submissionRepository.save(secondAssessedInTime);
+
         participationUtilService.addResultToSubmission(assessedInTime, AssessmentType.MANUAL, tutor, 100D, true, now.minusHours(5));
         // a complaint response adds a second result to the same submission
         participationUtilService.addResultToSubmission(assessedInTime, AssessmentType.MANUAL, tutor, 90D, true, now.minusHours(4));
-        participationUtilService.addResultToSubmission(assessedLate, AssessmentType.MANUAL, tutor, 100D, true, now.minusHours(3));
+        participationUtilService.addResultToSubmission(secondAssessedInTime, AssessmentType.MANUAL, tutor, 100D, true, now.minusHours(4));
+        participationUtilService.addResultToSubmission(assessedLate, AssessmentType.MANUAL, tutor, 100D, false, now.minusHours(3));
 
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
@@ -1902,10 +1911,11 @@ public class CourseTestService {
         StatsForDashboardDTO stats = request.get("/api/course/courses/" + course.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
 
         // the automatically assessed programming exercise is neither part of the submissions nor of the assessments
-        assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(2L);
+        assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(3L);
         assertThat(stats.getNumberOfSubmissions().late()).isEqualTo(1L);
-        // two assessed submissions: the in-time one counts once although it has two results, and the late one counts as well
-        assertThat(stats.getTotalNumberOfAssessments()).as("assessments are counted per submission, like the submissions they relate to").isEqualTo(2L);
+        // three assessed submissions: the first in-time one counts once although it has two results, the second one of the same participation counts separately,
+        // and the late one counts although its result is not rated
+        assertThat(stats.getTotalNumberOfAssessments()).as("assessments are counted per submission, like the submissions they relate to").isEqualTo(3L);
     }
 
     // Test
@@ -1915,9 +1925,10 @@ public class CourseTestService {
         var courseDTO = request.get("/api/course/courses/" + course.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
 
         // the automatically assessed programming exercise is neither part of the submissions nor of the assessments
-        assertThat(courseDTO.currentMaxAssessments()).isEqualTo(3L);
-        assertThat(courseDTO.currentAbsoluteAssessments()).as("the assessed late submission is part of the submissions and therefore of the assessments").isEqualTo(2L);
-        assertThat(courseDTO.currentPercentageAssessments()).isEqualTo(66.7);
+        assertThat(courseDTO.currentMaxAssessments()).isEqualTo(4L);
+        assertThat(courseDTO.currentAbsoluteAssessments()).as("every assessed submission counts, including the unrated late one and both ones of the same participation")
+                .isEqualTo(3L);
+        assertThat(courseDTO.currentPercentageAssessments()).isEqualTo(75.0);
     }
 
     // Test
