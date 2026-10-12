@@ -620,6 +620,22 @@ describe('HyperionJobRegistryService', () => {
         expect(service.hasMoreHistory()).toBe(false);
     });
 
+    it('preserves exhausted pagination when the newest history page refreshes', () => {
+        getRuns
+            .mockReturnValueOnce(of({ runs: [], nextBeforeId: 51 }))
+            .mockReturnValueOnce(of({ runs: [] }))
+            .mockReturnValueOnce(of({ runs: [], nextBeforeId: 51 }));
+        const service = createService();
+        service.loadMoreHistory();
+        expect(getRuns).toHaveBeenLastCalledWith(51);
+        expect(service.hasMoreHistory()).toBe(false);
+        service.refresh();
+        expect(getRuns).toHaveBeenLastCalledWith(undefined);
+        expect(service.hasMoreHistory()).toBe(false);
+        service.loadMoreHistory();
+        expect(getRuns).toHaveBeenCalledTimes(3);
+    });
+
     it('never accepts a history response from the previous login', () => {
         const pending = new Subject<AuthoringRunPage>();
         getRuns.mockReturnValueOnce(pending);

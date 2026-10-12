@@ -101,6 +101,7 @@ export class HyperionJobRegistryService {
     private readonly activeChanges = new Subject<boolean>();
     private readonly websocketHints = new Subject<void>();
     private readonly identityChanged = new Subject<void>();
+    private historyDiscovered = false;
     private refreshing = false;
 
     /** Every tracked run, newest first. */
@@ -203,7 +204,8 @@ export class HyperionJobRegistryService {
                 next: (page) => {
                     if (this.accountService.userIdentity()?.login !== login) return;
                     this.historyFailed.set(false);
-                    if (beforeId !== undefined || this.nextBeforeId() === undefined) this.nextBeforeId.set(page.nextBeforeId);
+                    if (beforeId !== undefined || !this.historyDiscovered) this.nextBeforeId.set(page.nextBeforeId);
+                    this.historyDiscovered = true;
                     const entries = new Map(this.entriesSignal().map((entry) => [entry.jobId, entry]));
                     for (const run of page.runs) entries.set(run.jobId, this.fromHistory(run, entries.get(run.jobId)));
                     this.setEntries([...entries.values()]);
@@ -404,6 +406,7 @@ export class HyperionJobRegistryService {
     /** Loads (or clears) the registry when the logged-in user changes. Does nothing for a repeated login. */
     private onLoginChanged(login: string | undefined): void {
         if (login !== this.loadedLogin) {
+            this.historyDiscovered = false;
             this.identityChanged.next();
             this.accessFailed.set(false);
             this.accessOffset = 0;
