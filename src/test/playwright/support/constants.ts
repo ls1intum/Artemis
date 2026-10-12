@@ -76,6 +76,8 @@ export class AdditionalData {
     practiceMode?: boolean;
     skipBuildResultCheck?: boolean;
     progExerciseAssessmentType?: ProgrammingExerciseAssessmentType;
+    /** Whether students may complain about an automatic result of the programming exercise, which a tutor then answers manually. */
+    allowComplaintsForAutomaticAssessments?: boolean;
     programmingLanguage?: ProgrammingLanguage;
 }
 

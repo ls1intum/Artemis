@@ -852,8 +852,17 @@ export async function prepareEndedExam(
     page: Page,
     numberOfCorrectionRounds: number = 1,
     publishResults: boolean = true,
+    programmingAssessment?: ProgrammingAssessmentOptions,
 ): Promise<Exam> {
-    const exam = await prepareExam(course, dayjs().add(EXAM_PARTICIPATION_WINDOW_IN_MINUTES, 'minutes'), exerciseType, page, numberOfCorrectionRounds, false);
+    const exam = await prepareExam(
+        course,
+        dayjs().add(EXAM_PARTICIPATION_WINDOW_IN_MINUTES, 'minutes'),
+        exerciseType,
+        page,
+        numberOfCorrectionRounds,
+        false,
+        programmingAssessment,
+    );
     await Commands.login(page, admin);
     const examAPIRequests = new ExamAPIRequests(page);
     try {
@@ -877,6 +886,12 @@ async function deleteQuietly(page: Page, examAPIRequests: ExamAPIRequests, exam:
 /** How long an exam stays open while a test participates in it, before {@link prepareEndedExam} ends it. */
 const EXAM_PARTICIPATION_WINDOW_IN_MINUTES = 30;
 
+/** How the programming exercise of a prepared exam is assessed; without it, tutors assess it manually. */
+export type ProgrammingAssessmentOptions = {
+    assessmentType: ProgrammingExerciseAssessmentType;
+    allowComplaintsForAutomaticAssessments?: boolean;
+};
+
 export async function prepareExam(
     course: Course,
     end: dayjs.Dayjs,
@@ -884,6 +899,7 @@ export async function prepareExam(
     page: Page,
     numberOfCorrectionRounds: number = 1,
     publishResultsAtEnd: boolean = true,
+    programmingAssessment?: ProgrammingAssessmentOptions,
 ): Promise<Exam> {
     const examAPIRequests = new ExamAPIRequests(page);
     const exerciseAPIRequests = new ExerciseAPIRequests(page);
@@ -922,7 +938,8 @@ export async function prepareExam(
             case ExerciseType.PROGRAMMING:
                 additionalData = {
                     submission: cPartiallySuccessful,
-                    progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
+                    progExerciseAssessmentType: programmingAssessment?.assessmentType ?? ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
+                    allowComplaintsForAutomaticAssessments: programmingAssessment?.allowComplaintsForAutomaticAssessments,
                     programmingLanguage: ProgrammingLanguage.C,
                     skipBuildResultCheck: true,
                 };
