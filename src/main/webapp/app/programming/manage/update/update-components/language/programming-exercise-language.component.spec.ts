@@ -4,7 +4,7 @@ import { Signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { NgModel } from '@angular/forms';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
@@ -141,6 +141,58 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         it('should be disabled when importing from the sharing platform', async () => {
             await setUp({ isImportFromSharing: true });
             expect(getSequentialTestRunsCheckbox().disabled).toBe(true);
+        });
+    });
+
+    describe('project type picker', () => {
+        const getProjectTypeButtons = (): HTMLButtonElement[] => Array.from(fixture.nativeElement.querySelectorAll('jhi-mode-picker button'));
+
+        const setUp = (configOverrides: Partial<ProgrammingExerciseCreationConfig>) => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            exercise.buildConfig = new ProgrammingExerciseBuildConfig();
+            fixture.componentRef.setInput('programmingExercise', exercise);
+            fixture.componentRef.setInput(
+                'programmingExerciseCreationConfig',
+                Object.assign(
+                    {},
+                    programmingExerciseCreationConfigMock,
+                    {
+                        projectTypes: [ProjectType.PLAIN_GRADLE, ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_BLACKBOX],
+                        modePickerOptions: [
+                            { value: ProjectType.PLAIN_GRADLE, label: 'Gradle', btnClass: 'btn-primary' },
+                            { value: ProjectType.MAVEN_BLACKBOX, label: 'Blackbox', btnClass: 'btn-primary' },
+                        ],
+                    },
+                    configOverrides,
+                ),
+            );
+            fixture.detectChanges();
+        };
+
+        it('should be enabled when a new exercise is created', () => {
+            setUp({});
+            expect(getProjectTypeButtons()).toHaveLength(2);
+            expect(getProjectTypeButtons().every((button) => !button.disabled)).toBe(true);
+        });
+
+        it.each([
+            ['importing an existing exercise', { isImportFromExistingExercise: true }],
+            ['importing from a file', { isImportFromFile: true }],
+            ['importing from the sharing platform', { isImportFromSharing: true }],
+        ])('should be disabled when %s', (_description, configOverrides) => {
+            setUp(configOverrides);
+            expect(getProjectTypeButtons()).toHaveLength(2);
+            expect(getProjectTypeButtons().every((button) => button.disabled)).toBe(true);
+        });
+
+        it('should not offer the with dependencies option when importing from the sharing platform', () => {
+            const isEditFieldDisplayedRecord = { programmingLanguage: true, projectType: true, withExemplaryDependency: true, packageName: true };
+            fixture.componentRef.setInput('isEditFieldDisplayedRecord', isEditFieldDisplayedRecord);
+            setUp({});
+            expect(fixture.nativeElement.querySelector('#field_with_dependencies')).not.toBeNull();
+            setUp({ isImportFromSharing: true });
+            expect(fixture.nativeElement.querySelector('#field_with_dependencies')).toBeNull();
         });
     });
 });

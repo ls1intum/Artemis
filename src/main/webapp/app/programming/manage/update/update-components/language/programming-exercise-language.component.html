@@ -33,7 +33,10 @@
                     [value]="programmingExerciseCreationConfig().selectedProjectType"
                     (valueChange)="programmingExerciseCreationConfig().onProjectTypeChange($event!)"
                     [disabled]="
-                        programmingExerciseCreationConfig().isImportFromExistingExercise || programmingExerciseCreationConfig().isImportFromFile || !!programmingExercise().id
+                        programmingExerciseCreationConfig().isImportFromExistingExercise ||
+                        programmingExerciseCreationConfig().isImportFromFile ||
+                        programmingExerciseCreationConfig().isImportFromSharing ||
+                        !!programmingExercise().id
                     "
                     name="projectType"
                     id="field_projectType"
@@ -43,6 +46,7 @@
                 isEditFieldDisplayedRecord().withExemplaryDependency &&
                 !programmingExerciseCreationConfig().isImportFromExistingExercise &&
                 !programmingExerciseCreationConfig().isImportFromFile &&
+                !programmingExerciseCreationConfig().isImportFromSharing &&
                 !programmingExercise().id &&
                 programmingExercise().programmingLanguage === ProgrammingLanguage.JAVA &&
                 programmingExercise().projectType !== ProjectType.MAVEN_BLACKBOX
