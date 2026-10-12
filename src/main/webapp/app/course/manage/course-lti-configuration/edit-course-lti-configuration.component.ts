@@ -4,10 +4,10 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { combineLatest, finalize } from 'rxjs';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
-import { LOGIN_PATTERN } from 'app/foundation/constants/input.constants';
+import { LOGIN_PATTERN, LTI_USER_PREFIX_MAX_LENGTH } from 'app/foundation/constants/input.constants';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
@@ -87,7 +87,7 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
         const onlineCourseConfiguration = this.onlineCourseConfiguration();
         this.onlineCourseConfigurationForm = new FormGroup({
             id: new FormControl(onlineCourseConfiguration.id),
-            userPrefix: new FormControl(onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
+            userPrefix: new FormControl(onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN), Validators.maxLength(LTI_USER_PREFIX_MAX_LENGTH)] }),
             requireExistingUser: new FormControl(onlineCourseConfiguration.requireExistingUser),
             ltiPlatformConfiguration: new FormControl(onlineCourseConfiguration?.ltiPlatformConfiguration ?? null),
         });

@@ -172,6 +172,8 @@ jobs:
               - '.github/actionlint.yaml'
               - 'deployment/kubernetes/install-localci-kubernetes-ubuntu.sh'
               - 'supporting_scripts/test_verified_installers.py'
+              - 'supporting_scripts/check_action_pinning.py'
+              - 'supporting_scripts/test_check_action_pinning.py'
               - 'supporting_scripts/update_python_dependency_locks.sh'
             has_version:
               - '.github/workflows/ci.yml'
