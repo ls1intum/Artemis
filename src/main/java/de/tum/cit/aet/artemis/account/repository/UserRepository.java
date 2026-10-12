@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecip
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseRoleMembersSearchDTO;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
@@ -1742,7 +1742,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param role     the {@link CourseRole} to filter by
      * @return page of matching {@link User} entities
      */
-    default Page<User> searchUsersInCourseRole(Pageable pageable, CourseRoleMembersSearchDTO search, long courseId, CourseRole role) {
+    default Page<User> searchUsersInCourseRole(Pageable pageable, PagedSearchDTO search, long courseId, CourseRole role) {
         // orderByColumn() applies the sort as a query.orderBy() side effect, so the Pageable itself stays unsorted.
         Specification<User> spec = notSoftDeleted().and(inCourseWithRole(courseId, role)).and(searchByLoginNameEmailOrRegistrationNumber(search.searchTerm()))
                 .and(orderByColumn(search.sortedColumn(), search.sortingOrder()));

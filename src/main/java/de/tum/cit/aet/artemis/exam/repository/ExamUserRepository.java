@@ -19,11 +19,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
-import de.tum.cit.aet.artemis.exam.dto.ExamStudentSearchDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 
 @Conditional(ExamEnabled.class)
@@ -129,7 +129,7 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
     Set<Long> findRegisteredUserIdsByExamIdAndUserIds(@Param("examId") long examId, @Param("userIds") List<Long> userIds);
 
     /**
-     * Returns a page of {@link ExamUser} IDs for the given exam, filtered and searched according to {@link ExamStudentSearchDTO}.
+     * Returns a page of {@link ExamUser} IDs for the given exam, filtered and searched according to {@link PagedSearchDTO}.
      * Sorting is applied via {@code query.orderBy} inside the specification rather than through {@link Pageable#getSort()}
      * because the working-time sort requires a correlated subquery that {@link Sort} cannot express.
      *
@@ -137,7 +137,7 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
      * @param search search term, page index, page size, sort column, sort direction, and an optional filter value
      * @return a page of {@link ExamUser} IDs in the requested order
      */
-    default Page<Long> findExamUserIdsForExam(long examId, ExamStudentSearchDTO search) {
+    default Page<Long> findExamUserIdsForExam(long examId, PagedSearchDTO search) {
         SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
         Specification<ExamUser> spec = Specification.where(ExamUserSpecs.forExam(examId)).and(ExamUserSpecs.searchByUserFields(search.searchTerm()))
                 .and(ExamUserSpecs.filteredBy(search.filterProp())).and(ExamUserSpecs.ordered(search.sortedColumn(), sortOrder));

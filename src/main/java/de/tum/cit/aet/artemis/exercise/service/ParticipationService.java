@@ -17,6 +17,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO;
@@ -51,8 +53,6 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -1187,7 +1187,7 @@ public class ParticipationService {
      * @param search   search parameters including pagination, sorting, search term, and filter
      * @return a page of ParticipationManagementDTO
      */
-    public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, ParticipationSearchDTO search) {
+    public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, PagedSearchDTO search) {
         SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
         Pageable pageable = PageRequest.of(search.page(), search.pageSize());
         boolean teamMode = exercise.isTeamMode();
@@ -1280,18 +1280,21 @@ public class ParticipationService {
      * 2. Data query — loads full entity data for the page-sized set of IDs (FETCH JOINs, bounded)
      * 3. DTO mapping — maps entities to flat DTOs for the REST response
      *
-     * @param exercise the exercise to query
-     * @param search   the search parameters including pagination, sorting, search term, filter, and score range
+     * @param exercise        the exercise to query
+     * @param search          the search parameters including pagination, sorting, search term, and filter
+     * @param scoreRangeLower the optional lower bound of the score range in percent
+     * @param scoreRangeUpper the optional upper bound of the score range in percent
      * @return a page of ParticipationScoreDTO
      */
-    public Page<ParticipationScoreDTO> findParticipationScoresForExercise(Exercise exercise, ParticipationScoreSearchDTO search) {
+    public Page<ParticipationScoreDTO> findParticipationScoresForExercise(Exercise exercise, PagedSearchDTO search, @Nullable Integer scoreRangeLower,
+            @Nullable Integer scoreRangeUpper) {
         SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
         Pageable pageable = PageRequest.of(search.page(), search.pageSize());
         boolean teamMode = exercise.isTeamMode();
 
         // Step 1: Get paginated participation IDs with filters
-        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForScores(exercise.getId(), teamMode, search.searchTerm(), search.filterProp(),
-                search.scoreRangeLower(), search.scoreRangeUpper(), pageable, sortOrder, search.sortedColumn());
+        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForScores(exercise.getId(), teamMode, search.searchTerm(), search.filterProp(), scoreRangeLower,
+                scoreRangeUpper, pageable, sortOrder, search.sortedColumn());
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {
             return new PageImpl<>(List.of(), pageable, idPage.getTotalElements());

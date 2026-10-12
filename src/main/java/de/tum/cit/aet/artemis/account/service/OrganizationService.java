@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -212,16 +211,8 @@ public class OrganizationService {
      * @return a page of {@link UserForRegistrationDTO} with {@code isRegistered} set appropriately
      */
     public Page<UserForRegistrationDTO> searchUsersForOrganizationRegistration(long organizationId, String loginOrName, int pageIndex, int pageSize) {
-        PageRequest pageable = PageRequest.of(pageIndex, pageSize);
-        Page<User> users = userRepository.searchAllByLoginOrNameOrEmailOrRegistrationNumber(pageable, loginOrName);
-
-        List<Long> userIds = users.getContent().stream().map(User::getId).toList();
-        Set<Long> memberIds = userIds.isEmpty() ? Set.of() : organizationRepository.findMemberUserIdsByOrganizationIdAndUserIds(organizationId, userIds);
-
-        List<UserForRegistrationDTO> dtos = users.getContent().stream().map(user -> new UserForRegistrationDTO(user.getId(), user.getLogin(), user.getName(), user.getEmail(),
-                user.getRegistrationNumber(), user.getImageUrl(), memberIds.contains(user.getId()))).toList();
-
-        return new PageImpl<>(dtos, pageable, users.getTotalElements());
+        Page<User> users = userRepository.searchAllByLoginOrNameOrEmailOrRegistrationNumber(PageRequest.of(pageIndex, pageSize), loginOrName);
+        return UserForRegistrationDTO.pageOf(users, userIds -> organizationRepository.findMemberUserIdsByOrganizationIdAndUserIds(organizationId, userIds));
     }
 
     /**
