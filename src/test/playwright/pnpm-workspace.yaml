@@ -8,10 +8,14 @@ autoInstallPeers: true
 # Dependency overrides. pnpm reads overrides from this file in preference to
 # `pnpm.overrides` in package.json (which it silently ignores).
 overrides:
+  # Node 24 is the supported runtime. Many packages ask for any @types/node (`*`, `>=18`), which would resolve to the newest major,
+  # 26 at the time of writing, whose types describe APIs we do not support yet. Keep this on the 24.x line, in step with the root
+  # catalog in ../../../pnpm-workspace.yaml, and move it to the next major together with the Node major.
+  '@types/node': '24.19.2'
   brace-expansion: '5.0.12'
   nodemailer: '9.1.1'
   lodash: '4.18.1'
-  shell-quote: '1.10.0'
+  shell-quote: '1.12.0'
 
 allowBuilds:
   esbuild: true
