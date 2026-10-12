@@ -167,6 +167,8 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             if (this.checkboxStates()[newValue.competency.id]) {
                 this.selectedCompetencyLinks = this.selectedCompetencyLinks?.filter((value) => value.competency?.id !== newValue.competency?.id);
             } else {
+                // A competency ticked by hand is a manual link, even if an AI suggestion had selected it before.
+                newValue.generatedByAi = false;
                 this.selectedCompetencyLinks = [...(this.selectedCompetencyLinks ?? []), newValue];
             }
 
@@ -195,6 +197,9 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         competencyLinks?.forEach((link) => {
             const selectedLink = value?.find((value) => value.competency?.id === link.competency?.id);
             link.weight = selectedLink?.weight ?? MEDIUM_COMPETENCY_LINK_WEIGHT;
+            // Carry the origin over too: the selection emits these links on the next edit, and an unsaved link from
+            // Hyperion's checklist would otherwise be saved as a manual one.
+            link.generatedByAi = selectedLink?.generatedByAi ?? false;
         });
         // Rebuild as a fresh reference so the template re-renders the updated weights under zoneless.
         if (competencyLinks) {

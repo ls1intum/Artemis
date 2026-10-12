@@ -58,7 +58,7 @@ public class RepositoryAccessService {
      * @throws AccessForbiddenException if the course cannot be resolved
      */
     private static Course getCourseOrThrow(ProgrammingExercise exercise) {
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        Course course = exercise == null ? null : exercise.getCourseViaExerciseGroupOrCourseMember();
         if (course == null) {
             throw new AccessForbiddenException("The course of this programming exercise could not be resolved.");
         }

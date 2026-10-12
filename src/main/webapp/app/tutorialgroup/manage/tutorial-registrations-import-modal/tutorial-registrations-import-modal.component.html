@@ -44,7 +44,14 @@
             @switch (step) {
                 @case (ImportFlowStep.EXPLANATION) {
                     <div class="spacer"></div>
-                    <input type="file" class="file-upload-input" accept=".csv" (change)="parseStudents($event)" #fileUploadInput />
+                    <input
+                        [attr.aria-label]="'accessibility.importRegistrations' | artemisTranslate"
+                        type="file"
+                        class="file-upload-input"
+                        accept=".csv"
+                        (change)="parseStudents($event)"
+                        #fileUploadInput
+                    />
                     <button
                         type="button"
                         tumAetUiButton

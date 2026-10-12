@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
+import de.tum.cit.aet.artemis.iris.service.IrisSessionPresenceService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
@@ -150,6 +151,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     protected IrisCitationService irisCitationService;
 
     @MockitoSpyBean
+    protected IrisSessionPresenceService irisSessionPresenceService;
+
+    @MockitoSpyBean
     protected PyrisPipelineService pyrisPipelineService;
 
     @MockitoSpyBean
@@ -241,8 +245,8 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(gitServiceSpy, bareGitRepositoryServiceSpy, continuousIntegrationService, localCITriggerService, buildAgentConfiguration, resourceLoaderService,
-                programmingMessagingService, competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, pyrisPipelineService, pyrisEventService,
-                ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel);
+                programmingMessagingService, competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, irisSessionPresenceService,
+                pyrisPipelineService, pyrisEventService, ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel);
         super.resetSpyBeans();
     }
 

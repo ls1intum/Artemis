@@ -118,34 +118,102 @@ describe('ComplaintRequestComponent', () => {
             expect(textarea.maxLength).toBe(3000);
         });
 
-        it('should show success badge when complaint is accepted', () => {
+        it('should show the success tag when complaint is accepted', () => {
             const complaint = createComplaint(ComplaintType.COMPLAINT, true);
             fixture.componentRef.setInput('complaint', complaint);
             fixture.componentRef.setInput('maxComplaintTextLimit', 2000);
             fixture.detectChanges();
 
-            const successBadge = fixture.nativeElement.querySelector('.badge.bg-success');
-            expect(successBadge).toBeTruthy();
+            const tag = fixture.nativeElement.querySelector('[data-testid="complaint-status-badge"]');
+            expect(tag).toBeTruthy();
+            expect(tag.tagName.toLowerCase()).toBe('tumaet-ui-tag');
+            expect(tag.querySelector('[data-severity="success"]')).toBeTruthy();
         });
 
-        it('should show danger badge when complaint is rejected', () => {
+        it('should show the danger tag when complaint is rejected', () => {
             const complaint = createComplaint(ComplaintType.COMPLAINT, false);
             fixture.componentRef.setInput('complaint', complaint);
             fixture.componentRef.setInput('maxComplaintTextLimit', 2000);
             fixture.detectChanges();
 
-            const dangerBadge = fixture.nativeElement.querySelector('.badge.bg-danger');
-            expect(dangerBadge).toBeTruthy();
+            const tag = fixture.nativeElement.querySelector('[data-testid="complaint-status-badge"]');
+            expect(tag).toBeTruthy();
+            expect(tag.querySelector('[data-severity="danger"]')).toBeTruthy();
         });
 
-        it('should not show any badge when complaint is pending', () => {
+        it('should not show any tag when complaint is pending', () => {
             const complaint = createComplaint(ComplaintType.COMPLAINT);
             fixture.componentRef.setInput('complaint', complaint);
             fixture.componentRef.setInput('maxComplaintTextLimit', 2000);
             fixture.detectChanges();
 
-            const badge = fixture.nativeElement.querySelector('.badge');
-            expect(badge).toBeFalsy();
+            expect(fixture.nativeElement.querySelector('[data-testid="complaint-status-badge"]')).toBeFalsy();
+            expect(fixture.nativeElement.querySelector('tumaet-ui-tag')).toBeFalsy();
+        });
+
+        it('should show the complaint text in the text area', () => {
+            const complaint = createComplaint(ComplaintType.COMPLAINT);
+            fixture.componentRef.setInput('complaint', complaint);
+            fixture.componentRef.setInput('maxComplaintTextLimit', 2000);
+            fixture.detectChanges();
+
+            const textarea = fixture.nativeElement.querySelector('#complainTextArea') as HTMLTextAreaElement;
+            expect(textarea.value).toBe('Test complaint text');
+        });
+
+        it('should keep the text focusable and selectable, which a disabled text area is not', () => {
+            const complaint = createComplaint(ComplaintType.COMPLAINT);
+            fixture.componentRef.setInput('complaint', complaint);
+            fixture.componentRef.setInput('maxComplaintTextLimit', 2000);
+            fixture.detectChanges();
+
+            const textarea = fixture.nativeElement.querySelector('#complainTextArea') as HTMLTextAreaElement;
+            expect(textarea.readOnly).toBe(true);
+            expect(textarea.disabled).toBe(false);
+        });
+    });
+
+    describe('card', () => {
+        beforeEach(() => {
+            fixture.componentRef.setInput('complaint', createComplaint(ComplaintType.COMPLAINT, false));
+            fixture.componentRef.setInput('maxComplaintTextLimit', 2000);
+            fixture.detectChanges();
+        });
+
+        it('should present the complaint in a bordered, rounded and padded card with the semantic border and surface', () => {
+            const card = fixture.nativeElement.querySelector('[data-testid="complaint-request-card"]') as HTMLElement;
+
+            expect(card).toBeTruthy();
+            // The same card language as the feedback cards on the page. The important padding is needed because Bootstrap pads and sizes by its own scale.
+            for (const utility of ['rounded-lg', 'border', 'border-(--border-color)', 'bg-(--module-bg)', 'p-4!']) {
+                expect(card.classList.contains(utility), utility).toBe(true);
+            }
+        });
+
+        it('should put the submission time and the status tag together in the header above the text', () => {
+            const card = fixture.nativeElement.querySelector('[data-testid="complaint-request-card"]') as HTMLElement;
+            const header = card.firstElementChild as HTMLElement;
+            const textarea = card.querySelector('#complainTextArea') as HTMLElement;
+
+            expect(header.querySelector('span')).toBeTruthy();
+            expect(header.querySelector('[data-testid="complaint-status-badge"]')).toBeTruthy();
+            expect(header.nextElementSibling).toBe(textarea);
+        });
+
+        it('should be a cell of the grid of the complaint area that spans the rows of the header and of the text', () => {
+            const card = fixture.nativeElement.querySelector('[data-testid="complaint-request-card"]') as HTMLElement;
+
+            // The host has no box of its own, so the card is a direct cell of the grid, and the response card shares its rows (subgrid).
+            expect(fixture.nativeElement.classList.contains('contents')).toBe(true);
+            for (const utility of ['row-span-2', 'grid', 'grid-rows-subgrid']) {
+                expect(card.classList.contains(utility), utility).toBe(true);
+            }
+        });
+
+        it('should not use any Bootstrap class', () => {
+            const classes = Array.from(fixture.nativeElement.querySelectorAll('[class]')).flatMap((element) => Array.from((element as HTMLElement).classList));
+
+            expect(classes.filter((name) => ['badge', 'bg-success', 'bg-danger', 'row'].includes(name) || /^col-/.test(name))).toEqual([]);
         });
     });
 

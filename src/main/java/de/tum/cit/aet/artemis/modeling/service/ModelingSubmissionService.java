@@ -138,7 +138,7 @@ public class ModelingSubmissionService extends SubmissionService {
         // Mapped here rather than read back off the submission: its participation is only a foreign key, and reading it
         // would load the entity this whole path exists to avoid.
         return new SavedSubmission<>(modelingSubmission,
-                ModelingParticipationDTO.of(target.afterSubmission(), exercise, participationService.findSubmitParticipant(exercise, user), true));
+                ModelingParticipationDTO.of(target.afterSubmission(), exercise, participationService.findSubmitParticipant(exercise, user, target), true));
     }
 
     /**
@@ -179,7 +179,8 @@ public class ModelingSubmissionService extends SubmissionService {
 
         // versioning of submission
         try {
-            if (modelingExercise.isTeamMode()) {
+            // a practice participation of a team exercise is individual, so it has no team to version for
+            if (modelingExercise.isTeamMode() && !target.testRun()) {
                 submissionVersionService.saveVersionForTeam(modelingSubmission, user);
             }
             else if (modelingExercise.isExamExercise()) {

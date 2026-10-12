@@ -4,9 +4,12 @@ import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTop
 import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.PLAGIARISM_CASE_POSTS;
 import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.USER_CONVERSATION_POSTS;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -31,6 +34,7 @@ import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
@@ -365,6 +369,41 @@ public abstract class PostingService {
     }
 
     protected abstract String getEntityName();
+
+    /**
+     * Checks whether a posting pings all members of its conversation. The "@all" token only counts in group chats, in every other conversation it is plain text.
+     *
+     * @param conversation   the conversation the posting belongs to
+     * @param postingContent content of the posting, may be null
+     * @return true if the posting contains the "@all" token and the conversation is a group chat
+     */
+    protected static boolean mentionsAllMembers(Conversation conversation, String postingContent) {
+        return conversation instanceof GroupChat && AtAllMentionDetector.containsAtAllMention(postingContent);
+    }
+
+    /**
+     * Determines the users that receive the mention notification: the explicitly mentioned users and, if the posting pings all members, every member who did not mute or hide
+     * the conversation. A user is contained once even if the posting mentions them by name and through "@all". The author never receives a mention notification.
+     * Explicitly mentioned users are kept as they are, i.e. they are notified even if they muted the conversation.
+     *
+     * @param mentionedUserRecipients the explicitly mentioned users who are allowed to receive the notification
+     * @param mentionsAllMembers      whether the posting pings all members of the conversation
+     * @param conversationRecipients  the members of the conversation including their mute and hide flags
+     * @param authorId                the id of the author of the posting
+     * @return the users that receive the mention notification
+     */
+    protected static List<User> resolveMentionRecipients(List<User> mentionedUserRecipients, boolean mentionsAllMembers,
+            Collection<ConversationNotificationRecipientSummary> conversationRecipients, Long authorId) {
+        if (!mentionsAllMembers) {
+            return mentionedUserRecipients;
+        }
+        Map<Long, User> recipientsById = new LinkedHashMap<>();
+        mentionedUserRecipients.forEach(user -> recipientsById.put(user.getId(), user));
+        conversationRecipients.stream().filter(summary -> summary.shouldNotifyRecipient() && !Objects.equals(summary.userId(), authorId))
+                .forEach(summary -> recipientsById.computeIfAbsent(summary.userId(),
+                        userId -> new User(userId, summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail())));
+        return new ArrayList<>(recipientsById.values());
+    }
 
     /**
      * Gets the list of logins for users mentioned in a posting.

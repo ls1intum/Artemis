@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { effect } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -168,6 +169,65 @@ describe('Submission Policy Update Form Component', () => {
         // form-level validity for a lock policy: the submission limit control decides (see the invalid getter)
         expect(component.submissionLimitControl.valid).toBe(true);
         expect(component.invalid).toBe(false);
+    });
+
+    describe('policyForm signal', () => {
+        it('should be undefined until the exercise arrived and then expose the form that was built', async () => {
+            // the effect that builds the form has not run before the first change detection
+            expect(component.policyForm()).toBeUndefined();
+
+            await detectChanges();
+
+            expect(component.form).toBeDefined();
+            expect(component.policyForm()).toBe(component.form);
+            expect(component.policyForm()!.get('submissionLimit')!.value).toBe(5);
+        });
+
+        it('should notify those that follow the form once it appears', async () => {
+            const bareFixture = TestBed.createComponent(SubmissionPolicyUpdateComponent);
+            bareFixture.componentRef.setInput('editable', true);
+            const bareComponent = bareFixture.componentInstance;
+            const followedForms: unknown[] = [];
+            const followed = TestBed.runInInjectionContext(() => effect(() => followedForms.push(bareComponent.policyForm())));
+            bareFixture.detectChanges();
+            await bareFixture.whenStable();
+            expect(followedForms).toEqual([undefined]);
+
+            bareFixture.componentRef.setInput('programmingExercise', programmingExercise);
+            bareFixture.detectChanges();
+            await bareFixture.whenStable();
+
+            expect(followedForms).toHaveLength(2);
+            expect(followedForms.at(-1)).toBe(bareComponent.form);
+            followed.destroy();
+        });
+
+        it('should keep the form instance and reset its values when another exercise arrives', async () => {
+            programmingExercise.id = 1;
+            await detectChanges();
+            const firstForm = component.policyForm();
+            firstForm!.get('submissionLimit')!.setValue(99);
+
+            const otherExercise = new ProgrammingExercise(undefined, undefined);
+            otherExercise.id = 2;
+            otherExercise.submissionPolicy = { type: SubmissionPolicyType.LOCK_REPOSITORY, submissionLimit: 7 } as LockRepositoryPolicy;
+            fixture.componentRef.setInput('programmingExercise', otherExercise);
+            await detectChanges();
+
+            expect(component.policyForm()).toBe(firstForm);
+            expect(component.policyForm()).toBe(component.form);
+            expect(component.policyForm()!.get('submissionLimit')!.value).toBe(7);
+        });
+
+        it('should stay undefined as long as no exercise input was ever set', async () => {
+            const bareFixture = TestBed.createComponent(SubmissionPolicyUpdateComponent);
+            bareFixture.componentRef.setInput('editable', true);
+
+            bareFixture.detectChanges();
+            await bareFixture.whenStable();
+
+            expect(bareFixture.componentInstance.policyForm()).toBeUndefined();
+        });
     });
 
     it('should keep user edits when the exercise input re-emits (#13447)', async () => {

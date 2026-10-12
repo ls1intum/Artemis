@@ -27,15 +27,11 @@ public record OnlineCourseDTO(Long id, String title, String shortName, String re
     /**
      * Creates an OnlineCourseDTO from a Course entity.
      *
-     * @param course the course entity to convert
+     * @param course         the course entity to convert
+     * @param registrationId the registration ID of the LTI platform the course was found for
      * @return an OnlineCourseDTO containing the course data
      */
-    public static OnlineCourseDTO from(Course course) {
-        var onlineCourseConfig = course.getOnlineCourseConfiguration();
-        String registrationId = null;
-        if (onlineCourseConfig != null && onlineCourseConfig.getLtiPlatformConfiguration() != null) {
-            registrationId = onlineCourseConfig.getLtiPlatformConfiguration().getRegistrationId();
-        }
+    public static OnlineCourseDTO from(Course course, String registrationId) {
         return new OnlineCourseDTO(course.getId(), course.getTitle(), course.getShortName(), registrationId, course.getStartDate(), course.getEndDate(), course.getDescription(),
                 course.getNumberOfStudents());
     }

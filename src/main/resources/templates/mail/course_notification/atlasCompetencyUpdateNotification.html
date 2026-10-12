@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="head">
+    <head>
+        <title th:text="#{email.courseNotification.atlasCompetencyUpdateNotification.title}">Report on an automatic competency update</title>
+        <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+        <th:block th:replace="~{mail/notification/fragments :: css}"/>
+    </head>
+</th:block>
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}"/>
+<!-- Message Body Start -->
+<div id="message-body">
+    <th:block>
+        <span th:text="#{email.greetings}">Dear </span>
+        <span class="bold-text" th:text="${recipient.getName()}">fullName</span>
+        <br>
+    </th:block>
+    <div class="notification-content" th:with="outcome=${parameters['outcome']}">
+        <p th:if="${outcome == 'COMPLETED'}" th:text="#{email.courseNotification.atlasCompetencyUpdateNotification.text.completed(${parameters['courseTitle']}, ${parameters['exerciseCount']})}">
+            Atlas automatically updated the competencies of the course.
+        </p>
+        <p th:if="${outcome == 'PARTIAL'}" th:text="#{email.courseNotification.atlasCompetencyUpdateNotification.text.partial(${parameters['courseTitle']}, ${parameters['exerciseCount']})}">
+            An automatic competency update of the course stopped early.
+        </p>
+        <p th:if="${outcome == 'FAILED'}" th:text="#{email.courseNotification.atlasCompetencyUpdateNotification.text.failed(${parameters['courseTitle']}, ${parameters['exerciseCount']})}">
+            An automatic competency update of the course failed.
+        </p>
+
+        <th:block th:if="${parameters['appliedCount'] > 0}">
+            <p th:text="#{email.courseNotification.atlasCompetencyUpdateNotification.summary(${parameters['createdCount']}, ${parameters['editedCount']}, ${parameters['deletedCount']}, ${parameters['assignedCount']}, ${parameters['unassignedCount']})}">
+                Summary of the applied changes
+            </p>
+            <p class="bold-text" th:text="#{email.courseNotification.atlasCompetencyUpdateNotification.changes}">Applied changes</p>
+            <div th:utext="${parameters['changesMarkdown']}">Rendered list of applied changes</div>
+            <p th:if="${parameters['omittedCount'] > 0}" th:text="#{email.courseNotification.atlasCompetencyUpdateNotification.more(${parameters['omittedCount']})}">
+                Further changes are not listed here.
+            </p>
+        </th:block>
+
+        <p th:text="#{email.courseNotification.atlasCompetencyUpdateNotification.review}">You can review and edit all competencies and links in the competency management of the course.</p>
+
+        <th:block th:replace="~{mail/notification/fragments :: openInArtemisButton}"/>
+    </div>
+    <th:block th:replace="~{mail/notification/fragments :: farewell}"/>
+</div>
+<!-- Message Body End -->
+<th:block>
+    <footer>
+        <span th:text="#{email.notification.aux.footer}"/>
+        <a th:href="@{|${serverUrl}/courses/${courseId}/settings|}">
+            <span th:text="#{email.notification.aux.footer.link}"/>
+        </a>
+    </footer>
+</th:block>
+</body>
+</html>

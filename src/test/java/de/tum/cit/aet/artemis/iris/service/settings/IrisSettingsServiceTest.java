@@ -27,6 +27,9 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     @Autowired
     private IrisSettingsService irisSettingsService;
 
+    @Autowired
+    private IrisCourseSettingsRepository irisCourseSettingsRepository;
+
     private Course course;
 
     @BeforeEach
@@ -35,7 +38,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void getSettingsForCourse_returnsDefaultsWhenNoSettingsExist() {
+    void getSettingsForCourse_returnsStoredDefaultsForNewCourse() {
         var settings = irisSettingsService.getSettingsForCourse(course);
 
         assertThat(settings.enabled()).isTrue();
@@ -69,7 +72,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void isEnabledForCourse_usesDefaultWhenMissing() {
+    void isEnabledForCourse_usesDefaultsForNewCourse() {
         assertThat(irisSettingsService.isEnabledForCourse(course.getId())).isTrue();
     }
 
@@ -95,6 +98,15 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
         assertThat(dto.settings().enabled()).isTrue();
         assertThat(dto.applicationRateLimitDefaults()).isNotNull();
         assertThat(dto.effectiveRateLimit()).isNotNull();
+    }
+
+    @Test
+    void updateCourseSettings_failsInsteadOfFakingASaveWhenTheCourseHasNoSettingsRow() {
+        // Every course owns a settings row; if it is gone, answering with the requested values would claim a save that never happened
+        irisCourseSettingsRepository.deleteByCourseId(course.getId());
+        var payload = IrisCourseSettings.of(false, "never stored", IrisPipelineVariant.ADVANCED, IrisSupportLevel.MODERATE, new IrisRateLimitConfiguration(100, 24));
+
+        assertThatThrownBy(() -> irisSettingsService.updateCourseSettings(course.getId(), payload, true)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -414,7 +426,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void getSettingsForCourseOrThrow_returnsDefaultsWhenNoSettingsExist() {
+    void getSettingsForCourseOrThrow_returnsStoredDefaultsForNewCourse() {
         var settings = irisSettingsService.getSettingsForCourseOrThrow(course.getId());
 
         assertThat(settings.enabled()).isTrue();

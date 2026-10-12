@@ -12,6 +12,7 @@
             </button>
             <div class="question-title">
                 <input
+                    [attr.aria-label]="'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate"
                     data-testid="mc-question-title"
                     pInputText
                     [(ngModel)]="question().title"
@@ -140,7 +141,15 @@
                 <div class="col-12 col-md-2">
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                        <input class="form-control point-input" title="score" type="number" [value]="question().points" disabled style="width: 100%" />
+                        <input
+                            [attr.aria-label]="'artemisApp.quizQuestion.score' | artemisTranslate"
+                            class="form-control point-input"
+                            title="score"
+                            type="number"
+                            [value]="question().points"
+                            disabled
+                            style="width: 100%"
+                        />
                     </div>
                 </div>
             }

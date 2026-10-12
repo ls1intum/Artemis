@@ -203,7 +203,7 @@ public class StatisticsService {
      * @return a custom ExerciseManagementStatisticsDTO, which contains the relevant data
      */
     public ExerciseManagementStatisticsDTO getExerciseStatistics(Exercise exercise) throws EntityNotFoundException {
-        var course = courseRepository.findByIdElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        var course = courseRepository.findByIdElseThrow(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
 
         // number of students or teams and number of participations of students or teams
         long numberOfParticipationsOfStudentsOrTeams;

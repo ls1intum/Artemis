@@ -316,7 +316,11 @@ public class PyrisDTOService {
         if (participation == null) {
             return RepositoryContents.UNREADABLE;
         }
-        var language = participation.getProgrammingExercise().getProgrammingLanguage();
+        var exercise = participation.getProgrammingExercise();
+        if (exercise == null) {
+            return RepositoryContents.UNREADABLE;
+        }
+        var language = exercise.getProgrammingLanguage();
 
         var repositoryContents = getRepositoryContents(participation.getVcsRepositoryUri());
         if (repositoryContents == null) {
