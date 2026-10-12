@@ -171,6 +171,7 @@
                 "created": "New reply successfully created",
                 "deleted": "Reply successfully deleted",
                 "deleteAnswer": "Delete answer",
+                "resolvesPost": "Resolved the question",
                 "unverifiedIris": {
                     "badge": "Awaiting tutor review",
                     "approve": "Approve",

@@ -99,6 +99,50 @@ describe('AnswerPostComponent', () => {
         expect(header).not.toBeNull();
     });
 
+    describe('resolving answer marker', () => {
+        const markerSelector = '[data-testid="resolving-answer-marker"]';
+
+        it('should render the marker with its translation key for an answer that resolves the post', () => {
+            component.posting.set(Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, resolvesPost: true }));
+            fixture.changeDetectorRef.detectChanges();
+
+            const marker = debugElement.query(By.css(markerSelector));
+            expect(marker).not.toBeNull();
+            expect(marker.query(By.css('span')).nativeElement.getAttribute('jhiTranslate')).toBe('artemisApp.communication.answerPost.resolvesPost');
+            expect(debugElement.query(By.css('.answer-post')).nativeElement.classList).toContain('resolves-post');
+        });
+
+        it('should render the marker for a consecutive answer that resolves the post', () => {
+            fixture.componentRef.setInput('isConsecutive', true);
+            component.posting.set(Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, resolvesPost: true }));
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(debugElement.query(By.css(markerSelector))).not.toBeNull();
+        });
+
+        it('should not render the marker for an answer that does not resolve the post', () => {
+            component.posting.set(Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, resolvesPost: false }));
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(debugElement.query(By.css(markerSelector))).toBeNull();
+            expect(debugElement.query(By.css('.answer-post')).nativeElement.classList).not.toContain('resolves-post');
+        });
+
+        it('should update the marker when the resolvesPost flag toggles', () => {
+            component.posting.set(Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, resolvesPost: false }));
+            fixture.changeDetectorRef.detectChanges();
+            expect(debugElement.query(By.css(markerSelector))).toBeNull();
+
+            component.posting.set(Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, resolvesPost: true }));
+            fixture.changeDetectorRef.detectChanges();
+            expect(debugElement.query(By.css(markerSelector))).not.toBeNull();
+
+            component.posting.set(Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, resolvesPost: false }));
+            fixture.changeDetectorRef.detectChanges();
+            expect(debugElement.query(By.css(markerSelector))).toBeNull();
+        });
+    });
+
     it('should not contain the posting header when isConsecutive is true', () => {
         fixture.componentRef.setInput('isConsecutive', true);
         component.posting.set(communicationResolvingAnswerPostUser1);
