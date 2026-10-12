@@ -100,8 +100,48 @@ programming exercise created inside an exam.
 
 Hiding every test leaves the student knowing only whether their code compiled, which is often what an exam wants.
 Controlling *when* the tests run is a separate question from when their results become visible, and it depends on
-the setup: with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle) you give the build
-phase that runs the tests an **After due date** inclusion condition, described under
-[Configure the Build](/instructor/exercises/programming-exercise/configure-the-build#adapt-build-phases-optional).
-With Jenkins the exercise instead offers **Rerun tests after due date**, which runs the suite once over every
-submission after the date you set.
+the setup. With [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle) it is part of the
+build configuration, described next. With Jenkins the exercise instead offers **Rerun tests after due date**, which
+runs the suite once over every submission after the date you set.
+
+### Run the Tests After the Exam
+
+With Integrated Code Lifecycle a build is a list of phases, each with an **Inclusion condition** of **Always** or
+**After due date**. Before a build starts, Artemis drops the phases whose condition is not met and runs the rest. A
+programming exercise created inside an exam starts with **After due date** on every phase that collects test
+results, and **Always** on the others. With the default templates that means a compile phase that runs on every
+push and a test phase that waits for the end of the exam. This gives the exam two steps without any manual set-up:
+
+1. **During the exam**, each push to a student repository builds the code and nothing else. The student sees whether
+   it compiles, and no test runs, so there is no need to replace the real tests in the test repository with a
+   placeholder test and revert that commit afterwards.
+2. **After the exam**, Artemis rebuilds the latest submission of every student with all phases active, and the
+   results of that run are graded. The rebuild starts 15 minutes after the latest individual exam end including the
+   grace period, so a student with extra working time is not cut short. You can change this date in the timeline of
+   the exercise's edit form, where it is labelled **Date for running tests after due date**. When you change the
+   exam's times, Artemis moves the date along by the same offset.
+
+The template and solution builds ignore the conditions and always run every phase. They are how you check an
+exercise before the exam: the solution build should pass every test, and the template build shows how the tests
+judge the code students start from. Both statuses appear next to the phases in the build plan editor.
+
+To inspect or change the phases:
+
+1. Open the exam and go to **Exercise Groups**.
+2. Click the exercise's title to open its detail page. The phases are listed there, and a warning appears on a phase
+   that expects tests but is included before the due date.
+3. Click **Edit build plan**, which is offered to editors and instructors.
+4. In the build plan editor, set the **Inclusion condition** of each phase and edit its script. **Add Phase**
+   splits the build into further steps, for example a separate compile phase for the test code.
+
+Artemis joins the scripts of the active phases in order into one build, so a phase that fails stops the ones after
+it, unless that phase has **Execute at end regardless of previous failures** switched on. See
+[Adapt Build Phases](/instructor/exercises/programming-exercise/configure-the-build#adapt-build-phases-optional)
+for every option of a phase and for how Artemis decides whether a build succeeded.
+
+<Callout variant={CalloutVariant.warning}>
+
+  An imported exercise keeps its build plan unchanged, and Artemis does not apply the exam defaults to it. Open the
+  build plan editor after an import and check that the phases expecting tests are set to **After due date**.
+
+</Callout>
