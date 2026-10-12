@@ -148,7 +148,8 @@ export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextRepl
         // (green == implemented, red == not yet implemented, grey == unknown)
         const plantUmlsValidated = plantUmlsIndexed.map((plantUmlIndexed: { containerId: string; plantUml: string }) => {
             plantUmlIndexed.plantUml = plantUmlIndexed.plantUml.replace(testsColorRegex, (match: string, capture: string) => {
-                const tests = this.programmingExerciseInstructionService.convertTestListToIds(capture, this.testCases);
+                // A testsColor element takes exactly one test, so the capture is one test reference and must not be split at commas (a test name may contain them).
+                const tests = [this.programmingExerciseInstructionService.convertProblemStatementTextToTestId(capture.trim(), this.testCases) ?? -1];
                 const { testCaseState } = this.programmingExerciseInstructionService.testStatusForTask(tests, this.latestResult);
                 switch (testCaseState) {
                     case TestCaseState.SUCCESS:

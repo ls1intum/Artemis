@@ -333,6 +333,8 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
             { id: 2, testName: 'Test Attributes of Class' },
             { id: 3, testName: 'Test Methods of Class(1, 2)' },
             { id: 4, testName: 'Failing Test With Spaces' },
+            { id: 5, testName: 'Adds items, preserves order' },
+            { id: 6, testName: 'Fails to add, keeps order' },
         ] as ProgrammingExerciseTestCase[];
         const latestResult = {
             successful: false,
@@ -341,6 +343,8 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
                 { testCase: { id: 2 }, positive: true },
                 { testCase: { id: 3 }, positive: true },
                 { testCase: { id: 4 }, positive: false },
+                { testCase: { id: 5 }, positive: true },
+                { testCase: { id: 6 }, positive: false },
             ],
         } as Result;
 
@@ -360,6 +364,17 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
 
         it('should resolve a test name that contains spaces', () => {
             expect(renderedPlantUml('<color:testsColor(Test Attributes of Class)>-foo: String</color>')).toBe('@startuml\n<color:green>-foo: String</color>\n@enduml');
+        });
+
+        it('should resolve a test name that contains a comma and spaces as one test', () => {
+            const rendered = renderedPlantUml(
+                '<color:testsColor(Adds items, preserves order)>+ add()</color>\nclass A #testsColor(Fails to add, keeps order)\nclass B #testsColor(<testid>5</testid>)',
+            );
+            expect(rendered).toBe('@startuml\n<color:green>+ add()</color>\nclass A #red\nclass B #green\n@enduml');
+        });
+
+        it('should render a test name with a comma as unknown when it does not exist', () => {
+            expect(renderedPlantUml('class A #testsColor(Adds items, preserves)')).toBe('@startuml\nclass A #grey\n@enduml');
         });
 
         it('should resolve a failing test name that contains spaces and parameters', () => {

@@ -14,7 +14,8 @@ import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
 class PlantUmlTaskColorResolverTest {
 
     private static final Map<Long, TestFeedbackInputDTO> TEST_RESULTS = Map.of(1L, new TestFeedbackInputDTO(1L, "Test Attributes of Class", true, null, 1.0), 2L,
-            new TestFeedbackInputDTO(2L, "testClass[Car]", false, null, 0.0), 3L, new TestFeedbackInputDTO(3L, "Test Methods of Class(1, 2)", true, null, 1.0));
+            new TestFeedbackInputDTO(2L, "testClass[Car]", false, null, 0.0), 3L, new TestFeedbackInputDTO(3L, "Test Methods of Class(1, 2)", true, null, 1.0), 4L,
+            new TestFeedbackInputDTO(4L, "Adds items, preserves order", true, null, 1.0));
 
     @Test
     void resolve_colorTagWithSpacesInTheTestName() {
@@ -35,6 +36,14 @@ class PlantUmlTaskColorResolverTest {
         String resolved = PlantUmlTaskColorResolver.resolve("<color:testsColor(Test Methods of Class(1, 2))>+ foo()</color>", TEST_RESULTS);
 
         assertThat(resolved).isEqualTo("<color:green>+ foo()</color>");
+    }
+
+    @Test
+    void resolve_aCommaInTheTestNameDoesNotSplitTheReference() {
+        String resolved = PlantUmlTaskColorResolver.resolve("<color:testsColor(Adds items, preserves order)>+ add()</color> #testsColor(Adds items, preserves order)",
+                TEST_RESULTS);
+
+        assertThat(resolved).isEqualTo("<color:green>+ add()</color> #green");
     }
 
     @Test

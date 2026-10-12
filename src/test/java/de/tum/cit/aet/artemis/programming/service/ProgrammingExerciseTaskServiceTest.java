@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -301,6 +302,64 @@ class ProgrammingExerciseTaskServiceTest {
         taskService.replaceTestIdsWithNames(exercise);
 
         assertThat(exercise.getProblemStatement()).contains("#testsColor(Test Attributes of Class)");
+    }
+
+    @Test
+    void testsColorReferenceWhoseNameContainsACommaAndSpaces_roundTripsAsOneReference() {
+        // A JUnit DisplayName may contain a comma. Unlike a task, a testsColor element takes exactly one test, so the comma must not split the reference.
+        String diagram = """
+                @startuml
+                class BubbleSort #testsColor(Adds items, preserves order) {
+                  <color:testsColor(Adds items, preserves order)>+ sort()</color>
+                }
+                @enduml
+                """;
+        ProgrammingExercise exercise = exerciseWith(diagram, testCase(1L, "Adds items, preserves order"));
+
+        taskService.replaceTestNamesWithIds(exercise);
+
+        assertThat(exercise.getProblemStatement()).as("saving stores the id of the matching test").contains("#testsColor(<testid>1</testid>)")
+                .contains("<color:testsColor(<testid>1</testid>)>").doesNotContain("Adds items");
+
+        taskService.replaceTestIdsWithNames(exercise);
+
+        assertThat(exercise.getProblemStatement()).as("reopening restores the name exactly as written").isEqualTo(diagram);
+    }
+
+    @Test
+    void replaceTestNamesWithIds_keepsAnUnknownTestsColorNameWithACommaUnchanged() {
+        String diagram = """
+                @startuml
+                class BubbleSort #testsColor(Unknown test, with comma)
+                @enduml
+                """;
+        ProgrammingExercise exercise = exerciseWith(diagram, testCase(1L, "testBubbleSort"));
+
+        taskService.replaceTestNamesWithIds(exercise);
+
+        assertThat(exercise.getProblemStatement()).isEqualTo(diagram);
+    }
+
+    @Test
+    void updateTestIds_remapsATestsColorReferenceInsideAPlantUmlDiagram() {
+        ProgrammingExercise exercise = exerciseWith("""
+                @startuml
+                class BubbleSort #testsColor(<testid>1</testid>)
+                @enduml
+                """, testCase(1L, "Adds items, preserves order"));
+
+        taskService.updateTestIds(exercise, Map.of(1L, 7L));
+
+        assertThat(exercise.getProblemStatement()).contains("#testsColor(<testid>7</testid>)");
+    }
+
+    @Test
+    void replaceTestNamesWithIds_stillSplitsTheTestListOfATaskAtCommas() {
+        ProgrammingExercise exercise = exerciseWith("[task][Sort](testA, testB)", testCase(1L, "testA"), testCase(2L, "testB"));
+
+        taskService.replaceTestNamesWithIds(exercise);
+
+        assertThat(exercise.getProblemStatement()).isEqualTo("[task][Sort](<testid>1</testid>,<testid>2</testid>)");
     }
 
     @Test
