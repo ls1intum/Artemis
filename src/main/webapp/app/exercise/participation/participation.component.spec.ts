@@ -28,6 +28,7 @@ import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
@@ -68,6 +69,7 @@ describe('ParticipationComponent', () => {
                 SessionStorageService,
                 MockProvider(ExerciseService),
                 MockProvider(ParticipationService),
+                MockProvider(DeleteDialogService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(EventManager),
                 { provide: WebsocketService, useClass: MockWebsocketService },
@@ -168,6 +170,111 @@ describe('ParticipationComponent', () => {
             component.saveIndividualDueDate(dto);
 
             expect(successSpy).toHaveBeenCalledWith('artemisApp.participation.updateDueDates.success', { name: '42' });
+        });
+    });
+
+    describe('Practice participations of a team exercise', () => {
+        const teamDto: ParticipationManagementDTO = {
+            participationId: 11,
+            submissionCount: 2,
+            testRun: false,
+            participantName: 'Team Alpha',
+            participantIdentifier: 'alpha',
+            teamId: 7,
+            teamStudents: [
+                { name: 'Alice Anderson', login: 'alice' },
+                { name: 'Bob Brown', login: 'bob' },
+            ],
+        };
+
+        const practiceDto: ParticipationManagementDTO = {
+            participationId: 12,
+            submissionCount: 0,
+            testRun: true,
+            participantName: 'Carol Clark',
+            participantIdentifier: 'carol',
+            studentId: 5,
+            studentLogin: 'carol',
+        };
+
+        async function renderRows(teamMode: boolean, rows: ParticipationManagementDTO[]): Promise<HTMLElement> {
+            const instructorExercise = { ...exercise, teamMode, isAtLeastTutor: true, isAtLeastInstructor: true };
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: instructorExercise })));
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: rows, totalElements: rows.length }));
+
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            componentFixture.detectChanges();
+
+            return componentFixture.nativeElement.querySelector('jhi-table-view');
+        }
+
+        function bodyRows(table: HTMLElement): HTMLTableRowElement[] {
+            return Array.from(table.querySelectorAll<HTMLTableRowElement>('tbody tr'));
+        }
+
+        it('should list a team row and a practice row of a team exercise', async () => {
+            const table = await renderRows(true, [teamDto, practiceDto]);
+
+            expect(bodyRows(table)).toHaveLength(2);
+            expect(table.querySelectorAll('[data-testid="participation-practice-tag"]')).toHaveLength(1);
+        });
+
+        it('should render a team row with its team link and members and without a practice marker', async () => {
+            const table = await renderRows(true, [teamDto, practiceDto]);
+            const teamRow = bodyRows(table)[0];
+
+            const teamLink = teamRow.querySelector('a[href*="/teams/"]');
+            expect(teamLink?.getAttribute('href')).toContain('/course-management/10/exercises/1/teams/7');
+            expect(teamLink?.textContent?.trim()).toBe('Team Alpha');
+            expect(teamRow.querySelector('jhi-team-students-list')).not.toBeNull();
+            expect(teamRow.textContent).toContain('Alice Anderson');
+            expect(teamRow.textContent).toContain('Bob Brown');
+            expect(teamRow.querySelector('[data-testid="participation-practice-tag"]')).toBeNull();
+            expect(teamRow.querySelector('[data-testid="participation-practice-student"]')).toBeNull();
+        });
+
+        it('should render a practice row with the student, the practice marker and no team link', async () => {
+            const table = await renderRows(true, [teamDto, practiceDto]);
+            const practiceRow = bodyRows(table)[1];
+
+            expect(practiceRow.textContent).toContain('Carol Clark');
+            expect(practiceRow.querySelector('a[href*="/teams/"]')).toBeNull();
+            expect(practiceRow.querySelector('jhi-team-students-list')).toBeNull();
+            expect(practiceRow.querySelector('[data-testid="participation-practice-tag"]')?.textContent).toContain('artemisApp.participation.practice');
+            expect(practiceRow.querySelector('[data-testid="participation-practice-student"]')?.textContent?.trim()).toBe('Carol Clark (carol)');
+        });
+
+        it('should link the student of a practice row to the user management for administrators', async () => {
+            const table = await renderRows(true, [teamDto, practiceDto]);
+            component.isAdmin.set(true);
+            componentFixture.detectChanges();
+            const [teamRow, practiceRow] = bodyRows(table);
+
+            const studentLink = practiceRow.querySelector('a[href*="/admin/user-management/"]');
+            expect(studentLink?.getAttribute('href')).toContain('/admin/user-management/carol');
+            expect(studentLink?.textContent?.trim()).toBe('Carol Clark');
+            expect(practiceRow.querySelector('a[href*="/teams/"]')).toBeNull();
+            expect(teamRow.querySelector('a[href*="/admin/user-management/"]')).toBeNull();
+            expect(teamRow.querySelector('a[href*="/teams/7"]')).not.toBeNull();
+        });
+
+        it('should not mark rows of an individual exercise as practice in the name column', async () => {
+            const table = await renderRows(false, [{ ...practiceDto, testRun: true }, sampleDto]);
+
+            expect(bodyRows(table)).toHaveLength(2);
+            expect(table.querySelector('[data-testid="participation-practice-tag"]')).toBeNull();
+            expect(table.querySelector('[data-testid="participation-practice-student"]')).toBeNull();
+            expect(table.querySelector('a[href*="/teams/"]')).toBeNull();
+            expect(bodyRows(table)[0].textContent).toContain('Carol Clark');
+            expect(bodyRows(table)[1].textContent).toContain('Alice');
+        });
+
+        it('should keep the identity columns of a team exercise for practice rows', async () => {
+            await renderRows(true, [practiceDto]);
+
+            expect(component.columns().map((column) => column.headerKey)).toEqual(expect.arrayContaining(['artemisApp.participation.team', 'artemisApp.participation.students']));
+            expect(component.participations()).toEqual([practiceDto]);
         });
     });
 

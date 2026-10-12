@@ -6,6 +6,8 @@ import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -49,12 +51,13 @@ public class ModelingSubmissionApi extends AbstractModelingApi {
      * @param modelingSubmission the submission to handle
      * @param exercise           the exercise the submission belongs to
      * @param user               the user who initiated the save
+     * @param participation      the participation to save to, which the caller has authorized
      * @return the saved modeling submission
      */
-    public ModelingSubmission handleModelingSubmission(ModelingSubmission modelingSubmission, ModelingExercise exercise, User user) {
-        // The team websocket is the caller here and never goes through the exam submission gate, so the participation
-        // is resolved from the user inside the service.
-        return modelingSubmissionService.handleModelingSubmission(modelingSubmission, exercise, user, null).submission();
+    public ModelingSubmission handleModelingSubmission(ModelingSubmission modelingSubmission, ModelingExercise exercise, User user, StudentParticipation participation) {
+        // The team websocket is the caller here. It has authorized the participation its topic addresses, so the save goes
+        // to that one. Resolving it from the user instead could pick the student's own practice participation.
+        return modelingSubmissionService.handleModelingSubmission(modelingSubmission, exercise, user, StudentParticipationSubmitTargetDTO.of(participation)).submission();
     }
 
     /**
