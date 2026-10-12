@@ -76,6 +76,8 @@ public class DataExportCreationService {
 
     private final DataExportTutorialGroupService dataExportTutorialGroupService;
 
+    private final DataExportPresentationAssessmentService dataExportPresentationAssessmentService;
+
     private final ResourceLoaderService resourceLoaderService;
 
     private final TempFileUtilService tempFileUtilService;
@@ -85,7 +87,8 @@ public class DataExportCreationService {
             DataExportExamCreationService dataExportExamCreationService, DataExportCommunicationDataService dataExportCommunicationDataService,
             DataExportScienceEventService dataExportScienceEventService, DataExportIrisService dataExportIrisService,
             DataExportLearnerProfileService dataExportLearnerProfileService, DataExportCompetencyProgressService dataExportCompetencyProgressService,
-            DataExportTutorialGroupService dataExportTutorialGroupService, ResourceLoaderService resourceLoaderService, TempFileUtilService tempFileUtilService) {
+            DataExportTutorialGroupService dataExportTutorialGroupService, DataExportPresentationAssessmentService dataExportPresentationAssessmentService,
+            ResourceLoaderService resourceLoaderService, TempFileUtilService tempFileUtilService) {
         this.zipFileService = zipFileService;
         this.fileService = fileService;
         this.dataExportRepository = dataExportRepository;
@@ -98,6 +101,7 @@ public class DataExportCreationService {
         this.dataExportLearnerProfileService = dataExportLearnerProfileService;
         this.dataExportCompetencyProgressService = dataExportCompetencyProgressService;
         this.dataExportTutorialGroupService = dataExportTutorialGroupService;
+        this.dataExportPresentationAssessmentService = dataExportPresentationAssessmentService;
         this.dataExportsPath = dataExportsPath;
         this.resourceLoaderService = resourceLoaderService;
         this.tempFileUtilService = tempFileUtilService;
@@ -122,6 +126,7 @@ public class DataExportCreationService {
         dataExportLearnerProfileService.createLearnerProfileExport(userId, workingDirectory);
         dataExportCompetencyProgressService.createCompetencyProgressExport(userId, workingDirectory);
         dataExportTutorialGroupService.createTutorialGroupExport(userId, workingDirectory);
+        dataExportPresentationAssessmentService.createPresentationAssessmentExport(userId, workingDirectory);
         addGeneralUserInformation(user, workingDirectory);
         addReadmeFile(workingDirectory);
         var dataExportPath = createDataExportZipFile(user.getLogin(), workingDirectory);
