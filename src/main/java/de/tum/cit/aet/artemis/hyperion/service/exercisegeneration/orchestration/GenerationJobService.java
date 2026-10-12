@@ -61,7 +61,7 @@ public class GenerationJobService {
 
     private static final Logger log = LoggerFactory.getLogger(GenerationJobService.class);
 
-    static final String JOB_MAP_NAME = "hyperion-exercise-generation-jobs";
+    static final String JOB_MAP_NAME = de.tum.cit.aet.artemis.core.config.Constants.HYPERION_GENERATION_JOBS_MAP;
 
     static final String CANCEL_MAP_NAME = "hyperion-exercise-generation-cancellations";
 
@@ -539,9 +539,15 @@ public class GenerationJobService {
      * @return whether this node still owns an uncancelled job
      */
     public boolean enterNonCancellablePhase(long exerciseId, String jobId) {
+        if (!topology.permitsOwnership()) {
+            return false;
+        }
         String key = key(exerciseId);
         lockJobSlot(key);
         try {
+            if (!topology.permitsOwnership()) {
+                return false;
+            }
             JobInfo job = jobMap.get(key);
             if (job == null || !job.jobId().equals(jobId) || localNodeId == null || (job.ownerNodeId() != null && !job.ownerNodeId().equals(localNodeId))) {
                 return false;
@@ -581,9 +587,15 @@ public class GenerationJobService {
      * @return true if this JVM still owns the active job
      */
     public boolean isOwnedActiveJob(long exerciseId, String jobId) {
+        if (!topology.permitsOwnership()) {
+            return false;
+        }
         String key = key(exerciseId);
         lockJobSlot(key);
         try {
+            if (!topology.permitsOwnership()) {
+                return false;
+            }
             JobInfo job = jobMap.get(key);
             return job != null && job.jobId().equals(jobId) && localNodeId != null && (job.ownerNodeId() == null || job.ownerNodeId().equals(localNodeId));
         }
@@ -600,9 +612,15 @@ public class GenerationJobService {
      * @return true if the heartbeat was recorded
      */
     public boolean heartbeat(long exerciseId, String jobId) {
+        if (!topology.permitsOwnership()) {
+            return false;
+        }
         String key = key(exerciseId);
         lockJobSlot(key);
         try {
+            if (!topology.permitsOwnership()) {
+                return false;
+            }
             JobInfo job = jobMap.get(key);
             if (job == null || !job.jobId().equals(jobId) || localNodeId == null || (job.ownerNodeId() != null && !job.ownerNodeId().equals(localNodeId))) {
                 return false;
@@ -662,7 +680,7 @@ public class GenerationJobService {
      */
     public String claimExternalMutationSlot(long exerciseId) {
         topology.verifyAllMembers();
-        return GenerationExternalMutationService.claim(jobMap, localNodeId, exerciseId);
+        return GenerationExternalMutationService.claim(jobMap, localNodeId, exerciseId, topology::verifyAllMembers);
     }
 
     /**
