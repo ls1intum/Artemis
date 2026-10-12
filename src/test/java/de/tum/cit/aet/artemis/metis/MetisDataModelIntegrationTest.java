@@ -5,16 +5,27 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.function.BiPredicate;
+
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+
+import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.core.type.AnnotatedTypeMetadata;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.env.MockEnvironment;
@@ -23,6 +34,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseResetService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -40,23 +52,32 @@ import de.tum.cit.aet.artemis.metis.repository.MetisQuestionRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
+import liquibase.changelog.ChangeLogParameters;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.parser.ChangeLogParserFactory;
+import liquibase.resource.ClassLoaderResourceAccessor;
 
 /**
  * Holds the Metis data model to what its schema promises: every column round-trips through the repositories, the
- * foreign keys cascade from the participation, the main question, the tutorial group and the exercise without any
- * Metis service being involved, no row can be written without its parent, the unique keys refuse a second window per
- * tutorial group, a second check per participation and a second question per position, and the module condition
- * follows its property.
+ * foreign keys cascade from the participation, the check, the main question, the tutorial group and the exercise without
+ * any Metis service being involved, no row can be written without its parent, a follow-up can only name a question of
+ * its own check, the unique keys refuse a second window per tutorial group, a second check per participation and a
+ * second question per position, a focus file path of 1024 characters fits, only a five- or seven-point Likert scale is
+ * accepted, and the module condition follows its property. Every programming exercise owns its configuration from the
+ * moment it is stored, with the column defaults, and storing it again neither adds a second row nor resets the first.
  *
  * <p>
  * The deletions run through the paths a participation or an exercise really leaves by: a plain delete of the
  * participation row, {@link ParticipationDeletionService#delete(long, boolean)}, which the exercise deletion and the
  * course reset run once per participation, {@link ExerciseDeletionService#delete(long, boolean)}, which the deletion
  * of a course runs once per exercise, and {@link CourseResetService#resetStudentData(long)}, which keeps the exercise
- * and so has to keep its configuration. A main question and a tutorial group are deleted through their repositories.
+ * and so has to keep its configuration. A check, a main question and a tutorial group are deleted through their repositories.
  * After every deletion a sweep over all four tables asserts that no row names a parent that is gone. With every foreign
  * key in place, such a row cannot exist, so the sweep is the assertion that no key has gone missing from the changelog,
  * over whole tables rather than this test's rows; a key that stopped cascading would surface earlier, as an exception
@@ -76,6 +97,14 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
 
     /** An id no fixture hands out, so a row pointing at it names a parent that does not exist. */
     private static final long MISSING_ID = Long.MAX_VALUE / 2;
+
+    /** The changelog that creates the Metis tables, and its changeSet that gives the programming exercises stored before it their configuration. */
+    private static final String CHANGELOG = "config/liquibase/changelog/20261012160502_changelog.xml";
+
+    private static final String BACKFILL_CHANGE_SET = "20261012160502-06-backfill-metis-exercise-config";
+
+    /** A repository path of exactly 1024 characters, the longest the column holds: 58 nested directories and a long file name. */
+    private static final String LONGEST_FOCUS_FILE_PATH = "src/" + "nested_directory/".repeat(58) + "A".repeat(29) + ".java";
 
     /** The columns are datetime(3) without a zone, so what comes back is the same instant, not necessarily the same zone. */
     private static final BiPredicate<ZonedDateTime, ZonedDateTime> SAME_INSTANT = (left, right) -> left.toInstant().equals(right.toInstant());
@@ -110,9 +139,25 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
     @Autowired
     private CourseResetService courseResetService;
 
-    /** For the orphan sweep only: the repositories cannot ask for a row whose parent is gone, since they navigate from the parent. */
+    @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    /**
+     * For what the repositories cannot do: the orphan sweep, since they cannot ask for a row whose parent is gone, and a native write that the database has to
+     * refuse.
+     */
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    /**
+     * For the writes behind the entity's back that have to stay: a configuration removed the way a creation that failed half-way leaves it, and the backfill
+     * changeSet of the migration. The pool of the tests disables auto-commit, so they run on a connection of their own.
+     */
+    @Autowired
+    private DataSource dataSource;
 
     private Course course;
 
@@ -124,7 +169,7 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
 
     @BeforeEach
     void setUp() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
@@ -283,10 +328,13 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
         configOfAMissingExercise.setExerciseId(MISSING_ID);
         assertThatThrownBy(() -> metisExerciseConfigRepository.saveAndFlush(configOfAMissingExercise)).isInstanceOf(DataIntegrityViolationException.class);
 
-        // The exercise exists, but it has no configuration yet, and the window hangs off the configuration, not off the exercise.
-        assertThatThrownBy(() -> metisGroupWindowRepository.saveAndFlush(windowWithEveryFieldSet())).isInstanceOf(DataIntegrityViolationException.class);
+        // A window hangs off the configuration, not off the exercise: the text exercise exists, but only a programming exercise owns a configuration.
+        TextExercise textExercise = textExerciseUtilService.createSampleTextExercise(course);
+        MetisGroupWindow windowOfAnExerciseWithoutConfiguration = windowWithEveryFieldSet();
+        windowOfAnExerciseWithoutConfiguration.setExerciseId(textExercise.getId());
+        assertThatThrownBy(() -> metisGroupWindowRepository.saveAndFlush(windowOfAnExerciseWithoutConfiguration)).isInstanceOf(DataIntegrityViolationException.class);
 
-        metisExerciseConfigRepository.save(configWithEveryFieldSet());
+        // The programming exercise owns its configuration from the start, so here only the missing tutorial group is refused.
         MetisGroupWindow windowOfAMissingGroup = windowWithEveryFieldSet();
         windowOfAMissingGroup.setTutorialGroupId(MISSING_ID);
         assertThatThrownBy(() -> metisGroupWindowRepository.saveAndFlush(windowOfAMissingGroup)).isInstanceOf(DataIntegrityViolationException.class);
@@ -301,13 +349,146 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
         MetisCheck check = metisCheckRepository.save(checkWithEveryFieldSet());
         assertThatThrownBy(() -> metisQuestionRepository.saveAndFlush(followUpWithEveryFieldSet(check.getId(), MISSING_ID))).isInstanceOf(DataIntegrityViolationException.class);
 
-        // A refused insert leaves nothing behind: only the configuration and the check saved above exist.
+        // A refused insert leaves nothing behind: only the configuration the exercise owns and the check saved above exist.
         assertThat(metisExerciseConfigRepository.findById(MISSING_ID)).isEmpty();
         assertThat(metisExerciseConfigRepository.findById(exercise.getId())).isPresent();
+        assertThat(metisExerciseConfigRepository.findById(textExercise.getId())).isEmpty();
         assertThat(metisGroupWindowRepository.findAllByExerciseId(exercise.getId())).isEmpty();
+        assertThat(metisGroupWindowRepository.findAllByExerciseId(textExercise.getId())).isEmpty();
         assertThat(metisCheckRepository.findByParticipationId(participation.getId())).map(MetisCheck::getId).contains(check.getId());
         assertThat(metisQuestionRepository.findAllByCheckIdOrderByQuestionOrderAsc(check.getId())).isEmpty();
         assertNoOrphanRows();
+    }
+
+    @Test
+    void aFollowUpCannotNameAMainQuestionOfAnotherCheck() {
+        MetisCheck check = metisCheckRepository.save(checkWithEveryFieldSet());
+        MetisQuestion mainQuestion = metisQuestionRepository.save(mainQuestionWithEveryFieldSet(check.getId()));
+        ProgrammingExerciseStudentParticipation otherStudentsParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise,
+                TEST_PREFIX + "student2");
+        MetisCheck otherStudentsCheck = metisCheckRepository.save(checkOf(otherStudentsParticipation));
+
+        // Both ids exist, but not as a pair: the main question belongs to the first student's check, so the second student's follow-up cannot name it.
+        MetisQuestion crossCheckFollowUp = followUpWithEveryFieldSet(otherStudentsCheck.getId(), mainQuestion.getId());
+        assertThatThrownBy(() -> metisQuestionRepository.saveAndFlush(crossCheckFollowUp)).isInstanceOf(DataIntegrityViolationException.class);
+        assertThat(metisQuestionRepository.findAllByCheckIdOrderByQuestionOrderAsc(otherStudentsCheck.getId())).isEmpty();
+
+        // The same follow-up in the main question's own check is accepted, and so is a main question, whose parent is null.
+        MetisQuestion followUp = metisQuestionRepository.saveAndFlush(followUpWithEveryFieldSet(check.getId(), mainQuestion.getId()));
+        assertThat(metisQuestionRepository.findAllByCheckIdOrderByQuestionOrderAsc(check.getId())).extracting(MetisQuestion::getId).containsExactly(mainQuestion.getId(),
+                followUp.getId());
+        assertNoOrphanRows();
+    }
+
+    @Test
+    void deletingTheCheckRemovesItsMainQuestionsAndTheirFollowUps() {
+        MetisCheck check = metisCheckRepository.save(checkWithEveryFieldSet());
+        MetisQuestion mainQuestion = metisQuestionRepository.save(mainQuestionWithEveryFieldSet(check.getId()));
+        MetisQuestion followUp = metisQuestionRepository.save(followUpWithEveryFieldSet(check.getId(), mainQuestion.getId()));
+
+        // The follow-up is reached twice, through its check and through its main question; both keys cascade.
+        metisCheckRepository.deleteById(check.getId());
+
+        assertThat(metisQuestionRepository.findById(mainQuestion.getId())).isEmpty();
+        assertThat(metisQuestionRepository.findById(followUp.getId())).isEmpty();
+        assertThat(programmingExerciseStudentParticipationRepository.findById(participation.getId())).isPresent();
+        assertNoOrphanRows();
+    }
+
+    @Test
+    void everyProgrammingExerciseOwnsItsConfigurationFromTheMomentItIsStored() {
+        // The fixture stores the exercise the way every creation path does, followed by ExerciseConfigurationService.initialize, and nothing here writes a
+        // configuration. The row is there all the same, and it holds the column defaults, which are the defaults of the entity: Metis starts switched off.
+        MetisExerciseConfig defaults = new MetisExerciseConfig();
+        defaults.setExerciseId(exercise.getId());
+        assertThat(metisExerciseConfigRepository.findById(exercise.getId()).orElseThrow()).usingRecursiveComparison().isEqualTo(defaults);
+
+        // An exercise of another type is stored through the same call and owns none.
+        TextExercise textExercise = textExerciseUtilService.createSampleTextExercise(course);
+        assertThat(metisExerciseConfigRepository.findById(textExercise.getId())).isEmpty();
+    }
+
+    @Test
+    void storingTheExerciseAgainNeitherAddsNorResetsItsConfiguration() {
+        // An instructor's settings, written into the row the exercise owns.
+        metisExerciseConfigRepository.save(configWithEveryFieldSet());
+
+        // A path that initializes an exercise it initialized before finds the row and leaves it alone.
+        exerciseConfigurationService.initialize(exercise);
+        exerciseConfigurationService.initialize(exercise);
+
+        assertThat(metisExerciseConfigRepository.findById(exercise.getId()).orElseThrow()).usingRecursiveComparison().withEqualsForType(SAME_INSTANT, ZonedDateTime.class)
+                .isEqualTo(configWithEveryFieldSet());
+    }
+
+    @Test
+    void anExerciseWhoseConfigurationIsMissingGetsTheDefaultsAgain() throws SQLException {
+        // What a creation that failed after storing the exercise leaves behind: the exercise without its row.
+        deleteConfigurationRow(exercise.getId());
+        assertThat(metisExerciseConfigRepository.findById(exercise.getId())).isEmpty();
+
+        exerciseConfigurationService.initialize(exercise);
+
+        MetisExerciseConfig defaults = new MetisExerciseConfig();
+        defaults.setExerciseId(exercise.getId());
+        assertThat(metisExerciseConfigRepository.findById(exercise.getId()).orElseThrow()).usingRecursiveComparison().isEqualTo(defaults);
+    }
+
+    @Test
+    void theMigrationGivesAProgrammingExerciseStoredBeforeItTheDefaultsAndLeavesEveryOtherRowAlone() throws Exception {
+        // A programming exercise as the migration finds it on an installation that already has exercises: without a configuration.
+        deleteConfigurationRow(exercise.getId());
+        TextExercise textExercise = textExerciseUtilService.createSampleTextExercise(course);
+
+        executeBackfill();
+
+        MetisExerciseConfig defaults = new MetisExerciseConfig();
+        defaults.setExerciseId(exercise.getId());
+        assertThat(metisExerciseConfigRepository.findById(exercise.getId()).orElseThrow()).usingRecursiveComparison().isEqualTo(defaults);
+        assertThat(metisExerciseConfigRepository.findById(textExercise.getId())).isEmpty();
+
+        // A repeated run, after an interruption, skips every exercise that has its row and changes none of them.
+        metisExerciseConfigRepository.save(configWithEveryFieldSet());
+        executeBackfill();
+        assertThat(metisExerciseConfigRepository.findById(exercise.getId()).orElseThrow()).usingRecursiveComparison().withEqualsForType(SAME_INSTANT, ZonedDateTime.class)
+                .isEqualTo(configWithEveryFieldSet());
+    }
+
+    @Test
+    void aFocusFilePathOf1024CharactersRoundTrips() {
+        assertThat(LONGEST_FOCUS_FILE_PATH).hasSize(1024);
+        MetisCheck check = metisCheckRepository.save(checkWithEveryFieldSet());
+        MetisQuestion question = mainQuestionWithEveryFieldSet(check.getId());
+        question.setFocusFilePath(LONGEST_FOCUS_FILE_PATH);
+
+        MetisQuestion saved = metisQuestionRepository.saveAndFlush(question);
+
+        assertThat(metisQuestionRepository.findById(saved.getId())).map(MetisQuestion::getFocusFilePath).contains(LONGEST_FOCUS_FILE_PATH);
+    }
+
+    @Test
+    void onlyAFiveOrASevenPointLikertScaleIsAccepted() {
+        MetisExerciseConfig config = configWithEveryFieldSet();
+        try (ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory()) {
+            Validator validator = validatorFactory.getValidator();
+            for (int points : List.of(MetisExerciseConfig.MIN_LIKERT_POINTS, MetisExerciseConfig.MAX_LIKERT_POINTS)) {
+                config.setLikertScalePoints(points);
+                assertThat(validator.validate(config)).as("violations of a %d-point scale", points).isEmpty();
+                metisExerciseConfigRepository.saveAndFlush(config);
+                assertThat(metisExerciseConfigRepository.findById(exercise.getId())).map(MetisExerciseConfig::getLikertScalePoints).contains(points);
+            }
+
+            // Six lies inside the range from five to seven, which is why the rule is membership and not a range.
+            config.setLikertScalePoints(6);
+            assertThat(validator.validate(config)).extracting(violation -> violation.getPropertyPath().toString()).containsExactly("likertScaleSupported");
+        }
+
+        // The database refuses six too, for the writes that do not pass through validation: the server disables it on persist, the row is inserted by a native
+        // statement, and settings are changed by modifying queries.
+        assertThatThrownBy(() -> jdbcTemplate.update("UPDATE metis_exercise_config SET likert_scale_points = ? WHERE exercise_id = ?", 6, exercise.getId()))
+                .isInstanceOf(DataAccessException.class)
+                .satisfies(refusal -> assertThat(refusal.getMessage().toLowerCase(Locale.ROOT)).contains("ck_metis_exercise_config_likert_scale_points"));
+        assertThat(metisExerciseConfigRepository.findById(exercise.getId())).map(MetisExerciseConfig::getLikertScalePoints).contains(MetisExerciseConfig.MAX_LIKERT_POINTS);
     }
 
     @Test
@@ -350,6 +531,36 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
     }
 
     /**
+     * Removes the configuration row of an exercise without going through the entity, as a creation that failed after storing the exercise leaves it.
+     *
+     * @param exerciseId the id of the exercise whose row goes
+     * @throws SQLException if the statement fails
+     */
+    private void deleteConfigurationRow(long exerciseId) throws SQLException {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement("DELETE FROM metis_exercise_config WHERE exercise_id = ?")) {
+            connection.setAutoCommit(true);
+            statement.setLong(1, exerciseId);
+            statement.executeUpdate();
+        }
+    }
+
+    /**
+     * Runs the backfill changeSet of the Metis migration against the test database the way Liquibase runs it on an upgrade. On the empty database every test
+     * run starts from, the migration has no exercise to give a row, so this is the only place it meets one.
+     *
+     * @throws Exception if the changelog cannot be read or the changeSet fails
+     */
+    private void executeBackfill() throws Exception {
+        try (Connection connection = dataSource.getConnection(); ClassLoaderResourceAccessor resourceAccessor = new ClassLoaderResourceAccessor()) {
+            var database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
+            var changeLog = ChangeLogParserFactory.getInstance().getParser(CHANGELOG, resourceAccessor).parse(CHANGELOG, new ChangeLogParameters(database), resourceAccessor);
+            var changeSet = changeLog.getChangeSets().stream().filter(candidate -> candidate.getId().equals(BACKFILL_CHANGE_SET)).findFirst().orElseThrow();
+            changeSet.execute(changeLog, database);
+        }
+    }
+
+    /**
      * The fixture gives the participation a build plan id, and removing a build plan needs a continuous integration service that the Independent profile does not
      * load. Clearing the id keeps a deletion on its real path: the participation goes through the participation deletion service, the exercise through the
      * programming exercise deletion service, and nothing but the cascade in the schema may reach the Metis rows.
@@ -368,7 +579,7 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
      */
     private void assertNoOrphanRows() {
         assertThat(countRowsWithoutParent("metis_question", "check_id", "metis_check", "id")).as("questions whose check is gone").isZero();
-        assertThat(countRowsWithoutParent("metis_question", "parent_question_id", "metis_question", "id")).as("follow-ups whose main question is gone").isZero();
+        assertThat(countFollowUpsWithoutTheirMainQuestion()).as("follow-ups whose main question is gone or belongs to another check").isZero();
         assertThat(countRowsWithoutParent("metis_check", "participation_id", "participation", "id")).as("checks whose participation is gone").isZero();
         assertThat(countRowsWithoutParent("metis_group_window", "exercise_id", "metis_exercise_config", "exercise_id")).as("windows whose configuration is gone").isZero();
         assertThat(countRowsWithoutParent("metis_group_window", "tutorial_group_id", "tutorial_group", "id")).as("windows whose tutorial group is gone").isZero();
@@ -376,8 +587,21 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
     }
 
     /**
-     * How many rows of the child table name a parent the parent table does not hold. The IS NOT NULL guard only matters for parent_question_id, where null means
-     * "a main question" rather than "a missing parent"; on the other columns it is implied by their NOT NULL constraint.
+     * How many follow-ups name a main question their own check does not hold, which covers a deleted main question and one of another check alike: the key of a
+     * follow-up is the pair (parent_question_id, check_id). A main question has no parent and is not counted.
+     *
+     * @return the number of follow-ups whose main question is missing from their check
+     */
+    private long countFollowUpsWithoutTheirMainQuestion() {
+        String sql = "SELECT COUNT(*) FROM metis_question c LEFT JOIN metis_question p ON p.check_id = c.check_id AND p.id = c.parent_question_id"
+                + " WHERE c.parent_question_id IS NOT NULL AND p.id IS NULL";
+        Long orphans = jdbcTemplate.queryForObject(sql, Long.class);
+        return orphans == null ? 0 : orphans;
+    }
+
+    /**
+     * How many rows of the child table name a parent the parent table does not hold. The columns swept here are all NOT NULL, so the IS NOT NULL guard is
+     * implied; it keeps the statement correct for a nullable key as well.
      *
      * @param childTable   the table holding the foreign key
      * @param childColumn  the foreign key column
@@ -418,6 +642,12 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
         window.setWindowStart(BASE.plusDays(1));
         window.setWindowEnd(BASE.plusDays(2));
         return window;
+    }
+
+    private static MetisCheck checkOf(ProgrammingExerciseStudentParticipation participation) {
+        MetisCheck check = new MetisCheck();
+        check.setParticipationId(participation.getId());
+        return check;
     }
 
     private MetisCheck checkWithEveryFieldSet() {
