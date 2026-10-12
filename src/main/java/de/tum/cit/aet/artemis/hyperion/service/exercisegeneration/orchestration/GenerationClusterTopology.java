@@ -43,13 +43,23 @@ final class GenerationClusterTopology {
         }
     }
 
+    boolean permitsOwnership() {
+        try {
+            verifyAllMembers();
+            return true;
+        }
+        catch (ServiceUnavailableAlertException unavailable) {
+            return false;
+        }
+    }
+
     void verifyAllMembers() {
         CoordinationSnapshot snapshot = snapshot();
-        if (!snapshot.permitsAdmission(expectedDataMemberCount) || !snapshot.ownerNodeIds().contains(distributedDataProvider.getLocalNodeId())) {
-            throw new ServiceUnavailableAlertException(
-                    "Authoring requires a connected owner and a complete configured store view: expected " + expectedDataMemberCount + " data members, observed "
-                            + snapshot.ownerNodeIds().size() + " owner processes (member-hosted store: " + snapshot.memberQuorumRequired() + ").",
-                    ENTITY_NAME, "hyperionDataMemberTopologyMismatch");
+        if (!snapshot.permitsAdmission(expectedDataMemberCount) || !snapshot.ownerNodeIds().contains(distributedDataProvider.getLocalNodeId())
+                || snapshot.memberQuorumRequired() && !snapshot.allWritersFenced()) {
+            throw new ServiceUnavailableAlertException("Authoring requires a connected owner and a complete configured store view: expected " + expectedDataMemberCount
+                    + " data members, observed " + snapshot.ownerNodeIds().size() + " owner processes (member-hosted store: " + snapshot.memberQuorumRequired()
+                    + ", all writers fenced: " + snapshot.allWritersFenced() + ").", ENTITY_NAME, "hyperionDataMemberTopologyMismatch");
         }
     }
 }

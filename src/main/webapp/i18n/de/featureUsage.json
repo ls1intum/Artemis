@@ -381,6 +381,10 @@
                         "name": "Ergebnisse und Feedbackanalyse",
                         "description": "Zusammengefasstes Feedback über alle Abgaben einer Aufgabe."
                     },
+                    "PRESENTATION_ASSESSMENT": {
+                        "name": "Präsentationsbewertungen",
+                        "description": "Präsentationsbewertungen, Präsentationstermine, Vortragende und deren Bewertungen verwalten."
+                    },
                     "EXAM_TAKE": {
                         "name": "Klausur schreiben",
                         "description": "Eine Klausur beginnen, bearbeiten und abgeben."

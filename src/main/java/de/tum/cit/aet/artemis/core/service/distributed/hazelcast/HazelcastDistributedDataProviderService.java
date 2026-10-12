@@ -289,8 +289,10 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
         if (!isInstanceRunning()) {
             return Optional.empty();
         }
-        return Optional.of(new CoordinationSnapshot(
-                getClusterMembers().stream().filter(member -> !member.isLiteMember()).map(Member::getUuid).map(UUID::toString).collect(Collectors.toUnmodifiableSet()), true));
+        var members = getClusterMembers().stream().filter(member -> !member.isLiteMember()).toList();
+        return Optional.of(new CoordinationSnapshot(members.stream().map(Member::getUuid).map(UUID::toString).collect(Collectors.toUnmodifiableSet()), true,
+                members.stream().allMatch(member -> Boolean.parseBoolean(member.getAttribute(WRITER_FENCING_MEMBER_ATTRIBUTE))
+                        && String.valueOf(members.size()).equals(member.getAttribute(WRITER_FENCING_MEMBERS_ATTRIBUTE)))));
     }
 
     /**
