@@ -571,6 +571,7 @@ public class TextAssessmentResource extends AssessmentResource {
         feedback.setType(dto.type());
         feedback.setPositive(dto.positive());
         feedback.setVisibility(dto.visibility());
+        feedback.setSeverity(dto.severity());
         if (dto.gradingInstruction() != null && dto.gradingInstruction().id() != null) {
             final GradingInstruction gradingInstruction = new GradingInstruction();
             gradingInstruction.setId(dto.gradingInstruction().id());

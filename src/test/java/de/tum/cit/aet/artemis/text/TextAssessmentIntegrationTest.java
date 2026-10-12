@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackSeverity;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -196,6 +197,24 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         assertThat(resultRepository.findByIdWithEagerFeedbacksElseThrow(result.getId()).getFeedbacks()).singleElement()
                 .satisfies(item -> assertThat(item.getId()).isEqualTo(originalFeedback.getId()));
+    }
+
+    @ParameterizedTest
+    @EnumSource(FeedbackSeverity.class)
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void saveAssessmentPreservesFeedbackSeverity(FeedbackSeverity severity) throws Exception {
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("Some submitted text", Language.ENGLISH, true);
+        submission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        Result result = submission.getLatestResult();
+        Feedback feedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("Review hint");
+        feedback.setSeverity(severity);
+        TextAssessmentDTO body = new TextAssessmentDTO(List.of(FeedbackDTO.of(feedback)), null, null);
+
+        ResultDTO saved = saveOrSubmitTextAssessment(submission.getParticipation().getId(), result.getId(), body, false, HttpStatus.OK);
+
+        assertThat(saved.feedbacks()).singleElement().satisfies(item -> assertThat(item.severity()).isEqualTo(severity));
+        assertThat(resultRepository.findByIdWithEagerFeedbacksElseThrow(result.getId()).getFeedbacks()).singleElement()
+                .satisfies(item -> assertThat(item.getSeverity()).isEqualTo(severity));
     }
 
     @Test

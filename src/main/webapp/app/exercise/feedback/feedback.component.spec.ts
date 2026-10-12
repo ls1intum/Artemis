@@ -1,3 +1,5 @@
+import { By } from '@angular/platform-browser';
+import { TumAetUiBarChartComponent } from '@tumaet/ui-angular';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -316,7 +318,7 @@ describe('FeedbackComponent', () => {
     });
 
     describe.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])('%s AI score display', (type) => {
-        it.each([0, 60, 100])('shows the stored score of %s even without visible feedback', (score) => {
+        it.each([-20, 0, 60, 100, 120])('shows the stored score of %s even without visible feedback', (score) => {
             fixture.componentRef.setInput('exercise', { ...exercise, type });
             fixture.componentRef.setInput('result', { id: 89, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, score });
             fixture.componentRef.setInput('showScoreChart', true);
@@ -326,6 +328,9 @@ describe('FeedbackComponent', () => {
             const bar = fixture.nativeElement.querySelector('[data-testid="feedback-chart"]');
             expect(bar?.querySelector('tumaet-ui-bar-chart')).not.toBeNull();
             expect(comp.scoreChartData().series.map((series) => series.data)).toEqual([[score]]);
+            const chart: TumAetUiBarChartComponent = fixture.debugElement.query(By.directive(TumAetUiBarChartComponent)).componentInstance;
+            expect(chart['valueDomain']()[0]).toBeLessThanOrEqual(Math.min(0, score));
+            expect(chart['valueDomain']()[1]).toBe(Math.max(100, score));
             expect(fixture.nativeElement.querySelector('h4 [jhiTranslate="artemisApp.result.scoreWithPoints"]')).not.toBeNull();
             expect(fixture.nativeElement.textContent).toContain('artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip');
         });
