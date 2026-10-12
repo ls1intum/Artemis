@@ -323,8 +323,9 @@ describe('FeedbackComponent', () => {
 
             fixture.detectChanges();
 
-            const bar = fixture.nativeElement.querySelector('[data-testid="ai-feedback-score-bar"]');
-            expect(bar?.getAttribute('aria-valuenow')).toBe(String(score));
+            const bar = fixture.nativeElement.querySelector('[data-testid="feedback-chart"]');
+            expect(bar?.querySelector('tumaet-ui-bar-chart')).not.toBeNull();
+            expect(comp.scoreChartData().series.map((series) => series.data)).toEqual([[score]]);
             expect(fixture.nativeElement.querySelector('h4 [jhiTranslate="artemisApp.result.scoreWithPoints"]')).not.toBeNull();
             expect(fixture.nativeElement.textContent).toContain('artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip');
         });
@@ -347,7 +348,7 @@ describe('FeedbackComponent', () => {
 
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.querySelector('[data-testid="ai-feedback-score-bar"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="feedback-chart"]')).toBeNull();
         expect(fixture.nativeElement.querySelector('h4 [jhiTranslate="artemisApp.result.scoreWithPoints"]')).toBeNull();
     });
 
@@ -364,7 +365,8 @@ describe('FeedbackComponent', () => {
         fixture.detectChanges();
 
         expect(comp.feedbackItemNodes()?.[0].credits).toBeUndefined();
-        expect(fixture.nativeElement.querySelector('[data-testid="ai-feedback-score-bar"]')?.getAttribute('aria-valuenow')).toBe('60');
+        expect(fixture.nativeElement.querySelector('[data-testid="feedback-chart"] tumaet-ui-bar-chart')).not.toBeNull();
+        expect(comp.scoreChartData().series.map((series) => series.data)).toEqual([[60]]);
     });
 
     it('marks a preliminary result as preliminary when the participation carries no exercise', () => {
