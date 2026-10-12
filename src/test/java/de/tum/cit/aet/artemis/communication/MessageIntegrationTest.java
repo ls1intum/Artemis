@@ -1419,12 +1419,15 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // the message is created, nobody is left to ping
         assertThat(postWithoutRecipients.content()).isEqualTo("@all is anybody there?");
-        // The notifications are created asynchronously and read the muted and hidden state of the members when they run, so the members keep their state for the whole test.
-        // That notifications are sent to unmuted members is checked by shouldNotifyEveryUnmutedGroupChatMemberExceptTheAuthorForAtAll.
-        await().during(Duration.ofMillis(500)).atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-            assertThat(notificationRecipientIds(3, "postId", postWithoutRecipients.id())).isEmpty();
-            assertThat(notificationRecipientIds(1, "postId", postWithoutRecipients.id())).isEmpty();
-        });
+        // The notifications are created asynchronously after the request returned and read the muted and hidden state of the members when they run, so the members keep their
+        // state for the whole test. That notifications are sent to unmuted members is checked by shouldNotifyEveryUnmutedGroupChatMemberExceptTheAuthorForAtAll.
+        // The mention notification is created even if nobody is left to ping and only after the new post notification is complete. Waiting for it proves that the task
+        // is running, so the empty results below are not read before it started.
+        await().atMost(Duration.ofSeconds(5)).until(() -> !notificationIds(3, "postId", postWithoutRecipients.id()).isEmpty());
+        assertThat(notificationRecipientIds(1, "postId", postWithoutRecipients.id())).isEmpty();
+        // Only the recipients of the mention notification are still written by the task, right after it created the notification.
+        await().during(Duration.ofMillis(200)).atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(notificationRecipientIds(3, "postId", postWithoutRecipients.id())).isEmpty());
     }
 
     private Conversation nameGroupChat(Conversation groupChat, String name) {
@@ -1462,12 +1465,19 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * An id appears once per received notification, so a duplicate notification for one user shows up as a repeated id.
      */
     private List<Long> notificationRecipientIds(int type, String parameterKey, Long parameterValue) {
+        return notificationIds(type, parameterKey, parameterValue).stream()
+                .flatMap(notificationId -> userCourseNotificationStatusRepository.findAllByCourseNotificationId(notificationId).stream()).map(status -> status.getUser().getId())
+                .toList();
+    }
+
+    /**
+     * Collects the ids of the course notifications of the given type which carry the given parameter, whether or not somebody received them.
+     */
+    private List<Long> notificationIds(int type, String parameterKey, Long parameterValue) {
         Set<Long> notificationIds = courseNotificationParameterRepository.findAll().stream()
                 .filter(parameter -> parameterKey.equals(parameter.getKey()) && String.valueOf(parameterValue).equals(parameter.getValue()))
                 .map(parameter -> parameter.getCourseNotification().getId()).collect(Collectors.toSet());
-        return courseNotificationRepository.findAllById(notificationIds).stream().filter(notification -> notification.getType() == type)
-                .flatMap(notification -> userCourseNotificationStatusRepository.findAllByCourseNotificationId(notification.getId()).stream())
-                .map(status -> status.getUser().getId()).toList();
+        return courseNotificationRepository.findAllById(notificationIds).stream().filter(notification -> notification.getType() == type).map(CourseNotification::getId).toList();
     }
 
     @Test
