@@ -22,6 +22,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockProvider } from 'ng-mocks';
 import { DialogService } from 'primeng/dynamicdialog';
+import { By } from '@angular/platform-browser';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { PostingEditType } from 'app/communication/communication.util';
 
 describe('MessageReplyInlineInputComponent', () => {
     let component: MessageReplyInlineInputComponent;
@@ -86,6 +89,25 @@ describe('MessageReplyInlineInputComponent', () => {
         vi.advanceTimersByTime(0);
         expect(component.isLoading()).toBe(false);
         expect(onCreateSpy).toHaveBeenCalledExactlyOnceWith({ ...component.posting()!, content: newContent });
+    });
+
+    it('should hand the conversation and the edit type to the markdown editor, which decides whether @all is offered', () => {
+        const conversation = new GroupChatDTO();
+        component.posting.set(communicationPostToCreateUser1);
+        fixture.componentRef.setInput('activeConversation', conversation);
+        fixture.detectChanges();
+
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.activeConversation()).toBe(conversation);
+        expect(editor.editType()).toBe(PostingEditType.CREATE);
+    });
+
+    it('should tell the markdown editor that an existing reply is edited, which notifies nobody', () => {
+        component.posting.set(directMessageUser1);
+        fixture.detectChanges();
+
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.editType()).toBe(PostingEditType.UPDATE);
     });
 
     it('should stop loading when communication service throws error during replying to message', () => {

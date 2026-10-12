@@ -11,6 +11,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -26,7 +27,9 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -339,5 +342,110 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, null, null, false);
         assertThat(isAllowed).isFalse();
+    }
+
+    /**
+     * A student who practices a team exercise on their own has a participation without a team, so there is no team tutor. The check must not fail on it, and the tutor of the
+     * course can assess the practice work like any other.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testIsAllowedToCreateOrOverrideResult_practiceParticipationOfTeamExercise() {
+        TextExercise teamExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, course1);
+        teamExercise.setMode(ExerciseMode.TEAM);
+        StudentParticipation practiceParticipation = new StudentParticipation();
+        practiceParticipation.setExercise(teamExercise);
+        practiceParticipation.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        practiceParticipation.setPracticeMode(true);
+
+        boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, teamExercise, practiceParticipation, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"),
+                false);
+
+        assertThat(isAllowed).isTrue();
+    }
+
+    private TextExercise teamExercise() {
+        TextExercise teamExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, course1);
+        teamExercise.setMode(ExerciseMode.TEAM);
+        return teamExercise;
+    }
+
+    private StudentParticipation practiceParticipationOfStudent1(TextExercise teamExercise) {
+        StudentParticipation practiceParticipation = new StudentParticipation();
+        practiceParticipation.setExercise(teamExercise);
+        practiceParticipation.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        practiceParticipation.setPracticeMode(true);
+        return practiceParticipation;
+    }
+
+    /**
+     * The graded participation of a team keeps the rule that only the tutor who owns the team is the assessor, also when the result is first created.
+     */
+    @ParameterizedTest(name = "{0} is allowed: {1}")
+    @CsvSource({ "tutor1,true", "tutor2,false" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testIsAllowedToCreateOrOverrideResult_teamParticipation_onlyTheTeamTutorIsAllowed(String tutor, boolean expected) {
+        TextExercise teamExercise = teamExercise();
+        Team team = new Team();
+        team.setOwner(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        StudentParticipation teamParticipation = new StudentParticipation();
+        teamParticipation.setExercise(teamExercise);
+        teamParticipation.setParticipant(team);
+
+        boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, teamExercise, teamParticipation, userUtilService.getUserByLogin(TEST_PREFIX + tutor), false);
+
+        assertThat(isAllowed).isEqualTo(expected);
+    }
+
+    /**
+     * A team without a tutor has nobody who may assess its participation.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testIsAllowedToCreateOrOverrideResult_teamParticipationWithoutTeamTutor_isNotAllowed() {
+        TextExercise teamExercise = teamExercise();
+        StudentParticipation teamParticipation = new StudentParticipation();
+        teamParticipation.setExercise(teamExercise);
+        teamParticipation.setParticipant(new Team());
+
+        boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, teamExercise, teamParticipation, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"),
+                false);
+
+        assertThat(isAllowed).isFalse();
+    }
+
+    /**
+     * A practice participation of a team exercise has no team tutor, so it follows the rule of an individual exercise: a tutor may continue an assessment they started, or one
+     * nobody started, but not the draft of another tutor.
+     */
+    @ParameterizedTest(name = "assessor {0}, requested by tutor1: {1}")
+    @CsvSource({ "tutor1,true", "tutor2,false", "none,true" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testIsAllowedToCreateOrOverrideResult_practiceParticipationOfTeamExercise_followsTheIndividualRule(String assessor, boolean expected) {
+        TextExercise teamExercise = teamExercise();
+        StudentParticipation practiceParticipation = practiceParticipationOfStudent1(teamExercise);
+        Result draft = new Result();
+        if (!"none".equals(assessor)) {
+            draft.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + assessor));
+        }
+
+        boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(draft, teamExercise, practiceParticipation, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"),
+                false);
+
+        assertThat(isAllowed).isEqualTo(expected);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    void testIsAllowedToCreateOrOverrideResult_practiceParticipationOfTeamExercise_instructorMayAlwaysOverride() {
+        TextExercise teamExercise = teamExercise();
+        StudentParticipation practiceParticipation = practiceParticipationOfStudent1(teamExercise);
+        Result draft = new Result();
+        draft.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+
+        boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(draft, teamExercise, practiceParticipation,
+                userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), true);
+
+        assertThat(isAllowed).isTrue();
     }
 }
