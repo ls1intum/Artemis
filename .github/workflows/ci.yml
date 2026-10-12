@@ -175,6 +175,9 @@ jobs:
               - 'supporting_scripts/check_action_pinning.py'
               - 'supporting_scripts/test_check_action_pinning.py'
               - 'supporting_scripts/update_python_dependency_locks.sh'
+              - 'supporting_scripts/test_template_test_requirements.py'
+              - 'src/main/resources/templates/c/gcc/test/testUtils/**'
+              - 'src/main/resources/templates/c_plus_plus/test/testUtils/**'
             has_version:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-version-consistency.yml'
