@@ -25,13 +25,12 @@ import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model'
 import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/students-export.model';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
 import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model';
-import { PageableResult } from 'app/foundation/pagination/pageable-table';
+import { PageableResult, toPageableResult } from 'app/foundation/pagination/pageable-table';
 import { ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamImportResultDTO, ExerciseGroupImportResultDTO } from 'app/exam/shared/entities/exam-import-result.model';
 import { ExamImportProgress } from 'app/exam/shared/entities/exam-import-progress.model';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
 import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 
@@ -332,12 +331,13 @@ export class ExamManagementService {
                 observe: 'response',
             })
             .pipe(
-                map((res) => ({
-                    content: (res.body ?? []).map((row) =>
-                        cloneWith(row, { startedDate: convertDateFromServer(row.startedDate), submissionDate: convertDateFromServer(row.submissionDate) }),
-                    ),
-                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
-                })),
+                map(toPageableResult),
+                tap(({ content }) =>
+                    content.forEach((row) => {
+                        row.startedDate = convertDateFromServer(row.startedDate);
+                        row.submissionDate = convertDateFromServer(row.submissionDate);
+                    }),
+                ),
             );
     }
 
@@ -358,12 +358,7 @@ export class ExamManagementService {
                 params: { searchTerm, page, size },
                 observe: 'response',
             })
-            .pipe(
-                map((res) => ({
-                    content: res.body ?? [],
-                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
-                })),
-            );
+            .pipe(map(toPageableResult));
     }
 
     /**
