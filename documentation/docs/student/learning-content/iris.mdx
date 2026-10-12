@@ -127,9 +127,10 @@ open unit.
 
 When Artemis saves an acknowledged move, a chip appears in the conversation, reading *Navigated to page 5 and
 timestamp 0:56 in lecture unit Concurrency*. The chip stays, so the place is one click away later on, and clicking it
-reopens the view if you have closed it. If a saved point-out names both a page and a video moment that cannot stay
-synchronized, **Synchronize slides and video** switches off so the next movement does not undo the point-out, and
-Artemis names the page and the moment it is keeping.
+reopens the view if you have closed it. A point-out that was checked against the material opens at one position only,
+the page or the moment that check covered. Where an older saved point-out still names both a page and a video moment
+that cannot stay synchronized, **Synchronize slides and video** switches off so the next movement does not undo it,
+and Artemis names the page and the moment it is keeping.
 
 <Image src={irisPointOut} alt="A question in the Iris chat, followed by a chip reading Navigated to page 5 and timestamp 0:56 in lecture unit Concurrency" size={ImageSize.medium} caption="The chip Artemis leaves after Iris moved the material" />
 
