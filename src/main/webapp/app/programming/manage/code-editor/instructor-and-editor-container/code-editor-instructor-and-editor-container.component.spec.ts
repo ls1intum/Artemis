@@ -176,6 +176,7 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
                 connect: vi.fn(),
                 generationCompleted: new Subject(),
                 generationReverted: new Subject(),
+                exerciseContentsInvalidated: new Subject(),
                 running: signal(false),
                 statusLoading: signal(false),
                 statusLoadFailed: signal(false),
@@ -1621,6 +1622,30 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
 
         expect(reloadEditor).toHaveBeenCalledOnce();
         expect((comp as any).generationRefreshPending()).toBe(true);
+    });
+
+    it('refreshes a clean editor when a saved run disappears after undo in another tab', () => {
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        setCodeEditorContainer(comp, { canDeactivate: () => true, hasCleanRepositoryState: () => true });
+        setEditableInstructions(comp, { unsavedChangesValue: () => false });
+        TestBed.inject(HyperionGenerationActivityFacade).exerciseContentsInvalidated.next('saved');
+        expect(reloadEditor).toHaveBeenCalledOnce();
+        expect((comp as any).appliedGenerationRefresh?.jobId).toBe('saved');
+        expect((comp as any).generationRefreshPending()).toBe(true);
+    });
+
+    it('preserves dirty edits and offers guarded reload after undo in another tab', () => {
+        confirm.mockImplementation(() => undefined);
+        const reloadEditor = vi.spyOn(comp as any, 'reloadEditor').mockImplementation(() => undefined);
+        setCodeEditorContainer(comp, { canDeactivate: () => false, hasCleanRepositoryState: () => false });
+        setEditableInstructions(comp, { unsavedChangesValue: () => true });
+        TestBed.inject(HyperionGenerationActivityFacade).exerciseContentsInvalidated.next('saved');
+        expect(reloadEditor).not.toHaveBeenCalled();
+        expect((comp as any).isProblemStatementEditingLocked()).toBe(true);
+        expect((comp as any).pendingGenerationRefreshJobId).toBe('saved');
+        (comp as any).retryHyperionRefresh();
+        expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ key: 'hyperionReloadSavedExerciseConfirmation', accept: expect.any(Function) }));
+        expect(reloadEditor).not.toHaveBeenCalled();
     });
 
     it('warns and does not reload when a generation revert arrives while the editor is dirty', () => {

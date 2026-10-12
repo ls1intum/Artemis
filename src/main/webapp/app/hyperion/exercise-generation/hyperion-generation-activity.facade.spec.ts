@@ -1121,6 +1121,29 @@ describe('HyperionGenerationActivityFacade', () => {
         expect(component.mode()).toBe('ADAPT');
         expect(component.running()).toBe(true);
     });
+    it('invalidates saved editor contents before clearing a run undone in another tab', () => {
+        vi.useFakeTimers();
+        const fixture = createWith({ jobId: 'saved', running: false, events: [], fileChanges: [], revertAvailable: true });
+        const component = fixture.componentInstance.facade;
+        const invalidated = vi.fn(() => expect(component.jobId()).toBe('saved'));
+        component.exerciseContentsInvalidated.subscribe(invalidated);
+        service.status = null;
+        vi.advanceTimersByTime(15_000);
+        expect(invalidated).toHaveBeenCalledExactlyOnceWith('saved');
+        expect(component.jobId()).toBeUndefined();
+        vi.advanceTimersByTime(15_000);
+        expect(invalidated).toHaveBeenCalledOnce();
+    });
+
+    it('does not invalidate untouched editor contents when idle status is absent', () => {
+        vi.useFakeTimers();
+        const fixture = createWith(null);
+        const invalidated = vi.fn();
+        fixture.componentInstance.facade.exerciseContentsInvalidated.subscribe(invalidated);
+        vi.advanceTimersByTime(15_000);
+        expect(invalidated).not.toHaveBeenCalled();
+    });
+
     it('discovers a run started after this editor became idle', () => {
         vi.useFakeTimers();
         const fixture = createWith(null);
