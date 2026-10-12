@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.hyperion.runtime.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
@@ -118,6 +120,36 @@ class HyperionSecretMaterialPolicyTest {
         for (String nearMiss : new String[] { token.substring(1), token.substring(0, token.length() - 1), "a" + token, token + "a" }) {
             assertThat(policy.assess("fixture.txt", bytes(nearMiss)).isSafe()).isTrue();
         }
+    }
+
+    @Test
+    void emptyInputsAndSafeSourcesAreAllowedWithoutInventingPaths() {
+        var assessment = policy.assess(null, null);
+        assertThat(assessment.isSafe()).isTrue();
+        assertThat(assessment.safePath()).isEqualTo("<unknown>");
+        assertThat(policy.assess(" ", null).safePath()).isEqualTo("<unknown>");
+        assertThatNoException().isThrownBy(() -> policy.requireSafe("src/Example.java", bytes("class Example {}")));
+        assertThatIllegalArgumentException().isThrownBy(() -> policy.blockedObservation(assessment));
+    }
+
+    @Test
+    void normalizedPathsCannotHideCredentialFiles() {
+        assertThat(policy.assess("././config//.env", bytes("ordinary")).category()).contains(HyperionSecretMaterialPolicy.Category.CREDENTIAL_FILE);
+        assertThat(policy.assess("config\\.ENV", null).category()).contains(HyperionSecretMaterialPolicy.Category.CREDENTIAL_FILE);
+    }
+
+    @Test
+    void blockedObservationsAndExceptionsContainOnlySafeMetadata() {
+        var assessment = policy.assess("fixture.txt", bytes(GITHUB_SENTINEL));
+        assertThat(policy.blockedObservation(assessment)).isEqualTo("ERROR: Hyperion blocked secret material [GITHUB_TOKEN] at fixture.txt.").doesNotContain(GITHUB_SENTINEL);
+        assertThatExceptionOfType(HyperionSecretMaterialPolicy.SecretMaterialException.class).isThrownBy(() -> policy.requireSafe("fixture.txt", bytes(GITHUB_SENTINEL)))
+                .satisfies(exception -> assertThat(exception.assessment()).isEqualTo(assessment));
+    }
+
+    @Test
+    void diagnosticPathsStripControlsAndBoundTheirLength() {
+        assertThat(policy.assess("src/line\nname.java", null).safePath()).isEqualTo("src/line_name.java");
+        assertThat(policy.assess("a".repeat(300), null).safePath()).isEqualTo("a".repeat(239) + "…");
     }
 
     private static byte[] bytes(String value) {
