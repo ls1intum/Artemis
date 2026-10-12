@@ -555,8 +555,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
                         UpdateFileUploadExerciseDTO.of(fileUploadExercise), FileUploadExerciseDTO.class, HttpStatus.OK))
                 // Includes the four fixed queries used to reload and enrich the response DTO, one lookup for the new competency link and
                 // the reads of the plagiarism detection configuration that the response and the version snapshot report (an exercise
-                // does not carry it by itself).
-                .hasBeenCalledAtMostTimes(56);
+                // does not carry it by itself), and the parameter row that stores the notification text for the students.
+                .hasBeenCalledAtMostTimes(57);
         assertThat(receivedFileUploadExercise.dueDate()).isCloseTo(dueDate, HalfSecond());
         assertThat(receivedFileUploadExercise.course()).as("course was set for normal exercise").isNotNull();
         assertThat(receivedFileUploadExercise.exerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
