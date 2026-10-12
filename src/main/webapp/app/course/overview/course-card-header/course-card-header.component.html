@@ -18,7 +18,7 @@
             }
         </div>
         <div class="course-title-container text-center px-2">
-            <h5 class="card-title">
+            <h5 class="card-title" [title]="courseTitle()">
                 {{ courseTitle() }}
             </h5>
         </div>
@@ -37,7 +37,7 @@
     } @else {
         <div class="flex h-full items-center justify-between gap-1 px-3">
             <ng-container *ngTemplateOutlet="courseIdentity" />
-            <a class="stretched-link" [routerLink]="['/courses', courseId()]"></a>
+            <a class="stretched-link" [routerLink]="['/courses', courseId()]" [title]="courseTitle()"></a>
         </div>
     }
 </div>
