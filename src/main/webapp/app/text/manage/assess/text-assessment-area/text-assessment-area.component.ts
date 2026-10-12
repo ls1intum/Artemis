@@ -1,5 +1,6 @@
 import { Component, HostListener, effect, inject, input, model, output, signal } from '@angular/core';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
@@ -38,6 +39,8 @@ export class TextAssessmentAreaComponent {
     selectedRef = model<TextBlockRef | undefined>(undefined);
     wordCount = signal(0);
     characterCount = signal(0);
+    // block that was just added by manual selection; its feedback editor is focused as soon as the card is rendered
+    blockToFocus = signal<TextBlock | undefined>(undefined);
 
     constructor() {
         // Effect to handle submission changes - updates word/character counts
@@ -75,6 +78,10 @@ export class TextAssessmentAreaComponent {
         if (!this.allowManualBlockSelection()) {
             return;
         }
+        if (!toggleValue && this.autoTextBlockAssessment()) {
+            // a new manual selection starts, so the previous one must not claim the focus when the cards are rendered again
+            this.blockToFocus.set(undefined);
+        }
         this.autoTextBlockAssessment.set(toggleValue);
     }
 
@@ -93,6 +100,7 @@ export class TextAssessmentAreaComponent {
     addTextBlockRef(ref: TextBlockRef): void {
         const currentRefs = this.textBlockRefs();
         this.textBlockRefs.set([...currentRefs, ref]);
+        this.blockToFocus.set(ref.block);
         this.textBlockRefsAddedRemoved.emit();
     }
 
@@ -105,6 +113,9 @@ export class TextAssessmentAreaComponent {
         const index = currentRefs.findIndex((elem) => elem.block!.id! === ref.block!.id!);
         if (index === -1) {
             return;
+        }
+        if (this.blockToFocus() === ref.block) {
+            this.blockToFocus.set(undefined);
         }
         const newRefs = [...currentRefs];
         newRefs.splice(index, 1);

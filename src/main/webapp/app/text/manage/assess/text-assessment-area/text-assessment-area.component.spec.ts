@@ -17,6 +17,7 @@ import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
+import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
 
 describe('TextAssessmentAreaComponent', () => {
     let component: TextAssessmentAreaComponent;
@@ -205,5 +206,66 @@ describe('TextAssessmentAreaComponent', () => {
 
         expect(component.textBlockRefsAddedRemoved.emit).toHaveBeenCalledOnce();
         expect(component.textBlockRefs()).toHaveLength(3);
+    });
+
+    describe('focus after manual selection', () => {
+        const pressAlt = (type: 'keydown' | 'keyup') => {
+            document.dispatchEvent(new KeyboardEvent(type, { key: 'Alt' }));
+            fixture.detectChanges();
+        };
+
+        const feedbackTextareas = (): HTMLTextAreaElement[] => Array.from(fixture.nativeElement.querySelectorAll('textarea.unified-feedback-detail-input'));
+
+        const selectWordsManually = () => {
+            pressAlt('keydown');
+            const manualSelection = fixture.debugElement.query(By.directive(ManualTextblockSelectionComponent)).componentInstance as ManualTextblockSelectionComponent;
+            manualSelection.handleTextSelection([
+                { word: 'Test', index: 0 },
+                { word: 'submission', index: 5 },
+            ]);
+            fixture.detectChanges();
+        };
+
+        beforeEach(() => {
+            // one automatic block without feedback that covers the whole submission, so the words can be selected manually
+            fixture.componentRef.setInput('textBlockRefs', [new TextBlockRef(newBlock(0, submission.text!.length))]);
+            fixture.detectChanges();
+        });
+
+        it('should focus the feedback textarea of the new block once Alt is released', async () => {
+            selectWordsManually();
+            pressAlt('keyup');
+            await fixture.whenStable();
+
+            expect(component.textBlockRefs()).toHaveLength(2);
+            const textareas = feedbackTextareas();
+            expect(textareas).toHaveLength(1);
+            expect(document.activeElement).toBe(textareas[0]);
+        });
+
+        it('should not focus a feedback textarea when no text block was selected manually', async () => {
+            pressAlt('keydown');
+            pressAlt('keyup');
+            await fixture.whenStable();
+
+            expect(feedbackTextareas()).toHaveLength(0);
+            expect(document.activeElement).toBe(document.body);
+        });
+
+        it('should not steal the focus again when Alt is pressed later on', async () => {
+            selectWordsManually();
+            pressAlt('keyup');
+            await fixture.whenStable();
+            const textarea = feedbackTextareas()[0];
+            expect(document.activeElement).toBe(textarea);
+
+            textarea.blur();
+            pressAlt('keydown');
+            pressAlt('keyup');
+            await fixture.whenStable();
+
+            expect(feedbackTextareas()).toHaveLength(1);
+            expect(document.activeElement).toBe(document.body);
+        });
     });
 });

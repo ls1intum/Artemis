@@ -10,6 +10,7 @@
             (didDelete)="removeTextBlockRef($event)"
             [highlightDifferences]="highlightDifferences()"
             [criteria]="criteria()"
+            [focusFeedback]="ref.block === blockToFocus()"
         />
     }
 } @else {

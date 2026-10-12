@@ -1,4 +1,4 @@
-import { Component, inject, input, output, viewChild } from '@angular/core';
+import { Component, Injector, afterNextRender, effect, inject, input, output, viewChild } from '@angular/core';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -21,12 +21,15 @@ export class TextBlockAssessmentCardComponent {
     private route = inject(ActivatedRoute);
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private textAssessmentAnalytics = inject(TextAssessmentAnalytics);
+    private injector = inject(Injector);
 
     textBlockRef = input.required<TextBlockRef>();
     selected = input<boolean>(false);
     readOnly = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
     criteria = input<GradingCriterion[]>();
+    /** Moves the focus to the feedback editor as soon as it is rendered, e.g. for a block that was just selected manually. */
+    focusFeedback = input<boolean>(false);
 
     didSelect = output<OptionalTextBlockRef>();
     didChange = output<TextBlockRef>();
@@ -35,6 +38,11 @@ export class TextBlockAssessmentCardComponent {
 
     constructor() {
         this.textAssessmentAnalytics.setComponentRoute(this.route);
+        effect(() => {
+            if (this.focusFeedback() && !this.readOnly()) {
+                afterNextRender(() => this.feedbackEditor().focus(), { injector: this.injector });
+            }
+        });
     }
 
     /**

@@ -139,6 +139,36 @@ describe('TextblockAssessmentCardComponent', () => {
         expect(didSelectSpy).toHaveBeenCalledWith(textBlockRef);
     });
 
+    it('should focus the feedback editor once it is rendered when focusFeedback is set', async () => {
+        const textBlockRef = TextBlockRef.new();
+        textBlockRef.initFeedback();
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.detectChanges();
+        const focusSpy = vi.spyOn(fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent)).componentInstance, 'focus');
+        expect(focusSpy).not.toHaveBeenCalled();
+
+        fixture.componentRef.setInput('focusFeedback', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(focusSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not focus the feedback editor when focusFeedback is set on a read-only card', async () => {
+        const textBlockRef = TextBlockRef.new();
+        textBlockRef.initFeedback();
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.detectChanges();
+        const focusSpy = vi.spyOn(fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent)).componentInstance, 'focus');
+
+        fixture.componentRef.setInput('focusFeedback', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(focusSpy).not.toHaveBeenCalled();
+    });
+
     it('should expose selected state only while the block is interactive', () => {
         const textBlockRef = TextBlockRef.new();
         textBlockRef.initFeedback();
