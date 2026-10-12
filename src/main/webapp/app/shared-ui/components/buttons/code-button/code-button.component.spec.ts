@@ -111,6 +111,7 @@ describe('CodeButtonComponent', () => {
                 fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
                 fixture.componentRef.setInput('smallButtons', true);
                 fixture.componentRef.setInput('routerLinkForRepositoryView', []);
+                fixture.componentRef.setInput('exerciseId', 1);
                 stubServices();
                 fixture.detectChanges();
             });
@@ -791,6 +792,7 @@ describe('CodeButtonComponent', () => {
         freshFixture.componentRef.setInput('smallButtons', true);
         freshFixture.componentRef.setInput('repositoryUri', '');
         freshFixture.componentRef.setInput('routerLinkForRepositoryView', []);
+        freshFixture.componentRef.setInput('exerciseId', 1);
         router.setUrl('/course-management');
         freshFixture.componentRef.setInput('participation', {
             id: 42,

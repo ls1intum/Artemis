@@ -127,8 +127,8 @@ export class CodeButtonComponent implements OnInit {
     // When set to a base repository type (TEMPLATE, SOLUTION, TESTS, AUXILIARY), the code button uses a repository-scoped staff VCS access token instead of a participation token.
     repositoryType = input<RepositoryType>();
     auxiliaryRepositoryId = input<number>();
-    // The exercise id, used as a fallback to load the repository-scoped staff token when the full exercise object is not available (e.g. in the exercise detail view).
-    exerciseId = input<number>();
+    // The exercise id used to load repository-scoped staff tokens.
+    exerciseId = input.required<number>();
     readonly isInCourseManagement = getSignalBasedOnRoute(this.router, (url) => url.includes('course-management'));
     readonly user = signal<User | undefined>(undefined);
     // Set once a participation VCS token request has terminally failed to yield a token (empty response or an error that
@@ -444,7 +444,7 @@ export class CodeButtonComponent implements OnInit {
      * repository (identified by its participation). Does nothing when the required identifiers (exercise id, and the participation id for a student repository) are unavailable.
      */
     private loadRepositoryScopedTokenForCurrentRepository() {
-        const exerciseId = this.exerciseId() ?? this.participation()?.exercise?.id;
+        const exerciseId = this.exerciseId();
         if (!exerciseId) {
             return;
         }
@@ -551,13 +551,7 @@ export class CodeButtonComponent implements OnInit {
      * detect when this reused component instance switches to a different repository, so a repository-scoped token minted for the previous repository is never reused.
      */
     private currentRepositoryIdentity(): string {
-        return [
-            this.repositoryType(),
-            this.repositoryUri(),
-            this.exerciseId() ?? this.participation()?.exercise?.id,
-            this.auxiliaryRepositoryId(),
-            this.participationId() ?? this.participation()?.id,
-        ].join('|');
+        return [this.repositoryType(), this.repositoryUri(), this.exerciseId(), this.auxiliaryRepositoryId(), this.participationId() ?? this.participation()?.id].join('|');
     }
 
     private getUsedToken(alwaysUseToken = false): string | undefined {
