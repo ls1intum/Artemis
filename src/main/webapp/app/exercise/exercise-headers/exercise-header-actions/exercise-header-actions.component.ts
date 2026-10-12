@@ -195,6 +195,7 @@ export class ExerciseHeaderActionsComponent {
     readonly activeParticipationForCode = computed(() => {
         return this.participationMode() === 'practice' ? (this._practiceParticipation() ?? this._gradedParticipation()) : this._gradedParticipation();
     });
+    readonly programmingParticipationForCode = computed(() => this.getProgrammingParticipationForCode());
     readonly repositoryUriForCode = computed(() => this.getRepositoryUriForCode());
 
     readonly routerLinkForRepositoryView = computed(() => {
@@ -312,6 +313,11 @@ export class ExerciseHeaderActionsComponent {
 
     private isProgrammingExerciseStudentParticipation(participation: StudentParticipation): participation is ProgrammingExerciseStudentParticipation {
         return participation.type === ParticipationType.PROGRAMMING;
+    }
+
+    private getProgrammingParticipationForCode(): ProgrammingExerciseStudentParticipation | undefined {
+        const participations = this.studentParticipations();
+        return this.participationService.getSpecificStudentParticipation(participations, this.participationMode() === 'practice') ?? participations[0];
     }
 
     isStartExerciseAvailable(): boolean {

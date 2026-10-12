@@ -122,6 +122,7 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly isLoading = this._isLoading.asReadonly();
     readonly studentParticipations = this._studentParticipations.asReadonly();
     readonly hasGradedSubmission = computed(() => !!this._gradedParticipation()?.submissions?.some((submission) => submission.submitted));
+    readonly programmingParticipationForCode = computed(() => this.getProgrammingParticipationForCode());
     readonly gradedRepositoryUri = computed(() => this.getGradedRepositoryUri());
 
     readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
@@ -170,6 +171,11 @@ export class ExerciseDetailsStudentActionsComponent {
         this._hasRatedGradedResult.set(
             !!getAllResultsOfAllSubmissions(gradedParticipation?.submissions)?.some((result) => result.rated === true && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA),
         );
+    }
+
+    private getProgrammingParticipationForCode(): ProgrammingExerciseStudentParticipation | undefined {
+        const participations = this.studentParticipations();
+        return this.participationService.getSpecificStudentParticipation(participations, false) ?? participations[0];
     }
 
     private getGradedRepositoryUri(): string {

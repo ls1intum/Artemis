@@ -151,13 +151,12 @@
                         <jhi-code-button
                             [loading]="isLoading()"
                             [smallButtons]="smallButtons()"
-                            [participations]="studentParticipations()"
+                            [participation]="programmingParticipationForCode()"
                             [programmingExerciseIdeConfiguration]="programmingExercise()"
                             [exerciseId]="exercise().id"
                             [routerLinkForRepositoryView]="routerLinkForRepositoryView()"
                             [hideLabelMobile]="true"
                             [repositoryUri]="repositoryUriForCode()"
-                            [isPractice]="participationMode() === 'practice'"
                         />
                         <jhi-code-button-new [repositoryUri]="repositoryUriForCode()" />
                     }

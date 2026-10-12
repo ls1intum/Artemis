@@ -9,10 +9,9 @@
                     <h1>Programming exam summary</h1>
                     <jhi-code-button
                         [smallButtons]="true"
-                        [participations]="participation() ? [participation()] : []"
+                        [participation]="participation()"
                         [repositoryUri]="participation()?.repositoryUri ?? participation()?.userIndependentRepositoryUri ?? ''"
                         [routerLinkForRepositoryView]="routerLinkForRepositoryView"
-                        [isPractice]="false"
                     />
                     <br />
                     <span>

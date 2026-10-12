@@ -125,13 +125,12 @@
                         <jhi-code-button
                             [loading]="isLoading()"
                             [smallButtons]="smallButtons()"
-                            [participations]="studentParticipations()"
+                            [participation]="programmingParticipationForCode()"
                             [programmingExerciseIdeConfiguration]="programmingExercise()"
                             [exerciseId]="exercise().id"
                             [routerLinkForRepositoryView]="['/courses', courseId(), 'exercises', exercise().id!, 'repository', studentParticipations()[0]!.id!]"
                             [hideLabelMobile]="true"
                             [repositoryUri]="gradedRepositoryUri()"
-                            [isPractice]="false"
                         />
                     }
                     @if (

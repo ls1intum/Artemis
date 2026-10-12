@@ -109,10 +109,8 @@ describe('CodeButtonComponent', () => {
 
                 // Reset input properties
                 fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
-                fixture.componentRef.setInput('participations', []);
                 fixture.componentRef.setInput('smallButtons', true);
                 fixture.componentRef.setInput('routerLinkForRepositoryView', []);
-                fixture.componentRef.setInput('isPractice', false);
                 stubServices();
                 fixture.detectChanges();
             });
@@ -124,7 +122,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should initialize', async () => {
-        fixture.componentRef.setInput('participations', [participation]);
+        fixture.componentRef.setInput('participation', participation);
 
         await component['initializeCodeButtonComponent']();
         component.onClick();
@@ -137,7 +135,7 @@ describe('CodeButtonComponent', () => {
 
     it('should default to token authentication when password was stored in local storage', async () => {
         localStorageState = RepositoryAuthenticationMethod.Password;
-        fixture.componentRef.setInput('participations', [participation]);
+        fixture.componentRef.setInput('participation', participation);
         await component['initializeCodeButtonComponent']();
         fixture.detectChanges();
 
@@ -151,7 +149,7 @@ describe('CodeButtonComponent', () => {
 
     it('should preserve SSH preference from local storage', async () => {
         localStorageState = RepositoryAuthenticationMethod.SSH;
-        fixture.componentRef.setInput('participations', [participation]);
+        fixture.componentRef.setInput('participation', participation);
         await component['initializeCodeButtonComponent']();
         fixture.detectChanges();
 
@@ -164,7 +162,7 @@ describe('CodeButtonComponent', () => {
 
     it('should not load participation vcsAccessToken when it already exists in participation', async () => {
         participation.vcsAccessToken = 'vcpat-1234';
-        fixture.componentRef.setInput('participations', [participation]);
+        fixture.componentRef.setInput('participation', participation);
         await component['initializeCodeButtonComponent']();
         component.onClick();
         fixture.detectChanges();
@@ -175,7 +173,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should load participation vcsAccessToken if it exists on the server', async () => {
-        fixture.componentRef.setInput('participations', [participation]);
+        fixture.componentRef.setInput('participation', participation);
         await component['initializeCodeButtonComponent']();
         fixture.detectChanges();
         await fixture.whenStable();
@@ -187,7 +185,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should only display available authentication mechanisms', async () => {
-        fixture.componentRef.setInput('participations', [participation]);
+        fixture.componentRef.setInput('participation', participation);
         localStorageState = RepositoryAuthenticationMethod.Password;
         await component['initializeCodeButtonComponent']();
 
@@ -236,7 +234,7 @@ describe('CodeButtonComponent', () => {
         it('should not load participation tokens while in base repository mode', async () => {
             fixture.componentRef.setInput('repositoryType', 'TESTS');
             fixture.componentRef.setInput('exerciseId', 42);
-            fixture.componentRef.setInput('participations', [participation]);
+            fixture.componentRef.setInput('participation', participation);
             await component['initializeCodeButtonComponent']();
             component.onClick();
             fixture.detectChanges();
@@ -362,7 +360,7 @@ describe('CodeButtonComponent', () => {
         });
 
         it('should display password warning nudge when password is selected and switch to token on click', () => {
-            fixture.componentRef.setInput('participations', [participation]);
+            fixture.componentRef.setInput('participation', participation);
 
             fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
             fixture.detectChanges();
@@ -386,7 +384,7 @@ describe('CodeButtonComponent', () => {
         });
 
         it('should not display password warning nudge when token mechanism is not available in configuration', () => {
-            fixture.componentRef.setInput('participations', [participation]);
+            fixture.componentRef.setInput('participation', participation);
             component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Password]);
 
             fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
@@ -397,7 +395,7 @@ describe('CodeButtonComponent', () => {
         });
 
         it('should not display password warning nudge when token or SSH is selected', () => {
-            fixture.componentRef.setInput('participations', [participation]);
+            fixture.componentRef.setInput('participation', participation);
             component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
 
             fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
@@ -489,18 +487,12 @@ describe('CodeButtonComponent', () => {
             expect(component.repositoryAccessToken()).toBeUndefined();
         });
 
-        it('should not crash for a base repository whose view passes a participation-less array (tests/auxiliary repo)', async () => {
-            // The staff tests/auxiliary repository view has no student participation and renders the code button with a
-            // participation-less array. activeParticipation must tolerate that instead of dereferencing undefined (regression).
+        it('should handle a base repository without a participation', async () => {
             localStorageState = RepositoryAuthenticationMethod.Token;
             fixture.componentRef.setInput('repositoryType', 'TESTS');
             fixture.componentRef.setInput('exerciseId', 7);
             fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-tests.git');
-            fixture.componentRef.setInput('participations', [undefined as unknown as ProgrammingExerciseStudentParticipation]);
             await component['initializeCodeButtonComponent']();
-
-            expect(() => component.activeParticipation()).not.toThrow();
-            expect(component.activeParticipation()).toBeUndefined();
 
             component.onClick();
             fixture.detectChanges();
@@ -527,7 +519,7 @@ describe('CodeButtonComponent', () => {
             await component['initializeCodeButtonComponent']();
             router.setUrl('/course-management');
             fixture.componentRef.setInput('exerciseId', 99);
-            fixture.componentRef.setInput('participations', [othersParticipation]);
+            fixture.componentRef.setInput('participation', othersParticipation);
             fixture.detectChanges();
             await fixture.whenStable();
             component.onClick();
@@ -579,7 +571,7 @@ describe('CodeButtonComponent', () => {
             await component['initializeCodeButtonComponent']();
             router.setUrl('/course-management');
             fixture.componentRef.setInput('exerciseId', 99);
-            fixture.componentRef.setInput('participations', [othersParticipation]);
+            fixture.componentRef.setInput('participation', othersParticipation);
             fixture.detectChanges();
             await fixture.whenStable();
             component.onClick();
@@ -595,7 +587,7 @@ describe('CodeButtonComponent', () => {
         getVcsAccessTokenSpy = vi.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not found' })));
 
         participation.id = 1;
-        fixture.componentRef.setInput('participations', [participation]);
+        fixture.componentRef.setInput('participation', participation);
         await component['initializeCodeButtonComponent']();
         fixture.detectChanges();
         await fixture.whenStable();
@@ -610,7 +602,7 @@ describe('CodeButtonComponent', () => {
         participation.repositoryUri = 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git';
         participation.team = {};
         fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
-        fixture.componentRef.setInput('participations', [participation]);
+        fixture.componentRef.setInput('participation', participation);
         component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
         fixture.changeDetectorRef.detectChanges();
         component.onClick();
@@ -625,7 +617,7 @@ describe('CodeButtonComponent', () => {
         participation.repositoryUri = `https://${component.user()!.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         participation.team = {};
         fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
-        fixture.componentRef.setInput('participations', [participation]);
+        fixture.componentRef.setInput('participation', participation);
         component.useHttpsPassword();
         fixture.changeDetectorRef.detectChanges();
 
@@ -640,7 +632,7 @@ describe('CodeButtonComponent', () => {
     it('should insert the correct token in the repository uri', async () => {
         participation.repositoryUri = `https://${component.user()!.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
-        fixture.componentRef.setInput('participations', [participation]);
+        fixture.componentRef.setInput('participation', participation);
         localStorageState = RepositoryAuthenticationMethod.Token;
 
         await component['initializeCodeButtonComponent']();
@@ -684,7 +676,7 @@ describe('CodeButtonComponent', () => {
 
         await component['initializeCodeButtonComponent']();
         router.setUrl('/course-management');
-        fixture.componentRef.setInput('participations', [ownTestRunParticipation]);
+        fixture.componentRef.setInput('participation', ownTestRunParticipation);
         fixture.detectChanges();
         await fixture.whenStable();
         component.onClick();
@@ -715,7 +707,7 @@ describe('CodeButtonComponent', () => {
         await component['initializeCodeButtonComponent']();
         router.setUrl('/course-management');
         fixture.componentRef.setInput('exerciseId', 77);
-        fixture.componentRef.setInput('participations', [othersTestRunParticipation]);
+        fixture.componentRef.setInput('participation', othersTestRunParticipation);
         fixture.detectChanges();
         await fixture.whenStable();
         component.onClick();
@@ -746,7 +738,7 @@ describe('CodeButtonComponent', () => {
         } as ProgrammingExerciseStudentParticipation;
 
         await component['initializeCodeButtonComponent']();
-        fixture.componentRef.setInput('participations', [participation]);
+        fixture.componentRef.setInput('participation', participation);
         fixture.detectChanges();
         await fixture.whenStable();
         component.onClick();
@@ -775,7 +767,7 @@ describe('CodeButtonComponent', () => {
         } as ProgrammingExerciseStudentParticipation;
 
         await component['initializeCodeButtonComponent']();
-        fixture.componentRef.setInput('participations', [participation]);
+        fixture.componentRef.setInput('participation', participation);
         fixture.detectChanges();
         await fixture.whenStable();
         component.onClick();
@@ -799,16 +791,13 @@ describe('CodeButtonComponent', () => {
         freshFixture.componentRef.setInput('smallButtons', true);
         freshFixture.componentRef.setInput('repositoryUri', '');
         freshFixture.componentRef.setInput('routerLinkForRepositoryView', []);
-        freshFixture.componentRef.setInput('isPractice', false);
         router.setUrl('/course-management');
-        freshFixture.componentRef.setInput('participations', [
-            {
-                id: 42,
-                testRun: true,
-                student: { login: 'edx_userLogin' },
-                repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
-            } as ProgrammingExerciseStudentParticipation,
-        ]);
+        freshFixture.componentRef.setInput('participation', {
+            id: 42,
+            testRun: true,
+            student: { login: 'edx_userLogin' },
+            repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
+        } as ProgrammingExerciseStudentParticipation);
         freshFixture.detectChanges();
 
         // Identity still pending → the owner is unknown → the participation token must not be requested yet.
@@ -843,7 +832,7 @@ describe('CodeButtonComponent', () => {
         await component['initializeCodeButtonComponent']();
         router.setUrl('/course-management');
         fixture.componentRef.setInput('exerciseId', 88);
-        fixture.componentRef.setInput('participations', [othersParticipation]);
+        fixture.componentRef.setInput('participation', othersParticipation);
         fixture.detectChanges();
         await fixture.whenStable();
         component.onClick();
@@ -858,7 +847,7 @@ describe('CodeButtonComponent', () => {
     it('should add the user login and token to the URL', async () => {
         participation.repositoryUri = `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
-        fixture.componentRef.setInput('participations', [participation]);
+        fixture.componentRef.setInput('participation', participation);
         component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
         fixture.changeDetectorRef.detectChanges();
 
@@ -869,7 +858,7 @@ describe('CodeButtonComponent', () => {
     it('should return http url if ssh is selected but http is forced', async () => {
         participation.repositoryUri = `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
-        fixture.componentRef.setInput('participations', [participation]);
+        fixture.componentRef.setInput('participation', participation);
         component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
 
         component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.SSH);
@@ -879,7 +868,7 @@ describe('CodeButtonComponent', () => {
         expect(url).toBe(`https://${component.user()!.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
-    it('should handle multiple participations', async () => {
+    it('should handle participation changes', async () => {
         const participation1: ProgrammingExerciseStudentParticipation = {
             repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
             testRun: false,
@@ -888,26 +877,23 @@ describe('CodeButtonComponent', () => {
             repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-practice.git',
             testRun: true,
         };
-        fixture.componentRef.setInput('participations', [participation1, participation2]);
+        fixture.componentRef.setInput('participation', participation1);
         fixture.componentRef.setInput('repositoryUri', participation1.repositoryUri);
         component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Password);
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(component.activeParticipation()).toEqual(participation1);
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
 
-        fixture.componentRef.setInput('isPractice', true);
+        fixture.componentRef.setInput('participation', participation2);
         fixture.componentRef.setInput('repositoryUri', participation2.repositoryUri);
         fixture.detectChanges();
 
-        expect(component.activeParticipation()).toEqual(participation2);
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-practice.git');
     });
 
     it('should handle no participation', () => {
         fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.solution.git');
-        fixture.componentRef.setInput('participations', []);
         component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Password);
         fixture.changeDetectorRef.detectChanges();
 
@@ -933,7 +919,7 @@ describe('CodeButtonComponent', () => {
 
     it('should fetch and store ssh preference', () => {
         participation.repositoryUri = `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
-        fixture.componentRef.setInput('participations', [participation]);
+        fixture.componentRef.setInput('participation', participation);
 
         component.sshEnabled = true;
         component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
@@ -982,34 +968,6 @@ describe('CodeButtonComponent', () => {
         expect(localStorageMock.store).toHaveBeenNthCalledWith(4, 'code-button-state', 'token');
         expect(component.useSsh()).toBeFalsy();
         expect(component.useToken()).toBeTruthy();
-    });
-
-    it.each([
-        [
-            [
-                { id: 1, testRun: true },
-                { id: 2, testRun: false },
-            ],
-            false,
-            2,
-        ],
-        [[{ id: 1, testRun: true }], false, 1],
-        [[{ id: 2, testRun: false }], false, 2],
-        [
-            [
-                { id: 1, testRun: true },
-                { id: 2, testRun: false },
-            ],
-            true,
-            1,
-        ],
-    ])('should correctly choose active participation', async (participations: ProgrammingExerciseStudentParticipation[], isPractice: boolean, expected: number) => {
-        fixture.componentRef.setInput('participations', participations);
-        fixture.componentRef.setInput('isPractice', isPractice);
-
-        fixture.detectChanges();
-
-        expect(component.activeParticipation()?.id).toBe(expected);
     });
 
     it.each([
@@ -1107,7 +1065,7 @@ describe('CodeButtonComponent', () => {
 
         fixture.componentRef.setInput('programmingExerciseIdeConfiguration', { buildConfig: { theiaImage: 'theia-image' } });
         fixture.componentRef.setInput('repositoryUri', 'https://repo.uri');
-        fixture.componentRef.setInput('participations', [{ repositoryUri: 'https://repo.uri', vcsAccessToken: 'token' } as any]);
+        fixture.componentRef.setInput('participation', { repositoryUri: 'https://repo.uri', vcsAccessToken: 'token' } as any);
 
         component.theiaPortalURL = 'https://theia.portal.url';
 
@@ -1155,7 +1113,7 @@ describe('CodeButtonComponent', () => {
 
         fixture.componentRef.setInput('programmingExerciseIdeConfiguration', { buildConfig: { theiaImage: 'theia-image' } });
         fixture.componentRef.setInput('repositoryUri', 'https://repo.uri');
-        fixture.componentRef.setInput('participations', [{ repositoryUri: 'https://repo.uri', vcsAccessToken: 'token' }]);
+        fixture.componentRef.setInput('participation', { repositoryUri: 'https://repo.uri', vcsAccessToken: 'token' });
         component.theiaPortalURL = 'https://theia.portal.url';
 
         component.sshTemplateUrl = 'https://ssh.repo.url';
