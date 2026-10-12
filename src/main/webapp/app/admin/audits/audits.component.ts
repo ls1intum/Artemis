@@ -129,11 +129,14 @@ export class AuditsComponent implements OnInit {
      */
     readonly hasDateRange = computed(() => this.fromDate() !== '' && this.toDate() !== '');
 
-    /** From date exposed to the date picker as a dayjs value. */
-    readonly fromDateValue = computed(() => this.toPickerDate(this.fromDate()));
+    /**
+     * What the from picker holds: the last date it committed. It is kept apart from {@link fromDate}, the applied filter,
+     * because feeding the filter back to the picker would clear its draft text whenever the text stops being a date.
+     */
+    readonly fromDateValue = signal<dayjs.Dayjs | undefined>(undefined);
 
-    /** To date exposed to the date picker as a dayjs value. */
-    readonly toDateValue = computed(() => this.toPickerDate(this.toDate()));
+    /** What the to picker holds, kept apart from {@link toDate} for the same reason as {@link fromDateValue}. */
+    readonly toDateValue = signal<dayjs.Dayjs | undefined>(undefined);
 
     /**
      * Whether the text typed into each picker is a date. A picker keeps its last valid date while the text is not one,
@@ -167,10 +170,11 @@ export class AuditsComponent implements OnInit {
     }
 
     /**
-     * Applies a date picked or cleared in the from picker and reloads. Ignored while the typed text is not a date, because the
-     * filter is cleared then and {@link onFromTextValidityChange} applies the date once the text is valid again.
+     * Applies a date picked or cleared in the from picker and reloads. The filter ignores it while the typed text is not a date,
+     * because the filter is cleared then and {@link onFromTextValidityChange} applies the date once the text is valid again.
      */
     onFromDateChange(value: dayjs.Dayjs | undefined): void {
+        this.fromDateValue.set(value);
         if (this.isFromTextValid()) {
             this.updateFromDate(value);
             this.transition();
@@ -178,7 +182,8 @@ export class AuditsComponent implements OnInit {
     }
 
     /**
-     * Clears the from filter when the typed text stops being a date, and restores the picker's date once it is one again.
+     * Clears the from filter when the typed text stops being a date, and restores the picker's date once it is one again. The picker
+     * keeps its value and the text typed so far; only the filter changes.
      *
      * @param isValid whether the typed text is a date
      * @param value the date the picker currently holds, used when the text becomes valid again without a new date
@@ -193,6 +198,7 @@ export class AuditsComponent implements OnInit {
 
     /** Applies a date picked or cleared in the to picker and reloads. See {@link onFromDateChange}. */
     onToDateChange(value: dayjs.Dayjs | undefined): void {
+        this.toDateValue.set(value);
         if (this.isToTextValid()) {
             this.updateToDate(value);
             this.transition();
@@ -222,6 +228,19 @@ export class AuditsComponent implements OnInit {
      */
     updateToDate(value: dayjs.Dayjs | undefined): void {
         this.toDate.set(this.toDateString(value));
+    }
+
+    /**
+     * Shows the applied filter dates in the pickers after the URL set them. A picker whose text is not a date keeps what the
+     * user is typing: its filter is empty then, which is no date to show.
+     */
+    private syncPickerValues(): void {
+        if (this.isFromTextValid() && this.toDateString(this.fromDateValue()) !== this.fromDate()) {
+            this.fromDateValue.set(this.toPickerDate(this.fromDate()));
+        }
+        if (this.isToTextValid() && this.toDateString(this.toDateValue()) !== this.toDate()) {
+            this.toDateValue.set(this.toPickerDate(this.toDate()));
+        }
     }
 
     /** Converts a picker value to the yyyy-MM-dd string the audits service expects. */
@@ -311,6 +330,7 @@ export class AuditsComponent implements OnInit {
                 this.fromDate.set(from ? this.datePipe.transform(from, this.dateFormat)! : '');
                 this.toDate.set(to ? this.datePipe.transform(to, this.dateFormat)! : '');
             }
+            this.syncPickerValues();
             const logTypeParam = params.get('logType');
             // Set the log on every emission rather than only for a valid parameter: Angular reuses this component across
             // query-parameter-only navigations, so leaving the signal untouched would keep querying the previously

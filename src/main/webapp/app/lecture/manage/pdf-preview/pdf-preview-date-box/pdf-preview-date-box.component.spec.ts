@@ -33,6 +33,11 @@ describe('PdfPreviewDateBoxComponent', () => {
     ] as unknown as OrderedPage[];
 
     beforeEach(async () => {
+        // The component fixes its minimum date when it is created, and the picker disables the days before it. Freeze the
+        // date before the 15th so that selecting the 15th in the calendar works whatever day the suite runs on.
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(new Date(2026, 5, 10, 12, 0, 0));
+
         courseExerciseServiceMock = {
             findAllExercisesWithDueDatesForCourse: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockExercises }))),
         };
@@ -60,6 +65,7 @@ describe('PdfPreviewDateBoxComponent', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.clearAllMocks();
     });
 
