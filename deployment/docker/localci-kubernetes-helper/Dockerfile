@@ -1,4 +1,4 @@
-FROM alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8
+FROM alpine:3.24.2@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
 
 # ip6tables is a separate package on Alpine; without it the network isolation init container
 # cannot apply any IPv6 rules and builds requested with network mode "none" stay reachable over IPv6.
