@@ -54,11 +54,15 @@ public class BonusService {
      *
      * @param bonus                     the bonus source to be saved
      * @param isSourceGradeScaleUpdated used to skip source grading scale validation if it is not updated
-     * @return the saved bonus source
+     * @return the saved bonus source, with the bonus strategy of the given bonus
      */
     public Bonus saveBonus(Bonus bonus, boolean isSourceGradeScaleUpdated) {
         validateBonusGradeTypes(bonus, isSourceGradeScaleUpdated);
-        return bonusRepository.save(bonus);
+        Bonus savedBonus = bonusRepository.save(bonus);
+        // The bonus strategy is transient: it is stored on the bonusTo grading scale and not on the bonus. Saving an existing bonus returns a copy
+        // without it, so it is carried over for the response of the update, as the create and the get response have it.
+        savedBonus.setBonusStrategy(bonus.getBonusStrategy());
+        return savedBonus;
     }
 
     /**
