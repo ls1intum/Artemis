@@ -72,6 +72,8 @@ export class ProgrammingExerciseSecurityComponent {
     readonly stagedActivation = input<SecurityStagedActivation | undefined>(undefined);
     /** Emits the create-mode staged activation (or undefined when cleared) so the parent can persist it on save even if this card is gone. */
     readonly stagedActivationChange = output<SecurityStagedActivation | undefined>();
+    /** True while the parent form is saving the exercise and running the follow-up activation, so this card's controls stay locked - a staged change made mid-save would disagree with what gets persisted. */
+    readonly isSaving = input<boolean>(false);
 
     readonly isEditMode = computed(() => !!this.programmingExercise().id);
     readonly isSupportedLanguage = computed(() => {
@@ -107,7 +109,7 @@ export class ProgrammingExerciseSecurityComponent {
      * re-runs the previously failed operation for the old version - so the shown selection could silently diverge
      * from what Retry actually does.
      */
-    readonly isVersionSelectDisabled = computed(() => this.isBusy() || this.status() === SecurityActivationStatus.ERROR);
+    readonly isVersionSelectDisabled = computed(() => this.isBusy() || this.isSaving() || this.status() === SecurityActivationStatus.ERROR);
     /** The toggle sits "on" whenever the sandbox is on or being turned on (or errored while on). */
     readonly isToggleOn = computed(() => {
         const status = this.status();

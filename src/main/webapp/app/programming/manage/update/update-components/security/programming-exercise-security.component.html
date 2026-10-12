@@ -19,7 +19,7 @@
                             inputId="securityActivateToggle"
                             [ngModel]="isToggleOn()"
                             [ngModelOptions]="{ standalone: true }"
-                            [disabled]="isBusy()"
+                            [disabled]="isBusy() || isSaving()"
                             (changed)="onToggleChanged($event)"
                             [ariaLabel]="'artemisApp.programmingExercise.security.activateLabel' | artemisTranslate"
                             data-testid="security-activate-toggle"
