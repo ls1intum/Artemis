@@ -274,8 +274,20 @@ Hazelcast cluster:
 
 - **Hazelcast:** writer nodes must be data members, not standalone LocalVC clients.
   Configure `jhipster.cache.hazelcast.expected-data-member-count` consistently.
+  Set `artemis.hyperion.generation.cluster-fencing-enabled=true` on **every writer**,
+  including nodes with Hyperion disabled, before enabling generation anywhere.
+  This setting defaults to the local `artemis.hyperion.exercise-generation.enabled`
+  value. It does not start a model, worker or generation service. Admission checks
+  that every observed data member advertises fencing and the same expected member
+  count; mixed settings reject generation.
+  Drain runs and restart all writers together when changing this deployment setting.
+  Ordinary writes retain their existing behavior when generation and fencing are
+  disabled everywhere. With fencing enabled, incomplete membership rejects ordinary
+  mutation and participation-copy claims, and invalidates generation ownership.
   Admission requires all configured data members; recovery requires a strict
-  majority. Keep the generation maps' split-brain protection enabled.
+  majority. The non-expiring job-slot map also has majority-based read/write
+  split-brain protection and no eviction; full-membership application checks
+  additionally stop authoring and participation in the majority partition.
 - **Redis / Valkey:** all writers must use the same authoritative store and
   distributed-data namespace. Each Redisson client receives a unique process
   incarnation in its connection name; the configured client name remains the

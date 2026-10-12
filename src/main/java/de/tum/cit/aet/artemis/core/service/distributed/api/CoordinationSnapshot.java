@@ -7,8 +7,14 @@ import java.util.Set;
  *
  * @param ownerNodeIds         stable process-incarnation identities observed by the provider
  * @param memberQuorumRequired whether these processes also host the distributed data and require a configured member quorum
+ * @param allWritersFenced     whether every observed data owner declares deployment-wide writer fencing
  */
-public record CoordinationSnapshot(Set<String> ownerNodeIds, boolean memberQuorumRequired) {
+public record CoordinationSnapshot(Set<String> ownerNodeIds, boolean memberQuorumRequired, boolean allWritersFenced) {
+
+    /** Builds a snapshot for stores whose clients do not need separate member-level fencing declarations. */
+    public CoordinationSnapshot(Set<String> ownerNodeIds, boolean memberQuorumRequired) {
+        this(ownerNodeIds, memberQuorumRequired, true);
+    }
 
     public CoordinationSnapshot {
         ownerNodeIds = Set.copyOf(ownerNodeIds);

@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -32,10 +33,19 @@ public class GenerationExternalMutationService {
 
     private final int expectedDataMemberCount;
 
+    private final boolean clusterFencingEnabled;
+
+    public GenerationExternalMutationService(DistributedDataProvider distributedDataProvider, int expectedDataMemberCount) {
+        this(distributedDataProvider, expectedDataMemberCount, false);
+    }
+
+    @Autowired
     public GenerationExternalMutationService(DistributedDataProvider distributedDataProvider,
-            @Value("${jhipster.cache.hazelcast.expected-data-member-count:1}") int expectedDataMemberCount) {
+            @Value("${jhipster.cache.hazelcast.expected-data-member-count:1}") int expectedDataMemberCount,
+            @Value("${artemis.hyperion.generation.cluster-fencing-enabled:${artemis.hyperion.exercise-generation.enabled:false}}") boolean clusterFencingEnabled) {
         this.distributedDataProvider = distributedDataProvider;
         this.expectedDataMemberCount = expectedDataMemberCount;
+        this.clusterFencingEnabled = clusterFencingEnabled;
     }
 
     /**
@@ -45,10 +55,14 @@ public class GenerationExternalMutationService {
      * @return exact ownership token
      */
     public String claimExternalMutationSlot(long exerciseId) {
-        return claim(distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME), requireWriterNode(), exerciseId);
+        return claim(distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME), requireWriterNode(), exerciseId, this::requireWriterNode);
     }
 
     private String requireWriterNode() {
+        if (clusterFencingEnabled) {
+            new GenerationClusterTopology(distributedDataProvider, expectedDataMemberCount).verifyAllMembers();
+            return distributedDataProvider.getLocalNodeId();
+        }
         String owner = distributedDataProvider.getLocalNodeId();
         if (!distributedDataProvider.getCoordinationSnapshot().map(snapshot -> !snapshot.ownerNodeIds().isEmpty() && snapshot.ownerNodeIds().contains(owner)).orElse(false)) {
             throw new ServiceUnavailableAlertException("Exercise writers require a connected owner and a complete coordination view.", "hyperionExerciseGeneration",
@@ -70,6 +84,7 @@ public class GenerationExternalMutationService {
         DistributedMap<String, JobInfo> jobs = distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME);
         jobs.lock(key);
         try {
+            requireWriterNode();
             JobInfo current = jobs.get(key);
             if (current != null && (!current.jobId().startsWith(PARTICIPATION_PREFIX) || current.participationOwners() == null)) {
                 throw new ConflictException("Exercise authoring or recovery is running; wait before starting the exercise.", "hyperionExerciseGeneration",
@@ -185,13 +200,14 @@ public class GenerationExternalMutationService {
         }
     }
 
-    static String claim(DistributedMap<String, JobInfo> jobs, String nodeId, long exerciseId) {
+    static String claim(DistributedMap<String, JobInfo> jobs, String nodeId, long exerciseId, Runnable validateTopology) {
         String key = String.valueOf(exerciseId);
         String token = GenerationJobService.EXTERNAL_MUTATION_JOB_PREFIX + UUID.randomUUID();
         Instant now = Instant.now();
         JobInfo mutation = new JobInfo(token, "external", exerciseId, now, null, nodeId, now, false, null);
         jobs.lock(key);
         try {
+            validateTopology.run();
             if (jobs.putIfAbsent(key, mutation) != null) {
                 throw new ConflictException("Exercise generation or another mutation is running; wait for it to finish before making changes.", "hyperionExerciseGeneration",
                         "exerciseGenerationRunning");
