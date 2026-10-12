@@ -11,6 +11,8 @@ import Image, {ImageSize} from "../../../src/components/Image/Image";
 import irisAiChoice from './assets/iris/iris-ai-choice.png';
 import irisChatEmpty from './assets/iris/iris-chat-empty.png';
 import irisConversation from './assets/iris/iris-conversation.png';
+import irisCitation from './assets/iris/iris-citation.png';
+import irisPointOut from './assets/iris/iris-point-out.png';
 
 Iris is a tutor built into Artemis that you can ask questions of while you work. It already has the exercise and
 your latest submission in front of it, so you can ask about *this* task without explaining it first.
@@ -89,6 +91,8 @@ back the same sentence, their chips sit together as a group, and the arrows besi
 Clicking a lecture citation opens its unit, with the slides at the cited page or the video at the cited moment. That
 lets you check an answer against the material: the chip shows where Iris found support, not whether its answer is right.
 
+<Image src={irisCitation} alt="A source chip labelled Multithreading with its tooltip open, showing the summary above the unit Concurrency and the lecture Parallel Computing" size={ImageSize.medium} caption="A source chip with its tooltip open" />
+
 ### When a Citation Cannot Open the Exact Place
 
 New citations to a lecture page or video moment carry an internal material version. When that version is available,
@@ -120,11 +124,13 @@ a page or the video to a moment, then answer with that material in front of you.
 viewer may follow. The topic selector is hidden in this view; your next message uses the lecture that contains the
 open unit.
 
-When Artemis saves an acknowledged move, a chip appears in the conversation, reading *Navigated to page 12 in lecture
-unit Sorting*. The chip stays, so the place is one click away later on, and clicking it reopens the view if you have
-closed it. If a saved point-out names both a page and a video moment that cannot stay synchronized,
-**Synchronize slides and video** switches off so the next movement does not undo the point-out, and Artemis names the
-page and the moment it is keeping.
+When Artemis saves an acknowledged move, a chip appears in the conversation, reading *Navigated to page 5 and
+timestamp 0:56 in lecture unit Concurrency*. The chip stays, so the place is one click away later on, and clicking it
+reopens the view if you have closed it. If a saved point-out names both a page and a video moment that cannot stay
+synchronized, **Synchronize slides and video** switches off so the next movement does not undo the point-out, and
+Artemis names the page and the moment it is keeping.
+
+<Image src={irisPointOut} alt="A question in the Iris chat, followed by a chip reading Navigated to page 5 and timestamp 0:56 in lecture unit Concurrency" size={ImageSize.medium} caption="The chip Artemis leaves after Iris moved the material" />
 
 Iris can move the material only while that combined view / fullscreen is open. If you click a saved point-out after
 the material has changed, the unit still opens, but the old position is withheld just as it is for a citation.
