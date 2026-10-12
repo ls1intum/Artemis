@@ -55,9 +55,10 @@ class GenerationVersionRecoveryServiceTest {
                     "templateParticipation":{"id":1,"commitId":"%s-template"},
                     "solutionParticipation":{"id":2,"commitId":"%s-solution"},
                     "testsCommitId":"%s-tests",
-                    "testCases":[{"id":1,"testName":"checksStack","weight":2.0,"visibility":"ALWAYS","active":true}]
+                    "testCases":[{"id":1,"testName":"checksStack","weight":2.0,%s"visibility":"ALWAYS","active":true}]
                 }}
-                """.formatted(prefix, prefix, prefix, prefix), ExerciseSnapshotDTO.class));
+                """.formatted(prefix, prefix, prefix, prefix, "legacy".equals(prefix) ? "" : "\"bonusPoints\":" + ("before".equals(prefix) ? "2.0," : "0.0,")),
+                ExerciseSnapshotDTO.class));
         return version;
     }
 
@@ -71,6 +72,14 @@ class GenerationVersionRecoveryServiceTest {
         assertThat(baseline.repositoryBranch()).isEqualTo("teaching");
         assertThat(baseline.mode()).isEqualTo(GenerationMode.ADAPT);
         assertThat(baseline.previousGrading().tests().get("checksStack").weight()).isEqualTo(2.0);
+        assertThat(baseline.previousGrading().tests().get("checksStack").bonusPoints()).isEqualTo(2.0);
+        assertThat(baseline.savedGrading().tests().get("checksStack").bonusPoints()).isZero();
+    }
+
+    @Test
+    void missingBonusCreditInLegacyVersionsHasTheSameZeroDefaultAsTestCases() throws Exception {
+        when(versions.findById(81L)).thenReturn(Optional.of(version("legacy")));
+        assertThat(recovery.find(12L).orElseThrow().baseline().previousGrading().tests().get("checksStack").bonusPoints()).isZero();
     }
 
     @Test

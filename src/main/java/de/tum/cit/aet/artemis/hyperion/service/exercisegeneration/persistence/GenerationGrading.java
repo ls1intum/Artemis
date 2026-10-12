@@ -44,11 +44,11 @@ public final class GenerationGrading {
         }
     }
 
-    /** Weight and visibility are the only test-case settings generation may replace. */
-    public record Grading(@Nullable Double weight, @Nullable Visibility visibility) implements Serializable {
+    /** Grading values changed by generation, including bonus credit for preservation checks. */
+    public record Grading(@Nullable Double weight, @Nullable Visibility visibility, @Nullable Double bonusPoints) implements Serializable {
 
         static Grading of(ProgrammingExerciseTestCase test) {
-            return new Grading(test.getWeight(), test.getVisibility());
+            return new Grading(test.getWeight(), test.getVisibility(), test.getBonusPoints());
         }
     }
 
@@ -79,6 +79,7 @@ public final class GenerationGrading {
             if (target != null && !target.equals(Grading.of(test))) {
                 test.setWeight(target.weight());
                 test.setVisibility(target.visibility());
+                test.setBonusPoints(target.bonusPoints());
                 changed.add(test);
             }
         }
@@ -120,9 +121,11 @@ public final class GenerationGrading {
             ProgrammingExerciseTestCase testCase = byName.get(entry.name());
             Double weight = effectiveWeights.get(entry.name());
             Visibility visibility = "AFTER_DUE_DATE".equals(entry.visibility()) ? Visibility.AFTER_DUE_DATE : Visibility.ALWAYS;
-            if (!Objects.equals(testCase.getWeight(), weight) || testCase.getVisibility() != visibility) {
+            Double bonusPoints = entry.purpose() == GeneratedTestPlan.Purpose.PRESERVATION ? 0.0 : testCase.getBonusPoints();
+            if (!Objects.equals(testCase.getWeight(), weight) || testCase.getVisibility() != visibility || !Objects.equals(testCase.getBonusPoints(), bonusPoints)) {
                 testCase.setWeight(weight);
                 testCase.setVisibility(visibility);
+                testCase.setBonusPoints(bonusPoints);
                 changed.add(testCase);
             }
         }

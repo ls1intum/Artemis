@@ -112,8 +112,8 @@ public class GenerationVersionRecoveryService {
         var tests = new LinkedHashMap<String, GenerationGrading.Grading>();
         if (snapshot.testCases() != null) {
             for (var test : snapshot.testCases()) {
-                if (test.testName() == null || test.testName().isBlank()
-                        || tests.putIfAbsent(test.testName(), new GenerationGrading.Grading(test.weight(), test.visibility())) != null) {
+                if (test.testName() == null || test.testName().isBlank() || tests.putIfAbsent(test.testName(),
+                        new GenerationGrading.Grading(test.weight(), test.visibility(), test.bonusPoints() == null ? 0.0 : test.bonusPoints())) != null) {
                     throw new IllegalArgumentException("The programming version has incomplete or duplicate test identity");
                 }
             }

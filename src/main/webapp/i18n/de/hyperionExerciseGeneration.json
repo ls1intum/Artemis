@@ -225,7 +225,7 @@
                     "failedTitle": "Die Generierung endete ohne Ergebnis",
                     "failedBody": "In deine Aufgabe wurde nichts geschrieben.",
                     "cancelledTitle": "Du hast diesen Durchlauf abgebrochen",
-                    "cancelledBody": "In deine Aufgabe wurde nichts geschrieben. Der Aufgabenentwurf ist weiterhin vorhanden und leer — starte erneut oder lösche ihn.",
+                    "cancelledBody": "Dieser Lauf wurde abgebrochen. Die Inhalte der Aufgabe bleiben unverändert.",
                     "retained": "Was Artemis erarbeitet hat, bleibt zur Ansicht erhalten. Teil deiner Aufgabe ist es nicht.",
                     "nothingRetained": "Von diesem Durchlauf konnte nichts aufbewahrt werden, es gibt also nichts anzusehen. Deine Aufgabe ist unverändert — starte einfach erneut.",
                     "technicalDetails": "Technische Details anzeigen",
