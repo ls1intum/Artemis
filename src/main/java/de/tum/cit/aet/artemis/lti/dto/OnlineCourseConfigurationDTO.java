@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.lti.dto;
 
+import static de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration.MAX_USER_PREFIX_LENGTH;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.Nullable;
 
@@ -15,7 +18,7 @@ import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record OnlineCourseConfigurationDTO(@Nullable Long id, @NotBlank String userPrefix, @NotNull Boolean requireExistingUser,
+public record OnlineCourseConfigurationDTO(@Nullable Long id, @NotBlank @Size(max = MAX_USER_PREFIX_LENGTH) String userPrefix, @NotNull Boolean requireExistingUser,
         @Nullable LtiPlatformConfigurationDTO ltiPlatformConfiguration) {
 
     public static OnlineCourseConfigurationDTO of(OnlineCourseConfiguration config) {
