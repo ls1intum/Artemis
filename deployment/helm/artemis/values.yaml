@@ -230,7 +230,7 @@ postgresql:
   deploy: true
   image:
     repository: postgres
-    tag: "18.4-alpine"
+    tag: "18.6-alpine"
     pullPolicy: IfNotPresent
   auth:
     database: "Artemis"
@@ -287,7 +287,7 @@ broker:
   deploy: true
   image:
     repository: apache/artemis
-    tag: "2.54.0-alpine"
+    tag: "2.57.0-alpine"
     pullPolicy: IfNotPresent
   auth:
     username: "guest"

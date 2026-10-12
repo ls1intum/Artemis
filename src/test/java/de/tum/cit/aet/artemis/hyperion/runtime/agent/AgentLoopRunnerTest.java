@@ -79,6 +79,48 @@ class AgentLoopRunnerTest {
     }
 
     @Test
+    void usageSinksWithoutOptionalHooksRemainCompatibleWithToolSessions() {
+        ChatModel model = mock(ChatModel.class);
+        ChatResponse edit = calls("edit", "write");
+        ChatResponse finished = text("finished");
+        when(model.call(any(Prompt.class))).thenReturn(edit, finished);
+        List<ChatResponse> responses = new ArrayList<>();
+        List<Long> toolCounts = new ArrayList<>();
+        AtomicBoolean uncertain = new AtomicBoolean();
+        ProviderUsageSink usage = new ProviderUsageSink() {
+
+            @Override
+            public void accept(ChatResponse response) {
+                responses.add(response);
+            }
+
+            @Override
+            public void recordToolCalls(long count) {
+                toolCounts.add(count);
+            }
+
+            @Override
+            public void markUncertain() {
+                uncertain.set(true);
+            }
+        };
+
+        usage.recordAttempt();
+        var result = runner(model).run("system", "brief", new RecordingTools(), 4, () -> false, usage, null);
+
+        assertThat(result).isEqualTo(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 2, "finished"));
+        assertThat(responses).containsExactly(edit, finished);
+        assertThat(toolCounts).containsExactly(1L, 0L);
+        assertThat(uncertain).isFalse();
+    }
+
+    @Test
+    void cancellationOutsideASessionDoesNotInventModelTurns() {
+        assertThat(AgentLoopResult.outsideSession(AgentLoopResult.Status.CANCELLED, "Cancelled before authoring"))
+                .isEqualTo(new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, "Cancelled before authoring"));
+    }
+
+    @Test
     void mixedSubmitBatchRejectsAllCallsBeforeAnyWorkspaceChange() {
         ChatModel model = mock(ChatModel.class);
         when(model.call(any(Prompt.class))).thenReturn(calls("stop", "submit", "edit", "write"), calls("edit", "write", "stop", "submit"), calls("stop", "submit"));
