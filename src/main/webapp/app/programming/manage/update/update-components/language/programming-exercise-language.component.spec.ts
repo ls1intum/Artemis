@@ -5,6 +5,8 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
 import { provideHttpClient } from '@angular/common/http';
@@ -106,5 +108,39 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         expect(packageNameInput.maxLength).toBe(MAX_PACKAGE_NAME_LENGTH);
         vi.spyOn(internals(comp), 'packageNameField').mockReturnValue({ valid: true } as NgModel);
         expect(comp.isPackageNameValid()).toBe(true);
+    });
+
+    describe('sequential test runs checkbox', () => {
+        const getSequentialTestRunsCheckbox = (): HTMLInputElement => fixture.nativeElement.querySelector('#field_sequentialTestRuns');
+
+        const setUp = async (configOverrides: Partial<ProgrammingExerciseCreationConfig>) => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            exercise.buildConfig = new ProgrammingExerciseBuildConfig();
+            exercise.buildConfig.sequentialTestRuns = true;
+            fixture.componentRef.setInput('programmingExercise', exercise);
+            fixture.componentRef.setInput(
+                'programmingExerciseCreationConfig',
+                Object.assign({}, programmingExerciseCreationConfigMock, { sequentialTestRunsAllowed: true }, configOverrides),
+            );
+            fixture.detectChanges();
+            // NgModel applies the disabled state in a microtask
+            await fixture.whenStable();
+        };
+
+        it('should be enabled when a new exercise is created', async () => {
+            await setUp({});
+            expect(getSequentialTestRunsCheckbox().disabled).toBe(false);
+        });
+
+        it('should be disabled when importing from a file', async () => {
+            await setUp({ isImportFromFile: true });
+            expect(getSequentialTestRunsCheckbox().disabled).toBe(true);
+        });
+
+        it('should be disabled when importing from the sharing platform', async () => {
+            await setUp({ isImportFromSharing: true });
+            expect(getSequentialTestRunsCheckbox().disabled).toBe(true);
+        });
     });
 });

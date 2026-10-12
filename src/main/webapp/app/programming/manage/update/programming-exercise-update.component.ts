@@ -524,7 +524,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.programmingExercise.projectType = type;
         }
 
-        this.resetBuildOptionSelections();
+        // The imported build options belong to the imported repositories and are locked, so they must survive setting the imported project type
+        if (!(this.isImportFromFile || this.isImportFromSharing)) {
+            this.resetBuildOptionSelections();
+        }
     }
 
     /**

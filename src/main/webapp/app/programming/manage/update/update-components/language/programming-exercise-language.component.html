@@ -196,7 +196,8 @@
         </div>
     }
     <!-- Sequential Test Runs checkbox
-    It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.-->
+    It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.
+    The test repository of an imported exercise already has its final structure, so the imported value is locked on every import path.-->
     @if (isEditFieldDisplayedRecord().sequentialTestRuns && programmingExerciseCreationConfig().sequentialTestRunsAllowed) {
         <div>
             <div class="form-check custom-control custom-checkbox">
@@ -205,7 +206,12 @@
                     type="checkbox"
                     name="sequentialTestRuns"
                     id="field_sequentialTestRuns"
-                    [disabled]="!!programmingExercise().id || !!programmingExercise().staticCodeAnalysisEnabled"
+                    [disabled]="
+                        !!programmingExercise().id ||
+                        programmingExerciseCreationConfig().isImportFromFile ||
+                        programmingExerciseCreationConfig().isImportFromSharing ||
+                        !!programmingExercise().staticCodeAnalysisEnabled
+                    "
                     [(ngModel)]="programmingExercise().buildConfig!.sequentialTestRuns"
                     checked
                 />
