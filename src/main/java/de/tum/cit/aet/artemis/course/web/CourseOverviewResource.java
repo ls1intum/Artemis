@@ -348,22 +348,26 @@ public class CourseOverviewResource {
         // only for the roles that see it.
         OnlineCourseConfiguration onlineConfiguration = null;
         TutorialGroupsConfiguration tutorialConfiguration = null;
+        boolean presentationAssessmentsEnabled = false;
         if (authCheckService.isAtLeastInstructorInCourse(course, user)) {
             // the Athena switches, grade-relevance and the auto-orchestration settings the instructor edits
             courseAthenaConfigRepository.attachTo(course);
             courseConfigurationRepository.attachTo(course);
+            presentationAssessmentsEnabled = course.getPresentationAssessmentsEnabled();
             onlineConfiguration = ltiApi.flatMap(api -> api.findOnlineCourseConfiguration(courseId)).orElse(null);
             tutorialConfiguration = tutorialGroupApi.flatMap(api -> api.findConfigurationByCourseId(courseId)).orElse(null);
         }
         else if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             tutorialConfiguration = tutorialGroupApi.flatMap(api -> api.findConfigurationByCourseId(courseId)).orElse(null);
+            // Tutors and editors grade presentations, so they need this switch, but not the rest of the course configuration.
+            presentationAssessmentsEnabled = courseConfigurationRepository.findPresentationAssessmentsEnabledByCourseId(courseId).orElse(false);
         }
 
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             userRepository.setUserCountsForCourse(course);
         }
 
-        return ResponseEntity.ok(CourseManagementDTO.of(course, onlineConfiguration, tutorialConfiguration));
+        return ResponseEntity.ok(CourseManagementDTO.of(course, onlineConfiguration, tutorialConfiguration, presentationAssessmentsEnabled));
     }
 
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
