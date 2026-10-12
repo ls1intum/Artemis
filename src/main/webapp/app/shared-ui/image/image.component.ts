@@ -14,7 +14,8 @@ export const enum ImageLoadingStatus {
  * - Relies on browser caching (Artemis serves images with proper caching headers, see {@link StaticResourcesConfiguration.java}).
  *
  * Template note:
- * - We used `[attr.src]="localImageUrl()"` because it removes the `src` attribute if the value is `undefined`.
+ * - We use `[attr.src]="localImageUrl()"` so that nothing is requested while the image is loading: Angular renders an `undefined` value as an empty
+ * `src` on `<img>` (before 22.2.2 it removed the attribute), and the browser does not request an empty `src`.
  * - We did not use `[src]="localImageUrl()"` because some browsers (e.g. Chrome) convert `undefined` to the string `"undefined"`, causing a request when we do not want
  * to trigger a request.
  */
