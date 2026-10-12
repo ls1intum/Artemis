@@ -911,7 +911,6 @@ describe('CodeButtonComponent', () => {
         component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Password);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.isTeamParticipation()).toBeFalsy();
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.solution.git');
     });
 

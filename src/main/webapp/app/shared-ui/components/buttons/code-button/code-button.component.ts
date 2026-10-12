@@ -142,7 +142,6 @@ export class CodeButtonComponent implements OnInit {
     // as they are
     wasCopied = signal(false);
     copyEnabled = signal(false);
-    isTeamParticipation = computed(() => !!this.activeParticipation()?.team);
     doesUserHaveSSHkeys = signal(false);
     areAnySshKeysExpired = signal(false);
     // The repository-scoped VCS access token for course staff (used for base repositories and student repositories browsed by staff).
