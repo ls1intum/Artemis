@@ -50,6 +50,8 @@ export enum RepositoryAuthenticationMethod {
     SSH = 'ssh',
 }
 
+export type ParticipationOwnership = boolean | 'not-applicable';
+
 export interface ProgrammingExerciseIdeConfiguration {
     programmingLanguage?: ProgrammingLanguage;
     allowOnlineIde?: boolean;
@@ -121,6 +123,7 @@ export class CodeButtonComponent implements OnInit {
     // full participation object. It lets the repository-scoped staff token be minted for exactly that student repository.
     participationId = input<number>();
     participation = input<ProgrammingExerciseStudentParticipation>();
+    isOwnParticipation = input.required<ParticipationOwnership>();
     programmingExerciseIdeConfiguration = input<ProgrammingExerciseIdeConfiguration>();
     hideLabelMobile = input<boolean>(false);
     hideLabelBreakpoint = input<'md' | 'xl'>('md');
@@ -190,7 +193,7 @@ export class CodeButtonComponent implements OnInit {
 
     private shouldUseRepositoryScopedToken(): boolean {
         const usesStudentRepositoryStaffToken =
-            this.isInCourseManagement() && (this.participationId() !== undefined || (!!this.participation() && !this.isOwnParticipation(this.participation())));
+            this.isInCourseManagement() && (this.participationId() !== undefined || !!this.participation()) && this.isOwnParticipation() === false;
         const isBaseRepository = this.isBaseRepository();
         return isBaseRepository || usesStudentRepositoryStaffToken;
     }
@@ -363,21 +366,9 @@ export class CodeButtonComponent implements OnInit {
         // or for the user's own participation inside course management (e.g. an exam test run the instructor conducts).
         // For other participants' repositories in course management the personal staff token is used, and requesting
         // their participation token would be forbidden server-side.
-        if (participation.id && !participation.vcsAccessToken && (!this.isInCourseManagement() || this.isOwnParticipation(participation))) {
+        if (participation.id && !participation.vcsAccessToken && (!this.isInCourseManagement() || this.isOwnParticipation() === true)) {
             this.loadParticipationVcsAccessToken(participation);
         }
-    }
-
-    /**
-     * Whether the given participation belongs to the currently logged-in user. Used to decide whether the participation's
-     * own VCS access token may be used (and loaded) even inside course management — e.g. an exam test run the instructor
-     * conducts for themselves. For participations of other users (a student's, another instructor's test run) this is false,
-     * so the personal staff token is used instead. Relies on the participation's `student` being populated, which is the
-     * case for the exam test run summary/conduction flows where this distinction matters.
-     */
-    private isOwnParticipation(participation: ProgrammingExerciseStudentParticipation | undefined): boolean {
-        const userLogin = this.user()?.login;
-        return !!userLogin && participation?.student?.login === userLogin;
     }
 
     /**

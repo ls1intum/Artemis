@@ -119,6 +119,7 @@
             [smallButtons]="true"
             [exerciseId]="exercise()!.id!"
             [participationId]="cell.data.participationId"
+            [isOwnParticipation]="false"
             [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, cell.data.participationId]"
             [repositoryUri]="cell.data.repositoryUri"
         />

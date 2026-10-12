@@ -112,6 +112,7 @@ describe('CodeButtonComponent', () => {
                 fixture.componentRef.setInput('smallButtons', true);
                 fixture.componentRef.setInput('routerLinkForRepositoryView', []);
                 fixture.componentRef.setInput('exerciseId', 1);
+                fixture.componentRef.setInput('isOwnParticipation', 'not-applicable');
                 stubServices();
                 fixture.detectChanges();
             });
@@ -123,6 +124,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should initialize', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         fixture.componentRef.setInput('participation', participation);
 
         await component['initializeCodeButtonComponent']();
@@ -135,6 +137,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should default to token authentication when password was stored in local storage', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         localStorageState = RepositoryAuthenticationMethod.Password;
         fixture.componentRef.setInput('participation', participation);
         await component['initializeCodeButtonComponent']();
@@ -149,6 +152,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should preserve SSH preference from local storage', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         localStorageState = RepositoryAuthenticationMethod.SSH;
         fixture.componentRef.setInput('participation', participation);
         await component['initializeCodeButtonComponent']();
@@ -162,6 +166,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should not load participation vcsAccessToken when it already exists in participation', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         participation.vcsAccessToken = 'vcpat-1234';
         fixture.componentRef.setInput('participation', participation);
         await component['initializeCodeButtonComponent']();
@@ -174,6 +179,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should load participation vcsAccessToken if it exists on the server', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         fixture.componentRef.setInput('participation', participation);
         await component['initializeCodeButtonComponent']();
         fixture.detectChanges();
@@ -186,6 +192,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should only display available authentication mechanisms', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         fixture.componentRef.setInput('participation', participation);
         localStorageState = RepositoryAuthenticationMethod.Password;
         await component['initializeCodeButtonComponent']();
@@ -202,6 +209,7 @@ describe('CodeButtonComponent', () => {
         let createRepoTokenSpy: MockInstance;
 
         beforeEach(() => {
+            fixture.componentRef.setInput('isOwnParticipation', 'not-applicable');
             getRepoTokenSpy = vi.spyOn(programmingExerciseService, 'getRepositoryVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: repoToken })));
             createRepoTokenSpy = vi.spyOn(programmingExerciseService, 'createRepositoryVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: repoToken })));
         });
@@ -361,6 +369,7 @@ describe('CodeButtonComponent', () => {
         });
 
         it('should display password warning nudge when password is selected and switch to token on click', () => {
+            fixture.componentRef.setInput('isOwnParticipation', true);
             fixture.componentRef.setInput('participation', participation);
 
             fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
@@ -385,6 +394,7 @@ describe('CodeButtonComponent', () => {
         });
 
         it('should not display password warning nudge when token mechanism is not available in configuration', () => {
+            fixture.componentRef.setInput('isOwnParticipation', true);
             fixture.componentRef.setInput('participation', participation);
             component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Password]);
 
@@ -396,6 +406,7 @@ describe('CodeButtonComponent', () => {
         });
 
         it('should not display password warning nudge when token or SSH is selected', () => {
+            fixture.componentRef.setInput('isOwnParticipation', true);
             fixture.componentRef.setInput('participation', participation);
             component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
 
@@ -505,6 +516,7 @@ describe('CodeButtonComponent', () => {
         });
 
         it('should mint a repository-scoped token for a student repository browsed by staff and never leave the clone button disabled', async () => {
+            fixture.componentRef.setInput('isOwnParticipation', false);
             // Course staff opening another student's assignment repository in course management. Even without a personal VCS
             // token, a repository-scoped USER token is provisioned on demand (keyed by the participation), so the copy button
             // becomes enabled and the clone URL embeds that scoped token.
@@ -537,6 +549,7 @@ describe('CodeButtonComponent', () => {
         });
 
         it('should mint the student token from a participationId input when no participation object is passed (staff tables)', async () => {
+            fixture.componentRef.setInput('isOwnParticipation', false);
             // The scores / participations / feedback tables render the code button with only repositoryUri + exerciseId +
             // participationId (no participations array). The scoped USER token must still be minted so the button is never disabled.
             vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'edx_userLogin', internal: true, vcsAccessToken: undefined } as User));
@@ -560,6 +573,7 @@ describe('CodeButtonComponent', () => {
         });
 
         it('should create the repository-scoped student token on demand when none exists yet (404)', async () => {
+            fixture.componentRef.setInput('isOwnParticipation', false);
             getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
             localStorageState = RepositoryAuthenticationMethod.Token;
 
@@ -584,6 +598,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should create new vcsAccessToken when it does not exist', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         createVcsAccessTokenSpy = vi.spyOn(accountService, 'createVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: vcsToken })));
         getVcsAccessTokenSpy = vi.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not found' })));
 
@@ -600,6 +615,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should get ssh url (same url for team and individual participation)', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         participation.repositoryUri = 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git';
         participation.team = {};
         fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
@@ -615,6 +631,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should get copy the repository uri', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         participation.repositoryUri = `https://${component.user()!.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         participation.team = {};
         fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
@@ -631,6 +648,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should insert the correct token in the repository uri', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         participation.repositoryUri = `https://${component.user()!.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
         fixture.componentRef.setInput('participation', participation);
@@ -662,6 +680,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should use the participation token for the users own test run participation in course management', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         // Exam test runs are served under a course-management URL, but the participation belongs to the current user,
         // so its own participation token (not the personal staff token) must be used and loaded.
         const participationToken = 'vcpat-own-test-run-participation-token';
@@ -692,6 +711,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should mint a repository-scoped staff token for another users test run participation in course management', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', false);
         // When course staff open another instructor's test run summary, the participation is not owned by them. Instead of the
         // (deprecated) personal staff token, a repository-scoped USER token is minted on demand for that student repository.
         const repoToken = 'vcpat-StaffScopedTestRunTokenStaffScopedTestRun12';
@@ -724,6 +744,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should omit the token and report to Sentry when a participation token is unexpectedly missing', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
         captureSpy.mockClear();
         // Simulate a participation whose token can neither be fetched (404) nor created (created but empty body); this is
@@ -755,6 +776,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should not report to Sentry while a participation token is still loading (no terminal failure yet)', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
         captureSpy.mockClear();
         // The token request never resolves during this test, so the token is merely in flight, not terminally missing.
@@ -781,41 +803,8 @@ describe('CodeButtonComponent', () => {
         expect(captureSpy).not.toHaveBeenCalled();
     });
 
-    it('should load the own participation token only after the current user resolves (async ordering)', async () => {
-        // Reproduces the real ordering: participations and the course-management context are known before the async
-        // identity resolves. The token-loading effect must re-run once the user becomes known.
-        let resolveIdentity!: (user: User) => void;
-        const identitySpy = vi.spyOn(accountService, 'identity').mockReturnValue(new Promise<User>((resolve) => (resolveIdentity = resolve)));
-        localStorageState = RepositoryAuthenticationMethod.Token;
-
-        const freshFixture = TestBed.createComponent(CodeButtonComponent);
-        freshFixture.componentRef.setInput('smallButtons', true);
-        freshFixture.componentRef.setInput('repositoryUri', '');
-        freshFixture.componentRef.setInput('routerLinkForRepositoryView', []);
-        freshFixture.componentRef.setInput('exerciseId', 1);
-        router.setUrl('/course-management');
-        freshFixture.componentRef.setInput('participation', {
-            id: 42,
-            testRun: true,
-            student: { login: 'edx_userLogin' },
-            repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
-        } as ProgrammingExerciseStudentParticipation);
-        freshFixture.detectChanges();
-
-        // Identity still pending → the owner is unknown → the participation token must not be requested yet.
-        expect(identitySpy).toHaveBeenCalled();
-        expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
-
-        resolveIdentity({ login: 'edx_userLogin', internal: true, vcsAccessToken: vcsToken } as User);
-        await freshFixture.whenStable();
-        freshFixture.detectChanges();
-
-        // Now that the user is known, the effect re-runs and loads the own participation token.
-        expect(getVcsAccessTokenSpy).toHaveBeenCalledWith(42);
-        freshFixture.destroy();
-    });
-
     it('should not report to Sentry while a repository-scoped staff token for a student repository is still loading', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', false);
         const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
         captureSpy.mockClear();
         // Course staff browsing another participant's repository: a repository-scoped token is minted on demand. While it is
@@ -847,6 +836,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should add the user login and token to the URL', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         participation.repositoryUri = `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
         fixture.componentRef.setInput('participation', participation);
@@ -858,6 +848,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should return http url if ssh is selected but http is forced', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         participation.repositoryUri = `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         fixture.componentRef.setInput('repositoryUri', participation.repositoryUri);
         fixture.componentRef.setInput('participation', participation);
@@ -871,6 +862,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should handle participation changes', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         const participation1: ProgrammingExerciseStudentParticipation = {
             repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
             testRun: false,
@@ -920,6 +912,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should fetch and store ssh preference', () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         participation.repositoryUri = `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         fixture.componentRef.setInput('participation', participation);
 
@@ -1058,6 +1051,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should include the correct data in the form submission when startOnlineIDE is called', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         const windowOpenSpy = vi.spyOn(window, 'open').mockReturnValue({ name: '' } as any);
         const documentAppendChildSpy = vi.spyOn(document.body, 'appendChild');
         const documentRemoveChildSpy = vi.spyOn(document.body, 'removeChild');
@@ -1107,6 +1101,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should use token authentication when startOnlineIDE is called with SSH is selected', async () => {
+        fixture.componentRef.setInput('isOwnParticipation', true);
         const windowOpenSpy = vi.spyOn(window, 'open').mockReturnValue({ name: '' } as any);
         const formSubmitSpy = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => {});
         const documentAppendChildSpy = vi.spyOn(document.body, 'appendChild');

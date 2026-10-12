@@ -46,6 +46,7 @@
                         [loading]="!!exercise()!.loading"
                         [smallButtons]="false"
                         [participation]="participation()"
+                        [isOwnParticipation]="participationOwnershipForCode()"
                         [programmingExerciseIdeConfiguration]="exercise()"
                         [exerciseId]="exercise().id!"
                         [repositoryUri]="repositoryUri()"

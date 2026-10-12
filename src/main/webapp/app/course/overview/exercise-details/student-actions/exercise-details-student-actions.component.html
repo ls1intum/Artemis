@@ -126,6 +126,7 @@
                             [loading]="isLoading()"
                             [smallButtons]="smallButtons()"
                             [participation]="programmingParticipationForCode()"
+                            [isOwnParticipation]="participationOwnershipForCode()"
                             [programmingExerciseIdeConfiguration]="programmingExercise()"
                             [exerciseId]="exercise().id!"
                             [routerLinkForRepositoryView]="['/courses', courseId(), 'exercises', exercise().id!, 'repository', studentParticipations()[0]!.id!]"

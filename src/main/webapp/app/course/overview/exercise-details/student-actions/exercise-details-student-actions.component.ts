@@ -21,7 +21,8 @@ import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { CodeButtonComponent, type ParticipationOwnership } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { AccountService } from 'app/core/auth/account.service';
 import { RequestFeedbackButtonComponent } from '../request-feedback-button/request-feedback-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
@@ -59,6 +60,7 @@ export class ExerciseDetailsStudentActionsComponent {
     private courseExerciseService = inject(CourseExerciseService);
     private participationService = inject(ParticipationService);
     private profileService = inject(ProfileService);
+    private accountService = inject(AccountService);
 
     protected readonly faFolderOpen = faFolderOpen;
     protected readonly faUsers = faUsers;
@@ -123,6 +125,7 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly studentParticipations = this._studentParticipations.asReadonly();
     readonly hasGradedSubmission = computed(() => !!this._gradedParticipation()?.submissions?.some((submission) => submission.submitted));
     readonly programmingParticipationForCode = computed(() => this.getProgrammingParticipationForCode());
+    readonly participationOwnershipForCode = computed(() => this.getParticipationOwnershipForCode());
     readonly gradedRepositoryUri = computed(() => this.getGradedRepositoryUri());
 
     readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
@@ -176,6 +179,11 @@ export class ExerciseDetailsStudentActionsComponent {
     private getProgrammingParticipationForCode(): ProgrammingExerciseStudentParticipation | undefined {
         const participations = this.studentParticipations();
         return this.participationService.getSpecificStudentParticipation(participations, false) ?? participations[0];
+    }
+
+    private getParticipationOwnershipForCode(): ParticipationOwnership {
+        const userLogin = this.accountService.userIdentity()?.login;
+        return !!userLogin && this.programmingParticipationForCode()?.student?.login === userLogin;
     }
 
     private getGradedRepositoryUri(): string {

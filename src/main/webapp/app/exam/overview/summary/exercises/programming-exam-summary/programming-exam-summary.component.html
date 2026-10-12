@@ -10,6 +10,7 @@
                     <jhi-code-button
                         [smallButtons]="true"
                         [participation]="participation()"
+                        [isOwnParticipation]="participationOwnershipForCode()"
                         [exerciseId]="exercise().id!"
                         [repositoryUri]="participation()?.repositoryUri ?? participation()?.userIndependentRepositoryUri ?? ''"
                         [routerLinkForRepositoryView]="routerLinkForRepositoryView"

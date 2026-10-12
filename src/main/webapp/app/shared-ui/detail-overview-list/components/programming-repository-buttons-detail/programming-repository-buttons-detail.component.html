@@ -6,6 +6,7 @@
             [repositoryUri]="data.participation?.repositoryUri!"
             [routerLinkForRepositoryView]="['.', 'repository', data.type]"
             [repositoryType]="data.type"
+            [isOwnParticipation]="'not-applicable'"
             [exerciseId]="data.exerciseId"
         />
         <jhi-programming-exercise-instructor-repo-download class="ms-2" [exerciseId]="data.exerciseId" [repositoryType]="data.type" />

@@ -226,6 +226,7 @@
                             [repositoryUri]="programmingExercise().solutionParticipation?.repositoryUri || ''"
                             [routerLinkForRepositoryView]="['/course-management', courseId(), 'programming-exercises', exerciseId(), 'repository', 'SOLUTION']"
                             [repositoryType]="RepositoryType.SOLUTION"
+                            [isOwnParticipation]="'not-applicable'"
                             [exerciseId]="exerciseId()"
                         />
                     </div>

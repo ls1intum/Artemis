@@ -43,7 +43,7 @@ import { ButtonType } from 'app/shared-ui/components/buttons/button/button.compo
 import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { CodeButtonComponent, type ParticipationOwnership } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { CodeButtonNewComponent } from 'app/shared-ui/components/buttons/code-button-new/code-button-new.component';
 import {
     DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT,
@@ -196,6 +196,7 @@ export class ExerciseHeaderActionsComponent {
         return this.participationMode() === 'practice' ? (this._practiceParticipation() ?? this._gradedParticipation()) : this._gradedParticipation();
     });
     readonly programmingParticipationForCode = computed(() => this.getProgrammingParticipationForCode());
+    readonly participationOwnershipForCode = computed(() => this.getParticipationOwnershipForCode());
     readonly repositoryUriForCode = computed(() => this.getRepositoryUriForCode());
 
     readonly routerLinkForRepositoryView = computed(() => {
@@ -318,6 +319,11 @@ export class ExerciseHeaderActionsComponent {
     private getProgrammingParticipationForCode(): ProgrammingExerciseStudentParticipation | undefined {
         const participations = this.studentParticipations();
         return this.participationService.getSpecificStudentParticipation(participations, this.participationMode() === 'practice') ?? participations[0];
+    }
+
+    private getParticipationOwnershipForCode(): ParticipationOwnership {
+        const userLogin = this.accountService.userIdentity()?.login;
+        return !!userLogin && this.programmingParticipationForCode()?.student?.login === userLogin;
     }
 
     isStartExerciseAvailable(): boolean {
