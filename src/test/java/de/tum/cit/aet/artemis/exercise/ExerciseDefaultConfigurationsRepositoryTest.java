@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Pins the default method that gives an exercise the permanent configuration rows of optional modules, in the cases that need a
- * racing or failing database to reach: the concurrent insert of the same row and a violation that is not one. The statements are
+ * racing or failing database to reach: the concurrent insert of the same row and a violation that is not one. The two queries are
  * stubbed and the default methods run for real. The behavior against a real database, including the column defaults the insert
  * relies on, is covered by {@code MetisDataModelIntegrationTest}.
  */
@@ -52,13 +52,13 @@ class ExerciseDefaultConfigurationsRepositoryTest {
             repository.ensureDefaultConfigurations(exercise);
         }
 
-        verify(repository, never()).countMetisExerciseConfigs(anyLong());
+        verify(repository, never()).hasMetisExerciseConfig(anyLong());
         verify(repository, never()).initializeMetisExerciseConfig(anyLong());
     }
 
     @Test
     void aProgrammingExerciseThatHasItsConfigurationInsertsNothing() {
-        doReturn(1L).when(repository).countMetisExerciseConfigs(EXERCISE_ID);
+        doReturn(true).when(repository).hasMetisExerciseConfig(EXERCISE_ID);
 
         repository.ensureDefaultConfigurations(withId(new ProgrammingExercise()));
 
@@ -67,7 +67,7 @@ class ExerciseDefaultConfigurationsRepositoryTest {
 
     @Test
     void aProgrammingExerciseWithoutItsConfigurationGetsItOnce() {
-        doReturn(0L).when(repository).countMetisExerciseConfigs(EXERCISE_ID);
+        doReturn(false).when(repository).hasMetisExerciseConfig(EXERCISE_ID);
 
         repository.ensureDefaultConfigurations(withId(new ProgrammingExercise()));
 
@@ -77,18 +77,18 @@ class ExerciseDefaultConfigurationsRepositoryTest {
     @Test
     void aConcurrentCallThatInsertedTheRowFirstIsNotAnError() {
         // the first read finds no row, the other call inserts it before this insert, so the primary key rejects ours
-        doReturn(0L, 1L).when(repository).countMetisExerciseConfigs(EXERCISE_ID);
+        doReturn(false, true).when(repository).hasMetisExerciseConfig(EXERCISE_ID);
         doThrow(new DataIntegrityViolationException("duplicate key")).when(repository).initializeMetisExerciseConfig(EXERCISE_ID);
 
         repository.ensureDefaultConfigurations(withId(new ProgrammingExercise()));
 
         verify(repository, times(1)).initializeMetisExerciseConfig(EXERCISE_ID);
-        verify(repository, times(2)).countMetisExerciseConfigs(EXERCISE_ID);
+        verify(repository, times(2)).hasMetisExerciseConfig(EXERCISE_ID);
     }
 
     @Test
     void anIntegrityViolationThatLeavesNoRowBehindIsRethrown() {
-        doReturn(0L).when(repository).countMetisExerciseConfigs(EXERCISE_ID);
+        doReturn(false).when(repository).hasMetisExerciseConfig(EXERCISE_ID);
         DataIntegrityViolationException violation = new DataIntegrityViolationException("foreign key violation");
         doThrow(violation).when(repository).initializeMetisExerciseConfig(EXERCISE_ID);
 
