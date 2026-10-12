@@ -292,14 +292,15 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportAll_IOException() throws Exception {
         doThrow(IOException.class).when(zipFileService).createZipFile(any(), any());
-        request.postWithResponseBodyFile("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBodyFile("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions,
+                HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportTextExerciseSubmission_IOException() throws Exception {
         doThrow(IOException.class).when(zipFileService).createZipFile(any(), any());
-        request.postWithResponseBodyFile("/api/text/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBodyFile("/api/text/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     private void assertZipContains(File file, Submission... submissions) {
