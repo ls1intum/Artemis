@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
@@ -46,7 +46,7 @@ class SubmissionExportServiceElseThrowTest {
     @TempDir
     private Path tempDir;
 
-    private ExerciseRepository exerciseRepository;
+    private ExerciseTestRepository exerciseRepository;
 
     private ZipFileService zipFileService;
 
@@ -60,7 +60,7 @@ class SubmissionExportServiceElseThrowTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        exerciseRepository = mock(ExerciseRepository.class);
+        exerciseRepository = mock(ExerciseTestRepository.class);
         zipFileService = mock(ZipFileService.class);
         fileService = mock(FileService.class);
         service = new TextSubmissionExportService(exerciseRepository, zipFileService, fileService);
