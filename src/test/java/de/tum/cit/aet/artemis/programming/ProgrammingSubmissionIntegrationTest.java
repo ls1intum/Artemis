@@ -606,6 +606,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(exerciseNode.get("course").propertyNames()).doesNotContain("description", "enrollmentConfirmationMessage", "courseArchivePath");
         assertThat(participation.propertyNames()).doesNotContain("student", "participantName", "participantIdentifier", "repositoryUri");
         assertThat(response.has("results")).isTrue();
+        assertThat(response.get("commitHash").asString()).as("the feedback dialog shows the commit hash").isNotBlank();
     }
 
     @Test
@@ -800,6 +801,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         // response is a DTO now, so a recursive comparison would only assert which entity fields it happens to omit.
         assertThat(storedSubmission.getId()).as("submission was found").isEqualTo(submission.getId());
         assertThat(storedSubmission.isBuildFailed()).isEqualTo(submission.isBuildFailed());
+        assertThat(storedSubmission.getCommitHash()).as("the feedback dialog shows the commit hash").isEqualTo(submission.getCommitHash());
         assertThat(storedSubmission.getSubmissionDate()).as("the dashboard shows the submission date").isCloseTo(submission.getSubmissionDate(), HalfSecond());
         assertThat(storedSubmission.getParticipation()).as("participation is set").isNotNull();
         assertThat(storedSubmission.getParticipation().getId()).isEqualTo(submission.getParticipation().getId());

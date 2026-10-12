@@ -39,13 +39,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  * @param id                     the submission id
  * @param submissionExerciseType the constant discriminator {@code "programming"}
  * @param submissionDate         when the submission was created, which the assessment dashboard shows for the next submission
+ * @param commitHash             the git commit hash of the submission, which the feedback dialog shows and resolves code references against
  * @param buildFailed            whether the build for this submission failed
  * @param participation          the participation of the submission with the exercise the page needs
  * @param results                the results relevant for the requested correction round
  */
 @JsonInclude()
-public record ProgrammingSubmissionForTutorAssessmentDTO(Long id, String submissionExerciseType, ZonedDateTime submissionDate, Boolean buildFailed, ParticipationDTO participation,
-        List<ProgrammingAssessmentResultDTO> results) implements Serializable {
+public record ProgrammingSubmissionForTutorAssessmentDTO(Long id, String submissionExerciseType, ZonedDateTime submissionDate, String commitHash, Boolean buildFailed,
+        ParticipationDTO participation, List<ProgrammingAssessmentResultDTO> results) implements Serializable {
 
     /**
      * The participation without its participant. The team is reduced to its id, which the page needs to link back to the
@@ -207,6 +208,6 @@ public record ProgrammingSubmissionForTutorAssessmentDTO(Long id, String submiss
         }
         var resultDTOs = results == null ? null : results.stream().filter(Objects::nonNull).map(ProgrammingAssessmentResultDTO::of).toList();
         return new ProgrammingSubmissionForTutorAssessmentDTO(submission.getId(), ProgrammingSubmissionForAssessmentDTO.SUBMISSION_EXERCISE_TYPE, submission.getSubmissionDate(),
-                submission.isBuildFailed(), participation, resultDTOs);
+                submission.getCommitHash(), submission.isBuildFailed(), participation, resultDTOs);
     }
 }
