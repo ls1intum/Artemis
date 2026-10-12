@@ -219,7 +219,7 @@
                 "description": "Description",
                 "updateNotificationText": "Update Notification Text",
                 "updateNotificationTextPlaceholder": "Optional notification text for students about changes.",
-                "updateNotificationTextMaxLengthValidationError": "The notification text can be max 1000 characters long.",
+                "updateNotificationTextMaxLengthValidationError": "The notification text can be max 255 characters long.",
                 "descriptionPlaceHolder": "Give the content a description",
                 "nameRequiredValidationError": "Name is required.",
                 "nameMaxLengthValidationError": "Name can be max 255 characters long.",
