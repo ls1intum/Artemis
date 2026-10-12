@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.service.IrisLectureMaterialVersionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitProcessingStateRepositoryApi;
 
 class PyrisJobServiceTest {
 
@@ -47,7 +49,8 @@ class PyrisJobServiceTest {
         }).when(distributedDataProvider).getExpiringMap(anyString(), any(Duration.class));
 
         materialVersionService = mock(IrisLectureMaterialVersionService.class);
-        service = new PyrisJobService(distributedDataProvider, mock(IrisProactiveProperties.class), materialVersionService);
+        service = new PyrisJobService(distributedDataProvider, Optional.<LectureUnitProcessingStateRepositoryApi>empty(), mock(IrisProactiveProperties.class),
+                materialVersionService);
         ReflectionTestUtils.setField(service, "serverUrl", "https://artemis.example");
         ReflectionTestUtils.setField(service, "instanceId", "node-1");
         ReflectionTestUtils.setField(service, "jobTimeout", 300);

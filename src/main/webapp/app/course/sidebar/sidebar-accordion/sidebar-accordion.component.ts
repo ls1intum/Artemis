@@ -4,7 +4,7 @@ import { Params } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, TitleCasePipe } from '@angular/common';
-import { SidebarCardDirective } from '../directive/sidebar-card.directive';
+import { SidebarCardComponent } from '../sidebar-card/sidebar-card.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
@@ -37,7 +37,7 @@ function isVariantGroupCard(item: SidebarCardElement): boolean {
     selector: 'jhi-sidebar-accordion',
     templateUrl: './sidebar-accordion.component.html',
     styleUrls: ['./sidebar-accordion.component.scss'],
-    imports: [FaIconComponent, NgbCollapse, NgClass, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
+    imports: [FaIconComponent, NgbCollapse, NgClass, SidebarCardComponent, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
 })
 export class SidebarAccordionComponent implements OnInit, OnDestroy {
     private courseConversationsService = inject(CourseConversationsService);

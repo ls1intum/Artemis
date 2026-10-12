@@ -135,7 +135,15 @@ echo "E2E counts: ${E2E_PASSED} passed, ${E2E_FLAKY} flaky, ${E2E_FAILED} failed
 echo "--- Finalizing test reports ---"
 rm -f ./test-reports/results.xml
 if [ -f ./test-reports/results-parallel.xml ] && [ -f ./test-reports/results-multinode.xml ]; then
-    pnpm exec junit-merge ./test-reports/results-parallel.xml ./test-reports/results-multinode.xml -o ./test-reports/results.xml
+    # Drop the two inputs once merged, here and not in the CI teardown: this runs as root inside the container and so
+    # owns test-reports/, which the runner user cannot delete from. Left behind they would also be uploaded next to the
+    # merged report and counted twice.
+    if pnpm exec junit-merge ./test-reports/results-parallel.xml ./test-reports/results-multinode.xml -o ./test-reports/results.xml; then
+        rm -f ./test-reports/results-parallel.xml ./test-reports/results-multinode.xml
+    else
+        echo "ERROR: Merging the parallel and multi-node JUnit reports failed"
+        FAILED=1
+    fi
 elif [ -f ./test-reports/results-parallel.xml ]; then
     mv ./test-reports/results-parallel.xml ./test-reports/results.xml
 elif [ -f ./test-reports/results-multinode.xml ]; then

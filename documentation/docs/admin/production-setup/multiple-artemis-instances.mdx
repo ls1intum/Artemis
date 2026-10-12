@@ -462,6 +462,7 @@ artemis:
     submission-export-path: {{ artemis_repo_basepath }}/exports
     build-logs-path: {{ artemis_repo_basepath }}/build-logs
     failed-build-logs-path: {{ artemis_repo_basepath }}/failed-build-logs
+    data-export-path: {{ artemis_repo_basepath }}/data-exports
 ```
 
 Where `{{ artemis_repo_basepath }}` is the path to the shared folder
@@ -469,6 +470,10 @@ Where `{{ artemis_repo_basepath }}` is the path to the shared folder
 The two build log folders have to be shared as well, because the instance that writes a build log is rarely the one
 that later serves it: `build-logs-path` holds the downloadable log of every build job, and `failed-build-logs-path`
 holds the logs of failed builds that the build output panel, Iris and Hyperion read.
+
+The same holds for `data-export-path`: the instance that creates a data export is rarely the one that later serves the
+download. Left at its default, a relative folder on each instance's local disk, a download that reaches another instance
+fails with an internal server error, because that instance cannot find the file.
 
 The file system stores (as its names suggests) files, these are e.g. submissions to file upload exercises,
 repositories that are checked out for the online editor, course icons, etc.

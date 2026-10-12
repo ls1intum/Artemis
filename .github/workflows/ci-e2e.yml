@@ -685,13 +685,16 @@ jobs:
           workflow-run-id: ${{ github.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run E2E Playwright tests (PostgreSQL, Local, Multi-Node)
+      # Redis (Valkey) is the distributed data provider of this run, not the embedded Hazelcast cluster, so no Hazelcast
+      # instance is created. The suite runs once: the E2E cleanup stops every container on its host, so a second run
+      # on the other provider would have to be serialized behind this one and double the duration.
+      - name: Run E2E Playwright tests (PostgreSQL, Local, Multi-Node, Redis)
         id: run-tests-all-non-pr
         # Advisory: a failed test must not fail the phase job. Real outcome via the `tests` output.
         continue-on-error: true
         env:
           FAST_TEST_TIMEOUT_SECONDS: 75
-        run: supporting_scripts/ci/E2E-tests/execute.sh multi-node playwright
+        run: supporting_scripts/ci/E2E-tests/execute.sh multi-node-redis playwright
 
       - name: E2E Teardown
         id: teardown

@@ -1180,6 +1180,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, this.isSimpleMode());
     };
 
+    /** Lets the form footer check the form again when the reasons it displays block a click. */
+    readonly revalidate = (): ValidationReason[] => this.getInvalidReasons();
+
     /**
      * Change the selected programming language for the current exercise. If there are unsaved changes, the user
      * will see a confirmation dialog about switching to a new template
@@ -1405,6 +1408,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private validateExerciseBonusPoints(validationErrorReasons: ValidationReason[]) {
+        // The input is hidden and the value reset on save unless the score includes the bonus, so a stale value is not the user's to fix.
+        if (this.programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            return;
+        }
         if (this.programmingExercise.bonusPoints === undefined || typeof this.programmingExercise.bonusPoints !== 'number') {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.bonusPoints.undefined',

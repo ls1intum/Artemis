@@ -15,18 +15,20 @@ test.describe('Quiz Exercise Drop Location Spec', { tag: '@slow' }, () => {
             await quizExerciseDragAndDropQuiz.createDnDQuiz('DnD Quiz Test');
         });
 
-        // TODO: Enable test again after fixing https://github.com/ls1intum/Artemis/issues/12418
-        test.skip('Checks drop locations', async ({ page, quizExerciseDragAndDropQuiz }) => {
+        test('Checks drop locations', async ({ page, quizExerciseDragAndDropQuiz }) => {
             await quizExerciseDragAndDropQuiz.dragUsingCoordinates(0, 100);
             await quizExerciseDragAndDropQuiz.dragUsingCoordinates(410, 240);
             await quizExerciseDragAndDropQuiz.dragUsingCoordinates(420, 90);
 
             const exerciseId = await quizExerciseDragAndDropQuiz.generateQuizExercise();
-            await quizExerciseDragAndDropQuiz.waitForQuizExerciseToBeGenerated();
 
             // Navigate directly to the exercise detail to preview, avoiding slow exercises list
             await page.goto(`/course-management/${course.id}/quiz-exercises/${exerciseId}/preview`);
             await quizExerciseDragAndDropQuiz.waitForQuizPreviewToLoad();
+
+            // One drop location per class node. Without this the bounds checks below pass vacuously when no drop location is rendered,
+            // and the overlay only appears once the generated background image has loaded, so wait for it before measuring.
+            await expect(page.locator('.drop-location')).toHaveCount(3);
 
             const containerBounds = await page.locator('.click-layer').first().boundingBox();
 

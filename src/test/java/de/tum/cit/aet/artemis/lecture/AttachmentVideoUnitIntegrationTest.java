@@ -134,8 +134,6 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @BeforeEach
     void initTestCase() {
         irisRequestMockProvider.enableMockingOfRequests();
-        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
-        }, ExpectedCount.manyTimes());
         irisRequestMockProvider.mockDeletionWebhookRunResponse(dto -> {
         }, ExpectedCount.manyTimes());
         irisRequestMockProvider.mockLectureUnitMetadataWebhookRunResponse(dto -> {

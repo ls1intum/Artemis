@@ -141,7 +141,6 @@
             "participationInPracticeMode": "The exercise due date is already over, a regular participation in the exercise is no longer possible. You can use the Practice Mode to solve the exercise.",
             "unsupportedExerciseType": "This exercise type does not support practice mode.",
             "notAvailableInExam": "Practice mode is not available for exam exercises.",
-            "notSupportedForTeams": "Practice mode is not supported for team exercises.",
             "programmingExercisesDisabled": "Practice mode for programming exercises is disabled.",
             "programmingExercisesDisabled_detail": "The programming exercises feature toggle is disabled.",
             "athenaNotEnabled": "Practice mode for text and modeling exercises is unavailable.",

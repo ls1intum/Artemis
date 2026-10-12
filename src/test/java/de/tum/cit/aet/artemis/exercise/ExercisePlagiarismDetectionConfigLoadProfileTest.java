@@ -119,6 +119,15 @@ class ExercisePlagiarismDetectionConfigLoadProfileTest extends AbstractSpringInt
                 .getId();
     }
 
+    private void switchContinuousPlagiarismControl(long exerciseId, boolean enabled) {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        exercise.setDueDate(ZonedDateTime.now().plusDays(5));
+        exerciseRepository.save(exercise);
+        PlagiarismDetectionConfig config = plagiarismDetectionConfigRepository.findByExerciseId(exerciseId).orElseThrow();
+        config.setContinuousPlagiarismControlEnabled(enabled);
+        plagiarismDetectionConfigRepository.save(config);
+    }
+
     private <E extends Exercise> E withConfig(E exercise, int similarityThreshold) {
         PlagiarismDetectionConfig config = PlagiarismDetectionConfig.createDefault();
         config.setSimilarityThreshold(similarityThreshold);
@@ -189,24 +198,33 @@ class ExercisePlagiarismDetectionConfigLoadProfileTest extends AbstractSpringInt
 
     @Test
     void theSchedulerQueryFiltersOnTheConfigurationAndLeavesTheSlotsEmptyUntilTheyAreAttached() throws Exception {
-        TextExercise exercise = textExerciseRepository.findById(textExerciseId).orElseThrow();
-        exercise.setDueDate(ZonedDateTime.now().plusDays(5));
-        textExerciseRepository.save(exercise);
-        PlagiarismDetectionConfig config = plagiarismDetectionConfigRepository.findByExerciseId(textExerciseId).orElseThrow();
-        config.setContinuousPlagiarismControlEnabled(true);
-        plagiarismDetectionConfigRepository.save(config);
+        long secondTextExerciseId = withConfig(textExerciseUtilService.createSampleTextExercise(courseRepository.findByIdElseThrow(courseId)), 50).getId();
+        // an exercise of another course, as another test class leaves behind in the shared database
+        long foreignExerciseId = withConfig(textExerciseUtilService.createSampleTextExercise(courseUtilService.createCourse()), 40).getId();
+        List<Long> switchedOn = List.of(textExerciseId, secondTextExerciseId, foreignExerciseId);
+        switchedOn.forEach(exerciseId -> switchContinuousPlagiarismControl(exerciseId, true));
 
-        var scheduled = exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue();
+        try {
+            var scheduled = exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue();
 
-        // only the exercise whose configuration switches the control on is returned, although the query does not fetch it
-        assertThat(scheduled).extracting(Exercise::getId).containsExactly(textExerciseId);
-        assertThat(scheduled).allSatisfy(returned -> assertThat(returned.getPlagiarismDetectionConfig()).as("nothing fills the slot by itself").isNull());
+            // The query is not scoped to a course, so it returns the exercises of every test that switched the control on. Which
+            // other exercises the shared database holds depends on the tests that ran before, so only this test's own can be asserted on.
+            assertThat(scheduled).extracting(Exercise::getId).contains(foreignExerciseId);
+            List<Long> ownExerciseIds = List.of(textExerciseId, secondTextExerciseId, modelingExerciseId, fileUploadExerciseId, programmingExerciseId, examExerciseId);
+            // exactly the exercises whose configuration switches the control on are returned, although the query does not fetch it
+            assertThat(scheduled).extracting(Exercise::getId).filteredOn(ownExerciseIds::contains).containsExactlyInAnyOrder(textExerciseId, secondTextExerciseId);
+            assertThat(scheduled).allSatisfy(returned -> assertThat(returned.getPlagiarismDetectionConfig()).as("nothing fills the slot by itself").isNull());
 
-        assertThatDb(() -> {
-            plagiarismDetectionConfigRepository.attachTo(scheduled);
-            return scheduled;
-        }).hasBeenCalledTimes(1);
-        assertThat(scheduled).allSatisfy(returned -> assertThat(returned.getPlagiarismDetectionConfig().isContinuousPlagiarismControlEnabled()).isTrue());
+            assertThatDb(() -> {
+                plagiarismDetectionConfigRepository.attachTo(scheduled);
+                return scheduled;
+            }).hasBeenCalledTimes(1);
+            assertThat(scheduled).allSatisfy(returned -> assertThat(returned.getPlagiarismDetectionConfig().isContinuousPlagiarismControlEnabled()).isTrue());
+        }
+        finally {
+            // leave nothing behind that a query like the scheduler's would return to the tests that run after this one
+            switchedOn.forEach(exerciseId -> switchContinuousPlagiarismControl(exerciseId, false));
+        }
     }
 
     @Test
@@ -292,6 +310,70 @@ class ExercisePlagiarismDetectionConfigLoadProfileTest extends AbstractSpringInt
         List<PlagiarismDetectionConfig> rows = plagiarismDetectionConfigRepository.findAllByExerciseIdIn(List.of(exercise.getId()));
         assertThat(rows).hasSize(1);
         assertThat(rows.getFirst().getSimilarityThreshold()).as("the second call keeps what the request asked for").isEqualTo(42);
+    }
+
+    @Test
+    void attachingTheConfigurationOfOnePersistedExerciseReadsItInOneQuery() throws Exception {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(textExerciseId);
+        assertThat(exercise.getPlagiarismDetectionConfig()).as("an exercise read from the database carries no configuration").isNull();
+        PlagiarismDetectionConfig stored = plagiarismDetectionConfigRepository.findByExerciseId(textExerciseId).orElseThrow();
+
+        assertThatDb(() -> {
+            plagiarismDetectionConfigRepository.attachTo(exercise);
+            return exercise;
+        }).hasBeenCalledTimes(1);
+
+        assertThat(exercise.getPlagiarismDetectionConfig()).isNotNull();
+        assertThat(exercise.getPlagiarismDetectionConfig().getId()).isEqualTo(stored.getId());
+        assertThat(exercise.getPlagiarismDetectionConfig().getExerciseId()).isEqualTo(textExerciseId);
+        assertThat(exercise.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(90);
+    }
+
+    @Test
+    void attachingTheConfigurationOfAnExerciseThatIsNotPersistedYetReadsNothingAndLeavesTheSlotUntouched() throws Exception {
+        TextExercise unsaved = new TextExercise();
+        PlagiarismDetectionConfig placeholder = PlagiarismDetectionConfig.createDefault();
+        placeholder.setSimilarityThreshold(12);
+        unsaved.setPlagiarismDetectionConfig(placeholder);
+        assertThat(unsaved.getId()).isNull();
+
+        assertThatDb(() -> {
+            plagiarismDetectionConfigRepository.attachTo(unsaved);
+            return unsaved;
+        }).hasBeenCalledTimes(0);
+
+        assertThat(unsaved.getPlagiarismDetectionConfig()).isSameAs(placeholder);
+        assertThat(unsaved.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(12);
+    }
+
+    @Test
+    void attachingTheConfigurationOfAnExerciseWithoutAStoredRowEmptiesTheSlot() {
+        Exercise exercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exerciseRepository.findByIdElseThrow(examExerciseId).getExerciseGroup()));
+        assertThat(plagiarismDetectionConfigRepository.findByExerciseId(exercise.getId())).isEmpty();
+        exercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+
+        plagiarismDetectionConfigRepository.attachTo(exercise);
+
+        assertThat(exercise.getPlagiarismDetectionConfig()).as("a stale slot must not survive when nothing is stored").isNull();
+    }
+
+    @Test
+    void attachingTheConfigurationReplacesWhatTheSlotCarried() {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(modelingExerciseId);
+        PlagiarismDetectionConfig stale = PlagiarismDetectionConfig.createDefault();
+        stale.setSimilarityThreshold(5);
+        exercise.setPlagiarismDetectionConfig(stale);
+
+        plagiarismDetectionConfigRepository.attachTo(exercise);
+
+        assertThat(exercise.getPlagiarismDetectionConfig()).isNotSameAs(stale);
+        assertThat(exercise.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(80);
+        assertThat(exercise.getPlagiarismDetectionConfig().getExerciseId()).isEqualTo(modelingExerciseId);
+    }
+
+    @Test
+    void attachingTheConfigurationOfNoExerciseIsRejected() {
+        assertThatThrownBy(() -> plagiarismDetectionConfigRepository.attachTo((Exercise) null)).isInstanceOf(NullPointerException.class);
     }
 
     @Test

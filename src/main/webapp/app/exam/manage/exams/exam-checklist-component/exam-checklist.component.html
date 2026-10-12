@@ -486,6 +486,23 @@
                         <tr>
                             <td>3</td>
                             <td>
+                                <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.plagiarismCases"></span>
+                            </td>
+                            <td>
+                                <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.plagiarismCases"></span>
+                            </td>
+                            <td>
+                                <jhi-feature-overlay [enabled]="plagiarismEnabled()">
+                                    <a tumAetUiButton class="whitespace-nowrap" severity="info" [routerLink]="getExamRoutesByIdentifier()('plagiarism-cases')">
+                                        <fa-icon [icon]="faHeartBroken" />
+                                        <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
+                                    </a>
+                                </jhi-feature-overlay>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>
                                 <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.publishResults"></span>
                             </td>
                             <td>
@@ -622,7 +639,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>4</td>
+                            <td>5</td>
                             <td>
                                 <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.examReview"></span>
                             </td>
@@ -660,7 +677,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>5</td>
+                            <td>6</td>
                             <td>
                                 <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.resolveComplaints"></span>
                             </td>
@@ -698,7 +715,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>6</td>
+                            <td>7</td>
                             <td>
                                 <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.exportResults"></span>
                             </td>

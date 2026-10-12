@@ -4,12 +4,11 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLe
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureUnitExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureUnitNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryChannelProperties;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryLectureProperties;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -89,12 +88,12 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     void testDeleteLecture_removesLectureFromWeaviate() throws Exception {
         Lecture lecture = lectureUtilService.createLecture(course);
         searchableEntityWeaviateService.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture));
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertLectureExistsInWeaviate(weaviateService, lecture));
+        assertLectureExistsInWeaviate(weaviateService, lecture);
 
         long lectureId = lecture.getId();
         request.delete("/api/lecture/lectures/" + lectureId, HttpStatus.OK);
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertLectureNotInWeaviate(weaviateService, lectureId));
+        assertLectureNotInWeaviate(weaviateService, lectureId);
     }
 
     @Test
@@ -104,7 +103,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         TextUnit textUnit = lectureUtilService.createTextUnit(lecture);
         searchableEntityWeaviateService.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture));
         searchableEntityWeaviateService.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(textUnit));
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             assertLectureExistsInWeaviate(weaviateService, lecture);
             assertLectureUnitExistsInWeaviate(weaviateService, textUnit.getId());
         });
@@ -113,7 +112,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         long textUnitId = textUnit.getId();
         request.delete("/api/lecture/lectures/" + lectureId, HttpStatus.OK);
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             assertLectureNotInWeaviate(weaviateService, lectureId);
             assertLectureUnitNotInWeaviate(weaviateService, textUnitId);
         });
@@ -158,7 +157,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         assertThat(newLecture.getStartDate().toInstant().truncatedTo(ChronoUnit.MILLIS)).isEqualTo(date2.toInstant().truncatedTo(ChronoUnit.MILLIS));
 
         // Verify Weaviate has the corrected title, not the original "Lecture 3"
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryLectureProperties(weaviateService, newLecture.getId());
             assertThat(properties).as("New lecture should be indexed in Weaviate").isNotNull();
             assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("Lecture 2");
@@ -191,7 +190,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         Lecture newlyImportedLecture = lectureRepository.findByIdWithLectureUnitsElseThrow(importedLectureDto.id());
         TextUnit importedTextUnit = (TextUnit) newlyImportedLecture.getLectureUnits().stream().filter(u -> u instanceof TextUnit).findFirst().orElseThrow();
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             assertLectureExistsInWeaviate(weaviateService, newlyImportedLecture);
             assertLectureUnitExistsInWeaviate(weaviateService, importedTextUnit.getId());
         });
