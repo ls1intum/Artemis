@@ -363,7 +363,7 @@ export class CodeButtonComponent implements OnInit {
         // or for the user's own participation inside course management (e.g. an exam test run the instructor conducts).
         // For other participants' repositories in course management the personal staff token is used, and requesting
         // their participation token would be forbidden server-side.
-        if ((!this.isInCourseManagement() || this.isOwnParticipation(participation)) && participation.id && !participation.vcsAccessToken) {
+        if (participation.id && !participation.vcsAccessToken && (!this.isInCourseManagement() || this.isOwnParticipation(participation))) {
             this.loadParticipationVcsAccessToken(participation);
         }
     }
