@@ -6,6 +6,8 @@ import java.util.Set;
 
 import org.springframework.data.repository.Repository;
 
+import de.tum.cit.aet.artemis.core.api.AbstractApi;
+
 /**
  * Where in the application a query was issued from, resolved by walking the current thread's
  * stack. Lets a runtime finding name the exact code that caused it, e.g. "repeated query from
@@ -20,7 +22,9 @@ import org.springframework.data.repository.Repository;
  * @param callerMethod     the first application method below the repository (or, without one,
  *                             below Hibernate), e.g. {@code CourseStatsService.calculate}, or an entity
  *                             getter such as {@code Exercise.getTeams} for a lazy load; {@code null} if
- *                             no application frame is on the stack at all.
+ *                             no application frame is on the stack at all. Module API delegates
+ *                             ({@link AbstractApi}) are skipped: they only forward a call from another
+ *                             module, so the code that decided to issue the query is their caller.
  */
 public record QueryCallSite(String repositoryMethod, String callerMethod) {
 
@@ -54,7 +58,7 @@ public record QueryCallSite(String repositoryMethod, String callerMethod) {
                     continue;
                 }
                 String className = declaringClass.getName();
-                if (className.startsWith(APP_PACKAGE) && !DETECTOR_CLASSES.contains(declaringClass)) {
+                if (className.startsWith(APP_PACKAGE) && !DETECTOR_CLASSES.contains(declaringClass) && !AbstractApi.class.isAssignableFrom(declaringClass)) {
                     return new QueryCallSite(repositoryMethod, declaringClass.getSimpleName() + "." + frame.getMethodName());
                 }
             }

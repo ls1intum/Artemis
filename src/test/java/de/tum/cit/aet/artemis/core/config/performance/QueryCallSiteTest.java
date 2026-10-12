@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.Repository;
 
+import de.tum.cit.aet.artemis.core.api.AbstractApi;
+
 /**
  * Covers the stack walk that names the repository method and the application caller of a query.
  */
@@ -23,6 +25,14 @@ class QueryCallSiteTest {
     interface ExampleRepository extends Repository<Object, Long> {
 
         QueryCallSite findByExerciseId();
+    }
+
+    /** A module API delegate that only forwards a call from another module to the repository. */
+    static class ExampleApi implements AbstractApi {
+
+        QueryCallSite findByExerciseId(ExampleRepository repository) {
+            return repository.findByExerciseId();
+        }
     }
 
     /**
@@ -44,6 +54,14 @@ class QueryCallSiteTest {
 
         assertThat(site.repositoryMethod()).isEqualTo("ExampleRepository.findByExerciseId");
         assertThat(site.callerMethod()).isEqualTo("QueryCallSiteTest.namesTheRepositoryInterfaceBehindTheProxyAndTheCallingMethod");
+    }
+
+    @Test
+    void skipsModuleApiDelegatesAndNamesTheirCaller() throws ReflectiveOperationException {
+        QueryCallSite site = new ExampleApi().findByExerciseId(repositoryProxy());
+
+        assertThat(site.repositoryMethod()).isEqualTo("ExampleRepository.findByExerciseId");
+        assertThat(site.callerMethod()).isEqualTo("QueryCallSiteTest.skipsModuleApiDelegatesAndNamesTheirCaller");
     }
 
     @Test
