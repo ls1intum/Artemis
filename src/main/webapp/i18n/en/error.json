@@ -79,6 +79,12 @@
         "userExists": "Login name already in use!",
         "emailExists": "Email is already in use!",
         "idExists": "A new {{ entityName }} cannot already have an ID",
+        "concurrentModification": "The presentation changed while your update was being checked. Please reload the page and try again.",
+        "studentNotInCourse": "The selected user is not a student of this course.",
+        "maxPointsBelowExistingResult": "The maximum points cannot be lower than a result that was already entered.",
+        "resultPointsExceedMaxPoints": "The result points cannot exceed the maximum points.",
+        "exerciseNotInCourse": "The linked exercise must belong to this course.",
+        "studentAlreadyAssigned": "These students already have this presentation: {{ logins }}",
         "invalidOrganizationReference": "One or more selected organizations are invalid or no longer exist.",
         "ambiguousContext": "A new {{entityName}} must have an unambiguous context",
         "invalid": {
