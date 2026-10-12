@@ -1,3 +1,4 @@
+import { TranslateService } from '@ngx-translate/core';
 import { Component, Injector, OnInit, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -42,7 +43,7 @@ import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { Participation, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiProgressBarComponent } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig } from '@tumaet/ui-angular';
 
 const CODE_REFERENCE_CONTEXT_LINES = 2;
 const MAX_DISPLAYED_CODE_REFERENCE_LINES = 50;
@@ -55,7 +56,6 @@ const MAX_DISPLAYED_CODE_REFERENCE_LINES = 50;
         TranslateDirective,
         FaIconComponent,
         TumAetUiBarChartComponent,
-        TumAetUiProgressBarComponent,
         TagModule,
         ButtonModule,
         TooltipModule,
@@ -68,6 +68,7 @@ const MAX_DISPLAYED_CODE_REFERENCE_LINES = 50;
     ],
 })
 export class FeedbackComponent implements OnInit {
+    private translateService = inject(TranslateService);
     private resultService = inject(ResultService);
     private buildLogService = inject(BuildLogService);
     private feedbackService = inject(FeedbackService);
@@ -256,8 +257,8 @@ export class FeedbackComponent implements OnInit {
                         return this.fetchAndSetBuildLogs(participationId, result.id);
                     }
 
-                    if (this.scoreChartVisible() && this.feedbackItemNodes() !== undefined) {
-                        this.updateChart(this.feedbackItemNodes()!);
+                    if (this.scoreChartVisible()) {
+                        this.updateChart(this.feedbackItemNodes() ?? []);
                     }
 
                     if (isStudentParticipation(participation)) {
@@ -344,8 +345,18 @@ export class FeedbackComponent implements OnInit {
     };
 
     private updateChart(feedbackItemNodes: FeedbackNode[]) {
+        const aiScore = this.completedAiScore();
+        if (aiScore !== undefined) {
+            this.chartData.set({
+                xScaleMax: 100,
+                colors: ['var(--tumaet-ui-state-success)'],
+                results: [{ name: 'scores', series: [{ name: this.translateService.instant('artemisApp.result.detail.feedback'), value: aiScore }] }],
+            });
+            return;
+        }
+
         const exercise = this.resolvedExercise();
-        if (!exercise || feedbackItemNodes.length === 0) {
+        if (this.result().assessmentType === AssessmentType.AUTOMATIC_ATHENA || !exercise || feedbackItemNodes.length === 0) {
             this.scoreChartVisible.set(false);
             return;
         }

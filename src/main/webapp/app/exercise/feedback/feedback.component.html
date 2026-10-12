@@ -80,16 +80,8 @@
 
                 @if (completedAiScore() !== undefined) {
                     <p class="text-muted-color" jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip"></p>
-                    @if (showScoreChart()) {
-                        <tumaet-ui-progress-bar
-                            class="block mb-6"
-                            data-testid="ai-feedback-score-bar"
-                            [value]="completedAiScore()!"
-                            [showValue]="false"
-                            [ariaLabel]="'artemisApp.feedback.modal.scoreChartAriaLabel' | artemisTranslate"
-                        />
-                    }
-                } @else if (result().assessmentType !== AssessmentType.AUTOMATIC_ATHENA && scoreChartVisible() && resolvedExercise()) {
+                }
+                @if (scoreChartVisible() && (completedAiScore() !== undefined || resolvedExercise())) {
                     <div class="mb-12">
                         <div data-testid="feedback-chart" class="chart-space h-20">
                             <tumaet-ui-bar-chart
