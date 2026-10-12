@@ -543,6 +543,24 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         assertThat(result).allMatch(u -> u.login().startsWith(TEST_PREFIX + "student"));
     }
 
+    /**
+     * A part of the login that is not its start finds the user. Name and email are set so that they do not contain the login and cannot produce the
+     * match instead.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSearchUsersForExamRegistration_matchesLoginInfix() throws Exception {
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "examinfixlogin");
+        user.setFirstName("Unrelated");
+        user.setLastName("Person");
+        user.setEmail("unrelated.person.exam@test.de");
+        userTestRepository.save(user);
+
+        List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
+                searchParams("examinfixlogin", 0, 10));
+        assertThat(result).extracting(UserForRegistrationDTO::id).containsExactly(user.getId());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSearchUsersForExamRegistration_marksAlreadyRegisteredUser() throws Exception {

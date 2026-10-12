@@ -322,7 +322,7 @@ public class ExamUserService {
     }
 
     /**
-     * Searches Artemis users by login prefix, full-name substring, email substring, or registration-number substring,
+     * Searches Artemis users whose login, full name, email or registration number contains the search term,
      * excluding course staff (teaching assistants, editors, instructors) and admins,
      * and marks each result as already registered for the given exam.
      *

@@ -167,7 +167,7 @@ public class OrganizationService {
                 .and(UserSpecs.orderByColumn(search.getSortedColumn(), search.getSortingOrder()));
         var pageable = PageRequest.of(search.getPage(), search.getPageSize(), Sort.unsorted());
         return userRepository.findAll(spec, pageable).map(u -> new OrganizationMemberDTO(u.getId(), u.getLogin(),
-                ((u.getFirstName() != null ? u.getFirstName() : "") + " " + (u.getLastName() != null ? u.getLastName() : "")).trim(), u.getEmail()));
+                ((u.getFirstName() != null ? u.getFirstName() : "") + " " + (u.getLastName() != null ? u.getLastName() : "")).trim(), u.getEmail(), u.getRegistrationNumber()));
     }
 
     /**
@@ -202,7 +202,7 @@ public class OrganizationService {
     }
 
     /**
-     * Searches Artemis users by login prefix, full-name substring, email substring, or registration-number substring,
+     * Searches Artemis users whose login, full name, email or registration number contains the search term,
      * and marks each result as already a member of the given organization.
      *
      * @param organizationId the organization to check membership against

@@ -343,7 +343,7 @@ export class ExamManagementService {
 
     /**
      * Search for Artemis users that can be registered for the exam.
-     * Matches login (prefix), full name (contains), email (contains), and registration number (contains).
+     * Matches the search term anywhere in the login, full name, email or registration number.
      * Each result is flagged with {@code isRegistered} if already registered for the exam.
      * @param courseId The course id.
      * @param examId The exam id.

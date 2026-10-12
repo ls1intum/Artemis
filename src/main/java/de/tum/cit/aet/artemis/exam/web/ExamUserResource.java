@@ -226,7 +226,7 @@ public class ExamUserResource {
 
     /**
      * GET courses/{courseId}/exams/{examId}/students/search : Search for users that can be registered for the exam.
-     * Searches across login (prefix), full name (contains), email (contains), and registration number (contains).
+     * Matches the search term anywhere in the login, full name, email or registration number.
      * Already registered users are flagged with {@code isRegistered = true}.
      *
      * @param courseId   the id of the course
