@@ -85,6 +85,15 @@ describe('CourseCardHeaderComponent', () => {
             expect(title.getAttribute('title')).toBe(longTitle);
         });
 
+        // The stretched link covers the whole header and receives the hover events instead of the heading below it.
+        it('should show the full title when hovering the stretched link of a regular card', () => {
+            fixture.componentRef.setInput('courseTitle', longTitle);
+            fixture.detectChanges();
+
+            const stretchedLink = fixture.nativeElement.querySelector('a.stretched-link') as HTMLElement;
+            expect(stretchedLink.getAttribute('title')).toBe(longTitle);
+        });
+
         it.each([
             ['regular card', false, false],
             ['archive card', true, false],

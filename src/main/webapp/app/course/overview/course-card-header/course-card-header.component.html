@@ -37,7 +37,7 @@
     } @else {
         <div class="flex h-full items-center justify-between gap-1 px-3">
             <ng-container *ngTemplateOutlet="courseIdentity" />
-            <a class="stretched-link" [routerLink]="['/courses', courseId()]"></a>
+            <a class="stretched-link" [routerLink]="['/courses', courseId()]" [title]="courseTitle()"></a>
         </div>
     }
 </div>
