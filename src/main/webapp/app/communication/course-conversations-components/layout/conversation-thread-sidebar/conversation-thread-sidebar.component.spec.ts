@@ -14,6 +14,8 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentRef, signal } from '@angular/core';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
 import { TranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 
 describe('ConversationThreadSidebarComponent', () => {
     let component: ConversationThreadSidebarComponent;
@@ -74,6 +76,25 @@ describe('ConversationThreadSidebarComponent', () => {
         fixture.componentRef.setInput('activeConversation', conversation);
         fixture.detectChanges();
         expect(component.hasChannelModerationRights()).toBe(hasModerationRights);
+    });
+
+    it('should hand the conversation of the thread to the reply input, which offers @all in group chats', () => {
+        const conversation = new GroupChatDTO();
+        fixture.componentRef.setInput('activeConversation', conversation);
+        fixture.componentRef.setInput('activePost', new Post());
+        fixture.detectChanges();
+
+        const replyInput = fixture.debugElement.query(By.directive(MessageReplyInlineInputComponent));
+        expect(replyInput.componentInstance.activeConversation()).toBe(conversation);
+    });
+
+    it('should not show the reply input in read only mode', () => {
+        fixture.componentRef.setInput('activeConversation', new GroupChatDTO());
+        fixture.componentRef.setInput('activePost', new Post());
+        fixture.componentRef.setInput('readOnlyMode', true);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.directive(MessageReplyInlineInputComponent))).toBeNull();
     });
 
     it('should set min and max width for the resizable thread section', () => {

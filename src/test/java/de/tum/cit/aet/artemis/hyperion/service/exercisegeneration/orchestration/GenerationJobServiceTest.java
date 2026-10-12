@@ -1520,7 +1520,7 @@ class GenerationJobServiceTest {
         // defect lives in the interaction between the two, which a mock cannot show.
         long exerciseId = 226L;
         HyperionGenerationBudgetService budgetService = new HyperionGenerationBudgetService(mock(LLMTokenUsageTraceTestRepository.class),
-                new HazelcastDistributedDataProviderService(hazelcastInstance), Duration.ofHours(24), 300, 0, 0, 300, Duration.ofMinutes(30));
+                new HazelcastDistributedDataProviderService(hazelcastInstance), Duration.ofHours(24), 300, 0, 0, 300, 1.0, Duration.ofMinutes(30));
         budgetService.init();
         HyperionGenerationBudgetService.BudgetReservation reservation = budgetService.reserveGenerationBudget(1L, 2L, 300);
         GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {

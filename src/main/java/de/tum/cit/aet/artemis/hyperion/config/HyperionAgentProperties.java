@@ -34,11 +34,11 @@ public class HyperionAgentProperties {
      */
     private Duration staleJobTimeout = Duration.ofMinutes(50);
 
-    /** Post-response per-job provider spend guard, and the number of tokens admission reserves for a job it admits. */
+    /** Post-response weighted per-job spend guard. Admission converts this limit to raw tokens using the cached-input-token weight. */
     private long maxTokensPerJob = 3_000_000L;
 
     /**
-     * The share of a provider-cached input token that counts against {@link #maxTokensPerJob}, in [0, 1].
+     * The share of a provider-cached input token that counts against {@link #maxTokensPerJob}, in (0, 1].
      * <p>
      * Defaults to the discount OpenAI-compatible providers apply to cached input. An agentic run re-sends the same prefix every turn, so most of its input is cache reads;
      * counting those at full weight exhausts the budget long before the run has spent what the budget bounds. Never set this to 0: the budget would then stop bounding a run

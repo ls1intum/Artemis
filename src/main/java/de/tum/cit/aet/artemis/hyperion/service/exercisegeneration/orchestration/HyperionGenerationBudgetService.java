@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -59,6 +61,8 @@ public class HyperionGenerationBudgetService {
 
     private final long maxTokensPerJob;
 
+    private final double cachedInputTokenWeight;
+
     private final Duration reservationTtl;
 
     private DistributedMap<String, TokenBudgetReservation> reservationMap;
@@ -75,12 +79,12 @@ public class HyperionGenerationBudgetService {
         // Validated against the LARGEST configured profile, not the deployment default: a profile that raises the per-job ceiling above a rolling budget could otherwise be
         // admitted against a budget too small to hold one of its jobs, which under-reserves exactly the runs that cost the most.
         this(tokenUsageTraceRepository, distributedDataProvider, budgetWindow, maxTokensPerUser, maxTokensPerCourse, maxTokensGlobal, effortProfiles.largestMaxTokensPerJob(),
-                agentProperties.getMaxJobDuration());
+                agentProperties.getCachedInputTokenWeight(), agentProperties.getMaxJobDuration());
     }
 
     HyperionGenerationBudgetService(LLMTokenUsageTraceRepository tokenUsageTraceRepository, DistributedDataProvider distributedDataProvider, Duration budgetWindow,
-            long maxTokensPerUser, long maxTokensPerCourse, long maxTokensGlobal, long maxTokensPerJob, Duration maxJobDuration) {
-        validateConfiguration(budgetWindow, maxTokensPerUser, maxTokensPerCourse, maxTokensGlobal, maxTokensPerJob);
+            long maxTokensPerUser, long maxTokensPerCourse, long maxTokensGlobal, long maxTokensPerJob, double cachedInputTokenWeight, Duration maxJobDuration) {
+        validateConfiguration(budgetWindow, maxTokensPerUser, maxTokensPerCourse, maxTokensGlobal, rawTokenCeiling(maxTokensPerJob, cachedInputTokenWeight));
         this.tokenUsageTraceRepository = tokenUsageTraceRepository;
         this.distributedDataProvider = distributedDataProvider;
         this.budgetWindow = budgetWindow;
@@ -88,8 +92,21 @@ public class HyperionGenerationBudgetService {
         this.maxTokensPerCourse = maxTokensPerCourse;
         this.maxTokensGlobal = maxTokensGlobal;
         this.maxTokensPerJob = maxTokensPerJob;
+        this.cachedInputTokenWeight = cachedInputTokenWeight;
         Duration activeReservationTtl = reservationTtl(maxJobDuration);
         this.reservationTtl = budgetWindow == null || activeReservationTtl.compareTo(budgetWindow) >= 0 ? activeReservationTtl : budgetWindow;
+    }
+
+    private static long rawTokenCeiling(long weightedTokens, double cachedInputTokenWeight) {
+        if (weightedTokens <= 0 || !Double.isFinite(cachedInputTokenWeight) || cachedInputTokenWeight <= 0 || cachedInputTokenWeight > 1) {
+            throw new IllegalArgumentException("Hyperion max-tokens-per-job must be positive and cached-input-token-weight must be finite and in (0, 1]");
+        }
+        try {
+            return BigDecimal.valueOf(weightedTokens).divide(BigDecimal.valueOf(cachedInputTokenWeight), 0, RoundingMode.CEILING).longValueExact();
+        }
+        catch (ArithmeticException exception) {
+            throw new IllegalArgumentException("Hyperion raw-token reservation exceeds the supported token range", exception);
+        }
     }
 
     private static void validateConfiguration(Duration budgetWindow, long maxTokensPerUser, long maxTokensPerCourse, long maxTokensGlobal, long maxTokensPerJob) {
@@ -108,8 +125,9 @@ public class HyperionGenerationBudgetService {
     private static void validateBudgetFitsOneJob(String budgetName, long budget, long maxTokensPerJob) {
         if (budget > 0 && maxTokensPerJob > budget) {
             throw new IllegalArgumentException("artemis.hyperion.agent." + budgetName
-                    + " must be at least the largest configured max-tokens-per-job (the deployment default or any effort profile under artemis.hyperion.agent.profiles, "
-                    + "whichever is larger: " + maxTokensPerJob + ") so one generation can be admitted without under-reserving its allowed usage");
+                    + " must be at least the raw-token ceiling of the largest configured max-tokens-per-job, using cached-input-token-weight "
+                    + "(the deployment default or any effort profile under artemis.hyperion.agent.profiles, " + "whichever is larger: " + maxTokensPerJob
+                    + ") so one generation can be admitted without under-reserving its allowed usage");
         }
     }
 
@@ -122,6 +140,7 @@ public class HyperionGenerationBudgetService {
         this.maxTokensPerCourse = maxTokensPerCourse;
         this.maxTokensGlobal = maxTokensGlobal;
         this.maxTokensPerJob = 0;
+        this.cachedInputTokenWeight = 1;
         this.reservationTtl = Duration.ZERO;
     }
 
@@ -143,7 +162,7 @@ public class HyperionGenerationBudgetService {
      *
      * @param userId         the requesting user's id, or null if unavailable
      * @param courseId       the course id, or null if unavailable
-     * @param reservedTokens the tokens this job may spend, already clamped to its profile's ceiling
+     * @param reservedTokens the weighted tokens this job may spend, already clamped to its profile's ceiling
      * @return the reservation to attach to the job
      */
     public BudgetReservation reserveGenerationBudget(@Nullable Long userId, @Nullable Long courseId, long reservedTokens) {
@@ -151,11 +170,11 @@ public class HyperionGenerationBudgetService {
             return BudgetReservation.none();
         }
         // Never reserve more than the validated ceiling: the startup check proved only that ceiling fits every enabled budget.
-        long tokens = reservedTokens <= 0 ? maxTokensPerJob : Math.min(reservedTokens, maxTokensPerJob);
-        if (reservationMap == null || tokens <= 0) {
+        if (reservationMap == null) {
             assertWithinBudgets(userId, courseId);
             return BudgetReservation.none();
         }
+        long tokens = rawTokenCeiling(reservedTokens <= 0 ? maxTokensPerJob : Math.min(reservedTokens, maxTokensPerJob), cachedInputTokenWeight);
         boolean locked = false;
         try {
             locked = reservationAdmissionLock.tryLock(Duration.ofSeconds(RESERVATION_LOCK_WAIT_SECONDS));
