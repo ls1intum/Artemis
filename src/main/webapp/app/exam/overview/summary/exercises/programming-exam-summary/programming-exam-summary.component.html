@@ -9,7 +9,7 @@
                     <h1>Programming exam summary</h1>
                     <jhi-code-button
                         [smallButtons]="true"
-                        [participation]="participation()"
+                        [participationId]="participation()?.id"
                         [isOwnParticipation]="participationOwnershipForCode()"
                         [exerciseId]="exercise().id!"
                         [repositoryUri]="participation()?.repositoryUri ?? participation()?.userIndependentRepositoryUri ?? ''"

@@ -45,7 +45,7 @@
                     <jhi-code-button
                         [loading]="!!exercise()!.loading"
                         [smallButtons]="false"
-                        [participation]="participation()"
+                        [participationId]="participation()?.id"
                         [isOwnParticipation]="participationOwnershipForCode()"
                         [programmingExerciseIdeConfiguration]="exercise()"
                         [exerciseId]="exercise().id!"
