@@ -2,13 +2,14 @@
  * Vitest tests for UserManagementComponent.
  * Tests the main user management list view with filtering, sorting, and CRUD operations.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subscription, of } from 'rxjs';
 import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FormControl, FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 
@@ -105,6 +106,98 @@ describe('UserManagementComponent', () => {
         it('converts the 0-indexed paginator page to the 1-indexed page', () => {
             component.onPageChange(2);
             expect(component.page()).toBe(3);
+        });
+    });
+
+    describe('onPageSizeChange (tumaet-ui paginator)', () => {
+        it('applies the new page size, returns to the first page and puts the size in the URL', () => {
+            const router = TestBed.inject(Router);
+            component.page.set(4);
+
+            component.onPageSizeChange(100);
+
+            expect(component.itemsPerPage()).toBe(100);
+            expect(component.page()).toBe(1);
+            expect(router.navigate).toHaveBeenCalledWith(['/admin/user-management'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 1, size: 100 }) }));
+        });
+
+        it.each`
+            size         | expected
+            ${'20'}      | ${20}
+            ${'7'}       | ${50}
+            ${'abc'}     | ${50}
+            ${undefined} | ${50}
+        `('reads the page size $size from the URL as $expected', async ({ size, expected }) => {
+            vi.useFakeTimers();
+            const queryParams = new Map<string, string>([['page', '2']]);
+            if (size !== undefined) {
+                queryParams.set('size', size);
+            }
+            const route = mockRoute as unknown as { queryParamMap: unknown };
+            const originalQueryParamMap = route.queryParamMap;
+            route.queryParamMap = of(queryParams);
+            vi.spyOn(userService, 'query').mockReturnValue(of(new HttpResponse({ body: [new User(1)] })));
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(new ProfileInfo());
+
+            try {
+                fixture.detectChanges();
+                await vi.advanceTimersByTimeAsync(1000);
+
+                expect(component.itemsPerPage()).toBe(expected);
+                expect(component.page()).toBe(2);
+            } finally {
+                route.queryParamMap = originalQueryParamMap;
+                vi.useRealTimers();
+            }
+        });
+    });
+
+    describe('returning to the first page', () => {
+        let router: Router;
+        let searchSpy: MockInstance;
+
+        beforeEach(() => {
+            router = TestBed.inject(Router);
+            searchSpy = vi.spyOn(component.search, 'next');
+            component.userSearchForm = new FormGroup({ searchControl: new FormControl('') });
+        });
+
+        it('applies filters on the first page when the current page is a later one', () => {
+            component.page.set(6);
+
+            component.applyFilter();
+
+            expect(component.page()).toBe(1);
+            expect(router.navigate).toHaveBeenCalledWith(['/admin/user-management'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 1 }) }));
+            expect(component.filterModalVisible()).toBe(false);
+        });
+
+        it('reloads directly when filters are applied on the first page', () => {
+            component.applyFilter();
+
+            expect(searchSpy).toHaveBeenCalledOnce();
+            expect(router.navigate).not.toHaveBeenCalled();
+        });
+
+        it('searches from the first page when the search term changes', () => {
+            component.page.set(6);
+            component.searchControl.setValue('student');
+
+            component.loadAll();
+
+            expect(component.page()).toBe(1);
+            expect(router.navigate).toHaveBeenCalledWith(['/admin/user-management'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 1 }) }));
+            expect(searchSpy).not.toHaveBeenCalled();
+        });
+
+        it('stays on the current page when the search term is unchanged', () => {
+            component.page.set(6);
+
+            component.loadAll();
+
+            expect(component.page()).toBe(6);
+            expect(searchSpy).toHaveBeenCalledOnce();
+            expect(router.navigate).not.toHaveBeenCalled();
         });
     });
 

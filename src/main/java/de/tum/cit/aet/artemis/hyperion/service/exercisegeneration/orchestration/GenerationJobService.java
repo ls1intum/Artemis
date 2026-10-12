@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import jakarta.annotation.PostConstruct;
 
@@ -60,7 +61,7 @@ public class GenerationJobService {
 
     private static final Logger log = LoggerFactory.getLogger(GenerationJobService.class);
 
-    static final String JOB_MAP_NAME = "hyperion-exercise-generation-jobs";
+    static final String JOB_MAP_NAME = de.tum.cit.aet.artemis.core.config.Constants.HYPERION_GENERATION_JOBS_MAP;
 
     static final String CANCEL_MAP_NAME = "hyperion-exercise-generation-cancellations";
 
@@ -598,26 +599,11 @@ public class GenerationJobService {
      * @return whether this node still owns an uncancelled job
      */
     public boolean enterNonCancellablePhase(long exerciseId, String jobId) {
-        String key = key(exerciseId);
-        lockJobSlot(key);
-        try {
-            JobInfo job = jobMap.get(key);
-            if (job == null || !job.jobId().equals(jobId) || localNodeId == null || (job.ownerNodeId() != null && !job.ownerNodeId().equals(localNodeId))) {
-                return false;
-            }
-            if (isCancelled(jobId)) {
-                // Cancellation already won this job under the same lock: the run is terminal as CANCELLED, so this must not flip it non-cancellable or let the caller persist.
-                return false;
-            }
-            if (!jobMap.replace(key, job, job.withHeartbeat(Instant.now()).withCancellable(false))) {
-                // The slot changed under an expired lease, so this node no longer owns the job and must not enter the phase that writes to Git and the database.
-                return false;
-            }
+        // Cancellation must be absent, and value-based replacement must succeed before durable writes.
+        if (!withOwnedJob(exerciseId, jobId, job -> !isCancelled(jobId) && jobMap.replace(key(exerciseId), job, job.withHeartbeat(Instant.now()).withCancellable(false)))) {
+            return false;
         }
-        finally {
-            unlockJobSlot(key);
-        }
-        // The sandbox phase is over; there is no longer an in-flight tool/build operation that a cancel hook may safely interrupt.
+        // The sandbox phase is over; a cancel hook must no longer interrupt persistence.
         cancelHooks.deregister(jobId);
         return true;
     }
@@ -640,15 +626,7 @@ public class GenerationJobService {
      * @return true if this JVM still owns the active job
      */
     public boolean isOwnedActiveJob(long exerciseId, String jobId) {
-        String key = key(exerciseId);
-        lockJobSlot(key);
-        try {
-            JobInfo job = jobMap.get(key);
-            return job != null && job.jobId().equals(jobId) && localNodeId != null && (job.ownerNodeId() == null || job.ownerNodeId().equals(localNodeId));
-        }
-        finally {
-            unlockJobSlot(key);
-        }
+        return withOwnedJob(exerciseId, jobId, _ -> true);
     }
 
     /**
@@ -659,18 +637,28 @@ public class GenerationJobService {
      * @return true if the heartbeat was recorded
      */
     public boolean heartbeat(long exerciseId, String jobId) {
-        String key = key(exerciseId);
-        lockJobSlot(key);
-        try {
-            JobInfo job = jobMap.get(key);
-            if (job == null || !job.jobId().equals(jobId) || localNodeId == null || (job.ownerNodeId() != null && !job.ownerNodeId().equals(localNodeId))) {
-                return false;
-            }
+        return withOwnedJob(exerciseId, jobId, job -> {
             if (generationBudgetService != null && !generationBudgetService.refreshReservation(job.budgetReservationId())) {
                 return false;
             }
-            // Reports the heartbeat as lost if the slot changed under an expired lease, rather than overwriting whichever job now owns it.
-            return jobMap.replace(key, job, job.withHeartbeat(Instant.now()));
+            // An expired lock lease must not permit this heartbeat to replace a newer slot owner.
+            return jobMap.replace(key(exerciseId), job, job.withHeartbeat(Instant.now()));
+        });
+    }
+
+    /** Checks complete membership and exact ownership under the slot lock. Mutating operations must still use value-based replacement. */
+    private boolean withOwnedJob(long exerciseId, String jobId, Predicate<JobInfo> operation) {
+        if (!topology.permitsOwnership()) {
+            return false;
+        }
+        String key = key(exerciseId);
+        lockJobSlot(key);
+        try {
+            if (!topology.permitsOwnership()) {
+                return false;
+            }
+            JobInfo job = jobMap.get(key);
+            return job != null && job.jobId().equals(jobId) && localNodeId != null && (job.ownerNodeId() == null || job.ownerNodeId().equals(localNodeId)) && operation.test(job);
         }
         finally {
             unlockJobSlot(key);
@@ -721,7 +709,7 @@ public class GenerationJobService {
      */
     public String claimExternalMutationSlot(long exerciseId) {
         topology.verifyAllMembers();
-        return GenerationExternalMutationService.claim(jobMap, localNodeId, exerciseId);
+        return GenerationExternalMutationService.claim(jobMap, localNodeId, exerciseId, topology::verifyAllMembers);
     }
 
     /**

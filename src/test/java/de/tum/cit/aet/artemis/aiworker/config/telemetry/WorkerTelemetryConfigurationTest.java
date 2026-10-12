@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -33,8 +35,8 @@ import io.opentelemetry.sdk.trace.export.SpanExporter;
 class WorkerTelemetryConfigurationTest {
 
     @ParameterizedTest
-    @ValueSource(booleans = { false, true })
-    void bootExportsParentedChatSpansAndHonorsTheContentOptIn(boolean captureContent) {
+    @MethodSource("telemetryProfiles")
+    void bootExportsParentedChatSpansAndHonorsTheContentOptIn(String profiles, boolean langfuse, Boolean captureContent) {
         var spans = new ArrayList<SpanData>();
         SpanExporter exporter = new SpanExporter() {
 
@@ -54,14 +56,17 @@ class WorkerTelemetryConfigurationTest {
                 return CompletableResultCode.ofSuccess();
             }
         };
-        new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles("aiworker"))
+        boolean worker = List.of(profiles.split(",")).contains("aiworker");
+        new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles(profiles.isEmpty() ? new String[0] : profiles.split(",")))
                 .withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class, ObservationAutoConfiguration.class, MicrometerTracingAutoConfiguration.class,
                         OpenTelemetryTracingAutoConfiguration.class, OpenTelemetrySdkAutoConfiguration.class))
                 .withUserConfiguration(WorkerTelemetryConfiguration.class, ChatModelCompletionContentObservationFilter.class)
                 .withBean(SpanProcessor.class, () -> SimpleSpanProcessor.create(exporter))
-                .withPropertyValues("management.tracing.sampling.probability=1.0", "management.langfuse.enabled=true", "artemis.telemetry.gen-ai.capture-content=" + captureContent)
-                .run(context -> {
+                .withPropertyValues("management.tracing.sampling.probability=1.0", "management.langfuse.enabled=" + langfuse)
+                .withPropertyValues(captureContent == null ? new String[0] : new String[] { "artemis.telemetry.gen-ai.capture-content=" + captureContent }).run(context -> {
                     assertThat(context).hasNotFailed();
+                    assertThat(context.getBeansOfType(ChatModelCompletionContentObservationFilter.class)).hasSize(!worker && langfuse ? 1 : 0);
+                    assertThat(context.getBeansOfType(ChatModelContentObservationFilter.class)).hasSize(worker ? 1 : 0);
                     var registry = context.getBean(ObservationRegistry.class);
                     var chat = ChatModelObservationContext.builder().prompt(new Prompt("private teaching brief")).provider("openai").build();
                     chat.setResponse(new ChatResponse(List.of(new Generation(new AssistantMessage("private generated solution")))));
@@ -75,12 +80,17 @@ class WorkerTelemetryConfigurationTest {
                     assertThat(child.getParentSpanId()).isEqualTo(parent.getSpanId());
                     assertThat(child.getTraceId()).isEqualTo(parent.getTraceId());
                     assertThat(parent.getAttributes().get(AttributeKey.stringKey("artemis.hyperion.job.id"))).isEqualTo("job");
-                    assertThat(child.getAttributes().get(AttributeKey.stringKey("ai.span"))).isEqualTo("true");
+                    assertThat(child.getAttributes().get(AttributeKey.stringKey("ai.span"))).isEqualTo(worker || langfuse ? "true" : null);
                     String content = child.getAttributes().get(AttributeKey.stringKey("gen_ai.input.messages"));
-                    if (captureContent) {
+                    if (worker && Boolean.TRUE.equals(captureContent)) {
                         assertThat(content).contains("private teaching brief");
                         assertThat(child.getAttributes().get(AttributeKey.stringKey("gen_ai.output.messages"))).contains("private generated solution");
                         assertThat(child.getAttributes().get(AttributeKey.stringKey("artemis.gen_ai.content.complete"))).isEqualTo("true");
+                    }
+                    else if (!worker && langfuse) {
+                        assertThat(content).isNull();
+                        assertThat(child.getAttributes().get(AttributeKey.stringKey("gen_ai.prompt"))).contains("private teaching brief");
+                        assertThat(child.getAttributes().get(AttributeKey.stringKey("gen_ai.completion"))).contains("private generated solution");
                     }
                     else {
                         assertThat(content).isNull();
@@ -92,5 +102,10 @@ class WorkerTelemetryConfigurationTest {
                         });
                     }
                 });
+    }
+
+    private static Stream<Arguments> telemetryProfiles() {
+        return Stream.of("", "core", "prod,core", "aiworker", "prod,aiworker", "core,aiworker", "buildagent")
+                .flatMap(profiles -> Stream.of(false, true).flatMap(langfuse -> Stream.of(null, false, true).map(capture -> Arguments.of(profiles, langfuse, capture))));
     }
 }

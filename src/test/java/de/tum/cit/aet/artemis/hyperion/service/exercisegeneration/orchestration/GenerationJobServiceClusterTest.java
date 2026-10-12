@@ -6,6 +6,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.mock;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -72,7 +73,14 @@ class GenerationJobServiceClusterTest {
      * with no seeds and its bound port is read back for the second.
      */
     private static Config clusterConfig(String clusterName, List<String> seedMembers) {
+        return clusterConfig(clusterName, seedMembers, EXPECTED_DATA_MEMBERS);
+    }
+
+    private static Config clusterConfig(String clusterName, List<String> seedMembers, int expectedMembers) {
         Config config = new Config();
+        config.getMemberAttributeConfig().setAttribute(de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider.WRITER_FENCING_MEMBER_ATTRIBUTE, "true");
+        config.getMemberAttributeConfig().setAttribute(de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider.WRITER_FENCING_MEMBERS_ATTRIBUTE,
+                String.valueOf(expectedMembers));
         config.setClusterName(clusterName);
         NetworkConfig network = config.getNetworkConfig();
         network.setPortAutoIncrement(true);
@@ -212,13 +220,18 @@ class GenerationJobServiceClusterTest {
     @Test
     void recoverWedgedSlot_becomesPossibleFromTheSurvivingNodeOnlyAfterTheOwnerLeavesTheCluster() {
         long exerciseId = 905L;
-        HazelcastInstance doomedMember = Hazelcast.newHazelcastInstance(
-                clusterConfig(firstMember.getConfig().getClusterName(), List.of("127.0.0.1:" + firstMember.getCluster().getLocalMember().getSocketAddress().getPort())));
+        var recoveryMembers = new ArrayList<HazelcastInstance>();
         try {
-            await().atMost(Duration.ofSeconds(60)).untilAsserted(() -> assertThat(firstMember.getCluster().getMembers()).hasSize(3));
-            // Three members now, so both services must expect three or admission fails closed on the topology check.
+            String cluster = "hyperion-recovery-cluster-" + System.nanoTime();
+            recoveryMembers.add(Hazelcast.newHazelcastInstance(clusterConfig(cluster, List.of(), 3)));
+            HazelcastInstance survivor = recoveryMembers.getFirst();
+            String seed = "127.0.0.1:" + survivor.getCluster().getLocalMember().getSocketAddress().getPort();
+            recoveryMembers.add(Hazelcast.newHazelcastInstance(clusterConfig(cluster, List.of(seed), 3)));
+            recoveryMembers.add(Hazelcast.newHazelcastInstance(clusterConfig(cluster, List.of(seed), 3)));
+            HazelcastInstance doomedMember = recoveryMembers.getLast();
+            await().atMost(Duration.ofSeconds(60)).untilAsserted(() -> assertThat(survivor.getCluster().getMembers()).hasSize(3));
             GenerationJobService doomedNode = clusterNodeExpecting(doomedMember, 3);
-            GenerationJobService survivingNode = clusterNodeExpecting(firstMember, 3);
+            GenerationJobService survivingNode = clusterNodeExpecting(survivor, 3);
             String jobId = doomedNode.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE);
             assertThat(doomedNode.enterNonCancellablePhase(exerciseId, jobId)).isTrue();
 
@@ -226,19 +239,16 @@ class GenerationJobServiceClusterTest {
             assertThat(survivingNode.getWedgedSlotInfo(exerciseId)).hasValueSatisfying(info -> assertThat(info.ownerLeftCluster()).isFalse());
 
             doomedMember.getLifecycleService().terminate();
-            await().atMost(Duration.ofSeconds(60)).untilAsserted(() -> assertThat(firstMember.getCluster().getMembers()).hasSize(2));
+            await().atMost(Duration.ofSeconds(60)).untilAsserted(() -> assertThat(survivor.getCluster().getMembers()).hasSize(2));
             await().atMost(Duration.ofSeconds(30))
                     .untilAsserted(() -> assertThat(survivingNode.getWedgedSlotInfo(exerciseId)).hasValueSatisfying(info -> assertThat(info.ownerLeftCluster()).isTrue()));
 
-            // Two of an expected three is a majority, so recovery proceeds without waiting for the dead node to come back.
+            // Two of an expected three is a majority, so audited recovery does not require the dead node to return.
             assertThat(survivingNode.recoverWedgedSlot(exerciseId, jobId)).isTrue();
             assertThat(survivingNode.hasActiveJob(exerciseId)).isFalse();
         }
         finally {
-            if (doomedMember.getLifecycleService().isRunning()) {
-                doomedMember.getLifecycleService().terminate();
-            }
-            await().atMost(Duration.ofSeconds(60)).untilAsserted(() -> assertThat(firstMember.getCluster().getMembers()).hasSize(2));
+            recoveryMembers.forEach(member -> member.getLifecycleService().terminate());
         }
     }
 

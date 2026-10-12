@@ -14,6 +14,8 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
@@ -31,6 +33,7 @@ import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
 import de.tum.cit.aet.artemis.aiworker.service.WorkerSupervisorService;
 import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerCommandListener;
 import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerEventPublisher;
+import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerTransport;
 import de.tum.cit.aet.artemis.aiworker.service.sandbox.DockerSandboxService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
@@ -38,11 +41,15 @@ import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderSe
 /** Boots and executes a second workload without Hyperion beans. */
 class WorkerIsolationTest {
 
-    @Test
-    void doesNotStartWorkerBeansWithoutTheAiworkerProfile() {
-        new ApplicationContextRunner().withUserConfiguration(WorkerMessaging.class, WorkerSandboxConfiguration.class, DockerConfiguration.class, WorkerSupervisorService.class,
-                WorkerCommandListener.class, DockerSandboxService.class).run(context -> {
-                    assertThat(context).hasNotFailed().doesNotHaveBean(WorkerSupervisorService.class).doesNotHaveBean(DockerClient.class);
+    @ParameterizedTest
+    @ValueSource(strings = { "", "prod", "prod,core", "buildagent", "localci,localvc" })
+    void doesNotStartWorkerBeansWithoutTheAiworkerProfile(String profiles) {
+        new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles(profiles.isEmpty() ? new String[0] : profiles.split(",")))
+                .withUserConfiguration(WorkerMessaging.class, WorkerSandboxConfiguration.class, DockerConfiguration.class, WorkerSupervisorService.class,
+                        WorkerCommandListener.class, DockerSandboxService.class)
+                .withPropertyValues("artemis.aiworker.enabled=true").run(context -> {
+                    assertThat(context).hasNotFailed().doesNotHaveBean(WorkerSupervisorService.class).doesNotHaveBean(DockerClient.class).doesNotHaveBean(WorkerTransport.class)
+                            .doesNotHaveBean(WorkerSettings.class).doesNotHaveBean(WorkerCommandListener.class).doesNotHaveBean(DockerSandboxService.class);
                 });
     }
 
