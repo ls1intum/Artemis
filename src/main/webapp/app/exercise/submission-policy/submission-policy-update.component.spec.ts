@@ -376,6 +376,105 @@ describe('Submission Policy Update Form Component', () => {
         expect(typeChangeSpy).toHaveBeenCalledTimes(1);
     });
 
+    // #7445: the value shown in the form must be the value the parent sends on save.
+    describe('keeping the form and the model in sync across policy type switches (#7445)', () => {
+        const pickType = async (type: SubmissionPolicyType) => {
+            const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
+            submissionPolicyTypeField.value = type;
+            submissionPolicyTypeField.dispatchEvent(new Event('change'));
+            await detectChanges();
+        };
+
+        const typeLimit = async (limit: number) => {
+            component.submissionLimitControl.setValue(limit);
+            fixture.nativeElement.querySelector('#field_submissionLimit').dispatchEvent(new Event('input'));
+            await detectChanges();
+        };
+
+        const typePenalty = async (penalty: number) => {
+            component.exceedingPenaltyControl.setValue(penalty);
+            fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty').dispatchEvent(new Event('input'));
+            await detectChanges();
+        };
+
+        /** The server removes the policy of an exercise saved with type none, so the exercise comes back without one. */
+        const reloadWithoutPolicy = async () => {
+            const reloadedExercise = new ProgrammingExercise(undefined, undefined);
+            fixture.componentRef.setInput('programmingExercise', reloadedExercise);
+            await detectChanges();
+            return reloadedExercise;
+        };
+
+        const expectDisplayedLimitEqualsModel = (exercise: ProgrammingExercise, expectedLimit: number) => {
+            expect(fixture.nativeElement.querySelector('#field_submissionLimit').value).toBe(String(expectedLimit));
+            expect(component.submissionLimitControl.value).toBe(expectedLimit);
+            expect(exercise.submissionPolicy!.submissionLimit).toBe(expectedLimit);
+        };
+
+        beforeEach(async () => {
+            programmingExercise.submissionPolicy = undefined;
+            await detectChanges();
+        });
+
+        it('should send the displayed limit after none -> lock repository, a save, and none -> lock repository again', async () => {
+            await pickType(SubmissionPolicyType.LOCK_REPOSITORY);
+            await typeLimit(10);
+            await pickType(SubmissionPolicyType.NONE);
+            const reloadedExercise = await reloadWithoutPolicy();
+            expect(reloadedExercise.submissionPolicy).toBeUndefined();
+
+            await pickType(SubmissionPolicyType.LOCK_REPOSITORY);
+
+            expect(reloadedExercise.submissionPolicy!.type).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
+            expectDisplayedLimitEqualsModel(reloadedExercise, 10);
+        });
+
+        it('should send the displayed limit and penalty after none -> submission penalty, a save, and none -> submission penalty again', async () => {
+            await pickType(SubmissionPolicyType.SUBMISSION_PENALTY);
+            await typeLimit(10);
+            await typePenalty(20);
+            await pickType(SubmissionPolicyType.NONE);
+            const reloadedExercise = await reloadWithoutPolicy();
+
+            await pickType(SubmissionPolicyType.SUBMISSION_PENALTY);
+
+            expectDisplayedLimitEqualsModel(reloadedExercise, 10);
+            expect(fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty').value).toBe('20');
+            expect(reloadedExercise.submissionPolicy!.exceedingPenalty).toBe(20);
+        });
+
+        it('should send the displayed limit when switching from none to the other real policy after a save', async () => {
+            await pickType(SubmissionPolicyType.LOCK_REPOSITORY);
+            await typeLimit(10);
+            await pickType(SubmissionPolicyType.NONE);
+            const reloadedExercise = await reloadWithoutPolicy();
+
+            await pickType(SubmissionPolicyType.SUBMISSION_PENALTY);
+
+            expect(reloadedExercise.submissionPolicy!.type).toBe(SubmissionPolicyType.SUBMISSION_PENALTY);
+            expectDisplayedLimitEqualsModel(reloadedExercise, 10);
+        });
+
+        it('should keep limit and penalty when switching between the two real policies', async () => {
+            await pickType(SubmissionPolicyType.LOCK_REPOSITORY);
+            await typeLimit(10);
+            await pickType(SubmissionPolicyType.SUBMISSION_PENALTY);
+            expectDisplayedLimitEqualsModel(programmingExercise, 10);
+            await typePenalty(20);
+
+            await pickType(SubmissionPolicyType.LOCK_REPOSITORY);
+            expect(programmingExercise.submissionPolicy!.type).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
+            expectDisplayedLimitEqualsModel(programmingExercise, 10);
+            expect(programmingExercise.submissionPolicy!.exceedingPenalty).toBeUndefined();
+
+            await pickType(SubmissionPolicyType.SUBMISSION_PENALTY);
+            expect(programmingExercise.submissionPolicy!.type).toBe(SubmissionPolicyType.SUBMISSION_PENALTY);
+            expectDisplayedLimitEqualsModel(programmingExercise, 10);
+            expect(fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty').value).toBe('20');
+            expect(programmingExercise.submissionPolicy!.exceedingPenalty).toBe(20);
+        });
+    });
+
     // The grading parent reloads on an exerciseId route change and Angular reuses this component for the same
     // route configuration, so a second exercise arrives through the same input.
     describe('navigating between two exercises on the reused grading route', () => {
