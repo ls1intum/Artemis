@@ -17,7 +17,7 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CodeButtonComponent, type ParticipationOwnership } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { CodeButtonComponent, type VcsAccessTokenData } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/programming/shared/actions/student-repo-download/programming-exercise-student-repo-download.component';
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/instructor-repo-download/programming-exercise-instructor-repo-download.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -77,7 +77,8 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     readonly result = signal<Result>(undefined!);
     readonly resultHasInlineFeedback = signal(false);
     readonly showInlineFeedback = signal(false);
-    readonly participationOwnershipForCode = computed(() => this.getParticipationOwnershipForCode());
+    readonly ownsParticipationForCodeButton = computed(() => this.getOwnsParticipationForCodeButton());
+    readonly vcsAccessTokenDataForCodeButton = computed(() => this.getVcsAccessTokenDataForCodeButton());
 
     faClockRotateLeft = faClockRotateLeft;
     participationWithLatestResultSub?: Subscription;
@@ -92,12 +93,23 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
         this.differentParticipationSub?.unsubscribe();
     }
 
-    private getParticipationOwnershipForCode(): ParticipationOwnership {
-        if (this.repositoryType() !== RepositoryType.USER) {
-            return 'not-applicable';
-        }
+    private getOwnsParticipationForCodeButton(): boolean {
         const userLogin = this.accountService.userIdentity()?.login;
-        return !!userLogin && this.participation()?.student?.login === userLogin;
+        return this.repositoryType() === RepositoryType.USER && !!userLogin && this.participation()?.student?.login === userLogin;
+    }
+
+    private getVcsAccessTokenDataForCodeButton(): VcsAccessTokenData {
+        const repositoryType = this.repositoryType();
+        if (repositoryType === RepositoryType.AUXILIARY) {
+            return { type: 'auxiliary-repository', auxiliaryRepositoryId: this.auxiliaryRepositoryId()! };
+        }
+        if (repositoryType === RepositoryType.TEMPLATE || repositoryType === RepositoryType.SOLUTION || repositoryType === RepositoryType.TESTS) {
+            return { type: 'base-repository', repositoryType };
+        }
+        if (!this.ownsParticipationForCodeButton()) {
+            return { type: 'student-repository', participationId: this.participation().id! };
+        }
+        return { type: 'participation', participationId: this.participation().id!, isOwnParticipation: this.ownsParticipationForCodeButton() };
     }
 
     /**

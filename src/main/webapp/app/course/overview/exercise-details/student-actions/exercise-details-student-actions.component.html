@@ -125,13 +125,16 @@
                         <jhi-code-button
                             [loading]="isLoading()"
                             [smallButtons]="smallButtons()"
-                            [participationId]="programmingParticipationForCode()?.id"
-                            [isOwnParticipation]="participationOwnershipForCode()"
                             [programmingExerciseIdeConfiguration]="programmingExercise()"
                             [exerciseId]="exercise().id!"
                             [routerLinkForRepositoryView]="['/courses', courseId(), 'exercises', exercise().id!, 'repository', studentParticipations()[0]!.id!]"
                             [hideLabelMobile]="true"
                             [repositoryUri]="gradedRepositoryUri()"
+                            [vcsAccessTokenData]="{
+                                type: 'participation',
+                                participationId: programmingParticipationForCodeButton()!.id!,
+                                isOwnParticipation: ownsParticipationForCodeButton(),
+                            }"
                         />
                     }
                     @if (

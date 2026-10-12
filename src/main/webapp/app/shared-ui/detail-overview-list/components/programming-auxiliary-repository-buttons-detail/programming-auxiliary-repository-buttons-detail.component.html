@@ -9,10 +9,11 @@
                     [smallButtons]="true"
                     [repositoryUri]="auxiliaryRepository.repositoryUri"
                     [routerLinkForRepositoryView]="['.', 'repository', RepositoryType.AUXILIARY, auxiliaryRepository.id]"
-                    [repositoryType]="RepositoryType.AUXILIARY"
-                    [isOwnParticipation]="'not-applicable'"
-                    [auxiliaryRepositoryId]="auxiliaryRepository.id"
                     [exerciseId]="data.exerciseId"
+                    [vcsAccessTokenData]="{
+                        type: 'auxiliary-repository',
+                        auxiliaryRepositoryId: auxiliaryRepository.id,
+                    }"
                 />
                 <jhi-programming-exercise-instructor-repo-download
                     class="ms-2"

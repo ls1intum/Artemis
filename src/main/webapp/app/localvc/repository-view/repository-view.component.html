@@ -45,14 +45,11 @@
                     <jhi-code-button
                         [loading]="!!exercise()!.loading"
                         [smallButtons]="false"
-                        [participationId]="participation()?.id"
-                        [isOwnParticipation]="participationOwnershipForCode()"
                         [programmingExerciseIdeConfiguration]="exercise()"
                         [exerciseId]="exercise().id!"
                         [repositoryUri]="repositoryUri()"
-                        [repositoryType]="repositoryType()"
-                        [auxiliaryRepositoryId]="auxiliaryRepositoryId()"
                         [routerLinkForRepositoryView]="[]"
+                        [vcsAccessTokenData]="vcsAccessTokenDataForCodeButton()"
                     />
                 }
 

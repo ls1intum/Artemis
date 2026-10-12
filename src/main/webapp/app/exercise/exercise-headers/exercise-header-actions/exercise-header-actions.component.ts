@@ -43,7 +43,7 @@ import { ButtonType } from 'app/shared-ui/components/buttons/button/button.compo
 import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { CodeButtonComponent, type ParticipationOwnership } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { CodeButtonComponent, VcsAccessTokenData } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { CodeButtonNewComponent } from 'app/shared-ui/components/buttons/code-button-new/code-button-new.component';
 import {
     DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT,
@@ -195,9 +195,10 @@ export class ExerciseHeaderActionsComponent {
     readonly activeParticipationForCode = computed(() => {
         return this.participationMode() === 'practice' ? (this._practiceParticipation() ?? this._gradedParticipation()) : this._gradedParticipation();
     });
-    readonly programmingParticipationForCode = computed(() => this.getProgrammingParticipationForCode());
-    readonly participationOwnershipForCode = computed(() => this.getParticipationOwnershipForCode());
-    readonly repositoryUriForCode = computed(() => this.getRepositoryUriForCode());
+    readonly programmingParticipationForCodeButton = computed(() => this.getProgrammingParticipationForCodeButton());
+    readonly ownsParticipationForCodeButton = computed(() => this.getOwnsParticipationForCodeButton());
+    readonly repositoryUriForCodeButton = computed(() => this.getRepositoryUriForCodeButton());
+    readonly vcsAccessTokenDataForCodeButton = computed(() => this.getVcsAccessTokenDataForCodeButton());
 
     readonly routerLinkForRepositoryView = computed(() => {
         const participation = this.activeParticipationForCode();
@@ -306,7 +307,7 @@ export class ExerciseHeaderActionsComponent {
         );
     }
 
-    private getRepositoryUriForCode(): string {
+    private getRepositoryUriForCodeButton(): string {
         const participations = this.studentParticipations();
         const participation = this.participationService.getSpecificStudentParticipation(participations, this.participationMode() === 'practice') ?? participations[0];
         return participation && this.isProgrammingExerciseStudentParticipation(participation) ? (participation.repositoryUri ?? '') : '';
@@ -316,14 +317,22 @@ export class ExerciseHeaderActionsComponent {
         return participation.type === ParticipationType.PROGRAMMING;
     }
 
-    private getProgrammingParticipationForCode(): ProgrammingExerciseStudentParticipation | undefined {
+    private getProgrammingParticipationForCodeButton(): ProgrammingExerciseStudentParticipation | undefined {
         const participations = this.studentParticipations();
         return this.participationService.getSpecificStudentParticipation(participations, this.participationMode() === 'practice') ?? participations[0];
     }
 
-    private getParticipationOwnershipForCode(): ParticipationOwnership {
+    private getOwnsParticipationForCodeButton(): boolean {
         const userLogin = this.accountService.userIdentity()?.login;
-        return !!userLogin && this.programmingParticipationForCode()?.student?.login === userLogin;
+        return !!userLogin && this.programmingParticipationForCodeButton()?.student?.login === userLogin;
+    }
+
+    private getVcsAccessTokenDataForCodeButton(): VcsAccessTokenData {
+        const participationId = this.programmingParticipationForCodeButton()!.id!;
+        if (!this.ownsParticipationForCodeButton()) {
+            return { type: 'student-repository', participationId };
+        }
+        return { type: 'participation', participationId, isOwnParticipation: true };
     }
 
     isStartExerciseAvailable(): boolean {

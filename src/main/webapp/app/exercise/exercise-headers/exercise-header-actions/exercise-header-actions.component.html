@@ -151,15 +151,14 @@
                         <jhi-code-button
                             [loading]="isLoading()"
                             [smallButtons]="smallButtons()"
-                            [participationId]="programmingParticipationForCode()?.id"
-                            [isOwnParticipation]="participationOwnershipForCode()"
                             [programmingExerciseIdeConfiguration]="programmingExercise()"
                             [exerciseId]="exercise().id!"
                             [routerLinkForRepositoryView]="routerLinkForRepositoryView()"
                             [hideLabelMobile]="true"
-                            [repositoryUri]="repositoryUriForCode()"
+                            [repositoryUri]="repositoryUriForCodeButton()"
+                            [vcsAccessTokenData]="vcsAccessTokenDataForCodeButton()"
                         />
-                        <jhi-code-button-new [repositoryUri]="repositoryUriForCode()" />
+                        <jhi-code-button-new [repositoryUri]="repositoryUriForCodeButton()" />
                     }
                 }
                 @if (

@@ -21,7 +21,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { CodeButtonComponent, type ParticipationOwnership } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { RequestFeedbackButtonComponent } from '../request-feedback-button/request-feedback-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -124,8 +124,8 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly isLoading = this._isLoading.asReadonly();
     readonly studentParticipations = this._studentParticipations.asReadonly();
     readonly hasGradedSubmission = computed(() => !!this._gradedParticipation()?.submissions?.some((submission) => submission.submitted));
-    readonly programmingParticipationForCode = computed(() => this.getProgrammingParticipationForCode());
-    readonly participationOwnershipForCode = computed(() => this.getParticipationOwnershipForCode());
+    readonly programmingParticipationForCodeButton = computed(() => this.getProgrammingParticipationForCodeButton());
+    readonly ownsParticipationForCodeButton = computed(() => this.getOwnsParticipationForCodeButton());
     readonly gradedRepositoryUri = computed(() => this.getGradedRepositoryUri());
 
     readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
@@ -176,14 +176,14 @@ export class ExerciseDetailsStudentActionsComponent {
         );
     }
 
-    private getProgrammingParticipationForCode(): ProgrammingExerciseStudentParticipation | undefined {
+    private getProgrammingParticipationForCodeButton(): ProgrammingExerciseStudentParticipation | undefined {
         const participations = this.studentParticipations();
         return this.participationService.getSpecificStudentParticipation(participations, false) ?? participations[0];
     }
 
-    private getParticipationOwnershipForCode(): ParticipationOwnership {
+    private getOwnsParticipationForCodeButton(): boolean {
         const userLogin = this.accountService.userIdentity()?.login;
-        return !!userLogin && this.programmingParticipationForCode()?.student?.login === userLogin;
+        return !!userLogin && this.programmingParticipationForCodeButton()?.student?.login === userLogin;
     }
 
     private getGradedRepositoryUri(): string {

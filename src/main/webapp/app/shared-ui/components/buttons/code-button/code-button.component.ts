@@ -49,7 +49,11 @@ export enum RepositoryAuthenticationMethod {
     SSH = 'ssh',
 }
 
-export type ParticipationOwnership = boolean | 'not-applicable';
+export type VcsAccessTokenData =
+    | { type: 'participation'; participationId: number; isOwnParticipation: boolean }
+    | { type: 'student-repository'; participationId: number }
+    | { type: 'base-repository'; repositoryType: RepositoryType.TEMPLATE | RepositoryType.SOLUTION | RepositoryType.TESTS }
+    | { type: 'auxiliary-repository'; auxiliaryRepositoryId: number };
 
 export interface ProgrammingExerciseIdeConfiguration {
     programmingLanguage?: ProgrammingLanguage;
@@ -114,45 +118,40 @@ export class CodeButtonComponent implements OnInit {
     theiaPortalURL!: string; // set in initTheia() from ngOnInit()
 
     // Input
-    loading = input<boolean>(false);
-    smallButtons = input.required<boolean>();
-    repositoryUri = input.required<string>();
-    routerLinkForRepositoryView = input.required<(string | number)[]>();
-    // The student participation id identifies the participation-scoped token for the current user's repository or the repository-scoped staff token for another user's repository.
-    participationId = input<number>();
-    isOwnParticipation = input.required<ParticipationOwnership>();
-    programmingExerciseIdeConfiguration = input<ProgrammingExerciseIdeConfiguration>();
     hideLabelMobile = input<boolean>(false);
     hideLabelBreakpoint = input<'md' | 'xl'>('md');
-    // When set to a base repository type (TEMPLATE, SOLUTION, TESTS, AUXILIARY), the code button uses a repository-scoped staff VCS access token instead of a participation token.
-    repositoryType = input<RepositoryType>();
-    auxiliaryRepositoryId = input<number>();
-    // The exercise id used to load repository-scoped staff tokens.
+    smallButtons = input.required<boolean>();
+    repositoryUri = input.required<string>();
     exerciseId = input.required<number>();
-    readonly isInCourseManagement = getSignalBasedOnRoute(this.router, (url) => url.includes('course-management'));
-    readonly user = signal<User | undefined>(undefined);
+    vcsAccessTokenData = input.required<VcsAccessTokenData>();
+    programmingExerciseIdeConfiguration = input<ProgrammingExerciseIdeConfiguration>();
+    isInCourseManagement = getSignalBasedOnRoute(this.router, (url) => url.includes('course-management'));
+    user = signal<User | undefined>(undefined);
+    private participationIdForVcsAccessToken = computed(() => this.getParticipationIdForVcsAccessToken());
     // Set once a participation VCS token request has terminally failed to yield a token (empty response or an error that
     // is not the 404 → create fallback). Gates the missing-token Sentry report so it never fires while a token is still
     // in flight (an expected transient state during which the clone URL simply omits the token).
-    private readonly participationTokenLoadFailed = linkedSignal<number | undefined, boolean>({ source: this.participationId, computation: () => false });
-    private readonly participationVcsAccessToken = linkedSignal<number | undefined, string | undefined>({ source: this.participationId, computation: () => undefined });
-    // Signals (we ideally declare everything related to change detection/UI to signals and leave component fields
-    // as they are
-    wasCopied = signal(false);
-    copyEnabled = signal(false);
+    private readonly participationTokenLoadFailed = linkedSignal<number | undefined, boolean>({ source: this.participationIdForVcsAccessToken, computation: () => false });
+    private readonly participationVcsAccessToken = linkedSignal<number | undefined, string | undefined>({
+        source: this.participationIdForVcsAccessToken,
+        computation: () => undefined,
+    });
     doesUserHaveSSHkeys = signal(false);
     areAnySshKeysExpired = signal(false);
-    // The repository-scoped VCS access token for course staff (used for base repositories and student repositories browsed by staff).
-    repositoryAccessToken = signal<string | undefined>(undefined); // set exclusively through onClick and its called methods
-    // The repository identity the cached repositoryAccessToken was minted for. The repository view reuses one code-button instance across base repositories (only the route
-    // params change), so a token cached for the previous repository must not be reused for the next one: repository tokens are scoped to one exact repository URI and would fail
-    // authentication. We therefore remember which repository the cached token belongs to and reload when it no longer matches the current repository.
-    private repositoryAccessTokenIdentity?: string;
-    sshKeyMissingTip = signal('');
-    sshKeysExpiredTip = signal('');
-    theiaEnabled = signal(false);
-    ideName = signal('');
-    // this is the fallback with a default order in case the server does not specify this as part of the profile info endpoint
+    repositoryAccessToken = signal<string | undefined>(undefined);
+    selectedAuthenticationMechanism = signal<RepositoryAuthenticationMethod>(RepositoryAuthenticationMethod.Token);
+    useToken = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token);
+    useSsh = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH);
+    usePassword = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password);
+    isBaseRepository = computed(() => this.vcsAccessTokenData().type === 'base-repository' || this.vcsAccessTokenData().type === 'auxiliary-repository');
+    // True whenever the clone URL authenticates with a repository-scoped staff token that is minted on demand: for base
+    // repositories (template/solution/tests/auxiliary) and for a student repository browsed by staff. Such tokens are
+    // exact-URI scoped and provisioned automatically, so the personal VCS access token is never needed for cloning.
+    usesRepositoryScopedToken = computed(() => {
+        const usesStudentRepositoryStaffToken = this.vcsAccessTokenData().type === 'student-repository' && this.isInCourseManagement();
+        const isBaseRepository = this.isBaseRepository();
+        return isBaseRepository || usesStudentRepositoryStaffToken;
+    });
     authenticationMechanisms = signal<RepositoryAuthenticationMethod[]>([
         RepositoryAuthenticationMethod.Token,
         RepositoryAuthenticationMethod.SSH,
@@ -160,34 +159,30 @@ export class CodeButtonComponent implements OnInit {
     ]);
     private readonly matchesMediumBreakpoint = this.getMatchesBreakpointSignal(BREAKPOINTS.md);
     private readonly matchesExtraLargeBreakpoint = this.getMatchesBreakpointSignal(BREAKPOINTS.xl);
-    readonly programmingExercisesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
     readonly displayLabel = computed(() => this.computeDisplayLabel());
-    selectedAuthenticationMechanism = signal<RepositoryAuthenticationMethod>(RepositoryAuthenticationMethod.Token);
-    useToken = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token);
-    useSsh = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH);
-    usePassword = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password);
-    isBaseRepository = computed(() => {
-        const type = this.repositoryType();
-        return type === RepositoryType.TEMPLATE || type === RepositoryType.SOLUTION || type === RepositoryType.TESTS || type === RepositoryType.AUXILIARY;
-    });
-    // True whenever the clone URL authenticates with a repository-scoped staff token that is minted on demand: for base
-    // repositories (template/solution/tests/auxiliary) and for a student repository browsed by staff. Such tokens are
-    // exact-URI scoped and provisioned automatically, so the personal VCS access token is never needed for cloning.
-    usesRepositoryScopedToken = computed(() => this.shouldUseRepositoryScopedToken());
+    private repositoryAccessTokenIdentity?: string;
+    sshKeyMissingTip = signal('');
+    sshKeysExpiredTip = signal('');
+
+    loading = input<boolean>(false);
+    routerLinkForRepositoryView = input.required<(string | number)[]>();
+    // Signals (we ideally declare everything related to change detection/UI to signals and leave component fields
+    // as they are
+    wasCopied = signal(false);
+    copyEnabled = signal(false);
+    // The repository identity the cached repositoryAccessToken was minted for. The repository view reuses one code-button instance across base repositories (only the route
+    // params change), so a token cached for the previous repository must not be reused for the next one: repository tokens are scoped to one exact repository URI and would fail
+    // authentication. We therefore remember which repository the cached token belongs to and reload when it no longer matches the current repository.
+    theiaEnabled = signal(false);
+    ideName = signal('');
+    readonly programmingExercisesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
 
     constructor() {
-        effect(() => {
-            if (this.isBaseRepository()) {
-                return;
-            }
-            this.loadParticipationVcsAccessTokenIfMissing();
-        });
+        effect(() => this.initializeParticipationVcsAccessTokenFromDataIfApplicable());
     }
 
-    private shouldUseRepositoryScopedToken(): boolean {
-        const usesStudentRepositoryStaffToken = this.isInCourseManagement() && this.participationId() !== undefined && this.isOwnParticipation() === false;
-        const isBaseRepository = this.isBaseRepository();
-        return isBaseRepository || usesStudentRepositoryStaffToken;
+    ngOnInit() {
+        void this.initializeCodeButtonComponent();
     }
 
     private getMatchesBreakpointSignal(breakpoint: string) {
@@ -203,8 +198,9 @@ export class CodeButtonComponent implements OnInit {
         return this.hideLabelBreakpoint() === 'md' ? this.matchesMediumBreakpoint() : this.matchesExtraLargeBreakpoint();
     }
 
-    ngOnInit() {
-        void this.initializeCodeButtonComponent();
+    private getParticipationIdForVcsAccessToken(): number | undefined {
+        const data = this.vcsAccessTokenData();
+        return data.type === 'participation' ? data.participationId : undefined;
     }
 
     private async initializeCodeButtonComponent(): Promise<void> {
@@ -286,10 +282,7 @@ export class CodeButtonComponent implements OnInit {
         // Fallback for course staff: generate the repository-scoped token on demand when the clone dialog is opened and none valid for the current repository exists yet. A token
         // cached for a previously viewed repository (this component instance is reused across repositories) is dropped first, so it can never be embedded into another repository's
         // clone URL. This covers both base repositories and student repositories browsed by staff, so the copy/clone button is never left disabled for a missing token.
-        if (this.usesRepositoryScopedToken() && !this.hasValidRepositoryAccessToken()) {
-            this.repositoryAccessToken.set(undefined);
-            this.loadRepositoryScopedTokenForCurrentRepository();
-        }
+        this.initializeVcsAccessTokenFromDataIfMissing();
 
         if (this.useSsh()) {
             this.useSshUrl();
@@ -301,6 +294,7 @@ export class CodeButtonComponent implements OnInit {
             this.useHttpsPassword();
         }
     }
+
     /**
      * Add the credentials to the http url, if a token should be used.
      *
@@ -314,7 +308,7 @@ export class CodeButtonComponent implements OnInit {
         }
         const url = this.repositoryUri();
         const useToken = this.useToken() || alwaysUsetoken;
-        const token = insertPlaceholder ? '**********' : this.getUsedToken(alwaysUsetoken);
+        const token = insertPlaceholder ? '**********' : this.getUsedTokenFromVcsAccessTokenData(alwaysUsetoken);
 
         // Never interpolate a missing token into the clone URL: an undefined/empty token would produce a broken
         // "://<login>:undefined@..." URL. If a token was expected but is unavailable, omit it entirely and report it.
@@ -345,21 +339,42 @@ export class CodeButtonComponent implements OnInit {
             return;
         }
         this.vcsAccessTokenReportedMissing = true;
+        const vcsAccessTokenData = this.vcsAccessTokenData();
         captureException(
             new Error(
-                `A VCS access token was expected but missing while building the clone URL (participationId=${this.participationId()}, isInCourseManagement=${this.isInCourseManagement()}); the token was omitted from the URL.`,
+                `A VCS access token was expected but missing while building the clone URL (exerciseId=${this.exerciseId()}, vcsAccessTokenData=${JSON.stringify(vcsAccessTokenData)}, isInCourseManagement=${this.isInCourseManagement()}); the token was omitted from the URL.`,
             ),
         );
     }
 
-    private loadParticipationVcsAccessTokenIfMissing() {
-        const participationId = this.participationId();
+    private initializeParticipationVcsAccessTokenFromDataIfApplicable(): void {
+        const data = this.vcsAccessTokenData();
         // Load the participation-scoped token only when the clone URL will actually use it: outside course management,
         // or for the user's own participation inside course management (e.g. an exam test run the instructor conducts).
         // For other participants' repositories in course management the personal staff token is used, and requesting
         // their participation token would be forbidden server-side.
-        if (participationId && !this.participationVcsAccessToken() && (!this.isInCourseManagement() || this.isOwnParticipation() === true)) {
-            this.loadParticipationVcsAccessToken(participationId);
+        if (data.type === 'participation' && !this.participationVcsAccessToken() && (!this.isInCourseManagement() || data.isOwnParticipation)) {
+            this.loadParticipationVcsAccessToken(data.participationId);
+        }
+    }
+
+    initializeVcsAccessTokenFromDataIfMissing(): void {
+        const data = this.vcsAccessTokenData();
+        if (data.type === 'participation' || this.hasValidRepositoryAccessToken()) {
+            return;
+        }
+
+        this.repositoryAccessToken.set(undefined);
+        const exerciseId = this.exerciseId();
+        switch (data.type) {
+            case 'student-repository':
+                this.loadRepositoryVcsAccessToken(exerciseId, RepositoryType.USER, undefined, data.participationId);
+                return;
+            case 'base-repository':
+                this.loadRepositoryVcsAccessToken(exerciseId, data.repositoryType);
+                return;
+            case 'auxiliary-repository':
+                this.loadRepositoryVcsAccessToken(exerciseId, RepositoryType.AUXILIARY, data.auxiliaryRepositoryId);
         }
     }
 
@@ -420,25 +435,6 @@ export class CodeButtonComponent implements OnInit {
                 this.participationTokenLoadFailed.set(true);
             },
         });
-    }
-
-    /**
-     * Mints (or reuses) the repository-scoped staff token for the repository the clone dialog currently targets: a base repository (identified by its type) or a student assignment
-     * repository (identified by its participation). Does nothing when the required identifiers (exercise id, and the participation id for a student repository) are unavailable.
-     */
-    private loadRepositoryScopedTokenForCurrentRepository() {
-        const exerciseId = this.exerciseId();
-        if (!exerciseId) {
-            return;
-        }
-        if (this.isBaseRepository()) {
-            this.loadRepositoryVcsAccessToken(exerciseId, this.repositoryType()!, this.auxiliaryRepositoryId());
-            return;
-        }
-        const participationId = this.participationId();
-        if (participationId) {
-            this.loadRepositoryVcsAccessToken(exerciseId, RepositoryType.USER, undefined, participationId);
-        }
     }
 
     /**
@@ -534,18 +530,34 @@ export class CodeButtonComponent implements OnInit {
      * detect when this reused component instance switches to a different repository, so a repository-scoped token minted for the previous repository is never reused.
      */
     private currentRepositoryIdentity(): string {
-        return [this.repositoryType(), this.repositoryUri(), this.exerciseId(), this.auxiliaryRepositoryId(), this.participationId()].join('|');
+        const data = this.vcsAccessTokenData();
+        const repositoryUri = this.repositoryUri();
+        const exerciseId = this.exerciseId();
+        switch (data.type) {
+            case 'participation':
+                return [data.type, repositoryUri, exerciseId, data.participationId].join('|');
+            case 'student-repository':
+                return [data.type, repositoryUri, exerciseId, data.participationId].join('|');
+            case 'base-repository':
+                return [data.type, repositoryUri, exerciseId, data.repositoryType].join('|');
+            case 'auxiliary-repository':
+                return [data.type, repositoryUri, exerciseId, data.auxiliaryRepositoryId].join('|');
+        }
     }
 
-    private getUsedToken(alwaysUseToken = false): string | undefined {
-        if (this.useToken() || alwaysUseToken) {
-            if (this.usesRepositoryScopedToken()) {
-                // Never embed a token cached for a different repository (exact-URI scoped); only the token for the current repository is valid.
-                return this.hasValidRepositoryAccessToken() ? this.repositoryAccessToken() : undefined;
-            }
-            return this.participationVcsAccessToken();
+    private getUsedTokenFromVcsAccessTokenData(alwaysUseToken = false): string | undefined {
+        if (!this.useToken() && !alwaysUseToken) {
+            return '';
         }
-        return '';
+
+        switch (this.vcsAccessTokenData().type) {
+            case 'participation':
+                return this.participationVcsAccessToken();
+            case 'student-repository':
+            case 'base-repository':
+            case 'auxiliary-repository':
+                return this.hasValidRepositoryAccessToken() ? this.repositoryAccessToken() : undefined;
+        }
     }
 
     /**

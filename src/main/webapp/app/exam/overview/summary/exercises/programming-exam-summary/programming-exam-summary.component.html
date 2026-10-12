@@ -9,11 +9,14 @@
                     <h1>Programming exam summary</h1>
                     <jhi-code-button
                         [smallButtons]="true"
-                        [participationId]="participation()?.id"
-                        [isOwnParticipation]="participationOwnershipForCode()"
                         [exerciseId]="exercise().id!"
                         [repositoryUri]="participation()?.repositoryUri ?? participation()?.userIndependentRepositoryUri ?? ''"
                         [routerLinkForRepositoryView]="routerLinkForRepositoryView"
+                        [vcsAccessTokenData]="{
+                            type: 'participation',
+                            participationId: participation().id!,
+                            isOwnParticipation: ownsParticipationForCodeButton(),
+                        }"
                     />
                     <br />
                     <span>
