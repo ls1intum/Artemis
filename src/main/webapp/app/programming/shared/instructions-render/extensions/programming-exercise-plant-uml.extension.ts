@@ -32,8 +32,10 @@ const testsColorRegex = /testsColor\((\s*[^()\s]+(?:[ \t]+[^()\s]+)*(\([^()]*\))
  * returns the FIRST match in DOM order, which may belong to a DIFFERENT exercise.
  * This causes: (1) wrong diagram shown in one exercise, (2) no diagram in another.
  *
- * Solution: Container IDs are scoped per exercise: "plantUml-{exerciseId}-{index}".
+ * Solution: Container IDs are scoped per exercise and per component instance: "plantUml-{exerciseId}-{instanceId}-{index}".
  * - The exerciseId distinguishes exercises from each other (set via setExerciseId before each render)
+ * - The instanceId distinguishes components that show the same exercise at the same time, e.g. the exercise details page
+ *   and the online editor sidebar (set via setInstanceId before each render)
  * - The index (0, 1, 2, ...) distinguishes multiple diagrams within the same exercise;
  *   it is derived from the array position in replaceText(), NOT from mutable singleton state
  *
@@ -53,11 +55,15 @@ export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextRepl
     private injectableElementsFoundSubject = new Subject<() => void>();
 
     // The exercise ID used to scope PlantUML container DOM IDs.
-    // Combined with the per-diagram array index to form: "plantUml-{exerciseId}-{index}".
+    // Combined with the instance ID and the per-diagram array index to form: "plantUml-{exerciseId}-{instanceId}-{index}".
     // This guarantees globally unique IDs even when multiple exercises are on the same page (exams).
     // IMPORTANT: There is intentionally NO mutable index counter on this singleton.
     // The per-diagram index comes from the array position in replaceText() to avoid shared mutable state.
     private exerciseId?: number;
+
+    // Identifies the component instance that is rendering. Two components can show the same exercise at the same time
+    // (e.g. the hidden exercise details and the online editor sidebar), so the exercise ID alone is not unique in the DOM.
+    private instanceId?: number;
 
     constructor() {
         super();
@@ -83,6 +89,15 @@ export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextRepl
      */
     public setExerciseId(exerciseId?: number): void {
         this.exerciseId = exerciseId;
+    }
+
+    /**
+     * Sets the ID of the component instance that renders the diagrams, so that two components showing the same exercise
+     * do not generate the same container IDs. Must be called together with setExerciseId before each markdown render.
+     * @param instanceId a number that is unique per rendering component instance
+     */
+    public setInstanceId(instanceId?: number): void {
+        this.instanceId = instanceId;
     }
 
     /**
@@ -131,12 +146,14 @@ export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextRepl
         // Replace test status markers.
         const plantUmls = text.match(plantUmlRegex) ?? [];
         // Assign unique container IDs to each diagram.
-        // The ID format is "plantUml-{exerciseId}-{index}" where:
+        // The ID format is "plantUml-{exerciseId}-{instanceId}-{index}" where:
         // - exerciseId: scopes IDs per exercise (prevents cross-contamination in exams)
+        // - instanceId: scopes IDs per rendering component (prevents collisions when the same exercise is rendered twice)
         // - index: the array position, distinguishes multiple diagrams within the same exercise
         // Using the array index (not a mutable counter) avoids shared singleton state bugs.
         const plantUmlsIndexed = plantUmls.map((plantUml, index) => {
-            const containerId = this.exerciseId != undefined ? `plantUml-${this.exerciseId}-${index}` : `plantUml-${index}`;
+            const scope = [this.exerciseId, this.instanceId].filter((part) => part != undefined).join('-');
+            const containerId = scope ? `plantUml-${scope}-${index}` : `plantUml-${index}`;
             return { containerId, plantUml };
         });
         // custom markdown to html rendering: replace the plantUml in the markdown with a simple <div></div> container with a unique id placeholder
