@@ -61,6 +61,9 @@ function withConsecutiveFlag(post: Post, isConsecutive: boolean): Post {
     return flagged;
 }
 
+// sub-pixel scroll positions on scaled displays must still count as "at the bottom"
+const SCROLLED_TO_BOTTOM_TOLERANCE_PX = 5;
+
 @Component({
     selector: 'jhi-conversation-messages',
     templateUrl: './conversation-messages.component.html',
@@ -117,9 +120,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     canCreateNewMessageInConversation = canCreateNewMessageInConversation;
 
-    previousScrollDistanceFromTop = 0;
-    // as set for the css class '.posting-infinite-scroll-container'
-    messagesContainerHeight = 700;
+    // whether the user was scrolled to the bottom of the message list before the latest posts were applied
+    private wasScrolledToBottom = false;
     currentPostContextFilter?: PostContextFilter;
     private readonly search$ = new Subject<string>();
     searchText = '';
@@ -439,10 +441,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      * Applies pinned message filters, loads forwarded messages and their sources, and groups posts for rendering.
      */
     setPosts(): void {
-        // Saves the current scroll position relative to the bottom.
+        // Remembers whether the user is at the bottom, so that a newly received message is scrolled into view only then.
         const content = this.content();
         if (content) {
-            this.previousScrollDistanceFromTop = content.nativeElement.scrollHeight - content.nativeElement.scrollTop;
+            const { scrollHeight, scrollTop, clientHeight } = content.nativeElement;
+            this.wasScrolledToBottom = scrollHeight - scrollTop - clientHeight <= SCROLLED_TO_BOTTOM_TOLERANCE_PX;
         }
         this.applyPinnedMessageFilter();
         this.reversePosts();
@@ -673,7 +676,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (!el) {
             return;
         }
-        if ((this.posts().length > 0 && el.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
+        if ((this.posts().length > 0 && el.scrollTop === 0 && this.page === 1) || this.wasScrolledToBottom) {
             this.scrollToBottomOfMessages();
         }
     };

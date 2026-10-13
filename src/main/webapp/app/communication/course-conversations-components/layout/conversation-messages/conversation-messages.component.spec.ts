@@ -243,6 +243,46 @@ examples.forEach((activeConversation) => {
             expect(component.content()!.nativeElement.scrollTop).toBe(component.content()!.nativeElement.scrollHeight);
         });
 
+        describe('scrolling when a message of another user arrives', () => {
+            const setScrollGeometry = (scrollTop: number) => {
+                const container = component.content()!.nativeElement;
+                // the container is 400px high (not the formerly hard-coded 700px) and holds 1000px of messages
+                Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+                Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
+                container.scrollTop = scrollTop;
+            };
+
+            it('should scroll to the bottom when the user is at the bottom, independent of the container height', () => {
+                setScrollGeometry(600);
+                const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                component.setPosts();
+                component.handleScrollOnNewMessage();
+
+                expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+            });
+
+            it('should scroll to the bottom when the user is within a few pixels of the bottom', () => {
+                setScrollGeometry(597);
+                const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                component.setPosts();
+                component.handleScrollOnNewMessage();
+
+                expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+            });
+
+            it('should not scroll when the user has scrolled up to read older messages', () => {
+                setScrollGeometry(100);
+                const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                component.setPosts();
+                component.handleScrollOnNewMessage();
+
+                expect(scrollToBottomSpy).not.toHaveBeenCalled();
+            });
+        });
+
         it('should create empty post with the correct conversation type', () => {
             const createEmptyPostForContextSpy = vi.spyOn(communicationService, 'createEmptyPostForContext').mockReturnValue(new Post());
             component.createEmptyPost();
