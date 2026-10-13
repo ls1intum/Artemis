@@ -21,6 +21,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.TeamScore;
 import de.tum.cit.aet.artemis.assessment.dto.score.ScoreDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
@@ -407,8 +408,10 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(scoreAfter.getLastRatedScore()).isEqualTo(scoreBefore.getLastRatedScore()).isNotEqualTo(100.0);
         assertThat(scoreAfter.getLastScore()).isEqualTo(scoreBefore.getLastScore()).isNotEqualTo(100.0);
         assertThat(scoreAfter.getLastModifiedDate()).as("the score of the team was not recalculated").isEqualTo(scoreBefore.getLastModifiedDate());
-        assertThat(participantScoreRepository.findAllByExercise(teamExercise)).extracting(score -> score.getParticipant().getId())
-                .as("no score was created for the student whose id is not a team id").doesNotContain(practiceParticipation.getParticipant().getId());
+        // The kind of score tells a team's score from a student's. Their participant ids must not be compared: users and teams have separate id sequences, so the id of the
+        // student can equal the id of the team by chance, and the team's own score would then look like one created for the student.
+        assertThat(participantScoreRepository.findAllByExercise(teamExercise)).as("no score was created for the student, the only score is the team's")
+                .allSatisfy(score -> assertThat(score).isInstanceOf(TeamScore.class));
     }
 
     /**
