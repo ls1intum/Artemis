@@ -114,6 +114,26 @@ describe('AnswerPostCreateEditModalComponent', () => {
         expect(onCreateSpy).toHaveBeenCalledOnce();
     });
 
+    it('should clear the editor container before emitting onCreate so that the parent can reopen the editor', () => {
+        const calls: string[] = [];
+        const mockClear = vi.fn(() => calls.push('clear'));
+        fixture.componentRef.setInput('createEditAnswerPostContainerRef', {
+            clear: mockClear,
+            createEmbeddedView: vi.fn(),
+        } as unknown as ViewContainerRef);
+        vi.spyOn(component.onCreate, 'emit').mockImplementation(() => {
+            calls.push('emit');
+        });
+        component.posting.set(communicationAnswerPostToCreateUser1);
+        fixture.detectChanges();
+        calls.length = 0;
+        component.formGroup.setValue({ content: 'New Content' });
+
+        component.confirm();
+
+        expect(calls).toEqual(['clear', 'emit']);
+    });
+
     it('should invoke communication service with updated answer post', () => {
         const communicationServiceCreateSpy = vi.spyOn(communicationService, 'updateAnswerPost');
         component.posting.set(communicationAnswerPostUser2);
