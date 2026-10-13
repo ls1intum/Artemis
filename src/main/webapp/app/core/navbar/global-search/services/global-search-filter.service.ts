@@ -501,56 +501,23 @@ export class GlobalSearchFilterService {
     }
 
     /**
-     * Derives the course + type tokens implied by a course-scoped URL (student `/courses/:id` or instructor
-     * `/course-management/:id`, optionally with a tab like `exercises`). Returns undefined when the URL is not
-     * course-scoped, so the caller leaves the filters untouched.
+     * Derives the course token implied by a course-scoped URL (student `/courses/:id` or instructor
+     * `/course-management/:id`). Returns undefined when the URL is not course-scoped, so the caller leaves the filters
+     * untouched.
+     *
+     * The current tab (for example `exercises`) adds no type token: a search started from the exercises tab is often
+     * about a lecture or a post, and a type chip would hide those results until the user removed it.
      */
     deriveContextTokens(url: string): FilterToken[] | undefined {
         const match = url.match(GlobalSearchFilterService.COURSE_URL_PATTERN);
         if (!match) {
             return undefined;
         }
-        const courseId = Number(match[1]);
-        const tabSegment = match[2];
-        const newTokens: FilterToken[] = [{ facet: 'course', value: String(courseId) }];
-        if (tabSegment) {
-            const filterTags = GlobalSearchFilterService.ROUTE_TO_FILTER_TAG[tabSegment];
-            const facetValue = filterTags ? this.typeFacetForTags(filterTags) : undefined;
-            if (facetValue) {
-                newTokens.push({ facet: 'type', value: facetValue });
-            }
-        }
-        return newTokens;
+        return [{ facet: 'course', value: match[1] }];
     }
 
     /**
-     * Resolves the `type` facet value whose server types match the given tags exactly
-     * (e.g. `['channel', 'post', 'answer_post']` -> `communication`).
+     * Matches course URLs in both student view (`/courses/:courseId`) and instructor view (`/course-management/:courseId`).
      */
-    private typeFacetForTags(tags: SearchEntityType[]): TypeFacetValue | undefined {
-        const target = new Set(tags);
-        return (Object.keys(TYPE_FACETS) as TypeFacetValue[]).find((value) => {
-            const serverTypes = TYPE_FACETS[value].serverTypes;
-            return serverTypes.length === target.size && serverTypes.every((type) => target.has(type));
-        });
-    }
-
-    /**
-     * Matches course URLs in both student view (`/courses/:courseId`) and instructor view (`/course-management/:courseId`),
-     * optionally capturing a tab segment (e.g. `exercises`, `lectures`).
-     */
-    private static readonly COURSE_URL_PATTERN = /\/(?:courses|course-management)\/(\d+)(?:\/([^/?#]+))?/;
-
-    /**
-     * Maps route segments (e.g. 'exercises') to search filter tags (e.g. ['exercise']).
-     * Includes both student view segments (e.g. 'faq') and instructor view segments (e.g. 'faqs').
-     */
-    private static readonly ROUTE_TO_FILTER_TAG: Record<string, SearchEntityType[]> = {
-        exercises: ['exercise'],
-        lectures: ['lecture', 'lecture_unit'],
-        exams: ['exam'],
-        communication: ['channel', 'post', 'answer_post'],
-        faq: ['faq'],
-        faqs: ['faq'],
-    };
+    private static readonly COURSE_URL_PATTERN = /\/(?:courses|course-management)\/(\d+)/;
 }
