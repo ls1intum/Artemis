@@ -26,11 +26,19 @@ export class UrlAction extends TextStyleTextEditorAction {
         super(UrlAction.ID, 'artemisApp.multipleChoiceQuestion.editor.link', faLink, undefined);
     }
 
+    /**
+     * Registers the action with the given editor and adds a paste interceptor that turns the selected text into a link when a URL is pasted over it.
+     * @param editor The editor to register the action in.
+     * @param translateService The translation service to use for translating the action label.
+     */
     override register(editor: TextEditor, translateService: TranslateService) {
         super.register(editor, translateService);
         this.disposablePasteInterceptor = editor.addPasteInterceptor((pastedText) => this.wrapSelectionWithPastedUrl(editor, pastedText));
     }
 
+    /**
+     * Disposes the action and removes the paste interceptor from the editor it was registered in.
+     */
     override dispose() {
         super.dispose();
         this.disposablePasteInterceptor?.dispose();
