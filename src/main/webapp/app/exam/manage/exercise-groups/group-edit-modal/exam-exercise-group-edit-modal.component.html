@@ -11,6 +11,9 @@
                 (ngModelChange)="draftTitle.set($event)"
                 [tumAetUiInputInvalid]="!isTitleValid()"
             />
+            @if (titleErrorKey(); as errorKey) {
+                <tumaet-ui-message severity="error" class="mt-1" data-testid="group-title-error"><span [jhiTranslate]="errorKey"></span></tumaet-ui-message>
+            }
         </div>
         <div class="flex items-center gap-2">
             <tumaet-ui-checkbox inputId="exam-group-edit-mandatory" [ngModel]="draftIsMandatory()" (ngModelChange)="draftIsMandatory.set($event)" />
