@@ -262,7 +262,7 @@ public class UserCreationService {
      */
     @NonNull
     public User updateUser(@NonNull User user, ManagedUserVM updatedUserDTO) {
-        updateEmailIfChanged(user, updatedUserDTO.getEmail());
+        boolean emailChangedByAdministrator = updateEmailIfChanged(user, updatedUserDTO.getEmail());
         user.setLogin(updatedUserDTO.getLogin().toLowerCase(Locale.ENGLISH));
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
@@ -316,6 +316,11 @@ public class UserCreationService {
         log.debug("Changed Information for User: {}", user);
 
         User savedUser = saveUser(user);
+        if (emailChangedByAdministrator || isPasswordBeingChanged) {
+            // The administrator has decided about the address or taken over the password, so a request the account made earlier no
+            // longer describes what it should become, and must not be confirmable afterwards.
+            userRecoveryKeyService.clearPendingEmailChange(savedUser.getId());
+        }
         if (credentialsChanged) {
             // Stops sessions established before this change from being extended any further. Stamped after the save so it
             // is keyed on a persisted id, and outside the entity so the timestamp is not carried on every user load.

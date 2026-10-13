@@ -132,6 +132,39 @@ An account that is not activated within `registration.cleanup-time-minutes` (def
 activated, so the timer applies only to self-registration — no other provisioning path schedules it.
 The activation mail states this deadline in minutes, or in hours when the value is a whole number of hours.
 
+### Changing the email address
+
+The email address is where a password reset goes, so changing it must not be possible for someone who only holds a session of the
+account. When a user with an internal account changes the address in the settings, Artemis therefore does not apply it. It stores a
+request and mails one confirmation link to the **current** address and one to the **new** address. The address changes once the owners
+of both addresses have followed their link. Confirming only from the new address changes nothing, because that mailbox is the one an
+intruder would choose.
+
+- A request is valid for 24 hours. The settings page shows what is pending and offers to resend the mails or to cancel the request.
+  At most one request is pending per account, and another one, or a resend, is accepted one minute after the last.
+- Anything that ends an intrusion also cancels a pending request: a completed password reset, a password change, an administrator
+  changing the password or the address, a deactivation and a deletion.
+- The previous address is told when the change has been applied, as before.
+- `allowed-email-pattern` applies to the new address, as it does at registration. The address is checked again when the change is
+  applied.
+- Without a configured mail server (`jhipster.mail.from` left at its default) nothing could be confirmed, so users cannot change
+  their address themselves and the settings field is disabled. An administrator can still change it in the user management, which
+  is also the way out for a user whose old mailbox no longer exists.
+- Accounts managed by an external provider (LDAP, SAML2 or OIDC) are not affected: their address comes from the provider.
+
+### Sessions and new credentials
+
+A password reset or change, a deactivation and an administrator setting a password record the moment the credentials changed.
+Tokens that are already issued cannot be revoked, so the session in use before that moment would otherwise keep working until its
+token expires, and could use that time to add a passkey, an SSH key or an access token, each of which outlives the password reset.
+Artemis therefore compares the start of the session, the `iat` claim of its token, to that moment before it creates any of these
+credentials, and refuses a session that started earlier with `401`. The client then asks the user to sign in again. The same check
+applies to the repository access token for course staff and to turning a session into a tool token.
+
+The check is made only when a credential is created, never on ordinary requests, so it adds no database access to them. It does
+not end the read access of an older session, which stays valid until its token expires, and a side effect is that a user who has
+just changed their own password signs in again before adding a new SSH key or passkey.
+
 ### Deactivation versus deletion
 
 - **Deactivation** keeps the account and its data but refuses authentication. It also revokes the

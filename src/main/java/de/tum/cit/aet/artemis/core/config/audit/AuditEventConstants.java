@@ -59,6 +59,13 @@ public class AuditEventConstants {
     /** A user changed the e-mail address on their own account. */
     public static final String ACCOUNT_EMAIL_CHANGED = "ACCOUNT_EMAIL_CHANGED";
 
+    /**
+     * A user asked to change the e-mail address on their own account. The address changes only once both the current and the new
+     * address have confirmed, which is then recorded as {@link #ACCOUNT_EMAIL_CHANGED}. A request that is never confirmed leaves only
+     * this record, which is what shows an attempt.
+     */
+    public static final String ACCOUNT_EMAIL_CHANGE_REQUESTED = "ACCOUNT_EMAIL_CHANGE_REQUESTED";
+
     /** A new account was created through self-registration. */
     public static final String ACCOUNT_REGISTERED = "ACCOUNT_REGISTERED";
 
@@ -106,8 +113,8 @@ public class AuditEventConstants {
      * See {@link #GENERAL_EVENT_TYPES} on the relationship to the type lists in {@code 20260803140000_changelog.xml}.
      */
     public static final Set<String> SECURITY_EVENT_TYPES = Set.of(PASSWORD_RESET_REQUESTED, PASSWORD_RESET_REQUEST_REJECTED, PASSWORD_RESET_COMPLETED, ACCOUNT_EMAIL_CHANGED,
-            ACCOUNT_REGISTERED, SAML2_ACCOUNT_CREATE, AUTHENTICATION_SWITCH, Constants.CHANGE_OWN_PASSWORD, Constants.COMPLETE_PASSWORD_RESET, Constants.ADMIN_CHANGE_USER_PASSWORD,
-            Constants.REVOKE_OWN_CREDENTIALS, Constants.ACTIVATE_USER, Constants.DEACTIVATE_USER);
+            ACCOUNT_EMAIL_CHANGE_REQUESTED, ACCOUNT_REGISTERED, SAML2_ACCOUNT_CREATE, AUTHENTICATION_SWITCH, Constants.CHANGE_OWN_PASSWORD, Constants.COMPLETE_PASSWORD_RESET,
+            Constants.ADMIN_CHANGE_USER_PASSWORD, Constants.REVOKE_OWN_CREDENTIALS, Constants.ACTIVATE_USER, Constants.DEACTIVATE_USER);
 
     /**
      * Utility class, should not be instantiated.

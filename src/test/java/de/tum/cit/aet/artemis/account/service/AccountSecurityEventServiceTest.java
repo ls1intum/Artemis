@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.account.service;
 
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.ACCOUNT_EMAIL_CHANGED;
+import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.ACCOUNT_EMAIL_CHANGE_REQUESTED;
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.ACCOUNT_REGISTERED;
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.AUTHENTICATION_SUCCESS;
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.PASSWORD_RESET_COMPLETED;
@@ -153,6 +154,18 @@ class AccountSecurityEventServiceTest {
         verify(mailSendingService).buildAndSendAsync(any(), anyString(), anyString(), anyMap());
     }
 
+    /**
+     * A request that is never confirmed leaves nothing else behind, so this record is what shows that someone asked. The confirmation mail to the
+     * current address is already the notification, so no second message goes out from here.
+     */
+    @Test
+    void testEmailChangeRequestedIsAuditedWithoutASecondMail() {
+        service.recordEmailChangeRequested(user);
+
+        assertThat(capturedAuditEvent().getType()).isEqualTo(ACCOUNT_EMAIL_CHANGE_REQUESTED);
+        verify(mailSendingService, never()).buildAndSendAsync(any(), anyString(), anyString(), anyMap());
+    }
+
     @Test
     void testMailFailureDoesNotBreakTheAccountOperation() {
         doThrow(new RuntimeException("smtp down")).when(mailSendingService).buildAndSendAsync(any(), anyString(), anyString(), anyMap());
@@ -169,7 +182,8 @@ class AccountSecurityEventServiceTest {
         // sets are asserted in AuditEventTypeClassifierTest; here the point is that this service's own events are covered.
         // PASSWORD_RESET_COMPLETED is no longer emitted - passwordChanged(..., RESET) records a completed reset instead -
         // but it stays in the list so rows written by an earlier build of this branch keep their security retention.
-        for (String emittedType : List.of(PASSWORD_RESET_REQUESTED, PASSWORD_RESET_REQUEST_REJECTED, PASSWORD_RESET_COMPLETED, ACCOUNT_EMAIL_CHANGED, ACCOUNT_REGISTERED)) {
+        for (String emittedType : List.of(PASSWORD_RESET_REQUESTED, PASSWORD_RESET_REQUEST_REJECTED, PASSWORD_RESET_COMPLETED, ACCOUNT_EMAIL_CHANGED,
+                ACCOUNT_EMAIL_CHANGE_REQUESTED, ACCOUNT_REGISTERED)) {
             assertThat(AuditEventTypeClassifier.classify(emittedType)).as("%s must be routed to the security audit log", emittedType).isEqualTo(AuditLogType.SECURITY);
             assertThat(SECURITY_EVENT_TYPES).contains(emittedType);
         }

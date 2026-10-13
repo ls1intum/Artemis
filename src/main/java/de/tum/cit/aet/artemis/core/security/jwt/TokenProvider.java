@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.security.jwt;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -62,6 +63,14 @@ public class TokenProvider {
      * it had already produced from being extended.
      */
     public static final String PASSKEY_CREDENTIAL_ID = "passkey-credential-id";
+
+    /**
+     * Key in the details of a request authentication under which the moment the session was originally established is
+     * kept, as an {@link Instant}. It is the token's {@code iat} claim, which silent rotation preserves, so it identifies
+     * the login rather than the latest rotation. Operations that create a credential compare it to the time the account's
+     * credentials last changed, see {@code SessionFreshnessService}.
+     */
+    public static final String SESSION_STARTED_AT = "session-started-at";
 
     private static final String TOOLS_KEY = "tools";
 
@@ -283,6 +292,10 @@ public class TokenProvider {
         String passkeyCredentialId = claims.get(PASSKEY_CREDENTIAL_ID, String.class);
         if (passkeyCredentialId != null) {
             details.put(PASSKEY_CREDENTIAL_ID, passkeyCredentialId);
+        }
+        Date issuedAt = claims.getIssuedAt();
+        if (issuedAt != null) {
+            details.put(SESSION_STARTED_AT, issuedAt.toInstant());
         }
         authentication.setDetails(Map.copyOf(details));
         return authentication;
