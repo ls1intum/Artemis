@@ -22,7 +22,7 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { DomainType, FileType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, DomainType, FileType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { problemStatement } from 'test/helpers/sample/problemStatement.json';
@@ -40,6 +40,9 @@ import { DomainService } from 'app/programming/shared/code-editor/services/code-
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
+import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
@@ -230,6 +233,47 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id);
         expect(comp.loadingState()).toBe(comp.LOADING_STATE.INITIALIZING);
     };
+
+    it('preserves real editor files after remote invalidation blocks a repository switch, but allows saved uncommitted navigation', async () => {
+        const course = new Course();
+        course.id = 1;
+        const exercise = new ProgrammingExercise(course, undefined);
+        exercise.id = 1;
+        exercise.problemStatement = problemStatement;
+        exercise.templateParticipation!.id = 3;
+        exercise.templateParticipation!.repositoryUri = 'template';
+        exercise.solutionParticipation!.id = 4;
+        exercise.solutionParticipation!.repositoryUri = 'solution';
+        initContainer(exercise);
+        findWithParticipationsSubject.next({ body: exercise });
+        containerFixture.detectChanges();
+        const editor = comp.codeEditorContainer()!;
+        editor.onFileContentChange({ fileName: 'App.java', text: 'unsaved local code' });
+        const initialize = vi.spyOn(editor, 'initializeProperties');
+        const reset = vi.spyOn(TestBed.inject(CodeEditorFileSyncService), 'reset');
+        const setDomain = vi.spyOn(domainService, 'setDomain');
+
+        containerFixture.debugElement.injector.get(HyperionGenerationActivityFacade).exerciseContentsInvalidated.next('saved');
+        containerFixture.detectChanges();
+        expect(editor.editable()).toBe(false);
+
+        const switched = await comp.selectSolutionParticipation();
+        comp.saveChangesAndSelectDomain([DomainType.PARTICIPATION, exercise.solutionParticipation!]);
+
+        expect(editor.unsavedFiles).toEqual({ 'App.java': 'unsaved local code' });
+        expect(switched).toBe(false);
+        expect(navigateSpy).not.toHaveBeenCalled();
+        expect(setDomain).not.toHaveBeenCalled();
+        expect(initialize).not.toHaveBeenCalled();
+        expect(reset).not.toHaveBeenCalled();
+        expect(comp.selectedRepository).toBe(RepositoryType.TEMPLATE);
+
+        editor.unsavedFiles = {};
+        editor.commitState = CommitState.UNCOMMITTED_CHANGES;
+        await comp.selectSolutionParticipation();
+
+        expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.SOLUTION, 4], expect.any(Object));
+    });
 
     it('should load the exercise and select the template participation if no participation id is provided', () => {
         vi.resetModules();

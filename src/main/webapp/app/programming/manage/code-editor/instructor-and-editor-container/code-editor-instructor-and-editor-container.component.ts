@@ -64,7 +64,7 @@ import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generat
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { AdaptFinding, getFirstCommentByCreatedDateThenId, selectedThreadsFindings } from 'app/exercise/review/review-comment-utils';
+import { AdaptFinding, getFirstCommentByCreatedDateThenId, mapRepositoryToThreadLocationType, selectedThreadsFindings } from 'app/exercise/review/review-comment-utils';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
@@ -702,24 +702,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             });
     }
 
-    override selectTemplateParticipation(): Promise<boolean> {
-        return super.selectTemplateParticipation();
-    }
-
-    override selectSolutionParticipation(): Promise<boolean> {
-        return super.selectSolutionParticipation();
-    }
-
-    override selectAssignmentParticipation(): Promise<boolean> {
-        return super.selectAssignmentParticipation();
-    }
-
-    override selectTestRepository(): Promise<boolean> {
-        return super.selectTestRepository();
-    }
-
-    override selectAuxiliaryRepository(repositoryId: number): Promise<boolean> {
-        return super.selectAuxiliaryRepository(repositoryId);
+    protected override canSwitchRepository(): boolean {
+        const editor = this.codeEditorContainer();
+        if (this.isProblemStatementEditingLocked() && editor && (!editor.canDeactivate() || editor.hasReviewCommentDrafts())) {
+            this.alertService.warning('artemisApp.hyperion.generationActivity.repositorySwitchBlockedByLocalEdits');
+            return false;
+        }
+        return true;
     }
 
     override ngOnDestroy() {
@@ -1030,6 +1019,15 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (!location.filePath) {
             return;
         }
+
+        const selectedRepository = this.codeEditorContainer()?.selectedRepository();
+        const switchesRepository =
+            selectedRepository === undefined ||
+            location.targetType !== mapRepositoryToThreadLocationType(selectedRepository) ||
+            (location.targetType === CommentThreadLocationType.AUXILIARY_REPO &&
+                location.auxiliaryRepositoryId !== undefined &&
+                this.selectedRepositoryId !== location.auxiliaryRepositoryId);
+        if (switchesRepository && !this.canSwitchRepository()) return;
 
         this.lineJumpOnFileLoad = location.lineNumber;
         this.fileToJumpOn = location.filePath;
