@@ -121,6 +121,11 @@ artemis:
             # Tests exercise these jobs explicitly; event-driven synchronization remains enabled.
             initial-delay: P365D
 
+    # Metis: tests never start the generation poller; they call MetisGenerationDispatchService.dispatch(now) directly
+    metis:
+        generation:
+            scheduler-enabled: false
+
     # Theia configuration for tests
     theia:
         enabled: true

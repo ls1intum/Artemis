@@ -198,6 +198,11 @@ artemis:
         #     max-inputs-per-request: 32             # Chunks sent in one embedding request (at most 256)
         #     background-max-rows-per-minute: 600    # Background index writes per minute
         #     background-max-requests-per-minute: 30 # Background embedding requests per minute
+    # Metis (development only): a local Ollama server (ollama pull qwen3-coder:30b); production has no default endpoint
+    metis:
+        llm:
+            base-url: http://localhost:11434/v1
+            model: qwen3-coder:30b
 
 # Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
 sentry:
