@@ -214,6 +214,24 @@ management:
                         Authorization: 'Basic <base64(public_key:secret_key)>'
 ```
 
+## Configure the quiz question pool
+
+Hyperion can pre-generate a pool of multiple-choice questions per course and competency, judged by a second model call before an instructor reviews them. The pool uses the default chat model configured above unless you name other models here. Instructors do not choose models; they only decide how many questions the pool holds per competency.
+
+```yaml
+artemis:
+  hyperion:
+    quiz-pool:
+      generator-model: # model (Azure: deployment name) that generates pool questions; blank uses the default chat model
+      judge-model: # model (Azure: deployment name) that judges generated questions; blank uses the default chat model
+      question-types: single-choice,multiple-choice # cells of the pool per competency and difficulty
+      difficulties: easy,medium,hard
+      generation-batch-size: 8 # questions requested per generation call
+      stale-claim-minutes: 30 # a claim older than this counts as abandoned by a dead node and is released at the next build
+```
+
+Both models must be reachable through the configured Spring AI endpoint. On Azure OpenAI / Microsoft Foundry a model name is the deployment name. Every generation and filter call is recorded in the LLM token usage tracking, so add the two models to `artemis.llm.model-costs` if you want their cost reported.
+
 ## Verifying the integration
 
 1. Restart the Artemis server and confirm that `hyperion` appears in `activeModuleFeatures` on `/management/info`.
