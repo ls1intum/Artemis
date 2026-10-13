@@ -21,6 +21,6 @@ import de.tum.cit.aet.artemis.metis.domain.MetisCheckStatus;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record MetisStudentCheckDTO(@NotNull MetisCheckStatus status, @Nullable ZonedDateTime windowStart, @Nullable ZonedDateTime windowEnd, @Nullable String tutorialGroupTitle,
-        int mainQuestionCount, int likertScalePoints, @Nullable MetisQuestionDTO currentQuestion, @JsonInclude @NotNull List<MetisQuestionDTO> answeredQuestions,
-        boolean ratingsVisible, @Nullable String failureReason) {
+        @NotNull int mainQuestionCount, @NotNull int likertScalePoints, @Nullable MetisQuestionDTO currentQuestion, @JsonInclude @NotNull List<MetisQuestionDTO> answeredQuestions,
+        @NotNull boolean ratingsVisible, @Nullable String failureReason) {
 }

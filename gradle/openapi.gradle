@@ -31,7 +31,7 @@
             jvmArgs = [
                 "-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,theia,dev,localci,localvc",
                 "-Dartemis.lti.enabled=true",
-                "-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web",
+                "-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web,de.tum.cit.aet.artemis.metis.web",
                 // Legacy URL aliases stay mapped in Java for old clients (canonical path first, legacy second), but are kept out
                 // of the specification: in the generated client each alias would become a name/name_ method pair.
                 "-Dspringdoc.paths-to-exclude=/api/quiz/quiz-exercises/*/start-batch,/api/tutorialgroup/courses/*/tutorial-groups-configuration,/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",
@@ -40,6 +40,8 @@
                 // Controller introspection only; no generation job is admitted by this documentation process.
                 "-Dartemis.aiworker.enabled=true",
                 "-Dartemis.aiworker.ids=openapi-docs",
+                // application-core.yml switches Metis off after application-artemis.yml switched it on, so only a system property enables it here
+                "-Dartemis.metis.enabled=true",
                 "-Dartemis.weaviate.enabled=true",
                 "-Dartemis.openapi-docs-generation=true",
                 "-Dartemis.iris.enabled=true",

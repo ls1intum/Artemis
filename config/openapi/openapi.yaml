@@ -352,6 +352,104 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizSubmissionBeforeEvaluation'}
+  /api/metis/exercises/{exerciseId}/questions/{questionId}/text:
+    put:
+      tags: [metis-question-review]
+      operationId: updateQuestionText
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: questionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/MetisQuestionTextRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MetisQuestion'}
+  /api/metis/exercises/{exerciseId}/group-windows:
+    get:
+      tags: [metis-exercise-config]
+      operationId: getGroupWindows
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/MetisGroupWindow'}
+    put:
+      tags: [metis-exercise-config]
+      operationId: updateGroupWindows
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: '#/components/schemas/MetisGroupWindow'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/MetisGroupWindow'}
+  /api/metis/exercises/{exerciseId}/config:
+    get:
+      tags: [metis-exercise-config]
+      operationId: getConfig
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MetisExerciseConfig'}
+    put:
+      tags: [metis-exercise-config]
+      operationId: updateConfig
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/MetisExerciseConfig'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MetisExerciseConfig'}
   /api/hyperion/courses/{courseId}/quiz-question-pool/settings:
     get:
       tags: [hyperion-quiz-question-pool]
@@ -862,6 +960,109 @@ paths:
         required: true
       responses:
         '200': {description: OK}
+  /api/metis/exercises/{exerciseId}/questions/{questionId}/regenerate:
+    post:
+      tags: [metis-question-review]
+      operationId: regenerateQuestion
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: questionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MetisQuestion'}
+  /api/metis/exercises/{exerciseId}/questions/{questionId}/approve:
+    post:
+      tags: [metis-question-review]
+      operationId: approveQuestion
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: questionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MetisQuestion'}
+  /api/metis/exercises/{exerciseId}/questions/approve-all:
+    post:
+      tags: [metis-question-review]
+      operationId: approveAllQuestions
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/metis/exercises/{exerciseId}/checks/generate:
+    post:
+      tags: [metis-dashboard]
+      operationId: generateChecks
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MetisGenerateResult'}
+  /api/metis/exercises/{exerciseId}/check/start:
+    post:
+      tags: [metis-student-check]
+      operationId: startOwnCheck
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MetisStudentCheck'}
+  /api/metis/exercises/{exerciseId}/check/questions/{questionId}/answer:
+    post:
+      tags: [metis-student-check]
+      operationId: submitAnswer
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: questionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/MetisAnswerRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MetisStudentCheck'}
   /api/hyperion/programming-exercises/{exerciseId}/generation/variants:
     post:
       tags: [hyperion-programming-variant]
@@ -1819,6 +2020,83 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/LeaderboardWithCurrentUserEntry'}
+  /api/metis/exercises/{exerciseId}/status:
+    get:
+      tags: [metis-student-check]
+      operationId: getExerciseStatus
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MetisExerciseStatus'}
+  /api/metis/exercises/{exerciseId}/export:
+    get:
+      tags: [metis-dashboard]
+      operationId: exportCsv
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            text/csv:
+              schema: {type: string, format: binary}
+  /api/metis/exercises/{exerciseId}/dashboard:
+    get:
+      tags: [metis-dashboard]
+      operationId: getDashboard
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MetisDashboard'}
+  /api/metis/exercises/{exerciseId}/check:
+    get:
+      tags: [metis-student-check]
+      operationId: getOwnCheck
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MetisStudentCheck'}
+  /api/metis/courses/{courseId}/tutorial-groups:
+    get:
+      tags: [metis-exercise-config]
+      operationId: getTutorialGroups
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/MetisTutorialGroup'}
   /api/hyperion/variant-jobs:
     get:
       tags: [hyperion-exercise-variant]
@@ -2957,6 +3235,10 @@ components:
         currentUserEntry: {$ref: '#/components/schemas/LeaderboardEntry'}
         currentTime: {type: string, format: date-time}
       required: [currentTime, currentUserEntry, leaderboardEntries]
+    MetisAnswerRequest:
+      type: object
+      properties:
+        answerText: {type: string}
     QuizExerciseForCourse:
       type: object
       properties:
@@ -3078,6 +3360,12 @@ components:
         typeCounts:
           type: array
           items: {$ref: '#/components/schemas/IngestionTypeCount'}
+    MetisGenerateResult:
+      type: object
+      properties:
+        createdChecks: {type: integer, format: int32}
+        requeuedChecks: {type: integer, format: int32}
+      required: [createdChecks, requeuedChecks]
     QuizQuestionBulkRefinementRequest:
       type: object
       description: Request to refine multiple quiz questions at once using a single
@@ -3170,6 +3458,11 @@ components:
         location: {type: string, maxLength: 2000, minLength: 1}
         attendance: {type: integer, format: int32}
       required: [date, endTime, location, startTime]
+    MetisQuestionTextRequest:
+      type: object
+      properties:
+        questionText: {type: string, maxLength: 2000, minLength: 1}
+      required: [questionText]
     MultipleChoiceQuestionCreate:
       required: [answerOptions, points, scoringType, singleChoice, title, type]
       type: object
@@ -3266,6 +3559,11 @@ components:
         properties:
           type: object
           additionalProperties: {}
+    MetisExerciseStatus:
+      type: object
+      properties:
+        enabled: {type: boolean}
+      required: [enabled]
     ExerciseGenerationRetainedArtifacts:
       type: object
       description: The current bounded, read-only generated candidate, also retained
@@ -3438,6 +3736,26 @@ components:
         problemStatementText: {type: string, description: Original problem statement
             text to be improved, minLength: 1}
       required: [problemStatementText]
+    MetisExerciseConfig:
+      type: object
+      properties:
+        exerciseId: {type: integer, format: int64}
+        enabled: {type: boolean}
+        windowStart: {type: string, format: date-time}
+        windowEnd: {type: string, format: date-time}
+        mainQuestionCount: {type: integer, format: int32, maximum: 5, minimum: 1}
+        maxFollowUpsPerQuestion: {type: integer, format: int32, maximum: 3, minimum: 0}
+        minSecondsPerQuestion: {type: integer, format: int32, maximum: 3600, minimum: 30}
+        maxSecondsPerQuestion: {type: integer, format: int32, maximum: 3600, minimum: 30}
+        answerLength: {type: integer, format: int32, maximum: 5, minimum: 1}
+        complexity: {type: integer, format: int32, maximum: 5, minimum: 1}
+        likertScalePoints: {type: integer, format: int32, maximum: 7, minimum: 5}
+        followUpThreshold: {type: integer, format: int32, maximum: 6, minimum: 1}
+        reviewRequired: {type: boolean}
+        instructorHint: {type: string, maxLength: 2000, minLength: 0}
+      required: [answerLength, complexity, enabled, exerciseId, followUpThreshold,
+        likertScalePoints, mainQuestionCount, maxFollowUpsPerQuestion, maxSecondsPerQuestion,
+        minSecondsPerQuestion, reviewRequired]
     DragAndDropSubmittedAnswerAfterEvaluation:
       required: [type]
       type: object
@@ -3453,6 +3771,20 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    MetisDashboardSummary:
+      type: object
+      properties:
+        participants: {type: integer, format: int32}
+        completed: {type: integer, format: int32}
+        inProgress: {type: integer, format: int32}
+        notStarted: {type: integer, format: int32}
+        skippedOrFailed: {type: integer, format: int32}
+        awaitingReview: {type: integer, format: int32}
+        averageScore: {type: number, format: double}
+        followUps: {type: integer, format: int32}
+        windowEnd: {type: string, format: date-time}
+      required: [awaitingReview, completed, followUps, inProgress, notStarted, participants,
+        skippedOrFailed]
     QuizQuestionStatistic:
       discriminator:
         propertyName: type
@@ -3550,6 +3882,26 @@ components:
           items: {$ref: '#/components/schemas/QuizQuestionReEvaluate'}
           minItems: 1
       required: [includedInOverallScore, quizQuestions, randomizeQuestionOrder, title]
+    MetisQuestion:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        checkId: {type: integer, format: int64}
+        questionOrder: {type: integer, format: int32}
+        parentQuestionId: {type: integer, format: int64}
+        focusFilePath: {type: string}
+        focusFileChangedLines: {type: integer, format: int32}
+        questionText: {type: string}
+        timeLimitSeconds: {type: integer, format: int32}
+        regenerationCount: {type: integer, format: int32}
+        approvedAt: {type: string, format: date-time}
+        shownAt: {type: string, format: date-time}
+        answerText: {type: string}
+        answeredAt: {type: string, format: date-time}
+        llmScore: {type: integer, format: int32}
+        llmRationale: {type: string}
+        llmRatedAt: {type: string, format: date-time}
+      required: [checkId, id, questionOrder, questionText, regenerationCount, timeLimitSeconds]
     RewriteFaqResponse:
       type: object
       description: Response containing rewritten FAQ
@@ -3774,6 +4126,14 @@ components:
         points: {type: number, format: double}
         ratedCounter: {type: integer, format: int32}
         unRatedCounter: {type: integer, format: int32}
+    MetisDashboard:
+      type: object
+      properties:
+        summary: {$ref: '#/components/schemas/MetisDashboardSummary'}
+        rows:
+          type: array
+          items: {$ref: '#/components/schemas/MetisDashboardRow'}
+      required: [rows, summary]
     ExerciseGenerationCapabilities:
       type: object
       properties:
@@ -4289,6 +4649,18 @@ components:
         improved: {type: boolean, description: Whether the text was actually improved,
           example: true}
       required: [improved, rewrittenText]
+    MetisDashboardRow:
+      type: object
+      properties:
+        participationId: {type: integer, format: int64}
+        studentName: {type: string}
+        studentLogin: {type: string}
+        tutorialGroupTitle: {type: string}
+        check: {$ref: '#/components/schemas/MetisCheck'}
+        questions:
+          type: array
+          items: {$ref: '#/components/schemas/MetisQuestion'}
+      required: [check, participationId, questions, studentLogin, studentName]
     QuizSubmissionAfterEvaluation:
       type: object
       properties:
@@ -4822,6 +5194,23 @@ components:
           items: {$ref: '#/components/schemas/QuestionStatistics'}
         participantsRated: {type: integer, format: int32}
         participantsUnrated: {type: integer, format: int32}
+    MetisCheck:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        participationId: {type: integer, format: int64}
+        status:
+          type: string
+          enum: [PENDING, GENERATING, IN_REVIEW, READY, IN_PROGRESS, COMPLETED, FAILED,
+            SKIPPED]
+        commitHash: {type: string}
+        llmModel: {type: string}
+        promptVersion: {type: string}
+        failureReason: {type: string}
+        generatedAt: {type: string, format: date-time}
+        startedAt: {type: string, format: date-time}
+        completedAt: {type: string, format: date-time}
+      required: [id, participationId, status]
     QuizPointStatistic:
       type: object
       properties:
@@ -5046,6 +5435,26 @@ components:
         invalid: {type: boolean}
         solution: {$ref: '#/components/schemas/ShortAnswerSolution'}
         spot: {$ref: '#/components/schemas/ShortAnswerSpot'}
+    MetisStudentCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [PENDING, GENERATING, IN_REVIEW, READY, IN_PROGRESS, COMPLETED, FAILED,
+            SKIPPED]
+        windowStart: {type: string, format: date-time}
+        windowEnd: {type: string, format: date-time}
+        tutorialGroupTitle: {type: string}
+        mainQuestionCount: {type: integer, format: int32}
+        likertScalePoints: {type: integer, format: int32}
+        currentQuestion: {$ref: '#/components/schemas/MetisQuestion'}
+        answeredQuestions:
+          type: array
+          items: {$ref: '#/components/schemas/MetisQuestion'}
+        ratingsVisible: {type: boolean}
+        failureReason: {type: string}
+      required: [answeredQuestions, likertScalePoints, mainQuestionCount, ratingsVisible,
+        status]
     ShortAnswerMappingReEvaluate:
       type: object
       properties:
@@ -5249,6 +5658,12 @@ components:
             (1-indexed)}
         endLine: {type: integer, format: int32, description: 'Ending line number (1-indexed,
             inclusive)'}
+    MetisTutorialGroup:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+      required: [id, title]
     SubmittedAnswerBeforeEvaluation:
       discriminator:
         propertyName: type
@@ -5383,6 +5798,15 @@ components:
           enum: [EXISTING_GROUP, NEW_GROUP, STANDALONE, SAME_EXAM_GROUP]
         existingGroupId: {type: integer, format: int64}
         newGroup: {$ref: '#/components/schemas/CreateExerciseVariantGroup'}
+    MetisGroupWindow:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exerciseId: {type: integer, format: int64}
+        tutorialGroupId: {type: integer, format: int64}
+        windowStart: {type: string, format: date-time}
+        windowEnd: {type: string, format: date-time}
+      required: [tutorialGroupId, windowEnd, windowStart]
     StudentQuizParticipationWithQuestions:
       required: [quizQuestionsType]
       type: object
