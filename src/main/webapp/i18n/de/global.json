@@ -46,6 +46,8 @@
         "search": {
             "title": "Suchen",
             "placeholder": "Suchen oder Frage stellen...",
+            "contentHitsRow": "Folien & Videos: {{ count }} Treffer in {{ lectures }}",
+            "contentHitsRowAction": "Anzeigen",
             "showMoreResults": "Mehr Ergebnisse anzeigen",
             "noResultsFound": "Keine Ergebnisse gefunden",
             "searchPlaceholder": "Suche...",
@@ -106,7 +108,8 @@
                     "faq": "FAQ",
                     "channel": "Kanal",
                     "course": "Kurs",
-                    "message": "Nachricht"
+                    "message": "Nachricht",
+                    "page": "Seite"
                 }
             },
             "comingSoon": "Demnächst verfügbar",
