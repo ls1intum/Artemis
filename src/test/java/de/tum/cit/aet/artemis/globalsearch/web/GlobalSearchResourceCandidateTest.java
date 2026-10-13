@@ -32,8 +32,8 @@ import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityAccessFilterS
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 
 /**
- * How many candidates the search reads from Weaviate before ranking: browsing reads the most, and a query reads more when merging semester
- * copies shrank a cut-off candidate set below the requested limit.
+ * How many candidates the search reads from Weaviate before ranking: browsing reads only the limit, and a query reads more when merging
+ * semester copies shrank a cut-off candidate set below the requested limit.
  */
 class GlobalSearchResourceCandidateTest {
 
@@ -56,12 +56,12 @@ class GlobalSearchResourceCandidateTest {
     }
 
     @Test
-    void browsingReadsTheMostCandidates() {
+    void browsingReadsOnlyTheRequestedLimit() {
         when(weaviateService.searchSearchableEntities(any(), any(), anyInt())).thenReturn(List.of());
 
         resource.globalSearch("", null, null, null, null, 10, null);
 
-        verify(weaviateService).searchSearchableEntities(eq(""), any(), eq(100));
+        verify(weaviateService).searchSearchableEntities(eq(""), any(), eq(10));
     }
 
     @Test

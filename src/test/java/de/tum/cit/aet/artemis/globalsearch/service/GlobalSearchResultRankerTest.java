@@ -91,13 +91,12 @@ class GlobalSearchResultRankerTest {
     }
 
     @Test
-    void sortsABrowseByCourseNewestFirstAndThenByTitle() {
+    void leavesABrowseWithoutAQueryUnchanged() {
         var oldRow = row("lecture", 3L, "Intro");
-        var databasesRow = row("lecture", 4L, "Joins");
-        var runningB = row("lecture", 1L, "Testing");
-        var runningA = row("lecture", 1L, "Architecture");
+        var runningRow = row("lecture", 1L, "Testing");
+        var copy = row("lecture", 2L, "Testing");
 
-        assertThat(GlobalSearchResultRanker.rank(List.of(oldRow, databasesRow, runningB, runningA), false, courses, NOW)).containsExactly(runningA, runningB, databasesRow, oldRow);
+        assertThat(GlobalSearchResultRanker.rank(List.of(oldRow, runningRow, copy), false, courses, NOW)).containsExactly(oldRow, runningRow, copy);
     }
 
     @Test

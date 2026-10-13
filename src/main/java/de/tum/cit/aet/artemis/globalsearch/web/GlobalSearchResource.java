@@ -177,11 +177,10 @@ public class GlobalSearchResource {
             return ResponseEntity.ok(List.of());
         }
 
-        // Over-fetched, because the ranking below moves rows of running courses up and drops older semester copies of an
-        // item; the limit applies after that. A browse without a query has no relevance order, so Weaviate returns an
-        // arbitrary subset; it reads the most candidates, so the course and title order covers as much as possible.
+        // A search is over-fetched, because the ranking below moves rows of running courses up and drops older semester
+        // copies of an item; the limit applies after that. A browse without a query is returned in Weaviate's order.
         boolean hasQuery = query != null && !query.isBlank();
-        int candidateLimit = hasQuery ? Math.min(MAX_CANDIDATES, effectiveLimit * CANDIDATE_FACTOR) : MAX_CANDIDATES;
+        int candidateLimit = hasQuery ? Math.min(MAX_CANDIDATES, effectiveLimit * CANDIDATE_FACTOR) : effectiveLimit;
         List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), candidateLimit);
 
         Map<Long, Course> coursesById;
@@ -202,7 +201,7 @@ public class GlobalSearchResource {
         Map<Long, String> courseNameById = new HashMap<>();
         coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
         List<Map<String, Object>> rankedResults = GlobalSearchResultRanker.rank(rawResults, hasQuery, coursesById, ZonedDateTime.now());
-        if (rankedResults.size() < effectiveLimit && rawResults.size() == candidateLimit && candidateLimit < MAX_CANDIDATES) {
+        if (hasQuery && rankedResults.size() < effectiveLimit && rawResults.size() == candidateLimit && candidateLimit < MAX_CANDIDATES) {
             // Merging semester copies shrank a cut-off candidate set below the limit, so more distinct matches may lie
             // beyond it. Reading the larger set keeps a short result list meaning "no more matches", which is what the
             // client relies on to offer more results.

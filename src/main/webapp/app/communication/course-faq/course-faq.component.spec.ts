@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, ParamMap, Router, convertToParamMap } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -220,14 +220,34 @@ describe('CourseFaqs', () => {
         expect(courseFaqComponent.referencedFaqId()).toBe(3);
     });
 
-    it('clears the filters that would hide a newly referenced faq', () => {
+    // The mocked FaqService.applyFilters always returns FAQ 2 and 3, so FAQ 1 counts as hidden by the filters.
+    it('clears the filters that would hide a referenced faq', () => {
         courseFaqComponentFixture.detectChanges();
-        courseFaqComponent.activeFilters.set(new Set(['category1']));
+        courseFaqComponent.activeFilters.set(new Set(['category2']));
+
+        queryParams.next(convertToParamMap({ faqId: '1' }));
+
+        expect(courseFaqComponent.activeFilters().size).toBe(0);
+        expect(courseFaqComponent.referencedFaqId()).toBe(1);
+    });
+
+    it('reveals the referenced faq again when it is opened once more after a filter hid it', () => {
+        courseFaqComponentFixture.detectChanges();
+        courseFaqComponent.activeFilters.set(new Set(['category2']));
+
+        // The same faqId again: the query does not change, only another navigation to the same URL is reported.
+        (TestBed.inject(Router) as unknown as MockRouter).eventSubject.next(new NavigationEnd(2, '/courses/1/faq?faqId=1', '/courses/1/faq?faqId=1'));
+
+        expect(courseFaqComponent.activeFilters().size).toBe(0);
+    });
+
+    it('keeps the filters when the referenced faq is visible', () => {
+        courseFaqComponentFixture.detectChanges();
+        courseFaqComponent.activeFilters.set(new Set(['category2']));
 
         queryParams.next(convertToParamMap({ faqId: '3' }));
 
-        expect(courseFaqComponent.activeFilters().size).toBe(0);
-        expect(courseFaqComponent.filteredFaqs()).toContainEqual(faq3);
+        expect(courseFaqComponent.activeFilters().size).toBe(1);
         expect(courseFaqComponent.referencedFaqId()).toBe(3);
     });
 });
