@@ -12,6 +12,11 @@ describe('matchCoursePages', () => {
         }
     });
 
+    it('does not offer the lectures page, which a course can block', () => {
+        expect(matchCoursePages('lectures', 42, 'Algorithms', translate)).toEqual([]);
+        expect(matchCoursePages('vorlesungen', 42, 'Algorithms', translate)).toEqual([]);
+    });
+
     it('matches nothing for a short or unrelated query', () => {
         expect(matchCoursePages('ex', 42, 'Algorithms', translate)).toEqual([]);
         expect(matchCoursePages('dijkstra', 42, 'Algorithms', translate)).toEqual([]);

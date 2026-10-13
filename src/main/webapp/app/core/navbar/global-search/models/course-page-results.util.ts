@@ -13,12 +13,12 @@ interface CoursePage {
 }
 
 /**
- * The course pages every course has, whatever its settings. Pages that a course can switch off (communication, Iris,
- * competencies, tutorial groups, FAQ) are left out, so a match never leads to a page the course does not offer.
+ * The course pages every course has, whatever its settings: the child routes of `/courses/:courseId` without an access
+ * rule (see `COURSE_OVERVIEW_GUARDED_ROUTE_PATHS`). Guarded pages such as lectures, FAQ or Iris are left out, so a match
+ * never leads to a page the course does not offer to the user.
  */
 const COURSE_PAGES: CoursePage[] = [
     { segment: 'exercises', labelKey: 'artemisApp.courseOverview.menu.exercises', aliases: ['exercises', 'tasks', 'übungen', 'aufgaben', 'hausaufgaben'] },
-    { segment: 'lectures', labelKey: 'artemisApp.courseOverview.menu.lectures', aliases: ['lectures', 'vorlesungen'] },
     {
         segment: 'statistics',
         labelKey: 'artemisApp.courseOverview.menu.statistics',
