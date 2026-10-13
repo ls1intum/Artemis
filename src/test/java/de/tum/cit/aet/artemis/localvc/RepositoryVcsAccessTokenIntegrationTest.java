@@ -242,6 +242,22 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
         assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), templateUri)).isEmpty();
     }
 
+    /**
+     * The tokens of course staff are provisioned whenever an exercise is created or updated, so reading one back is how a session would get a
+     * credential that outlives it.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getRepositoryVcsAccessToken_isRefusedForASessionThatPredatesTheCredentialsChange() throws Exception {
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.TEMPLATE, null);
+        userActivityService.recordCredentialsChanged(tutor.getId(), Instant.now());
+        SessionTestUtil.actAsSessionStartedAt(tutor.getLogin(), Instant.now().minus(Duration.ofHours(1)));
+        String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=TEMPLATE";
+
+        request.get(url, HttpStatus.UNAUTHORIZED, String.class);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void repositoryVcsAccessTokenEndpoints_auxiliaryWithoutIdIsBadRequest() throws Exception {

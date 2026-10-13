@@ -92,6 +92,8 @@ public class RepositoryVcsAccessTokenResource {
     public ResponseEntity<String> getRepositoryVcsAccessToken(@RequestParam("exerciseId") long exerciseId, @RequestParam("repositoryType") RepositoryType repositoryType,
             @RequestParam(value = "auxiliaryRepositoryId", required = false) Long auxiliaryRepositoryId,
             @RequestParam(value = "participationId", required = false) Long participationId) {
+        // The tokens of course staff are provisioned whenever an exercise is created or updated, so reading one back is how a session gets a credential that outlives it.
+        sessionFreshnessService.requireCurrentSession();
         validateRepositoryTypeInput(repositoryType, auxiliaryRepositoryId, participationId);
         User user = userRepository.getUser();
         log.debug("REST request to get repository VCS access token of user {} for {} repository of exercise {}", user.getLogin(), repositoryType, exerciseId);

@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 
 import java.net.URI;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.account.dto.EmailChangeConfirmationResultDTO.Email
 import de.tum.cit.aet.artemis.account.dto.EmailChangeKeyDTO;
 import de.tum.cit.aet.artemis.account.dto.PendingEmailChangeDTO;
 import de.tum.cit.aet.artemis.account.service.EmailChangeService;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
@@ -51,6 +53,7 @@ import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.util.ConfigUtil;
+import de.tum.cit.aet.artemis.core.util.SessionTestUtil;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -95,6 +98,9 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Autowired
     private DistributedDataProvider distributedDataProvider;
+
+    @Autowired
+    private UserActivityService userActivityService;
 
     private User user;
 
@@ -594,6 +600,28 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
         assertThat(userTestRepository.applyConfirmedEmailChange(user.getId(), NEW_EMAIL, confirmed.getCurrentKeyId(), confirmed.getNewKeyId())).isZero();
         assertThat(emailOfAccount()).isEqualTo(originalEmail);
+    }
+
+    /**
+     * Regression test: after the owner took the account back with a password change, the session the intruder still holds must not be able to
+     * file a new request, which the owner could otherwise only keep cancelling. It is the way in for an account that has no address yet, where
+     * the new address alone completes the change.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void aSessionThatStartedBeforeTheCredentialsChangedCannotRequestOrResendAnEmailChange() throws Exception {
+        requestChangeTo(NEW_EMAIL);
+        userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
+        SessionTestUtil.actAsSessionStartedAt(LOGIN, Instant.now().minus(Duration.ofHours(1)));
+        waitOutTheCooldown();
+
+        request.put(BASIC_INFORMATION_PATH, updateWithEmail("another-address@test.de"), HttpStatus.UNAUTHORIZED);
+        request.postWithResponseBody(PENDING_PATH + "/resend", null, Map.class, HttpStatus.UNAUTHORIZED);
+
+        assertThat(confirmationMails()).hasSize(2);
+        // Withdrawing a request stays possible for such a session: it only ever protects the account.
+        request.delete(PENDING_PATH, HttpStatus.OK);
+        assertThat(storedPendingChange()).isEmpty();
     }
 
     @Test
