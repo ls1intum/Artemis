@@ -181,6 +181,18 @@ public class UserRecoveryKeyService {
     }
 
     /**
+     * Clears one specific pending e-mail change, and removes the row when nothing is left outstanding. A request that replaced it in the meantime stays, which is why this
+     * is used for the cleanup after a confirmation instead of {@link #clearPendingEmailChange}, whose purpose is to end whatever is pending.
+     *
+     * @param userId  the account
+     * @param request the request to clear, as it was read
+     */
+    public void clearPendingEmailChangeOfRequest(long userId, PendingEmailChange request) {
+        userRecoveryKeyRepository.clearPendingEmailChangeOfRequest(userId, request.getCurrentKeyId(), request.getNewKeyId());
+        userRecoveryKeyRepository.deleteIfNothingOutstanding(userId);
+    }
+
+    /**
      * Clears the activation key, and removes the row when nothing is left outstanding.
      *
      * @param userId the account

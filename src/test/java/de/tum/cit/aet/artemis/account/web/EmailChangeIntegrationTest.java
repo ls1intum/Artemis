@@ -576,6 +576,28 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
         assertThat(userTestRepository.applyConfirmedEmailChange(userId, "another-address@test.de", current.getCurrentKeyId(), current.getNewKeyId())).isZero();
     }
 
+    /**
+     * The cleanup after a confirmation, an expiry or a failed check names the request it belongs to, so a request that replaced it in the
+     * meantime is not deleted together with it.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void cleaningUpARequestLeavesAReplacementAlone() throws Exception {
+        requestChangeTo(NEW_EMAIL);
+        PendingEmailChange first = storedPendingChange().orElseThrow();
+        waitOutTheCooldown();
+        requestChangeTo("another-address@test.de");
+
+        userRecoveryKeyService.clearPendingEmailChangeOfRequest(user.getId(), first);
+
+        assertThat(storedPendingChange()).isPresent();
+        assertThat(storedPendingChange().orElseThrow().getNewEmail()).isEqualTo("another-address@test.de");
+
+        PendingEmailChange second = storedPendingChange().orElseThrow();
+        userRecoveryKeyService.clearPendingEmailChangeOfRequest(user.getId(), second);
+        assertThat(storedPendingChange()).isEmpty();
+    }
+
     @Test
     @WithMockUser(username = LOGIN)
     void aChangeConfirmedFromOnlyOneAddressIsNotApplied() throws Exception {

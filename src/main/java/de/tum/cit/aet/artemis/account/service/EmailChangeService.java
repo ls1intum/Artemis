@@ -211,7 +211,7 @@ public class EmailChangeService {
         long userId = userRecoveryKeyService.findByEmailChangeKeyId(keyId).map(UserRecoveryKey::getUserId).orElseThrow(EmailChangeService::invalidKey);
         PendingEmailChange change = pendingChangeWithKey(userId, keyId);
         if (isExpired(change)) {
-            userRecoveryKeyService.clearPendingEmailChange(userId);
+            userRecoveryKeyService.clearPendingEmailChangeOfRequest(userId, change);
             throw invalidKey();
         }
 
@@ -241,7 +241,7 @@ public class EmailChangeService {
     private void applyChange(long userId, PendingEmailChange change) {
         User user = userRepository.findById(userId).filter(account -> Boolean.TRUE.equals(account.getActivated()) && !account.isDeleted()).orElse(null);
         if (user == null) {
-            userRecoveryKeyService.clearPendingEmailChange(userId);
+            userRecoveryKeyService.clearPendingEmailChangeOfRequest(userId, change);
             throw invalidKey();
         }
 
@@ -252,7 +252,7 @@ public class EmailChangeService {
             userCreationService.validateEmailIsAvailable(newEmail, userId);
         }
         catch (RuntimeException e) {
-            userRecoveryKeyService.clearPendingEmailChange(userId);
+            userRecoveryKeyService.clearPendingEmailChangeOfRequest(userId, change);
             throw e;
         }
 
@@ -266,7 +266,7 @@ public class EmailChangeService {
             }
             throw invalidKey();
         }
-        userRecoveryKeyService.clearPendingEmailChange(userId);
+        userRecoveryKeyService.clearPendingEmailChangeOfRequest(userId, change);
         user.setEmail(newEmail);
         log.info("Changed the e-mail address of user {} after both addresses confirmed", user.getLogin());
         // Tells the previous address, which is the one channel the owner may still read if both confirmations were not theirs.
