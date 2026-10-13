@@ -1,5 +1,5 @@
 import { JsonPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, ViewEncapsulation, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ExerciseTitleChannelNamePrimengComponent } from 'app/exercise/exercise-title-channel-name-primeng/exercise-title-channel-name-primeng.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
@@ -14,7 +14,7 @@ import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-q
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { Duration } from '../interfaces/quiz-exercise-interfaces';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { DialogService } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -42,6 +42,7 @@ import {
     faGraduationCap,
     faPaperPlane,
     faPlus,
+    faQuestionCircle,
     faWandMagicSparkles,
     faWrench,
     faXmark,
@@ -65,7 +66,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
@@ -77,6 +78,7 @@ import { GeneratedQuestion, GeneratedQuestionType } from 'app/hyperion/quiz/quiz
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 /** Largest delay setTimeout accepts before its signed 32-bit truncation makes it fire immediately. */
 const MAX_TIMEOUT_DELAY = 2_147_483_647;
@@ -108,7 +110,9 @@ const MAX_TIMEOUT_DELAY = 2_147_483_647;
         CheckboxModule,
         InputTextModule,
         InputNumberModule,
-        FormDateTimePickerComponent,
+        TumAetUiDatePickerComponent,
+        TumAetUiFormFieldComponent,
+        ExerciseGroupDateNoticeComponent,
         ExerciseGroupTimelineLockComponent,
         QuizAiGenerationModalComponent,
         JsonPipe,
@@ -132,6 +136,14 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private destroyRef = inject(DestroyRef);
 
     readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
+    private readonly datePickers = viewChildren(TumAetUiDatePickerComponent);
+
+    /**
+     * Whether a date field holds text that is not a date. A picker keeps its last valid date while its text is not one,
+     * so the quiz would otherwise be saved with a date the field shows as invalid. Only the text counts here: the pickers
+     * a date error is shown on are invalid for a reason that has its own validation.
+     */
+    readonly hasInvalidDateText = computed(() => this.datePickers().some((picker) => !picker.invalid() && !picker.isValid()));
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
     aiGenerationModalVisible = false;
 
@@ -187,6 +199,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     faGear = faGear;
     faClock = faClock;
     faGraduationCap = faGraduationCap;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     faFloppyDisk = faFloppyDisk;
     faCircleNotch = faCircleNotch;
 
@@ -527,6 +541,21 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         return super.cacheValidation();
     }
 
+    onReleaseDateChange(date: dayjs.Dayjs | undefined) {
+        this.quizExercise().releaseDate = date;
+        this.cacheValidation();
+    }
+
+    onDueDateChange(date: dayjs.Dayjs | undefined) {
+        this.quizExercise().dueDate = date;
+        this.cacheValidation();
+    }
+
+    onBatchStartTimeChange(batch: QuizBatch, date: dayjs.Dayjs | undefined) {
+        batch.startTime = date;
+        this.cacheValidation();
+    }
+
     addQuizBatch() {
         if (!this.quizExercise().quizBatches) {
             this.quizExercise().quizBatches = [];
@@ -796,6 +825,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             quizExercise.duration = Number(quizExercise.duration);
             quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
         }
+        // The server sends a batch start time as an ISO string, while the date picker needs a dayjs object.
+        quizExercise.quizBatches?.forEach((batch) => (batch.startTime = convertDateFromServer(batch.startTime)));
         for (const question of quizExercise.quizQuestions ?? []) {
             if (question.type === QuizQuestionType.SHORT_ANSWER) {
                 this.shortAnswerQuestionUtil.prepareShortAnswerQuestion(question as ShortAnswerQuestion);
@@ -963,7 +994,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             this.hasSavedQuizStarted ||
             !this.quizExercise().isEditable ||
             this.quizExercise().dueDateError ||
-            this.hasErrorInQuizBatches()
+            this.hasErrorInQuizBatches() ||
+            this.hasInvalidDateText()
         );
     }
 
@@ -986,7 +1018,15 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     /** Everything blocking the save button that can be put into words; empty when nothing is wrong. */
     readonly saveBlockedReasons = computed<string[]>(() => {
         const uneditableReason = this.uneditableReason();
-        return uneditableReason ? [uneditableReason] : this.invalidReasonTexts();
+        if (uneditableReason) {
+            return [uneditableReason];
+        }
+        const reasons = this.invalidReasonTexts();
+        if (this.hasInvalidDateText()) {
+            this.currentLocale();
+            return reasons.concat(this.translateService.instant('entity.dateMissingOrNotValidGeneric'));
+        }
+        return reasons;
     });
 
     readonly isSaveTooltipDisabled = computed<boolean>(() => !this.saveBlockedReasons().length);

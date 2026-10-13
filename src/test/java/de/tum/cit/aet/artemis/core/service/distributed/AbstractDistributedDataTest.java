@@ -69,17 +69,32 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
     }
 
     @Test
-    void testRefreshTimeToLiveIsAtomicAndRequiresExpiringMap() throws InterruptedException {
+    void testRefreshTimeToLiveExtendsExpiryAndRequiresExpiringMap() {
         DistributedMap<String, String> map = getDistributedDataProvider().getExpiringMap("testRefreshTimeToLive", Duration.ofSeconds(3));
-        map.put("key", "value", Duration.ofSeconds(2));
-        Thread.sleep(100);
+        map.put("key", "value", Duration.ofSeconds(1));
+        map.put("originalDeadline", "value", Duration.ofSeconds(1));
 
-        assertThat(map.refreshTimeToLive("key", Duration.ofSeconds(2))).isTrue();
-        Thread.sleep(1000);
+        assertThat(map.refreshTimeToLive("key", Duration.ofSeconds(10))).isTrue();
+        Awaitility.await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertThat(map.get("originalDeadline")).isNull());
         assertThat(map.get("key")).isEqualTo("value");
+        Awaitility.await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertThat(map.get("key")).isNull());
         assertThat(map.refreshTimeToLive("absent", Duration.ofSeconds(2))).isFalse();
         assertThatExceptionOfType(UnsupportedOperationException.class)
                 .isThrownBy(() -> getDistributedDataProvider().<String, String>getMap("nonExpiringRefresh").refreshTimeToLive("key", Duration.ofSeconds(1)));
+    }
+
+    @Test
+    void testConditionalReplacePreservesExpiry() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getExpiringMap("testConditionalReplaceExpiry", Duration.ofMinutes(1));
+        map.put("key", "before", Duration.ofSeconds(5));
+        map.put("originalDeadline", "value", Duration.ofSeconds(5));
+        map.put("replaceAfter", "value", Duration.ofSeconds(1));
+        Awaitility.await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertThat(map.get("replaceAfter")).isNull());
+        assertThat(map.replace("key", "before", "after")).isTrue();
+        assertThat(map.get("key")).isEqualTo("after");
+
+        Awaitility.await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertThat(map.get("originalDeadline")).isNull());
+        assertThat(map.get("key")).isNull();
     }
 
     @Test

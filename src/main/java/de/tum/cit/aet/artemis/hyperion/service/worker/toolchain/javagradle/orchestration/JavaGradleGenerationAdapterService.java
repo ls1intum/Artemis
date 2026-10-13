@@ -65,6 +65,8 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
 
     private final ObservationRegistry observations;
 
+    private final JsonMapper mapper;
+
     private final SandboxApi sandbox;
 
     private final List<ChatModel> models;
@@ -96,7 +98,7 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         }
     };
 
-    public JavaGradleGenerationAdapterService(SandboxApi sandbox, Collection<ChatModel> models, ObservationRegistry observations,
+    public JavaGradleGenerationAdapterService(SandboxApi sandbox, Collection<ChatModel> models, JsonMapper mapper, ObservationRegistry observations,
             @Value("${artemis.hyperion.agent.max-semantic-repairs:6}") int maxSemanticRepairs, @Value("${spring.ai.openai.max-retries:1}") int providerRetries,
             @Value("${spring.ai.openai.chat.timeout:${spring.ai.openai.timeout:60s}}") Duration providerTimeout,
             @Value("${artemis.hyperion.agent.transcript-dir:}") String transcriptDirectory) {
@@ -107,6 +109,7 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
             throw new IllegalArgumentException("The worker provider timeout must be positive");
         }
         this.observations = observations;
+        this.mapper = mapper;
         this.sandbox = sandbox;
         this.models = List.copyOf(models);
         this.maxSemanticRepairs = maxSemanticRepairs;
@@ -148,8 +151,8 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         var prompt = new AgentSystemPrompt(commands);
         var runner = new AgentLoopRunner(models, parameters.contextWindowTokens(), Duration.ofMinutes(5), cooldown);
         var model = models.getFirst();
-        var critic = new SpecFidelityCritic(ChatClient.create(new HarmonyScrubbingChatModel(model)), JsonMapper.builder().build(), new PromptTemplates(),
-                model.getOptions().getModel(), Duration.ofMinutes(5), cooldown, parameters.contextWindowTokens(), models);
+        var critic = new SpecFidelityCritic(ChatClient.create(new HarmonyScrubbingChatModel(model)), mapper, new PromptTemplates(), model.getOptions().getModel(),
+                Duration.ofMinutes(5), cooldown, parameters.contextWindowTokens(), models);
         var stages = new StagedGenerationRunner(runner, prompt, stageChecks, transcripts, approvedSpecs, critic, new ExerciseConceptSelector(runner, critic),
                 parameters.stagedContext(), parameters.maxDuration());
         var orchestrator = new GenerationOrchestrator(sandbox.forExecution(assignment.identity().executionId()), workspace, runner, verifier, prompt,

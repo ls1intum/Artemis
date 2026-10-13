@@ -168,7 +168,7 @@
                             [blockedReason]="legacyCodeGenerationBlockedReason()"
                             (runningChanged)="legacyCodeGenerationRunning.set($event)"
                             (feedbackRequested)="onNavigateToReviewCommentLocation($event)"
-                            (refreshRequested)="codeEditorContainer()?.actions()?.executeRefresh()"
+                            (refreshRequested)="onLegacyGenerationRefresh()"
                         />
                     }
                     <jhi-code-editor-ai-actions

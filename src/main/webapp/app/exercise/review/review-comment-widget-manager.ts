@@ -1,4 +1,4 @@
-import { ComponentRef, OutputRefSubscription, ViewContainerRef } from '@angular/core';
+import { ComponentRef, OutputRefSubscription, ViewContainerRef, signal } from '@angular/core';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { ReviewCommentDraftWidgetComponent } from 'app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
@@ -34,7 +34,7 @@ enum InlineFixApplyResult {
 }
 
 export class ReviewCommentWidgetManager {
-    private readonly draftLinesByFile: Map<string, Set<number>> = new Map();
+    private readonly draftLinesByFile = signal(new Map<string, Set<number>>());
     private readonly draftWidgetRefs: Map<string, ComponentRef<ReviewCommentDraftWidgetComponent>> = new Map();
     private readonly draftWidgetSubscriptions: Map<string, OutputRefSubscription[]> = new Map();
     private readonly threadWidgetRefs: Map<number, ComponentRef<ReviewCommentThreadWidgetComponent>> = new Map();
@@ -78,7 +78,7 @@ export class ReviewCommentWidgetManager {
     }
 
     hasDrafts(): boolean {
-        return this.draftLinesByFile.size > 0;
+        return this.draftLinesByFile().size > 0;
     }
 
     /**
@@ -109,7 +109,7 @@ export class ReviewCommentWidgetManager {
         this.editor.disposeWidgetsByPrefix('review-comment-');
         this.disposeDraftWidgets();
         this.disposeSavedWidgets();
-        this.draftLinesByFile.clear();
+        this.draftLinesByFile.update((drafts) => (drafts.size ? new Map<string, Set<number>>() : drafts));
         this.collapseState.clear();
     }
 
@@ -117,13 +117,13 @@ export class ReviewCommentWidgetManager {
      * Removes draft widgets and clears draft line tracking.
      */
     clearDrafts(): void {
-        for (const [fileName, lines] of this.draftLinesByFile.entries()) {
+        for (const [fileName, lines] of this.draftLinesByFile().entries()) {
             for (const line of lines) {
                 this.editor.disposeWidgetsByPrefix(this.buildDraftWidgetId(fileName, line));
             }
         }
         this.disposeDraftWidgets();
-        this.draftLinesByFile.clear();
+        this.draftLinesByFile.update((drafts) => (drafts.size ? new Map<string, Set<number>>() : drafts));
     }
 
     /**
@@ -141,10 +141,11 @@ export class ReviewCommentWidgetManager {
         if (!draftContext) {
             return;
         }
-        const existing = this.draftLinesByFile.get(fileName) ?? new Set<number>();
+        const existing = this.draftLinesByFile().get(fileName) ?? new Set<number>();
         if (!existing.has(lineNumberZeroBased)) {
-            existing.add(lineNumberZeroBased);
-            this.draftLinesByFile.set(fileName, existing);
+            const updated = new Map(this.draftLinesByFile());
+            updated.set(fileName, new Set([...existing, lineNumberZeroBased]));
+            this.draftLinesByFile.set(updated);
         }
         const widgetKey = this.getDraftKey(fileName, lineNumberZeroBased);
         const widgetRef = this.getOrCreateDraftWidget(widgetKey, fileName, lineNumberZeroBased);
@@ -161,7 +162,7 @@ export class ReviewCommentWidgetManager {
         if (!activeFileName) {
             return;
         }
-        const lines = this.draftLinesByFile.get(activeFileName);
+        const lines = this.draftLinesByFile().get(activeFileName);
         if (!lines) {
             return;
         }
@@ -339,12 +340,17 @@ export class ReviewCommentWidgetManager {
      * @param line The zero-based line index of the draft.
      */
     private removeDraft(fileName: string, line: number): void {
-        const existing = this.draftLinesByFile.get(fileName);
-        if (existing) {
-            existing.delete(line);
-            if (existing.size === 0) {
-                this.draftLinesByFile.delete(fileName);
+        const existing = this.draftLinesByFile().get(fileName);
+        if (existing?.has(line)) {
+            const updated = new Map(this.draftLinesByFile());
+            const lines = new Set(existing);
+            lines.delete(line);
+            if (lines.size === 0) {
+                updated.delete(fileName);
+            } else {
+                updated.set(fileName, lines);
             }
+            this.draftLinesByFile.set(updated);
         }
         const widgetKey = this.getDraftKey(fileName, line);
         const subscriptions = this.draftWidgetSubscriptions.get(widgetKey);

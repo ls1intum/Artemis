@@ -23,6 +23,7 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.aiworker.api.SandboxApi;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationAssignment;
@@ -50,7 +51,7 @@ class JavaGradleGenerationAdapterTest {
     private JavaGradleGenerationAdapterService engine(int retries) {
         when(sandbox.forExecution(org.mockito.ArgumentMatchers.any())).thenReturn(executionSandbox);
         when(model.getOptions()).thenReturn(OpenAiChatOptions.builder().model("test-model").build());
-        return new JavaGradleGenerationAdapterService(sandbox, List.of(model), ObservationRegistry.NOOP, 6, retries, Duration.ofMinutes(10), "");
+        return new JavaGradleGenerationAdapterService(sandbox, List.of(model), JsonObjectMapper.get(), ObservationRegistry.NOOP, 6, retries, Duration.ofMinutes(10), "");
     }
 
     private static GenerationAssignment assignment(Instant deadline) {
@@ -66,7 +67,7 @@ class JavaGradleGenerationAdapterTest {
         var a = assignment(Instant.now().plusSeconds(300));
         var brief = new ExerciseBrief("Stack", "stack", namespace, null, "Create", ExerciseBrief.Mode.GENERATE);
         var invalid = new GenerationAssignment(a.identity(), brief, a.parameters(), a.seed(), a.authoringDeadline(), a.imageDigest(), a.gradingContext());
-        var adapter = new JavaGradleGenerationAdapterService(sandbox, List.of(model), ObservationRegistry.NOOP, 6, 0, Duration.ofMinutes(10), "");
+        var adapter = new JavaGradleGenerationAdapterService(sandbox, List.of(model), JsonObjectMapper.get(), ObservationRegistry.NOOP, 6, 0, Duration.ofMinutes(10), "");
         assertThatIllegalArgumentException().isThrownBy(() -> adapter.generate(invalid, () -> false, observer, ignored -> {
         }));
         verifyNoInteractions(model, sandbox, observer);
@@ -123,7 +124,7 @@ class JavaGradleGenerationAdapterTest {
         });
         when(model.getOptions()).thenReturn(OpenAiChatOptions.builder().model("test-model").build());
         when(sandbox.forExecution(org.mockito.ArgumentMatchers.any())).thenReturn(executionSandbox);
-        var engine = new JavaGradleGenerationAdapterService(sandbox, List.of(model), registry, 6, 0, Duration.ofMinutes(10), "");
+        var engine = new JavaGradleGenerationAdapterService(sandbox, List.of(model), JsonObjectMapper.get(), registry, 6, 0, Duration.ofMinutes(10), "");
         var assignment = assignment(Instant.now().plusSeconds(300));
         engine.generate(assignment, () -> {
             assertThat(registry.getCurrentObservation()).isNotNull();
@@ -192,17 +193,18 @@ class JavaGradleGenerationAdapterTest {
     @Test
     void invalidOperatorConfigurationFailsAtStartup() {
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> new JavaGradleGenerationAdapterService(sandbox, List.of(), ObservationRegistry.NOOP, 6, 0, Duration.ofMinutes(10), ""));
+                .isThrownBy(() -> new JavaGradleGenerationAdapterService(sandbox, List.of(), JsonObjectMapper.get(), ObservationRegistry.NOOP, 6, 0, Duration.ofMinutes(10), ""));
+        assertThatIllegalArgumentException().isThrownBy(
+                () -> new JavaGradleGenerationAdapterService(sandbox, List.of(model, model), JsonObjectMapper.get(), ObservationRegistry.NOOP, 6, 0, Duration.ofMinutes(10), ""));
+        assertThatIllegalArgumentException().isThrownBy(
+                () -> new JavaGradleGenerationAdapterService(sandbox, List.of(model), JsonObjectMapper.get(), ObservationRegistry.NOOP, 0, 0, Duration.ofMinutes(10), ""));
+        assertThatIllegalArgumentException().isThrownBy(
+                () -> new JavaGradleGenerationAdapterService(sandbox, List.of(model), JsonObjectMapper.get(), ObservationRegistry.NOOP, 13, 0, Duration.ofMinutes(10), ""));
+        assertThatIllegalArgumentException().isThrownBy(
+                () -> new JavaGradleGenerationAdapterService(sandbox, List.of(model), JsonObjectMapper.get(), ObservationRegistry.NOOP, 6, -1, Duration.ofMinutes(10), ""));
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> new JavaGradleGenerationAdapterService(sandbox, List.of(model, model), ObservationRegistry.NOOP, 6, 0, Duration.ofMinutes(10), ""));
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> new JavaGradleGenerationAdapterService(sandbox, List.of(model), ObservationRegistry.NOOP, 0, 0, Duration.ofMinutes(10), ""));
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> new JavaGradleGenerationAdapterService(sandbox, List.of(model), ObservationRegistry.NOOP, 13, 0, Duration.ofMinutes(10), ""));
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> new JavaGradleGenerationAdapterService(sandbox, List.of(model), ObservationRegistry.NOOP, 6, -1, Duration.ofMinutes(10), ""));
-        assertThatIllegalArgumentException().isThrownBy(() -> new JavaGradleGenerationAdapterService(sandbox, List.of(model), ObservationRegistry.NOOP, 6, 0, Duration.ZERO, ""));
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> new JavaGradleGenerationAdapterService(sandbox, List.of(model), ObservationRegistry.NOOP, 6, 0, Duration.ofSeconds(-1), ""));
+                .isThrownBy(() -> new JavaGradleGenerationAdapterService(sandbox, List.of(model), JsonObjectMapper.get(), ObservationRegistry.NOOP, 6, 0, Duration.ZERO, ""));
+        assertThatIllegalArgumentException().isThrownBy(
+                () -> new JavaGradleGenerationAdapterService(sandbox, List.of(model), JsonObjectMapper.get(), ObservationRegistry.NOOP, 6, 0, Duration.ofSeconds(-1), ""));
     }
 }

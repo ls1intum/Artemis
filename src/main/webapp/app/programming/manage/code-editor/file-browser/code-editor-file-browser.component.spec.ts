@@ -293,6 +293,47 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(renderedFiles).toHaveLength(0);
     });
 
+    it('should read the files of the given commit and not ask for the working copy status', () => {
+        const commitId = '0123456789abcdef0123456789abcdef01234567';
+        getRepositoryContentStub.mockReturnValue(of({ file: 'FILE' }));
+        // a working copy with unsubmitted edits (or in conflict) must not influence what is shown for a commit
+        getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.UNCOMMITTED_CHANGES }));
+        fixture.componentRef.setInput('commitId', commitId);
+        fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
+        fixture.detectChanges();
+
+        expect(getStatusStub).not.toHaveBeenCalled();
+        expect(getRepositoryContentStub).toHaveBeenCalledExactlyOnceWith(undefined, commitId);
+        expect(comp.commitState()).toBe(CommitState.CLEAN);
+        expect(comp.repositoryFiles()).toEqual({ file: 'FILE', [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT });
+    });
+
+    it('should read the change information of the given commit', () => {
+        const commitId = '0123456789abcdef0123456789abcdef01234567';
+        getRepositoryContentStub.mockReturnValue(of({ file: 'FILE' }));
+        const getFilesWithInformationAboutChangeStub = vi.fn().mockReturnValue(of({ file: true }));
+        codeEditorRepositoryFileService.getFilesWithInformationAboutChange = getFilesWithInformationAboutChangeStub;
+        fixture.componentRef.setInput('commitId', commitId);
+        fixture.componentRef.setInput('isTutorAssessment', true);
+        fixture.componentRef.setInput('highlightFileChanges', true);
+        fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
+        fixture.detectChanges();
+
+        expect(getFilesWithInformationAboutChangeStub).toHaveBeenCalledExactlyOnceWith(undefined, commitId);
+        expect(comp.repositoryFilesWithInformationAboutChange()).toEqual({ file: true });
+    });
+
+    it('should still read the working copy if no commit is given', () => {
+        getRepositoryContentStub.mockReturnValue(of({ file: 'FILE' }));
+        getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.UNCOMMITTED_CHANGES }));
+        fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
+        fixture.detectChanges();
+
+        expect(getStatusStub).toHaveBeenCalledOnce();
+        expect(getRepositoryContentStub).toHaveBeenCalledExactlyOnceWith(undefined, undefined);
+        expect(comp.commitState()).toBe(CommitState.UNCOMMITTED_CHANGES);
+    });
+
     it('opens a delete modal when deleting a folder', () => {
         comp.repositoryFiles.set({
             folder: FileType.FOLDER,
