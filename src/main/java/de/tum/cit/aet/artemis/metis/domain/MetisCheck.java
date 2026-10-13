@@ -47,12 +47,18 @@ public class MetisCheck extends DomainObject {
     @Column(name = "commit_hash", length = 40)
     private String commitHash;
 
-    /** The model id reported by the LLM endpoint that generated the questions, or null before generation. */
+    /**
+     * The model id reported by the LLM endpoint that generated the questions; null before generation and after a run that skipped or failed the check. A check
+     * that went back into the queue keeps the value of its earlier run until its next run ends.
+     */
     @Nullable
     @Column(name = "llm_model", length = 100)
     private String llmModel;
 
-    /** The version of the prompt template used for generation, or null before generation. */
+    /**
+     * The version of the prompt template the questions were generated with; null before generation and after a run that skipped or failed the check. A check
+     * that went back into the queue keeps the value of its earlier run until its next run ends.
+     */
     @Nullable
     @Column(name = "prompt_version", length = 32)
     private String promptVersion;
@@ -62,10 +68,33 @@ public class MetisCheck extends DomainObject {
     @Column(name = "failure_reason", length = 255)
     private String failureReason;
 
-    /** When the questions were generated, or null until then. */
+    /**
+     * When the last generation run that ended started: the run that stored the questions, or the one that skipped or failed the check; null before the first
+     * such run. A run that puts the check back into the queue stores nothing.
+     */
     @Nullable
     @Column(name = "generated_at")
     private ZonedDateTime generatedAt;
+
+    /**
+     * The effective due date that the last generation run that ended read: the individual due date of the participation, or else the due date of the exercise.
+     * The run took the student's code from the last submission up to it, so once the effective due date differs from it, in either direction and also when both
+     * have passed, the questions no longer follow the code that counts, and the check is generated again until the student starts it. Null before the first
+     * such run and when the run ended before it read the due date. It is copied from the due date columns, which have the same precision, so an unchanged due
+     * date compares equal to it.
+     */
+    @Nullable
+    @Column(name = "generation_due_date")
+    private ZonedDateTime generationDueDate;
+
+    /**
+     * The claim of the generation run that holds the check while it is being generated: a random number that the claiming node writes with the claim. Every
+     * write of the run requires it, so a run that lost the check, for instance the run of a node that is still stopping during a rolling restart while the new
+     * scheduling node has put the check back into the queue and claimed it again, can neither delete nor store questions. Null while no run holds the check.
+     */
+    @Nullable
+    @Column(name = "generation_claim")
+    private Long generationClaim;
 
     /** When the student was shown the first question, or null until then. */
     @Nullable
@@ -136,6 +165,24 @@ public class MetisCheck extends DomainObject {
 
     public void setGeneratedAt(@Nullable ZonedDateTime generatedAt) {
         this.generatedAt = generatedAt;
+    }
+
+    @Nullable
+    public ZonedDateTime getGenerationDueDate() {
+        return generationDueDate;
+    }
+
+    public void setGenerationDueDate(@Nullable ZonedDateTime generationDueDate) {
+        this.generationDueDate = generationDueDate;
+    }
+
+    @Nullable
+    public Long getGenerationClaim() {
+        return generationClaim;
+    }
+
+    public void setGenerationClaim(@Nullable Long generationClaim) {
+        this.generationClaim = generationClaim;
     }
 
     @Nullable

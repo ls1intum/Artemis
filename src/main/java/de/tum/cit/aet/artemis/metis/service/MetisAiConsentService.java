@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.metis.config.MetisEnabled;
 import de.tum.cit.aet.artemis.metis.config.MetisProperties;
+import de.tum.cit.aet.artemis.metis.domain.MetisFailureReason;
 
 /**
  * Decides whether a student's recorded AI decision allows Metis to send their code to the configured endpoint.
@@ -26,12 +27,6 @@ import de.tum.cit.aet.artemis.metis.config.MetisProperties;
 @Lazy
 @Service
 public class MetisAiConsentService {
-
-    /** The reason code of a check that is skipped because the student's AI decision does not allow the endpoint. */
-    private static final String NO_AI_CONSENT = "NO_AI_CONSENT";
-
-    /** The presented reason code for a student who allowed local AI only, while the endpoint is a cloud service. */
-    private static final String CLOUD_AI_REQUIRED = "CLOUD_AI_REQUIRED";
 
     private final UserAiPreferenceService userAiPreferenceService;
 
@@ -101,6 +96,9 @@ public class MetisAiConsentService {
      * @return {@code CLOUD_AI_REQUIRED} for local AI consent under cloud hosting, {@code NO_AI_CONSENT} otherwise
      */
     public String skipReasonFor(@Nullable AiSelectionDecision decision) {
-        return decision == AiSelectionDecision.LOCAL_AI && hosting == MetisProperties.Hosting.CLOUD ? CLOUD_AI_REQUIRED : NO_AI_CONSENT;
+        if (decision == AiSelectionDecision.LOCAL_AI && hosting == MetisProperties.Hosting.CLOUD) {
+            return MetisFailureReason.CLOUD_AI_REQUIRED.name();
+        }
+        return MetisFailureReason.NO_AI_CONSENT.name();
     }
 }
