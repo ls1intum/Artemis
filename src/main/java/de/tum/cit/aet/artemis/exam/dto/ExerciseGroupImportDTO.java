@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.exam.dto;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -16,7 +18,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseGroupImportDTO(@Nullable String title, boolean isMandatory, @Nullable List<ExerciseImportDTO> exercises) {
+public record ExerciseGroupImportDTO(@Nullable String title, boolean isMandatory, @Nullable List<@Valid ExerciseImportDTO> exercises) {
 
     /**
      * Creates an ExerciseGroupImportDTO from an existing ExerciseGroup entity.

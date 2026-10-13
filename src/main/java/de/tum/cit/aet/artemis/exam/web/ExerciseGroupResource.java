@@ -219,7 +219,7 @@ public class ExerciseGroupResource {
     @PostMapping("courses/{courseId}/exams/{examId}/import-exercise-group")
     @EnforceAtLeastEditor
     public ResponseEntity<ExerciseGroupImportResultDTO> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId,
-            @RequestBody List<ExerciseGroupImportDTO> exerciseGroupsToImport, @RequestParam(required = false) String importId) throws IOException {
+            @RequestBody List<@Valid ExerciseGroupImportDTO> exerciseGroupsToImport, @RequestParam(required = false) String importId) throws IOException {
         log.debug("REST request to import {} exercise group(s) to exam {}", exerciseGroupsToImport.size(), examId);
 
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
