@@ -610,14 +610,14 @@ describe('GlobalSearchModalComponent', () => {
             expect(search).toHaveBeenCalledWith('backpropagation', 10, undefined, [42]);
         });
 
-        it('reports that Iris is off for the scope rather than falling back to the metadata search', () => {
-            vi.spyOn(lectureSearch, 'search').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+        it('reports a failed content search rather than falling back to the metadata search', () => {
+            vi.spyOn(lectureSearch, 'search').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
             component['applyTokens']([contentToken]);
 
             component['onSearchInput']('backpropagation');
             vi.advanceTimersByTime(300);
 
-            expect(component['searchError']()).toBe('global.search.contentSearchDisabled');
+            expect(component['searchError']()).toBe('global.search.contentSearchUnavailable');
             expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
         });
 
