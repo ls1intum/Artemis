@@ -40,8 +40,10 @@ public record MetisExerciseConfigDTO(@NotNull Long exerciseId, @NotNull Boolean 
     }
 
     /**
-     * The configuration an exercise has before anyone saved one: the field defaults of {@link MetisExerciseConfig}, switched off and without a window. Nothing is
-     * written; the row only comes into existence when an editor saves the configuration.
+     * The settings every configuration row starts with: the field defaults of {@link MetisExerciseConfig}, switched off and without a window. Every programming
+     * exercise owns its row from the moment it is stored, so these stand in only where there is no row: for a programming exercise whose creation failed
+     * half-way, until a settings request or the next update of the exercise adds the row, and for an exercise of another type, which never has one. Nothing is
+     * written.
      *
      * @param exerciseId the exercise without a configuration row
      * @return the default configuration of that exercise

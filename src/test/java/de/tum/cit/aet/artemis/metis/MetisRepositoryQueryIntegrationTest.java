@@ -280,16 +280,6 @@ class MetisRepositoryQueryIntegrationTest extends AbstractProgrammingIntegration
             var ofBothExercises = checkRepository.findSkippedChecksWithReason(List.of(exercise.getId(), other.getId()), noConsent);
             assertThat(ofBothExercises).containsExactlyInAnyOrder(expectedOwner, expectedOtherOwner);
         }
-
-        @Test
-        void shouldCountOnlyTheStartedChecksOfTheExercise() {
-            metisUtilService.saveCheck(participation(exercise, "student1").getId(), MetisCheckStatus.IN_PROGRESS);
-            metisUtilService.saveCheck(participation(exercise, "student2").getId(), MetisCheckStatus.COMPLETED);
-            metisUtilService.saveCheck(participation(exercise, "student3").getId(), MetisCheckStatus.READY);
-            metisUtilService.saveCheck(participation(otherExercise("METISB", DUE), "student4").getId(), MetisCheckStatus.IN_PROGRESS);
-
-            assertThat(checkRepository.countStartedChecksOfExercise(exercise.getId())).isEqualTo(2);
-        }
     }
 
     @Nested

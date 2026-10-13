@@ -532,7 +532,8 @@ The rows are inserted with a plain insert after an unlocked existence read, so a
 that a creation which failed half-way left out is added by the next update of its owner: the course update calls
 `CourseRepository.ensureDefaultConfigurations`, the update of a programming, text, modeling or file upload exercise calls
 `ensureExistsFor` through `applyTo`, and for the Metis row of a programming exercise
-`ExerciseDefaultConfigurationsRepository.ensureDefaultConfigurations`.
+`ExerciseDefaultConfigurationsRepository.ensureDefaultConfigurations`; saving the Metis settings or a tutorial-group window
+adds a missing Metis row as well (`MetisExerciseConfigRepository.ensureExistsFor`).
 
 Two of them carry a further constraint. `BuildPlan` is shared rather than owned: several
 programming exercises point at one build plan, so there is no single parent for it to name, and "at

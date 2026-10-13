@@ -264,7 +264,9 @@ statements are JPQL that names the entity only by its name, which keeps the exer
 tolerated, and a call that finds the row changes nothing. The programming import, which goes to the repositories directly,
 makes the same call, and so does `ProgrammingExerciseCreationUpdateService.updateProgrammingExercise` next to the `applyTo`
 calls of the team and plagiarism rows, so the next update of a programming exercise whose creation failed half-way adds the
-row that creation left out. The migration that created the table gave every existing programming exercise its row.
+row that creation left out. While the module is enabled, a request that saves the exercise's Metis settings, or at least one
+tutorial-group window, adds a missing row the same way, through `MetisExerciseConfigRepository.ensureExistsFor` and the
+module's own JPQL insert. The migration that created the table gave every existing programming exercise its row.
 Switching Metis on or off later only changes the row's `enabled` flag.
 
 #### Turning an existing association lazy
