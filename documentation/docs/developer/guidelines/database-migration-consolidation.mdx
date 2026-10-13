@@ -185,9 +185,13 @@ the git tag of the oldest supported release, reading which release that is from 
 in `DatabaseMigration.java` so the two cannot drift apart. It is what establishes that each baseline
 changeset's precondition holds against a schema that is missing everything written since that tag.
 
-`ci-liquibase.yml` runs all six on every pull request, including ones that touch no changelog: the
-baseline is generated, so nothing about the file itself says it still matches, and a new changelog
-filed in the wrong directory is exactly the mistake these catch.
+`ci-liquibase.yml` runs all six on every pull request that changes something they read: the changelogs
+and seed data under `config/liquibase`, `DatabaseMigration.java`, `supporting_scripts/liquibase`, the
+Gradle build files that fix the database and driver versions, or the workflow itself (`has_liquibase`
+in `ci.yml`). The baseline is generated, so nothing about the file itself says it still matches, and a
+new changelog filed in the wrong directory is exactly the mistake these catch. A pull request that
+touches none of those paths cannot change what they conclude, so it skips them; `develop` is checked
+on every push that does.
 
 <Callout variant={CalloutVariant.info}>
     All six run against empty databases, where every backfill and every guarded `NOT NULL` passes
