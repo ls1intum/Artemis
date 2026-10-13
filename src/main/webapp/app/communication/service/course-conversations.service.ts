@@ -154,9 +154,22 @@ export class CourseConversationsService implements OnDestroy {
                 this.requestedConversationId = conversationId;
                 return;
             }
-            this.alertService.addAlert({
-                type: AlertType.WARNING,
-                message: 'artemisApp.communication.channel.notAMember',
+            // The conversation can be missing because it was created after the conversations were loaded: nobody is told about a new
+            // course-wide channel, although every user of the course may open it. Ask the server again before concluding that the user
+            // is not a member. Otherwise following the notification about such a channel only shows the warning.
+            this.forceRefresh().subscribe({
+                complete: () => {
+                    if (this.conversationsOfUser.some((conversationInCache) => conversationInCache.id === conversationId)) {
+                        this.setActiveConversation(conversationId);
+                    } else {
+                        this.alertService.addAlert({
+                            type: AlertType.WARNING,
+                            message: 'artemisApp.communication.channel.notAMember',
+                        });
+                    }
+                },
+                // the failed request has already been reported by forceRefresh
+                error: () => {},
             });
             // Keep whatever is currently open instead of closing it. Replacing it with nothing empties the view, and the
             // active conversation subscriber reacts to that by removing the conversationId from the URL, so a reload can

@@ -612,6 +612,33 @@ examples.forEach((activeConversation) => {
             });
         });
 
+        describe('opening a conversation that the sidebar does not list yet', () => {
+            const newChannel = { id: 201, type: ConversationType.CHANNEL } as ConversationDTO;
+            const knownChannel = { id: 202, type: ConversationType.CHANNEL } as ConversationDTO;
+
+            beforeEach(() => {
+                fixture.detectChanges();
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockClear();
+                component.conversationsOfUser.set([newChannel, knownChannel]);
+                component.sidebarConversations.set([{ id: knownChannel.id!, title: 'known', size: 'S', conversation: knownChannel }]);
+                vi.mocked(courseOverviewService.groupConversationsByChannelType).mockClear();
+            });
+
+            it('should rebuild the sidebar without asking the server again', () => {
+                activeConversation$.next(newChannel);
+
+                expect(courseOverviewService.groupConversationsByChannelType).toHaveBeenCalledOnce();
+                expect(vi.mocked(courseOverviewService.groupConversationsByChannelType).mock.lastCall?.[1]).toContain(newChannel);
+                expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
+            });
+
+            it('should leave the sidebar alone when the conversation is already listed', () => {
+                activeConversation$.next(knownChannel);
+
+                expect(courseOverviewService.groupConversationsByChannelType).not.toHaveBeenCalled();
+            });
+        });
+
         describe('query parameter handling', () => {
             it('should handle SavedPostStatus in conversationId', () => {
                 const queryParams = {

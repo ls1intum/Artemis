@@ -159,6 +159,46 @@ describe('CourseConversationsService', () => {
         });
     });
 
+    it('should load the conversations again and open a course-wide channel that was created after they were loaded', () => {
+        // Nobody is told about a new course-wide channel, so the cache of a user who already has the page open does not know it.
+        // The notification about it links to it, and following that link must not claim that the user is not a member.
+        const newChannel = generateExampleChannelDTO({ id: 10, isCourseWide: true } as ChannelDTO);
+        return new Promise((done) => {
+            courseConversationsService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+                    vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel, newChannel] })));
+
+                    courseConversationsService.setActiveConversation(newChannel.id);
+
+                    expect(addAlertSpy).not.toHaveBeenCalled();
+                    courseConversationsService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
+                        expect(activeConversation?.id).toBe(newChannel.id);
+                        done({});
+                    });
+                },
+            });
+        });
+    });
+
+    it('should ask the server only once before warning that the user is not a member', () => {
+        return new Promise((done) => {
+            courseConversationsService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+                    const getConversationsOfUserSpy = vi.spyOn(conversationService, 'getConversationsOfUser');
+                    getConversationsOfUserSpy.mockClear();
+
+                    courseConversationsService.setActiveConversation(4);
+
+                    expect(getConversationsOfUserSpy).toHaveBeenCalledOnce();
+                    expect(addAlertSpy).toHaveBeenCalledOnce();
+                    done({});
+                },
+            });
+        });
+    });
+
     it('should get conversations of users again if force refresh is called', () => {
         return new Promise((done) => {
             courseConversationsService.setUpConversationService(course).subscribe({

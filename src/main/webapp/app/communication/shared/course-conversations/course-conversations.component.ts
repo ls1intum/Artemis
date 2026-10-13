@@ -497,6 +497,15 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
                 // The direct message that was just left has no messages. Reload the conversations so that it drops out of the sidebar,
                 // unless the user has written to it in the meantime and the server now reports it with a message date.
                 this.prepareSidebarData();
+            } else if (
+                this.sidebarData() &&
+                conversation?.id &&
+                !this.isListedInSidebar(conversation.id) &&
+                this.conversationsOfUser().some((cached) => cached.id === conversation.id)
+            ) {
+                // The conversation was opened although the sidebar does not list it yet, for example a course-wide channel that was created
+                // after the sidebar was built and opened through the notification about it.
+                this.rebuildSidebarData();
             }
             this.updateQueryParameters();
         });
@@ -610,18 +619,23 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
      */
     prepareSidebarData() {
         this.courseConversationsService.forceRefresh().subscribe({
-            complete: () => {
-                const conversations = this.conversationsToShowInSidebar();
-                this.sidebarConversations.set(this.courseOverviewService.mapConversationsToSidebarCardElements(conversations));
-                this.accordionConversationGroups.set(this.courseOverviewService.groupConversationsByChannelType(this.course()!, conversations, this.messagingEnabled));
-                this.accordionConversationGroups().recents.entityData = this.sidebarConversations()?.filter((item) => item.isCurrent) || [];
-                this.updateSidebarData();
-            },
+            complete: () => this.rebuildSidebarData(),
             error: () => {
                 // Keep the sidebar as it is. Rebuilding it from a refresh that failed would show a list that does not
                 // match the server, and the error has already been reported by the service.
             },
         });
+    }
+
+    /**
+     * Rebuilds the sidebar from the conversations that are already known, without asking the server again.
+     */
+    private rebuildSidebarData() {
+        const conversations = this.conversationsToShowInSidebar();
+        this.sidebarConversations.set(this.courseOverviewService.mapConversationsToSidebarCardElements(conversations));
+        this.accordionConversationGroups.set(this.courseOverviewService.groupConversationsByChannelType(this.course()!, conversations, this.messagingEnabled));
+        this.accordionConversationGroups().recents.entityData = this.sidebarConversations()?.filter((item) => item.isCurrent) || [];
+        this.updateSidebarData();
     }
 
     /**
@@ -631,6 +645,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
     private conversationsToShowInSidebar(): ConversationDTO[] {
         const activeConversationId = this.activeConversation()?.id;
         return this.conversationsOfUser().filter((conversation) => conversation.id === activeConversationId || !this.isEmptyDirectMessage(conversation));
+    }
+
+    private isListedInSidebar(conversationId: number): boolean {
+        return !!this.sidebarConversations()?.some((card) => card.id === conversationId);
     }
 
     private isEmptyDirectMessage(conversation: ConversationDTO | undefined): boolean {
