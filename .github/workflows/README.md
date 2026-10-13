@@ -136,21 +136,22 @@ a PR that edits a required check also runs that check. Cascading skips don't byp
 either: `detect-changes` is in the gate's `needs:`, so a change-detection failure fails the
 gate closed.
 
-### Skipping a test suite on a pull request
+### Skipping tests on a pull request
 
 The server suite is by far the largest consumer of the self-hosted `aet-large-ubuntu` runners
-(seven shards per run), so a **pull request** skips a suite it cannot affect. `detect-changes`
-emits `run_server_tests` and `run_client_tests`, which `ci.yml` passes to `ci-test.yml`. The
-skipped jobs report `skipped`; the `test` call as a whole still reports `success` when the other
+(seven shards per run), and E2E is the slowest stage, so a **pull request** skips what it cannot
+affect. `detect-changes` emits `run_server_tests` and `run_client_tests`, which `ci.yml` passes to
+`ci-test.yml`, and `run_e2e`, which gates the `e2e` job. The skipped jobs report `skipped`; the `test` call as a whole still reports `success` when the other
 suite passes, which is all the gate sees. A skipped suite produces no coverage artifact (the
 coverage reporters only fetch an artifact when the matching `has_*_changes` is true, which implies
 the suite ran).
 
-- Both outputs are **deny-lists** in the `relevant` step, so a path nobody has classified runs both
-  suites. The server suite is skipped only if every changed file is markdown, `LICENSE`,
-  documentation, a client file (`src/main/webapp/**`), a client test, or under `packages/` or
-  `skills/`. The client suite is skipped only if every changed file is markdown, `LICENSE`,
-  documentation, or under `src/main/java`, `src/test/java` or `src/main/resources`. `build.gradle`
+- All three outputs are **deny-lists** in the `relevant` step, so a path nobody has classified runs
+  the suite. The server suite is skipped only if every changed file is markdown, `LICENSE`,
+  documentation, a client file (`src/main/webapp/**`), a client test (`src/test/javascript`,
+  `src/test/vitest`), Playwright (`src/test/playwright`), or under `packages/` or `skills/`. The
+  client suite is skipped only if every changed file is markdown, `LICENSE`, documentation, or under
+  `src/main/java`, `src/main/resources`, `src/test/java` or `src/test/resources`. `build.gradle`
   and `gradle/` are deliberately in neither list: `supporting_scripts/client/prebuild.mjs` reads the
   app version from `build.gradle`, and the `test:rules` spec reads `gradle/profile_{dev,prod}.gradle`.
 - Server tests read some files that the deny-lists (and `build`) treat as irrelevant: the
@@ -160,6 +161,12 @@ the suite ran).
   documentation-only change that includes the catalogue runs only the server suite). If a server
   test starts reading another client, documentation or markdown file, add it there, or the suite can
   be skipped under it.
+- E2E runs against the built Docker image, so it is skipped only if every changed file is markdown,
+  `LICENSE`, documentation, or a test that is not an E2E test: `src/test/java`, `src/test/resources`,
+  `src/test/javascript`, `src/test/vitest`, and the `*.spec.ts` files under `src/main/webapp` and
+  `packages`. Playwright specs are `*.spec.ts` too, which is why client specs are matched by
+  location, and a change under `src/test/playwright` always runs E2E. `build` and the other required
+  checks still run.
 - Only `pull_request` events skip. A push to `develop`, a merge group, a manual run and a release
   other than a `@tumaet/*` one run both suites, because the coverage badge and Sonar read both
   suites' coverage there and `develop` is where anything that slipped past a pull request's own run
