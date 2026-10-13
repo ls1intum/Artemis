@@ -601,6 +601,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             setAllowOnlineIde(exercise.getId(), false);
 
             userUtilService.changeUser(TEST_PREFIX + "student2");
+            mockDockerClientForStudentBuild();
             request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class, HttpStatus.CREATED);
 
             String student2RepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + student2.getLogin();
