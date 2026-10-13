@@ -146,7 +146,7 @@ class CourseNotificationWebappServiceTest {
     }
 
     private CourseNotificationRecipientDTO createTestUser(Long id, String login) {
-        return new CourseNotificationRecipientDTO(id, login, null, null, null, null);
+        return new CourseNotificationRecipientDTO(id, login, null, null, null, null, false);
     }
 
     private CourseNotificationDTO createTestNotification(Long courseId) {
