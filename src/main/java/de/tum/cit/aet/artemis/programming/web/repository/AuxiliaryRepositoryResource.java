@@ -107,9 +107,9 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    OptionalLong getExerciseIdForMutation(Long auxiliaryRepositoryId) {
+    OptionalLong getExerciseIdForMutation(Long auxiliaryRepositoryId, RepositoryActionType repositoryAction) {
         AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
-        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, auxiliaryRepository.getExercise(), userRepository.getUserWithAuthorities(), "auxiliary");
+        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, auxiliaryRepository.getExercise(), userRepository.getUserWithAuthorities(), "auxiliary");
         return OptionalLong.of(auxiliaryRepository.getExercise().getId());
     }
 

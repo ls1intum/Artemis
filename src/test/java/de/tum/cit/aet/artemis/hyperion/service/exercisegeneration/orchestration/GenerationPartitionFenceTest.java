@@ -17,7 +17,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.CoordinationSnapshot;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
@@ -33,7 +32,7 @@ class GenerationPartitionFenceTest {
         var view = new AtomicReference<>(new CoordinationSnapshot(Set.of(owner, "second", "island"), true, true));
         doAnswer(_ -> Optional.of(view.get())).when(provider).getCoordinationSnapshot();
         var jobs = new GenerationJobService(provider, _ -> {
-        }, mock(LLMTokenUsageService.class), null, Duration.ofHours(1), Duration.ofMinutes(45), Runnable::run, 3);
+        }, mock(GenerationTokenUsageService.class), null, Duration.ofHours(1), Duration.ofMinutes(45), Runnable::run, 3);
         jobs.init();
         var user = new User();
         user.setLogin("owner");
@@ -86,10 +85,11 @@ class GenerationPartitionFenceTest {
         assertThat(slots.get("42")).isNull();
     }
 
-    @Test
-    void missingWriterDeclarationRejectsGenerationEvenWithCompleteMembership() {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void missingWriterDeclarationRejectsGenerationEvenWithCompleteMembership(boolean memberHosted) {
         var provider = spy(new LocalDataProviderService());
-        doAnswer(_ -> Optional.of(new CoordinationSnapshot(Set.of(provider.getLocalNodeId()), true, false))).when(provider).getCoordinationSnapshot();
+        doAnswer(_ -> Optional.of(new CoordinationSnapshot(Set.of(provider.getLocalNodeId()), memberHosted, false))).when(provider).getCoordinationSnapshot();
         assertThatThrownBy(() -> new GenerationClusterTopology(provider, 1).verifyAllMembers()).isInstanceOf(ServiceUnavailableAlertException.class);
         assertThatThrownBy(() -> new GenerationExternalMutationService(provider, 1, true).claimParticipationSlot(42)).isInstanceOf(ServiceUnavailableAlertException.class);
         var ordinaryWriter = new GenerationExternalMutationService(provider, 1, false);

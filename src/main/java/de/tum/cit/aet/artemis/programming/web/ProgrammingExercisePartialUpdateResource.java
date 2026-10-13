@@ -121,11 +121,16 @@ public class ProgrammingExercisePartialUpdateResource {
             throw new BadRequestAlertException("The timeline of an exercise in a variant group is managed by its group and must be changed there", ENTITY_NAME,
                     "timelineManagedByVariantGroup");
         }
-        try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(timelineUpdateDTO.id())) {
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(timelineUpdateDTO.id())) {
             var programmingExercise = programmingExerciseRepository.findByIdElseThrow(timelineUpdateDTO.id());
             var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateTimeline(programmingExercise, timelineUpdateDTO, notificationText);
             exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-            exerciseVersionService.createExerciseVersionSynchronously(updatedProgrammingExercise, user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(updatedProgrammingExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
+            }
             teamAssignmentConfigRepository.attachTo(updatedProgrammingExercise);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
                     .body(ProgrammingExerciseResponseDTO.of(updatedProgrammingExercise,
@@ -151,12 +156,17 @@ public class ProgrammingExercisePartialUpdateResource {
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
         var user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, authorizationExercise, user);
-        try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(exerciseId)
                     .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
             var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateProblemStatement(programmingExercise, updatedProblemStatement, notificationText);
             exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-            exerciseVersionService.createExerciseVersionSynchronously(updatedProgrammingExercise, user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(updatedProgrammingExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
+            }
             // we saved a problem statement with test ids instead of test names. For easier editing we send a problem statement with test names to the client:
             programmingExerciseTaskService.replaceTestIdsWithNames(updatedProgrammingExercise);
             teamAssignmentConfigRepository.attachTo(updatedProgrammingExercise);

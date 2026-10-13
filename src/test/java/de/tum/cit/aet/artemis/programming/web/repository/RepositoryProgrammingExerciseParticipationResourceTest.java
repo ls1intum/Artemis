@@ -379,6 +379,21 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     }
 
     @Test
+    void pullChangesAllowsReadOnlyAccessToTheSolutionRepository() throws Exception {
+        withAccessibleParticipation();
+        var solution = new SolutionProgrammingExerciseParticipation();
+        solution.setProgrammingExercise(exercise);
+        when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(solution);
+        when(programmingExerciseRepository.getProgrammingExerciseFromParticipation(solution)).thenReturn(exercise);
+        lenient().doThrow(new AccessForbiddenException()).when(repositoryAccessService).checkAccessRepositoryElseThrow(solution, user, exercise, RepositoryActionType.WRITE);
+
+        assertThat(resource.pullChanges(PARTICIPATION_ID).getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(repositoryService).pullChanges(repository);
+        verify(repositoryAccessService, never()).checkAccessRepositoryElseThrow(solution, user, exercise, RepositoryActionType.WRITE);
+        verify(repositoryAccessService, org.mockito.Mockito.times(2)).checkAccessRepositoryElseThrow(solution, user, exercise, RepositoryActionType.READ);
+    }
+
+    @Test
     void commitChanges_commitsAndLetsTheServerProcessThePush() throws Exception {
         withAccessibleParticipation();
         when(userRepository.getUser()).thenReturn(user);

@@ -23,7 +23,6 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFeedbackDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationInputDTO;
@@ -112,7 +111,7 @@ class GenerationJobServiceClusterTest {
 
     private static GenerationJobService nodeOn(HazelcastInstance member) {
         GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(member), event -> {
-        }, mock(LLMTokenUsageService.class), null, STALE_JOB_TIMEOUT, MAX_JOB_DURATION, Runnable::run, EXPECTED_DATA_MEMBERS);
+        }, mock(GenerationTokenUsageService.class), null, STALE_JOB_TIMEOUT, MAX_JOB_DURATION, Runnable::run, EXPECTED_DATA_MEMBERS);
         service.init();
         return service;
     }
@@ -136,8 +135,10 @@ class GenerationJobServiceClusterTest {
     /** The stale-writer fence: a node that does not own the job must not declare the point of no return and start writing to Git and the database. */
     @Test
     void inputAndDesignReplayAcrossNodesWithoutDisclosingOwnerFeedback() {
-        var firstReplay = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(firstMember), Duration.ofHours(4));
-        var secondReplay = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(secondMember), Duration.ofHours(4));
+        var firstReplay = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(firstMember), Duration.ofHours(4),
+                HyperionDistributedDataTestProvider.provider(firstMember).getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
+        var secondReplay = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(secondMember), Duration.ofHours(4),
+                HyperionDistributedDataTestProvider.provider(secondMember).getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
         var input = new ExerciseGenerationInputDTO("Keep the API.",
                 List.of(new ExerciseGenerationFeedbackDTO("SOLUTION_REPO", "src/Stack.java", 12, List.of("Handle empty stacks."))));
         var exercise = new ProgrammingExercise();
@@ -255,7 +256,7 @@ class GenerationJobServiceClusterTest {
 
     private static GenerationJobService clusterNodeExpecting(HazelcastInstance member, int expectedDataMembers) {
         GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(member), event -> {
-        }, mock(LLMTokenUsageService.class), null, STALE_JOB_TIMEOUT, MAX_JOB_DURATION, Runnable::run, expectedDataMembers);
+        }, mock(GenerationTokenUsageService.class), null, STALE_JOB_TIMEOUT, MAX_JOB_DURATION, Runnable::run, expectedDataMembers);
         service.init();
         return service;
     }

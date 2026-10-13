@@ -193,11 +193,6 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
     }
 
     @Override
-    public void lock(K key, Duration lease) {
-        map.getLock(key).lock(lease.toMillis(), TimeUnit.MILLISECONDS);
-    }
-
-    @Override
     public void unlock(K key) {
         map.getLock(key).unlock();
     }

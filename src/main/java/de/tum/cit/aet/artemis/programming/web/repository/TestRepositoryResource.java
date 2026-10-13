@@ -101,7 +101,7 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    OptionalLong getExerciseIdForMutation(Long exerciseId) {
+    OptionalLong getExerciseIdForMutation(Long exerciseId, RepositoryActionType repositoryAction) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, exercise, userRepository.getUserWithAuthorities(), "test");
         return OptionalLong.of(exerciseId);

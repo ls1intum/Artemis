@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -7,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -22,10 +24,12 @@ class ProgrammingExerciseMutationGuardTest {
     @Test
     void claimExternalMutation_holdsTheHyperionSlotUntilLeaseCloses() {
         HyperionExerciseMutationApi hyperionApi = mock(HyperionExerciseMutationApi.class);
+        when(hyperionApi.isCoordinationEnabled()).thenReturn(true);
         when(hyperionApi.claimExternalMutationSlot(42L)).thenReturn("mutation-42");
         ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.of(hyperionApi));
 
-        try (ProgrammingExerciseMutationGuardService.MutationLease ignored = guard.claimExternalMutation(42L)) {
+        try (ProgrammingExerciseMutationGuardService.MutationLease lease = guard.claimExternalMutation(42L)) {
+            assertThat(lease.coordinated()).isTrue();
             verify(hyperionApi).claimExternalMutationSlot(42L);
         }
 
@@ -35,6 +39,7 @@ class ProgrammingExerciseMutationGuardTest {
     @Test
     void claimExternalMutation_propagatesConflictWithoutClearing() {
         HyperionExerciseMutationApi hyperionApi = mock(HyperionExerciseMutationApi.class);
+        when(hyperionApi.isCoordinationEnabled()).thenReturn(true);
         when(hyperionApi.claimExternalMutationSlot(42L))
                 .thenThrow(new ConflictException("Exercise 42 is already being mutated.", "programmingExercise", "hyperionMutationSlotConflict"));
         ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.of(hyperionApi));
@@ -46,7 +51,22 @@ class ProgrammingExerciseMutationGuardTest {
     @Test
     void claimExternalMutation_isNoOpWhenWholeExerciseGenerationIsDisabled() {
         ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.empty());
-        assertThatCode(() -> guard.claimExternalMutation(42L).close()).doesNotThrowAnyException();
+        try (var lease = guard.claimExternalMutation(42L)) {
+            assertThat(lease.coordinated()).isFalse();
+        }
+    }
+
+    @Test
+    void claimExternalMutation_isNoOpWhenCoordinationIsDisabled() {
+        HyperionExerciseMutationApi hyperionApi = mock(HyperionExerciseMutationApi.class);
+        ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.of(hyperionApi));
+
+        try (var lease = guard.claimExternalMutation(42L)) {
+            assertThat(lease.coordinated()).isFalse();
+        }
+
+        verify(hyperionApi).isCoordinationEnabled();
+        verifyNoMoreInteractions(hyperionApi);
     }
 
     @Test

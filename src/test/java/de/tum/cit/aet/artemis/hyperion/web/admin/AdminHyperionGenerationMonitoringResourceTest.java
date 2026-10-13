@@ -12,14 +12,23 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationMonitoringService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class AdminHyperionGenerationMonitoringResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class AdminHyperionGenerationMonitoringResourceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private AuditEventRepository audit;
+
+    @Autowired
+    private Environment environment;
+
+    @Autowired
+    private ApplicationContext context;
 
     @BeforeEach
     void addAdmin() {
@@ -45,6 +54,8 @@ class AdminHyperionGenerationMonitoringResourceTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "hyperionmonitoradmin", roles = "ADMIN")
     void disabledGenerationHasNoActiveRuns() throws Exception {
+        assertThat(environment.getProperty("artemis.hyperion.exercise-generation.enabled", Boolean.class, false)).isFalse();
+        assertThat(context.getBeansOfType(GenerationMonitoringService.class)).isEmpty();
         request.performMvcRequest(get("/api/hyperion/admin/exercises/generations")).andExpect(status().isOk()).andExpect(jsonPath("$").isEmpty());
     }
 
