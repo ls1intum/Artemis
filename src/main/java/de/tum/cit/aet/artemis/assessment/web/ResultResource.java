@@ -306,6 +306,8 @@ public class ResultResource {
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(exercise, student.get(), SubmissionType.EXTERNAL);
         Submission submission = participationRepository.findByIdWithSubmissionsElseThrow(participation.getId()).findLatestSubmission().orElseThrow();
         result.setSubmission(submission);
+        // the check above guarantees that the submission holds no result yet, so this is the result of the first correction round
+        result.setCorrectionRound(0);
         // the exercise id is a non-null column on the result; it is derived from the path, never from the request
         result.setExerciseId(exercise.getId());
 
