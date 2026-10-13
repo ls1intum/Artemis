@@ -1129,6 +1129,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return !!this.lectureUnit().attachment;
     }
 
+    /** A unit that only embeds a video link may carry an attachment without a file, which leaves nothing to download. */
+    hasDownloadableFile(): boolean {
+        return !!this.getAttachmentLink();
+    }
+
     hasVideo(): boolean {
         return !!this.lectureUnit().videoSource;
     }
