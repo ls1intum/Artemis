@@ -136,6 +136,29 @@ a PR that edits a required check also runs that check. Cascading skips don't byp
 either: `detect-changes` is in the gate's `needs:`, so a change-detection failure fails the
 gate closed.
 
+### Skipping a test suite on a pull request
+
+The server suite is by far the largest consumer of the self-hosted `aet-large-ubuntu` runners
+(seven shards per run), so a **pull request** skips a suite it cannot affect. `detect-changes`
+emits `run_server_tests` and `run_client_tests`, which `ci.yml` passes to `ci-test.yml`; a
+skipped suite reports `skipped`, which the gate accepts, and its coverage artifact is not produced
+(the coverage reporters only fetch an artifact when the matching `has_*_changes` is true, which
+implies the suite ran).
+
+- Both outputs are **deny-lists** in the `relevant` step, so a path nobody has classified runs both
+  suites. The server suite is skipped only if every changed file is markdown, documentation, a
+  client file (`src/main/webapp/**`), a client test, or `packages/**` or `skills/**`. The client
+  suite is skipped only if every changed file is markdown, documentation, or under `src/main/java`,
+  `src/test/java`, `src/main/resources` or `gradle/`. `build.gradle` is deliberately in neither list:
+  `supporting_scripts/client/prebuild.mjs` reads the app version from it.
+- Server tests read two things outside the server's own paths: the translations under
+  `src/main/webapp/i18n/` and `documentation/docs/developer/feature-usage-catalogue.mdx`
+  (`has_server_test_inputs`). Changing either runs the server suite. If a server test starts
+  reading another client or documentation file, add it there, or the suite can be skipped under it.
+- Only `pull_request` events skip. A push to `develop`, a merge group, a release and a manual run
+  run both suites, because the coverage badge and Sonar read both suites' coverage there and
+  `develop` is where anything that slipped past a pull request's own run would show up.
+
 ## Action pinning policy
 
 - **All external actions**, including `actions/*` and `github/*`, are pinned to a
