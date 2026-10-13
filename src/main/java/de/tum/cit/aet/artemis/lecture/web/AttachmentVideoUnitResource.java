@@ -349,6 +349,7 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
         }
         try {
+            lectureUnitProcessingService.validatePdfElseThrow(file);
             String filename = lectureUnitProcessingService.saveTempFileForProcessing(lectureId, file, minutesUntilDeletion);
             // Explicitly set JSON content type to prevent XSS — the filename derives from user input
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(JsonObjectMapper.get().writeValueAsString(filename));
