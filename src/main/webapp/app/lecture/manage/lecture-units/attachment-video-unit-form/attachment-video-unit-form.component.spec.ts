@@ -8,7 +8,6 @@ import {
     AttachmentVideoUnitFormData,
     FileProperties,
 } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -37,7 +36,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 FormsModule,
                 FontAwesomeTestingModule,
                 AttachmentVideoUnitFormComponent,
-                FormDateTimePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(CompetencySelectionComponent),
                 MockDirective(FeatureToggleHideDirective),

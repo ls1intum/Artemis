@@ -15,34 +15,32 @@
     <div class="mb-4 flex flex-wrap items-start gap-4" data-testid="audits-date-filter">
         <div class="flex flex-col gap-2">
             <label for="audits-from-date" jhiTranslate="audits.filter.from"></label>
-            <jhi-date-time-picker
+            <tumaet-ui-date-picker
                 #fromPicker
-                name="start"
                 inputId="audits-from-date"
+                data-testid="audits-from-date"
                 [hideLabelName]="true"
                 [hideValidationMessage]="true"
                 [shouldDisplayTimeZoneWarning]="false"
-                [pickerType]="DateTimePickerType.CALENDAR"
-                [ngModel]="fromDateValue()"
-                [ngModelOptions]="{ standalone: true }"
-                (valueChange)="updateFromDate(fromPicker.isValid() ? fromPicker.value() : undefined); transition()"
-                data-testid="audits-from-date"
+                [dateOnly]="true"
+                [value]="fromDateValue()"
+                (valueChange)="onFromDateChange($event)"
+                (inputValidityChange)="onFromTextValidityChange($event, fromPicker.value())"
             />
         </div>
         <div class="flex flex-col gap-2">
             <label for="audits-to-date" jhiTranslate="audits.filter.to"></label>
-            <jhi-date-time-picker
+            <tumaet-ui-date-picker
                 #toPicker
-                name="end"
                 inputId="audits-to-date"
+                data-testid="audits-to-date"
                 [hideLabelName]="true"
                 [hideValidationMessage]="true"
                 [shouldDisplayTimeZoneWarning]="false"
-                [pickerType]="DateTimePickerType.CALENDAR"
-                [ngModel]="toDateValue()"
-                [ngModelOptions]="{ standalone: true }"
-                (valueChange)="updateToDate(toPicker.isValid() ? toPicker.value() : undefined); transition()"
-                data-testid="audits-to-date"
+                [dateOnly]="true"
+                [value]="toDateValue()"
+                (valueChange)="onToDateChange($event)"
+                (inputValidityChange)="onToTextValidityChange($event, toPicker.value())"
             />
         </div>
     </div>
