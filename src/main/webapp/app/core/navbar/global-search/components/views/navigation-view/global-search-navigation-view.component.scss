@@ -13,3 +13,15 @@
         border-bottom: none;
     }
 }
+
+.show-more-results-btn {
+    font-size: 0.8125rem;
+    color: var(--primary);
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+        color: var(--primary-dark);
+        background-color: var(--global-search-item-hover-bg);
+    }
+}

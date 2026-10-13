@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.globalsearch.web;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.GlobalSearchResultRanker;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityAccessFilterService;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -68,6 +70,12 @@ public class GlobalSearchResource {
      * set, so only a crafted request can reach it.
      */
     private static final int MAX_COURSE_ID_FILTERS = 100;
+
+    /** How many rows are read from Weaviate per requested result, so ranking and de-duplication still fill the limit. */
+    private static final int CANDIDATE_FACTOR = 4;
+
+    /** Upper bound on the rows read from Weaviate for one search. */
+    private static final int MAX_CANDIDATES = 100;
 
     private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
@@ -169,7 +177,10 @@ public class GlobalSearchResource {
             return ResponseEntity.ok(List.of());
         }
 
-        List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), effectiveLimit);
+        // Over-fetched, because the ranking below moves rows of running courses up and drops older semester copies of an
+        // item; the limit applies after that.
+        List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(),
+                Math.min(MAX_CANDIDATES, effectiveLimit * CANDIDATE_FACTOR));
 
         Map<Long, Course> coursesById;
         Set<Long> staffCourseIds;
@@ -188,6 +199,8 @@ public class GlobalSearchResource {
         }
         Map<Long, String> courseNameById = new HashMap<>();
         coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
+        List<Map<String, Object>> rankedResults = GlobalSearchResultRanker.rank(rawResults, query != null && !query.isBlank(), coursesById, ZonedDateTime.now());
+        rawResults = rankedResults.subList(0, Math.min(rankedResults.size(), effectiveLimit));
 
         Map<Long, Long> exerciseGroupIdByExerciseId = resolveExerciseGroupIds(rawResults);
         Map<Long, String> channelNameById = resolveChannelNames(rawResults);
