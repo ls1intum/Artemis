@@ -26,6 +26,8 @@ import de.tum.cit.aet.artemis.iris.dto.IrisDashboardAlertChatModeDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardAlertDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardDigestDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.TestAccountEmailService;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailRetryQueueService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -45,6 +47,12 @@ class IrisDashboardEmailIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private SpringTemplateEngine templateEngine;
+
+    @Autowired
+    private MailRetryQueueService mailRetryQueue;
+
+    @Autowired
+    private TestAccountEmailService testAccountEmailPolicy;
 
     private MailService testMailService;
 
@@ -71,7 +79,7 @@ class IrisDashboardEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         var mailEnabledProperties = new ArtemisProperties();
         mailEnabledProperties.getMail().setFrom("test@greenmail.test");
 
-        var testMailSendingService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine);
+        var testMailSendingService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine, mailRetryQueue, testAccountEmailPolicy);
         ReflectionTestUtils.setField(testMailSendingService, "artemisServerUrl", URI.create("http://localhost:9000").toURL());
 
         testMailService = new MailService(mainMessageSource, testTemplateEngine, testMailSendingService);
