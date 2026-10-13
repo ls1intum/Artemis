@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.service.SessionFreshnessService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
@@ -93,9 +94,11 @@ public class EmailChangeService {
     /** The accounts whose confirmation mails went out within {@link #MIN_INTERVAL_BETWEEN_REQUESTS}, shared by all nodes. */
     private final DistributedMap<Long, Long> requestCooldowns;
 
+    private final SessionFreshnessService sessionFreshnessService;
+
     public EmailChangeService(UserRecoveryKeyService userRecoveryKeyService, UserRepository userRepository, UserCreationService userCreationService,
             PasswordService passwordService, MailSendingService mailSendingService, AccountSecurityEventService accountSecurityEventService,
-            DistributedDataProvider distributedDataProvider,
+            DistributedDataProvider distributedDataProvider, SessionFreshnessService sessionFreshnessService,
             @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}") Optional<Pattern> allowedEmailPattern) {
         this.userRecoveryKeyService = userRecoveryKeyService;
         this.userRepository = userRepository;
@@ -105,6 +108,7 @@ public class EmailChangeService {
         this.accountSecurityEventService = accountSecurityEventService;
         this.allowedEmailPattern = allowedEmailPattern;
         this.requestCooldowns = distributedDataProvider.getExpiringMap(REQUEST_COOLDOWN_MAP_NAME, MIN_INTERVAL_BETWEEN_REQUESTS);
+        this.sessionFreshnessService = sessionFreshnessService;
     }
 
     /**
@@ -143,6 +147,8 @@ public class EmailChangeService {
      *                                      another request was made a moment ago
      */
     public PendingEmailChangeDTO requestChange(User user, String requestedEmail) {
+        // A session that survived a password reset must not be able to start a new request, which the owner could otherwise only keep cancelling.
+        sessionFreshnessService.requireCurrentSession();
         String newEmail = User.canonicalEmail(requestedEmail);
         if (newEmail == null) {
             // Removing the address would leave an account that needs only the new address to confirm, and so would be the way
@@ -170,6 +176,7 @@ public class EmailChangeService {
      *                                      {@code emailChangeRequestedTooRecently} if the last mails went out a moment ago
      */
     public PendingEmailChangeDTO resend(User user) {
+        sessionFreshnessService.requireCurrentSession();
         requireMailConfigured();
         PendingEmailChange pending = findValidPendingChange(user.getId())
                 .orElseThrow(() -> new BadRequestAlertException("No e-mail change is pending", ENTITY_NAME, "noPendingEmailChange"));

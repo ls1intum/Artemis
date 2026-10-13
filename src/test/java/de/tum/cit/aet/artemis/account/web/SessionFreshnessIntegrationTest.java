@@ -153,6 +153,19 @@ class SessionFreshnessIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     /**
+     * The participation token is minted when a participation is started, so a session could otherwise get a credential that outlives it
+     * just by reading it back.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void aSessionThatStartedBeforeTheCredentialsChangedCannotReadAParticipationAccessToken() throws Exception {
+        userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
+        SessionTestUtil.actAsSessionStartedAt(LOGIN, Instant.now().minus(Duration.ofHours(1)));
+
+        request.get("/api/account/participation-vcs-access-token?participationId=1", HttpStatus.UNAUTHORIZED, String.class);
+    }
+
+    /**
      * A tool token starts a session of its own with {@code iat} set to now. Minting one from an outdated session would carry that
      * session past the change, and a tool token is accepted by the endpoints that hand out repository access.
      * <p>

@@ -261,13 +261,16 @@ public class AccountResource {
      *
      * @param participationId the participation for which the access token should be fetched
      *
-     * @return the versionControlAccessToken belonging to the provided participation and user
+     * @return the versionControlAccessToken belonging to the provided participation and user, or status 401 (Unauthorized) if the session was established before the
+     *         credentials of the account last changed
      */
     @FeatureUsage(UserFeature.GIT_CREDENTIALS)
     @GetMapping("participation-vcs-access-token")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<String> getVcsAccessToken(@RequestParam("participationId") Long participationId) {
+        // The token is minted when a participation is started, so reading it back is how a session gets a credential that outlives it.
+        sessionFreshnessService.requireCurrentSession();
         User user = userRepository.getUser();
 
         log.debug("REST request to get VCS access token of user {} for participation {}", user.getLogin(), participationId);
