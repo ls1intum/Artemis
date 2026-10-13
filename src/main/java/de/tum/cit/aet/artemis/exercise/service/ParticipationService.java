@@ -1322,12 +1322,12 @@ public class ParticipationService {
         final Map<Long, Result> finalResultMap = resultBySubmissionId;
         final Map<Long, List<CorrectionRoundResultDTO>> finalCorrectionRoundResults = correctionRoundResultsBySubmissionId;
         List<ParticipationScoreDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull)
-                .map(p -> mapToDTO(p, submissionCountMap, finalResultMap, finalCorrectionRoundResults)).toList();
+                .map(p -> mapToDTO(p, exercise instanceof QuizExercise, submissionCountMap, finalResultMap, finalCorrectionRoundResults)).toList();
 
         return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
     }
 
-    private ParticipationScoreDTO mapToDTO(StudentParticipation participation, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId,
+    private ParticipationScoreDTO mapToDTO(StudentParticipation participation, boolean quizExercise, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId,
             Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId) {
         // Participant info
         String participantName;
@@ -1363,9 +1363,11 @@ public class ParticipationService {
         AssessmentType assessmentType = latestResult != null ? latestResult.getAssessmentType() : null;
         String assessmentNote = (latestResult != null && latestResult.getAssessmentNote() != null) ? latestResult.getAssessmentNote().getNote() : null;
 
-        // Duration in seconds
+        // Duration in seconds. A quiz practice participation is reused for every attempt and the start of a single attempt is not recorded, so the time since the
+        // participation was created would include the pauses between the attempts and is not the duration of the latest one.
         Long durationInSeconds = null;
-        if (completionDate != null && participation.getInitializationDate() != null) {
+        boolean durationUnknown = quizExercise && participation.isPracticeMode();
+        if (!durationUnknown && completionDate != null && participation.getInitializationDate() != null) {
             durationInSeconds = Duration.between(participation.getInitializationDate(), completionDate).getSeconds();
         }
 
