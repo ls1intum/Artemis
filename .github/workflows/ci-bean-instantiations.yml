@@ -30,7 +30,9 @@ jobs:
       # TitleCacheConfiguration at startup.
       # 160 rather than 159 since the reliable mail delivery: the mail sending service reaches the
       # mail retry queue and the test account e-mail service at startup.
-      MAX_INSTANTIATED_BEANS: 160
+      # LocalVC servlet initialization adds the mutation guard, Hyperion mutation API and external
+      # mutation service. These protect Git writes without loading generation models or workers.
+      MAX_INSTANTIATED_BEANS: 163
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
