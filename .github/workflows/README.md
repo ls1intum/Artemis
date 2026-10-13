@@ -221,6 +221,7 @@ These workflows are intentionally NOT folded into the umbrella:
 | `test-android.yml` | Different self-hosted runner pool, clones a separate repo, 60-minute job. |
 | `test-mysql.yml` | Manual-only (`workflow_dispatch`). Sibling DB engine to PostgreSQL. |
 | `nightly-lti-interop.yml` | Scheduled default-branch interop check; not part of PR/push CI. |
+| `dependency-submission.yml` | Submits the Gradle dependency graph on `develop` pushes that change a build file, weekly, and on demand (`workflow_dispatch`). Replaces the repository setting "Automatic dependency submission", which ran on every branch and pull request although GitHub discards a snapshot of any non-default branch. Keep that setting off. |
 | `deploy-documentation.yml` | **Split:** the automatic develop-push docs deploy is now ci.yml's `deploy-docs` job (reusing `ci-docs.yml`'s build); this file is the `workflow_dispatch` manual-redeploy fallback. Both share the `pages` concurrency group. |
 | `testserver-deployment.yml`, `prod-like-deployment.yml` | Manual deploy workflows. |
 | `pullrequest-coverage-reporter.yml` | **Fork PRs only.** Posts the coverage table for fork PRs (where an in-run token can't write); hardened against a `workflow_run` pwn-request. Internal PRs use `ci.yml`'s in-run `coverage-report` job instead, so the table appears at ~test time rather than after the run. |
