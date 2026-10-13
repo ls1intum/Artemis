@@ -152,12 +152,20 @@ public class UserRecoveryKeyService {
     }
 
     /**
-     * Saves a change to the pending e-mail change of a row that was read earlier, such as a confirmation timestamp.
+     * Records that one address of a pending e-mail change was confirmed. Does nothing if the request was cancelled or replaced in the meantime, or if that address was
+     * confirmed before, which is why the caller reads the request again afterwards instead of trusting what it read before.
      *
-     * @param row the row to save
+     * @param keyId          the id of the key from the mail
+     * @param currentAddress whether the key was mailed to the current address, otherwise to the new one
      */
-    public void save(UserRecoveryKey row) {
-        userRecoveryKeyRepository.save(row);
+    public void confirmEmailChangeAddress(String keyId, boolean currentAddress) {
+        Instant now = Instant.now();
+        if (currentAddress) {
+            userRecoveryKeyRepository.confirmCurrentAddress(keyId, now);
+        }
+        else {
+            userRecoveryKeyRepository.confirmNewAddress(keyId, now);
+        }
     }
 
     /**
