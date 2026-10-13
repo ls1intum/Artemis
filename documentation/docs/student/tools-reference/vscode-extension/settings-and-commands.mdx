@@ -1,0 +1,71 @@
+---
+id: settings-and-commands
+title: Settings and Commands of the VS Code Extension
+sidebar_label: Settings and Commands
+---
+
+Open the extension's settings with **Open Settings** on the dashboard, or search for `artemis` in the VS Code
+settings.
+
+## Settings
+
+| Setting | Default | What it does |
+|---|---|---|
+| `artemis.serverUrl` | `https://artemis.tum.de` | The Artemis server the extension connects to. **Artemis: Set Server URL** sets it from a list. |
+| `artemis.startPage` | `dashboard` | The page the extension opens after sign-in: `dashboard`, `course-list`, `workspace-course` (the course of the open exercise) or `workspace-exercise` (the open exercise itself). |
+| `artemis.showStartPageSuggestion` | on | Offers to make the open exercise your start page when the extension finds one in your workspace. |
+| `artemis.defaultClonePath` | empty | The folder new exercise repositories are cloned into. Empty means you choose a location for each clone. |
+| `artemis.showSetDefaultClonePathPrompt` | on | Asks for a default folder on your first clone. |
+| `artemis.defaultCommitMessage` | `Solution submission via Iris extension` | The commit message **Submit** uses when you do not write one. |
+| `artemis.showUnsavedChangesWarning` | on | Warns on the exercise page when a file has unsaved changes that a submission would leave out. |
+| `artemis.iris.sendUncommittedChanges` | on | Lets Iris read your work in progress (unsaved, uncommitted and unpushed changes) when you send it a message. |
+| `artemis.iris.proactiveCodeEgress` | `ask` | Your consent for [proactive help](/student/tools-reference/vscode-extension/iris#proactive-help): `enabled`, `disabled`, or `ask`, which leaves it off. Not available in the Open VSX version. |
+
+The Open VSX version, which EduIDE uses, ships different defaults: `artemis.startPage` is `workspace-exercise`, and
+the two prompts are off. They suit EduIDE, where the workspace already contains your exercise, and apply equally when
+you install the Open VSX version in VSCodium.
+
+## Commands
+
+Run these from the command palette (Ctrl+Shift+P, or Cmd+Shift+P on macOS).
+
+| Command | What it does |
+|---|---|
+| **Artemis: Login** | Opens the login page |
+| **Artemis: Logout** | Signs you out and removes the stored session |
+| **Artemis: Set Server URL** | Chooses the Artemis server |
+| **Artemis: Set Default Exercise Folder** | Chooses the folder exercise repositories are cloned into |
+| **Artemis: Reload Iris Chat** | Reloads the Iris chat view |
+| **Artemis: Check Iris Health Status** | Shows whether Iris is reachable, and how many of your messages are left if the course limits them |
+| **Artemis: Check WebSocket Connection Status** | Shows whether the live connection to Artemis is up |
+| **Artemis: Connect WebSocket** | Reconnects the live connection |
+
+EduIDE does not offer the login, logout and server commands, because the workspace provides the session, nor
+**Artemis: Set Default Exercise Folder**, because the workspace already contains the repository.
+
+## Connection Status
+
+Build results, submission status and Iris answers reach the extension over a live connection to Artemis. While it
+works, nothing about it is shown. When it drops, the status bar shows **Artemis: offline** in red, then
+**Artemis: reconnecting** while the extension retries on its own. Select the entry to reconnect immediately.
+
+## Troubleshooting
+
+**Sign-in says no Artemis API was found, or the server cannot be reached.** The server address is wrong or the server
+is down. Check the address on the login page and change it with **Artemis: Set Server URL**.
+
+**After sign-in, a warning says the server needs a newer Artemis.** The extension needs Artemis 9.9.0 or newer. Use
+Artemis in the browser on that server.
+
+**Submit stays disabled.** The extension only submits from the exercise repository that is open as your workspace,
+and only when something changed. Open the repository, save your files, and use **Check workspace status** under
+**More** on the exercise page.
+
+**Submitting is refused.** Open **Submission Setup** on the dashboard. It shows whether Git is missing your name and
+email or Artemis refuses your access token, and it can fix both.
+
+**Iris does not answer.** Make sure you have made the AI choice in Artemis, that Iris is enabled for the course, and
+that your repository contains no `.noai` file. **Artemis: Check Iris Health Status** tells you whether Iris itself is
+reachable.
+
+**Something else is wrong.** **Bug Report** on the dashboard opens the extension's issue tracker.

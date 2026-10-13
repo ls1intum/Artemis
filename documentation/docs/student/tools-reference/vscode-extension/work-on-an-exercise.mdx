@@ -1,0 +1,119 @@
+---
+id: work-on-an-exercise
+title: Working on an Exercise in VS Code
+sidebar_label: Working on an Exercise
+---
+
+import Callout from "../../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../../src/components/Image/Image";
+
+import testResults from '../../assets/vscode-extension/test-results.png';
+import buildFailed from '../../assets/vscode-extension/build-failed.png';
+import buildLog from '../../assets/vscode-extension/build-log.png';
+import codelensError from '../../assets/vscode-extension/codelens-error.png';
+import submissionSetup from '../../assets/vscode-extension/submission-setup.png';
+
+Once an exercise is started, the extension takes care of Git for you. It clones your repository, commits and pushes
+your changes when you select **Submit**, and shows the result of the build Artemis runs on every push. You can still
+use Git yourself, since the extension works on the same repository.
+
+## Getting the Repository
+
+On the exercise page, **Clone Repository** copies your repository to your computer. The first time, the extension asks
+where exercise repositories should go: **Set Default Folder** uses one folder for all of them, **Choose Each Time**
+asks again for every clone. You can change the folder later with **Artemis: Set Default Exercise Folder** in the
+command palette.
+
+After cloning, the extension offers to open the repository as your workspace; select **Open Folder**. It only submits
+from the repository that is open in VS Code, and until then the exercise page says
+**Repository not in your workspace**.
+
+In EduIDE you do not clone anything, because the workspace already contains the repository of its exercise.
+
+<Callout variant={CalloutVariant.info}>
+
+  The clone uses an access token for this one repository, so you never type your Artemis password into Git. See
+  [Integrated Code Lifecycle](/student/tools-reference/integrated-code-lifecycle) for what the token is and how to
+  revoke it.
+
+</Callout>
+
+## Submitting
+
+Below **Repository Ready**, the exercise page says whether there is anything to submit: **Up to date** or
+**Uncommitted changes ready to submit**. **Submit** becomes available once you save a change. It commits every change
+in the repository and pushes it to Artemis, which then builds and tests it.
+
+The commit message is **Solution submission via Iris extension** unless you write your own: the envelope button
+beside **Submit** opens a field for it, and the setting `artemis.defaultCommitMessage` changes the default.
+
+If auto-save is off and a file has unsaved changes, the page says **Unsaved files. Save before submitting.**, because
+an unsaved change is not part of the commit. **Configure auto-save** opens the VS Code setting that saves files for
+you.
+
+<Callout variant={CalloutVariant.warning}>
+
+  A submission that reaches Artemis after the due date is not graded.
+
+</Callout>
+
+If Git does not know your name and email yet, submitting stops and offers **Configure Git Identity**. If Artemis
+refuses access to the repository, it offers **Open Submission Setup**. Both are described under
+[Submission Setup](#submission-setup).
+
+## Test Results
+
+While Artemis builds your submission, the page shows the progress. When the build finishes, it shows how many tests
+passed and the points you get.
+
+**See test results** lists every test, the failed ones first, each with the feedback the test produced. Close the list
+with the cross or with Escape.
+
+<Image src={testResults} alt="The test results of a submission, with 5 of 13 tests passed and the failed tests listed with their feedback" size={ImageSize.medium} caption="Test results, failed tests first" />
+
+If you scroll the page while a build runs, a bar at the top keeps the build status in view and shows the result once
+the build finishes.
+
+## When the Build Fails
+
+A submission that does not compile has no test results, only **Build failed**.
+
+<Image src={buildFailed} alt="The exercise page after a failed build, with Go to source and Open log" size={ImageSize.medium} caption="A failed build" />
+
+**Go to source** opens the file at the first compiler error. **Open log** opens the full build log in an editor tab;
+read it when the error is not in your code.
+
+<Image src={buildLog} alt="The build log in an editor tab, showing a compiler error in BubbleSort.java" size={ImageSize.large} caption="The build log, with the compiler error" />
+
+In the editor, each compiler error is marked directly above its line with **Artemis Build Error** and the compiler's
+message. The mark moves with the line while you edit, and selecting it jumps to the error.
+
+<Image src={codelensError} alt="A Java file with an Artemis Build Error annotation above the line that is missing a semicolon" size={ImageSize.large} caption="The compiler error, marked above the line in the editor" />
+
+## More Actions
+
+**More** on the exercise page holds the actions you need less often:
+
+- **Check workspace status** looks again for uncommitted changes.
+- **Open Repository** shows the repository in the Explorer when it is your workspace.
+- **Copy Clone URL** copies the repository address, optionally with your access token in it. Do not share the
+  address with the token: it gives access to your repository.
+- **Open in browser** opens the exercise in Artemis.
+
+## Submission Setup
+
+**Submission Setup** on the dashboard checks everything Git needs before you can submit. Each row is marked as in
+order, as needing a fix, or as unknown, and the banner at the top summarizes the result.
+
+<Image src={submissionSetup} alt="The Submission Setup checklist with Git installed, the Git identity, the exercise repository and Artemis access, all in order" size={ImageSize.medium} caption="Everything in order for submitting" />
+
+| Row | What it checks | How to fix it |
+|---|---|---|
+| **Git installed** | Git is installed and found | Install Git from git-scm.com, then reload the window |
+| **Your identity** | Git has a name and email to record on your commits | **Change** opens a form; the values apply to every repository on this computer |
+| **Exercise repository** | The open folder is the repository of an Artemis exercise | Open the exercise folder, or clone the exercise first |
+| **Artemis access** | Artemis accepts the access token in the repository | **Renew** gets a new token from Artemis and puts it into the repository |
+
+**Recheck** runs the access check again, for example after you were offline. Under **Prefer the terminal?** you
+find the Git commands that set your name and email by hand.
