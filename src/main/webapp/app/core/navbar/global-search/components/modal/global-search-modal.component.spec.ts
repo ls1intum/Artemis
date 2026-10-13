@@ -644,16 +644,17 @@ describe('GlobalSearchModalComponent', () => {
             vi.useRealTimers();
         });
 
-        it('does not remove a filter on backspace over the empty input', () => {
+        it('only selects the last filter on backspace over the empty input, without removing it', () => {
             component['tokens'].set([
                 { facet: 'type', value: 'exercise' },
                 { facet: 'type', value: 'lecture' },
             ]);
 
-            component['onBackspaceRemoveFilter']();
+            component['onBackspaceAtStart'](new KeyboardEvent('keydown', { key: 'Backspace' }));
 
             expect(component['activeFilters']()).toEqual(['exercise', 'lecture', 'lecture_unit']);
             expect(component['tokens']()).toHaveLength(2);
+            expect(component['selectedChip']()).toBe(1);
         });
 
         it('should re-trigger search when filter changes even if query stays the same', () => {
@@ -1118,13 +1119,167 @@ describe('GlobalSearchModalComponent', () => {
                 { facet: 'type', value: 'exercise' },
                 { facet: 'course', value: '5' },
             ]);
-            (component as any).selectedChip.set(1);
+            (component as any).highlightChip(1);
 
             component.handleKeyboardEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
 
             expect((component as any).editingChip()).toBe(1);
             expect((component as any).selectedChip()).toBe(-1);
             expect((component as any).searchQuery()).toBe('course:');
+        });
+
+        describe('Backspace at the start of the input', () => {
+            const searchInput = () => fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+            const pressBackspace = (repeat = false) => {
+                const event = new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true, repeat });
+                searchInput().dispatchEvent(event);
+                return event;
+            };
+
+            beforeEach(() => {
+                (component as any).tokens.set([
+                    { facet: 'type', value: 'exercise' },
+                    { facet: 'course', value: '5' },
+                ]);
+                fixture.detectChanges();
+                // The user types into the focused input, so the keys come from where the chip gets highlighted.
+                searchInput().focus();
+            });
+
+            it('selects the last chip on the first press and removes it on the second', () => {
+                (component as any).selectedIndex.set(1);
+
+                pressBackspace();
+
+                expect((component as any).tokens()).toHaveLength(2);
+                expect((component as any).selectedChip()).toBe(1);
+                expect((component as any).selectedIndex()).toBe(-1);
+
+                pressBackspace();
+
+                expect((component as any).tokens()).toEqual([{ facet: 'type', value: 'exercise' }]);
+                expect((component as any).selectedChip()).toBe(0);
+            });
+
+            it('selects and then removes every chip while the key is held down, as in Gmail', () => {
+                pressBackspace();
+                expect((component as any).selectedChip()).toBe(1);
+                expect((component as any).tokens()).toHaveLength(2);
+
+                pressBackspace(true);
+                expect((component as any).tokens()).toEqual([{ facet: 'type', value: 'exercise' }]);
+                expect((component as any).selectedChip()).toBe(0);
+
+                pressBackspace(true);
+                expect((component as any).tokens()).toEqual([]);
+                expect((component as any).selectedChip()).toBe(-1);
+            });
+
+            it('deletes selected text instead of the selected chip', () => {
+                const input = searchInput();
+                input.value = 'query';
+                input.setSelectionRange(0, 0);
+                pressBackspace();
+                expect((component as any).selectedChip()).toBe(1);
+
+                input.setSelectionRange(0, input.value.length);
+                const event = pressBackspace();
+
+                expect(event.defaultPrevented).toBe(false);
+                expect((component as any).tokens()).toHaveLength(2);
+                expect((component as any).selectedChip()).toBe(-1);
+            });
+
+            it('edits the text instead of removing the chip once the cursor moved', () => {
+                const input = searchInput();
+                input.value = 'query';
+                input.setSelectionRange(0, 0);
+                pressBackspace();
+                expect((component as any).selectedChip()).toBe(1);
+
+                input.setSelectionRange(3, 3);
+                const event = pressBackspace();
+
+                expect(event.defaultPrevented).toBe(false);
+                expect((component as any).tokens()).toHaveLength(2);
+                expect((component as any).selectedChip()).toBe(-1);
+            });
+
+            it('leaves the chip alone when the key comes from another element in the modal', () => {
+                pressBackspace();
+                expect((component as any).selectedChip()).toBe(1);
+                const elsewhere = document.createElement('button');
+                fixture.nativeElement.appendChild(elsewhere);
+                elsewhere.focus();
+
+                const event = new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true });
+                elsewhere.dispatchEvent(event);
+
+                expect(event.defaultPrevented).toBe(false);
+                expect((component as any).tokens()).toHaveLength(2);
+                expect((component as any).selectedChip()).toBe(-1);
+                elsewhere.remove();
+            });
+
+            it('lets ArrowLeft move the cursor once it moved away from the highlighted chip', () => {
+                const input = searchInput();
+                input.value = 'query';
+                input.setSelectionRange(0, 0);
+                pressBackspace();
+                input.setSelectionRange(5, 5);
+
+                const event = new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true });
+                input.dispatchEvent(event);
+
+                expect(event.defaultPrevented).toBe(false);
+                expect((component as any).selectedChip()).toBe(-1);
+            });
+
+            it('leaves a modified arrow to the text, so word and line jumps keep working', () => {
+                const input = searchInput();
+                input.value = 'query';
+                input.setSelectionRange(0, 0);
+                pressBackspace();
+
+                const event = new KeyboardEvent('keydown', { key: 'ArrowRight', metaKey: true, bubbles: true, cancelable: true });
+                input.dispatchEvent(event);
+
+                expect(event.defaultPrevented).toBe(false);
+                expect((component as any).selectedChip()).toBe(-1);
+            });
+
+            it('ends the chip highlight on a click anywhere', () => {
+                pressBackspace();
+                expect((component as any).selectedChip()).toBe(1);
+
+                document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+
+                expect((component as any).selectedChip()).toBe(-1);
+            });
+
+            it('lets Enter activate the Filter button after Tab moved focus away from the highlighted chip', () => {
+                pressBackspace();
+                expect((component as any).selectedChip()).toBe(1);
+                const filterButton = fixture.nativeElement.querySelector('.filter-trigger') as HTMLButtonElement;
+                // Tab moves focus; jsdom does not move it for a dispatched Tab key, so focus the next control directly.
+                filterButton.focus();
+
+                const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+                filterButton.dispatchEvent(event);
+
+                expect(event.defaultPrevented).toBe(false);
+                expect((component as any).editingChip()).toBe(-1);
+                expect((component as any).searchQuery()).toBe('');
+            });
+
+            it('still removes a chip highlighted with ArrowDown on Delete', () => {
+                searchInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+                expect((component as any).selectedChip()).toBe(0);
+
+                searchInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }));
+
+                expect((component as any).tokens()).toEqual([{ facet: 'course', value: '5' }]);
+            });
         });
     });
 
@@ -1282,9 +1437,8 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['courseIdsParam']()[0]).toBe(42);
             expect(component['activeFilters']()).toEqual(['exercise']);
 
-            // Backspace over the empty input must not remove filters (removal requires chip navigation).
-            component['onBackspaceRemoveFilter']();
-            component['onBackspaceRemoveFilter']();
+            // Backspace over the empty input only selects a filter; removing it takes a second press.
+            component['onBackspaceAtStart'](new KeyboardEvent('keydown', { key: 'Backspace' }));
 
             expect(component['activeFilters']()).toEqual(['exercise']);
             expect(component['courseIdsParam']()[0]).toBe(42);
