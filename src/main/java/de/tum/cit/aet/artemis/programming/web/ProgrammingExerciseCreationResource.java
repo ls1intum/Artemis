@@ -155,7 +155,7 @@ public class ProgrammingExerciseCreationResource {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
 
-            exerciseVersionService.createExerciseVersionSynchronously(newProgrammingExercise, user);
+            exerciseVersionService.createExerciseVersion(newProgrammingExercise, user);
 
             return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + newProgrammingExercise.getId()))
                     .body(ProgrammingExerciseResponseDTO.of(newProgrammingExercise, buildConfig));
@@ -203,7 +203,12 @@ public class ProgrammingExerciseCreationResource {
                 boolean didGenerateOracle = programmingExerciseCreationUpdateService.generateStructureOracleFile(solutionRepoUri, exerciseRepoUri, testRepoUri, testsPath, user);
 
                 if (didGenerateOracle) {
-                    exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+                    if (mutationLease.coordinated()) {
+                        exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+                    }
+                    else {
+                        exerciseVersionService.createExerciseVersion(programmingExercise, user);
+                    }
                     HttpHeaders responseHeaders = new HttpHeaders();
                     responseHeaders.setContentType(MediaType.TEXT_PLAIN);
                     return new ResponseEntity<>("Successfully generated the structure oracle for the exercise " + programmingExercise.getProjectName(), responseHeaders,

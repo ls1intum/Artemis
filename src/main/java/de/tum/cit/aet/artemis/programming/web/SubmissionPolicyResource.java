@@ -145,14 +145,19 @@ public class SubmissionPolicyResource {
         submissionPolicyService.validateSubmissionPolicy(submissionPolicy);
 
         var user = userRepository.getUser();
-        try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             programmingExercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
             if (programmingExercise.getSubmissionPolicy() != null) {
                 throw new BadRequestAlertException("The submission policy could not be added to the programming exercise, because it already has a submission policy.", ENTITY_NAME,
                         "programmingExercisePolicyPresent");
             }
             addedSubmissionPolicy = submissionPolicyService.addSubmissionPolicyToProgrammingExercise(submissionPolicy, programmingExercise);
-            exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(programmingExercise, user);
+            }
             HttpHeaders responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, Long.toString(addedSubmissionPolicy.getId()));
             return ResponseEntity.created(new URI("programming-exercises/" + exerciseId + "/submission-policy")).headers(responseHeaders)
                     .body(SubmissionPolicyDTO.of(addedSubmissionPolicy));
@@ -187,7 +192,7 @@ public class SubmissionPolicyResource {
         }
 
         var user = userRepository.getUser();
-        try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             programmingExercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
             submissionPolicy = programmingExercise.getSubmissionPolicy();
             if (submissionPolicy == null) {
@@ -195,7 +200,12 @@ public class SubmissionPolicyResource {
                         ENTITY_NAME, "programmingExercisePolicyNotPresent");
             }
             submissionPolicyService.removeSubmissionPolicyFromProgrammingExercise(programmingExercise);
-            exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(programmingExercise, user);
+            }
             HttpHeaders responseHeaders = HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(submissionPolicy.getId()));
             return ResponseEntity.ok().headers(responseHeaders).build();
         }
@@ -228,7 +238,7 @@ public class SubmissionPolicyResource {
 
         getSubmissionPolicy(activate, exercise);
         var user = userRepository.getUser();
-        try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             exercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
             final var submissionPolicy = getSubmissionPolicy(activate, exercise);
             if (activate) {
@@ -237,7 +247,12 @@ public class SubmissionPolicyResource {
             else {
                 submissionPolicyService.disableSubmissionPolicy(submissionPolicy);
             }
-            exerciseVersionService.createExerciseVersionSynchronously(exercise, user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(exercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(exercise, user);
+            }
             responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, Long.toString(submissionPolicy.getId()));
             return ResponseEntity.ok().headers(responseHeaders).build();
         }
@@ -294,7 +309,7 @@ public class SubmissionPolicyResource {
         SubmissionPolicy updatedSubmissionPolicy = updatedSubmissionPolicyDTO.toEntity();
         submissionPolicyService.validateSubmissionPolicy(updatedSubmissionPolicy);
         var user = userRepository.getUser();
-        try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             exercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
             SubmissionPolicy submissionPolicy = exercise.getSubmissionPolicy();
             if (submissionPolicy == null) {
@@ -303,7 +318,12 @@ public class SubmissionPolicyResource {
             }
             submissionPolicy.setProgrammingExercise(exercise);
             submissionPolicy = submissionPolicyService.updateSubmissionPolicy(exercise, updatedSubmissionPolicy);
-            exerciseVersionService.createExerciseVersionSynchronously(exercise, user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(exercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(exercise, user);
+            }
             responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, Long.toString(submissionPolicy.getId()));
             return ResponseEntity.ok().headers(responseHeaders).body(SubmissionPolicyDTO.of(submissionPolicy));
         }

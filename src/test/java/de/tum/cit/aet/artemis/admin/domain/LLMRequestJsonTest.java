@@ -26,7 +26,7 @@ class LLMRequestJsonTest {
     }
 
     @Test
-    void readsUsageWithoutPromptCacheFieldsAsUnknownCacheUsage() {
+    void readsUsageWithoutPromptCacheFieldsAsNoCacheUsage() {
         String json = """
                 {"model": "gpt-5.4-mini", "numInputTokens": 10, "costPerMillionInputToken": 0.75, "numOutputTokens": 3, "costPerMillionOutputToken": 4.5,
                  "pipelineId": "IRIS_CHAT_COURSE_MESSAGE"}
@@ -35,7 +35,7 @@ class LLMRequestJsonTest {
         LLMRequest request = JsonObjectMapper.get().readValue(json, LLMRequest.class);
 
         assertThat(request.numInputTokens()).isEqualTo(10);
-        assertThat(request.numCachedInputTokens()).isNull();
+        assertThat(request.numCachedInputTokens()).isZero();
         assertThat(request.costPerMillionCachedInputToken()).isZero();
         assertThat(request.numCacheWriteInputTokens()).isZero();
         assertThat(request.costPerMillionCacheWriteInputToken()).isZero();

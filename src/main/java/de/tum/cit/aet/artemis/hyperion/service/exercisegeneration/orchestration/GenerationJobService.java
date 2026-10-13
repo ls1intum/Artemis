@@ -31,9 +31,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
-import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
@@ -51,6 +49,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationFileUpdate;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService.GenerationUsage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /** Coordinates distributed generation slots, cancellation, and reconnect state. */
@@ -67,7 +66,7 @@ public class GenerationJobService {
 
     private static final String ENTITY_NAME = "hyperionExerciseGeneration";
 
-    private static final String REVERT_JOB_PREFIX = "revert-";
+    static final String REVERT_JOB_PREFIX = "revert-";
 
     static final String EXTERNAL_MUTATION_JOB_PREFIX = "external-mutation-";
 
@@ -83,7 +82,7 @@ public class GenerationJobService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    private final LLMTokenUsageService llmTokenUsageService;
+    private final GenerationTokenUsageService llmTokenUsageService;
 
     private final HyperionGenerationBudgetService generationBudgetService;
 
@@ -113,34 +112,46 @@ public class GenerationJobService {
 
     private GenerationJobReaper reaper;
 
+    private final GenerationExternalMutationService externalMutationService;
+
     @Autowired
-    public GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    public GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             HyperionGenerationBudgetService generationBudgetService, HyperionAgentProperties agentProperties, HyperionEffortProfileService effortProfiles,
             @Qualifier("taskExecutor") Executor cancellationExecutor, @Value("${jhipster.cache.hazelcast.expected-data-member-count:1}") int expectedDataMemberCount,
-            @Value("${artemis.hyperion.generation.terminal-replay-ttl:PT4H}") Duration terminalReplayTtl, @Value("${spring.ai.openai.max-retries:1}") int providerMaxRetries) {
+            @Value("${artemis.hyperion.generation.terminal-replay-ttl:PT4H}") Duration terminalReplayTtl, @Value("${spring.ai.openai.max-retries:1}") int providerMaxRetries,
+            GenerationExternalMutationService externalMutationService) {
         // The stale-job timeout is validated against the longest deadline ANY configured effort profile can hand a run, not against the deployment default: a profile that raises
         // the deadline above the stale timeout would otherwise have its slot reclaimed by another node while it is still legitimately running.
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, agentProperties.getStaleJobTimeout(), agentProperties.getMaxJobDuration(),
-                cancellationExecutor, expectedDataMemberCount, terminalReplayTtl, providerMaxRetries == 0, effortProfiles.longestMaxJobDuration());
+                cancellationExecutor, expectedDataMemberCount, terminalReplayTtl, providerMaxRetries == 0, effortProfiles.longestMaxJobDuration(), externalMutationService);
     }
 
-    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
             int expectedDataMemberCount, Duration terminalReplayTtl) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
                 terminalReplayTtl, true);
     }
 
-    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
             int expectedDataMemberCount, Duration terminalReplayTtl, boolean exactProviderUsage) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
                 terminalReplayTtl, exactProviderUsage, maxJobDuration);
     }
 
-    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
             int expectedDataMemberCount, Duration terminalReplayTtl, boolean exactProviderUsage, @Nullable Duration longestConfiguredJobDuration) {
+        this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
+                terminalReplayTtl, exactProviderUsage, longestConfiguredJobDuration, new GenerationExternalMutationService(distributedDataProvider, expectedDataMemberCount, true));
+    }
+
+    private GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
+            @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
+            int expectedDataMemberCount, Duration terminalReplayTtl, boolean exactProviderUsage, @Nullable Duration longestConfiguredJobDuration,
+            GenerationExternalMutationService externalMutationService) {
+        this.externalMutationService = externalMutationService;
         this.longestConfiguredJobDuration = longestConfiguredJobDuration;
         this.distributedDataProvider = distributedDataProvider;
         this.eventPublisher = eventPublisher;
@@ -154,29 +165,29 @@ public class GenerationJobService {
         this.exactProviderUsage = exactProviderUsage;
     }
 
-    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
             int expectedDataMemberCount) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
                 DEFAULT_TERMINAL_REPLAY_TTL);
     }
 
-    public GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    public GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, 1,
                 DEFAULT_TERMINAL_REPLAY_TTL);
     }
 
-    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService) {
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run);
     }
 
-    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             Duration staleJobTimeout, Duration maxJobDuration) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, null, staleJobTimeout, maxJobDuration, Runnable::run);
     }
 
-    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, Runnable::run);
     }
@@ -203,7 +214,7 @@ public class GenerationJobService {
      * @return the usage sink
      */
     public Consumer<ChatResponse> tokenUsageSink(@Nullable Long courseId, @Nullable Long exerciseId, @Nullable Long userId, @Nullable String generationJobId,
-            @Nullable Consumer<LLMRequest> liveUsageSink) {
+            @Nullable Consumer<GenerationUsage> liveUsageSink) {
         return chatResponse -> {
             boolean recorded = llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
                     builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId), request -> {
@@ -256,7 +267,7 @@ public class GenerationJobService {
         HyperionGenerationTimeouts.validateStaleJobTimeout(staleJobTimeout, longestJobDuration);
         jobMap = distributedDataProvider.getMap(JOB_MAP_NAME);
         cancellationMap = distributedDataProvider.getExpiringMap(CANCEL_MAP_NAME, longestJobDuration);
-        replayStore = new GenerationJobReplayStore(distributedDataProvider, terminalReplayTtl);
+        replayStore = new GenerationJobReplayStore(distributedDataProvider, terminalReplayTtl, cancellationMap);
         cancelHooks.subscribe();
         localNodeId = distributedDataProvider.getLocalNodeId();
         reaper = new GenerationJobReaper(this, distributedDataProvider, jobMap, cancellationMap, replayStore, generationBudgetService, staleJobTimeout, maxJobDuration);
@@ -391,7 +402,6 @@ public class GenerationJobService {
                 }
             }
             if (jobMap.putIfAbsent(key, newJob) != null) {
-                // Only reachable if the lease expired mid-section and another node claimed the slot; losing the race is correct, overwriting its claim would not be.
                 throw new ConflictException(conflictMessage, ENTITY_NAME, errorKey);
             }
         }
@@ -646,7 +656,8 @@ public class GenerationJobService {
      */
     public String claimRevertSlot(User user, long exerciseId) {
         return GenerationRecoverySlots.claim(jobMap, user, exerciseId, localNodeId, topology::verifyAllMembers,
-                job -> claimSlot(key(exerciseId), job, "Exercise authoring or another mutation is running; wait before reverting.", "exerciseGenerationRunning"));
+                job -> claimSlot(key(exerciseId), job, "Exercise authoring or another mutation is running; wait before reverting.", "exerciseGenerationRunning"),
+                (token, previousRecovery) -> externalMutationService.releaseRevertSlot(exerciseId, token, previousRecovery));
     }
 
     /**
@@ -680,7 +691,7 @@ public class GenerationJobService {
      */
     public String claimExternalMutationSlot(long exerciseId) {
         topology.verifyAllMembers();
-        return GenerationExternalMutationService.claim(jobMap, localNodeId, exerciseId, topology::verifyAllMembers);
+        return externalMutationService.claimExternalMutationSlot(exerciseId);
     }
 
     /**
@@ -690,7 +701,7 @@ public class GenerationJobService {
      * @param token      the token returned from {@link #claimExternalMutationSlot(long)}
      */
     public void clearExternalMutationSlot(long exerciseId, String token) {
-        GenerationExternalMutationService.clear(jobMap, exerciseId, token);
+        externalMutationService.clearExternalMutationSlot(exerciseId, token);
     }
 
     /**
@@ -773,21 +784,7 @@ public class GenerationJobService {
      * @param token      the token returned from {@link #claimRevertSlot(User, long)}
      */
     public void clearRevertSlot(long exerciseId, String token) {
-        clearClaimedSlot(exerciseId, token);
-    }
-
-    private void clearClaimedSlot(long exerciseId, String token) {
-        String key = key(exerciseId);
-        lockJobSlot(key);
-        try {
-            JobInfo job = jobMap.get(key);
-            if (job != null && job.jobId().equals(token)) {
-                jobMap.remove(key, job);
-            }
-        }
-        finally {
-            unlockJobSlot(key);
-        }
+        externalMutationService.releaseRevertSlot(exerciseId, token, null);
     }
 
     public void registerCancelHook(String jobId, Runnable hook) {

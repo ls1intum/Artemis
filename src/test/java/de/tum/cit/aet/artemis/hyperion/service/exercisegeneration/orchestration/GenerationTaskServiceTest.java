@@ -47,7 +47,6 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.scheduling.TaskScheduler;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
@@ -62,6 +61,7 @@ import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationFileUpdate;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService.GenerationUsage;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationGrading;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationIncompleteException;
@@ -1022,8 +1022,8 @@ class GenerationTaskServiceTest {
                 auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 700,
                 java.time.Duration.ofSeconds(15));
         when(jobService.tokenUsageSink(any(), any(), any(), any(), any())).thenAnswer(invocation -> {
-            Consumer<LLMRequest> liveUsageSink = invocation.getArgument(4);
-            return (Consumer<ChatResponse>) response -> liveUsageSink.accept(new LLMRequest("model", 1000, 1f, 100, 2f, "pipeline", "provider-id", 800L, 0.1f, true));
+            Consumer<GenerationUsage> liveUsageSink = invocation.getArgument(4);
+            return (Consumer<ChatResponse>) response -> liveUsageSink.accept(new GenerationUsage("model", 1000, 1f, 100, 2f, "pipeline", "provider-id", 800L, 0.1f, true));
         });
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             ProviderUsageSink usageSink = invocation.getArgument(8);

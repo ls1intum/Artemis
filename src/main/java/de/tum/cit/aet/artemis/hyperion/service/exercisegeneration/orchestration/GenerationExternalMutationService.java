@@ -8,15 +8,20 @@ import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService.JobInfo;
@@ -27,6 +32,10 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 @Profile(PROFILE_CORE + " | " + PROFILE_LOCALVC)
 public class GenerationExternalMutationService {
 
+    private static final Logger log = LoggerFactory.getLogger(GenerationExternalMutationService.class);
+
+    private static final String DISABLED_TOKEN = "fencing-disabled";
+
     private static final String PARTICIPATION_PREFIX = GenerationJobService.EXTERNAL_MUTATION_JOB_PREFIX + "participation:";
 
     private final DistributedDataProvider distributedDataProvider;
@@ -34,6 +43,8 @@ public class GenerationExternalMutationService {
     private final int expectedDataMemberCount;
 
     private final boolean clusterFencingEnabled;
+
+    private final Set<PendingRelease> pendingReleases = ConcurrentHashMap.newKeySet();
 
     public GenerationExternalMutationService(DistributedDataProvider distributedDataProvider, int expectedDataMemberCount) {
         this(distributedDataProvider, expectedDataMemberCount, false);
@@ -49,37 +60,58 @@ public class GenerationExternalMutationService {
     }
 
     /**
-     * Claims a non-expiring slot; a crashed writer requires audited recovery rather than automatic reuse.
+     * Claims a non-expiring slot when deployment-wide fencing is enabled; otherwise performs no coordination.
      *
      * @param exerciseId exercise to protect
      * @return exact ownership token
      */
     public String claimExternalMutationSlot(long exerciseId) {
-        return claim(distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME), requireWriterNode(), exerciseId, this::requireWriterNode);
+        if (!clusterFencingEnabled) {
+            return DISABLED_TOKEN;
+        }
+        String owner = requireWriterNode();
+        String token = GenerationJobService.EXTERNAL_MUTATION_JOB_PREFIX + UUID.randomUUID();
+        try {
+            return claim(distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME), owner, exerciseId, token, this::requireWriterNode);
+        }
+        catch (RuntimeException failedClaim) {
+            clearExternalMutationSlot(exerciseId, token);
+            throw failedClaim;
+        }
+    }
+
+    /** @return whether exercise writers participate in deployment-wide generation coordination */
+    public boolean isCoordinationEnabled() {
+        return clusterFencingEnabled;
     }
 
     private String requireWriterNode() {
-        if (clusterFencingEnabled) {
-            new GenerationClusterTopology(distributedDataProvider, expectedDataMemberCount).verifyAllMembers();
-            return distributedDataProvider.getLocalNodeId();
-        }
-        String owner = distributedDataProvider.getLocalNodeId();
-        if (!distributedDataProvider.getCoordinationSnapshot().map(snapshot -> !snapshot.ownerNodeIds().isEmpty() && snapshot.ownerNodeIds().contains(owner)).orElse(false)) {
-            throw new ServiceUnavailableAlertException("Exercise writers require a connected owner and a complete coordination view.", "hyperionExerciseGeneration",
-                    "hyperionDataMemberTopologyUnavailable");
-        }
-        return owner;
+        new GenerationClusterTopology(distributedDataProvider, expectedDataMemberCount).verifyAllMembers();
+        return distributedDataProvider.getLocalNodeId();
     }
 
     /**
-     * Reserves a template copy. Readers may coexist; the shared non-expiring slot excludes every writer until the last copy finishes.
+     * Reserves a template copy when fencing is enabled. Readers may coexist; the shared slot excludes writers until the last copy finishes.
      *
      * @param exerciseId exercise to reserve
      * @return exact reservation token
      */
     public String claimParticipationSlot(long exerciseId) {
+        if (!clusterFencingEnabled) {
+            return DISABLED_TOKEN;
+        }
         String owner = requireWriterNode();
         String token = UUID.randomUUID().toString();
+        try {
+            return claimParticipation(exerciseId, owner, token);
+        }
+        catch (RuntimeException failedClaim) {
+            clearParticipationSlot(exerciseId, token);
+            throw failedClaim;
+        }
+    }
+
+    private String claimParticipation(long exerciseId, String owner, String token) {
         String key = String.valueOf(exerciseId);
         DistributedMap<String, JobInfo> jobs = distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME);
         jobs.lock(key);
@@ -116,6 +148,10 @@ public class GenerationExternalMutationService {
      * @param token      exact reservation token
      */
     public void clearParticipationSlot(long exerciseId, String token) {
+        release(new PendingRelease(exerciseId, token, true, null));
+    }
+
+    private void clearParticipation(long exerciseId, String token) {
         DistributedMap<String, JobInfo> jobs = distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME);
         String key = String.valueOf(exerciseId);
         jobs.lock(key);
@@ -145,7 +181,45 @@ public class GenerationExternalMutationService {
      * @param token      caller's ownership token
      */
     public void clearExternalMutationSlot(long exerciseId, String token) {
-        clear(distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME), exerciseId, token);
+        if (!token.startsWith(GenerationJobService.EXTERNAL_MUTATION_JOB_PREFIX)) {
+            return;
+        }
+        release(new PendingRelease(exerciseId, token, false, null));
+    }
+
+    void releaseRevertSlot(long exerciseId, String token, @Nullable JobInfo previousRecovery) {
+        if (!token.startsWith(GenerationJobService.REVERT_JOB_PREFIX)) {
+            return;
+        }
+        release(new PendingRelease(exerciseId, token, false, previousRecovery));
+    }
+
+    private void release(PendingRelease release) {
+        if (!clusterFencingEnabled) {
+            return;
+        }
+        try {
+            if (release.participation()) {
+                clearParticipation(release.exerciseId(), release.token());
+            }
+            else {
+                clear(distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME), release.exerciseId(), release.token(), release.previousRecovery());
+            }
+            pendingReleases.remove(release);
+        }
+        catch (RuntimeException failure) {
+            if (pendingReleases.add(release)) {
+                log.warn("Finished exercise operation could not release its slot for exercise {}; exact-token release will be retried.", release.exerciseId(), failure);
+            }
+        }
+    }
+
+    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.SECONDS)
+    void retryPendingReleases() {
+        pendingReleases.forEach(this::release);
+    }
+
+    private record PendingRelease(long exerciseId, String token, boolean participation, @Nullable JobInfo previousRecovery) {
     }
 
     /**
@@ -157,6 +231,9 @@ public class GenerationExternalMutationService {
      * @return whether a slot is held for the exercise
      */
     public boolean isGenerationActive(long exerciseId) {
+        if (!clusterFencingEnabled) {
+            return false;
+        }
         DistributedMap<String, JobInfo> jobs = distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME);
         return jobs.get(String.valueOf(exerciseId)) != null;
     }
@@ -168,6 +245,9 @@ public class GenerationExternalMutationService {
      * @return non-cancellable external slot, when present
      */
     public Optional<GenerationJobService.WedgedSlotInfo> getWedgedSlotInfo(long exerciseId) {
+        if (!clusterFencingEnabled) {
+            return Optional.empty();
+        }
         DistributedMap<String, JobInfo> jobs = distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME);
         JobInfo job = jobs.get(String.valueOf(exerciseId));
         if (job == null || job.cancellable() || !GenerationJobService.isExternalMutationJob(job)) {
@@ -186,6 +266,9 @@ public class GenerationExternalMutationService {
      * @return whether the matching slot was removed
      */
     public boolean recoverWedgedSlot(long exerciseId, String token) {
+        if (!clusterFencingEnabled) {
+            return false;
+        }
         DistributedMap<String, JobInfo> jobs = distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME);
         String key = String.valueOf(exerciseId);
         jobs.lock(key);
@@ -200,9 +283,8 @@ public class GenerationExternalMutationService {
         }
     }
 
-    static String claim(DistributedMap<String, JobInfo> jobs, String nodeId, long exerciseId, Runnable validateTopology) {
+    private static String claim(DistributedMap<String, JobInfo> jobs, String nodeId, long exerciseId, String token, Runnable validateTopology) {
         String key = String.valueOf(exerciseId);
-        String token = GenerationJobService.EXTERNAL_MUTATION_JOB_PREFIX + UUID.randomUUID();
         Instant now = Instant.now();
         JobInfo mutation = new JobInfo(token, "external", exerciseId, now, null, nodeId, now, false, null);
         jobs.lock(key);
@@ -219,16 +301,16 @@ public class GenerationExternalMutationService {
         }
     }
 
-    static void clear(DistributedMap<String, JobInfo> jobs, long exerciseId, String token) {
-        if (!token.startsWith(GenerationJobService.EXTERNAL_MUTATION_JOB_PREFIX)) {
-            return;
-        }
+    private static void clear(DistributedMap<String, JobInfo> jobs, long exerciseId, String token, @Nullable JobInfo previousRecovery) {
         String key = String.valueOf(exerciseId);
         jobs.lock(key);
         try {
             JobInfo current = jobs.get(key);
             if (current != null && current.jobId().equals(token)) {
-                jobs.remove(key, current);
+                boolean released = previousRecovery == null ? jobs.remove(key, current) : jobs.replace(key, current, previousRecovery);
+                if (!released) {
+                    throw new IllegalStateException("The reservation changed during exact-token cleanup");
+                }
             }
         }
         finally {

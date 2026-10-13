@@ -44,11 +44,11 @@ public final class GenerationGrading {
         }
     }
 
-    /** Weight and visibility are the only test-case settings generation may replace. */
-    public record Grading(@Nullable Double weight, @Nullable Visibility visibility) implements Serializable {
+    /** Grading values captured for guarded restoration. */
+    public record Grading(@Nullable Double weight, @Nullable Visibility visibility, @Nullable Double bonusPoints) implements Serializable {
 
         static Grading of(ProgrammingExerciseTestCase test) {
-            return new Grading(test.getWeight(), test.getVisibility());
+            return new Grading(test.getWeight(), test.getVisibility(), test.getBonusPoints());
         }
     }
 
@@ -79,6 +79,7 @@ public final class GenerationGrading {
             if (target != null && !target.equals(Grading.of(test))) {
                 test.setWeight(target.weight());
                 test.setVisibility(target.visibility());
+                test.setBonusPoints(target.bonusPoints());
                 changed.add(test);
             }
         }

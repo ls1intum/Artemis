@@ -22,6 +22,11 @@ public class HyperionExerciseMutationApi implements AbstractApi {
         this.mutationService = mutationService;
     }
 
+    /** @return whether this deployment enables generation coordination for exercise writers */
+    public boolean isCoordinationEnabled() {
+        return mutationService.isCoordinationEnabled();
+    }
+
     public String claimExternalMutationSlot(long exerciseId) {
         return mutationService.claimExternalMutationSlot(exerciseId);
     }

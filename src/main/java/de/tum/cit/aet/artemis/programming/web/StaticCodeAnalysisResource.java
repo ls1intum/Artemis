@@ -122,12 +122,17 @@ public class StaticCodeAnalysisResource {
 
         validateCategories(categories, exerciseId);
         User user = userRepository.getUser();
-        try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
             checkSCAEnabledForExerciseElseThrow(programmingExercise);
             Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.updateCategories(exerciseId,
                     categories.stream().map(StaticCodeAnalysisCategoryUpdateDTO::toEntity).toList());
-            exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(programmingExercise, user);
+            }
             return ResponseEntity.ok(toDTOs(staticCodeAnalysisCategories));
         }
     }
@@ -148,11 +153,16 @@ public class StaticCodeAnalysisResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         User user = userRepository.getUser();
-        try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
             checkSCAEnabledForExerciseElseThrow(programmingExercise);
             Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.resetCategories(programmingExercise);
-            exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(programmingExercise, user);
+            }
             return ResponseEntity.ok(toDTOs(staticCodeAnalysisCategories));
         }
     }
@@ -183,7 +193,7 @@ public class StaticCodeAnalysisResource {
         }
 
         User user = userRepository.getUser();
-        try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             targetExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
             checkSCAEnabledForExerciseElseThrow(targetExercise);
             if (targetExercise.getProgrammingLanguage() != sourceExercise.getProgrammingLanguage()) {
@@ -191,7 +201,12 @@ public class StaticCodeAnalysisResource {
                         "programmingLanguageMismatch");
             }
             Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.importCategoriesFromExercise(sourceExercise, targetExercise);
-            exerciseVersionService.createExerciseVersionSynchronously(targetExercise, user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(targetExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(targetExercise, user);
+            }
             return ResponseEntity.ok(toDTOs(staticCodeAnalysisCategories));
         }
     }

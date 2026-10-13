@@ -55,8 +55,7 @@ final class GenerationClusterTopology {
 
     void verifyAllMembers() {
         CoordinationSnapshot snapshot = snapshot();
-        if (!snapshot.permitsAdmission(expectedDataMemberCount) || !snapshot.ownerNodeIds().contains(distributedDataProvider.getLocalNodeId())
-                || snapshot.memberQuorumRequired() && !snapshot.allWritersFenced()) {
+        if (!snapshot.permitsAdmission(expectedDataMemberCount) || !snapshot.ownerNodeIds().contains(distributedDataProvider.getLocalNodeId()) || !snapshot.allWritersFenced()) {
             throw new ServiceUnavailableAlertException("Authoring requires a connected owner and a complete configured store view: expected " + expectedDataMemberCount
                     + " data members, observed " + snapshot.ownerNodeIds().size() + " owner processes (member-hosted store: " + snapshot.memberQuorumRequired()
                     + ", all writers fenced: " + snapshot.allWritersFenced() + ").", ENTITY_NAME, "hyperionDataMemberTopologyMismatch");

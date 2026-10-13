@@ -348,13 +348,6 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
     }
 
     @Override
-    public void lock(K key, Duration lease) {
-        // No process can outlive this in-memory provider. Preserve mutual exclusion; unlike remote providers there is
-        // no surviving lock to reclaim after this JVM exits.
-        getLock(key).lock();
-    }
-
-    @Override
     public void unlock(K key) {
         ReentrantLock lock = locks.get(key);
         if (lock != null) {

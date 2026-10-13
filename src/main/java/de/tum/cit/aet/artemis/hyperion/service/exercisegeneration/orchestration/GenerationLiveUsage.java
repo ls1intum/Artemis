@@ -6,15 +6,15 @@ import java.util.concurrent.atomic.DoubleAdder;
 
 import org.springframework.ai.chat.model.ChatResponse;
 
-import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
-import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationLiveUsageDTO;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService.GenerationUsage;
 
 /**
  * What one run has spent so far, accumulated on the node executing it.
  * <p>
  * It lives here rather than in the run's distributed usage map because the agent emits an event per turn plus one before every provider call, and stamping each of those from the
- * cluster would turn a progress line into a remote read. Both inputs are objects the run already has to look at for other reasons — the {@link LLMRequest} its recorded usage was
+ * cluster would turn a progress line into a remote read. Both inputs are objects the run already has to look at for other reasons — the {@link GenerationUsage} its recorded usage
+ * was
  * built from, and the {@link ChatResponse} its budget guard weighs — so no figure here is a second opinion about what a call cost.
  * <p>
  * The billable total is the guard's own running total, not a parallel count: {@link #addBillableTokens} is what the guard compares against the budget.
@@ -49,12 +49,12 @@ final class GenerationLiveUsage {
      *
      * @param request the recorded request, carrying the token split and the prices resolved for its model
      */
-    void recordAccountedRequest(LLMRequest request) {
+    void recordAccountedRequest(GenerationUsage request) {
         inputTokens.addAndGet(request.numInputTokens());
         outputTokens.addAndGet(request.numOutputTokens());
         cachedInputTokens.addAndGet(request.numCachedInputTokens() == null ? 0 : request.numCachedInputTokens());
         modelCalls.incrementAndGet();
-        estimatedCostEur.add(LLMTokenUsageService.estimatedCostEur(request));
+        estimatedCostEur.add(GenerationTokenUsageService.estimatedCostEur(request));
         if (!request.costEstimateComplete()) {
             // Absorbing: an unpriced model makes every later total a lower bound, and reporting it as a price would claim the run cost less than it did.
             estimatedCostComplete.set(false);
@@ -68,7 +68,7 @@ final class GenerationLiveUsage {
      * @return the run's billable total including this response
      */
     long addBillableTokens(ChatResponse response) {
-        return billableTokens.addAndGet(LLMTokenUsageService.billableTokens(response, cachedInputTokenWeight));
+        return billableTokens.addAndGet(GenerationTokenUsageService.billableTokens(response, cachedInputTokenWeight));
     }
 
     /**

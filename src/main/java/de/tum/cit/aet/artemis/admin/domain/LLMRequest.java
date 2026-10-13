@@ -15,24 +15,19 @@ package de.tum.cit.aet.artemis.admin.domain;
  * @param costPerMillionCacheWriteInputToken cost in Euro per million input tokens written to the prompt cache
  */
 public record LLMRequest(String model, int numInputTokens, float costPerMillionInputToken, int numOutputTokens, float costPerMillionOutputToken, String pipelineId,
-        String providerRequestId, Long numCachedInputTokens, float costPerMillionCachedInputToken, boolean costEstimateComplete, int numCacheWriteInputTokens,
-        float costPerMillionCacheWriteInputToken) {
+        int numCachedInputTokens, float costPerMillionCachedInputToken, int numCacheWriteInputTokens, float costPerMillionCacheWriteInputToken) {
 
+    /**
+     * Creates a request without prompt-cache usage.
+     *
+     * @param model                     LLM model (e.g. gpt-4o)
+     * @param numInputTokens            number of tokens of the LLM call
+     * @param costPerMillionInputToken  cost in Euro per million input tokens
+     * @param numOutputTokens           number of tokens of the LLM answer
+     * @param costPerMillionOutputToken cost in Euro per million output tokens
+     * @param pipelineId                String with the pipeline name (e.g. IRIS_COURSE_CHAT_PIPELINE)
+     */
     public LLMRequest(String model, int numInputTokens, float costPerMillionInputToken, int numOutputTokens, float costPerMillionOutputToken, String pipelineId) {
-        this(model, numInputTokens, costPerMillionInputToken, numOutputTokens, costPerMillionOutputToken, pipelineId, null, null, 0f, true, 0, 0f);
-    }
-
-    /** Creates a request with explicit cache-read and cache-write prices. */
-    public LLMRequest(String model, int numInputTokens, float costPerMillionInputToken, int numOutputTokens, float costPerMillionOutputToken, String pipelineId,
-            int numCachedInputTokens, float costPerMillionCachedInputToken, int numCacheWriteInputTokens, float costPerMillionCacheWriteInputToken) {
-        this(model, numInputTokens, costPerMillionInputToken, numOutputTokens, costPerMillionOutputToken, pipelineId, null, (long) numCachedInputTokens,
-                costPerMillionCachedInputToken, true, numCacheWriteInputTokens, costPerMillionCacheWriteInputToken);
-    }
-
-    /** Creates a provider-correlated request without cache-write usage. */
-    public LLMRequest(String model, int numInputTokens, float costPerMillionInputToken, int numOutputTokens, float costPerMillionOutputToken, String pipelineId,
-            String providerRequestId, Long numCachedInputTokens, float costPerMillionCachedInputToken, boolean costEstimateComplete) {
-        this(model, numInputTokens, costPerMillionInputToken, numOutputTokens, costPerMillionOutputToken, pipelineId, providerRequestId, numCachedInputTokens,
-                costPerMillionCachedInputToken, costEstimateComplete, 0, 0f);
+        this(model, numInputTokens, costPerMillionInputToken, numOutputTokens, costPerMillionOutputToken, pipelineId, 0, 0f, 0, 0f);
     }
 }
