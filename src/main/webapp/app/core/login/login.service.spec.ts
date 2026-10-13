@@ -12,6 +12,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { Router } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
 describe('LoginService', () => {
     let accountService: AccountService;
@@ -73,11 +74,25 @@ describe('LoginService', () => {
 
     it('should call the server logout and still count as forceful when the session is outdated', () => {
         navigateByUrlStub.mockReturnValue(Promise.resolve(true));
-        loginService.logoutWithServerSession();
+        loginService.logoutWithServerSession('/courses');
 
         commonExpects();
         expect(authServerProviderLogoutStub).toHaveBeenCalledOnce();
         expect(loginService.lastLogoutWasForceful()).toBe(true);
+    });
+
+    it('should keep the previous url after the server logout cleared the session storage', () => {
+        const sessionStorageService = TestBed.inject(SessionStorageService);
+        navigateByUrlStub.mockReturnValue(Promise.resolve(true));
+        authServerProviderLogoutStub.mockReturnValue(of({}));
+        authServerProviderClearStub.mockImplementation(() => {
+            sessionStorageService.clear();
+            return of(undefined);
+        });
+
+        loginService.logoutWithServerSession('/user-settings/ssh/add');
+
+        expect(sessionStorageService.retrieve<string>('previousUrl')).toBe('/user-settings/ssh/add');
     });
 
     describe('test login', () => {

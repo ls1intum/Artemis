@@ -65,7 +65,7 @@ describe('AuthExpiredInterceptor', () => {
         expect(sessionStorageServiceMock.store).toHaveBeenCalledWith('previousUrl', 'https://example.com');
     });
 
-    it('should end the server session and store the current url if the session is outdated', () => {
+    it('should end the server session and hand the current url over if the session is outdated', () => {
         const mockHandler = {
             handle: () => throwError(() => new HttpErrorResponse({ status: 401, error: { errorKey: 'sessionOutdated' } })),
         };
@@ -73,9 +73,10 @@ describe('AuthExpiredInterceptor', () => {
 
         authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe({ error: () => {} });
 
-        expect(loginServiceMock.logoutWithServerSession).toHaveBeenCalledOnce();
+        // the login service stores the url itself, after the server logout cleared the session storage
+        expect(loginServiceMock.logoutWithServerSession).toHaveBeenCalledExactlyOnceWith('https://example.com');
         expect(loginServiceMock.logout).not.toHaveBeenCalled();
-        expect(sessionStorageServiceMock.store).toHaveBeenCalledWith('previousUrl', 'https://example.com');
+        expect(sessionStorageServiceMock.store).not.toHaveBeenCalled();
     });
 
     it('should keep the client-only logout for a 401 with another error key', () => {
