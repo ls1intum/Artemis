@@ -87,6 +87,7 @@
                             [hideLabelName]="true"
                             [value]="course().enrollmentStartDate"
                             (valueChange)="updateField('enrollmentStartDate', $event)"
+                            (inputValidityChange)="setStartTextValid($event)"
                         />
                     </div>
                     <div class="col-md-6">
@@ -96,6 +97,7 @@
                             [hideLabelName]="true"
                             [value]="course().enrollmentEndDate"
                             (valueChange)="updateField('enrollmentEndDate', $event)"
+                            (inputValidityChange)="setEndTextValid($event)"
                         />
                     </div>
                 </div>
@@ -144,6 +146,7 @@
                             [hideLabelName]="true"
                             [value]="course().unenrollmentEndDate"
                             (valueChange)="updateField('unenrollmentEndDate', $event)"
+                            (inputValidityChange)="setUnenrollmentEndTextValid($event)"
                         />
                     </div>
                 }

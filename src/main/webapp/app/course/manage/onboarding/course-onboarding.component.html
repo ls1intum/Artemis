@@ -47,7 +47,7 @@
                 />
             }
             @case (1) {
-                <jhi-onboarding-enrollment [course]="course()" (courseUpdated)="onCourseUpdated($event)" />
+                <jhi-onboarding-enrollment [course]="course()" (courseUpdated)="onCourseUpdated($event)" (dateTextValidityChange)="enrollmentDateTextValid.set($event)" />
             }
             @case (2) {
                 <jhi-onboarding-communication [course]="course()" (courseUpdated)="onCourseUpdated($event)" />

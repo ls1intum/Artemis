@@ -102,6 +102,73 @@ describe('OnboardingEnrollmentComponent', () => {
             expect(picker.componentInstance.value().isSame(course.unenrollmentEndDate)).toBe(true);
         });
 
+        describe('text validity reported to the wizard', () => {
+            let emitSpy: ReturnType<typeof vi.spyOn>;
+
+            const showPickers = (unenrollment: boolean) => {
+                course.enrollmentEnabled = true;
+                course.unenrollmentEnabled = unenrollment;
+                fixture.componentRef.setInput('course', Course.from(course));
+                fixture.detectChanges();
+                emitSpy = vi.spyOn(comp.dateTextValidityChange, 'emit');
+            };
+            const setTextValid = (id: string, valid: boolean) => pickerById(id).componentInstance.inputValidityChange.emit(valid);
+
+            it('should report invalid text in the enrollment start or end date until both are dates again', () => {
+                showPickers(false);
+
+                setTextValid('onboarding-enrollmentStartDate', false);
+                expect(emitSpy).toHaveBeenLastCalledWith(false);
+
+                // The end date is fine, but the start date still is not.
+                setTextValid('onboarding-enrollmentEndDate', true);
+                expect(emitSpy).toHaveBeenLastCalledWith(false);
+
+                setTextValid('onboarding-enrollmentEndDate', false);
+                setTextValid('onboarding-enrollmentStartDate', true);
+                expect(emitSpy).toHaveBeenLastCalledWith(false);
+
+                setTextValid('onboarding-enrollmentEndDate', true);
+                expect(emitSpy).toHaveBeenLastCalledWith(true);
+            });
+
+            it('should include the unenrollment end date only while unenrollment is enabled', () => {
+                showPickers(true);
+
+                setTextValid('onboarding-unenrollmentEndDate', false);
+                expect(emitSpy).toHaveBeenLastCalledWith(false);
+
+                // Disabling unenrollment removes the picker with its invalid text, so it no longer counts.
+                comp.toggleUnenrollment();
+                expect(emitSpy).toHaveBeenLastCalledWith(true);
+
+                // Enabling it again renders a fresh picker, which starts with valid text.
+                course.unenrollmentEnabled = true;
+                fixture.componentRef.setInput('course', Course.from(course));
+                fixture.detectChanges();
+                setTextValid('onboarding-unenrollmentEndDate', true);
+                expect(emitSpy).toHaveBeenLastCalledWith(true);
+            });
+
+            it('should report valid text after enrollment is switched off while a picker held invalid text', () => {
+                showPickers(false);
+                setTextValid('onboarding-enrollmentStartDate', false);
+
+                comp.toggleEnrollment();
+
+                expect(emitSpy).toHaveBeenLastCalledWith(true);
+            });
+
+            it('should report valid text after the course is switched to an online course while a picker held invalid text', () => {
+                showPickers(false);
+                setTextValid('onboarding-enrollmentEndDate', false);
+
+                comp.toggleOnlineCourse();
+
+                expect(emitSpy).toHaveBeenLastCalledWith(true);
+            });
+        });
+
         it('should write a picked date back to the course', () => {
             course.enrollmentEnabled = true;
             fixture.componentRef.setInput('course', Course.from(course));
