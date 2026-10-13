@@ -189,7 +189,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             // Read the signal to track changes
             void this.messages();
             untracked(() => {
-                if (!this.createdNewMessage && this.posts().length > 0) {
+                // Once the initial position is restored, a user who is at the bottom stays there when a message arrives.
+                // Restoring the stored top-visible post would otherwise override the scroll to the bottom above.
+                const keepsFollowingNewMessages = this.canStartSaving && this.wasScrolledToBottom;
+                if (!this.createdNewMessage && this.posts().length > 0 && !keepsFollowingNewMessages) {
                     this.scrollToStoredId();
                 }
             });

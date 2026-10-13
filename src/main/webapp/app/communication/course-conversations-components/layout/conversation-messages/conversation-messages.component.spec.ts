@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -15,7 +15,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
-import { Directive, NO_ERRORS_SCHEMA, input, output } from '@angular/core';
+import { Directive, NO_ERRORS_SCHEMA, type WritableSignal, input, output, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -280,6 +280,70 @@ examples.forEach((activeConversation) => {
                 component.handleScrollOnNewMessage();
 
                 expect(scrollToBottomSpy).not.toHaveBeenCalled();
+            });
+
+            describe('with a stored scroll position', () => {
+                const storedPostId = 5;
+                const newPostId = 6;
+                let messagesSignal: WritableSignal<PostingThreadComponent[]>;
+                let container: HTMLElement;
+                let scrollToStoredIdSpy: MockInstance;
+
+                const createPostingThread = (id: number, offsetTop: number) =>
+                    ({
+                        post: () => ({ id }),
+                        elementRef: { nativeElement: { offsetTop, getBoundingClientRect: () => ({ top: 0, bottom: 0 }) } },
+                    }) as unknown as PostingThreadComponent;
+
+                beforeEach(() => {
+                    // The effects in the shared fixture ran already without a tracked dependency, so this test needs a component
+                    // whose `messages` signal is writable before the first change detection run.
+                    const sessionStorageService = TestBed.inject(SessionStorageService);
+                    vi.spyOn(sessionStorageService, 'retrieve').mockImplementation((key: string) => (key.includes('scrollPosition') ? storedPostId : undefined));
+
+                    fixture = TestBed.createComponent(ConversationMessagesComponent);
+                    component = fixture.componentInstance;
+                    fixture.componentRef.setInput('course', course);
+                    messagesSignal = signal([createPostingThread(1, 0), createPostingThread(storedPostId, 300)]);
+                    (component as any).messages = messagesSignal;
+                    container = document.createElement('div');
+                    vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({ top: 0, bottom: 100 } as DOMRect);
+                    Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+                    Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
+                    (component as any).content = vi.fn().mockReturnValue({ nativeElement: container });
+                    // the conversation is opened and its stored scroll position is restored
+                    component.canStartSaving = true;
+                    scrollToStoredIdSpy = vi.spyOn(component as any, 'scrollToStoredId');
+                    fixture.detectChanges();
+                    vi.runAllTimers();
+                    scrollToStoredIdSpy.mockClear();
+                });
+
+                it('should keep the user at the bottom when a message arrives although a scroll position is stored', () => {
+                    // the user scrolled to the very end of the conversation
+                    container.scrollTop = 600;
+
+                    // another user posts a message
+                    component.setPosts();
+                    messagesSignal.set([...messagesSignal(), createPostingThread(newPostId, 1000)]);
+                    fixture.detectChanges();
+                    vi.runAllTimers();
+
+                    expect(scrollToStoredIdSpy).not.toHaveBeenCalled();
+                    expect(container.scrollTop).toBe(container.scrollHeight);
+                });
+
+                it('should restore the stored scroll position when a message arrives while the user is not at the bottom', () => {
+                    container.scrollTop = 100;
+
+                    component.setPosts();
+                    messagesSignal.set([...messagesSignal(), createPostingThread(newPostId, 1000)]);
+                    fixture.detectChanges();
+                    vi.runAllTimers();
+
+                    expect(scrollToStoredIdSpy).toHaveBeenCalledOnce();
+                    expect(container.scrollTop).toBe(290);
+                });
             });
         });
 
