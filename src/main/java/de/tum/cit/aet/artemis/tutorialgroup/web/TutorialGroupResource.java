@@ -522,7 +522,7 @@ public class TutorialGroupResource {
      * @return the list of registrations with information about the success of the import sorted by tutorial group title
      */
     @PostMapping("courses/{courseId}/tutorial-groups/import")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<TutorialGroupImportDataDTO>> importTutorialGroupsWithRegistrations(@PathVariable Long courseId,
             @RequestBody @Valid Set<TutorialGroupImportDataDTO> importDTOs) {
         log.debug("REST request to import registrations {} to course {}", importDTOs, courseId);
