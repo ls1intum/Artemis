@@ -313,20 +313,15 @@
                         </div>
                         <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
-                                <div class="flex items-center gap-1">
-                                    <label class="mb-0! font-bold" for="examSummaryPublicationDate">{{
-                                        'artemisApp.examManagement.examSummaryPublicationDate' | artemisTranslate
-                                    }}</label>
-                                    <jhi-help-icon text="artemisApp.examManagement.examSummaryPublicationDateTooltip" />
-                                </div>
                                 <tumaet-ui-date-picker
                                     inputId="examSummaryPublicationDate"
                                     data-testid="examSummaryPublicationDate"
-                                    [hideLabelName]="true"
-                                    [ariaLabel]="'artemisApp.examManagement.examSummaryPublicationDate' | artemisTranslate"
+                                    labelName="artemisApp.examManagement.examSummaryPublicationDate"
                                     [(value)]="exam.examSummaryPublicationDate"
                                     [invalid]="!isValidExamSummaryPublicationDate"
-                                />
+                                >
+                                    <jhi-help-icon tumAetUiDatePickerLabelAddon text="artemisApp.examManagement.examSummaryPublicationDateTooltip" />
+                                </tumaet-ui-date-picker>
                                 @if (examSummaryPublicationDateErrorKey; as errorKey) {
                                     <tumaet-ui-message severity="error" class="mt-1" data-testid="examSummaryPublicationDate-error"
                                         ><span [jhiTranslate]="errorKey"></span
@@ -369,18 +364,15 @@
             <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.examSolutions"></h5>
             <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                    <div class="flex items-center gap-1">
-                        <label class="mb-0! font-bold" for="exampleSolutionPublicationDate">{{ 'artemisApp.exam.exampleSolutionPublicationDate' | artemisTranslate }}</label>
-                        <jhi-help-icon text="artemisApp.examManagement.exampleSolutionPublicationDateTooltip" />
-                    </div>
                     <tumaet-ui-date-picker
                         inputId="exampleSolutionPublicationDate"
                         data-testid="exampleSolutionPublicationDate"
-                        [hideLabelName]="true"
-                        [ariaLabel]="'artemisApp.exam.exampleSolutionPublicationDate' | artemisTranslate"
+                        labelName="artemisApp.exam.exampleSolutionPublicationDate"
                         [(value)]="exam.exampleSolutionPublicationDate"
                         [invalid]="!isValidExampleSolutionPublicationDate"
-                    />
+                    >
+                        <jhi-help-icon tumAetUiDatePickerLabelAddon text="artemisApp.examManagement.exampleSolutionPublicationDateTooltip" />
+                    </tumaet-ui-date-picker>
                     @if (exampleSolutionPublicationDateErrorKey; as errorKey) {
                         <tumaet-ui-message severity="error" class="mt-1" data-testid="exampleSolutionPublicationDate-error"
                             ><span [jhiTranslate]="errorKey"></span

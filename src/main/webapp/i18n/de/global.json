@@ -421,7 +421,7 @@
             "rowsPerPage": "Einträge pro Seite"
         },
         "datePicker": {
-            "placeholder": "DD.MM.YYYY HH:mm",
+            "placeholder": "TT.MM.JJJJ HH:mm",
             "open": "Kalender öffnen",
             "dialog": "Datum und Uhrzeit auswählen",
             "previousMonth": "Vorheriger Monat: {{ month }}",
@@ -442,7 +442,7 @@
             "timePlaceholder": "HH:mm",
             "dateDialog": "Datum auswählen",
             "invalidDate": "Bitte ein gültiges Datum eingeben.",
-            "datePlaceholder": "DD.MM.YYYY"
+            "datePlaceholder": "TT.MM.JJJJ"
         },
         "imageCropper": {
             "sourceImage": "Bild zum Zuschneiden"
