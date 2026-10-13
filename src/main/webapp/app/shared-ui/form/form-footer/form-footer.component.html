@@ -37,6 +37,23 @@
             <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
             <span class="hidden sm:inline" jhiTranslate="entity.action.cancel"></span>
         </button>
+        @if (showGenerateWithAi()) {
+            <button
+                tumAetUiButton
+                type="button"
+                size="small"
+                severity="secondary"
+                id="generate-with-ai"
+                data-testid="legacy-generate-with-ai"
+                [attr.aria-disabled]="isSubmitDisabled()"
+                [attr.aria-describedby]="invalidReasons().length ? invalidReasonsId : null"
+                [tumAetUiTooltip]="invalidReasonTexts()"
+                [tumAetUiTooltipDescribesHost]="false"
+                (click)="onGenerateWithAi()"
+            >
+                <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateWithAi"></span>
+            </button>
+        }
         <button
             tumAetUiButton
             type="button"

@@ -1,4 +1,7 @@
-import { ActivatedRoute, Params } from '@angular/router';
+import { hyperionGenerationBlocker } from 'app/hyperion/exercise-generation/hyperion-generation-support';
+import { serverTimeSignal } from 'app/hyperion/exercise-generation/hyperion-server-time.util';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
@@ -40,7 +43,7 @@ import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/su
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
 import { SharingInfo } from 'app/sharing/sharing.model';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
@@ -122,6 +125,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly exerciseGroupService = inject(ExerciseGroupService);
     private readonly programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly router = inject(Router);
     private readonly calendarService = inject(CalendarService);
     private readonly localStorageService = inject(LocalStorageService);
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
@@ -231,6 +235,22 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     backupExercise!: ProgrammingExercise; // set in ngOnInit() from the loaded programming exercise, before any edit/update action reads it
     readonly isSaving = signal<boolean>(undefined!);
+    private readonly legacyCreationNow = serverTimeSignal();
+    readonly showGenerateWithAi = computed(() => {
+        const exercise = this._programmingExercise();
+        return (
+            !!exercise &&
+            this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION) &&
+            !exercise.id &&
+            !this.isImportFromExistingExercise &&
+            !this.isImportFromFile &&
+            !this.isImportFromSharing &&
+            exercise.programmingLanguage === ProgrammingLanguage.JAVA &&
+            (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION) ||
+                (!!exercise.projectType && hyperionGenerationBlocker(exercise, this.legacyCreationNow()) !== undefined))
+        );
+    });
+
     goBackAfterSaving = false;
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
@@ -833,7 +853,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     /**
      * Saves the programming exercise through the normal creation or update workflow.
      */
-    saveExercise() {
+    saveWithAi(): void {
+        if (!this.showGenerateWithAi()) return;
+        this.saveWithModalCheck(() => {
+            if (this.showGenerateWithAi()) this.saveExercise(true);
+        });
+    }
+
+    saveExercise(emptyRepositories = false) {
         if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig?.timeoutSeconds < 1) {
             this.programmingExercise.buildConfig.timeoutSeconds = 0;
         }
@@ -885,9 +912,29 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 requestOptions.notificationText = this.notificationText;
             }
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
+        } else if (emptyRepositories) {
+            this.programmingExerciseService.automaticSetup(this.programmingExercise, true).subscribe({
+                next: (response) => this.openLegacyCodeEditor(response.body!),
+                error: (error: HttpErrorResponse) => this.onSaveError(error),
+            });
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
         }
+    }
+
+    private openLegacyCodeEditor(exercise: ProgrammingExercise): void {
+        this.isSaving.set(false);
+        const courseId = exercise.course?.id ?? exercise.exerciseGroup?.exam?.course?.id;
+        const participationId = exercise.templateParticipation?.id;
+        if (!exercise.id || !courseId || !participationId) {
+            this.onSaveSuccess(exercise);
+            return;
+        }
+        const path =
+            exercise.exerciseGroup?.exam?.id && exercise.exerciseGroup?.id
+                ? ['course-management', courseId, 'exams', exercise.exerciseGroup.exam.id, 'exercise-groups', exercise.exerciseGroup.id, 'programming-exercises', exercise.id]
+                : ['course-management', courseId, 'programming-exercises', exercise.id];
+        void this.router.navigate([...path, 'code-editor', RepositoryType.TEMPLATE, participationId], { state: { autoStartCodeGenerationAllRepositories: true } });
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
@@ -1046,7 +1093,16 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
-        this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
+        if (
+            this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION) &&
+            !this.programmingExercise.id &&
+            !this.isImportFromExistingExercise &&
+            !this.isImportFromFile &&
+            !this.isImportFromSharing
+        ) {
+            this.programmingExercise = deepClone(this.programmingExercise);
+        }
+        this.fileService.getTemplateFile(language, this.programmingExercise.projectType).subscribe({
             next: (file) => {
                 this.programmingExercise.problemStatement = file;
                 this.problemStatementLoaded = true;

@@ -77,6 +77,72 @@ class GenerationExternalMutationServiceTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
+    void completedPartialUndoRetriesRecoveryConversionWithoutReleasingItsReservation(boolean lostResponse) {
+        var provider = spy(new LocalDataProviderService());
+        var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
+        doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
+        var guard = new GenerationExternalMutationService(provider, 1, true);
+        var jobs = new GenerationJobService(provider, _ -> {
+        }, org.mockito.Mockito.mock(GenerationTokenUsageService.class), null, new HyperionAgentProperties(), org.mockito.Mockito.mock(HyperionEffortProfileService.class),
+                Runnable::run, 1, Duration.ofHours(4), 0, guard);
+        jobs.init();
+        var user = new User();
+        user.setLogin("editor");
+        String token = jobs.claimRevertSlot(user, 42);
+        if (lostResponse) {
+            doAnswer(invocation -> {
+                invocation.callRealMethod();
+                throw new IllegalStateException("conversion response lost");
+            }).doCallRealMethod().when(slots).replace(org.mockito.ArgumentMatchers.eq("42"), org.mockito.ArgumentMatchers.any(JobInfo.class),
+                    org.mockito.ArgumentMatchers.any(JobInfo.class));
+        }
+        else {
+            doThrow(new IllegalStateException("store temporarily unavailable")).doCallRealMethod().when(slots).lock("42");
+        }
+        jobs.retainRevertRecoverySlot(42, token);
+        JobInfo afterFailure = slots.get("42");
+        assertThat(afterFailure).isNotNull();
+        assertThat(afterFailure.cancellable()).isFalse();
+        guard.retryPendingReleases();
+        assertThat(jobs.isRevertRecoveryPending(42)).isTrue();
+        JobInfo recovery = slots.get("42");
+        if (lostResponse) {
+            assertThat(recovery).isEqualTo(afterFailure);
+        }
+        assertThat(jobs.recoverWedgedSlot(42, token)).isFalse();
+        assertThat(jobs.recoverWedgedSlot(42, recovery.jobId())).isTrue();
+    }
+
+    @Test
+    void delayedUndoConversionCannotReplaceANewerRecoveryRetry() {
+        var provider = spy(new LocalDataProviderService());
+        var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
+        doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
+        var guard = new GenerationExternalMutationService(provider, 1, true);
+        var jobs = new GenerationJobService(provider, _ -> {
+        }, org.mockito.Mockito.mock(GenerationTokenUsageService.class), null, new HyperionAgentProperties(), org.mockito.Mockito.mock(HyperionEffortProfileService.class),
+                Runnable::run, 1, Duration.ofHours(4), 0, guard);
+        jobs.init();
+        var user = new User();
+        user.setLogin("editor");
+        String old = jobs.claimRevertSlot(user, 42);
+        doAnswer(invocation -> {
+            invocation.callRealMethod();
+            throw new IllegalStateException("conversion response lost");
+        }).doCallRealMethod().when(slots).replace(org.mockito.ArgumentMatchers.eq("42"), org.mockito.ArgumentMatchers.any(JobInfo.class),
+                org.mockito.ArgumentMatchers.any(JobInfo.class));
+        jobs.retainRevertRecoverySlot(42, old);
+        assertThat(jobs.isRevertRecoveryPending(42)).isTrue();
+        String retry = jobs.claimRevertSlot(user, 42);
+        JobInfo replacement = slots.get("42");
+        guard.retryPendingReleases();
+        assertThat(slots.get("42")).isEqualTo(replacement);
+        assertThat(jobs.isOwnedActiveJob(42, retry)).isTrue();
+        assertThat(jobs.isRevertRecoveryPending(42)).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
     void revertAcquisitionRetriesCleanupAndRestoresThePreviousRecoveryGuard(boolean recovering) {
         var provider = spy(new LocalDataProviderService());
         var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));

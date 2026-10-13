@@ -1445,7 +1445,12 @@ public class LocalVCServletService {
                 Long triggeringAuxiliaryRepositoryId = repositoryType == RepositoryType.AUXILIARY
                         ? auxiliaryRepositoryService.findAuxiliaryRepositoryIdOfExercise(repositoryTypeOrUserName, exercise).orElse(null)
                         : null;
-                exerciseVersionService.createExerciseVersion(exercise, user, repositoryType, triggeringAuxiliaryRepositoryId, triggeringCommitHash);
+                if (programmingExerciseMutationGuard.isCoordinationEnabled()) {
+                    exerciseVersionService.createExerciseVersionSynchronously(exercise, user, repositoryType, triggeringAuxiliaryRepositoryId, triggeringCommitHash);
+                }
+                else {
+                    exerciseVersionService.createExerciseVersion(exercise, user, repositoryType, triggeringAuxiliaryRepositoryId, triggeringCommitHash);
+                }
             }
 
             if (repositoryType.equals(RepositoryType.TESTS)) {
