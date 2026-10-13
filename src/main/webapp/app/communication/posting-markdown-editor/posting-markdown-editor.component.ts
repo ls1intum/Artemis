@@ -234,6 +234,9 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         // Prevent a newline from being added to the text when pressing enter
         if (this.suppressNewlineOnEnter() && event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
+            // The editor debounces its text changes, so the form control may still hold the content from before the last
+            // keystrokes. Enter submits the form right after this handler, therefore sync the control first.
+            this.markdownEditor().flushPendingTextChange();
         }
     }
 }

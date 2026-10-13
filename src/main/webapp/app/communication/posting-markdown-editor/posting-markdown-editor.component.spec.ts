@@ -340,6 +340,21 @@ describe('PostingsMarkdownEditor', () => {
         expect(preventDefaultSpy).toHaveBeenCalledOnce();
     });
 
+    it('should flush the pending editor text before the user submits with enter', () => {
+        fixture.componentRef.setInput('suppressNewlineOnEnter', true);
+        const flushSpy = vi.spyOn(mockMarkdownEditorComponent, 'flushPendingTextChange');
+        component.onKeyDown(new KeyboardEvent('keydown', { key: 'Enter' }));
+        expect(flushSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not flush the pending editor text when enter only inserts a newline', () => {
+        const flushSpy = vi.spyOn(mockMarkdownEditorComponent, 'flushPendingTextChange');
+        component.onKeyDown(new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true }));
+        fixture.componentRef.setInput('suppressNewlineOnEnter', false);
+        component.onKeyDown(new KeyboardEvent('keydown', { key: 'Enter' }));
+        expect(flushSpy).not.toHaveBeenCalled();
+    });
+
     it('should not call preventDefault when the user presses shift+enter', () => {
         fixture.componentRef.setInput('suppressNewlineOnEnter', true);
         const event = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true });
