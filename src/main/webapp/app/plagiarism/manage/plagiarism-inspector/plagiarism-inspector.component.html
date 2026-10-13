@@ -95,15 +95,42 @@
             <div class="plagiarism-option">
                 <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.similarityThreshold"></div>
                 <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.similarityThresholdTooltip' | artemisTranslate" />
-                <input type="number" required class="form-control" min="0" max="100" step="5" id="plagiarism-similarity-threshold" [(ngModel)]="similarityThreshold" />
+                <input
+                    [attr.aria-label]="'artemisApp.plagiarism.similarityThreshold' | artemisTranslate"
+                    type="number"
+                    required
+                    class="form-control"
+                    min="0"
+                    max="100"
+                    step="5"
+                    id="plagiarism-similarity-threshold"
+                    [(ngModel)]="similarityThreshold"
+                />
             </div>
             <div class="plagiarism-option" [class.disabled]="!enableMinimumScore">
                 <div class="plagiarism-checkbox form-check" for="enableMinimumScore">
-                    <input type="checkbox" id="enableMinimumScore" class="plagiarism-option-checkbox form-check-input" [(ngModel)]="enableMinimumScore" checked />
+                    <input
+                        [attr.aria-label]="'artemisApp.plagiarism.minimumScore' | artemisTranslate"
+                        type="checkbox"
+                        id="enableMinimumScore"
+                        class="plagiarism-option-checkbox form-check-input"
+                        [(ngModel)]="enableMinimumScore"
+                        checked
+                    />
                     <div class="plagiarism-option-label form-check-label" jhiTranslate="artemisApp.plagiarism.minimumScore"></div>
                 </div>
                 <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.minimumScoreTooltip' | artemisTranslate" />
-                <input required type="number" [disabled]="!enableMinimumScore" class="form-control" min="0" max="100" id="plagiarism-minimum-score" [(ngModel)]="minimumScore" />
+                <input
+                    [attr.aria-label]="'artemisApp.plagiarism.minimumScore' | artemisTranslate"
+                    required
+                    type="number"
+                    [disabled]="!enableMinimumScore"
+                    class="form-control"
+                    min="0"
+                    max="100"
+                    id="plagiarism-minimum-score"
+                    [(ngModel)]="minimumScore"
+                />
             </div>
             <div class="plagiarism-option" [class.disabled]="!enableMinimumSize">
                 <div class="plagiarism-checkbox form-check" for="enableMinimumSize">
@@ -111,7 +138,17 @@
                     <label for="enableMinimumSize" class="plagiarism-option-label form-check-label" [jhiTranslate]="getMinimumSizeLabel()"></label>
                 </div>
                 <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="getMinimumSizeTooltip() | artemisTranslate" />
-                <input required type="number" [disabled]="!enableMinimumSize" class="form-control" min="0" max="100" id="plagiarism-minimum-size" [(ngModel)]="minimumSize" />
+                <input
+                    [attr.aria-label]="getMinimumSizeLabel() | artemisTranslate"
+                    required
+                    type="number"
+                    [disabled]="!enableMinimumSize"
+                    class="form-control"
+                    min="0"
+                    max="100"
+                    id="plagiarism-minimum-size"
+                    [(ngModel)]="minimumSize"
+                />
             </div>
             @if (isProgrammingExercise()) {
                 <div class="plagiarism-checkbox form-check" for="generateJPlagReport">

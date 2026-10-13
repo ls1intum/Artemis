@@ -153,9 +153,9 @@ artemis:
         grpc-port: 50051                  # Weaviate gRPC port for better performance
         scheme: http                      # http scheme for development (https should be used in production environments)
         collection-prefix: Artemis_       # Prefix for all Weaviate collection names to avoid naming conflicts (e.g. with Pyris)
-        vectorizer-module: none           # Vectorizer module: "none" (docker/weaviate.yml), "text2vec-transformers" (docker/weaviate-embeddings.yml), or "text2vec-openai" (for OpenAI-compatible APIs like Ollama)
+        vectorizer-module: none           # Vectorizer module: "none" (deployment/docker/weaviate.yml), "text2vec-transformers" (deployment/docker/weaviate-embeddings.yml), or "text2vec-openai" (for OpenAI-compatible APIs like Ollama)
         # Weaviate server authentication (optional). When set, the client authenticates using API key auth.
-        # The Weaviate server must have API key authentication enabled (see docker/weaviate/*.env).
+        # The Weaviate server must have API key authentication enabled (see deployment/docker/weaviate/*.env).
         # api-key: admin-key                                         # API key matching AUTHENTICATION_APIKEY_ALLOWED_KEYS in the Weaviate server config
         # The following properties are only required when using vectorizer-module: text2vec-openai
         # See docs: admin/global-search-weaviate

@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
@@ -132,6 +133,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final ExerciseService exerciseService;
 
+    private final ExerciseConfigurationService exerciseConfigurationService;
+
     private final UserRepository userRepository;
 
     private final QuizBatchRepository quizBatchRepository;
@@ -155,7 +158,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService, ExerciseService exerciseService, UserRepository userRepository,
             QuizBatchRepository quizBatchRepository, ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService,
             Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService,
-            Optional<ExamDateApi> examDateApi, Optional<LtiApi> ltiApi) {
+            Optional<ExamDateApi> examDateApi, Optional<LtiApi> ltiApi, ExerciseConfigurationService exerciseConfigurationService) {
         super();
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -175,6 +178,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.examDateApi = examDateApi;
         this.ltiApi = ltiApi;
+        this.exerciseConfigurationService = exerciseConfigurationService;
     }
 
     /**
@@ -1390,6 +1394,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         // Save the exercise first to get an ID (competency links are passed separately and require the exercise ID)
         QuizExercise savedExercise = save(quizExercise);
+
+        // The permanent configuration rows hold the key to the exercise, so they are created once it is stored. Native statements,
+        // so the exercise itself is not saved again (see the note below).
+        exerciseConfigurationService.initialize(savedExercise);
 
         // Add competency links after the initial save (they need the exercise ID for @MapsId).
         // IMPORTANT: Do NOT re-save the exercise (neither via QuizService.save() nor via

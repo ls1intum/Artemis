@@ -21,6 +21,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { CourseNotificationSettingsMap } from 'app/notification/shared/entities/course-notification/course-notification-settings-map';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('NotificationSettingsComponent', () => {
     let component: NotificationSettingsComponent;
@@ -110,6 +112,7 @@ describe('NotificationSettingsComponent', () => {
                 { provide: CourseNotificationSettingService, useValue: courseNotificationSettingServiceMock },
                 { provide: ActivatedRoute, useValue: activatedRouteMock },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .overrideComponent(NotificationSettingsComponent, {
@@ -157,6 +160,59 @@ describe('NotificationSettingsComponent', () => {
         expect(component['selectableSettingPresets']()).toEqual(mockPresets);
         expect(component['selectedSettingPreset']()).toEqual(mockPresets[0]);
         expect(component['notificationSpecifications']()).toHaveLength(1);
+    });
+
+    describe('settings that apply without a chosen preset (an unconfigured test account)', () => {
+        // The server reports the custom preset with the channels that apply: the default preset's, but without e-mail.
+        const effectiveSettingInfo: CourseNotificationSettingInfo = {
+            selectedPreset: 0,
+            notificationTypeChannels: {
+                '1': {
+                    [CourseNotificationChannel.PUSH]: true,
+                    [CourseNotificationChannel.EMAIL]: false,
+                    [CourseNotificationChannel.WEBAPP]: true,
+                },
+            },
+        };
+        // A shared preset that would switch e-mail on, as the default preset does.
+        const presetsWithEmail: CourseNotificationSettingPreset[] = [
+            {
+                identifier: 'default',
+                typeId: 1,
+                presetMap: {
+                    newPostNotification: {
+                        [CourseNotificationChannel.PUSH]: true,
+                        [CourseNotificationChannel.EMAIL]: true,
+                        [CourseNotificationChannel.WEBAPP]: true,
+                    },
+                },
+            },
+        ];
+
+        beforeEach(() => {
+            component['settingInfo'] = effectiveSettingInfo;
+            component['info'] = { notificationTypes: mockNotificationTypes, presets: presetsWithEmail };
+            component.initializeValues();
+        });
+
+        it('should show the channels that apply and no selected preset, where the preset would show e-mail', () => {
+            expect(component['selectedSettingPreset']()).toBeUndefined();
+            expect(component['notificationSpecifications']()).toHaveLength(1);
+            expect(component['notificationSpecifications']()[0].channelSetting[CourseNotificationChannel.EMAIL]).toBe(false);
+        });
+
+        it('should customize from what is shown, without a preset to copy', () => {
+            const specification = component['notificationSpecifications']()[0];
+            const changed = new CourseNotificationSettingSpecification(specification.identifier, specification.typeId, {
+                ...specification.channelSetting,
+                [CourseNotificationChannel.PUSH]: false,
+            });
+
+            component.optionChanged(changed);
+
+            expect(courseNotificationSettingServiceMock.setSettingSpecification).toHaveBeenCalledWith(courseId, changed, undefined);
+            expect(changed.channelSetting[CourseNotificationChannel.EMAIL]).toBe(false);
+        });
     });
 
     it('should update selected preset when presetSelected is called', () => {
@@ -249,5 +305,44 @@ describe('NotificationSettingsComponent', () => {
         expect(component['notificationSpecifications']()[0].identifier).toBe('newPostNotification');
         expect(component['notificationSpecifications']()[0].typeId).toBe(1);
         expect(component['notificationSpecifications']()[0].channelSetting).toEqual(testMapWithIds['1']);
+    });
+
+    describe('instructor-only notification types', () => {
+        const channelSetting = {
+            [CourseNotificationChannel.PUSH]: false,
+            [CourseNotificationChannel.EMAIL]: false,
+            [CourseNotificationChannel.WEBAPP]: false,
+        };
+        const mapWithInstructorOnlyType: CourseNotificationSettingsMap = {
+            newPostNotification: channelSetting,
+            atlasCompetencyUpdateNotification: channelSetting,
+        };
+
+        beforeEach(() => {
+            component['info'] = {
+                notificationTypes: { 1: 'newPostNotification', 27: 'atlasCompetencyUpdateNotification' },
+                presets: [],
+            };
+        });
+
+        it('should hide instructor-only types from users below instructor', () => {
+            const instructorCheck = vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(false);
+
+            component['updateSpecificationArrayByNotificationMap'](mapWithInstructorOnlyType, true);
+
+            expect(instructorCheck).toHaveBeenCalledWith(courseId);
+            expect(component['notificationSpecifications']().map((specification) => specification.identifier)).toEqual(['newPostNotification']);
+        });
+
+        it('should show instructor-only types to instructors', () => {
+            vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(true);
+
+            component['updateSpecificationArrayByNotificationMap'](mapWithInstructorOnlyType, true);
+
+            expect(component['notificationSpecifications']().map((specification) => specification.identifier)).toEqual([
+                'newPostNotification',
+                'atlasCompetencyUpdateNotification',
+            ]);
+        });
     });
 });

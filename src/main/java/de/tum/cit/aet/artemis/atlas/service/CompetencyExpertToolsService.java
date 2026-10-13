@@ -328,6 +328,7 @@ public class CompetencyExpertToolsService {
                     competency.setDescription(comp.getDescription());
                     competency.setTaxonomy(comp.getTaxonomy());
                     competency.setCourse(course);
+                    competency.setGeneratedByAi(true);
                     competencyRepository.save(competency);
                     comp.setCompetencyId(competency.getId());
                     createCount++;

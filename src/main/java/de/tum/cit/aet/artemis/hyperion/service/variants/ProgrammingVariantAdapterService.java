@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +31,8 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
@@ -42,6 +43,7 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContex
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.BuildResultOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.PendingBuild;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -101,6 +103,10 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
 
     private final ProgrammingExerciseImportService programmingExerciseImportService;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
     private final ProgrammingExerciseValidationService programmingExerciseValidationService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -131,7 +137,10 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             UserRepository userRepository, ProgrammingVariantToolsetService toolsetService, VariantBuildVerificationService buildVerificationService,
             HyperionConsistencyCheckService consistencyCheckService, VariantPlacementService variantPlacementService, ExerciseVariantJobService jobService,
-            ExerciseDeletionService exerciseDeletionService) {
+            ExerciseDeletionService exerciseDeletionService, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.contextRendererService = contextRendererService;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
@@ -180,8 +189,13 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         // Exercise.categories is a lazy @ElementCollection NOT covered by the import fetch graph above (the REST
         // import path receives categories in the request payload instead) — reading it on this detached instance
         // in buildVariantSkeleton threw a LazyInitializationException in the first real-CI run. Hydrate separately.
-        programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(source.getId())
+        programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(source.getId())
                 .ifPresent(withCategories -> original.setCategories(withCategories.getCategories()));
+
+        // The team assignment and plagiarism detection settings are not part of an exercise, so they are read here for the
+        // skeleton to copy; without them a variant of a team exercise could not be imported.
+        teamAssignmentConfigRepository.attachTo(original);
+        plagiarismDetectionConfigRepository.attachTo(original);
 
         ProgrammingExercise newExercise = buildVariantSkeleton(original, plan, request);
         applyUniqueShortNameAndTitle(newExercise, original, plan.variantTitle());
@@ -417,24 +431,18 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         }
         newExercise.setMaxPoints(original.getMaxPoints());
         newExercise.setBonusPoints(original.getBonusPoints());
-        newExercise.setIncludedInOverallScore(original.getIncludedInOverallScore());
         newExercise.setMode(original.getMode());
-        newExercise.setDifficulty(request.targetDifficulty() != null ? request.targetDifficulty() : original.getDifficulty());
-        newExercise.setCategories(new HashSet<>(original.getCategories()));
+        if (original.getStoredTeamAssignmentConfig() != null) {
+            newExercise.setTeamAssignmentConfig(original.getStoredTeamAssignmentConfig().copyTeamAssignmentConfig());
+        }
+        if (original.getPlagiarismDetectionConfig() != null) {
+            newExercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig(original.getPlagiarismDetectionConfig()));
+        }
         newExercise.setProblemStatement(plan.problemStatement());
-        newExercise.setGradingInstructions(original.getGradingInstructions());
-        newExercise.setProgrammingLanguage(original.getProgrammingLanguage());
-        newExercise.setProjectType(original.getProjectType());
-        newExercise.setPackageName(original.getPackageName());
-        newExercise.setAllowOnlineEditor(original.isAllowOnlineEditor());
-        newExercise.setAllowOfflineIde(original.isAllowOfflineIde());
-        newExercise.setAllowOnlineIde(original.isAllowOnlineIde());
-        newExercise.setStaticCodeAnalysisEnabled(original.isStaticCodeAnalysisEnabled());
-        newExercise.setMaxStaticCodeAnalysisPenalty(original.getMaxStaticCodeAnalysisPenalty());
-        newExercise.setShowTestNamesToStudents(original.getShowTestNamesToStudents());
-        newExercise.setReleaseTestsWithExampleSolution(original.isReleaseTestsWithExampleSolution());
-        newExercise.setAssessmentType(original.getAssessmentType());
-        newExercise.setAllowComplaintsForAutomaticAssessments(original.getAllowComplaintsForAutomaticAssessments());
+        newExercise.copyImportSettingsFrom(original);
+        if (request.targetDifficulty() != null) {
+            newExercise.setDifficulty(request.targetDifficulty());
+        }
         newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(original.getBuildAndTestStudentSubmissionsAfterDueDate());
         return newExercise;
     }

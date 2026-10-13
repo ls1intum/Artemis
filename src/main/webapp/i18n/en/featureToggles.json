@@ -178,9 +178,9 @@
                     "disableWarning": "Iris will not retain conversation history between sessions, resulting in less personalized AI assistance."
                 },
                 "LectureContentProcessing": {
-                    "name": "Lecture Video Processing",
-                    "description": "Enables automated lecture content processing: transcription, slide extraction, and Pyris ingestion.",
-                    "disableWarning": "Disabling lecture content processing stops all ongoing transcription and ingestion jobs for new lectures."
+                    "name": "Lecture Unit Indexing",
+                    "description": "Indexes lecture units for Iris: transcribes videos, extracts slide content from PDFs, and ingests both into the vector store so Iris can answer questions about them.",
+                    "disableWarning": "Disabling lecture unit indexing stops new lecture units from being indexed, including retries, backfill, and reconciliation. Running jobs finish, and nothing already indexed is removed."
                 },
                 "RateLimit": {
                     "name": "API Rate Limiting",
@@ -196,6 +196,11 @@
                     "name": "Global Search",
                     "description": "Enables a unified search interface accessible via Cmd+K/Ctrl+K that allows users to quickly search across courses, exercises, lectures, and other content.",
                     "disableWarning": "Users will not have access to the global search functionality and must navigate manually through the interface."
+                },
+                "PresentationAssessments": {
+                    "name": "Presentations",
+                    "description": "Enables instructors to create and assess presentations.",
+                    "disableWarning": "Instructors will not be able to access or manage presentation assessments. Existing presentation data remains stored."
                 },
                 "Deimos": {
                     "name": "Deimos Analysis",

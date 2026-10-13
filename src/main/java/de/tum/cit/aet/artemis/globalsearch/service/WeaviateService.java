@@ -145,9 +145,10 @@ public class WeaviateService {
 
             client.collections.create(collectionName, collection -> {
                 // Configure vectorizer based on deployment setup
-                // - "none": Use self-provided vectors (respective weaviate instance can be started via docker/weaviate.yml)
-                // - "text2vec-transformers": Automatic embeddings with embeddinggemma-300m (respective weaviate instance can be started via docker/weaviate-embeddings.yml)
-                // - "text2vec-openai": OpenAI-compatible API embeddings, e.g. Ollama (weaviate started with docker/weaviate/openai.env)
+                // - "none": Use self-provided vectors (respective weaviate instance can be started via deployment/docker/weaviate.yml)
+                // - "text2vec-transformers": Automatic embeddings with embeddinggemma-300m (respective weaviate instance can be started via
+                // deployment/docker/weaviate-embeddings.yml)
+                // - "text2vec-openai": OpenAI-compatible API embeddings, e.g. Ollama (weaviate started with deployment/docker/weaviate/openai.env)
                 if (SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(properties.vectorizerModule())) {
                     collection.vectorConfig(VectorConfig.text2vecOpenAi(builder -> {
                         if (StringUtils.hasText(properties.openAiBaseUrl())) {

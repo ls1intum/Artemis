@@ -72,7 +72,7 @@ public class StatisticsResource {
         var courseId = 0L;
         switch (view) {
             case COURSE -> courseId = entityId;
-            case EXERCISE -> courseId = exerciseRepository.findByIdElseThrow(entityId).getCourseViaExerciseGroupOrCourseMember().getId();
+            case EXERCISE -> courseId = exerciseRepository.findByIdElseThrow(entityId).getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
             case ARTEMIS -> throw new UnsupportedOperationException("Unsupported view: " + view);
         }
         Course course = courseRepository.findByIdElseThrow(courseId);

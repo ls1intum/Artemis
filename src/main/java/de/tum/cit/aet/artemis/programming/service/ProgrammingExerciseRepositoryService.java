@@ -433,7 +433,10 @@ public class ProgrammingExerciseRepositoryService {
         if (auxiliaryRepository.getId() == null) {
             throw new IllegalArgumentException("Cannot delete auxiliary repository without id");
         }
-        versionControlService.orElseThrow().deleteRepository(auxiliaryRepository.getVcsRepositoryUri());
+        var repositoryUri = auxiliaryRepository.getVcsRepositoryUri();
+        if (repositoryUri != null) {
+            versionControlService.orElseThrow().deleteRepository(repositoryUri);
+        }
     }
 
     /**
