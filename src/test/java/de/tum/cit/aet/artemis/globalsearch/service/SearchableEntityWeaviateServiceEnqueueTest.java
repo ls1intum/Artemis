@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -95,7 +96,7 @@ class SearchableEntityWeaviateServiceEnqueueTest {
         service.upsertLectureUnitAsync(new LectureUnitSearchableEntityDTO(3L, 10L, 20L, null, "u", null, "text", null));
         service.upsertExamAsync(new ExamSearchableEntityDTO(4L, 10L, "e", null, null, null, null, false));
         service.upsertFaqAsync(new FaqSearchableEntityDTO(5L, 10L, "q", "a", "ACCEPTED"));
-        service.upsertChannelAsync(new ChannelSearchableEntityDTO(6L, 10L, "ch", null, false, true));
+        service.upsertChannelAsync(new ChannelSearchableEntityDTO(6L, 10L, "ch", null, false, true, null));
         service.upsertPostAsync(new PostSearchableEntityDTO(7L, 10L, 30L, "t", "content"));
         service.upsertAnswerPostAsync(new AnswerPostSearchableEntityDTO(8L, 7L, 10L, 30L, "reply"));
         service.upsertExerciseAsync(exerciseDto(9L));
@@ -109,6 +110,22 @@ class SearchableEntityWeaviateServiceEnqueueTest {
                 tuple(SearchableEntitySchema.TypeValues.LECTURE, 2L), tuple(SearchableEntitySchema.TypeValues.LECTURE_UNIT, 3L), tuple(SearchableEntitySchema.TypeValues.EXAM, 4L),
                 tuple(SearchableEntitySchema.TypeValues.FAQ, 5L), tuple(SearchableEntitySchema.TypeValues.CHANNEL, 6L), tuple(SearchableEntitySchema.TypeValues.POST, 7L),
                 tuple(SearchableEntitySchema.TypeValues.ANSWER_POST, 8L), tuple(SearchableEntitySchema.TypeValues.EXERCISE, 9L));
+    }
+
+    @Test
+    void testUpsertExerciseAndExam_alsoRewriteTheirChannelRows() {
+        // The channel row carries the date from which students may see the channel, which follows the item's dates.
+        when(resolver.findChannelIdOf(SearchableEntitySchema.TypeValues.EXERCISE, 9L)).thenReturn(Optional.of(77L));
+        when(resolver.findChannelIdOf(SearchableEntitySchema.TypeValues.EXAM, 4L)).thenReturn(Optional.of(78L));
+
+        service.upsertExerciseAsync(exerciseDto(9L));
+        service.upsertExamAsync(new ExamSearchableEntityDTO(4L, 10L, "e", null, null, null, null, false));
+
+        ArgumentCaptor<WeaviateOutboxEntry> captor = ArgumentCaptor.forClass(WeaviateOutboxEntry.class);
+        verify(outboxRepository, times(4)).save(captor.capture());
+        assertThat(captor.getAllValues()).extracting(WeaviateOutboxEntry::getEntityType, WeaviateOutboxEntry::getEntityId).containsExactly(
+                tuple(SearchableEntitySchema.TypeValues.EXERCISE, 9L), tuple(SearchableEntitySchema.TypeValues.CHANNEL, 77L), tuple(SearchableEntitySchema.TypeValues.EXAM, 4L),
+                tuple(SearchableEntitySchema.TypeValues.CHANNEL, 78L));
     }
 
     @Test

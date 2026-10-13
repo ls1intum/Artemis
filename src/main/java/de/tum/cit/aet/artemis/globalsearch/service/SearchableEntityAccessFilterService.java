@@ -547,16 +547,27 @@ public class SearchableEntityAccessFilterService {
 
     /**
      * Builds the channel type disjunct. All users with course access can see channels that are either
-     * course-wide or public within their courses.
+     * course-wide or public within their courses. Like the communication page, students see the channel of an
+     * exercise or exam only once the exercise is released or the exam is visible; its name would otherwise give the
+     * unreleased item away. Staff members see every such channel.
      *
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching channels the user may access, or {@code null} if no courses qualify
      */
     private Filter buildChannelDisjunct(CourseRoleSets roleSets) {
-        if (roleSets.allAccessibleCourseIds().isEmpty()) {
+        OffsetDateTime now = OffsetDateTime.now();
+        List<Filter> subBranches = new ArrayList<>();
+        if (!roleSets.staffCourseIds().isEmpty()) {
+            subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.staffCourseIds()));
+        }
+        if (!roleSets.studentCourseIds().isEmpty()) {
+            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()),
+                    Filter.or(Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).lte(now), Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).isNull())));
+        }
+        Filter courseScope = combineOr(subBranches);
+        if (courseScope == null) {
             return null;
         }
-        Filter courseScope = courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds());
         Filter visibility = Filter.or(Filter.property(SearchableEntitySchema.Properties.CHANNEL_IS_COURSE_WIDE).eq(true),
                 Filter.property(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC).eq(true));
         return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.CHANNEL), courseScope, visibility);

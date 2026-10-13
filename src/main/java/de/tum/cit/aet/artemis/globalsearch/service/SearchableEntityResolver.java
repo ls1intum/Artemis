@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -80,6 +81,23 @@ public class SearchableEntityResolver {
         this.examRepositoryApi = examRepositoryApi;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
+    }
+
+    /**
+     * The channel of an exercise or exam, whose row carries the date from which students may see it and therefore has
+     * to be written again when that date changes.
+     *
+     * @param type     {@code exercise} or {@code exam}
+     * @param entityId the exercise or exam id
+     * @return the channel id, or empty if the item has no channel or another type was given
+     */
+    public Optional<Long> findChannelIdOf(String type, long entityId) {
+        Channel channel = switch (type) {
+            case SearchableEntitySchema.TypeValues.EXERCISE -> channelRepository.findChannelByExerciseId(entityId);
+            case SearchableEntitySchema.TypeValues.EXAM -> channelRepository.findChannelByExamId(entityId);
+            default -> null;
+        };
+        return Optional.ofNullable(channel).map(Channel::getId);
     }
 
     /**

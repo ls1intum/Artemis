@@ -320,6 +320,7 @@ public class SearchableEntityWeaviateService {
             return;
         }
         enqueueUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), WeaviateOutboxOrigin.LIVE);
+        enqueueChannelOf(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId());
     }
 
     /**
@@ -402,6 +403,15 @@ public class SearchableEntityWeaviateService {
             return;
         }
         enqueueUpsert(SearchableEntitySchema.TypeValues.EXAM, dto.examId(), WeaviateOutboxOrigin.LIVE);
+        enqueueChannelOf(SearchableEntitySchema.TypeValues.EXAM, dto.examId());
+    }
+
+    /**
+     * Rewrites the channel row of an exercise or exam with it: the row holds the date from which students may see the
+     * channel, which follows the item's release or visible date.
+     */
+    private void enqueueChannelOf(String type, long entityId) {
+        resolver.findChannelIdOf(type, entityId).ifPresent(channelId -> enqueueUpsert(SearchableEntitySchema.TypeValues.CHANNEL, channelId, WeaviateOutboxOrigin.LIVE));
     }
 
     // ----- FAQ sync -----
