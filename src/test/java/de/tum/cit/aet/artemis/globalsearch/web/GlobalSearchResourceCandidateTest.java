@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -51,8 +50,7 @@ class GlobalSearchResourceCandidateTest {
                 course(4L, "Algorithms SS25", -15), 5L, course(5L, "Algorithms WS24/25", -21));
         when(accessFilterService.buildSearchableItemFilter(any(), isNull(), anyList(), anySet(), anySet(), anyBoolean()))
                 .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, true, courses, Set.of(), Set.of()));
-        resource = new GlobalSearchResource(weaviateService, accessFilterService, mock(CourseRepository.class), userRepository, mock(ExerciseRepository.class),
-                mock(ChannelRepository.class));
+        resource = new GlobalSearchResource(weaviateService, accessFilterService, mock(CourseRepository.class), userRepository, mock(ExerciseRepository.class));
     }
 
     @Test

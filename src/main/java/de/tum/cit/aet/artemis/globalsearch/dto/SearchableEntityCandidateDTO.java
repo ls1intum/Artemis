@@ -8,7 +8,7 @@ import org.jspecify.annotations.Nullable;
  * {@code SearchableEntityAccessFilterService}; consumers must not widen visibility. Dates are ISO
  * strings exactly as stored in Weaviate.
  *
- * @param entityType          the type discriminator (exercise, lecture, lecture_unit, exam, faq, channel, course, post, answer_post)
+ * @param entityType          the type discriminator (exercise, lecture, lecture_unit, exam, faq, channel, course)
  * @param entityId            the Artemis id of the entity
  * @param courseId            the id of the course the entity belongs to
  * @param courseName          the resolved course title, when known
