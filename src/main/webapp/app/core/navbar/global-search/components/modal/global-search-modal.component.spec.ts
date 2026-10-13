@@ -1551,19 +1551,22 @@ describe('GlobalSearchModalComponent', () => {
             mockCourseManagementService.getCourseAvailableTabs.mockReturnValue(tabs);
             mockCourseStorageService.getCourse.mockReturnValue({ id: 42, title: 'Intro to CS' });
             Object.defineProperty(router, 'url', { get: () => '/courses/42', configurable: true });
-            mockSearchService.globalSearch.mockReturnValue(of([{ id: '1', type: 'lecture', title: 'Vorlesung 1' } as GlobalSearchResult]));
+            mockSearchService.globalSearch.mockReturnValue(
+                of([{ id: '1', type: 'exercise', title: 'Vorlesungen planen' } as GlobalSearchResult, { id: '1', type: 'lecture', title: 'Vorlesung 1' } as GlobalSearchResult]),
+            );
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
             component['onSearchInput']('vorlesungen');
             vi.advanceTimersByTime(300);
-            expect(component['results']().map((result) => result.type)).toEqual(['lecture']);
-            component['selectedIndex'].set(0);
+            expect(component['results']().map((result) => result.type)).toEqual(['exercise', 'lecture']);
+            // The lecture shares its ID with the exercise before it; the selection must stay on the lecture.
+            component['selectedIndex'].set(1);
 
             tabs.next({ ...noTabs, lectures: true });
 
-            expect(component['results']().map((result) => result.type)).toEqual(['course_page', 'lecture']);
-            expect(component['selectedIndex']()).toBe(1);
+            expect(component['results']().map((result) => result.type)).toEqual(['course_page', 'exercise', 'lecture']);
+            expect(component['selectedIndex']()).toBe(2);
         });
 
         it('reads the course tabs again when the palette is opened again', () => {

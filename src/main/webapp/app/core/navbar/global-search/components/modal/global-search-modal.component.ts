@@ -440,10 +440,11 @@ export class GlobalSearchModalComponent implements OnDestroy {
     private replaceResultsKeepingSelection(results: GlobalSearchResult[]): void {
         const rowOffset = this.contentPreview().length > 0 && !this.contentSearchActive() ? 1 : 0;
         const selected = this.selectedIndex();
-        const selectedId = selected >= rowOffset ? this.results()[selected - rowOffset]?.id : undefined;
+        // IDs are only unique per entity type: an exercise and a lecture can both have ID 7.
+        const selectedResult = selected >= rowOffset ? this.results()[selected - rowOffset] : undefined;
         this.results.set(results);
-        if (selectedId !== undefined) {
-            const index = results.findIndex((result) => result.id === selectedId);
+        if (selectedResult !== undefined) {
+            const index = results.findIndex((result) => result.type === selectedResult.type && result.id === selectedResult.id);
             this.selectedIndex.set(index >= 0 ? index + rowOffset : -1);
         }
     }
