@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    The effective due date that the last generation run of a Metis check read: the individual due date of the participation, or else the due date of the
+    exercise. The run takes the student's code from the last submission up to that date, so once the effective due date differs from it, in either direction
+    and also when both have passed, the questions no longer follow the code that counts, and the check goes back into the queue until the student starts it.
+    Null before the first run and when a run ended before it read the due date. The column has the precision of the due date columns it is copied from, so
+    an unchanged due date compares equal to its copy.
+    -->
+    <changeSet id="20261112103027-01-metis-check-generation-due-date" author="eduardfrankford">
+        <comment>Store the effective due date that the last generation run of a Metis check read.</comment>
+        <addColumn tableName="metis_check">
+            <column name="generation_due_date" type="datetime(3)"/>
+        </addColumn>
+    </changeSet>
+
+    <!--
+    The claim of the generation run that holds a check while it is being generated: a random number that the claiming node writes with the claim. Every
+    write of the run requires it, so a run that lost the check, for instance the run of a node that is still stopping during a rolling restart while the new
+    scheduling node has put the check back into the queue and claimed it again, can neither delete nor store questions. Null while no run holds the check.
+    -->
+    <changeSet id="20261112103027-02-metis-check-generation-claim" author="eduardfrankford">
+        <comment>Store the claim of the generation run that holds a Metis check.</comment>
+        <addColumn tableName="metis_check">
+            <column name="generation_claim" type="bigint"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
