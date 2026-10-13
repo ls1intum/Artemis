@@ -378,6 +378,7 @@
                 "noActivity": "Es wurden noch keine Dateien erstellt, aktualisiert oder entfernt.",
                 "attempts": "Versuche: {{attempts}}",
                 "status": {
+                    "unknown": "Ergebnis nicht verfügbar",
                     "idle": "Nicht gestartet",
                     "queued": "In Warteschlange",
                     "running": "Läuft",

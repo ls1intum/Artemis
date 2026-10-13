@@ -1466,6 +1466,20 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(comp.adaptDialogVisible()).toBe(true);
     });
 
+    it('does not expose the legacy fallback to a non-editor or a non-Java exercise', () => {
+        comp.exercise.update((exercise) => Object.assign(exercise!, { isAtLeastEditor: false, projectType: ProjectType.PLAIN_MAVEN }));
+        expect((comp as any).legacyCodeGenerationOffered()).toBe(false);
+        comp.exercise.update((exercise) => Object.assign(exercise!, { isAtLeastEditor: true, programmingLanguage: ProgrammingLanguage.PYTHON }));
+        expect((comp as any).legacyCodeGenerationOffered()).toBe(false);
+    });
+
+    it('does not make a running legacy queue its own external blocker', () => {
+        comp.exercise.update((exercise) => Object.assign(exercise!, { projectType: ProjectType.PLAIN_MAVEN }));
+        (comp as any).legacyCodeGenerationRunning.set(true);
+        expect((comp as any).legacyCodeGenerationOffered()).toBe(true);
+        expect((comp as any).legacyCodeGenerationBlockedReason()).toBeUndefined();
+    });
+
     it('connects the adaptation availability to the review threads', () => {
         expect(reviewCommentService.connectAdaptation).toHaveBeenCalledOnce();
         expect(adaptation!.offered()).toBe(true);
@@ -1503,6 +1517,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         expect((comp as any).adaptBlockedReason()).toBeUndefined();
         expect((comp as any).canAdaptNow()).toBe(true);
+        expect((comp as any).legacyCodeGenerationOffered()).toBe(false);
     });
 
     it.each([
@@ -1520,6 +1535,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         expect((comp as any).adaptOffered()).toBe(true);
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.unsupportedProjectType');
+        expect((comp as any).legacyCodeGenerationOffered()).toBe(true);
         expect((comp as any).canAdaptNow()).toBe(false);
         const onCancel = vi.fn();
         (comp as any).openAdaptDialog(onCancel);
@@ -2159,6 +2175,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         expect((jenkinsComp as any).hyperionEnabled).toBe(true);
         expect((jenkinsComp as any).hyperionGenerationSupported).toBe(false);
+        expect((jenkinsComp as any).legacyCodeGenerationOffered()).toBe(true);
         expect((jenkinsComp as any).adaptOffered()).toBe(false);
         expect((jenkinsComp as any).generationSupported()).toBe(false);
         expect((jenkinsComp as any).canAdaptNow()).toBe(false);

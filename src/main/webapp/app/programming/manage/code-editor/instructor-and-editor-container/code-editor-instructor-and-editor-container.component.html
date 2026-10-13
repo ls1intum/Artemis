@@ -161,6 +161,16 @@
                 </div>
                 @if (hyperionEnabled) {
                     <div class="vr mx-2"></div>
+                    @if (legacyCodeGenerationOffered()) {
+                        <jhi-legacy-code-generation
+                            [exercise]="exercise"
+                            [selectedRepository]="selectedRepository"
+                            [blockedReason]="legacyCodeGenerationBlockedReason()"
+                            (runningChanged)="legacyCodeGenerationRunning.set($event)"
+                            (feedbackRequested)="onNavigateToReviewCommentLocation($event)"
+                            (refreshRequested)="codeEditorContainer()?.actions()?.executeRefresh()"
+                        />
+                    }
                     <jhi-code-editor-ai-actions
                         [adaptOffered]="adaptOffered()"
                         [adaptBlockedReason]="adaptBlockedReason()"
