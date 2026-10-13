@@ -113,6 +113,7 @@
             "enterToActivate": "Eingabetaste drücken zum Aktivieren",
             "courseFallbackLabel": "Kurs {{ id }}",
             "editFilter": "Filter bearbeiten",
+            "filterSelected": "Filter {{ filter }} ausgewählt. Drücke die Rücktaste, um ihn zu entfernen.",
             "noFilterMatches": "Keine Treffer",
             "loadingCourses": "Deine Kurse werden geladen...",
             "noCoursesToFilter": "Du hast keine Kurse, nach denen gefiltert werden kann",
