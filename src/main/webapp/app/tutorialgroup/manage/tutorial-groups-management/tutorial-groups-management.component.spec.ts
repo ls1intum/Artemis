@@ -309,7 +309,7 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(renderedRows()[0][1]).toBe('Ada Lovelace');
     });
 
-    it('should highlight the row of a group the current user tutors, and leave the others alone', async () => {
+    it('should highlight only the rows the current user tutors when some groups are not theirs', async () => {
         const own = generateExampleTutorialGroup({ id: 12, title: 'Own', isUserTutor: true, teachingAssistantName: 'Ada Lovelace' });
         const other = generateExampleTutorialGroup({ id: 13, title: 'Other', teachingAssistantName: 'Grace Hopper' });
         await setUp([own, other]);
@@ -320,6 +320,18 @@ describe('TutorialGroupsManagementComponent', () => {
 
         expect(renderedRows().map((row) => row[0])).toEqual(['Other', 'Own']);
         expect(highlighted).toEqual([false, true]);
+    });
+
+    it('should not highlight any row when the current user tutors every group', async () => {
+        const first = generateExampleTutorialGroup({ id: 12, title: 'A', isUserTutor: true, teachingAssistantName: 'Ada Lovelace' });
+        const second = generateExampleTutorialGroup({ id: 13, title: 'B', isUserTutor: true, teachingAssistantName: 'Ada Lovelace' });
+        await setUp([first, second]);
+
+        const highlighted = fixture.debugElement
+            .queryAll(By.css('tr[cdk-row]'))
+            .map((row) => (row.nativeElement as HTMLElement).classList.contains('tumaet-ui-table-row-highlighted'));
+
+        expect(highlighted).toEqual([false, false]);
     });
 
     it('should filter the rows by the search term', () => {
@@ -371,10 +383,12 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(renderedRows()[0][0]).toBe('Group-00');
     });
 
-    it('should show the intro message instead of the table when the course has no tutorial groups', async () => {
+    it('should show the empty state with create and import instead of the table when the course has no tutorial groups', async () => {
         await setUp([]);
         expect(fixture.debugElement.query(By.css('[data-testid="tutorial-groups-table"]'))).toBeNull();
         expect(fixture.debugElement.query(By.css('[data-testid="tutorial-groups-intro"]'))).not.toBeNull();
+        // Both calls to action sit in the empty state: create beside import.
+        expect(fixture.debugElement.query(By.css('[data-testid="empty-create-tutorial-group-btn"]'))).not.toBeNull();
         expect(fixture.debugElement.query(By.directive(TutorialGroupsImportButtonComponent))).not.toBeNull();
     });
 });

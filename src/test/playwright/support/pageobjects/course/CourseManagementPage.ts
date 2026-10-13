@@ -268,7 +268,7 @@ export class CourseManagementPage {
 
     async checkCourseHasNoIcon() {
         await expect(this.page.locator('#delete-course-icon')).not.toBeVisible();
-        await expect(this.page.locator('.no-image')).toBeVisible();
+        await expect(this.page.getByTestId('course-icon-placeholder')).toBeVisible();
     }
 
     async removeIconFromCourse() {

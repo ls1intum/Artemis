@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -193,6 +194,9 @@ public class AttachmentVideoUnitService {
                 }
             }
         }
+        else if (existingAttachment != null) {
+            keepAttachmentInStepWithUnit(existingAttachment, savedAttachmentVideoUnit);
+        }
 
         LectureContentUpdateSnapshot afterSnapshot = buildSnapshot(savedAttachmentVideoUnit, projectedSlideHiddenUntilBySlideNumber);
         var updateKinds = lectureContentUpdateClassifierService.classifyAll(beforeSnapshot, afterSnapshot, fileUpdateResult);
@@ -319,6 +323,25 @@ public class AttachmentVideoUnitService {
      * @param attachmentVideoUnit the attachment video unit to update
      * @param hiddenPages         the hidden pages in the attachment
      */
+    /**
+     * Gives the attachment the name and the release date of its unit after an update that sends no attachment metadata, such as the automatic save of an item edited in
+     * place. Access to the file and the release date Iris sees are decided on the attachment, so a unit whose release date was cleared or moved would otherwise keep its file
+     * hidden or show it early. The file and its student version stay as they are: the student version leaves out the hidden slides.
+     *
+     * @param existingAttachment  the attachment of the unit
+     * @param attachmentVideoUnit the saved unit
+     */
+    private void keepAttachmentInStepWithUnit(Attachment existingAttachment, AttachmentVideoUnit attachmentVideoUnit) {
+        if (Objects.equals(existingAttachment.getName(), attachmentVideoUnit.getName())
+                && Objects.equals(existingAttachment.getReleaseDate(), attachmentVideoUnit.getReleaseDate())) {
+            return;
+        }
+        existingAttachment.setAttachmentVideoUnit(attachmentVideoUnit);
+        existingAttachment.setName(attachmentVideoUnit.getName());
+        existingAttachment.setReleaseDate(attachmentVideoUnit.getReleaseDate());
+        attachmentVideoUnit.setAttachment(attachmentRepository.saveAndFlush(existingAttachment));
+    }
+
     private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentVideoUnit attachmentVideoUnit, List<HiddenPageInfoDTO> hiddenPages) {
         // Make sure that the original references are preserved.
         existingAttachment.setAttachmentVideoUnit(attachmentVideoUnit);

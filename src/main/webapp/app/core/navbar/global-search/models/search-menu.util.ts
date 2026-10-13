@@ -201,7 +201,7 @@ function courseOptions(courses: MenuCourse[], applied: Set<string>, query: strin
             .sort((a, b) => {
                 const titleA = a.title ?? '';
                 const titleB = b.title ?? '';
-                if (!titleA !== !titleB) {
+                if ((titleA === '') !== (titleB === '')) {
                     // An untitled course renders as its fallback label, so it is the least useful row to spend one of the
                     // capped slots on. Comparing the empty title directly would sort it first, since '' precedes every name.
                     return titleA ? -1 : 1;

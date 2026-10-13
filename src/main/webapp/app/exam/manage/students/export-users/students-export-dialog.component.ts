@@ -1,11 +1,11 @@
-import { Component, InputSignal, ModelSignal, ViewEncapsulation, WritableSignal, inject, input, model, signal } from '@angular/core';
+import { Component, InputSignal, ModelSignal, WritableSignal, inject, input, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faBan, faFileExport } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/students-export.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,10 +13,8 @@ import Papa from 'papaparse';
 
 @Component({
     selector: 'jhi-students-export-dialog',
-    standalone: true,
     templateUrl: './students-export-dialog.component.html',
-    encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, DialogModule, ButtonModule],
+    imports: [FormsModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiMessageComponent],
 })
 export class StudentsExportDialogComponent {
     private readonly translateService: TranslateService = inject(TranslateService);
@@ -32,6 +30,7 @@ export class StudentsExportDialogComponent {
     exam: InputSignal<Exam> = input.required();
 
     openDialog(): void {
+        this.lastExportAttemptFailed.set(false);
         this.dialogVisible.set(true);
     }
 

@@ -14,7 +14,8 @@ export class CourseAccessStorageService {
         courseAccessMap[courseId] = Date.now();
 
         if (Object.keys(courseAccessMap).length > maxAccessedCourses) {
-            const oldestEntry = Object.entries(courseAccessMap).reduce((prev, curr) => (prev[1] < curr[1] ? prev : curr));
+            const entries = Object.entries(courseAccessMap);
+            const oldestEntry = entries.reduce((prev, curr) => (prev[1] < curr[1] ? prev : curr), entries[0]);
             delete courseAccessMap[Number(oldestEntry[0])];
         }
 

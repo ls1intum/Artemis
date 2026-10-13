@@ -239,7 +239,7 @@ public class CourseAccessService {
      */
     @NonNull
     public Page<CourseRoleMemberDTO> getPagedUsersInCourseRole(long courseId, CourseRole role, CourseRoleMembersSearchDTO search) {
-        return userRepository.searchUsersInCourseRole(search, courseId, role).map(CourseRoleMemberDTO::of);
+        return userRepository.searchUsersInCourseRole(PageRequest.of(search.page(), search.pageSize()), search, courseId, role).map(CourseRoleMemberDTO::of);
     }
 
     /**

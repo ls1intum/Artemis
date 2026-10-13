@@ -343,7 +343,7 @@ public class PublicAccountResource {
             }
             var internalUser = internalUsers.getFirst();
             if (internalUser.getEmail() == null) { // Should not happen but constraint is not enforced on db.
-                log.warn("Password reset requested for user with login '{}' which has no email specified.", mailUsername);
+                log.warn("Password reset requested for user with login '{}' which has no email specified.", internalUser.getLogin());
             }
             else {
                 userService.prepareUserForPasswordReset(internalUser).ifPresentOrElse(resetKey -> {

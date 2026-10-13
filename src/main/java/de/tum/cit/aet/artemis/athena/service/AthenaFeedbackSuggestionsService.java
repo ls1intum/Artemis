@@ -386,7 +386,7 @@ public class AthenaFeedbackSuggestionsService {
         if (meta == null) {
             return;
         }
-        Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        Long courseId = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
         Long userId;
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
             userId = studentParticipation.getStudent().map(User::getId).orElse(null);

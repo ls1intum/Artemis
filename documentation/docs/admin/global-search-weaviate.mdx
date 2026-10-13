@@ -39,21 +39,21 @@ For full configuration details of each option, see [Choose and connect an embedd
 
 ### Docker Compose (recommended)
 
-The Artemis repository ships two ready-to-use Compose files under `docker/`. Run all commands from the **repository root**.
+The Artemis repository ships two ready-to-use Compose files under `deployment/docker/`. Run all commands from the **repository root**.
 
 **Keyword-only search:**
 
 ```bash
 # From the Artemis repo root:
-docker compose --env-file .env -f docker/weaviate.yml up -d
+docker compose --env-file .env -f deployment/docker/weaviate.yml up -d
 ```
 
 **OpenAI-compatible external embedder:**
 
-Change the `env_file` entry in `docker/weaviate.yml` from `./weaviate/default.env` to `./weaviate/openai.env`, then run the same Compose command:
+Change the `env_file` entry in `deployment/docker/weaviate.yml` from `./weaviate/default.env` to `./weaviate/openai.env`, then run the same Compose command:
 
 ```bash
-docker compose --env-file .env -f docker/weaviate.yml up -d
+docker compose --env-file .env -f deployment/docker/weaviate.yml up -d
 ```
 
 **Local CPU embeddings (embeddinggemma sidecar):**
@@ -62,11 +62,11 @@ Before the first build, accept the [embeddinggemma model license](https://huggin
 
 ```bash
 export HF_TOKEN=your_huggingface_token
-docker compose --env-file .env -f docker/weaviate-embeddings.yml build
-docker compose --env-file .env -f docker/weaviate-embeddings.yml up -d
+docker compose --env-file .env -f deployment/docker/weaviate-embeddings.yml build
+docker compose --env-file .env -f deployment/docker/weaviate-embeddings.yml up -d
 ```
 
-The shipped image is pinned to **Weaviate 1.37.14** (`cr.weaviate.io/semitechnologies/weaviate:1.37.14`).
+The shipped image is pinned to **Weaviate 1.38.20** (`cr.weaviate.io/semitechnologies/weaviate:1.38.20`).
 
 **Ports exposed by both files:**
 
@@ -79,7 +79,7 @@ Data is persisted in the named Docker volume `artemis-weaviate`.
 
 #### Production: disable anonymous access
 
-Both Compose files source their Weaviate configuration from `docker/weaviate/*.env`. Anonymous access is **enabled by default** (fine for development). For any shared or internet-reachable deployment you must disable it and enable API-key authentication.
+Both Compose files source their Weaviate configuration from `deployment/docker/weaviate/*.env`. Anonymous access is **enabled by default** (fine for development). For any shared or internet-reachable deployment you must disable it and enable API-key authentication.
 
 <Callout variant={CalloutVariant.warning}>
 
@@ -87,7 +87,7 @@ Both Compose files source their Weaviate configuration from `docker/weaviate/*.e
 
 </Callout>
 
-Edit the applicable `.env` file under `docker/weaviate/` — `default.env` (keyword-only / no embedder), `embeddings.env` (local transformers sidecar), or `openai.env` (OpenAI-compatible external embedder) — and make the following changes:
+Edit the applicable `.env` file under `deployment/docker/weaviate/` — `default.env` (keyword-only / no embedder), `embeddings.env` (local transformers sidecar), or `openai.env` (OpenAI-compatible external embedder) — and make the following changes:
 
 ```bash
 # Disable anonymous access:
@@ -142,7 +142,7 @@ artemis:
 
 </Callout>
 
-**Compose file:** `docker/weaviate.yml` (no local embedder sidecar needed). Change its `env_file` entry from `./weaviate/default.env` to `./weaviate/openai.env` before starting the service.
+**Compose file:** `deployment/docker/weaviate.yml` (no local embedder sidecar needed). Change its `env_file` entry from `./weaviate/default.env` to `./weaviate/openai.env` before starting the service.
 
 **OpenAI-compatible base-URL (Ollama, vLLM, etc.):** When using a self-hosted OpenAI-compatible endpoint, set `open-ai-base-url` to the host **without** a `/v1` suffix — for example `http://your-ollama-host:11434`. Weaviate's `text2vec-openai` module appends `/v1` automatically; supplying it yourself produces a broken `/v1/v1` path. (This `open-ai-base-url` is the Artemis→Weaviate setting and is independent of how Pyris or other services configure their own embedding endpoints.)
 
@@ -174,10 +174,10 @@ artemis:
   weaviate:
     enabled: true
     vectorizer-module: text2vec-transformers
-    # provisioned via docker/weaviate-embeddings.yml (embeddinggemma-300m, 768d sidecar)
+    # provisioned via deployment/docker/weaviate-embeddings.yml (embeddinggemma-300m, 768d sidecar)
 ```
 
-**Compose file:** `docker/weaviate-embeddings.yml`. This file adds a `text2vec-transformers` sidecar container (`embeddinggemma-300m`, 768-dimensional vectors) alongside Weaviate. No additional properties are required — the sidecar URL is pre-configured inside the Compose file.
+**Compose file:** `deployment/docker/weaviate-embeddings.yml`. This file adds a `text2vec-transformers` sidecar container (`embeddinggemma-300m`, 768-dimensional vectors) alongside Weaviate. No additional properties are required — the sidecar URL is pre-configured inside the Compose file.
 
 <Callout variant={CalloutVariant.info}>
 
@@ -196,7 +196,7 @@ artemis:
     vectorizer-module: none   # BM25 keyword-only; no semantic search
 ```
 
-**Compose file:** `docker/weaviate.yml`.
+**Compose file:** `deployment/docker/weaviate.yml`.
 
 No embedder is provisioned. All search uses Weaviate's built-in BM25 index. Artemis does not currently provide a full reindex operation, so switching an existing production collection to a semantic embedder requires separate migration tooling.
 
@@ -343,9 +343,9 @@ Weaviate backups capture the full data volume (all collections, vectors, and met
 
 ### Upgrades
 
-Weaviate follows semantic versioning. The shipped Compose files pin the image to **1.37.x**. When upgrading:
+Weaviate follows semantic versioning. The shipped Compose files pin the image to **1.38.x**. When upgrading:
 
-1. **Upgrade one minor version at a time** — do not skip minor versions (e.g., 1.37 → 1.38 → 1.39, not 1.37 → 1.39). Each minor release may include schema or storage migrations that must run in order.
+1. **Upgrade one minor version at a time** — do not skip minor versions (e.g., 1.38 → 1.39 → 1.40, not 1.38 → 1.40). Each minor release may include schema or storage migrations that must run in order.
 2. Stop the Weaviate container, update the image tag in the Compose file or Ansible vars, then restart.
 3. Check the [Weaviate release notes](https://github.com/weaviate/weaviate/releases) for breaking changes before each step, especially changes to module APIs or authentication config.
 4. After upgrading, verify the instance with the readiness probe and the `/management/health` endpoint described in [Enable and verify Artemis global search](#enable-and-verify-artemis-global-search).

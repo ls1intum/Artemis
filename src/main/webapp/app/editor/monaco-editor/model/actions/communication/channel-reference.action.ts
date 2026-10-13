@@ -2,7 +2,7 @@ import { faHashtag } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { ChannelIdAndNameDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { firstValueFrom } from 'rxjs';
 import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-editor.interface';
@@ -21,10 +21,10 @@ export class ChannelReferenceAction extends TextEditorAction {
     disposableCompletionProvider?: Disposable;
 
     constructor(
-        private readonly metisService: MetisService,
+        private readonly communicationService: CommunicationService,
         private readonly channelService: ChannelService,
     ) {
-        super(ChannelReferenceAction.ID, 'artemisApp.metis.editor.channel', faHashtag);
+        super(ChannelReferenceAction.ID, 'artemisApp.communication.editor.channel', faHashtag);
     }
 
     /**
@@ -55,7 +55,7 @@ export class ChannelReferenceAction extends TextEditorAction {
 
     async fetchChannels(): Promise<ChannelIdAndNameDTO[]> {
         if (!this.cachedChannels) {
-            const response = await firstValueFrom(this.channelService.getPublicChannelsOfCourse(this.metisService.getCourse().id!));
+            const response = await firstValueFrom(this.channelService.getPublicChannelsOfCourse(this.communicationService.getCourse().id!));
             this.cachedChannels = response.body!;
         }
         return this.cachedChannels;

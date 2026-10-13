@@ -6,7 +6,7 @@ import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PostingContentPartComponent } from 'app/communication/posting-content/posting-content-part/posting-content-part.components';
-import { PostingContentPart, ReferenceType } from 'app/communication/metis.util';
+import { PostingContentPart, ReferenceType } from 'app/communication/communication.util';
 import { getElement, getElements } from 'test/helpers/utils/general-test.utils';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
@@ -317,12 +317,12 @@ describe('PostingContentPartComponent', () => {
             expect(dialogService.open).toHaveBeenCalledWith(
                 EnlargeSlideImageComponent,
                 expect.objectContaining({
-                    data: { slideToReference, imageAlt: 'artemisApp.metis.imagePreviewAlt' },
+                    data: { slideToReference, imageAlt: 'artemisApp.communication.imagePreviewAlt' },
                     modal: true,
                     closable: true,
                     dismissableMask: true,
                     closeOnEscape: true,
-                    header: 'artemisApp.metis.imagePreviewTitle',
+                    header: 'artemisApp.communication.imagePreviewTitle',
                 }),
             );
         });

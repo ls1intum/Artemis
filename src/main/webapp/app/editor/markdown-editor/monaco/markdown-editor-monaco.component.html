@@ -236,20 +236,22 @@
             </div>
         }
 
-        <!-- Preview content: lazily rendered on first activation, then kept in the DOM (toggled via visibility). -->
-        @if (previewTabActivated()) {
-            <div class="mt-1 mb-2 mx-2 overflow-auto" [ngClass]="{ hidden: !inPreviewMode() }">
-                <ng-content class="overflow-auto p-1" select="#previewMonaco">
-                    @if (showDefaultPreview()) {
-                        <div class="p-0 m-0 overflow-auto markdown-preview" [innerHTML]="defaultPreviewHtml()"></div>
-                    }
-                </ng-content>
-                @if (editType() !== EditType.UPDATE && isInCommunication()) {
-                    <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'ms-auto' }" />
-                    <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'ms-auto' }" />
+        <!--
+            Preview content: always attached to the document and toggled via visibility. The projected content is created with the
+            editor either way, and content that renders itself into the document (task test statuses, PlantUML diagrams) finds its
+            anchors with a document query, which only sees attached nodes.
+        -->
+        <div class="mt-1 mb-2 mx-2 overflow-auto" [ngClass]="{ hidden: !inPreviewMode() }">
+            <ng-content class="overflow-auto p-1" select="#previewMonaco">
+                @if (showDefaultPreview()) {
+                    <div class="p-0 m-0 overflow-auto markdown-preview" [innerHTML]="defaultPreviewHtml()"></div>
                 }
-            </div>
-        }
+            </ng-content>
+            @if (editType() !== EditType.UPDATE && isInCommunication()) {
+                <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'ms-auto' }" />
+                <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'ms-auto' }" />
+            }
+        </div>
     </div>
     @if (enableResize() && inEditMode()) {
         <div #resizePlaceholder [style.cursor]="isResizing() ? 'ns-resize' : undefined" class="flex justify-center border border-[var(--border-color)]">

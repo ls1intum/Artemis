@@ -194,6 +194,25 @@ describe('AtlasOrchestrationTriggerComponent', () => {
         expect(runSpy).not.toHaveBeenCalled();
     });
 
+    it('should trigger a lecture-unit run when configured with a lectureUnitId', async () => {
+        fixture.componentRef.setInput('exercise', undefined);
+        fixture.componentRef.setInput('lectureUnitId', 55);
+        const runSpy = vi.spyOn(apiService, 'runForLectureUnit').mockResolvedValue({ status: CompetencyOrchestrationStatus.Success, summary: 'Already correct.' });
+
+        await comp.triggerAtlasOrchestrator();
+
+        expect(runSpy).toHaveBeenCalledWith(55);
+    });
+
+    it('should keep an accessible name when hiding the compact action label', () => {
+        fixture.componentRef.setInput('showLabel', false);
+        fixture.detectChanges();
+
+        const button = fixture.debugElement.query(By.css('button'));
+        expect(button.query(By.css('span'))).toBeNull();
+        expect(button.nativeElement.getAttribute('aria-label')).toBe('artemisApp.atlasOrchestrator.button');
+    });
+
     it('should apply the provided buttonClass to the trigger button', () => {
         fixture.componentRef.setInput('buttonClass', 'btn btn-outline-primary btn-sm atlas-trigger-marker');
         fixture.detectChanges();

@@ -4,13 +4,13 @@ import { Params } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, TitleCasePipe } from '@angular/common';
-import { SidebarCardDirective } from '../directive/sidebar-card.directive';
+import { SidebarCardComponent } from '../sidebar-card/sidebar-card.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
 import { AccordionGroups, ChannelGroupCategory, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarItemShowAlways, SidebarTypes } from 'app/foundation/types/sidebar';
 import { WeekGroup, WeekGroupingUtil } from 'app/foundation/util/week-grouping.util';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { Subject, takeUntil } from 'rxjs';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
@@ -37,10 +37,10 @@ function isVariantGroupCard(item: SidebarCardElement): boolean {
     selector: 'jhi-sidebar-accordion',
     templateUrl: './sidebar-accordion.component.html',
     styleUrls: ['./sidebar-accordion.component.scss'],
-    imports: [FaIconComponent, NgbCollapse, NgClass, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
+    imports: [FaIconComponent, NgbCollapse, NgClass, SidebarCardComponent, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
 })
 export class SidebarAccordionComponent implements OnInit, OnDestroy {
-    private metisConversationService = inject(MetisConversationService);
+    private courseConversationsService = inject(CourseConversationsService);
     private localStorageService = inject(LocalStorageService);
 
     protected readonly Object = Object;
@@ -149,12 +149,12 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.setStoredCollapseState();
-        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((c) => {
+        this.courseConversationsService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((c) => {
             setTimeout(() => {
                 this.calculateUnreadMessagesOfGroup();
             }, 0);
         });
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
+        this.courseConversationsService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
             setTimeout(() => {
                 this.calculateUnreadMessagesOfGroup();
             }, 0);

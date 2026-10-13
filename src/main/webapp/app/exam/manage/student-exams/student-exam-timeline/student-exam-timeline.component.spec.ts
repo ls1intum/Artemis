@@ -29,8 +29,6 @@ import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submis
 import { SubmissionVersionService } from 'app/exercise/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { Slider } from 'primeng/slider';
-import { FormsModule } from '@angular/forms';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -126,7 +124,6 @@ describe('Student Exam Timeline Component', () => {
             .overrideComponent(StudentExamTimelineComponent, {
                 set: {
                     imports: [
-                        FormsModule,
                         MockTranslateValuesDirective,
                         MockPipe(ArtemisTranslatePipe),
                         MockComponent(ProgrammingExerciseExamDiffComponent),
@@ -135,7 +132,6 @@ describe('Student Exam Timeline Component', () => {
                         MockComponent(QuizExamSubmissionComponent),
                         MockComponent(FileUploadExamSubmissionComponent),
                         MockComponent(ExamNavigationBarComponent),
-                        MockComponent(Slider),
                     ],
                 },
             })
@@ -270,17 +266,17 @@ describe('Student Exam Timeline Component', () => {
         component.fileUploadSubmissions = [fileUploadSubmission1];
         component.programmingSubmissions = [programmingSubmission1];
         component.submissionTimeStamps.set([dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')]);
-        component.timestampIndex = index;
+        component.timestampIndex.set(index);
 
         //when
         component.onSliderInputChange();
         fixture.changeDetectorRef.detectChanges();
         //then
-        if (dayjs(component.submissionTimeStamps()[component.timestampIndex]).isSame(dayjs('2023-01-07'))) {
+        if (dayjs(component.submissionTimeStamps()[component.timestampIndex()]).isSame(dayjs('2023-01-07'))) {
             expect(component.currentSubmission).toEqual(submissionVersion);
             expect(component.exerciseIndex()).toBe(0);
             expect(component.currentExercise).toEqual(textExercise);
-        } else if (dayjs(component.submissionTimeStamps()[component.timestampIndex]).isSame(dayjs('2023-02-07'))) {
+        } else if (dayjs(component.submissionTimeStamps()[component.timestampIndex()]).isSame(dayjs('2023-02-07'))) {
             expect(component.currentSubmission).toEqual(programmingSubmission1);
             expect(component.exerciseIndex()).toBe(1);
             expect(component.currentExercise).toEqual(programmingExercise);
@@ -289,7 +285,7 @@ describe('Student Exam Timeline Component', () => {
             expect(component.exerciseIndex()).toBe(2);
             expect(component.currentExercise).toEqual(fileUploadExercise);
         }
-        expect(component.selectedTimestamp()).toEqual(component.submissionTimeStamps()[component.timestampIndex].valueOf());
+        expect(component.selectedTimestamp()).toEqual(component.submissionTimeStamps()[component.timestampIndex()].valueOf());
     });
     it.each([programmingSubmission1, programmingSubmission2, programmingSubmission3])(
         'should correctly determine the previous submission',
@@ -309,29 +305,46 @@ describe('Student Exam Timeline Component', () => {
         },
     );
 
-    // p-slider does NOT emit (onSlideEnd) for keyboard navigation, so onSliderKeyup bridges keyboard input to
-    // onSliderInputChange for the navigation keys. This behaviour is the reason the slider migration introduced the method.
-    it.each(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'])(
-        'should call onSliderInputChange when a navigation key (%s) is released on the slider',
-        (key: string) => {
-            const inputChangeSpy = vi.spyOn(component, 'onSliderInputChange').mockImplementation(() => {});
+    describe('timeline slider', () => {
+        function renderSlider(): HTMLInputElement {
+            component.studentExam.set({ exercises: [] } as unknown as StudentExam);
+            component.submissionTimeStamps.set([dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')]);
+            fixture.changeDetectorRef.detectChanges();
+            const slider = fixture.nativeElement.querySelector('input[type="range"]') as HTMLInputElement;
+            expect(slider).not.toBeNull();
+            return slider;
+        }
 
-            component.onSliderKeyup({ key } as KeyboardEvent);
+        it('spans one step per submission timestamp', () => {
+            const slider = renderSlider();
+
+            expect(slider.min).toBe('0');
+            expect(slider.max).toBe('2');
+            expect(slider.step).toBe('1');
+        });
+
+        it('follows the dragged value without navigating until the change is committed', () => {
+            const inputChangeSpy = vi.spyOn(component, 'onSliderInputChange').mockImplementation(() => {});
+            const slider = renderSlider();
+
+            slider.value = '2';
+            slider.dispatchEvent(new Event('input'));
+
+            expect(component.timestampIndex()).toBe(2);
+            expect(inputChangeSpy).not.toHaveBeenCalled();
+        });
+
+        it('navigates when the change is committed, by pointer release or by keyboard step', () => {
+            const inputChangeSpy = vi.spyOn(component, 'onSliderInputChange').mockImplementation(() => {});
+            const slider = renderSlider();
+
+            slider.dispatchEvent(new Event('change'));
 
             expect(inputChangeSpy).toHaveBeenCalledOnce();
-        },
-    );
-
-    it.each(['a', 'Tab'])('should not call onSliderInputChange when a non-navigation key (%s) is released on the slider', (key: string) => {
-        const inputChangeSpy = vi.spyOn(component, 'onSliderInputChange').mockImplementation(() => {});
-
-        component.onSliderKeyup({ key } as KeyboardEvent);
-
-        expect(inputChangeSpy).not.toHaveBeenCalled();
+        });
     });
 
-    // The PrimeNG p-slider has no [showTickMarks] equivalent, so submissionTickPercentages drives custom tick markers
-    // that restore the Material slider's per-submission visual cue.
+    // A native range input has no tick marks, so submissionTickPercentages drives custom tick markers for each submission.
     describe('submission tick markers', () => {
         it('computes an evenly-spaced percentage position for each submission timestamp', () => {
             component.submissionTimeStamps.set([dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-03-07'), dayjs('2023-04-07'), dayjs('2023-05-07')]);

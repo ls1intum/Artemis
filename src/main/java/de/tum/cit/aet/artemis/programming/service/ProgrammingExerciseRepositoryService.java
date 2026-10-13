@@ -20,6 +20,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -156,8 +157,34 @@ public class ProgrammingExerciseRepositoryService {
         }
     }
 
-    private record RepositoryResources(Repository repository, Resource[] resources, Path prefix, Resource[] projectTypeResources, Path projectTypePrefix,
-            Resource[] staticCodeAnalysisResources, Path staticCodeAnalysisPrefix) {
+    private static final class RepositoryResources {
+
+        private final Repository repository;
+
+        private final Resource[] resources;
+
+        private final Path prefix;
+
+        private final Resource @Nullable [] projectTypeResources;
+
+        @Nullable
+        private final Path projectTypePrefix;
+
+        private final Resource @Nullable [] staticCodeAnalysisResources;
+
+        @Nullable
+        private final Path staticCodeAnalysisPrefix;
+
+        private RepositoryResources(Repository repository, Resource[] resources, Path prefix, Resource @Nullable [] projectTypeResources, @Nullable Path projectTypePrefix,
+                Resource @Nullable [] staticCodeAnalysisResources, @Nullable Path staticCodeAnalysisPrefix) {
+            this.repository = repository;
+            this.resources = resources;
+            this.prefix = prefix;
+            this.projectTypeResources = projectTypeResources;
+            this.projectTypePrefix = projectTypePrefix;
+            this.staticCodeAnalysisResources = staticCodeAnalysisResources;
+            this.staticCodeAnalysisPrefix = staticCodeAnalysisPrefix;
+        }
     }
 
     /**
@@ -406,7 +433,10 @@ public class ProgrammingExerciseRepositoryService {
         if (auxiliaryRepository.getId() == null) {
             throw new IllegalArgumentException("Cannot delete auxiliary repository without id");
         }
-        versionControlService.orElseThrow().deleteRepository(auxiliaryRepository.getVcsRepositoryUri());
+        var repositoryUri = auxiliaryRepository.getVcsRepositoryUri();
+        if (repositoryUri != null) {
+            versionControlService.orElseThrow().deleteRepository(repositoryUri);
+        }
     }
 
     /**
@@ -442,7 +472,8 @@ public class ProgrammingExerciseRepositoryService {
     }
 
     private static Path getRepoAbsoluteLocalPath(@NonNull final Repository repository) {
-        return repository.getLocalPath().toAbsolutePath();
+        return Optional.ofNullable(repository.getLocalPath())
+                .orElseThrow(() -> new IllegalStateException("The repository " + repository.getRemoteRepositoryUri() + " has no local path")).toAbsolutePath();
     }
 
     /**

@@ -49,6 +49,23 @@ export const CalendarInteraction: Story = {
     },
 };
 
+export const LimitedRange: Story = {
+    args: {
+        value: dayjs('2026-06-15T08:30:00'),
+        min: dayjs('2026-06-10'),
+        max: dayjs('2026-06-20'),
+    },
+    play: async ({ canvas, userEvent }) => {
+        await userEvent.click(canvas.getByRole('button', { name: 'Open calendar' }));
+
+        const dialog = await screen.findByRole('dialog', { name: 'Choose date and time' });
+        const before = dialog.querySelector('button[data-date="2026-06-09"]');
+        const inside = dialog.querySelector('button[data-date="2026-06-12"]');
+        await expect(before).toHaveAttribute('aria-disabled', 'true');
+        await expect(inside).not.toHaveAttribute('aria-disabled');
+    },
+};
+
 export const TimeOnly: Story = {
     args: {
         ariaLabel: 'Session start',
@@ -87,6 +104,24 @@ export const TimeOnlyInvalid: Story = {
         await userEvent.type(field, '13.06.2026 08:30');
 
         await expect(canvas.getByRole('alert')).toHaveTextContent('Enter a valid time.');
+    },
+};
+
+export const InlineTime: Story = {
+    args: {
+        ariaLabel: 'Session start',
+        labelName: 'Session start',
+        timeOnly: true,
+        inline: true,
+    },
+    play: async ({ canvas, userEvent }) => {
+        // No field to open: the steppers are the control, shown in place.
+        await expect(canvas.queryByRole('combobox')).toBeNull();
+        const hour = canvas.getByRole('textbox', { name: 'Hour' });
+        await expect(hour).toHaveValue('08');
+
+        await userEvent.click(canvas.getByRole('button', { name: 'Increment hour' }));
+        await expect(hour).toHaveValue('09');
     },
 };
 

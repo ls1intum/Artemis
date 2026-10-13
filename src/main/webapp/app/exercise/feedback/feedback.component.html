@@ -11,10 +11,10 @@
 <div class="relative">
     <!-- Message, if defined -->
     @if (messageKey()) {
-        <div class="mb-3"><h6 [innerHTML]="messageKey() | artemisTranslate"></h6></div>
+        <div class="mb-4!"><h6 [innerHTML]="messageKey() | artemisTranslate"></h6></div>
     }
     @if (showMissingAutomaticFeedbackInformation()) {
-        <div class="mb-3">
+        <div class="mb-4!">
             <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate: { date: latestDueDate() }"></h6>
         </div>
     }
@@ -138,7 +138,7 @@
                         <dd
                             [style.color]="logEntry.type === BuildLogType.ERROR ? 'var(--danger)' : logEntry.type === BuildLogType.WARNING ? 'var(--warning)' : undefined"
                             [class.font-bold]="logEntry.type === BuildLogType.ERROR"
-                            [class.mb-3]="i + 1 < buildLogs()!.length && logEntry.time !== buildLogs()![i + 1].time"
+                            [class.mb-4!]="i + 1 < buildLogs()!.length && logEntry.time !== buildLogs()![i + 1].time"
                         >
                             {{ logEntry.log }}
                         </dd>
@@ -172,7 +172,7 @@
                     <dd
                         [style.color]="logEntry.type === BuildLogType.ERROR ? 'var(--danger)' : logEntry.type === BuildLogType.WARNING ? 'var(--warning)' : undefined"
                         [class.font-bold]="logEntry.type === BuildLogType.ERROR"
-                        [class.mb-3]="i + 1 < buildLogs()!.length && logEntry.time !== buildLogs()![i + 1].time"
+                        [class.mb-4!]="i + 1 < buildLogs()!.length && logEntry.time !== buildLogs()![i + 1].time"
                     >
                         {{ logEntry.log }}
                     </dd>

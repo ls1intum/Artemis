@@ -331,6 +331,36 @@ describe('CourseMaterialImportDialogComponent', () => {
             expect(emitSpy).toHaveBeenCalled();
         });
 
+        it('should warn instead of reporting success when the server reports failed items', async () => {
+            vi.spyOn(importService, 'importMaterial').mockReturnValue(
+                of({
+                    exercisesImported: 1,
+                    lecturesImported: 0,
+                    examsImported: 0,
+                    competenciesImported: 0,
+                    tutorialGroupsImported: 0,
+                    faqsImported: 0,
+                    errors: ["Failed to import exercise 'Sorting': boom", "Failed to import exercise 'Trees': bang"],
+                }),
+            );
+            const successSpy = vi.spyOn(alertService, 'success');
+            const warningSpy = vi.spyOn(alertService, 'warning');
+            const closeSpy = vi.spyOn(component, 'close');
+            const emitSpy = vi.spyOn(component.importStarted, 'emit');
+
+            component.importExercises.set(true);
+            await component.executeImport();
+
+            expect(warningSpy).toHaveBeenCalledOnce();
+            expect(warningSpy).toHaveBeenCalledWith('artemisApp.course.import.partialSuccess', {
+                errors: "Failed to import exercise 'Sorting': boom; Failed to import exercise 'Trees': bang",
+            });
+            expect(successSpy).not.toHaveBeenCalled();
+            // Whatever was imported must still refresh the course, so the dialog closes and announces the import.
+            expect(closeSpy).toHaveBeenCalled();
+            expect(emitSpy).toHaveBeenCalled();
+        });
+
         it('should not execute import when canImport is false', async () => {
             vi.spyOn(importService, 'importMaterial');
 

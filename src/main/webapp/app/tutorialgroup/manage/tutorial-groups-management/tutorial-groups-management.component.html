@@ -58,13 +58,30 @@
     </div>
 
     @if (hasNoTutorialGroups()) {
-        <div class="flex flex-col items-start gap-3">
-            <!-- The message projects into an inline span, so the call to action lives beside it rather than inside. -->
-            <tumaet-ui-message severity="info" data-testid="tutorial-groups-intro" [text]="'artemisApp.pages.tutorialGroupsManagement.intro' | artemisTranslate" />
-            @if (isAtLeastInstructor()) {
-                <jhi-tutorial-groups-import-button [courseId]="currentCourseId" (importFinished)="loadTutorialGroups()" />
-            }
-        </div>
+        <tumaet-ui-empty-state
+            class="mt-5"
+            data-testid="tutorial-groups-intro"
+            [icon]="faUsers"
+            [title]="'artemisApp.pages.tutorialGroupsManagement.noTutorialGroupsTitle' | artemisTranslate"
+            [description]="'artemisApp.pages.tutorialGroupsManagement.intro' | artemisTranslate"
+        >
+            <div tumAetUiEmptyStateActions class="flex flex-wrap items-center justify-center gap-2">
+                @if (isAtLeastInstructor()) {
+                    <jhi-tutorial-groups-import-button [courseId]="currentCourseId" (importFinished)="loadTutorialGroups()" />
+                }
+                @if (isAtLeastEditor()) {
+                    <a
+                        tumAetUiButton
+                        size="small"
+                        data-testid="empty-create-tutorial-group-btn"
+                        [routerLink]="['/course-management', currentCourseId, 'tutorial-groups', 'create']"
+                    >
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.pages.tutorialGroupsManagement.actions.create"></span>
+                    </a>
+                }
+            </div>
+        </tumaet-ui-empty-state>
     } @else {
         <tumaet-ui-table
             data-testid="tutorial-groups-table"

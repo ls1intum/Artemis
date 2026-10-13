@@ -13,6 +13,14 @@ import path from 'path';
 // makes git use ONLY the credentials embedded in the clone URL, which is deterministic and correct.
 const NO_CREDENTIAL_HELPER = ['credential.helper='];
 
+// simple-git 4 filters the environment of the git child process and blocks GIT_SSH_COMMAND unless it is both allowed
+// here and enabled through `unsafe.allowUnsafeSshCommand`. The SSH tests pass their key through that variable.
+const SIMPLE_GIT_OPTIONS = {
+    unsafe: { allowUnsafeSshCommand: true, allowUnsafeCredentialHelper: true },
+    allowEnvironment: ['GIT_SSH_COMMAND'],
+    config: NO_CREDENTIAL_HELPER,
+};
+
 // Frequent, jittered retries remain for genuinely transient failures the credential-helper fix does
 // NOT cover: an SSH key registered via the API but not yet visible to the serving node, momentary
 // network blips, and a rare ~20s window in which LocalVC rejects an otherwise-valid credential while
@@ -41,7 +49,7 @@ class GitClient {
 
         for (let attempt = 1; attempt <= MAX_CLONE_RETRIES; attempt++) {
             try {
-                const git = simpleGit({ unsafe: { allowUnsafeSshCommand: true, allowUnsafeCredentialHelper: true }, config: NO_CREDENTIAL_HELPER });
+                const git = simpleGit(SIMPLE_GIT_OPTIONS);
                 if (gitSshCommand) {
                     git.env({ GIT_SSH_COMMAND: gitSshCommand });
                 }
@@ -63,7 +71,7 @@ class GitClient {
             }
         }
 
-        const clonedRepo = simpleGit(repoPath, { unsafe: { allowUnsafeSshCommand: true, allowUnsafeCredentialHelper: true }, config: NO_CREDENTIAL_HELPER });
+        const clonedRepo = simpleGit(repoPath, SIMPLE_GIT_OPTIONS);
 
         if (gitSshCommand) {
             clonedRepo.env({ GIT_SSH_COMMAND: gitSshCommand });

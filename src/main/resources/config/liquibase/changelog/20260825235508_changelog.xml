@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Record which path enqueued each outbox row.
+
+        The dispatcher ignores this and keeps draining strictly in enqueue order, since the bulk-delete fence
+        relies on apply order matching outbox id order. It exists so that "where did this queued work come from"
+        is a GROUP BY over the outbox rather than a log grep, and stays answerable from the database long after
+        the logs have rotated. It also separates the two very different situations that produce a backlog: a
+        burst of user edits, and a reconcile pass working through a corpus.
+
+        Existing rows were all enqueued by the request path, so LIVE is the correct default for them.
+    -->
+    <changeSet id="20260825235508-1" author="nayerkotry">
+        <addColumn tableName="weaviate_outbox">
+            <column name="origin" type="varchar(32)" defaultValue="LIVE">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

@@ -11,20 +11,41 @@ import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.sshd.client.SshClient;
+import org.apache.sshd.client.config.hosts.HostConfigEntryResolver;
+import org.apache.sshd.client.keyverifier.AcceptAllServerKeyVerifier;
+import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.io.IoSession;
+import org.apache.sshd.common.keyprovider.KeyIdentityProvider;
 import org.apache.sshd.common.util.buffer.Buffer;
 import org.apache.sshd.common.util.buffer.ByteArrayBuffer;
+import org.apache.sshd.server.SshServer;
+import org.apache.sshd.server.auth.pubkey.RejectAllPublickeyAuthenticator;
+import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.session.AbstractServerSession;
 import org.apache.sshd.server.session.ServerSession;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.core.config.SshProxyProtocolConfiguration;
 
 /**
@@ -37,7 +58,12 @@ import de.tum.cit.aet.artemis.core.config.SshProxyProtocolConfiguration;
  * The other subtle requirement is re-entrancy. MINA SSHD rewinds the buffer and calls the acceptor again whenever the
  * ssh identification line that follows the header arrives incomplete, so parsing has to work repeatedly on the same
  * bytes rather than assume it runs once.
+ * <p>
+ * Isolated because one test reads the log through an appender on the shared logback context. A Spring context starting
+ * in a parallel test class resets that context and suppresses logging while it does, so the warning under test would
+ * go missing depending on which classes happen to run alongside.
  */
+@Isolated
 class ProxyProtocolAcceptorTest {
 
     private static final byte[] V2_SIGNATURE = { 0x0D, 0x0A, 0x0D, 0x0A, 0x00, 0x0D, 0x0A, 0x51, 0x55, 0x49, 0x54, 0x0A };
@@ -76,37 +102,199 @@ class ProxyProtocolAcceptorTest {
     }
 
     private static InetSocketAddress capturedClientAddress(AbstractServerSession session) {
-        ArgumentCaptor<java.net.SocketAddress> captor = ArgumentCaptor.forClass(java.net.SocketAddress.class);
+        ArgumentCaptor<SocketAddress> captor = ArgumentCaptor.forClass(SocketAddress.class);
         verify(session).setClientAddress(captor.capture());
         return (InetSocketAddress) captor.getValue();
     }
 
     @Test
-    void shouldDoNothingWhenNoTrustedSourceIsConfigured() {
+    void shouldPassOrdinarySshThroughWhenNoTrustedSourceIsConfigured() {
         ProxyProtocolAcceptor acceptor = acceptorTrusting();
         AbstractServerSession session = sessionFrom("10.0.0.1");
         Buffer buffer = bufferOf(SSH_IDENTIFICATION.getBytes(StandardCharsets.US_ASCII));
+        int readPositionBefore = buffer.rpos();
 
         assertThatCode(() -> assertThat(acceptor.acceptServerProxyMetadata(session, buffer)).isTrue()).doesNotThrowAnyException();
         assertThat(acceptor.isEnabled()).isFalse();
         verify(session, never()).setClientAddress(any());
+        assertThat(buffer.rpos()).isEqualTo(readPositionBefore);
     }
 
-    /**
-     * The core rule. A direct connection is ordinary ssh even though it carries something that looks like a header, so
-     * nobody outside the configured proxies can choose the address they are judged by.
-     */
     @Test
-    void shouldIgnoreAHeaderFromAnUntrustedPeer() throws Exception {
+    void shouldPassOrdinarySshFromAnUntrustedPeerThroughUntouched() throws Exception {
         ProxyProtocolAcceptor acceptor = acceptorTrusting("10.0.0.1");
         AbstractServerSession session = sessionFrom("203.0.113.9");
-        Buffer buffer = bufferOf(("PROXY TCP4 1.2.3.4 5.6.7.8 1111 2222\r\n" + SSH_IDENTIFICATION).getBytes(StandardCharsets.US_ASCII));
+        Buffer buffer = bufferOf(SSH_IDENTIFICATION.getBytes(StandardCharsets.US_ASCII));
         int readPositionBefore = buffer.rpos();
 
         assertThat(acceptor.acceptServerProxyMetadata(session, buffer)).isTrue();
 
         verify(session, never()).setClientAddress(any());
-        assertThat(buffer.rpos()).as("nothing may be consumed, the bytes are part of the ssh stream as far as this connection is concerned").isEqualTo(readPositionBefore);
+        assertThat(buffer.rpos()).isEqualTo(readPositionBefore);
+    }
+
+    /**
+     * The core rule. A header from a peer outside the configured proxies is never believed, so nobody outside them can
+     * choose the address they are judged by. It is still removed from the stream: left in place, the ssh server reads
+     * it as the client's identification line and answers "Unsupported protocol version" to every connection.
+     */
+    @Test
+    void shouldDiscardAHeaderFromAnUntrustedPeerWithoutBelievingIt() throws Exception {
+        ProxyProtocolAcceptor acceptor = acceptorTrusting("10.0.0.1");
+        AbstractServerSession session = sessionFrom("203.0.113.9");
+        String header = "PROXY TCP4 1.2.3.4 5.6.7.8 1111 2222\r\n";
+        Buffer buffer = bufferOf((header + SSH_IDENTIFICATION).getBytes(StandardCharsets.US_ASCII));
+
+        assertThat(acceptor.acceptServerProxyMetadata(session, buffer)).isTrue();
+
+        verify(session, never()).setClientAddress(any());
+        assertThat(buffer.rpos()).as("the read position must point at the ssh identification line").isEqualTo(header.length());
+    }
+
+    /**
+     * An nginx with {@code proxy_protocol on} in front of a node whose trusted sources are still empty: the state an
+     * installation is in when it adopts the shipped nginx configuration without the matching Artemis property.
+     */
+    @Test
+    void shouldDiscardAVersion1HeaderWhenNoTrustedSourceIsConfigured() throws Exception {
+        ProxyProtocolAcceptor acceptor = acceptorTrusting();
+        AbstractServerSession session = sessionFrom("172.18.0.5");
+        String header = "PROXY TCP4 198.51.100.7 172.18.0.2 56324 7921\r\n";
+        Buffer buffer = bufferOf((header + SSH_IDENTIFICATION).getBytes(StandardCharsets.US_ASCII));
+
+        assertThat(acceptor.acceptServerProxyMetadata(session, buffer)).isTrue();
+
+        verify(session, never()).setClientAddress(any());
+        assertThat(buffer.rpos()).isEqualTo(header.length());
+    }
+
+    @Test
+    void shouldDiscardAVersion2HeaderWhenNoTrustedSourceIsConfigured() throws Exception {
+        ProxyProtocolAcceptor acceptor = acceptorTrusting();
+        AbstractServerSession session = sessionFrom("172.18.0.5");
+        byte[] header = version2Ipv4Header(new byte[] { (byte) 198, 51, 100, 7 }, 56324);
+        Buffer buffer = bufferOf(concat(header, SSH_IDENTIFICATION.getBytes(StandardCharsets.US_ASCII)));
+
+        assertThat(acceptor.acceptServerProxyMetadata(session, buffer)).isTrue();
+
+        verify(session, never()).setClientAddress(any());
+        assertThat(buffer.rpos()).isEqualTo(header.length);
+    }
+
+    @Test
+    void shouldWaitForMoreDataOnAnIncompleteHeaderFromAnUntrustedPeer() throws Exception {
+        ProxyProtocolAcceptor acceptor = acceptorTrusting();
+        AbstractServerSession session = sessionFrom("172.18.0.5");
+        Buffer buffer = bufferOf("PROXY TCP4 198.51.100.7 172.18.0.2 563".getBytes(StandardCharsets.US_ASCII));
+
+        assertThat(acceptor.acceptServerProxyMetadata(session, buffer)).isFalse();
+        verify(session, never()).setClientAddress(any());
+    }
+
+    /**
+     * Discarding a header keeps ssh working but attributes the connection to the proxy, so the operator has to learn
+     * about it from the log. Every git operation passes through here, though, so the warning must not repeat for each.
+     */
+    @Test
+    void shouldWarnAboutDiscardedHeadersOnlyOncePerInterval() throws Exception {
+        ProxyProtocolAcceptor acceptor = acceptorTrusting();
+        String header = "PROXY TCP4 198.51.100.7 172.18.0.2 56324 7921\r\n";
+
+        var logger = (Logger) LoggerFactory.getLogger(ProxyProtocolAcceptor.class);
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            for (int connection = 0; connection < 3; connection++) {
+                acceptor.acceptServerProxyMetadata(sessionFrom("172.18.0.5"), bufferOf((header + SSH_IDENTIFICATION).getBytes(StandardCharsets.US_ASCII)));
+            }
+        }
+        finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+
+        List<String> warnings = appender.list.stream().filter(event -> event.getLevel() == Level.WARN).map(ILoggingEvent::getFormattedMessage).toList();
+        assertThat(warnings).singleElement().asString().contains("172.18.0.5").contains("artemis.version-control.ssh-proxy-protocol.trusted-sources");
+    }
+
+    /**
+     * The acceptor only decides where the ssh server resumes reading, so the tests above cannot show that a handshake
+     * then completes. This runs a real ssh server behind a relay that prepends a PROXY header, as nginx does with
+     * {@code proxy_protocol on}, and logs in through it.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void shouldCompleteAnSshLoginThroughAProxyThatSendsAHeader(boolean proxyIsTrusted) throws Exception {
+        InetAddress loopback = InetAddress.getByAddress(new byte[] { 127, 0, 0, 1 });
+        ProxyProtocolAcceptor acceptor = proxyIsTrusted ? acceptorTrusting("127.0.0.1") : acceptorTrusting();
+        AtomicReference<SocketAddress> clientAddressSeenByServer = new AtomicReference<>();
+
+        SshServer server = SshServer.setUpDefaultServer();
+        server.setHost(loopback.getHostAddress());
+        server.setPort(0);
+        server.setKeyPairProvider(new SimpleGeneratorHostKeyProvider());
+        server.setPasswordAuthenticator((username, password, session) -> {
+            clientAddressSeenByServer.set(session.getClientAddress());
+            return true;
+        });
+        // Password only: the defaults would otherwise read keys and authorized_keys from the home directory of the
+        // machine running the test, so the outcome could depend on its ~/.ssh
+        server.setPublickeyAuthenticator(RejectAllPublickeyAuthenticator.INSTANCE);
+        server.setKeyboardInteractiveAuthenticator(null);
+        server.setServerProxyAcceptor(acceptor);
+        SshClient client = SshClient.setUpDefaultClient();
+        client.setHostConfigEntryResolver(HostConfigEntryResolver.EMPTY);
+        client.setKeyIdentityProvider(KeyIdentityProvider.EMPTY_KEYS_PROVIDER);
+        client.setServerKeyVerifier(AcceptAllServerKeyVerifier.INSTANCE);
+
+        try (ServerSocket relay = new ServerSocket(0, 1, loopback)) {
+            server.start();
+            client.start();
+            Thread.ofVirtual().start(() -> relayPrependingHeader(relay, loopback, server.getPort(), "PROXY TCP4 198.51.100.7 127.0.0.1 56324 7921\r\n"));
+
+            try (ClientSession session = client.connect("student", loopback.getHostAddress(), relay.getLocalPort()).verify(10, TimeUnit.SECONDS).getSession()) {
+                session.addPasswordIdentity("irrelevant");
+                session.auth().verify(10, TimeUnit.SECONDS);
+                assertThat(session.isAuthenticated()).isTrue();
+            }
+        }
+        finally {
+            client.stop();
+            server.stop(true);
+        }
+
+        assertThat(clientAddressSeenByServer.get()).as("the server never reached password authentication").isNotNull();
+        InetSocketAddress clientAddress = (InetSocketAddress) clientAddressSeenByServer.get();
+        assertThat(clientAddress.getAddress().getHostAddress()).as("a trusted proxy names the client, an untrusted one is the client")
+                .isEqualTo(proxyIsTrusted ? "198.51.100.7" : "127.0.0.1");
+    }
+
+    /**
+     * Accepts one connection, sends the header to the ssh server, then copies bytes in both directions until either side
+     * closes.
+     */
+    private static void relayPrependingHeader(ServerSocket relay, InetAddress serverHost, int serverPort, String header) {
+        try (Socket client = relay.accept(); Socket server = new Socket(serverHost, serverPort)) {
+            server.getOutputStream().write(header.getBytes(StandardCharsets.US_ASCII));
+            server.getOutputStream().flush();
+            Thread toClient = Thread.ofVirtual().start(() -> copy(server, client));
+            copy(client, server);
+            toClient.join();
+        }
+        catch (IOException | InterruptedException e) {
+            // the test has torn the connection down
+        }
+    }
+
+    private static void copy(Socket from, Socket to) {
+        try {
+            from.getInputStream().transferTo(to.getOutputStream());
+            to.shutdownOutput();
+        }
+        catch (IOException e) {
+            // one side closed, which ends the relay
+        }
     }
 
     @Test

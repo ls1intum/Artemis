@@ -12,6 +12,7 @@
             </button>
             <div class="question-title">
                 <input
+                    [attr.aria-label]="'artemisApp.quizExercise.placeholder.questionTitle' | artemisTranslate"
                     #titleInput="ngModel"
                     id="short-answer-question-title"
                     pInputText
@@ -179,7 +180,13 @@
                 <div class="col-12 col-md-4">
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
-                        <select class="form-select" [(ngModel)]="shortAnswerQuestion.scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
+                        <select
+                            [attr.aria-label]="'artemisApp.quizQuestion.scoringType' | artemisTranslate"
+                            class="form-select"
+                            [(ngModel)]="shortAnswerQuestion.scoringType"
+                            (ngModelChange)="questionUpdated.emit()"
+                            title="scoring type"
+                        >
                             <option value="ALL_OR_NOTHING" jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></option>
                             <option value="PROPORTIONAL_WITH_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></option>
                             <option value="PROPORTIONAL_WITHOUT_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></option>
@@ -190,7 +197,15 @@
                 <div class="col-12 col-md-2">
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                        <input class="form-control point-input" title="score" type="number" [value]="shortAnswerQuestion.points" disabled style="width: 100%" />
+                        <input
+                            [attr.aria-label]="'artemisApp.quizQuestion.score' | artemisTranslate"
+                            class="form-control point-input"
+                            title="score"
+                            type="number"
+                            [value]="shortAnswerQuestion.points"
+                            disabled
+                            style="width: 100%"
+                        />
                     </div>
                 </div>
                 <div class="col-12 col-md-6 d-flex align-items-center gap-2">
@@ -436,7 +451,11 @@
                         @for (solution of shortAnswerQuestion.solutions; track solution.id ?? solution.tempID) {
                             <div class="drag-item" cdkDrag [cdkDragDisabled]="false" [cdkDragData]="solution">
                                 <div>
-                                    <textarea [(ngModel)]="solution.text" (ngModelChange)="questionUpdated.emit()"></textarea>
+                                    <textarea
+                                        [attr.aria-label]="'accessibility.shortAnswerSolution' | artemisTranslate"
+                                        [(ngModel)]="solution.text"
+                                        (ngModelChange)="questionUpdated.emit()"
+                                    ></textarea>
                                 </div>
                                 <div
                                     class="delete-button"
@@ -484,7 +503,12 @@
                                         <fa-icon [icon]="faBars" class="drag-handle" size="lg" />
                                     </div>
                                     <div>
-                                        <textarea disabled [(ngModel)]="solution.text" (ngModelChange)="questionUpdated.emit()"></textarea>
+                                        <textarea
+                                            [attr.aria-label]="'accessibility.shortAnswerSolution' | artemisTranslate"
+                                            disabled
+                                            [(ngModel)]="solution.text"
+                                            (ngModelChange)="questionUpdated.emit()"
+                                        ></textarea>
                                     </div>
                                 </div>
                             </div>

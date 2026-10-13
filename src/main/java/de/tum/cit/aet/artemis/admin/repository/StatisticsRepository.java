@@ -733,7 +733,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                 case QUARTER -> {
                     int year = timeIndex < getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
                     ZonedDateTime firstDateOfYear = ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, startDate.getZone());
-                    yield getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(timeIndex - 1) : firstDateOfYear.plusWeeks(timeIndex);
+                    yield getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(timeIndex - 1L) : firstDateOfYear.plusWeeks(timeIndex);
                 }
                 case YEAR -> startDate.withMonth(timeIndex);
             };

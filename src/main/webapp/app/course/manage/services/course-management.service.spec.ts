@@ -214,6 +214,45 @@ describe('Course Management Service', () => {
         req.flush(mockResponse);
     });
 
+    it('should search the users of a course by login or name within the given roles', () => {
+        courseManagementService.searchUsers(1, 'ada', ['tutors', 'students']).subscribe();
+
+        const req = httpMock.expectOne((request) => request.url === `${resourceUrl}/1/users/search`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('loginOrName')).toBe('ada');
+        expect(req.request.params.get('roles')).toBe('tutors,students');
+        req.flush([]);
+    });
+
+    it('should search the members of a course for a mention by login or name', () => {
+        courseManagementService.searchMembersForUserMentions(1, 'ada').subscribe();
+
+        const req = httpMock.expectOne((request) => request.url === `${resourceUrl}/1/members/search`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('loginOrName')).toBe('ada');
+        req.flush([]);
+    });
+
+    it('should search the students of a course by login or name', () => {
+        courseManagementService.searchStudents(1, 'ada', 0, 25).subscribe();
+
+        const req = httpMock.expectOne((request) => request.url === `${resourceUrl}/1/students/search`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('loginOrName')).toBe('ada');
+        expect(req.request.params.get('page')).toBe('0');
+        expect(req.request.params.get('size')).toBe('25');
+        req.flush([]);
+    });
+
+    it('should fetch the time zones a course may use from the server', () => {
+        let timeZones: string[] | undefined;
+
+        courseManagementService.getSupportedTimeZones().subscribe((response) => (timeZones = response));
+
+        httpMock.expectOne({ method: 'GET', url: 'api/course/time-zones' }).flush(['Europe/Kyiv', 'UTC']);
+        expect(timeZones).toEqual(['Europe/Kyiv', 'UTC']);
+    });
+
     it('should find the course', () => {
         courseManagementService
             .find(course.id!)
@@ -555,6 +594,25 @@ describe('Course Management Service', () => {
         expect(result).toEqual({ content: mockUsers, totalElements: 2 });
     });
 
+    it('should search students using the requested page and size', () => {
+        const users = [new User(1, 'student1')];
+
+        courseManagementService
+            .searchStudents(course.id!, 'student', 2, 10)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(users));
+
+        const req = httpMock.expectOne(
+            (request) =>
+                request.method === 'GET' &&
+                request.url === `${resourceUrl}/${course.id}/students/search` &&
+                request.params.get('loginOrName') === 'student' &&
+                request.params.get('page') === '2' &&
+                request.params.get('size') === '10',
+        );
+        req.flush(users);
+    });
+
     it('getNumberOfAllowedComplaintsInCourse', () => {
         const courseId = 42;
         const teamMode = true;
@@ -757,6 +815,7 @@ describe('Course DTO adapter boundary', () => {
         athenaGradingFeedbackEnabled: false,
         athenaFormativeFeedbackEnabled: false,
         learningPathsEnabled: false,
+        presentationAssessmentsEnabled: false,
         trainingEnabled: false,
     };
 
@@ -984,6 +1043,11 @@ describe('Course DTO adapter boundary', () => {
 
         expect(courseFromManagementDTO(withArchive).courseArchivePath).toBe('archives/course-1.zip');
         expect(courseFromManagementDTO(minimalCourseManagementDTO).courseArchivePath).toBeUndefined();
+    });
+
+    it.each([true, false])('preserves presentationAssessmentsEnabled=%s when hydrating a management response', (enabled) => {
+        const dto: CourseManagementDTO = { ...minimalCourseManagementDTO, presentationAssessmentsEnabled: enabled };
+        expect(courseFromManagementDTO(dto).presentationAssessmentsEnabled).toBe(enabled);
     });
 
     it('hydrates title, semester, description and prerequisites from the enrollment DTO', () => {

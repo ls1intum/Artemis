@@ -134,7 +134,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
         formData.append('attachmentVideoUnit', objectToJsonBlob(updatedUnit));
 
         this.attachmentVideoUnitService
-            .update(lectureId, currentUnit.id, formData, this.notificationText())
+            .update(lectureId, currentUnit.id, formData, this.notificationText() || undefined)
             .pipe(
                 takeUntilDestroyed(this.destroyRef),
                 finalize(() => this.isLoading.set(false)),

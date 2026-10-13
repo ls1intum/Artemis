@@ -68,9 +68,10 @@ EMBED_DIM = max(0, int(os.environ.get("MOCK_LLM_EMBED_DIM", "1536")))
 # the mock answers ONE tool-call round before the canned reply. This lets e2e tests
 # exercise the real activity-visibility pipeline (tool start/finish snapshots) with
 # a deterministic tool round. The follow-up delay keeps the finished activity chip
-# on screen long enough for the UI assertion before the final answer replaces it.
+# on screen long enough for the UI assertion before the final answer replaces it; on a loaded
+# CI runner the browser can stall for more than a second, so the window is generous.
 TOOL_MARKER = os.environ.get("MOCK_LLM_TOOL_MARKER", "[e2e-tool]")
-TOOL_FOLLOWUP_DELAY_S = float(os.environ.get("MOCK_LLM_TOOL_FOLLOWUP_DELAY_S", "1.5"))
+TOOL_FOLLOWUP_DELAY_S = float(os.environ.get("MOCK_LLM_TOOL_FOLLOWUP_DELAY_S", "4.0"))
 TOOL_PREAMBLE = "Let me check the course details first — mock-preamble"
 
 

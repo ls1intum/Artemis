@@ -27,7 +27,8 @@ export interface CourseMaterialImportResultDTO {
     competenciesImported: number;
     tutorialGroupsImported: number;
     faqsImported: number;
-    errors: string[];
+    /** Absent when nothing failed, because the server omits empty collections. */
+    errors?: string[];
 }
 
 /**

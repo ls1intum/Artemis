@@ -36,25 +36,25 @@
                 <table class="table table-bordered table-sm table-striped">
                     <thead class="table-dark">
                         <tr>
-                            <th></th>
-                            <th>
+                            <th scope="col"></th>
+                            <th scope="col">
                                 <span jhiTranslate="artemisApp.instructorDashboard.statisticsTable.included"></span>
                             </th>
-                            <th>
+                            <th scope="col">
                                 <span jhiTranslate="artemisApp.instructorDashboard.statisticsTable.total"></span>
                             </th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <th>
+                            <th scope="row">
                                 <span jhiTranslate="artemisApp.instructorDashboard.statisticsTable.amountOfReleasedExercises"></span>
                             </th>
                             <td>{{ includedExercises().length }}</td>
                             <td>{{ numberOfReleasedExercises() }}</td>
                         </tr>
                         <tr>
-                            <th>
+                            <th scope="row">
                                 <div class="form-check">
                                     <input
                                         id="highlightBarAvergage"
@@ -75,7 +75,7 @@
                             <td>{{ averagePointsTotal() }} ({{ averageScoreTotal() }}%)</td>
                         </tr>
                         <tr>
-                            <th>
+                            <th scope="row">
                                 <div class="form-check">
                                     <input
                                         id="highlightBarMedian"
@@ -94,7 +94,7 @@
                             <td>{{ medianPointsTotal() }} ({{ medianScoreTotal() }}%)</td>
                         </tr>
                         <tr>
-                            <th>
+                            <th scope="row">
                                 <span jhiTranslate="artemisApp.instructorDashboard.statisticsTable.standardPointDeviation"></span>
                             </th>
                             <td>{{ standardDeviationPointsIncluded() }}</td>
@@ -121,48 +121,50 @@
                 <table class="table table-striped">
                     <thead>
                         <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                            <th jhiSortBy="user.name">
+                            <th scope="col" jhiSortBy="user.name">
                                 <span jhiTranslate="artemisApp.instructorDashboard.name"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
-                            <th jhiSortBy="user.login">
+                            <th scope="col" jhiSortBy="user.login">
                                 <span jhiTranslate="artemisApp.instructorDashboard.username"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
-                            <th jhiSortBy="numberOfParticipatedExercises">
+                            <th scope="col" jhiSortBy="numberOfParticipatedExercises">
                                 <span jhiTranslate="artemisApp.instructorDashboard.participated"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
-                            <th jhiSortBy="numberOfSuccessfulExercises">
+                            <th scope="col" jhiSortBy="numberOfSuccessfulExercises">
                                 <span jhiTranslate="artemisApp.instructorDashboard.successful"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             @for (exerciseType of exerciseTypes; track exerciseType) {
                                 @if (maxNumberOfPointsPerExerciseType().get(exerciseType)! > 0) {
-                                    <th jhiSortBy="sumPointsPerExerciseType.{{ exerciseType }}">
+                                    <th scope="col" jhiSortBy="sumPointsPerExerciseType.{{ exerciseType }}">
                                         <span jhiTranslate="artemisApp.instructorDashboard.{{ exerciseType }}Points"></span>
                                         <fa-icon [icon]="faSort" />
                                     </th>
                                 }
                             }
                             @if (maxNumberOfPresentationPoints() > 0) {
-                                <th jhiSortBy="presentationPoints"><span jhiTranslate="artemisApp.instructorDashboard.presentationPoints"></span> <fa-icon [icon]="faSort" /></th>
+                                <th scope="col" jhiSortBy="presentationPoints">
+                                    <span jhiTranslate="artemisApp.instructorDashboard.presentationPoints"></span> <fa-icon [icon]="faSort" />
+                                </th>
                             }
                             @if (variantCapReducesPoints()) {
-                                <th jhiSortBy="overallPointsUncapped">
+                                <th scope="col" jhiSortBy="overallPointsUncapped">
                                     <span jhiTranslate="artemisApp.instructorDashboard.uncappedPoints"></span>
                                     <jhi-help-icon text="artemisApp.instructorDashboard.uncappedPointsTooltip" />
                                     <fa-icon [icon]="faSort" />
                                 </th>
-                                <th jhiSortBy="excessVariantPoints">
+                                <th scope="col" jhiSortBy="excessVariantPoints">
                                     <span jhiTranslate="artemisApp.instructorDashboard.excessVariantPoints"></span>
                                     <jhi-help-icon text="artemisApp.instructorDashboard.excessVariantPointsTooltip" />
                                     <fa-icon [icon]="faSort" />
                                 </th>
                             }
-                            <th jhiSortBy="overallPoints"><span jhiTranslate="artemisApp.instructorDashboard.overallScore"></span> <fa-icon [icon]="faSort" /></th>
+                            <th scope="col" jhiSortBy="overallPoints"><span jhiTranslate="artemisApp.instructorDashboard.overallScore"></span> <fa-icon [icon]="faSort" /></th>
                             @if (gradingScaleExists()) {
-                                <th jhiSortBy="overallPoints">
+                                <th scope="col" jhiSortBy="overallPoints">
                                     <span
                                         jhiTranslate="{{
                                             isBonus() ? 'artemisApp.courseScoreCalculation.gradingSystemBonus' : 'artemisApp.courseScoreCalculation.gradingSystemGrade'
@@ -173,41 +175,41 @@
                             }
                         </tr>
                         <tr>
-                            <th><span jhiTranslate="artemisApp.instructorDashboard.max"></span></th>
-                            <th></th>
-                            <th>{{ includedExercises().length }}</th>
-                            <th>{{ includedExercises().length }}</th>
+                            <th scope="row"><span jhiTranslate="artemisApp.instructorDashboard.max"></span></th>
+                            <td class="font-bold"></td>
+                            <td class="font-bold">{{ includedExercises().length }}</td>
+                            <td class="font-bold">{{ includedExercises().length }}</td>
                             @for (exerciseType of exerciseTypes; track exerciseType) {
                                 @if (maxNumberOfPointsPerExerciseType().get(exerciseType)! > 0) {
-                                    <th>{{ maxNumberOfPointsPerExerciseType().get(exerciseType) }}</th>
+                                    <td class="font-bold">{{ maxNumberOfPointsPerExerciseType().get(exerciseType) }}</td>
                                 }
                             }
                             @if (maxNumberOfPresentationPoints() > 0) {
-                                <th>{{ maxNumberOfPresentationPoints() }}</th>
+                                <td class="font-bold">{{ maxNumberOfPresentationPoints() }}</td>
                             }
                             @if (variantCapReducesPoints()) {
-                                <th>{{ localizedMaxUncappedPoints() }}</th>
-                                <th>{{ localizedMaxExcessVariantPoints() }}</th>
+                                <td class="font-bold">{{ localizedMaxUncappedPoints() }}</td>
+                                <td class="font-bold">{{ localizedMaxExcessVariantPoints() }}</td>
                             }
-                            <th>{{ maxNumberOfOverallPoints() }}</th>
+                            <td class="font-bold">{{ maxNumberOfOverallPoints() }}</td>
                             @if (gradingScaleExists()) {
-                                <th>{{ maxGrade() }}</th>
+                                <td class="font-bold">{{ maxGrade() }}</td>
                             }
                         </tr>
                         <tr>
-                            <th><span jhiTranslate="artemisApp.instructorDashboard.average"></span></th>
-                            <th></th>
-                            <th>
+                            <th scope="row"><span jhiTranslate="artemisApp.instructorDashboard.average"></span></th>
+                            <td class="font-bold"></td>
+                            <td class="font-bold">
                                 {{ localize(averageNumberOfParticipatedExercises()) }}
                                 ({{ localize(roundScorePercentSpecifiedByCourseSettings(averageNumberOfParticipatedExercises() / includedExercises().length, course()!)) }}%)
-                            </th>
-                            <th>
+                            </td>
+                            <td class="font-bold">
                                 {{ localize(averageNumberOfSuccessfulExercises()) }}
                                 ({{ localize(roundScorePercentSpecifiedByCourseSettings(averageNumberOfSuccessfulExercises() / includedExercises().length, course()!)) }}%)
-                            </th>
+                            </td>
                             @for (exerciseType of exerciseTypes; track exerciseType) {
                                 @if (maxNumberOfPointsPerExerciseType().get(exerciseType)! > 0) {
-                                    <th>
+                                    <td class="font-bold">
                                         {{ localize(averageNumberOfPointsPerExerciseTypes().get(exerciseType)!) }}
                                         ({{
                                             localize(
@@ -217,27 +219,27 @@
                                                 )
                                             )
                                         }}%)
-                                    </th>
+                                    </td>
                                 }
                             }
                             @if (maxNumberOfPresentationPoints() > 0) {
-                                <th>
+                                <td class="font-bold">
                                     {{ localize(averageNumberOfPresentationPoints()) }}
                                     ({{ localize(roundScorePercentSpecifiedByCourseSettings(averageNumberOfPresentationPoints() / maxNumberOfPresentationPoints(), course()!)) }}%)
-                                </th>
+                                </td>
                             }
                             @if (variantCapReducesPoints()) {
-                                <th>{{ localizedAverageUncappedPoints() }}</th>
-                                <th>{{ localizedAverageExcessVariantPoints() }}</th>
+                                <td class="font-bold">{{ localizedAverageUncappedPoints() }}</td>
+                                <td class="font-bold">{{ localizedAverageExcessVariantPoints() }}</td>
                             }
-                            <th>
+                            <td class="font-bold">
                                 {{ localize(averageNumberOfOverallPoints()) }}
                                 ({{ localize(roundScorePercentSpecifiedByCourseSettings(averageNumberOfOverallPoints() / maxNumberOfOverallPoints(), course()!)) }}%)
-                            </th>
+                            </td>
                             @if (gradingScaleExists()) {
-                                <th>
+                                <td class="font-bold">
                                     {{ averageGrade() }}
-                                </th>
+                                </td>
                             }
                         </tr>
                     </thead>

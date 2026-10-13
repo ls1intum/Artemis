@@ -63,7 +63,7 @@ The signing key is checked through both `jhipster.security.authentication.jwt.ba
 openssl rand -base64 64 | tr -d '\n'
 ```
 
-`docker/artemis/config/prod.env` therefore keeps placeholders that this validation rejects: a deployment that has not been configured yet fails immediately instead of running on values that anyone can read. Supply your own values from outside version control — an env file of your own added through a compose override file, or `ARTEMIS_ENV_FILE` for the `docker/test-server-*.yml` compose files, which replaces `prod.env` entirely (see [Docker Compose Setup](/developer/docker-compose)):
+`deployment/docker/artemis/config/prod.env` therefore keeps placeholders that this validation rejects: a deployment that has not been configured yet fails immediately instead of running on values that anyone can read. Supply your own values from outside version control — an env file of your own added through a compose override file, or `ARTEMIS_ENV_FILE` for the `deployment/docker/test-server-*.yml` compose files, which replaces `prod.env` entirely (see [Docker Compose Setup](/developer/docker-compose)):
 
 ```env
 JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64SECRET="<output of the command above>"
@@ -230,7 +230,7 @@ artemis:
                 - "10.0.0.1"
 ```
 
-A connection from a listed address must begin with a valid PROXY protocol header and is refused otherwise. A connection from any other address is handled as ordinary SSH and keeps its socket peer, so direct connections are unaffected. The list is keyed on the source address rather than on whether a header is present, because believing a header from any sender would let anyone who can reach the port claim an arbitrary client address.
+A connection from a listed address must begin with a valid PROXY protocol header and is refused otherwise. A connection from any other address is handled as ordinary SSH and keeps its socket peer, so direct connections are unaffected. If such a connection starts with a PROXY protocol header anyway, Artemis removes the header without reading the address in it. The list is keyed on the source address rather than on whether a header is present, because believing a header from any sender would let anyone who can reach the port claim an arbitrary client address.
 
 <Callout variant={CalloutVariant.warning}>
     **Name the proxy exactly, and keep the list as narrow as you can.** A PROXY protocol header carries no signature and
@@ -248,10 +248,37 @@ A connection from a listed address must begin with a valid PROXY protocol header
 </Callout>
 
 <Callout variant={CalloutVariant.warning}>
-    These two settings must change together. `proxy_protocol on` without the matching `trusted-sources` breaks every
-    SSH connection through that proxy, and `trusted-sources` without `proxy_protocol on` refuses them. The Docker
+    These two settings must change together. With `proxy_protocol on` but without the matching `trusted-sources`,
+    SSH connections still succeed, but every connection through that proxy is attributed to the proxy: all users
+    behind it share one rate limit bucket, and a build agent that clones through it fails the address check above.
+    The server logs `Discarded a PROXY protocol header from <address>` at most every ten minutes. With
+    `trusted-sources` but without `proxy_protocol on`, every SSH connection through that proxy is refused. The Docker
     Compose setups in this repository already ship both.
 </Callout>
+
+When nginx runs as a container of the Docker Compose setup, Docker assigns its address when it creates the network, so
+the address can change. The environment files in this repository therefore list the Docker bridge ranges, which is
+acceptable for a test stack but not for a production deployment. Instead, give the network a fixed subnet and nginx a
+fixed address in an override file:
+
+```yaml
+services:
+    nginx:
+        networks:
+            artemis:
+                ipv4_address: 172.30.0.10
+networks:
+    artemis:
+        driver: bridge
+        name: artemis
+        ipam:
+            config:
+                - subnet: 172.30.0.0/24
+```
+
+Pass the file to `docker compose` with an additional `-f` and list only that address in
+`ARTEMIS_VERSIONCONTROL_SSHPROXYPROTOCOL_TRUSTEDSOURCES="172.30.0.10"`. Choose a subnet that no other network on the host
+uses. Docker applies a subnet only when it creates a network, so run `docker compose down` once before starting again.
 
 #### Moving build agents to SSH
 
@@ -281,7 +308,7 @@ A connection from a listed address must begin with a valid PROXY protocol header
 
 ### Database Credentials
 
-The database services used by `docker/artemis-prod-postgres.yml` and `docker/artemis-prod-mysql.yml` extend the shared `docker/postgres.yml`/`docker/mysql.yml` service definitions, which default to `docker/postgres/default.env` and `docker/mysql/default.env` for local development and testing. Those default env files intentionally use no real authentication (Postgres `POSTGRES_HOST_AUTH_METHOD=trust`, MySQL `MYSQL_ALLOW_EMPTY_PASSWORD=yes` with an empty root password) so a fresh local setup works without any configuration.
+The database services used by `deployment/docker/artemis-prod-postgres.yml` and `deployment/docker/artemis-prod-mysql.yml` extend the shared `deployment/docker/postgres.yml`/`deployment/docker/mysql.yml` service definitions, which default to `deployment/docker/postgres/default.env` and `deployment/docker/mysql/default.env` for local development and testing. Those default env files intentionally use no real authentication (Postgres `POSTGRES_HOST_AUTH_METHOD=trust`, MySQL `MYSQL_ALLOW_EMPTY_PASSWORD=yes` with an empty root password) so a fresh local setup works without any configuration.
 
 <Callout variant={CalloutVariant.warning}>
     Never run a production deployment with the default database env files. Override the database service's `env_file` with your own file that sets a real `POSTGRES_PASSWORD` (Postgres) or `MYSQL_ROOT_PASSWORD`/a dedicated application user and password (MySQL) before exposing the deployment to any network the database container is reachable from.

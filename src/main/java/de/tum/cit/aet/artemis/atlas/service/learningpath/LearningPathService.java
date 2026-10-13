@@ -401,11 +401,9 @@ public class LearningPathService {
      */
     public LearningPath findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(long learningPathId) {
         LearningPath learningPath = learningPathRepositoryService.findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(learningPathId);
-        if (learningPath.getUser() != null) {
-            // The navigation reads the per-course profile, and a path can be older than the profile, so make sure one
-            // exists. Creating it is idempotent: an existing profile is returned rather than replaced.
-            courseLearnerProfileService.createCourseLearnerProfile(learningPath.getCourse(), learningPath.getUser());
-        }
+        // The navigation reads the per-course profile, and a path can be older than the profile, so make sure one
+        // exists. Creating it is idempotent: an existing profile is returned rather than replaced.
+        courseLearnerProfileService.createCourseLearnerProfile(learningPath.getCourse(), learningPath.getUser());
 
         // Remove exercises that are not visible to students
         learningPath.getCompetencies().forEach(competency -> competency
@@ -415,15 +413,6 @@ public class LearningPathService {
                 .forEach(competency -> competency.setLectureUnitLinks(competency.getLectureUnitLinks().stream()
                         .filter(lectureUnitLink -> !(lectureUnitLink.getLectureUnit() instanceof ExerciseUnit) && lectureUnitLink.getLectureUnit().isVisibleToStudents())
                         .collect(Collectors.toSet())));
-
-        if (learningPath.getUser() == null) {
-            learningPath.getCompetencies().forEach(competency -> {
-                competency.setUserProgress(Set.of());
-                competency.getLectureUnitLinks().forEach(lectureUnitLink -> lectureUnitLink.getLectureUnit().setCompletedUsers(Set.of()));
-                competency.getExerciseLinks().forEach(exerciseLink -> exerciseLink.getExercise().setStudentParticipations(Set.of()));
-            });
-            return learningPath;
-        }
 
         LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
         Long userId = learningPath.getUser().getId();
@@ -436,8 +425,9 @@ public class LearningPathService {
                 .collect(Collectors.toMap(completion -> completion.getLectureUnit().getId(), cp -> cp));
         Set<Long> exerciseIds = learningPath.getCompetencies().stream().flatMap(competency -> competency.getExerciseLinks().stream())
                 .map(exerciseLink -> exerciseLink.getExercise().getId()).collect(Collectors.toSet());
-        Map<Long, StudentParticipation> studentParticipations = studentParticipationRepository.findDistinctAllByExerciseIdInAndStudentId(exerciseIds, userId).stream()
-                .collect(Collectors.toMap(participation -> participation.getExercise().getId(), sp -> sp));
+        // A student can have more than one participation per exercise, e.g. a graded one and a practice one after the due date
+        Map<Long, Set<StudentParticipation>> studentParticipations = studentParticipationRepository.findDistinctAllByExerciseIdInAndStudentId(exerciseIds, userId).stream()
+                .collect(Collectors.groupingBy(participation -> participation.getExercise().getId(), Collectors.toSet()));
         learningPath.getCompetencies().forEach(competency -> {
             if (competencyProgresses.containsKey(competency.getId())) {
                 competency.setUserProgress(Set.of(competencyProgresses.get(competency.getId())));
@@ -454,12 +444,7 @@ public class LearningPathService {
                 }
             });
             competency.getExerciseLinks().stream().map(CompetencyExerciseLink::getExercise).forEach(exercise -> {
-                if (studentParticipations.containsKey(exercise.getId())) {
-                    exercise.setStudentParticipations(Set.of(studentParticipations.get(exercise.getId())));
-                }
-                else {
-                    exercise.setStudentParticipations(Set.of());
-                }
+                exercise.setStudentParticipations(studentParticipations.getOrDefault(exercise.getId(), Set.of()));
             });
         });
 

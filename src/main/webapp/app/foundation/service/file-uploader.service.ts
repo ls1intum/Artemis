@@ -23,13 +23,13 @@ export class FileUploaderService {
     }
 
     /**
-     * Uploads a file for the markdown editor in the current Metis conversation.
+     * Uploads a file for the markdown editor in the current conversation.
      * @param file The file to upload
      * @param courseId The course ID
      * @param conversationId The conversation ID
      * @return A promise with the response from the server or an error
      */
-    uploadMarkdownFileInCurrentMetisConversation(file: File, courseId: number | undefined, conversationId: number | undefined): Promise<FileUploadResponse> {
+    uploadMarkdownFileInCurrentConversation(file: File, courseId: number | undefined, conversationId: number | undefined): Promise<FileUploadResponse> {
         if (!courseId || !conversationId) {
             return Promise.reject(new Error('No course or conversation available for the file upload.'));
         }

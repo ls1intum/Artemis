@@ -57,9 +57,6 @@ describe('PrerequisiteService', () => {
                     convertLectureUnitArrayDatesFromServer<T extends LectureUnit>(res: T[]): T[] {
                         return res;
                     },
-                    convertLectureUnitArrayDatesFromClient<T extends LectureUnit>(lectureUnits: T[]): T[] {
-                        return lectureUnits;
-                    },
                 }),
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ExerciseService, useClass: MockExerciseService },

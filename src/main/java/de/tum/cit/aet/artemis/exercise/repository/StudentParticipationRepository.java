@@ -452,6 +452,27 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Optional<StudentParticipation> findFirstByExerciseIdAndStudentIdOrderByIdDesc(long exerciseId, long studentId);
 
     /**
+     * The attempts in use by the student's participations for an exercise on one side of the test run divide.
+     * <p>
+     * The table is unique on (student_id, exercise_id, initialization_state, attempt), so a second participation for the
+     * same student and exercise - a test run next to a graded attempt - needs an attempt that the other side does not
+     * use. A participation without the flag counts as graded.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @param testRun    whether to read the attempts of the test run participations or of the graded ones
+     * @return the attempts in use on that side, empty when the student has no such participation for the exercise
+     */
+    @Query("""
+            SELECT participation.attempt
+            FROM StudentParticipation participation
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.student.id = :studentId
+                AND COALESCE(participation.testRun, FALSE) = :testRun
+            """)
+    Set<Integer> findAttemptsByExerciseIdAndStudentIdAndTestRun(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId, @Param("testRun") boolean testRun);
+
+    /**
      * The student's graded or practice participation in an exercise, as far as saving a submission needs it.
      *
      * @param exerciseId the id of the exercise
@@ -834,14 +855,34 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<StudentParticipation> findByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     /**
+     * Whether the student already has a participation in one of the given states for an exercise, on the given side of
+     * the test run divide.
+     * <p>
+     * A test run and a graded attempt keep separate participations for the same exercise and student, and only the
+     * matching ones are ever read back. Preparing one must therefore not treat the other's participation as the work
+     * being already set up. Pass {@link InitializationState#statesThatCompleted} to ask for a state having been reached
+     * rather than matched exactly.
+     *
+     * @param exerciseId           the id of the exercise
+     * @param studentId            the id of the student
+     * @param testRun              whether to look at the test run participations or at the graded ones
+     * @param initializationStates the states that count
+     * @return true if the student has such a participation
+     */
+    boolean existsByExerciseIdAndStudentIdAndTestRunAndInitializationStateIn(long exerciseId, long studentId, boolean testRun,
+            Collection<InitializationState> initializationStates);
+
+    /**
      * Reads which students already have a participation in one of the given states for an exercise, as ids only.
      * <p>
-     * Answers for a whole cohort at once what {@link #findByExerciseIdAndStudentId} answers for one student, so that
+     * Answers for a whole cohort at once what
+     * {@link #existsByExerciseIdAndStudentIdAndTestRunAndInitializationStateIn} answers for one student, so that
      * preparing an exam does not need one query and one full participation row per student and exercise. Pass
      * {@link InitializationState#statesThatCompleted} to ask for a state having been reached rather than matched
      * exactly.
      *
      * @param exerciseId           the id of the exercise
+     * @param testRun              whether to look at the test run participations or at the graded ones
      * @param initializationStates the states that count
      * @return the ids of the students with such a participation, empty for team exercises
      */
@@ -850,9 +891,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation participation
             WHERE participation.exercise.id = :exerciseId
                 AND participation.student.id IS NOT NULL
+                AND participation.testRun = :testRun
                 AND participation.initializationState IN :initializationStates
             """)
-    Set<Long> findStudentIdsWithParticipationInStateByExerciseId(@Param("exerciseId") long exerciseId,
+    Set<Long> findStudentIdsWithParticipationInStateByExerciseIdAndTestRun(@Param("exerciseId") long exerciseId, @Param("testRun") boolean testRun,
             @Param("initializationStates") Collection<InitializationState> initializationStates);
 
     /**
@@ -2074,11 +2116,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * Used as the data-loading step after the paginated ID query.
      *
      * @param ids the participation IDs to load
-     * @return participations with team, team students, and latest submission eagerly fetched
+     * @return participations with team, team students, student, and latest submission eagerly fetched; the student is the one of a practice participation, which has no team
      */
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
+                LEFT JOIN FETCH p.student
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
                 LEFT JOIN FETCH p.submissions s
@@ -2149,6 +2192,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     /**
      * Returns a page of participation IDs for the given exercise for the management view, applying search and filter predicates.
      * Uses {@link StudentParticipationSpecs} to build the query dynamically via the Criteria API.
+     * <p>
+     * An individual exercise yields the participations of students. A team exercise yields the participations of teams and the practice participations of single students.
      *
      * @param exerciseId       the exercise to query
      * @param teamMode         whether the exercise uses teams
@@ -2162,8 +2207,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     default Page<Long> findParticipationIdsForManagement(long exerciseId, boolean teamMode, String searchTerm, String filterProp, ZonedDateTime stuckBuildCutoff, Pageable pageable,
             SortingOrder sortOrder, String sortedColumn) {
-        Specification<StudentParticipation> spec = Specification.where(StudentParticipationSpecs.forExercise(exerciseId)).and(StudentParticipationSpecs.forMode(teamMode))
-                .and(StudentParticipationSpecs.searchByName(searchTerm, teamMode)).and(StudentParticipationSpecs.managementFilter(filterProp, stuckBuildCutoff))
+        Specification<StudentParticipation> spec = Specification.where(StudentParticipationSpecs.forExercise(exerciseId)).and(StudentParticipationSpecs.forManagementMode(teamMode))
+                .and(StudentParticipationSpecs.searchForManagement(searchTerm, teamMode)).and(StudentParticipationSpecs.managementFilter(filterProp, stuckBuildCutoff))
                 .and(StudentParticipationSpecs.orderedForManagement(sortedColumn, sortOrder != null ? sortOrder : SortingOrder.ASCENDING, teamMode));
 
         Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.unsorted());

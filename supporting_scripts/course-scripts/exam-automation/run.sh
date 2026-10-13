@@ -23,13 +23,13 @@ echo -e "${BLUE}Script directory: $SCRIPT_DIR${NC}"
 # Check if Python 3 is available
 if ! command -v $PYTHON_CMD &> /dev/null; then
     echo -e "${RED}Error: Python 3 is not installed or not in PATH${NC}"
-    echo "Please install Python 3.8 or higher and try again"
+    echo "Please install Python 3.10 or higher and try again"
     exit 1
 fi
 
 # Check Python version
 PYTHON_VERSION=$($PYTHON_CMD --version 2>&1 | cut -d' ' -f2 | cut -d'.' -f1,2)
-REQUIRED_VERSION="3.8"
+REQUIRED_VERSION="3.10"
 
 if [ "$(printf '%s\n' "$REQUIRED_VERSION" "$PYTHON_VERSION" | sort -V | head -n1)" != "$REQUIRED_VERSION" ]; then
     echo -e "${RED}Error: Python $PYTHON_VERSION found, but Python $REQUIRED_VERSION or higher is required${NC}"
@@ -54,7 +54,7 @@ source "$VENV_DIR/bin/activate"
 # Install requirements
 echo -e "${YELLOW}Installing requirements...${NC}"
 if [ -f "$SCRIPT_DIR/requirements.txt" ]; then
-    pip install -r "$SCRIPT_DIR/requirements.txt" > /dev/null 2>&1
+    python3 -m pip install --require-hashes -r "$SCRIPT_DIR/requirements.txt"
     echo -e "${GREEN}✓ Requirements installed${NC}"
 else
     echo -e "${YELLOW}Warning: requirements.txt not found, skipping dependency installation${NC}"

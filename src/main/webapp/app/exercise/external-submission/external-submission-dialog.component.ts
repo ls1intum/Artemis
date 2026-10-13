@@ -16,11 +16,12 @@ import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-external-submission-dialog',
     templateUrl: './external-submission-dialog.component.html',
-    imports: [FormsModule, TranslateDirective, NgClass, FaIconComponent, MarkdownDirective],
+    imports: [FormsModule, TranslateDirective, NgClass, FaIconComponent, MarkdownDirective, ArtemisTranslatePipe],
 })
 export class ExternalSubmissionDialogComponent implements OnInit {
     private externalSubmissionService = inject(ExternalSubmissionService);

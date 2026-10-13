@@ -8,6 +8,7 @@ artemis:
     legal-path: /opt/artemis/data/legal
     build-logs-path: /opt/artemis/data/build-logs
     failed-build-logs-path: /opt/artemis/data/failed-build-logs
+    data-export-path: /opt/artemis/data/data-exports
 
     version-control:
         local-vcs-repo-path: /opt/artemis/data/local-vcs-repos
@@ -18,7 +19,7 @@ artemis:
 
 spring:
     datasource:
-        url: jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+        url: jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
 
 server:
     # see application.yml for further comments

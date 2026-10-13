@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,14 +21,18 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
+import de.tum.cit.aet.artemis.iris.service.IrisLectureMaterialVersionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitProcessingStateRepositoryApi;
 
 class PyrisJobServiceTest {
 
     private DistributedMap<String, PyrisJob> jobMap;
 
     private DistributedMap<String, String> clientIdMap;
+
+    private IrisLectureMaterialVersionService materialVersionService;
 
     private PyrisJobService service;
 
@@ -43,7 +48,9 @@ class PyrisJobServiceTest {
             default -> throw new AssertionError("Unexpected distributed map: " + invocation.getArgument(0));
         }).when(distributedDataProvider).getExpiringMap(anyString(), any(Duration.class));
 
-        service = new PyrisJobService(distributedDataProvider, mock(IrisProactiveProperties.class));
+        materialVersionService = mock(IrisLectureMaterialVersionService.class);
+        service = new PyrisJobService(distributedDataProvider, Optional.<LectureUnitProcessingStateRepositoryApi>empty(), mock(IrisProactiveProperties.class),
+                materialVersionService);
         ReflectionTestUtils.setField(service, "serverUrl", "https://artemis.example");
         ReflectionTestUtils.setField(service, "instanceId", "node-1");
         ReflectionTestUtils.setField(service, "jobTimeout", 300);
@@ -70,6 +77,8 @@ class PyrisJobServiceTest {
 
         service.removeJob(job);
 
+        verify(materialVersionService).refresh(job.jobId());
+        verify(materialVersionService).remove(job.jobId());
         verify(jobMap).remove(job.jobId());
         verify(clientIdMap).remove(job.jobId());
     }

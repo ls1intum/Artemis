@@ -1,78 +1,78 @@
 <div *titleBarTitle class="flex items-center">
-    <h5 class="mb-0" jhiTranslate="artemisApp.examManagement.examStudents.verifyAttendanceBtn"></h5>
+    <h5 class="my-0!" jhiTranslate="artemisApp.examManagement.examStudents.verifyAttendanceBtn"></h5>
 </div>
 
-<div>
+<div class="flex flex-col gap-4 p-4">
     @if (isLoading()) {
-        <div class="d-flex justify-content-center">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden" jhiTranslate="loading"></span>
-            </div>
+        <div class="flex justify-center">
+            <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
         </div>
     } @else {
-        <div class="d-flex border-bottom pb-2 mt-3">
+        <div class="flex border-b border-(--border-color) pb-2">
             @if (!hasExamStarted()) {
-                <div>
-                    <h3><span class="text-white badge bg-danger" [jhiTranslate]="'artemisApp.examManagement.examStudents.examNotStarted'">Exam have not started yet!</span></h3>
+                <div data-testid="exam-not-started">
+                    <tumaet-ui-tag severity="danger">
+                        <span [jhiTranslate]="'artemisApp.examManagement.examStudents.examNotStarted'">Exam have not started yet!</span>
+                    </tumaet-ui-tag>
                 </div>
             } @else {
                 @if (allExamUsersAttendanceCheck() && allExamUsersAttendanceCheck().length > 0) {
                     <div>
                         <span [jhiTranslate]="'artemisApp.examManagement.examStudents.notCheckedStudents'">Students who did not sign</span>:
-                        <span class="badge bg-danger text-white ms-1 px-2" id="#registered-users"> {{ allExamUsersAttendanceCheck().length }}</span>
+                        <tumaet-ui-tag severity="danger" class="ms-1" id="#registered-users" data-testid="not-checked-count">
+                            {{ allExamUsersAttendanceCheck().length }}</tumaet-ui-tag
+                        >
                     </div>
                 }
                 @if (!allExamUsersAttendanceCheck() || allExamUsersAttendanceCheck().length === 0) {
-                    <div>
-                        <span class="fs-3" [jhiTranslate]="'artemisApp.examManagement.examStudents.allStudentsCheckedPassed'">All students passed</span>
-                        <fa-icon [icon]="faCheck" style="color: green" class="fa-2x ms-1" />
+                    <div data-testid="all-students-checked" class="flex items-center gap-2 text-state-success">
+                        <span class="text-2xl" [jhiTranslate]="'artemisApp.examManagement.examStudents.allStudentsCheckedPassed'">All students passed</span>
+                        <fa-icon [icon]="faCheck" size="2x" />
                     </div>
                 }
             }
         </div>
     }
-    <div class="row"></div>
-    <br />
     @if (allExamUsersAttendanceCheck().length > 0 && !isLoading()) {
-        <div class="table-responsive" id="exams-table">
-            <table class="table table-striped">
+        <div class="overflow-x-auto" id="exams-table">
+            <table tumAetUiTable [striped]="true">
                 <thead>
                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
-                        <th class="d-md-table-cell" jhiSortBy="id">
+                        <th jhiSortBy="id">
                             <span jhiTranslate="global.field.id"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th></th>
-                        <th class="d-md-table-cell" jhiSortBy="login">
+                        <th jhiSortBy="login">
                             <span jhiTranslate="artemisApp.examManagement.examStudents.login"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
-                        <th class="d-md-table-cell" jhiSortBy="registrationNumber">
+                        <th jhiSortBy="registrationNumber">
                             <span jhiTranslate="artemisApp.examManagement.examStudents.registrationNumber"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
-                        <th class="d-md-table-cell">
+                        <th>
                             <span jhiTranslate="artemisApp.examManagement.examStudents.attendanceChecks"></span>
                         </th>
-                        <th class="d-md-table-cell">
+                        <th>
                             <span jhiTranslate="artemisApp.studentExams.started"></span>
                         </th>
-                        <th class="d-md-table-cell">
+                        <th>
                             <span jhiTranslate="artemisApp.studentExams.submitted"></span>
                         </th>
                     </tr>
                 </thead>
                 <tbody>
                     @for (examUser of allExamUsersAttendanceCheck(); track examUser) {
-                        <tr>
-                            <td class="d-md-table-cell">
+                        <tr data-testid="attendance-check-row" [attr.data-login]="examUser.login">
+                            <td>
                                 <span>
                                     {{ examUser.id }}
                                 </span>
                             </td>
-                            <td class="d-md-table-cell">
+                            <td>
                                 <img
-                                    class="img-fluid"
+                                    class="max-w-full"
                                     width="60"
                                     loading="lazy"
                                     decoding="async"
@@ -83,20 +83,20 @@
                                     "
                                 />
                             </td>
-                            <td class="d-md-table-cell">
+                            <td>
                                 <span>
                                     {{ examUser.login }}
                                 </span>
                             </td>
-                            <td class="d-md-table-cell">
+                            <td>
                                 <span>
                                     {{ examUser.registrationNumber }}
                                 </span>
                             </td>
-                            <td class="d-md-table-cell">
+                            <td>
                                 @if (allExamUsersAttendanceCheck().length === 0 && examUser?.signingImagePath) {
                                     <img
-                                        class="img-fluid"
+                                        class="max-w-full"
                                         width="60"
                                         loading="lazy"
                                         decoding="async"
@@ -104,17 +104,13 @@
                                         [alt]="'artemisApp.exam.examUsers.studentSignatureAlt' | artemisTranslate: { login: examUser.login }"
                                     />
                                 } @else {
-                                    <h3>
-                                        <span class="m-2">
-                                            <fa-icon class="text-danger" [icon]="faXmark" />
-                                        </span>
-                                    </h3>
+                                    <fa-icon class="text-state-danger" size="lg" [icon]="faXmark" />
                                 }
                             </td>
-                            <td class="d-md-table-cell">
+                            <td>
                                 <span jhiTranslate="{{ examUser?.started ? 'global.generic.yes' : 'global.generic.no' }}"></span>
                             </td>
-                            <td class="d-md-table-cell">
+                            <td>
                                 <span jhiTranslate="{{ examUser?.submitted ? 'global.generic.yes' : 'global.generic.no' }}"></span>
                             </td>
                         </tr>

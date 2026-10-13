@@ -106,6 +106,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticip
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.CourseRoleMemberDTO;
 import de.tum.cit.aet.artemis.core.dto.DomainObjectDTO;
@@ -610,6 +611,57 @@ public class CourseTestService {
         request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
     }
 
+    // Test: a name the server cannot interpret is not stored, although a browser would accept it case-insensitively.
+    public void testCreateCourseWithUnsupportedTimeZone() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setTimeZone("europe/berlin");
+        request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isBadRequest());
+        assertThat(courseRepo.findAllByShortName(course.getShortName())).as("Course has not been stored").isEmpty();
+    }
+
+    // Test: names that some browsers leave out of their own lists, such as the renamed Europe/Kyiv, are accepted.
+    public void testCreateCourseWithTimeZoneMissingFromBrowserLists() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setTimeZone("Europe/Kyiv");
+        long createdCourseId = createCourseAndGetId(buildCreateCourse(course));
+        assertThat(courseRepo.findByIdElseThrow(createdCourseId).getTimeZone()).isEqualTo("Europe/Kyiv");
+    }
+
+    // Test
+    public void testUpdateCourseWithUnsupportedTimeZone() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setTimeZone("Mars/Olympus_Mons");
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
+        assertThat(courseRepo.findByIdElseThrow(course.getId()).getTimeZone()).isNotEqualTo("Mars/Olympus_Mons");
+    }
+
+    // Test: a course stored with a time zone the server does not know stays editable as long as the time zone is kept.
+    public void testUpdateCourseKeepingAnUnsupportedTimeZone() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setTimeZone("Legacy/Zone");
+        course = courseRepo.saveWithDefaultConfigurations(course);
+        course.setTitle("Renamed with a legacy time zone");
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
+        Course updatedCourse = courseRepo.findByIdElseThrow(course.getId());
+        assertThat(updatedCourse.getTitle()).isEqualTo("Renamed with a legacy time zone");
+        assertThat(updatedCourse.getTimeZone()).isEqualTo("Legacy/Zone");
+    }
+
+    // Test
+    public void testGetSupportedTimeZones() throws Exception {
+        List<String> timeZones = request.getList("/api/course/time-zones", HttpStatus.OK, String.class);
+        assertThat(timeZones).contains("UTC", "Etc/UTC", "Europe/Kyiv", "Europe/Kiev", "Europe/Berlin").doesNotContain("SystemV/EST5", "europe/berlin").isSorted();
+    }
+
+    // Test
+    public void testGetSupportedTimeZonesAsStudentIsForbidden() throws Exception {
+        request.getList("/api/course/time-zones", HttpStatus.FORBIDDEN, String.class);
+    }
+
     // Test
     public void testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
@@ -726,7 +778,7 @@ public class CourseTestService {
 
         for (Course course : courses) {
             if (!course.getExercises().isEmpty()) {
-                groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(course.getExercises().iterator().next());
+                groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(course.getExercises().iterator().next(), null);
             }
             request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
         }
@@ -944,8 +996,9 @@ public class CourseTestService {
 
     // Test
     public void testEditCourseWithPermission() throws Exception {
-        Course course = CourseFactory.generateCourse(1L, null, null, new HashSet<>());
-        course = courseRepo.save(course);
+        // A new course (no preset id): merging a hand-built course onto an existing row would overwrite its configuration links with null
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course = courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
 
         course.setTitle("Test Course");
@@ -972,12 +1025,12 @@ public class CourseTestService {
         Set<Competency> competencies = new HashSet<>();
         competencies.add(competencyService.createCompetency(course));
         course.setCompetencies(competencies);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
 
         Set<Prerequisite> prerequisites = new HashSet<>();
         prerequisites.add(prerequisiteService.createPrerequisite(course));
         course.setPrerequisites(prerequisites);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
 
         request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
 
@@ -1131,7 +1184,7 @@ public class CourseTestService {
         athenaConfig.setGradingFeedbackEnabled(true);
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepo.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         CourseForOverviewDTO overview = request.get("/api/course/courses/" + course.getId() + "/for-overview", HttpStatus.OK, CourseForOverviewDTO.class);
 
@@ -1158,7 +1211,7 @@ public class CourseTestService {
         athenaConfig.setCourse(course);
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepo.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         // Pin every programming action field read by the overview. The graded participation deliberately differs from
         // the practice participation so the projection cannot accidentally copy the wrong repository.
@@ -1353,7 +1406,7 @@ public class CourseTestService {
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
         Course course = courses.getFirst();
         course.setEnrollmentEnabled(enrollmentEnabled);
-        courseRepo.save(course);
+        courseRepo.saveWithDefaultConfigurations(course);
         return course;
     }
 
@@ -1454,7 +1507,7 @@ public class CourseTestService {
         User student = userUtilService.getUserByLogin(userPrefix + "student3");
 
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5), new HashSet<>());
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
@@ -1615,8 +1668,10 @@ public class CourseTestService {
     public void testGetCourseWithExercisesQueryCountStaysBoundedWithAllExerciseTypes() throws Exception {
         Course course = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, false, false, 0).getFirst();
 
+        // The ceiling includes the one query that reads the team assignment configurations of all the exercises together,
+        // which the exercises do not carry by themselves and the response reports.
         CourseWithExercisesDTO withExercises = assertThatDb(queryInterceptor,
-                () -> request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, CourseWithExercisesDTO.class)).hasBeenCalledAtMostTimes(3);
+                () -> request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, CourseWithExercisesDTO.class)).hasBeenCalledAtMostTimes(4);
         assertThat(withExercises.exercises()).hasSize(5);
 
         CourseWithContentDTO withContent = assertThatDb(queryInterceptor,
@@ -1795,6 +1850,85 @@ public class CourseTestService {
         // Only the started-but-unfinished assessment is a lock. Verified to return 2 before the fix: the previous query used a LEFT JOIN and only
         // checked "completionDate IS NULL", which is also true when the join produced no result row at all, so the unassessed submission was counted too.
         assertThat(stats.getTotalNumberOfAssessmentLocks()).as("only a started but unfinished assessment counts as an assessment lock").isEqualTo(1L);
+    }
+
+    /**
+     * Creates a course with a manual text exercise and an automatically assessed programming exercise.
+     * The text exercise has three in-time submissions (two assessed submissions of the same participation, one open) and one assessed late submission.
+     * The late result is not rated, like {@code submitResult()} sets it for a submission after the due date.
+     * The first in-time assessment additionally got a second result, like a complaint response creates one.
+     * The programming exercise has one submission with an automatic result and no assessor, which must not be counted anywhere.
+     *
+     * @return the created course
+     */
+    private Course createCourseForAssessmentCounterTests() {
+        Course course = courseUtilService.createCourse();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        User tutor = userUtilService.getUserByLogin(userPrefix + "tutor1");
+
+        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime dueDate = now.minusDays(2);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(now.minusDays(7), dueDate, now.minusDays(1), course);
+        textExercise.setAssessmentType(AssessmentType.MANUAL);
+        textExercise = exerciseRepo.save(textExercise);
+
+        TextSubmission assessedInTime = textExerciseUtilService.createSubmissionForTextExercise(textExercise, userUtilService.getUserByLogin(userPrefix + "student1"), "text");
+        assessedInTime.setSubmissionDate(dueDate.minusHours(2));
+        assessedInTime = submissionRepository.save(assessedInTime);
+        TextSubmission openInTime = textExerciseUtilService.createSubmissionForTextExercise(textExercise, userUtilService.getUserByLogin(userPrefix + "student2"), "text");
+        openInTime.setSubmissionDate(dueDate.minusHours(1));
+        submissionRepository.save(openInTime);
+        TextSubmission assessedLate = textExerciseUtilService.createSubmissionForTextExercise(textExercise, userUtilService.getUserByLogin(userPrefix + "student3"), "text");
+        assessedLate.setSubmissionDate(dueDate.plusHours(1));
+        assessedLate = submissionRepository.save(assessedLate);
+
+        // a text participation can hold several submitted submissions, e.g. when the student submits again after the first one was assessed
+        TextSubmission secondAssessedInTime = ParticipationFactory.generateTextSubmission("second text", Language.ENGLISH, true);
+        secondAssessedInTime.setSubmissionDate(dueDate.minusMinutes(30));
+        secondAssessedInTime.setParticipation(assessedInTime.getParticipation());
+        secondAssessedInTime = submissionRepository.save(secondAssessedInTime);
+
+        participationUtilService.addResultToSubmission(assessedInTime, AssessmentType.MANUAL, tutor, 100D, true, now.minusHours(5));
+        // a complaint response adds a second result to the same submission
+        participationUtilService.addResultToSubmission(assessedInTime, AssessmentType.MANUAL, tutor, 90D, true, now.minusHours(4));
+        participationUtilService.addResultToSubmission(secondAssessedInTime, AssessmentType.MANUAL, tutor, 100D, true, now.minusHours(4));
+        participationUtilService.addResultToSubmission(assessedLate, AssessmentType.MANUAL, tutor, 100D, false, now.minusHours(3));
+
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+        programmingSubmission.setSubmissionDate(dueDate.minusHours(1));
+        programmingSubmission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, programmingSubmission, userPrefix + "student1");
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, now.minusHours(1), programmingSubmission);
+        return course;
+    }
+
+    // Test
+    public void testGetAssessmentDashboardStats_assessmentCounterMatchesSubmissionsOfManualExercises() throws Exception {
+        Course course = createCourseForAssessmentCounterTests();
+
+        StatsForDashboardDTO stats = request.get("/api/course/courses/" + course.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
+
+        // the automatically assessed programming exercise is neither part of the submissions nor of the assessments
+        assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(3L);
+        assertThat(stats.getNumberOfSubmissions().late()).isEqualTo(1L);
+        // three assessed submissions: the first in-time one counts once although it has two results, the second one of the same participation counts separately,
+        // and the late one counts although its result is not rated
+        assertThat(stats.getTotalNumberOfAssessments()).as("assessments are counted per submission, like the submissions they relate to").isEqualTo(3L);
+    }
+
+    // Test
+    public void testGetCourseManagementDetailData_assessmentCounterMatchesSubmissionsOfManualExercises() throws Exception {
+        Course course = createCourseForAssessmentCounterTests();
+
+        var courseDTO = request.get("/api/course/courses/" + course.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
+
+        // the automatically assessed programming exercise is neither part of the submissions nor of the assessments
+        assertThat(courseDTO.currentMaxAssessments()).isEqualTo(4L);
+        assertThat(courseDTO.currentAbsoluteAssessments()).as("every assessed submission counts, including the unrated late one and both ones of the same participation")
+                .isEqualTo(3L);
+        assertThat(courseDTO.currentPercentageAssessments()).isEqualTo(75.0);
     }
 
     // Test
@@ -1989,7 +2123,7 @@ public class CourseTestService {
 
             // Assert that course properties on courseWithExercises match those of courseOnly
             assertThat(courseWithExercises.course()).as("courseWithExercises same as courseOnly").usingRecursiveComparison()
-                    .ignoringFields("numberOfStudents", "numberOfTeachingAssistants", "numberOfEditors", "numberOfInstructors").isEqualTo(courseOnly);
+                    .ignoringFields("numberOfStudents", "numberOfTeachingAssistants", "numberOfEditors", "numberOfInstructors", "courseConfiguration").isEqualTo(courseOnly);
 
             // Verify presence of exercises in mock courses
             // - Course 1 has 5 exercises in total, 4 exercises with relevant participations
@@ -2118,8 +2252,8 @@ public class CourseTestService {
 
     // Test
     public void testUpdateCourse_instructorNotInCourse() throws Exception {
-        var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>());
-        course = courseRepo.save(course);
+        var course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course = courseRepo.saveWithDefaultConfigurations(course);
 
         request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isForbidden());
     }
@@ -2214,7 +2348,7 @@ public class CourseTestService {
     public void testAddStudentOrTutorOrEditorOrInstructorToCourse() throws Exception {
         Course course = courseUtilService.createEnrolledCourse(userPrefix);
         course.setLearningPathsEnabled(true);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.OK);
         course = courseRepo.findWithEagerLearningPathsByIdElseThrow(course.getId());
         assertThat(course.getLearningPaths()).isNotEmpty();
@@ -2467,6 +2601,11 @@ public class CourseTestService {
         List<UserDTO> students = request.getList("/api/course/courses/" + course.getId() + "/students/search", HttpStatus.OK, UserDTO.class, params1);
         assertThat(students).size().isEqualTo(8);
 
+        params1.add("page", "1");
+        params1.add("size", "3");
+        List<UserDTO> secondPage = request.getList("/api/course/courses/" + course.getId() + "/students/search", HttpStatus.OK, UserDTO.class, params1);
+        assertThat(secondPage).hasSize(3);
+
         MultiValueMap<String, String> params2 = new LinkedMultiValueMap<>();
         params2.add("loginOrName", userPrefix + "tutor");
         // should be empty as we only search for students
@@ -2612,7 +2751,7 @@ public class CourseTestService {
 
     private Course createCourseForUserSearchTest() {
         var course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
@@ -2829,7 +2968,7 @@ public class CourseTestService {
         // Generate a course that has an archive
         var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA, userPrefix);
         course.setCourseArchivePath("some-archive-path");
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
 
         final ProgrammingExercise courseExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
@@ -2859,7 +2998,7 @@ public class CourseTestService {
     public void testGetCourseIncludesArchivePathWhenCourseIsArchived() throws Exception {
         Course course = courseUtilService.createEnrolledCourse(userPrefix);
         course.setCourseArchivePath("some-archive-path");
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
 
         CourseManagementDTO courseDTO = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
         assertThat(courseDTO.courseArchivePath()).isEqualTo(course.getCourseArchivePath());
@@ -2869,7 +3008,7 @@ public class CourseTestService {
     public void testGetCourseTitle() throws Exception {
         Course course = courseUtilService.createCourse();
         course.setTitle("Test Course");
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
 
         final var title = request.get("/api/course/courses/" + course.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(course.getTitle());
@@ -2912,7 +3051,7 @@ public class CourseTestService {
         userUtilService.createAndSaveUser(userPrefix + "user2");
 
         var instructor2 = userUtilService.createAndSaveUser(otherPrefix + "instructor2");
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         userUtilService.enrollUserInCourse(instructor2, course, CourseRole.INSTRUCTOR);
 
@@ -3169,10 +3308,9 @@ public class CourseTestService {
     public void testCreateValidOnlineCourse() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
-        Course courseWithOnlineConfiguration = courseRepo
-                .findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createCourseAndGetId(buildCreateCourse(course)));
-        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration()).isNotNull();
-        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo(courseWithOnlineConfiguration.getShortName());
+        Course createdCourse = courseRepo.findByIdElseThrow(createCourseAndGetId(buildCreateCourse(course)));
+        OnlineCourseConfiguration configuration = onlineCourseConfigurationRepository.findByCourseId(createdCourse.getId()).orElseThrow();
+        assertThat(configuration.getUserPrefix()).isEqualTo(createdCourse.getShortName());
     }
 
     public void testUpdateToOnlineCourse() throws Exception {
@@ -3190,13 +3328,15 @@ public class CourseTestService {
     public void testOnlineCourseConfigurationIsLazyLoaded() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         var courseId = course.getId();
+        // the configuration exists, but a course does not carry it, so the list of courses cannot contain it
+        saveOnlineConfiguration(course, "prefix");
 
         List<CourseManagementDTO> courses = request.getList("/api/course/courses", HttpStatus.OK, CourseManagementDTO.class);
 
         CourseManagementDTO receivedCourse = courses.stream().filter(c -> courseId.equals(c.id())).findFirst().orElseThrow();
-        assertThat(receivedCourse.onlineCourseConfiguration()).as("Online course configuration is lazily loaded").isNull();
+        assertThat(receivedCourse.onlineCourseConfiguration()).as("A course does not carry its online course configuration").isNull();
     }
 
     // Test
@@ -3204,15 +3344,15 @@ public class CourseTestService {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
-        Course createdCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createCourseAndGetId(buildCreateCourse(course)));
+        Course createdCourse = courseRepo.findByIdElseThrow(createCourseAndGetId(buildCreateCourse(course)));
 
         course.setOnlineCourse(true);
 
         MvcResult result = request.performMvcRequest(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
         CourseManagementDTO updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), CourseManagementDTO.class);
 
-        Course actualCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(updatedCourse.id());
-        OnlineCourseConfiguration ocConfiguration = actualCourse.getOnlineCourseConfiguration();
+        Course actualCourse = courseRepo.findByIdElseThrow(updatedCourse.id());
+        OnlineCourseConfiguration ocConfiguration = onlineCourseConfigurationRepository.findByCourseId(actualCourse.getId()).orElse(null);
 
         assertThat(ocConfiguration).isNotNull();
         assertThat(ocConfiguration.getUserPrefix()).isEqualTo(actualCourse.getShortName());
@@ -3223,26 +3363,26 @@ public class CourseTestService {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
-        Course createdCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createCourseAndGetId(buildCreateCourse(course)));
+        Course createdCourse = courseRepo.findByIdElseThrow(createCourseAndGetId(buildCreateCourse(course)));
+        assertThat(onlineCourseConfigurationRepository.findByCourseId(createdCourse.getId())).isPresent();
 
         createdCourse.setOnlineCourse(false);
         MvcResult result = request.performMvcRequest(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
         CourseManagementDTO updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), CourseManagementDTO.class);
 
-        Course courseWithoutOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(updatedCourse.id());
-        assertThat(courseWithoutOnlineConfiguration.getOnlineCourseConfiguration()).isNull();
+        assertThat(onlineCourseConfigurationRepository.findByCourseId(updatedCourse.id())).isEmpty();
     }
 
     // Test
     public void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
-        CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
+        OnlineCourseConfiguration configuration = saveOnlineConfiguration(course, "prefix");
 
         request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
-        assertThat(onlineCourseConfigurationRepository.findById(course.getOnlineCourseConfiguration().getId())).isNotPresent();
+        assertThat(onlineCourseConfigurationRepository.findById(configuration.getId())).isNotPresent();
     }
 
     // Test
@@ -3250,13 +3390,13 @@ public class CourseTestService {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
-        Course createdCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createCourseAndGetId(buildCreateCourse(course)));
+        Course createdCourse = courseRepo.findByIdElseThrow(createCourseAndGetId(buildCreateCourse(course)));
         String courseId = createdCourse.getId().toString();
 
         // without online course configuration
         request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), null, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
 
-        var ocConfiguration = createdCourse.getOnlineCourseConfiguration();
+        var ocConfiguration = onlineCourseConfigurationRepository.findByCourseId(createdCourse.getId()).orElseThrow();
         // with invalid user prefix - not matching regex
         CourseFactory.updateOnlineCourseConfiguration(ocConfiguration, "with space", null, "10000");
         request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
@@ -3265,12 +3405,12 @@ public class CourseTestService {
     public void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
-        CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
+        OnlineCourseConfiguration configuration = saveOnlineConfiguration(course, "prefix");
 
         String courseId = course.getId().toString();
 
-        request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), course.getOnlineCourseConfiguration(), OnlineCourseConfiguration.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), configuration, OnlineCourseConfiguration.class, HttpStatus.FORBIDDEN);
     }
 
     public void testUpdateValidOnlineCourseConfigurationNotOnlineCourse() throws Exception {
@@ -3288,10 +3428,10 @@ public class CourseTestService {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
-        Course createdCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createCourseAndGetId(buildCreateCourse(course)));
+        Course createdCourse = courseRepo.findByIdElseThrow(createCourseAndGetId(buildCreateCourse(course)));
         String courseId = createdCourse.getId().toString();
 
-        OnlineCourseConfiguration ocConfiguration = createdCourse.getOnlineCourseConfiguration();
+        OnlineCourseConfiguration ocConfiguration = onlineCourseConfigurationRepository.findByCourseId(createdCourse.getId()).orElseThrow();
         ocConfiguration.setId(10000L);
         request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
     }
@@ -3299,17 +3439,16 @@ public class CourseTestService {
     public void testUpdateValidOnlineCourseConfiguration() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
-        CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
-        course = courseRepo.save(course);
-
-        OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
+        course = courseRepo.saveWithDefaultConfigurations(course);
+        OnlineCourseConfiguration ocConfiguration = saveOnlineConfiguration(course, "prefix");
         ocConfiguration.setUserPrefix("prefix");
 
         String courseId = course.getId().toString();
 
         OnlineCourseConfiguration response = request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class,
                 HttpStatus.OK);
-        assertThat(response).usingRecursiveComparison().ignoringFields("id").isEqualTo(ocConfiguration);
+        // the course is not part of the response: the configuration holds the key to it and hides it from JSON
+        assertThat(response).usingRecursiveComparison().ignoringFields("id", "course").isEqualTo(ocConfiguration);
     }
 
     /**
@@ -3332,11 +3471,10 @@ public class CourseTestService {
         OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "prefix", "url");
         onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
 
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
-        onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
-
-        OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
+        onlineCourseConfiguration.setId(onlineCourseConfigurationRepository.findStoredByCourseId(course.getId()).orElseThrow().getId());
+        OnlineCourseConfiguration ocConfiguration = onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
         String clientId = ocConfiguration.getLtiPlatformConfiguration().getRegistrationId();
 
         String jsonResponse = request.get("/api/lti/courses/for-lti-dashboard?clientId=" + clientId, HttpStatus.OK, String.class);
@@ -3380,8 +3518,9 @@ public class CourseTestService {
                 course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
                 course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(),
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getLearningPathsEnabled(),
-                course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
-                course.isGradeRelevant(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(), course.getMaxDailyOrchestrationOverride());
+                course.getPresentationAssessmentsEnabled(), course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getTimeZone(),
+                course.getCourseInformationSharingConfiguration(), course.isGradeRelevant(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(),
+                course.getMaxDailyOrchestrationOverride());
     }
 
     public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JacksonException {
@@ -3448,7 +3587,7 @@ public class CourseTestService {
     public void testUpdateCourseEnableLearningPaths() throws Exception {
         Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>());
         course.setLearningPathsEnabled(false);
-        courseRepo.save(course);
+        courseRepo.saveWithDefaultConfigurations(course);
         User student = userUtilService.getUserByLogin(userPrefix + "student1");
         userUtilService.enrollUserInCourse(student, course, CourseRole.STUDENT);
 
@@ -3929,4 +4068,11 @@ public class CourseTestService {
                 params);
         assertThat(result).extracting(UserForRegistrationDTO::login).containsExactly(userPrefix + "student1");
     }
+
+    private OnlineCourseConfiguration saveOnlineConfiguration(Course course, String prefix) {
+        var configuration = onlineCourseConfigurationRepository.findStoredByCourseId(course.getId()).orElseThrow();
+        configuration.setUserPrefix(prefix);
+        return onlineCourseConfigurationRepository.save(configuration);
+    }
+
 }

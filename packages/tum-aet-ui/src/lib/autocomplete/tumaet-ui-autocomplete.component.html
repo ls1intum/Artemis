@@ -14,7 +14,7 @@
         #textInput
         type="text"
         role="combobox"
-        [id]="inputId()"
+        [id]="resolvedInputId()"
         [attr.name]="name()"
         class="tumaet-ui-autocomplete-input tumaet:min-w-16 tumaet:flex-1 tumaet:border-0 tumaet:bg-transparent tumaet:p-0 tumaet:text-base tumaet:text-inherit tumaet:outline-none tumaet:placeholder:text-muted"
         [value]="inputText()"
@@ -26,6 +26,9 @@
         [attr.aria-controls]="panelVisible() ? listboxId : null"
         [attr.aria-activedescendant]="activeOptionId()"
         [attr.aria-label]="ariaLabel()"
+        [attr.aria-describedby]="describedBy()"
+        [attr.aria-invalid]="isInvalid() ? 'true' : null"
+        [attr.aria-required]="required() ? 'true' : null"
         (input)="onInput($event)"
         (focus)="onFocus($event)"
         (blur)="onBlur()"
