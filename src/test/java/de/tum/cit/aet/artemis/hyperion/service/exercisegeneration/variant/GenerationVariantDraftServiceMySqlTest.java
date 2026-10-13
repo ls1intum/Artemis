@@ -27,7 +27,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.mysql.MySQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -49,11 +49,9 @@ class GenerationVariantDraftServiceMySqlTest {
 
     @Test
     void assignmentCommittedWhileDraftWaitsCannotBeHiddenByARepeatableReadSnapshot() throws Exception {
-        try (var mysql = new GenericContainer<>(DockerImageName.parse("mysql:" + System.getProperty("mysql.version"))).withEnv("MYSQL_ROOT_PASSWORD", "test")
-                .withEnv("MYSQL_ROOT_HOST", "%").withEnv("MYSQL_DATABASE", "authoring").withExposedPorts(3306)) {
+        try (var mysql = new MySQLContainer(DockerImageName.parse("mysql:" + System.getProperty("mysql.version"))).withDatabaseName("authoring")) {
             mysql.start();
-            var dataSource = new DriverManagerDataSource(
-                    "jdbc:mysql://" + mysql.getHost() + ":" + mysql.getMappedPort(3306) + "/authoring?allowPublicKeyRetrieval=true&useSSL=false", "root", "test");
+            var dataSource = new DriverManagerDataSource(mysql.getJdbcUrl(), mysql.getUsername(), mysql.getPassword());
             var jdbc = new JdbcTemplate(dataSource);
             jdbc.execute("CREATE TABLE exam (id BIGINT PRIMARY KEY) ENGINE=InnoDB");
             jdbc.execute("CREATE TABLE exercise (id BIGINT PRIMARY KEY, exam_id BIGINT) ENGINE=InnoDB");

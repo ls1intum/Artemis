@@ -30,6 +30,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             threads: signal([]),
         };
 
+        reviewCommentService.feedbackSelectionOffered = reviewCommentService.adaptationOffered;
+
         await TestBed.configureTestingModule({
             imports: [ReviewCommentThreadWidgetComponent],
             providers: [
@@ -206,6 +208,13 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
         comp.toggleFeedbackSelection();
 
+        expect(reviewCommentService.toggleThreadFeedbackSelection).toHaveBeenCalledWith(1);
+    });
+
+    it('should select legacy feedback without offering whole-exercise adaptation', () => {
+        reviewCommentService.feedbackSelectionOffered = signal(true);
+        fixture.detectChanges();
+        (fixture.nativeElement.querySelector('[data-testid="review-feedback-selection"]') as HTMLButtonElement).click();
         expect(reviewCommentService.toggleThreadFeedbackSelection).toHaveBeenCalledWith(1);
     });
 

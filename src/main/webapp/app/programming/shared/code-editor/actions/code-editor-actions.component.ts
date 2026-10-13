@@ -20,7 +20,7 @@ import { getLocalRepositoryLink } from 'app/foundation/util/navigation.utils';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/services/code-editor-submission.service';
-import { CommitState, DomainChange, EditorState, FileSubmission, FileSubmissionError, GitConflictState } from '../model/code-editor.model';
+import { CommitState, EditorState, FileSubmission, FileSubmissionError, GitConflictState } from '../model/code-editor.model';
 import { CodeEditorConfirmRefreshModalComponent } from 'app/programming/shared/code-editor/actions/refresh-modal/code-editor-confirm-refresh-modal.component';
 import { CodeEditorResolveConflictModalComponent } from 'app/programming/shared/code-editor/actions/conflict-modal/code-editor-resolve-conflict-modal.component';
 
@@ -204,9 +204,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         return this.refreshRepository();
     }
 
-    private refreshRepository(domain?: DomainChange): Observable<boolean> {
+    private refreshRepository(): Observable<boolean> {
         this.editorState.set(EditorState.REFRESHING);
-        return this.repositoryService.pull(domain).pipe(
+        return this.repositoryService.pull().pipe(
             map(() => {
                 this.onRefreshFiles.emit();
                 this.editorState.set(EditorState.CLEAN);

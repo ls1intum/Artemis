@@ -122,9 +122,10 @@ describe('ExerciseReviewCommentService', () => {
         expect(syncServiceMock.subscribeToUpdates).toHaveBeenCalledTimes(1);
     });
 
-    it('reloadThreads should clear state and show alert on failure', () => {
+    it('reloadThreads should retain feedback after a failed reload until an authoritative response', () => {
         service.setExercise(2);
         service.threads.set([{ id: 99 } as any]);
+        service.selectThreadAsFeedback(99);
 
         service.reloadThreads();
 
@@ -132,6 +133,13 @@ describe('ExerciseReviewCommentService', () => {
         req.flush('failed', { status: 500, statusText: 'Server Error' });
 
         expect(service.threads()).toEqual([]);
+        expect(service.selectedFeedbackThreadIds()).toEqual([99]);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/2/review-threads').flush([{ id: 99 }]);
+        expect(service.selectedFeedbackThreadIds()).toEqual([99]);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/2/review-threads').flush([]);
+        expect(service.selectedFeedbackThreadIds()).toEqual([]);
         expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.review.loadFailed');
         expect(syncServiceMock.subscribeToUpdates).toHaveBeenCalledTimes(1);
     });

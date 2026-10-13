@@ -66,12 +66,6 @@
         }
     }
 
-    // The fork plugin snapshots the launch classpath, losing its project-artifact task dependencies.
-    // Build those artifacts before launching, not later while the documentation JVM is reading an old JAR.
-    tasks.named('forkedSpringBootRun') {
-        dependsOn configurations.runtimeClasspath
-    }
-
     // 1. TODO Detect if any resources have changed
     // 2. TODO If so, modify the packages to scan accordingly in the task above
     // 3. TODO Replace the existing OpenAPI spec with the new part. Keep the rest as is.

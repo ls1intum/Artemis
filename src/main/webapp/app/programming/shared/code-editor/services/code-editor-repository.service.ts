@@ -101,9 +101,8 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
         return this.http.post<void>(`${this.restResourceUrl}/commit`, {}).pipe(handleErrorResponse(this.conflictService));
     };
 
-    pull = (domain?: DomainChange) => {
-        const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
-        return this.http.post<void>(`${restResourceUrl}/pull`, {}).pipe(handleErrorResponse(this.conflictService));
+    pull = () => {
+        return this.http.post<void>(`${this.restResourceUrl}/pull`, {}).pipe(handleErrorResponse(this.conflictService));
     };
 
     /**

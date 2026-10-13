@@ -554,10 +554,14 @@ describe('TumAetUiTabPanelComponent preserveContent', () => {
         expect(fixture.debugElement.query(By.css('.discarded'))).toBeNull();
     });
 
-    it('keeps a preserved panel in the DOM, so a trip to another tab does not reset its state', () => {
+    it('keeps the same preserved content after switching away and back', () => {
+        const content = fixture.debugElement.query(By.css('.kept')).nativeElement;
         fixture.componentInstance.value.set(2);
         fixture.detectChanges();
-        expect(fixture.debugElement.query(By.css('.kept'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('.kept')).nativeElement).toBe(content);
+        fixture.componentInstance.value.set(1);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('.kept')).nativeElement).toBe(content);
     });
 
     it('takes the preserved panel out of the accessibility tree and out of the tab order while hidden', () => {

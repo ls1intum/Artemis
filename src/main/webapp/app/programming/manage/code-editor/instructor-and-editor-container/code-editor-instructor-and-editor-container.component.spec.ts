@@ -43,7 +43,6 @@ import { ProblemStatementService } from 'app/hyperion/problem-statement/problem-
 import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
 
 import { ConsistencyIssue } from 'app/openapi/model/consistency-issue';
-import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseReviewCommentService, ReviewAdaptationAvailability } from 'app/exercise/review/exercise-review-comment.service';
@@ -582,20 +581,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             (artemisIntelligenceService as any).isLoading = () => false;
             expect(comp.isCheckingConsistency()).toBe(false);
-        });
-
-        it('returns right icon', () => {
-            expect(comp.getSeverityIcon('HIGH')).toBe(faCircleExclamation);
-            expect(comp.getSeverityIcon('MEDIUM')).toBe(faTriangleExclamation);
-            expect(comp.getSeverityIcon('LOW')).toBe(faCircleInfo);
-            expect(comp.getSeverityIcon(undefined as any)).toBe(faCircleInfo);
-        });
-
-        it('returns right color', () => {
-            expect(comp.getSeverityColor('HIGH')).toBe('text-danger');
-            expect(comp.getSeverityColor('MEDIUM')).toBe('text-warning');
-            expect(comp.getSeverityColor('LOW')).toBe('text-info');
-            expect(comp.getSeverityColor(undefined as any)).toBe('text-secondary');
         });
 
         it('should toggle toolbar and select first issue if none selected', () => {
@@ -2215,6 +2200,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
         expect((jenkinsComp as any).hyperionEnabled).toBe(true);
         expect((jenkinsComp as any).hyperionGenerationSupported).toBe(false);
         expect((jenkinsComp as any).legacyCodeGenerationOffered()).toBe(true);
+        const availability = reviewCommentService.connectAdaptation.mock.calls.at(-1)![0] as ReviewAdaptationAvailability;
+        expect(availability.offered()).toBe(false);
+        expect(availability.feedbackOffered!()).toBe(true);
         expect((jenkinsComp as any).adaptOffered()).toBe(false);
         expect((jenkinsComp as any).generationSupported()).toBe(false);
         expect((jenkinsComp as any).canAdaptNow()).toBe(false);

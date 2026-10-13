@@ -97,7 +97,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
      * Whether this thread can feed an AI adaptation: the editor offers adaptation (see {@link ExerciseReviewCommentService.connectAdaptation}) and the thread sits in
      * a repository the adaptation writes to. Auxiliary repositories are outside what it changes.
      */
-    readonly showFeedbackAction = computed(() => this.reviewCommentService.adaptationOffered() && this.thread().targetType !== CommentThreadLocationType.AUXILIARY_REPO);
+    readonly showFeedbackAction = computed(() => this.reviewCommentService.feedbackSelectionOffered() && this.thread().targetType !== CommentThreadLocationType.AUXILIARY_REPO);
     readonly firstComment = computed(() => this.orderedComments()[0]);
     readonly firstConsistencyIssueContent = computed(() => consistencyIssueContentOf(this.firstComment()));
     readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);

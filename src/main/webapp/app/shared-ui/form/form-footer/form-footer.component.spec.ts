@@ -41,11 +41,23 @@ describe('FormFooterComponent', () => {
         fixture.componentRef.setInput('revalidate', () => []);
         const generated = vi.fn();
         comp.generateWithAi.subscribe(generated);
-        comp.onGenerateWithAi();
+        fixture.detectChanges();
+        (fixture.nativeElement.querySelector('[data-testid="legacy-generate-with-ai"]') as HTMLButtonElement).click();
         expect(generated).toHaveBeenCalledTimes(1);
         fixture.componentRef.setInput('isSaving', true);
         comp.onGenerateWithAi();
         expect(generated).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not emit the AI action when fresh validation still fails', () => {
+        fixture.componentRef.setInput('showGenerateWithAi', true);
+        fixture.componentRef.setInput('invalidReasons', [{ translateKey: 'test.key', translateValues: {} }]);
+        fixture.componentRef.setInput('revalidate', () => [{ translateKey: 'test.key', translateValues: {} }]);
+        const generated = vi.fn();
+        comp.generateWithAi.subscribe(generated);
+        fixture.detectChanges();
+        (fixture.nativeElement.querySelector('[data-testid="legacy-generate-with-ai"]') as HTMLButtonElement).click();
+        expect(generated).not.toHaveBeenCalled();
     });
 
     const findSubmitTooltipHost = (): DebugElement => {

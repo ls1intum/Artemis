@@ -25,13 +25,18 @@ import java.util.function.Consumer;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.redisson.api.RMapCache;
 import org.springframework.cache.Cache;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.core.config.cache.DistributedDataCache;
 import de.tum.cit.aet.artemis.core.config.cache.DistributedDataCacheManager;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DelegatingDistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryListener;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapListener;
@@ -40,6 +45,10 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.queue.listener.QueueI
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.listener.QueueListener;
 import de.tum.cit.aet.artemis.core.service.distributed.api.set.DistributedSet;
 import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
+import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap;
+import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedMap;
 import de.tum.cit.aet.artemis.core.util.IpAddresses;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
@@ -70,31 +79,78 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
 
     @Test
     void testRefreshTimeToLiveExtendsExpiryAndRequiresExpiringMap() {
-        DistributedMap<String, String> map = getDistributedDataProvider().getExpiringMap("testRefreshTimeToLive", Duration.ofSeconds(3));
-        map.put("key", "value", Duration.ofSeconds(1));
-        map.put("originalDeadline", "value", Duration.ofSeconds(1));
+        DistributedMap<String, String> map = getDistributedDataProvider().getExpiringMap("testRefreshTimeToLive", Duration.ofHours(2));
+        map.put("key", "value", Duration.ofHours(1));
+        ExpirationWindow original = expirationWindow(map, "key");
 
-        assertThat(map.refreshTimeToLive("key", Duration.ofSeconds(10))).isTrue();
-        Awaitility.await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertThat(map.get("originalDeadline")).isNull());
+        boolean localClock = getDistributedDataProvider() instanceof LocalDataProviderService;
+        long before = localClock ? System.nanoTime() : System.currentTimeMillis();
+        assertThat(map.refreshTimeToLive("key", Duration.ofHours(2))).isTrue();
+        long after = localClock ? System.nanoTime() : System.currentTimeMillis();
+        // Hazelcast stores entry expiration timestamps at whole-second precision.
+        if (getDistributedDataProvider() instanceof HazelcastDistributedDataProviderService) {
+            before = TimeUnit.SECONDS.toMillis(TimeUnit.MILLISECONDS.toSeconds(before));
+            after = TimeUnit.SECONDS.toMillis(TimeUnit.MILLISECONDS.toSeconds(after));
+        }
+        long lifetime = localClock ? Duration.ofHours(2).toNanos() : Duration.ofHours(2).toMillis();
+        ExpirationWindow refreshed = expirationWindow(map, "key");
+        assertThat(refreshed.earliest()).isGreaterThan(original.latest());
+        assertSameExpiration(new ExpirationWindow(before + lifetime, after + lifetime), refreshed);
         assertThat(map.get("key")).isEqualTo("value");
-        Awaitility.await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertThat(map.get("key")).isNull());
-        assertThat(map.refreshTimeToLive("absent", Duration.ofSeconds(2))).isFalse();
+        assertThat(map.refreshTimeToLive("absent", Duration.ofHours(2))).isFalse();
         assertThatExceptionOfType(UnsupportedOperationException.class)
-                .isThrownBy(() -> getDistributedDataProvider().<String, String>getMap("nonExpiringRefresh").refreshTimeToLive("key", Duration.ofSeconds(1)));
+                .isThrownBy(() -> getDistributedDataProvider().<String, String>getMap("nonExpiringRefresh").refreshTimeToLive("key", Duration.ofHours(2)));
     }
 
     @Test
     void testConditionalReplacePreservesExpiry() {
-        DistributedMap<String, String> map = getDistributedDataProvider().getExpiringMap("testConditionalReplaceExpiry", Duration.ofMinutes(1));
-        map.put("key", "before", Duration.ofSeconds(5));
-        map.put("originalDeadline", "value", Duration.ofSeconds(5));
-        map.put("replaceAfter", "value", Duration.ofSeconds(1));
-        Awaitility.await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertThat(map.get("replaceAfter")).isNull());
+        DistributedMap<String, String> map = getDistributedDataProvider().getExpiringMap("testConditionalReplaceExpiry", Duration.ofHours(2));
+        map.put("key", "before", Duration.ofHours(1));
+        ExpirationWindow original = expirationWindow(map, "key");
+        if (getDistributedDataProvider() instanceof HazelcastDistributedDataProviderService) {
+            // A renewed deadline differs only after Hazelcast's whole-second clock advances.
+            long createdAt = original.earliest() - Duration.ofHours(1).toMillis();
+            Awaitility.await().pollDelay(Duration.ZERO).pollInterval(Duration.ofMillis(10)).atMost(Duration.ofSeconds(30))
+                    .until(() -> TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) > TimeUnit.MILLISECONDS.toSeconds(createdAt));
+        }
+
+        assertThat(map.replace("key", "wrong-owner", "after")).isFalse();
+        assertSameExpiration(original, expirationWindow(map, "key"));
         assertThat(map.replace("key", "before", "after")).isTrue();
         assertThat(map.get("key")).isEqualTo("after");
+        assertSameExpiration(original, expirationWindow(map, "key"));
+    }
 
-        Awaitility.await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertThat(map.get("originalDeadline")).isNull());
-        assertThat(map.get("key")).isNull();
+    private void assertSameExpiration(ExpirationWindow expected, ExpirationWindow actual) {
+        assertThat(actual.earliest()).isLessThanOrEqualTo(expected.latest());
+        assertThat(actual.latest()).isGreaterThanOrEqualTo(expected.earliest());
+    }
+
+    private record ExpirationWindow(long earliest, long latest) {
+    }
+
+    // Native deadline observations avoid requiring a live entry to survive a short CI scheduling window.
+    @SuppressWarnings("unchecked")
+    private ExpirationWindow expirationWindow(DistributedMap<String, String> map, String key) {
+        while (map instanceof DelegatingDistributedMap<?, ?>) {
+            map = (DistributedMap<String, String>) ReflectionTestUtils.getField(map, "delegate");
+        }
+        if (map instanceof LocalMap<?, ?>) {
+            Map<String, Long> deadlines = (Map<String, Long>) ReflectionTestUtils.getField(map, "expiryDeadlines");
+            long deadline = deadlines.get(key);
+            return new ExpirationWindow(deadline, deadline);
+        }
+        if (map instanceof RedissonDistributedMap<?, ?>) {
+            RMapCache<String, String> cache = (RMapCache<String, String>) ReflectionTestUtils.getField(map, "mapCache");
+            long before = System.currentTimeMillis();
+            long remaining = cache.remainTimeToLive(key);
+            long after = System.currentTimeMillis();
+            assertThat(remaining).isPositive();
+            return new ExpirationWindow(before + remaining, after + remaining);
+        }
+        IMap<String, String> nativeMap = (IMap<String, String>) ReflectionTestUtils.getField(map, "map");
+        long deadline = nativeMap.getEntryView(key).getExpirationTime();
+        return new ExpirationWindow(deadline, deadline);
     }
 
     @Test
