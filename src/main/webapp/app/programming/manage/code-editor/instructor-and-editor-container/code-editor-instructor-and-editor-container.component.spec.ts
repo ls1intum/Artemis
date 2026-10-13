@@ -915,17 +915,16 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         expect(setDomain).toHaveBeenCalledExactlyOnceWith(domain);
     });
 
-    it('can navigate to another repository while exercise generation locks mutations', async () => {
-        vi.spyOn(comp as any, 'isExerciseGenerationActionBlocked').mockReturnValue(true);
-        const selectTemplate = vi.spyOn(CodeEditorInstructorBaseContainerComponent.prototype, 'selectTemplateParticipation').mockResolvedValue(true);
+    it('can navigate to a clean repository while exercise generation locks mutations', async () => {
+        vi.spyOn(comp as any, 'isProblemStatementEditingLocked').mockReturnValue(true);
+        const router = TestBed.inject(Router);
 
-        try {
-            await CodeEditorInstructorAndEditorContainerComponent.prototype.selectTemplateParticipation.call(comp);
+        await CodeEditorInstructorBaseContainerComponent.prototype.selectTemplateParticipation.call(comp);
+        await CodeEditorInstructorBaseContainerComponent.prototype.selectTestRepository.call(comp);
 
-            expect(selectTemplate).toHaveBeenCalledOnce();
-        } finally {
-            selectTemplate.mockRestore();
-        }
+        expect(router.navigate).toHaveBeenCalledTimes(2);
+        expect(router.navigate).toHaveBeenCalledWith(['../..', RepositoryType.TEMPLATE, comp.exercise()!.templateParticipation!.id], expect.anything());
+        expect(router.navigate).toHaveBeenCalledWith(['../..', RepositoryType.TESTS, 'test'], expect.anything());
     });
 
     it('saves and switches domains normally when exercise generation does not lock editing', () => {
@@ -1706,6 +1705,70 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         (comp as any).retryHyperionRefresh();
         expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ key: 'hyperionReloadSavedExerciseConfirmation', accept: expect.any(Function) }));
         expect(reloadEditor).not.toHaveBeenCalled();
+    });
+
+    it.each(['remote invalidation', 'active generation'])('preserves unsaved code across every repository-switch entry point after %s', async (lockSource) => {
+        const unsavedFiles = { 'App.java': 'local edit' };
+        const onSave = vi.fn();
+        const initializeProperties = vi.fn();
+        setCodeEditorContainer(comp, {
+            canDeactivate: () => Object.keys(unsavedFiles).length === 0,
+            hasCleanRepositoryState: () => false,
+            actions: () => ({ onSave }),
+            initializeProperties,
+        });
+        setEditableInstructions(comp, { unsavedChangesValue: () => false });
+        const activity = TestBed.inject(HyperionGenerationActivityFacade);
+        (comp as any).generationActivity = activity;
+        if (lockSource === 'remote invalidation') {
+            activity.exerciseContentsInvalidated.next('saved');
+        } else {
+            (activity.running as WritableSignal<boolean>).set(true);
+        }
+        expect((comp as any).isProblemStatementEditingLocked()).toBe(true);
+        const reset = vi.spyOn(internals(comp).fileSyncService, 'reset');
+        const domain: DomainChange = [DomainType.TEST_REPOSITORY, comp.exercise()!];
+        const selectedRepository = comp.selectedRepository;
+
+        expect(
+            await Promise.all([
+                comp.selectTemplateParticipation(),
+                comp.selectSolutionParticipation(),
+                comp.selectAssignmentParticipation(),
+                comp.selectTestRepository(),
+                comp.selectAuxiliaryRepository(7),
+            ]),
+        ).toEqual([false, false, false, false, false]);
+        comp.saveChangesAndSelectDomain(domain);
+        internals(comp).applyDomainChange(...domain);
+
+        expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
+        expect(TestBed.inject(DomainService).setDomain).not.toHaveBeenCalled();
+        expect(onSave).not.toHaveBeenCalled();
+        expect(initializeProperties).not.toHaveBeenCalled();
+        expect(reset).not.toHaveBeenCalled();
+        expect(comp.selectedRepository).toBe(selectedRepository);
+    });
+
+    it('blocks deferred cross-repository review jumps but keeps same-repository jumps available while dirty and locked', () => {
+        comp.generationStartPending.set(true);
+        setCodeEditorContainer(comp, { canDeactivate: () => false, selectedRepository: vi.fn(() => RepositoryType.SOLUTION) });
+        const onEditorLoaded = vi.spyOn(comp, 'onEditorLoaded').mockImplementation(() => undefined);
+        const warning = vi.spyOn(TestBed.inject(AlertService), 'warning');
+
+        internals(comp).navigateToLocation({ targetType: CommentThreadLocationType.TEMPLATE_REPO, filePath: 'Template.java', lineNumber: 10 });
+
+        expect(comp.fileToJumpOn).toBeUndefined();
+        expect(comp.lineJumpOnFileLoad).toBeUndefined();
+        expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
+        expect(onEditorLoaded).not.toHaveBeenCalled();
+        expect(warning).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.repositorySwitchBlockedByLocalEdits');
+
+        internals(comp).navigateToLocation({ targetType: CommentThreadLocationType.SOLUTION_REPO, filePath: 'Solution.java', lineNumber: 12 });
+
+        expect(comp.fileToJumpOn).toBe('Solution.java');
+        expect(comp.lineJumpOnFileLoad).toBe(12);
+        expect(onEditorLoaded).toHaveBeenCalledOnce();
     });
 
     it('warns and does not reload when a generation revert arrives while the editor is dirty', () => {

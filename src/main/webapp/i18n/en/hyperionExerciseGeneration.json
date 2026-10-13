@@ -328,6 +328,7 @@
                 "meaningfulSpecRequired": "Describe the exercise requirements in at least 40 characters before generating it.",
                 "saveChangesFirst": "Save or discard your local edits before starting or applying AI generation.",
                 "refreshBlockedByLocalEdits": "The exercise was saved, but local edits prevent a safe refresh. Copy anything you need before reloading the saved exercise.",
+                "repositorySwitchBlockedByLocalEdits": "You cannot switch repositories while saving is locked and you have unsaved code or review drafts. Your edits stay in this editor.",
                 "checkingStatus": "Checking generation status…",
                 "refreshingEditor": "Updating the editor with the saved exercise…",
                 "editorRefreshFailed": "The exercise was saved, but the editor could not be updated safely. Copy anything you need before reloading the saved exercise.",

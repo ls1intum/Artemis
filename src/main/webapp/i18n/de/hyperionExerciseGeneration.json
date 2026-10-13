@@ -328,6 +328,7 @@
                 "meaningfulSpecRequired": "Beschreibe die Anforderungen der Aufgabe vor der Generierung mit mindestens 40 Zeichen.",
                 "saveChangesFirst": "Speichere oder verwirf deine lokalen Änderungen, bevor du die KI-Generierung startest oder anwendest.",
                 "refreshBlockedByLocalEdits": "Die Aufgabe wurde gespeichert, aber lokale Änderungen verhindern eine sichere Aktualisierung. Sichere alles, was du brauchst, bevor du die gespeicherte Aufgabe neu lädst.",
+                "repositorySwitchBlockedByLocalEdits": "Du kannst das Repository nicht wechseln, solange das Speichern gesperrt ist und du ungespeicherten Code oder Entwürfe für Review-Kommentare hast. Deine Änderungen bleiben in diesem Editor.",
                 "checkingStatus": "Generierungsstatus wird geprüft…",
                 "refreshingEditor": "Der Editor wird mit der gespeicherten Aufgabe aktualisiert…",
                 "editorRefreshFailed": "Die Aufgabe wurde gespeichert, aber der Editor konnte nicht sicher aktualisiert werden. Sichere alles, was du brauchst, bevor du die gespeicherte Aufgabe neu lädst.",
