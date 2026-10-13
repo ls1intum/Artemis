@@ -2,15 +2,27 @@ package de.tum.cit.aet.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.IntSupplier;
+
+import javax.sql.DataSource;
 
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.jspecify.annotations.Nullable;
@@ -23,6 +35,8 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
@@ -98,6 +112,12 @@ class MetisRepositoryQueryIntegrationTest extends AbstractProgrammingIntegration
 
     @Autowired
     private MetisUtilService metisUtilService;
+
+    @Autowired
+    private DataSource dataSource;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     @Autowired
     private MetisCheckRepository checkRepository;
@@ -916,12 +936,15 @@ class MetisRepositoryQueryIntegrationTest extends AbstractProgrammingIntegration
             // A check in generation has not been started either, so only the guard on the status refuses its question.
             MetisQuestion ofCheckInGeneration = mainQuestion(check("student4", MetisCheckStatus.GENERATING), 1);
 
-            assertThat(questionRepository.replaceAfterRegeneration(regenerated.getId(), "Regenerated", 200, 0)).isOne();
-            assertThat(questionRepository.replaceAfterRegeneration(regenerated.getId(), "Regenerated again", 210, 0)).isZero();
-            assertThat(questionRepository.replaceAfterRegeneration(shownMain.getId(), "Regenerated", 200, 0)).isZero();
-            assertThat(questionRepository.replaceAfterRegeneration(ofStartedCheck.getId(), "Regenerated", 200, 0)).isZero();
-            assertThat(questionRepository.replaceAfterRegeneration(ofCheckInReview.getId(), "Regenerated in review", 220, 0)).isOne();
-            assertThat(questionRepository.replaceAfterRegeneration(ofCheckInGeneration.getId(), "Regenerated", 200, 0)).isZero();
+            // An editor changed the text after the regeneration read it
+            assertThat(replaceAfterRegeneration(regenerated, "Regenerated", 200, 0, "Text before the edit")).isZero();
+            assertThat(replaceAfterRegeneration(regenerated, "Regenerated", 200, 0, regenerated.getQuestionText())).isOne();
+            // Another regeneration finished after this one read the question
+            assertThat(replaceAfterRegeneration(regenerated, "Regenerated again", 210, 0, "Regenerated")).isZero();
+            assertThat(replaceAfterRegeneration(shownMain, "Regenerated", 200, 0, shownMain.getQuestionText())).isZero();
+            assertThat(replaceAfterRegeneration(ofStartedCheck, "Regenerated", 200, 0, ofStartedCheck.getQuestionText())).isZero();
+            assertThat(replaceAfterRegeneration(ofCheckInReview, "Regenerated in review", 220, 0, ofCheckInReview.getQuestionText())).isOne();
+            assertThat(replaceAfterRegeneration(ofCheckInGeneration, "Regenerated", 200, 0, ofCheckInGeneration.getQuestionText())).isZero();
 
             MetisQuestion replaced = reload(regenerated);
             assertThat(replaced.getQuestionText()).isEqualTo("Regenerated");
@@ -938,6 +961,33 @@ class MetisRepositoryQueryIntegrationTest extends AbstractProgrammingIntegration
                 assertThat(reload(unchanged).getQuestionText()).isEqualTo(unchanged.getQuestionText());
                 assertThat(reload(unchanged).getRegenerationCount()).isZero();
             }
+        }
+
+        /**
+         * As for the approval, the text the regeneration read before the call is compared in Java, not in the collation of the column: the regenerated text must
+         * not overwrite a correction of nothing but the case of an identifier or an accent either.
+         */
+        @ParameterizedTest
+        @CsvSource(delimiter = '|', value = { "Why does getID return a copy of the list?|Why does getId return a copy of the list?",
+                "Why does the loop stop when zähler reaches the length?|Why does the loop stop when zahler reaches the length?" })
+        void shouldNotReplaceARegeneratedQuestionWhoseTextAnEditorChangedOnlyInCaseOrAccents(String readBeforeTheCall, String editedText) {
+            MetisCheck ready = check("student1", MetisCheckStatus.READY);
+            MetisQuestion question = mainQuestion(ready, 1);
+            // An editor corrected the text after the regeneration read it
+            question.setQuestionText(editedText);
+            questionRepository.save(question);
+
+            assertThat(replaceAfterRegeneration(question, "Regenerated", 200, 0, readBeforeTheCall)).isZero();
+
+            MetisQuestion kept = reload(question);
+            assertThat(kept.getQuestionText()).isEqualTo(editedText);
+            assertThat(kept.getRegenerationCount()).isZero();
+        }
+
+        /** Stores a regenerated question as the regeneration does, under the lock of its check. */
+        private int replaceAfterRegeneration(MetisQuestion question, String questionText, int timeLimitSeconds, int expectedRegenerationCount, String expectedQuestionText) {
+            return questionRepository.replaceAfterRegenerationSharingTheCheck(question.getCheckId(), question.getId(), questionText, timeLimitSeconds, expectedRegenerationCount,
+                    expectedQuestionText);
         }
 
         @Test
@@ -1035,6 +1085,147 @@ class MetisRepositoryQueryIntegrationTest extends AbstractProgrammingIntegration
             assertThat(questionRepository.deleteAllOfCheck(leftover.getId())).isEqualTo(2);
             assertThat(questionRepository.findAllByCheckIdOrderByQuestionOrderAsc(leftover.getId())).isEmpty();
             assertThat(questionRepository.findAllByCheckIdOrderByQuestionOrderAsc(other.getId())).extracting(MetisQuestion::getId).containsExactly(kept.getId());
+        }
+    }
+
+    @Nested
+    class LockOrder {
+
+        @Test
+        void shouldReplaceTheTextOnlyAfterATransitionThatHoldsTheCheckWithoutHoldingTheQuestionMeanwhile() throws Exception {
+            MetisCheck check = check("student1", MetisCheckStatus.READY);
+            MetisQuestion question = mainQuestion(check, 1);
+
+            int replaced = runWhileATransitionHoldsTheCheckAndShowsTheQuestion(check, question,
+                    () -> questionRepository.updateTextSharingTheCheck(check.getId(), question.getId(), "Edited"));
+
+            // The question was shown before the statement ran, so the student keeps the text they saw
+            assertThat(replaced).isZero();
+            assertThat(reload(question).getQuestionText()).isEqualTo(question.getQuestionText());
+        }
+
+        @Test
+        void shouldStoreARegeneratedQuestionOnlyAfterATransitionThatHoldsTheCheckWithoutHoldingTheQuestionMeanwhile() throws Exception {
+            MetisCheck check = check("student1", MetisCheckStatus.IN_REVIEW);
+            MetisQuestion question = mainQuestion(check, 1);
+
+            int replaced = runWhileATransitionHoldsTheCheckAndShowsTheQuestion(check, question,
+                    () -> questionRepository.replaceAfterRegenerationSharingTheCheck(check.getId(), question.getId(), "Regenerated", 200, 0, question.getQuestionText()));
+
+            assertThat(replaced).isZero();
+            assertThat(reload(question).getQuestionText()).isEqualTo(question.getQuestionText());
+            assertThat(reload(question).getRegenerationCount()).isZero();
+        }
+
+        @Test
+        void shouldApproveAllQuestionsOnlyAfterATransitionThatHoldsACheckWithoutHoldingItsQuestionsMeanwhile() throws Exception {
+            MetisCheck check = check("student1", MetisCheckStatus.IN_REVIEW);
+            MetisQuestion question = mainQuestion(check, 1);
+
+            int approved = runWhileATransitionHoldsTheCheckAndShowsTheQuestion(check, question,
+                    () -> questionRepository.approveAllOpenMainQuestionsOfExerciseSharingTheChecks(exercise.getId(), DUE.plusHours(1)));
+
+            assertThat(approved).isOne();
+            assertThat(reload(question).getApprovedAt()).isNotNull();
+        }
+
+        /**
+         * Runs a review statement while a transition in another transaction holds the lock of the check, as every transition of a started check does before it
+         * writes a question. The statement has to wait for the lock of the check before it writes the question, so that the transition can still show the
+         * question meanwhile: a statement that held the question first would wait for the transition while the transition waits for it.
+         *
+         * @return what the statement returned once the transition committed
+         */
+        private int runWhileATransitionHoldsTheCheckAndShowsTheQuestion(MetisCheck check, MetisQuestion question, IntSupplier reviewStatement) throws Exception {
+            try (Connection transition = dataSource.getConnection()) {
+                transition.setAutoCommit(false);
+                try (PreparedStatement lock = transition.prepareStatement("SELECT id FROM metis_check WHERE id = ? FOR UPDATE")) {
+                    lock.setLong(1, check.getId());
+                    lock.executeQuery().close();
+                }
+                CompletableFuture<Integer> review = CompletableFuture.supplyAsync(reviewStatement::getAsInt);
+                await().during(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(3)).until(() -> !review.isDone());
+
+                try (PreparedStatement show = transition.prepareStatement("UPDATE metis_question SET shown_at = ? WHERE id = ?")) {
+                    show.setTimestamp(1, Timestamp.from(DUE.toInstant()));
+                    show.setLong(2, question.getId());
+                    show.setQueryTimeout(10);
+                    show.executeUpdate();
+                }
+                transition.commit();
+                return review.get(10, TimeUnit.SECONDS);
+            }
+        }
+    }
+
+    /**
+     * The statements on one check, and the sweep of one exercise, read no participation and no exercise of other students or exercises. On MySQL an update
+     * keeps a shared lock on every row its subqueries read until its transaction ends, so a subquery that is not bound to the check or to the exercise would
+     * hold the participations and exercises of all of Artemis, whose updates would then wait for every start. The statements run in a transaction that stays
+     * open while another connection writes those rows with a short lock timeout.
+     */
+    @Nested
+    class LockScope {
+
+        @Test
+        void shouldStartAndResetOneCheckWithoutHoldingTheRowsOfOtherParticipationsOrExercises() {
+            MetisCheck started = generatedFor(check("student1", MetisCheckStatus.READY), DUE.plusMinutes(1), DUE);
+            MetisCheck unchanged = generatedFor(check("student2", MetisCheckStatus.READY), DUE.plusMinutes(1), DUE);
+            long otherStudent = participation(exercise, "student3").getId();
+            ProgrammingExercise other = otherExercise("METISB", DUE);
+            long ofOtherExercise = participation(other, "student1").getId();
+
+            inATransactionThatStaysOpen(() -> {
+                assertThat(checkRepository.markStarted(started.getId(), DUE.plusHours(1))).isOne();
+                assertThat(checkRepository.resetCheckWithChangedDueDate(unchanged.getId(), DUE.plusHours(1))).isZero();
+            }, () -> {
+                assertWritable("UPDATE participation SET individual_due_date = individual_due_date WHERE id = ?", otherStudent);
+                assertWritable("UPDATE participation SET individual_due_date = individual_due_date WHERE id = ?", ofOtherExercise);
+                assertWritable("UPDATE exercise SET due_date = due_date WHERE id = ?", other.getId());
+            });
+        }
+
+        @Test
+        void shouldSweepOneExerciseWithoutHoldingTheRowsOfAnotherExercise() {
+            generatedFor(check("student1", MetisCheckStatus.READY), DUE.plusMinutes(1), DUE);
+            ProgrammingExercise other = otherExercise("METISB", DUE);
+            MetisCheck ofOtherExercise = generatedFor(metisUtilService.saveCheck(participation(other, "student2").getId(), MetisCheckStatus.READY), DUE.plusMinutes(1), DUE);
+
+            inATransactionThatStaysOpen(() -> assertThat(checkRepository.resetChecksWithChangedDueDate(exercise.getId(), DUE.plusHours(1))).isZero(), () -> {
+                assertWritable("UPDATE participation SET individual_due_date = individual_due_date WHERE id = ?", ofOtherExercise.getParticipationId());
+                assertWritable("UPDATE exercise SET due_date = due_date WHERE id = ?", other.getId());
+                assertWritable("UPDATE metis_check SET status = status WHERE id = ?", ofOtherExercise.getId());
+            });
+        }
+
+        /** Runs the statements in a transaction and, while it is still open, the probes from another connection. */
+        private void inATransactionThatStaysOpen(Runnable statements, Runnable probes) {
+            new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+                statements.run();
+                probes.run();
+            });
+        }
+
+        /** Writes one row from another connection, which gives up after two seconds if the open transaction holds a lock on the row. */
+        private void assertWritable(String update, long id) {
+            try (Connection probe = dataSource.getConnection()) {
+                boolean mySql = probe.getMetaData().getDatabaseProductName().toLowerCase(Locale.ROOT).contains("mysql");
+                try (Statement timeout = probe.createStatement()) {
+                    timeout.execute(mySql ? "SET SESSION innodb_lock_wait_timeout = 2" : "SET lock_timeout = '2s'");
+                }
+                try (PreparedStatement write = probe.prepareStatement(update)) {
+                    write.setLong(1, id);
+                    write.executeUpdate();
+                }
+                finally {
+                    try (Statement timeout = probe.createStatement()) {
+                        timeout.execute(mySql ? "SET SESSION innodb_lock_wait_timeout = DEFAULT" : "RESET lock_timeout");
+                    }
+                }
+            }
+            catch (SQLException e) {
+                throw new AssertionError("The open transaction holds the row " + id + " of [" + update + "]: " + e.getMessage(), e);
+            }
         }
     }
 

@@ -172,7 +172,8 @@ public interface MetisQuestionRepository extends ArtemisJpaRepository<MetisQuest
             @Param("expectedRegenerationCount") int expectedRegenerationCount);
 
     /**
-     * Approves every main question of an exercise that is not approved yet.
+     * Approves every main question of an exercise that is not approved yet. It reads the checks of the questions it writes, so callers go through
+     * {@link #approveAllOpenMainQuestionsOfExerciseSharingTheChecks}, which locks the checks first.
      *
      * @param exerciseId the exercise
      * @param approvedAt when they were approved
@@ -195,8 +196,41 @@ public interface MetisQuestionRepository extends ArtemisJpaRepository<MetisQuest
     int approveAllOpenMainQuestionsOfExercise(@Param("exerciseId") long exerciseId, @Param("approvedAt") ZonedDateTime approvedAt);
 
     /**
+     * Reads the checks of an exercise and holds a shared lock on their rows until the surrounding transaction ends, see {@link #findCheckForShare}.
+     *
+     * @param exerciseId the exercise
+     * @return the checks of the exercise
+     */
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("""
+            SELECT c
+            FROM MetisCheck c
+            WHERE c.participationId IN (
+                SELECT p.id
+                FROM StudentParticipation p
+                WHERE p.exercise.id = :exerciseId
+            )
+            """)
+    List<MetisCheck> findChecksOfExerciseForShare(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Approves every main question of an exercise that is not approved yet, after it has locked the checks of the exercise, see {@link #findCheckForShare}.
+     *
+     * @param exerciseId the exercise
+     * @param approvedAt when they were approved
+     * @return the number of approved questions
+     */
+    @Transactional // ok because the rows of the checks are locked before the rows of their questions, in the order of the transitions of a started check
+    default int approveAllOpenMainQuestionsOfExerciseSharingTheChecks(long exerciseId, ZonedDateTime approvedAt) {
+        findChecksOfExerciseForShare(exerciseId);
+        return approveAllOpenMainQuestionsOfExercise(exerciseId, approvedAt);
+    }
+
+    /**
      * Replaces the text of a main question during the review, keeping its approval. Once the student has seen the question, or has started the check, the
      * questions of the check are frozen, so that what the student answers is what the instructor last saw.
+     *
+     * It reads the check of the question, so callers go through {@link #updateTextSharingTheCheck}, which locks the check first.
      *
      * @param questionId   the main question
      * @param questionText the new text
@@ -221,14 +255,30 @@ public interface MetisQuestionRepository extends ArtemisJpaRepository<MetisQuest
     int updateTextIfNotShown(@Param("questionId") long questionId, @Param("questionText") String questionText);
 
     /**
-     * Stores a regenerated question: its new text and time limit, one more regeneration, and no approval, since nobody has reviewed the new text. The count the
-     * caller read before the LLM call guards against a second regeneration or edit that finished meanwhile.
+     * Replaces the text of a main question during the review as {@link #updateTextIfNotShown} does, after it has locked the check of the question, see
+     * {@link #findCheckForShare}.
+     *
+     * @param checkId      the check of the question
+     * @param questionId   the main question
+     * @param questionText the new text
+     * @return 1 if the text was replaced, 0 if the question is a follow-up, has been shown, or its check is started or neither ready nor in review
+     */
+    @Transactional // ok because the row of the check is locked before the row of its question, in the order of the transitions of a started check
+    default int updateTextSharingTheCheck(long checkId, long questionId, String questionText) {
+        findCheckForShare(checkId);
+        return updateTextIfNotShown(questionId, questionText);
+    }
+
+    /**
+     * Stores a regenerated question: its new text and time limit, one more regeneration, and no approval, since nobody has reviewed the new text. The
+     * regeneration count the caller read before the LLM call guards against a second regeneration. It neither compares the text nor locks the check it reads,
+     * so callers go through {@link #replaceAfterRegenerationSharingTheCheck}, which does both first.
      *
      * @param questionId                the main question
      * @param questionText              the new text
      * @param timeLimitSeconds          the new time limit
      * @param expectedRegenerationCount the regeneration count the caller read before it asked the LLM
-     * @return 1 if the question was replaced, 0 if it changed meanwhile, has been shown, or its check is started or neither ready nor in review
+     * @return 1 if the question was replaced, 0 if it was generated again meanwhile, has been shown, or its check is started or neither ready nor in review
      */
     @Modifying
     @Transactional // ok because of modifying query
@@ -249,8 +299,46 @@ public interface MetisQuestionRepository extends ArtemisJpaRepository<MetisQuest
                         AND c.status IN (de.tum.cit.aet.artemis.metis.domain.MetisCheckStatus.READY, de.tum.cit.aet.artemis.metis.domain.MetisCheckStatus.IN_REVIEW)
                 )
             """)
-    int replaceAfterRegeneration(@Param("questionId") long questionId, @Param("questionText") String questionText, @Param("timeLimitSeconds") int timeLimitSeconds,
+    int replaceIfNotRegeneratedSince(@Param("questionId") long questionId, @Param("questionText") String questionText, @Param("timeLimitSeconds") int timeLimitSeconds,
             @Param("expectedRegenerationCount") int expectedRegenerationCount);
+
+    /**
+     * Stores a regenerated question as {@link #replaceIfNotRegeneratedSince} does while its text is still the one the caller read before it asked the LLM:
+     * an edit that finished meanwhile must not be overwritten unseen. It locks the check of the question first, see {@link #findCheckForShare}, and then the
+     * question, whose text it compares exactly, see {@link #findQuestionForUpdate}.
+     *
+     * @param checkId                   the check of the question
+     * @param questionId                the main question
+     * @param questionText              the new text
+     * @param timeLimitSeconds          the new time limit
+     * @param expectedRegenerationCount the regeneration count the caller read before it asked the LLM
+     * @param expectedQuestionText      the text the caller read before it asked the LLM
+     * @return 1 if the question was replaced, 0 if it changed meanwhile, has been shown, or its check is started or neither ready nor in review
+     */
+    @Transactional // ok because the row of the check is locked before the row of its question, in the order of the transitions of a started check
+    default int replaceAfterRegenerationSharingTheCheck(long checkId, long questionId, String questionText, int timeLimitSeconds, int expectedRegenerationCount,
+            String expectedQuestionText) {
+        findCheckForShare(checkId);
+        boolean unchanged = findQuestionForUpdate(questionId).map(question -> expectedQuestionText.equals(question.getQuestionText())).orElse(false);
+        return unchanged ? replaceIfNotRegeneratedSince(questionId, questionText, timeLimitSeconds, expectedRegenerationCount) : 0;
+    }
+
+    /**
+     * Reads a check and holds a shared lock on its row until the surrounding transaction ends. A review statement that writes a question and reads its check
+     * takes it first, in the order of the transitions of a started check, which lock the check before they write one of its questions: an {@code UPDATE} of
+     * a question on MySQL locks the row it writes before the rows its subquery reads, so the two would otherwise wait for each other, and the database would
+     * end one of them. Shared locks do not wait for each other, so reviews of the same check do not.
+     *
+     * @param checkId the check
+     * @return the check, or empty if it does not exist
+     */
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("""
+            SELECT c
+            FROM MetisCheck c
+            WHERE c.id = :checkId
+            """)
+    Optional<MetisCheck> findCheckForShare(@Param("checkId") long checkId);
 
     /**
      * Reads a check that is in progress and locks its row until the surrounding transaction ends. Every transition that moves a started check on after an
