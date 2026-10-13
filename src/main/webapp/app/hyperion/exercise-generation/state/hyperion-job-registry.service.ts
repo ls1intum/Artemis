@@ -3,6 +3,8 @@ import { DestroyRef, Service, Signal, computed, effect, inject, signal, untracke
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Subject, Subscription, defer, from, interval } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, filter, finalize, map, mergeMap, switchMap, take, takeUntil, tap, timeout } from 'rxjs/operators';
+import { MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -79,6 +81,7 @@ export function isTerminalHyperionJobStatus(status: HyperionJobStatus): boolean 
 @Service()
 export class HyperionJobRegistryService {
     private readonly accountService = inject(AccountService);
+    private readonly profileService = inject(ProfileService);
     private readonly generationService = inject(HyperionExerciseGenerationService);
     private readonly websocketService = inject(WebsocketService);
     private readonly destroyRef = inject(DestroyRef);
@@ -132,8 +135,9 @@ export class HyperionJobRegistryService {
 
         effect(() => {
             const login = this.accountService.userIdentity()?.login;
+            const eligible = this.accountService.hasEditorAccess() && this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION);
             // Registry reads during loading must not retrigger this identity effect.
-            untracked(() => this.onLoginChanged(login));
+            untracked(() => this.onLoginChanged(eligible ? login : undefined));
         });
 
         this.destroyRef.onDestroy(() => this.clearStreamSubscriptions());
@@ -204,7 +208,10 @@ export class HyperionJobRegistryService {
                 next: (page) => {
                     if (this.accountService.userIdentity()?.login !== login) return;
                     this.historyFailed.set(false);
-                    if (beforeId !== undefined || !this.historyDiscovered) this.nextBeforeId.set(page.nextBeforeId);
+                    const knownJobIds = new Set(this.entriesSignal().map((entry) => entry.jobId));
+                    const disconnectedNewestPage =
+                        beforeId === undefined && page.nextBeforeId !== undefined && (page.runs.length === 0 || !knownJobIds.has(page.runs.at(-1)!.jobId));
+                    if (beforeId !== undefined || !this.historyDiscovered || disconnectedNewestPage) this.nextBeforeId.set(page.nextBeforeId);
                     this.historyDiscovered = true;
                     const entries = new Map(this.entriesSignal().map((entry) => [entry.jobId, entry]));
                     for (const run of page.runs) entries.set(run.jobId, this.fromHistory(run, entries.get(run.jobId)));

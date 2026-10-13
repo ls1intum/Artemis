@@ -35,6 +35,7 @@ const quiz: VariantJob = { jobId: 'q', sourceExerciseTitle: 'Quiz', exerciseType
 
 describe('HyperionActivityTrayComponent', () => {
     let fixture: ComponentFixture<HyperionActivityTrayComponent>;
+    let editorAccess: ReturnType<typeof signal<boolean>>;
     let entries: ReturnType<typeof signal<HyperionJobEntry[]>>;
     let jobs: ReturnType<typeof signal<VariantJob[]>>;
     let identity: ReturnType<typeof signal<{ login: string } | undefined>>;
@@ -58,8 +59,19 @@ describe('HyperionActivityTrayComponent', () => {
         fixture.detectChanges();
     };
 
+    it('does not instantiate the authoring registry for an account without editor access', () => {
+        editorAccess.set(false);
+        fixture.componentRef.setInput('authoringEnabled', true);
+        entries.set([running]);
+        jobs.set([quiz]);
+        fixture.detectChanges();
+        expect(registryFactory).not.toHaveBeenCalled();
+        expect(query('ai-activity-trigger')).toBeNull();
+    });
+
     beforeEach(async () => {
         localStorage.clear();
+        editorAccess = signal(true);
         entries = signal<HyperionJobEntry[]>([]);
         jobs = signal<VariantJob[]>([]);
         identity = signal<{ login: string } | undefined>({ login: 'editor' });
@@ -77,7 +89,7 @@ describe('HyperionActivityTrayComponent', () => {
                 provideRouter([{ path: '**', children: [] }]),
                 provideLocationMocks(),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: AccountService, useValue: { userIdentity: identity, hasAnyAuthorityDirect: () => true } },
+                { provide: AccountService, useValue: { userIdentity: identity, hasEditorAccess: () => editorAccess() } },
                 { provide: AlertService, useValue: { error: vi.fn() } },
                 { provide: HyperionJobRegistryService, useFactory: () => registryFactory() },
                 { provide: HyperionExerciseGenerationService, useValue: generation },

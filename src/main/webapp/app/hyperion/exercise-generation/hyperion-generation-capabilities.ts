@@ -54,3 +54,8 @@ export function generationCapabilityBlocker(capabilities: ExerciseGenerationCapa
             return prefix + 'preparationOnly';
     }
 }
+
+/** Only a definite assignment restriction selects the existing legacy workflow; request failure and busy state do not. */
+export function hasLegacyGenerationRestriction(capabilities: ExerciseGenerationCapabilities | undefined): boolean {
+    return capabilities?.supported === true && capabilities.canAdapt !== true && !capabilities.busy && capabilities.restriction === 'exerciseAlreadyAssigned';
+}

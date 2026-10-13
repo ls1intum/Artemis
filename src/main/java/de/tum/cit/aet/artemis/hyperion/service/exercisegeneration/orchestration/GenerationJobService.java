@@ -383,6 +383,7 @@ public class GenerationJobService {
         }
         catch (RejectedExecutionException e) {
             cleanup.unpublished(newJob, startedReplay.get());
+            recordDispatchFailure(jobId);
             if (publicStatePublished) {
                 publishExerciseState(exercise.getId(), jobId, false);
             }
@@ -392,6 +393,7 @@ public class GenerationJobService {
         }
         catch (RuntimeException e) {
             cleanup.unpublished(newJob, startedReplay.get());
+            recordDispatchFailure(jobId);
             if (publicStatePublished) {
                 publishExerciseState(exercise.getId(), jobId, false);
             }

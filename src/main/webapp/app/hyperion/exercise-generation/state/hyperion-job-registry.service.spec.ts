@@ -5,6 +5,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { User } from 'app/account/user/user.model';
+import { MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
@@ -37,6 +39,8 @@ function status(partial: Partial<HyperionGenerationStatus>): HyperionGenerationS
 
 describe('HyperionJobRegistryService', () => {
     let identity: ReturnType<typeof signal<User | undefined>>;
+    let editorAccess: ReturnType<typeof signal<boolean>>;
+    let generationEnabled: boolean;
     let connectionState: BehaviorSubject<ConnectionState>;
     let getStatus: Mock<(exerciseId: number) => Observable<HyperionGenerationStatus | null>>;
     let getRuns: Mock<(beforeId?: number) => Observable<AuthoringRunPage>>;
@@ -46,6 +50,8 @@ describe('HyperionJobRegistryService', () => {
 
     function configure(): void {
         identity = signal<User | undefined>(undefined);
+        editorAccess = signal(true);
+        generationEnabled = true;
         connectionState = new BehaviorSubject<ConnectionState>(new ConnectionState(false, false));
         getStatus = vi.fn(() => of(status({ running: true, events: [event('STARTED')] })) as Observable<HyperionGenerationStatus | null>);
         streams = new Map();
@@ -66,7 +72,8 @@ describe('HyperionJobRegistryService', () => {
 
         TestBed.configureTestingModule({
             providers: [
-                { provide: AccountService, useValue: { userIdentity: identity } },
+                { provide: AccountService, useValue: { userIdentity: identity, hasEditorAccess: () => editorAccess() } },
+                { provide: ProfileService, useValue: { isModuleFeatureActive: (feature: string) => generationEnabled && feature === MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } },
                 { provide: WebsocketService, useValue: { connectionState: connectionState.asObservable() } },
                 { provide: HyperionExerciseGenerationService, useValue: generationServiceMock },
             ],
@@ -91,6 +98,43 @@ describe('HyperionJobRegistryService', () => {
         vi.useRealTimers();
         vi.restoreAllMocks();
         localStorage.clear();
+    });
+
+    it.each(['disabled generation', 'insufficient editor access'])('does not discover or poll with %s', (reason) => {
+        generationEnabled = reason !== 'disabled generation';
+        editorAccess.set(reason !== 'insufficient editor access');
+        const service = createService();
+        connectionState.next(new ConnectionState(true, false));
+        service.refresh();
+        vi.advanceTimersByTime(2 * HYPERION_JOB_POLL_INTERVAL_MS);
+        expect(getRuns).not.toHaveBeenCalled();
+        expect(getRunAccess).not.toHaveBeenCalled();
+        expect(getRunStatus).not.toHaveBeenCalled();
+        expect(service.entries()).toEqual([]);
+    });
+
+    it('cancels discovery and clears subscriptions when editor access ends, then reloads on regain', () => {
+        const service = createService();
+        service.track({ jobId: 'j1', exerciseId: 42, courseId: 7, exerciseTitle: 'Stack', mode: 'ADAPT' });
+        const pending = new Subject<AuthoringRunPage>();
+        getRuns.mockReturnValueOnce(pending);
+        service.refresh();
+        expect(pending.observed).toBe(true);
+        expect(streams.get('j1')?.observed).toBe(true);
+        editorAccess.set(false);
+        TestBed.tick();
+        expect(pending.observed).toBe(false);
+        expect(streams.get('j1')?.observed).toBe(false);
+        expect(service.entries()).toEqual([]);
+        getRuns.mockClear();
+        pending.next({ runs: [], nextBeforeId: 51 });
+        connectionState.next(new ConnectionState(true, false));
+        vi.advanceTimersByTime(2 * HYPERION_JOB_POLL_INTERVAL_MS);
+        expect(getRuns).not.toHaveBeenCalled();
+        expect(service.hasMoreHistory()).toBe(false);
+        editorAccess.set(true);
+        TestBed.tick();
+        expect(getRuns).toHaveBeenCalledTimes(1);
     });
 
     it('bounds requests and subscriptions without losing active jobs', () => {
@@ -621,10 +665,19 @@ describe('HyperionJobRegistryService', () => {
     });
 
     it('preserves exhausted pagination when the newest history page refreshes', () => {
+        const knownRun: AuthoringRunPage['runs'][number] = {
+            jobId: 'known',
+            exerciseId: 42,
+            courseId: 7,
+            kind: 'CREATE',
+            status: 'SAVED',
+            running: false,
+            startedAt: '2025-01-01T00:00:00Z',
+        };
         getRuns
-            .mockReturnValueOnce(of({ runs: [], nextBeforeId: 51 }))
+            .mockReturnValueOnce(of({ runs: [knownRun], nextBeforeId: 51 }))
             .mockReturnValueOnce(of({ runs: [] }))
-            .mockReturnValueOnce(of({ runs: [], nextBeforeId: 51 }));
+            .mockReturnValueOnce(of({ runs: [knownRun], nextBeforeId: 51 }));
         const service = createService();
         service.loadMoreHistory();
         expect(getRuns).toHaveBeenLastCalledWith(51);
@@ -634,6 +687,63 @@ describe('HyperionJobRegistryService', () => {
         expect(service.hasMoreHistory()).toBe(false);
         service.loadMoreHistory();
         expect(getRuns).toHaveBeenCalledTimes(3);
+    });
+
+    it('reopens exhausted history when a new page no longer joins the known runs', () => {
+        const run = (jobId: string): AuthoringRunPage['runs'][number] => ({
+            jobId,
+            exerciseId: 42,
+            courseId: 7,
+            kind: 'CREATE',
+            status: 'SAVED',
+            running: false,
+            startedAt: '2025-01-01T00:00:00Z',
+        });
+        const old = run('old');
+        getRuns.mockReturnValueOnce(of({ runs: [old] }));
+        const service = createService();
+        expect(service.hasMoreHistory()).toBe(false);
+        const newest = Array.from({ length: 50 }, (_, index) => run(`new-${index}`));
+        getRuns.mockReturnValueOnce(of({ runs: newest, nextBeforeId: 100 }));
+        service.refresh();
+        expect(service.hasMoreHistory()).toBe(true);
+        getRuns.mockReturnValueOnce(of({ runs: [run('gap'), old] }));
+        service.loadMoreHistory();
+        expect(getRuns).toHaveBeenLastCalledWith(100);
+        expect(service.entries()).toHaveLength(52);
+        expect(service.entries().some((entry) => entry.jobId === 'gap')).toBe(true);
+        expect(service.hasMoreHistory()).toBe(false);
+        getRuns.mockReturnValueOnce(of({ runs: newest, nextBeforeId: 100 }));
+        service.refresh();
+        expect(service.hasMoreHistory()).toBe(false);
+    });
+
+    it('reopens exhausted history when a filtered newest page is empty but has a continuation', () => {
+        const oldRun: AuthoringRunPage['runs'][number] = {
+            jobId: 'old',
+            exerciseId: 42,
+            courseId: 7,
+            kind: 'CREATE',
+            status: 'SAVED',
+            running: false,
+            startedAt: '2025-01-01T00:00:00Z',
+        };
+        getRuns.mockReturnValueOnce(of({ runs: [oldRun] }));
+        const service = createService();
+        expect(service.hasMoreHistory()).toBe(false);
+        getRuns.mockReturnValueOnce(of({ runs: [], nextBeforeId: 100 }));
+        service.refresh();
+        expect(service.hasMoreHistory()).toBe(true);
+        getRuns.mockReturnValueOnce(of({ runs: [{ ...oldRun, jobId: 'previously-hidden' }, oldRun] }));
+        service.loadMoreHistory();
+        expect(getRuns).toHaveBeenLastCalledWith(100);
+        expect(service.entries().map((entry) => entry.jobId)).toContain('previously-hidden');
+        expect(service.hasMoreHistory()).toBe(false);
+        getRuns.mockReturnValueOnce(of({ runs: [] }));
+        service.refresh();
+        const requests = getRuns.mock.calls.length;
+        service.loadMoreHistory();
+        expect(getRuns).toHaveBeenCalledTimes(requests);
     });
 
     it('never accepts a history response from the previous login', () => {

@@ -135,9 +135,9 @@ class GenerationJobServiceClusterTest {
     /** The stale-writer fence: a node that does not own the job must not declare the point of no return and start writing to Git and the database. */
     @Test
     void inputAndDesignReplayAcrossNodesWithoutDisclosingOwnerFeedback() {
-        var firstReplay = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(firstMember), Duration.ofHours(4),
+        var firstReplay = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(firstMember), Duration.ofHours(4), Duration.ofHours(4),
                 HyperionDistributedDataTestProvider.provider(firstMember).getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
-        var secondReplay = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(secondMember), Duration.ofHours(4),
+        var secondReplay = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(secondMember), Duration.ofHours(4), Duration.ofHours(4),
                 HyperionDistributedDataTestProvider.provider(secondMember).getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
         var input = new ExerciseGenerationInputDTO("Keep the API.",
                 List.of(new ExerciseGenerationFeedbackDTO("SOLUTION_REPO", "src/Stack.java", 12, List.of("Handle empty stacks."))));

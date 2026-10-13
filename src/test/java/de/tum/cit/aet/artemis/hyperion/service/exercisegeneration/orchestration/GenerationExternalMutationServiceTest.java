@@ -53,7 +53,8 @@ class GenerationExternalMutationServiceTest {
             assertThat(context.getBean(HyperionCodeGenerationJobService.class)).isNotNull();
             var service = context.getBean(GenerationExternalMutationService.class);
             String token = service.claimExternalMutationSlot(42);
-            assertThat(token).isNull();
+            assertThat(service.isCoordinationEnabled()).isFalse();
+            service.clearExternalMutationSlot(42, token);
             assertThat(service.isGenerationActive(42)).isFalse();
         }
     }

@@ -215,11 +215,39 @@ class StudentExamPreparationServiceTest {
         StudentExam testRun = new StudentExam();
         testRun.setExam(exam);
         testRun.setExercises(new ArrayList<>(exam.getExerciseGroups().getFirst().getExercises()));
-        when(studentExams.save(testRun)).thenAnswer(ignored -> {
-            assertThat(calls).containsExactly("reserve1", "reserve2");
+        doAnswer(invocation -> {
+            calls.add("lock");
+            Function<Exam, StudentExam> assignment = invocation.getArgument(1);
+            StudentExam saved = assignment.apply(exam);
+            assertThat(calls).containsExactly("reserve1", "reserve2", "lock", "save");
+            calls.add("commit");
+            return saved;
+        }).when(exams).withExerciseSelectionLock(anyLong(), any());
+        when(studentExams.saveAndFlush(testRun)).thenAnswer(ignored -> {
+            assertThat(calls).containsExactly("reserve1", "reserve2", "lock");
+            calls.add("save");
             return testRun;
         });
         assertThat(service.assignTestRun(testRun)).isSameAs(testRun);
+        assertThat(calls).containsExactly("reserve1", "reserve2", "lock", "save", "commit", "release2", "release1");
+    }
+
+    @Test
+    void staleTestRunSelectionIsRejectedAgainstTheLockedExamGraph() {
+        StudentExam testRun = new StudentExam();
+        testRun.setExam(exam);
+        testRun.setExercises(new ArrayList<>(exam.getExerciseGroups().getFirst().getExercises()));
+        doAnswer(invocation -> {
+            var current = new Exam();
+            var group = new ExerciseGroup();
+            group.setExercises(Set.of());
+            current.setExerciseGroups(List.of(group));
+            Function<Exam, StudentExam> assignment = invocation.getArgument(1);
+            return assignment.apply(current);
+        }).when(exams).withExerciseSelectionLock(anyLong(), any());
+
+        assertThatThrownBy(() -> service.assignTestRun(testRun)).isInstanceOf(IllegalStateException.class).hasMessage("The selected exercises no longer belong to this exam.");
+        verifyNoInteractions(studentExams);
         assertThat(calls).containsExactly("reserve1", "reserve2", "release2", "release1");
     }
 

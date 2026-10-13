@@ -118,7 +118,14 @@ public class StudentExamPreparationService {
      * @return persisted test run
      */
     public StudentExam assignTestRun(StudentExam testRun) {
-        return withReservations(testRun.getExercises(), () -> examRepository.withExerciseSelectionLock(testRun.getExam().getId(), exam -> studentExamRepository.save(testRun)));
+        return withReservations(testRun.getExercises(), () -> examRepository.withExerciseSelectionLock(testRun.getExam().getId(), exam -> {
+            Set<Long> currentExercises = exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).map(Exercise::getId)
+                    .collect(java.util.stream.Collectors.toSet());
+            if (!testRun.getExercises().stream().allMatch(exercise -> currentExercises.contains(exercise.getId()))) {
+                throw new IllegalStateException("The selected exercises no longer belong to this exam.");
+            }
+            return studentExamRepository.saveAndFlush(testRun);
+        }));
     }
 
     private <T> T assign(long examId, Function<Exam, T> assignment) {

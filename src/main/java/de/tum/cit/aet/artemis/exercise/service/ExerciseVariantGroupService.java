@@ -240,8 +240,22 @@ public class ExerciseVariantGroupService {
             if (current.isExamExercise() || !java.util.Objects.equals(current.getCourseViaExerciseGroupOrCourseMember().getId(), group.getCourse().getId())) {
                 return false;
             }
-            return exerciseVariantGroupRepository.claimAndAssignExerciseIfUngrouped(exerciseId, group.getId(),
-                    () -> assignCurrentExerciseToGroup(current, group, lease.coordinated()));
+            Duration originalBuildAndTestOffset = getBuildAndTestOffset(current);
+            boolean assigned = exerciseVariantGroupRepository.claimAndAssignExerciseIfUngrouped(exerciseId, group.getId(), () -> {
+                boolean groupTimelineChanged = adoptMissingDatesFromExercise(group, current);
+                current.setExerciseVariantGroup(group);
+                applyGroupTimeline(group, current);
+                validateProgrammingExerciseTimeline(current, originalBuildAndTestOffset);
+                if (groupTimelineChanged) {
+                    exerciseVariantGroupRepository.save(group);
+                }
+                exerciseRepository.save(current);
+            });
+            if (assigned) {
+                // The repository proxy has committed membership and dates before scheduling or recording a version.
+                runProgrammingPostTimelineUpdateSideEffects(updateProgrammingExerciseTimeline(current, group, originalBuildAndTestOffset), lease.coordinated());
+            }
+            return assigned;
         }
     }
 

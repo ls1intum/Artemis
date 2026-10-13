@@ -290,7 +290,7 @@ class GenerationRedisCoordinationTest {
                 var resolver = new RedisClientListResolver(new RedissonConnectionFactory(redis));
                 var provider = new RedissonDistributedDataProviderService(redis, resolver, identity);
                 var cancellations = provider.<String, Boolean>getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(1));
-                var replay = new GenerationJobReplayStore(provider, Duration.ofHours(4), cancellations);
+                var replay = new GenerationJobReplayStore(provider, Duration.ofHours(4), Duration.ofHours(4), cancellations);
                 String jobId = "cancelled-run";
                 Instant now = Instant.now();
                 provider.<String, GenerationJobService.JobInfo>getMap(GenerationJobService.JOB_MAP_NAME).put("42",

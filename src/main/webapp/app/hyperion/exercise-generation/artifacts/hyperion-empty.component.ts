@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -7,19 +7,19 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-hyperion-empty',
     template: `
-        <div class="flex flex-col items-center gap-3 text-center" [class.p-4]="size() === 'small'" [class.p-6]="size() === 'medium'">
-            @if (icon(); as emptyIcon) {
-                <fa-icon class="text-muted-color" [icon]="emptyIcon" />
-            }
-            <p class="m-0 font-medium">{{ titleKey() | artemisTranslate: titleParams() }}</p>
-            @if (descriptionKey(); as description) {
-                <p class="m-0 max-w-prose text-sm text-muted-color">{{ description | artemisTranslate: descriptionParams() }}</p>
-            }
-            <div class="flex flex-wrap justify-center gap-2"><ng-content /></div>
-        </div>
+        <tumaet-ui-empty-state
+            [class.p-4]="size() === 'small'"
+            [class.p-6]="size() === 'medium'"
+            variant="plain"
+            [icon]="icon()"
+            [title]="titleKey() | artemisTranslate: titleParams()"
+            [description]="descriptionKey() | artemisTranslate: descriptionParams()"
+        >
+            <ng-container tumAetUiEmptyStateActions><ng-content /></ng-container>
+        </tumaet-ui-empty-state>
     `,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe, FaIconComponent],
+    imports: [ArtemisTranslatePipe, TumAetUiEmptyStateComponent],
 })
 export class HyperionEmptyComponent {
     readonly titleKey = input.required<string>();

@@ -19,7 +19,6 @@ import {
 } from '@tumaet/ui-angular';
 import { finalize, timeout } from 'rxjs';
 import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRoute';
-import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -63,9 +62,7 @@ export class HyperionActivityTrayComponent {
     private readonly destroyRef = inject(DestroyRef);
     readonly authoringEnabled = input(false);
     // A quiz-only deployment must not start programming-job polling against disabled endpoints.
-    private readonly registry = computed(() =>
-        this.authoringEnabled() && this.account.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR) ? this.injector.get(HyperionJobRegistryService) : undefined,
-    );
+    private readonly registry = computed(() => (this.authoringEnabled() && this.account.hasEditorAccess() ? this.injector.get(HyperionJobRegistryService) : undefined));
     private readonly routedJob = getSignalBasedOnRoute(this.router, (url) => this.router.parseUrl(url).queryParamMap.get('aiRun'));
     private readonly popover = viewChild(TumAetUiPopoverComponent);
     private readonly login = computed(() => this.account.userIdentity()?.login);
@@ -91,7 +88,7 @@ export class HyperionActivityTrayComponent {
     protected readonly inspector = computed(() => {
         const reference = this.routedJob();
         const login = this.login();
-        if (!login || !this.authoringEnabled() || !this.account.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR)) return [];
+        if (!login || !this.authoringEnabled() || !this.account.hasEditorAccess()) return [];
         const match = /^authoring:([1-9]\d*):([^:]+)$/.exec(reference ?? '');
         if (!match || !Number.isSafeInteger(Number(match[1]))) return [];
         return [{ key: `${login}:${reference}`, exerciseId: Number(match[1]), runId: match[2] === 'latest' ? undefined : match[2] }];
@@ -102,13 +99,13 @@ export class HyperionActivityTrayComponent {
         this.showHistory.set(true);
         this.registry()?.loadMoreHistory();
     }
-    protected readonly monitorVisible = computed(() => !!this.login() && this.account.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR) && !!this.monitorJobId());
+    protected readonly monitorVisible = computed(() => !!this.login() && this.account.hasEditorAccess() && !!this.monitorJobId());
     protected readonly cancelling = linkedSignal({ source: this.login, computation: () => new Set<string>() });
     private readonly refreshing = linkedSignal({ source: this.login, computation: () => false });
     private readonly variantsLoadFailed = linkedSignal({ source: this.login, computation: () => false });
     protected readonly loadFailed = computed(() => (this.registry()?.loadFailed() ?? false) || this.variantsLoadFailed());
     protected readonly rows = computed(() => {
-        if (!this.login() || !this.account.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR)) return [];
+        if (!this.login() || !this.account.hasEditorAccess()) return [];
         return [
             ...(this.authoringEnabled() ? (this.registry()?.entries() ?? []).map(authoringActivity) : []),
             ...this.variants

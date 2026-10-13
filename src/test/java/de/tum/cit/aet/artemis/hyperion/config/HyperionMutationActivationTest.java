@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -51,9 +52,7 @@ class HyperionMutationActivationTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "core", "localvc" })
-    void absentOrDisabledGenerationStillProtectsWriter(String profile) {
-        when(provider.getLocalNodeId()).thenReturn("writer");
-        when(provider.getCoordinationSnapshot()).thenReturn(Optional.empty());
+    void absentOrDisabledGenerationLeavesOrdinaryOperationsUncoordinated(String profile) {
         for (String flag : new String[] { "unused.property=true", "artemis.hyperion.exercise-generation.enabled=false" }) {
             runner.withInitializer(context -> context.getEnvironment().setActiveProfiles(profile)).withPropertyValues(flag).run(context -> {
                 assertThat(context).hasNotFailed().hasSingleBean(HyperionExerciseMutationApi.class);
@@ -63,8 +62,10 @@ class HyperionMutationActivationTest {
                 else {
                     assertThat(context).doesNotHaveBean(ADMIN_RESOURCE);
                 }
-                assertThatThrownBy(() -> context.getBean(ProgrammingExerciseMutationGuardService.class).claimExternalMutation(1L))
-                        .isInstanceOf(ServiceUnavailableAlertException.class);
+                try (var lease = context.getBean(ProgrammingExerciseMutationGuardService.class).claimExternalMutation(1L)) {
+                    assertThat(lease.coordinated()).isFalse();
+                }
+                verifyNoInteractions(provider);
             });
         }
     }

@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.exercise;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -15,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -37,6 +40,7 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTarget;
@@ -269,6 +273,56 @@ class ExerciseVariantGroupServiceTest {
         if (operation.equals("push")) {
             verify(editorSync).broadcastNewCommitAlert(1L, ExerciseEditorSyncTarget.TESTS_REPOSITORY, null, coordinated ? "push-session" : null);
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void sourcePlacementRunsExternalEffectsOnlyAfterSuccessfulCommit(boolean commitFails) {
+        var exercise = programmingExercise(1);
+        var course = new Course();
+        course.setId(7L);
+        exercise.setCourse(course);
+        var group = new ExerciseVariantGroup();
+        group.setId(8L);
+        group.setCourse(course);
+        List<String> calls = new ArrayList<>();
+        when(mutationGuard.claimExternalMutation(1L)).thenReturn(new MutationLease(release));
+        when(programmingRepository.findByIdElseThrow(1L)).thenReturn(exercise);
+        doAnswer(invocation -> {
+            calls.add("claim");
+            Runnable assignment = invocation.getArgument(2);
+            assignment.run();
+            verifyNoInteractions(versionService, messages);
+            verify(programmingUpdateService, never()).updateTimeline(any(ProgrammingExerciseTimelineUpdateDTO.class), any(), any());
+            verify(release, never()).run();
+            if (commitFails)
+                throw new IllegalStateException("commit failed");
+            calls.add("commit");
+            return true;
+        }).when(groupRepository).claimAndAssignExerciseIfUngrouped(eq(1L), eq(8L), any());
+        when(exerciseRepository.save(exercise)).thenAnswer(invocation -> {
+            assertThat(calls).containsExactly("claim");
+            calls.add("save");
+            return exercise;
+        });
+        if (commitFails) {
+            assertThatThrownBy(() -> service.assignProgrammingSourceIfUngrouped(1L, group)).hasMessage("commit failed");
+            verifyNoInteractions(versionService, messages);
+            verify(programmingUpdateService, never()).updateTimeline(any(ProgrammingExerciseTimelineUpdateDTO.class), any(), any());
+            assertThat(calls).containsExactly("claim", "save");
+        }
+        else {
+            when(programmingUpdateService.updateTimeline(any(ProgrammingExerciseTimelineUpdateDTO.class), any(), any())).thenAnswer(invocation -> {
+                assertThat(calls).containsExactly("claim", "save", "commit");
+                verify(release, never()).run();
+                calls.add("schedule");
+                return exercise;
+            });
+            assertThat(service.assignProgrammingSourceIfUngrouped(1L, group)).isTrue();
+            verify(versionService).createExerciseVersionSynchronously(exercise);
+            assertThat(calls).containsExactly("claim", "save", "commit", "schedule");
+        }
+        verify(release).run();
     }
 
     private static ProgrammingExercise programmingExercise(long id) {

@@ -6,7 +6,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { HyperionExerciseGenerationApi } from 'app/openapi/api/hyperion-exercise-generation-api';
 import { ExerciseGenerationCapabilities } from 'app/openapi/model/exercise-generation-capabilities';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { generationCapabilityBlocker, injectGenerationCapabilities } from './hyperion-generation-capabilities';
+import { generationCapabilityBlocker, hasLegacyGenerationRestriction, injectGenerationCapabilities } from './hyperion-generation-capabilities';
 
 describe('Shared programming authoring capabilities', () => {
     const exercise = signal<Exercise | undefined>(undefined);
@@ -61,6 +61,15 @@ describe('Shared programming authoring capabilities', () => {
         previous.next({ canAdapt: true });
         expect(capabilities.value()?.canAdapt).toBe(false);
         expect(generationCapabilityBlocker(capabilities.value())).toMatch(/preparationOnly$/);
+    });
+
+    it('uses legacy generation only for the confirmed assignment restriction', () => {
+        expect(hasLegacyGenerationRestriction({ supported: true, canAdapt: false, restriction: 'exerciseAlreadyAssigned' })).toBe(true);
+        expect(hasLegacyGenerationRestriction({ supported: true, canAdapt: false, busy: true, restriction: 'exerciseAlreadyAssigned' })).toBe(false);
+        expect(hasLegacyGenerationRestriction({ supported: false, canAdapt: false, restriction: 'exerciseAlreadyAssigned' })).toBe(false);
+        expect(hasLegacyGenerationRestriction({ supported: true, canAdapt: true, restriction: 'exerciseAlreadyAssigned' })).toBe(false);
+        expect(hasLegacyGenerationRestriction({ supported: true, canAdapt: false, restriction: 'requiresEditor' })).toBe(false);
+        expect(hasLegacyGenerationRestriction(undefined)).toBe(false);
     });
 
     it('fails closed on a denied or unavailable capability response', () => {
