@@ -1029,6 +1029,35 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(programmingExerciseService.importFromFile).toHaveBeenCalledWith(entity, 1);
             expect(comp.isSaving()).toBe(false);
         });
+
+        const importFromFileWith = (customize: (exercise: ProgrammingExercise) => void) => {
+            const programmingExercise = getProgrammingExerciseForImport();
+            customize(programmingExercise);
+            history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');
+            route.data = of({ programmingExercise });
+            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation((language: ProgrammingLanguage) =>
+                getProgrammingLanguageFeature(language),
+            );
+            comp.ngOnInit();
+        };
+
+        it('should keep the imported sequential test runs setting', () => {
+            importFromFileWith((exercise) => (exercise.buildConfig!.sequentialTestRuns = true));
+            expect(comp.programmingExercise.buildConfig?.sequentialTestRuns).toBe(true);
+        });
+
+        it('should keep the imported static code analysis setting', () => {
+            importFromFileWith((exercise) => (exercise.staticCodeAnalysisEnabled = true));
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(true);
+        });
+
+        it.each([ProjectType.MAVEN_MAVEN, ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE])(
+            'should keep the imported project type %s',
+            (projectType) => {
+                importFromFileWith((exercise) => (exercise.projectType = projectType));
+                expect(comp.programmingExercise.projectType).toBe(projectType);
+            },
+        );
     });
 
     describe('import from sharing', () => {
@@ -1065,6 +1094,43 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             verifyImport(programmingExercise);
         });
+
+        it('should keep the imported language and build options when the course has another default language', () => {
+            const programmingExercise = getProgrammingExerciseForImport();
+            programmingExercise.buildConfig!.sequentialTestRuns = true;
+            programmingExercise.staticCodeAnalysisEnabled = true;
+
+            route.data = of({ programmingExercise });
+            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation((language: ProgrammingLanguage) =>
+                getProgrammingLanguageFeature(language),
+            );
+            vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises').mockReturnValue(of(programmingExercise));
+            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.PYTHON } as Course })));
+            comp.ngOnInit();
+
+            expect(comp.isImportFromSharing).toBe(true);
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
+            expect(comp.programmingExercise.buildConfig?.sequentialTestRuns).toBe(true);
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(true);
+        });
+
+        it.each([ProjectType.MAVEN_MAVEN, ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE])(
+            'should keep the imported project type %s',
+            (projectType) => {
+                const programmingExercise = getProgrammingExerciseForImport();
+                programmingExercise.projectType = projectType;
+
+                route.data = of({ programmingExercise });
+                vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation((language: ProgrammingLanguage) =>
+                    getProgrammingLanguageFeature(language),
+                );
+                vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises').mockReturnValue(of(programmingExercise));
+                comp.ngOnInit();
+
+                expect(comp.isImportFromSharing).toBe(true);
+                expect(comp.programmingExercise.projectType).toBe(projectType);
+            },
+        );
 
         it('should also handle exam mode import', () => {
             const examId = 1;

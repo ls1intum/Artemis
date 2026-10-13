@@ -420,6 +420,67 @@ describe('QuizExerciseUpdateComponent', () => {
             });
         });
 
+        describe('date change handlers', () => {
+            beforeEach(() => {
+                resetQuizExercise();
+                comp.course = course;
+                comp.init();
+                comp.quizExercise.set(quizExercise);
+                comp.duration = new Duration(5, 15);
+            });
+
+            it('should store a picked release date and validate afterwards', () => {
+                const cacheValidationSpy = vi.spyOn(comp, 'cacheValidation');
+                const releaseDate = dayjs('2030-06-01T12:00:00');
+
+                comp.onReleaseDateChange(releaseDate);
+
+                expect(comp.quizExercise().releaseDate).toBe(releaseDate);
+                expect(cacheValidationSpy).toHaveBeenCalledOnce();
+
+                comp.onReleaseDateChange(undefined);
+
+                expect(comp.quizExercise().releaseDate).toBeUndefined();
+            });
+
+            it('should flag a due date before the release date as soon as it is picked', () => {
+                comp.quizExercise().quizMode = QuizMode.INDIVIDUAL;
+                comp.onReleaseDateChange(dayjs('2030-06-02T12:00:00'));
+                expect(comp.quizExercise().dueDateError).toBeFalsy();
+
+                comp.onDueDateChange(dayjs('2030-06-01T12:00:00'));
+
+                expect(comp.quizExercise().dueDate!.isSame(dayjs('2030-06-01T12:00:00'))).toBe(true);
+                expect(comp.quizExercise().dueDateError).toBe(true);
+
+                comp.onDueDateChange(dayjs('2030-06-03T12:00:00'));
+
+                expect(comp.quizExercise().dueDateError).toBeFalsy();
+            });
+
+            it('should flag a start time before the release date as soon as it is picked', () => {
+                comp.quizExercise().quizMode = QuizMode.SYNCHRONIZED;
+                comp.scheduleQuizStart = true;
+                comp.cacheValidation();
+                const batch = comp.quizExercise().quizBatches![0];
+                comp.onReleaseDateChange(dayjs('2030-06-02T12:00:00'));
+
+                comp.onBatchStartTimeChange(batch, dayjs('2030-06-01T12:00:00'));
+
+                expect(batch.startTime!.isSame(dayjs('2030-06-01T12:00:00'))).toBe(true);
+                expect(batch.startTimeError).toBe(true);
+                expect(comp.hasErrorInQuizBatches()).toBe(true);
+
+                comp.onBatchStartTimeChange(batch, dayjs('2030-06-03T12:00:00'));
+
+                expect(batch.startTimeError).toBe(false);
+            });
+
+            it('should not treat a missing date picker text as invalid without any picker', () => {
+                expect(comp.hasInvalidDateText()).toBe(false);
+            });
+        });
+
         describe('set isEditable', () => {
             const testRoute = {
                 snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
