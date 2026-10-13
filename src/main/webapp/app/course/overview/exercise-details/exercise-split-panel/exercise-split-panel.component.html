@@ -18,6 +18,12 @@
         <!-- The exercise's details and its problem statement are one panel: the dates and points are what the student
              reads the tasks against, so they lead the panel rather than sitting a tab away. -->
         <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.details'" [icon]="faCircleInfo">
+            <jhi-team-practice-hint
+                [exercise]="exercise()"
+                [participationMode]="participationMode()"
+                [practiceParticipation]="practiceParticipation()"
+                [gradedParticipation]="gradedStudentParticipation()"
+            />
             <div class="mb-3">
                 <jhi-exercise-headers-information
                     [exercise]="exercise()"

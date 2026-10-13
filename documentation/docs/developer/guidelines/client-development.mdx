@@ -729,6 +729,39 @@ producer's `equal`. When a child binds the whole object, hand it a new top-level
 Assembling a view object from parts that must stay reference-identical also reads better as explicit field
 assignments than as a copy — see the `GradingComponent.gradingScale` getter.
 
+#### Exercise update forms
+
+The text, modeling and file upload exercise forms hold the exercise in an `ExerciseFormState`
+(`app/exercise/util/exercise-form-state.ts`): a signal declared with `equal: () => false` and three ways to write to
+it — `set(exercise)`, `update(mutator)` and `patch(field, value)`. Every write notifies, while the object stays the same,
+so the children that receive it keep their nested associations. What the form derives from the exercise — the reasons
+the footer lists, the sections of the status bar — is therefore a `computed()`, never a method the template calls or a
+value a `valueChanges` subscription keeps up to date.
+
+A computed only follows writes that go through the state, so a form never writes to the exercise directly:
+
+```html
+<!-- Don't - writes onto the object the signal returned; the derived state keeps the old value -->
+<input [(ngModel)]="textExercise.maxPoints" name="points" />
+
+<!-- Do - the write goes through the state, which notifies -->
+<input [ngModel]="textExercise.maxPoints" (ngModelChange)="exerciseState.patch('maxPoints', $event)" name="points" />
+```
+
+The same goes for writes in code (`exerciseState.update(resetForImport)`, an HTTP callback that sets the course) and for
+child components. A child that writes a field the form derives state from announces it with an `exerciseChange` output
+that emits the same object, and the form binds it two-way, either `[(exercise)]="textExercise"` to a setter that calls
+`set` or `(exerciseChange)="exerciseState.set($event)"`; `TeamConfigFormGroupComponent` and
+`ExerciseTitleChannelNameComponent` do that.
+
+Derive validity from the model, not from the state of a form control: `NgModel.valid` and `control.errors` are not
+signals, so a computed that reads them goes stale. The checks in `app/exercise/util/exercise-validation.util.ts` take the
+exercise and return the reasons, grouped by the section of the form that shows them
+(`getGeneralSectionInvalidReasons`, `getModeSectionInvalidReasons`, `getGradingSectionInvalidReasons`). A section is
+valid when its reasons are empty, so the status bar and the footer always agree. What a child component knows and the
+model does not — whether the title is already used, which plagiarism control is invalid — it exposes as a signal
+(`isTitleDisallowed`, `invalidControlNames`).
+
 ### Prettier and ESLint
 
 - We use `prettier` to style code automatically and `eslint` to find additional issues.
@@ -824,6 +857,8 @@ When an application component needs owned class selectors, use [BEM](https://get
 | `text-muted`                                                    | an application style using the semantic `--text-body-secondary` property                                                                                              |
 | `text-danger` / `text-success` / `text-warning` / `text-info`   | `text-state-danger` / `text-state-success` / `text-state-warning` / `text-state-info`                                                                                 |
 | `me-*` / `ms-*` / `mb-*` / `p-*` / `gap-*`                      | Tailwind logical spacing; convert by target size and write the steps 3 to 5 with `!` (Bootstrap `mb-3` is `1rem`, so `mb-4!`; see _Ambiguous Spacing Utilities_)      |
+
+**Date and time fields use `tumaet-ui-date-picker`.** It is a signal-forms control: bind `[(value)]` to a `dayjs` signal or property, or `[formField]` on a signal form. `[min]` and `[max]` grey out the days outside a range in the calendar, but text typed into the field is not limited by them. The picker has no required flag and no message for an external error, so the consumer checks the range or the required state, marks the field with `[invalid]`, and explains the error next to it (`[ariaDescribedBy]` ties the text to the field). Typed text that is not a date leaves the last valid value in `value` and is reported through `(inputValidityChange)`, so a consumer must not submit while that is `false`. Use `[dateOnly]` for a date, `[timeOnly]` for a time and `[startAt]` for the month a calendar opens on while the field is empty. A reactive form that has not moved to signal forms adds `DatePickerControlDirective` (`app/shared-ui/date-picker-control`) to keep `formControlName`; it reports unparseable text as an `invalidDate` control error and goes away with the last such form. For a range, use two pickers rather than a range component.
 
 **Colors — use semantic tokens, never primitives.** Color follows the three-tier design-token model (primitive → semantic → component): a _primitive_ token names a value (`red-500`); a _semantic_ token names intent (`danger`). Always apply a **semantic** token; never apply a primitive directly — naming the value to express a role drifts and reads inconsistently (the documented design-token anti-pattern). Pick by what you are styling:
 
