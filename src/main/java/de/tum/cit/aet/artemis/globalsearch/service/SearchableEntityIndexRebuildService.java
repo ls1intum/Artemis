@@ -24,6 +24,7 @@ import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.Property;
 import io.weaviate.client6.v1.api.collections.VectorConfig;
 import io.weaviate.client6.v1.api.collections.vectorindex.Hnsw;
+import io.weaviate.client6.v1.api.collections.vectorizers.SelfProvidedVectorizer;
 
 /**
  * Keeps the {@code SearchableEntities} collection matching the configured embedding mode and model.
@@ -145,8 +146,8 @@ public class SearchableEntityIndexRebuildService {
     }
 
     /**
-     * Whether the collection is built for the vector layout the configuration needs: one vector per chunk when Artemis
-     * embeds, no multi-vector index otherwise. A collection without a version collection next to it was usually created by
+     * Whether the collection is built for the vector layout the configuration needs: vectors provided by Artemis, one per
+     * chunk when Artemis embeds and no multi-vector index otherwise. A collection without a version collection next to it was usually created by
      * this startup, but one left behind by an earlier version that stopped before it wrote its version collection still
      * has the old single-vector layout, and keeping it would make every write fail.
      *
@@ -158,9 +159,12 @@ public class SearchableEntityIndexRebuildService {
         if (config.isEmpty()) {
             return true;
         }
-        boolean multiVector = config.get().vectors().values().stream()
-                .anyMatch(vector -> vector.vectorIndex() instanceof Hnsw hnsw && hnsw.multiVector() != null && hnsw.multiVector().enabled());
-        return multiVector == SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(properties.vectorizerModule());
+        var vectors = config.get().vectors().values();
+        // Artemis provides every vector itself; a collection with a vectorizer of its own (such as text2vec-openai) comes
+        // from an earlier layout and would keep calling that vectorizer on every write.
+        boolean selfProvided = vectors.stream().allMatch(vector -> vector instanceof SelfProvidedVectorizer);
+        boolean multiVector = vectors.stream().anyMatch(vector -> vector.vectorIndex() instanceof Hnsw hnsw && hnsw.multiVector() != null && hnsw.multiVector().enabled());
+        return selfProvided && multiVector == SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(properties.vectorizerModule());
     }
 
     private void deleteIfExists(String collectionName) throws IOException {

@@ -278,6 +278,26 @@ class SearchableEntityMultiVectorWeaviateTest {
     }
 
     @Test
+    void anOldCollectionWithItsOwnVectorizerIsRebuiltWhenSwitchingToKeywordSearch() throws Exception {
+        // Earlier versions let Weaviate call the embedding endpoint itself. Keeping such a collection in keyword mode would
+        // keep that vectorizer, which then fails on every write without the API key Artemis used to forward.
+        var keywordOnly = new WeaviateConfigurationProperties(true, weaviate.getHost(), weaviate.getMappedPort(8080), weaviate.getMappedPort(50051), "http", PREFIX, "none", null,
+                null, null, null, null);
+        dropCollections();
+        client = WeaviateClient.connectToLocal(config -> config.host(weaviate.getHost()).port(weaviate.getMappedPort(8080)).grpcPort(weaviate.getMappedPort(50051)));
+        client.collections.create(PREFIX + SearchableEntitySchema.COLLECTION_NAME,
+                config -> config.vectorConfig(io.weaviate.client6.v1.api.collections.VectorConfig.text2vecOpenAi()));
+        var keywordService = new WeaviateService(Optional.of(client), keywordOnly, new MockEnvironment());
+
+        assertThat(new SearchableEntityIndexRebuildService(Optional.of(client), keywordOnly, new MockEnvironment(), keywordService, syncStateRepository, reconcileStateRepository)
+                .ensureIndexMatchesConfiguration()).isTrue();
+
+        var vectors = client.collections.getConfig(PREFIX + SearchableEntitySchema.COLLECTION_NAME).orElseThrow().vectors().values();
+        assertThat(vectors).as("the collection was recreated with vectors provided by Artemis")
+                .allMatch(vector -> vector instanceof io.weaviate.client6.v1.api.collections.vectorizers.SelfProvidedVectorizer);
+    }
+
+    @Test
     void aRebuildAlsoReplacesTheIndexOfAnInstallationFromBeforeSignatures() throws Exception {
         // The first layout: an Exercises collection and a version object without a signature.
         dropCollections();
