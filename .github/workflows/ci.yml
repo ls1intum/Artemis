@@ -63,6 +63,7 @@ jobs:
       codeql_relevant: ${{ steps.decide.outputs.codeql_relevant }}
       run_server_tests: ${{ steps.decide.outputs.run_server_tests }}
       run_client_tests: ${{ steps.decide.outputs.run_client_tests }}
+      server_test_inputs: ${{ steps.decide.outputs.server_test_inputs }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -102,8 +103,8 @@ jobs:
               - '!.github/**'
             # Which test suites a pull request has to run. Each is a deny-list of what cannot change the
             # outcome of that suite, so a path nobody has classified runs both (see `decide` below, and
-            # `has_server_test_inputs` for the two inputs of the server suite that live in client or doc
-            # paths). The server suite also needs Docker-backed shards, so it is the expensive one.
+            # `has_server_test_inputs` for the inputs of the server suite that live in client, doc or
+            # markdown paths). The server suite also needs Docker-backed shards, so it is the expensive one.
             server_tests:
               - '!**/*.md'
               - '!LICENSE'
@@ -113,8 +114,9 @@ jobs:
               - '!src/test/playwright/**'
               - '!packages/**'
               - '!skills/**'
-            # `build.gradle` is deliberately absent: supporting_scripts/client/prebuild.mjs reads the app
-            # version from it, and prebuild runs in front of every client test.
+            # `build.gradle` and `gradle/` are deliberately absent: supporting_scripts/client/prebuild.mjs
+            # reads the app version from build.gradle, and prebuild runs in front of every client test;
+            # config/eslint/rules/tum-aet-ui-package.spec.mjs reads gradle/profile_{dev,prod}.gradle.
             client_tests:
               - '!**/*.md'
               - '!LICENSE'
@@ -122,7 +124,6 @@ jobs:
               - '!src/main/java/**'
               - '!src/test/java/**'
               - '!src/main/resources/**'
-              - '!gradle/**'
       #   area (default `some`): positive allow-lists (OR logic) gating the per-area jobs.
       #   Each area includes its own workflow/helper files so edited checks run themselves.
       - id: area
@@ -218,12 +219,16 @@ jobs:
               - 'supporting_scripts/test_template_test_requirements.py'
               - 'src/main/resources/templates/c/gcc/test/testUtils/**'
               - 'src/main/resources/templates/c_plus_plus/test/testUtils/**'
-            # Files outside the server's own paths that server tests read from disk (Path.of in
-            # FeatureUsageAnnotationTest and GlobalSearchResultDTOTest). The `server_tests` deny-list
-            # above excludes both locations, so a change to either must still run the server suite.
+            # Files that server tests read from disk but that the deny-lists above (and `build`) treat as
+            # irrelevant: the translations (GlobalSearchResultDTOTest, FeatureUsageAnnotationTest), the
+            # feature usage catalogue (FeatureUsageAnnotationTest compares it byte for byte) and the
+            # markdown templates under src/main/resources (served by FileResource and copied by
+            # DataExportCreationService, asserted on by FileIntegrationTest and DataExportCreationServiceTest).
+            # A change to any of them runs the server suite, even when `build` would skip the whole run.
             has_server_test_inputs:
               - 'src/main/webapp/i18n/**'
               - 'documentation/docs/developer/feature-usage-catalogue.mdx'
+              - 'src/main/resources/**/*.md'
             # The `codeql` deny-list above excludes `.github/**`; edits to the scan itself must still run it.
             has_codeql_config:
               - '.github/workflows/ci.yml'
@@ -261,10 +266,11 @@ jobs:
           F_SERVER_TEST_INPUTS: ${{ steps.area.outputs.has_server_test_inputs }}
           F_CLIENT_TESTS: ${{ steps.relevant.outputs.client_tests }}
           EVENT_NAME: ${{ github.event_name }}
+          CHANGED_FILES: ${{ github.event.pull_request.changed_files || 0 }}
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_skills has_tum_aet_ui codeql_relevant run_server_tests run_client_tests; do
+            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_skills has_tum_aet_ui codeql_relevant run_server_tests run_client_tests server_test_inputs; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
@@ -284,18 +290,27 @@ jobs:
               else
                 echo "codeql_relevant=false"
               fi
+              echo "server_test_inputs=${F_SERVER_TEST_INPUTS:-false}"
               # Only a pull request may skip a suite. A push to develop, a merge group and a manual run
               # still run both: the coverage badge and Sonar read both suites' coverage on develop, and
               # develop is where a change that slipped past the pull request's own run would show up.
-              if [ "$EVENT_NAME" != "pull_request" ] || [ "${F_SERVER_TESTS:-false}" = "true" ] || [ "${F_SERVER_TEST_INPUTS:-false}" = "true" ]; then
+              # A pull request that large is also never trusted with a skip: for a pull request the
+              # changed files come from the pulls API, which stops at 3000 files, so the filters may
+              # not have seen all of them.
+              if [ "$EVENT_NAME" != "pull_request" ] || [ "${CHANGED_FILES:-0}" -ge 3000 ]; then
                 echo "run_server_tests=true"
-              else
-                echo "run_server_tests=false"
-              fi
-              if [ "$EVENT_NAME" != "pull_request" ] || [ "${F_CLIENT_TESTS:-false}" = "true" ]; then
                 echo "run_client_tests=true"
               else
-                echo "run_client_tests=false"
+                if [ "${F_SERVER_TESTS:-false}" = "true" ] || [ "${F_SERVER_TEST_INPUTS:-false}" = "true" ]; then
+                  echo "run_server_tests=true"
+                else
+                  echo "run_server_tests=false"
+                fi
+                if [ "${F_CLIENT_TESTS:-false}" = "true" ]; then
+                  echo "run_client_tests=true"
+                else
+                  echo "run_client_tests=false"
+                fi
               fi
             } >> "$GITHUB_OUTPUT"
           fi
@@ -333,7 +348,11 @@ jobs:
   test:
     name: Test
     needs: detect-changes
-    if: needs.detect-changes.outputs.build_relevant == 'true'
+    # `server_test_inputs` keeps a change that `build` ignores but a server test reads (the feature usage
+    # catalogue, the markdown templates) from merging unchecked; only the server suite runs for it.
+    if: >-
+      needs.detect-changes.outputs.build_relevant == 'true' ||
+      needs.detect-changes.outputs.server_test_inputs == 'true'
     uses: ./.github/workflows/ci-test.yml
     permissions:
       contents: read
@@ -345,8 +364,9 @@ jobs:
       run_all_tests: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
       # A pull request that cannot affect one suite does not run it (see `detect-changes`). Always true
       # for anything but a pull request.
-      run_server_tests: ${{ needs.detect-changes.outputs.run_server_tests == 'true' }}
-      run_client_tests: ${{ needs.detect-changes.outputs.run_client_tests == 'true' }}
+      # `!= 'false'`, so that an output that went missing runs the suite instead of silently skipping it.
+      run_server_tests: ${{ needs.detect-changes.outputs.run_server_tests != 'false' }}
+      run_client_tests: ${{ needs.detect-changes.outputs.run_client_tests != 'false' }}
       is_internal_pr: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
       pr_author: ${{ github.event.pull_request.user.login || '' }}
     secrets:

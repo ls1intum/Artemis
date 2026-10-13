@@ -140,24 +140,35 @@ gate closed.
 
 The server suite is by far the largest consumer of the self-hosted `aet-large-ubuntu` runners
 (seven shards per run), so a **pull request** skips a suite it cannot affect. `detect-changes`
-emits `run_server_tests` and `run_client_tests`, which `ci.yml` passes to `ci-test.yml`; a
-skipped suite reports `skipped`, which the gate accepts, and its coverage artifact is not produced
-(the coverage reporters only fetch an artifact when the matching `has_*_changes` is true, which
-implies the suite ran).
+emits `run_server_tests` and `run_client_tests`, which `ci.yml` passes to `ci-test.yml`. The
+skipped jobs report `skipped`; the `test` call as a whole still reports `success` when the other
+suite passes, which is all the gate sees. A skipped suite produces no coverage artifact (the
+coverage reporters only fetch an artifact when the matching `has_*_changes` is true, which implies
+the suite ran).
 
 - Both outputs are **deny-lists** in the `relevant` step, so a path nobody has classified runs both
-  suites. The server suite is skipped only if every changed file is markdown, documentation, a
-  client file (`src/main/webapp/**`), a client test, or `packages/**` or `skills/**`. The client
-  suite is skipped only if every changed file is markdown, documentation, or under `src/main/java`,
-  `src/test/java`, `src/main/resources` or `gradle/`. `build.gradle` is deliberately in neither list:
-  `supporting_scripts/client/prebuild.mjs` reads the app version from it.
-- Server tests read two things outside the server's own paths: the translations under
-  `src/main/webapp/i18n/` and `documentation/docs/developer/feature-usage-catalogue.mdx`
-  (`has_server_test_inputs`). Changing either runs the server suite. If a server test starts
-  reading another client or documentation file, add it there, or the suite can be skipped under it.
-- Only `pull_request` events skip. A push to `develop`, a merge group, a release and a manual run
-  run both suites, because the coverage badge and Sonar read both suites' coverage there and
-  `develop` is where anything that slipped past a pull request's own run would show up.
+  suites. The server suite is skipped only if every changed file is markdown, `LICENSE`,
+  documentation, a client file (`src/main/webapp/**`), a client test, or under `packages/` or
+  `skills/`. The client suite is skipped only if every changed file is markdown, `LICENSE`,
+  documentation, or under `src/main/java`, `src/test/java` or `src/main/resources`. `build.gradle`
+  and `gradle/` are deliberately in neither list: `supporting_scripts/client/prebuild.mjs` reads the
+  app version from `build.gradle`, and the `test:rules` spec reads `gradle/profile_{dev,prod}.gradle`.
+- Server tests read some files that the deny-lists (and `build`) treat as irrelevant: the
+  translations under `src/main/webapp/i18n/`, `documentation/docs/developer/feature-usage-catalogue.mdx`
+  and the markdown templates under `src/main/resources/` (`has_server_test_inputs`). Changing any of
+  them runs the server suite, and `test` runs for it even when `build` would skip the whole run (a
+  documentation-only change that includes the catalogue runs only the server suite). If a server
+  test starts reading another client, documentation or markdown file, add it there, or the suite can
+  be skipped under it.
+- Only `pull_request` events skip. A push to `develop`, a merge group, a manual run and a release
+  other than a `@tumaet/*` one run both suites, because the coverage badge and Sonar read both
+  suites' coverage there and `develop` is where anything that slipped past a pull request's own run
+  would show up. `@tumaet/*` release tags skip `detect-changes` and with it `test`, like every other
+  Artemis job.
+- A pull request with 3000 changed files or more never skips: the changed files come from the pulls
+  API, which stops at 3000, so the filters may not have seen all of them.
+- Codacy coverage is uploaded by the server report job only, so an internal pull request that skips
+  the server suite uploads none.
 
 ## Action pinning policy
 
