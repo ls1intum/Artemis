@@ -33,7 +33,7 @@ spring:
             moderation: none
             audio:
                 speech: none
-            transcription: none
+                transcription: none
 artemis:
     aiworker:
         id: ${AI_WORKER_ID}

@@ -20,7 +20,7 @@ class RedissonDistributedDataProviderServiceTest {
     @Test
     void testNamespacesDataKeysButKeepsCrossReleaseLocksStable() {
         RedissonClient redissonClient = mock(RedissonClient.class);
-        var service = new RedissonDistributedDataProviderService(redissonClient, mock(RedisClientListResolver.class), new RedisNodeIdentity("artemis-test"));
+        var service = new RedissonDistributedDataProviderService(redissonClient, mock(RedisClientListResolver.class), new RedisNodeIdentity("artemis-test", true, false));
 
         var queue = service.<String>getQueue("jobs");
         service.getLock("scheduler-lock");
@@ -35,7 +35,7 @@ class RedissonDistributedDataProviderServiceTest {
     void coordinationRequiresCompleteViewContainingThisProcess() {
         var client = mock(RedissonClient.class);
         var resolver = mock(RedisClientListResolver.class);
-        var identity = new RedisNodeIdentity("artemis-core");
+        var identity = new RedisNodeIdentity("artemis-core", true, false);
         var provider = new RedissonDistributedDataProviderService(client, resolver, identity);
         when(resolver.resolveClients()).thenReturn(new RedisClientListResolver.ClientListSnapshot(Map.of(), Set.of(identity.connectionName()), false, false));
         assertThat(provider.getCoordinationSnapshot()).isEmpty();
@@ -56,7 +56,7 @@ class RedissonDistributedDataProviderServiceTest {
         RedisClientListResolver resolver = mock(RedisClientListResolver.class);
         when(resolver.getUniqueClients()).thenReturn(Set.of("node-a", "node-b"));
         when(resolver.resolveClients()).thenReturn(new RedisClientListResolver.ClientListSnapshot(Map.of("node-a", Set.of("10.0.0.1:1")), Set.of("node-a"), true, true));
-        var service = new RedissonDistributedDataProviderService(redissonClient, resolver, new RedisNodeIdentity("artemis-core"));
+        var service = new RedissonDistributedDataProviderService(redissonClient, resolver, new RedisNodeIdentity("artemis-core", true, false));
         var disconnected = new CopyOnWriteArrayList<String>();
 
         var listenerId = service.addClientDisconnectionListener(disconnected::add);
