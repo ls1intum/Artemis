@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -93,6 +94,28 @@ public class IrisCitationService {
      * @return the text with pinned-version fields appended, or the unchanged text when there is nothing to stamp
      */
     public String stampCitationVersions(String text, String jobId) {
+        return stampCitationVersions(text, () -> materialVersionService.getSnapshot(jobId));
+    }
+
+    /**
+     * Pins every lecture citation of a global search answer carried into a chat to the material versions captured for the run that produced it.
+     * <p>
+     * The versions were captured before the answer's retrieval, so a slide changed after the answer arrived is still recognised as changed in the chat. Without a run, or
+     * once its versions expired, the citations are stamped with version 0 (unverified), as in {@link #stampCitationVersions(String, String)}.
+     *
+     * @param text      the answer; may be {@code null} or blank
+     * @param runId     the global search run that produced the answer, or {@code null} when unknown
+     * @param userLogin the user the run belongs to
+     * @return the text with pinned-version fields appended, or the unchanged text when there is nothing to stamp
+     */
+    public String stampCitationVersionsForGlobalSearch(String text, @Nullable String runId, String userLogin) {
+        return stampCitationVersions(text, () -> runId == null ? Map.of() : materialVersionService.getGlobalSearchSnapshot(runId, userLogin));
+    }
+
+    /**
+     * Stamps every lecture citation of the text with the versions the supplier yields. The supplier is only asked when the text actually contains a citation.
+     */
+    private String stampCitationVersions(String text, Supplier<Map<Long, LectureUnitIngestedVersionsDTO>> versionsSupplier) {
         if (text == null || text.isBlank()) {
             return text;
         }
@@ -102,7 +125,7 @@ public class IrisCitationService {
         if (!matcher.find()) {
             return text;
         }
-        var ingestedVersions = materialVersionService.getSnapshot(jobId);
+        var ingestedVersions = versionsSupplier.get();
         var stamped = new StringBuilder();
         int lastEnd = 0;
         do {

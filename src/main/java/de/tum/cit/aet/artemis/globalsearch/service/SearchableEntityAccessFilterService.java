@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseForSearchFilterDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -38,6 +40,16 @@ import io.weaviate.client6.v1.api.collections.query.Filter;
 @Service
 @Conditional(WeaviateEnabled.class)
 public class SearchableEntityAccessFilterService {
+
+    /**
+     * The entity types global search returns, in the palette and as Iris answer candidates alike. Posts and answer posts
+     * are still indexed but left out: the reconcile passes do not manage them, so their rows drift from the database and
+     * would surface stale or deleted messages. Every filter this service builds is narrowed to these types, so no caller
+     * can reach the other rows by asking for them.
+     */
+    public static final Set<String> SEARCHABLE_TYPES = Set.of(SearchableEntitySchema.TypeValues.EXERCISE, SearchableEntitySchema.TypeValues.LECTURE,
+            SearchableEntitySchema.TypeValues.LECTURE_UNIT, SearchableEntitySchema.TypeValues.EXAM, SearchableEntitySchema.TypeValues.FAQ,
+            SearchableEntitySchema.TypeValues.CHANNEL, SearchableEntitySchema.TypeValues.COURSE);
 
     private final AuthorizationCheckService authCheckService;
 
@@ -91,6 +103,17 @@ public class SearchableEntityAccessFilterService {
     }
 
     /**
+     * The courses the user can scope a search to: exactly the courses an unscoped search covers, active and past alike,
+     * so every course the filter offers is one the search accepts.
+     *
+     * @param userId the id of the requesting user
+     * @return the user's accessible courses with their active flag
+     */
+    public List<CourseForSearchFilterDTO> findCourseFilterOptions(long userId) {
+        return courseRepository.findAllAccessibleCoursesForSearchFilter(userId, authCheckService.isCurrentUserAdminAccessEnabled(), ZonedDateTime.now());
+    }
+
+    /**
      * Convenience overload for a caller with no hidden-type or lenient-course-id needs: hides nothing
      * beyond {@code requestedTypes} itself, and rejects (rather than silently drops) an inaccessible or
      * unknown id in {@code courseIds}.
@@ -98,7 +121,7 @@ public class SearchableEntityAccessFilterService {
      * @param user             the requesting user (with course roles loaded)
      * @param courseIds        optional course ids to scope the search to (empty/null for unscoped)
      * @param excludeCourseIds course ids to hide regardless of {@code courseIds} or the unscoped fallback
-     * @param requestedTypes   the entity types to include
+     * @param requestedTypes   the entity types to include; any outside {@link #SEARCHABLE_TYPES} are ignored
      * @return the compound filter plus the per-request access context
      * @see #buildSearchableItemFilter(User, List, List, Set, Set, boolean)
      */
@@ -109,7 +132,8 @@ public class SearchableEntityAccessFilterService {
     /**
      * Builds the compound per-type filter for the current request. Returns:
      * <ul>
-     * <li>{@code hasAccess = false} if the user has no accessible courses (caller short-circuits with empty list)</li>
+     * <li>{@code hasAccess = false} if the user has no accessible courses, or none of the requested types is in
+     * {@link #SEARCHABLE_TYPES} (caller short-circuits with empty list)</li>
      * <li>{@code filter = null} for admins (Weaviate query runs with no filter)</li>
      * <li>an {@code OR}-of-{@code AND}s filter with one disjunct per requested type otherwise</li>
      * </ul>
@@ -118,7 +142,7 @@ public class SearchableEntityAccessFilterService {
      * @param courseIds                   optional course ids to scope the search to (empty/null for unscoped)
      * @param excludeCourseIds            course ids to hide regardless of {@code courseIds} or the unscoped fallback; only
      *                                        needed for a caller with no {@code courseIds} ceiling to narrow itself
-     * @param requestedTypes              the entity types to include
+     * @param requestedTypes              the entity types to include; any outside {@link #SEARCHABLE_TYPES} are ignored
      * @param hiddenTypes                 types the caller explicitly hid (distinct from a type simply not being requested): suppresses the
      *                                        exam-exercise auto-inclusion below when the caller hid exercises specifically, rather than just not
      *                                        asking for them
@@ -130,15 +154,21 @@ public class SearchableEntityAccessFilterService {
      */
     public FilterBuildResult buildSearchableItemFilter(User user, @Nullable List<Long> courseIds, List<Long> excludeCourseIds, Set<String> requestedTypes, Set<String> hiddenTypes,
             boolean rejectInaccessibleCourseIds) {
+        // Narrowed here rather than trusted from the caller: the admin fast path below turns every requested type into a
+        // bare type filter, so a type outside SEARCHABLE_TYPES would otherwise match its rows without any further check.
+        Set<String> searchableTypes = new HashSet<>(requestedTypes);
+        searchableTypes.retainAll(SEARCHABLE_TYPES);
+        if (searchableTypes.isEmpty()) {
+            return new FilterBuildResult(null, false, null, null, null);
+        }
         // Decide if the filters should be applied
         boolean isAdmin = authCheckService.isCurrentUserAdminAccessEnabled();
         boolean hasCourseScope = courseIds != null && !courseIds.isEmpty();
         boolean hasExclusions = !excludeCourseIds.isEmpty();
-        boolean needsCommFiltering = requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL) || requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)
-                || requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST);
+        boolean needsCommFiltering = searchableTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL);
 
         if (isAdmin && !hasCourseScope && !hasExclusions && !needsCommFiltering) {
-            return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes, hiddenTypes), true, null, null, null);
+            return new FilterBuildResult(buildTypeDiscriminatorFilter(searchableTypes, hiddenTypes), true, null, null, null);
         }
         List<Course> accessibleCourses;
         if (isAdmin && !hasCourseScope) {
@@ -183,7 +213,7 @@ public class SearchableEntityAccessFilterService {
         Set<Long> editorCourseIds = new HashSet<>(roleSets.editorCourseIds());
 
         List<Filter> disjuncts = new ArrayList<>();
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
+        if (searchableTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
             if (isAdmin && !hasCourseScope) {
                 disjuncts.add(adminUnscopedFilter(SearchableEntitySchema.TypeValues.EXERCISE, excludeCourseIds));
             }
@@ -195,7 +225,7 @@ public class SearchableEntityAccessFilterService {
             }
 
         }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.LECTURE)) {
+        if (searchableTypes.contains(SearchableEntitySchema.TypeValues.LECTURE)) {
             if (isAdmin && !hasCourseScope) {
                 disjuncts.add(adminUnscopedFilter(SearchableEntitySchema.TypeValues.LECTURE, excludeCourseIds));
             }
@@ -206,7 +236,7 @@ public class SearchableEntityAccessFilterService {
                 }
             }
         }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.LECTURE_UNIT)) {
+        if (searchableTypes.contains(SearchableEntitySchema.TypeValues.LECTURE_UNIT)) {
             if (isAdmin && !hasCourseScope) {
                 disjuncts.add(adminUnscopedFilter(SearchableEntitySchema.TypeValues.LECTURE_UNIT, excludeCourseIds));
             }
@@ -217,7 +247,7 @@ public class SearchableEntityAccessFilterService {
                 }
             }
         }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXAM)) {
+        if (searchableTypes.contains(SearchableEntitySchema.TypeValues.EXAM)) {
             if (isAdmin && !hasCourseScope) {
                 disjuncts.add(adminUnscopedFilter(SearchableEntitySchema.TypeValues.EXAM, excludeCourseIds));
             }
@@ -231,7 +261,7 @@ public class SearchableEntityAccessFilterService {
             // When the exam filter is active, also include exercises that belong to exams. Absent is not
             // the same as excluded: exercises may be missing because only exams were asked for (include
             // exam exercises), or because the caller hid them specifically (do not).
-            boolean isExerciseTypeAlreadyRequested = requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE);
+            boolean isExerciseTypeAlreadyRequested = searchableTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE);
             boolean areExercisesHidden = hiddenTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE);
             if (!isExerciseTypeAlreadyRequested && !areExercisesHidden) {
                 Filter examExerciseDisjunct = buildExamExerciseDisjunct(roleSets, studentExamInfo);
@@ -240,7 +270,7 @@ public class SearchableEntityAccessFilterService {
                 }
             }
         }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.FAQ)) {
+        if (searchableTypes.contains(SearchableEntitySchema.TypeValues.FAQ)) {
             if (isAdmin && !hasCourseScope) {
                 disjuncts.add(adminUnscopedFilter(SearchableEntitySchema.TypeValues.FAQ, excludeCourseIds));
             }
@@ -252,13 +282,13 @@ public class SearchableEntityAccessFilterService {
             }
         }
         // Only search within courses where communication configuration is active
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL)) {
+        if (searchableTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL)) {
             Filter disjunct = buildChannelDisjunct(roleSetsEnabledCommunication);
             if (disjunct != null) {
                 disjuncts.add(disjunct);
             }
         }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.COURSE)) {
+        if (searchableTypes.contains(SearchableEntitySchema.TypeValues.COURSE)) {
             if (isAdmin && !hasCourseScope) {
                 disjuncts.add(adminUnscopedFilter(SearchableEntitySchema.TypeValues.COURSE, excludeCourseIds));
             }
@@ -267,18 +297,6 @@ public class SearchableEntityAccessFilterService {
                 if (disjunct != null) {
                     disjuncts.add(disjunct);
                 }
-            }
-        }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)) {
-            Filter disjunct = buildPostDisjunct(roleSetsEnabledCommunication);
-            if (disjunct != null) {
-                disjuncts.add(disjunct);
-            }
-        }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST)) {
-            Filter disjunct = buildAnswerPostDisjunct(roleSetsEnabledCommunication);
-            if (disjunct != null) {
-                disjuncts.add(disjunct);
             }
         }
 
@@ -558,42 +576,6 @@ public class SearchableEntityAccessFilterService {
         return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.COURSE), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
     }
 
-    /**
-     * Builds the post type disjunct. Posts are only indexed for public channels, so course membership
-     * is sufficient for access (no additional channel-level visibility check needed).
-     * <p>
-     * Carries the same {@code type}-tokenization guard as {@link #buildLectureDisjunct(CourseRoleSets)}:
-     * {@code "answer_post"} is indexed as the tokens {@code ["answer", "post"]}, so {@code type Equal "post"}
-     * also matches answer-post rows and a caller asking for posts would get replies mixed in. Unlike the
-     * lecture case this is a correctness rather than an access problem, because answer posts are gated by
-     * the same course membership, but the filter must still mean what it says.
-     *
-     * @param roleSets the per-course role classification for the current user
-     * @return a filter matching posts the user may access, or {@code null} if no courses qualify
-     */
-    private Filter buildPostDisjunct(CourseRoleSets roleSets) {
-        if (roleSets.allAccessibleCourseIds().isEmpty()) {
-            return null;
-        }
-        // Posts are only indexed for public channels, so course membership is sufficient for access
-        return Filter.and(exactType(SearchableEntitySchema.TypeValues.POST), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
-    }
-
-    /**
-     * Builds the answer post type disjunct. Answer posts are only indexed for public channels, so
-     * course membership is sufficient for access (no additional channel-level visibility check needed).
-     *
-     * @param roleSets the per-course role classification for the current user
-     * @return a filter matching answer posts the user may access, or {@code null} if no courses qualify
-     */
-    private Filter buildAnswerPostDisjunct(CourseRoleSets roleSets) {
-        if (roleSets.allAccessibleCourseIds().isEmpty()) {
-            return null;
-        }
-        // Answer posts are only indexed for public channels, so course membership is sufficient for access
-        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.ANSWER_POST), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
-    }
-
     // -- Shared helpers --
 
     private static Filter buildTypeDiscriminatorFilter(Set<String> types, Set<String> hiddenTypes) {
@@ -621,8 +603,9 @@ public class SearchableEntityAccessFilterService {
 
     /**
      * Matches exactly one type despite the {@code word} tokenization of the discriminator (see
-     * {@link #buildLectureDisjunct(CourseRoleSets)}): {@code lecture} and {@code post} are token subsets of
-     * {@code lecture_unit} and {@code answer_post}, so a bare {@code Equal} on them also matches the longer type.
+     * {@link #buildLectureDisjunct(CourseRoleSets)}): {@code lecture} is a token subset of {@code lecture_unit}, so a bare
+     * {@code Equal} on it also matches the longer type. {@code post} and {@code answer_post} collide the same way, which
+     * needs the same guard here if they ever return to {@link #SEARCHABLE_TYPES}.
      *
      * @param type the {@code SearchableEntitySchema.TypeValues} discriminator to match
      * @return a filter matching rows of exactly that type
@@ -630,7 +613,6 @@ public class SearchableEntityAccessFilterService {
     private static Filter exactType(String type) {
         return switch (type) {
             case SearchableEntitySchema.TypeValues.LECTURE -> Filter.and(typeEquals(type), typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT).not());
-            case SearchableEntitySchema.TypeValues.POST -> Filter.and(typeEquals(type), typeEquals(SearchableEntitySchema.TypeValues.ANSWER_POST).not());
             default -> typeEquals(type);
         };
     }
