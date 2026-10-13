@@ -92,6 +92,14 @@ class GlobalSearchResultRankerTest {
     }
 
     @Test
+    void matchesTheDefaultChannelOfAnItemWithAccentedTitle() {
+        var channel = row("channel", 1L, "exercise-einf-hrung-in-java");
+        var exercise = row("exercise", 1L, "Einführung in Java");
+
+        assertThat(GlobalSearchResultRanker.rank(List.of(channel, exercise), true, courses, NOW)).containsExactly(exercise, channel);
+    }
+
+    @Test
     void leavesChannelsAloneThatBelongToNoItemInTheList() {
         var channel = row("channel", 1L, "tech-support");
         var otherCourseChannel = row("channel", 1L, "exercise-sorting");

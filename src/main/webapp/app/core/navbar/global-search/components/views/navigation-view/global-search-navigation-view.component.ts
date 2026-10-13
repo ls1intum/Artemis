@@ -72,6 +72,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     protected readonly contentRowOffset = computed(() => (this.hasContentRow() ? 1 : 0));
 
     protected readonly resultsListboxId = SEARCH_RESULTS_LISTBOX_ID;
+    /** Whether the result rows are on screen; while loading, skeletons take their place. */
+    protected readonly resultRowsShown = computed(() => this.showResults() && !this.isLoading() && !this.searchError() && this.results().length > 0);
     protected readonly optionDomId = searchResultOptionDomId;
     /** The distinct lectures of the hits, the first two by name, in hit order. */
     protected readonly contentLectureNames = computed(() => {

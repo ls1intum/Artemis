@@ -113,14 +113,19 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly filterShortcutLabel = computed<string>(() => (this.osDetector.isMac() ? '⌘F' : 'Ctrl+F'));
     // DOM id of the highlighted filter-menu option, for the search input's aria-activedescendant (the menu now
     // renders in the results pane, so the combobox references it across components by id).
+    /** How many selectable rows the results listbox renders; it mirrors the navigation view's template. */
+    private readonly renderedResultRows = computed(() => {
+        const contentRow = !this.contentSearchActive() && this.contentPreview().length > 0 ? 1 : 0;
+        const resultRows = this.showResults() && !this.isLoading() && !this.searchError() ? this.results().length : 0;
+        return contentRow + resultRows;
+    });
     /** The results listbox while it shows rows; the filter menu takes over the input's popup while it is open. */
-    protected readonly resultsListboxId = computed<string | undefined>(() =>
-        !this.filterMenuOpen() && (this.results().length > 0 || this.contentPreview().length > 0) ? SEARCH_RESULTS_LISTBOX_ID : undefined,
-    );
-    /** The selected result row, so a screen reader announces it while the focus stays in the input. */
-    protected readonly activeResultId = computed<string | undefined>(() =>
-        this.resultsListboxId() && this.selectedIndex() >= 0 ? searchResultOptionDomId(this.selectedIndex()) : undefined,
-    );
+    protected readonly resultsListboxId = computed<string | undefined>(() => (!this.filterMenuOpen() && this.renderedResultRows() > 0 ? SEARCH_RESULTS_LISTBOX_ID : undefined));
+    /** The selected result row, so a screen reader announces it while the focus stays in the input; none while it is not rendered. */
+    protected readonly activeResultId = computed<string | undefined>(() => {
+        const index = this.selectedIndex();
+        return this.resultsListboxId() && index >= 0 && index < this.renderedResultRows() ? searchResultOptionDomId(index) : undefined;
+    });
     protected readonly activeOptionId = computed<string | undefined>(() => {
         const option = this.menuOptions()[this.menuActiveIndex()];
         return option ? filterOptionDomId(option.id) : undefined;

@@ -10,34 +10,33 @@
     </div>
 }
 
-<!-- One listbox for the slides-and-videos row and the results, which the search input points into with aria-activedescendant -->
-<div role="listbox" class="contents" [id]="resultsListboxId" [attr.aria-label]="'global.search.resultsLabel' | artemisTranslate">
-    <!-- Slide and video hits for the query: one row that switches to the slides-and-videos search, selectable like a result -->
-    @if (hasContentRow()) {
-        <div #selectableItem class="content-hits-row" [class.content-hits-row-spaced]="irisOccupiesSpace()">
-            <div
-                class="content-hits-row-inner flex items-center gap-2 cursor-pointer"
-                [class.selected]="selectedIndex() === 0"
-                [attr.aria-selected]="selectedIndex() === 0"
-                [attr.id]="optionDomId(0)"
-                role="option"
-                tabindex="-1"
-                data-testid="global-search-content-hits-row"
-                (click)="showContentHits.emit()"
-                (keydown.enter)="showContentHits.emit()"
-            >
-                <fa-icon [icon]="faPhotoFilm" class="text-primary" aria-hidden="true" />
-                <span class="grow min-w-0 truncate">
-                    {{ 'global.search.contentHitsRow' | artemisTranslate: { count: contentPreview().length, lectures: contentLectureNames() } }}
-                </span>
-                <span class="content-hits-row-action font-medium">{{ 'global.search.contentHitsRowAction' | artemisTranslate }}</span>
+<!-- One listbox holds only the selectable rows (the slides-and-videos row and the results); the search input points into it
+     with aria-activedescendant. The Show more button and the empty, error and loading states stay outside it. -->
+@if (hasContentRow() || resultRowsShown()) {
+    <div role="listbox" class="contents" [id]="resultsListboxId" [attr.aria-label]="'global.search.resultsLabel' | artemisTranslate">
+        <!-- Slide and video hits for the query: one row that switches to the slides-and-videos search, selectable like a result -->
+        @if (hasContentRow()) {
+            <div #selectableItem class="content-hits-row" [class.content-hits-row-spaced]="irisOccupiesSpace()">
+                <div
+                    class="content-hits-row-inner flex items-center gap-2 cursor-pointer"
+                    [class.selected]="selectedIndex() === 0"
+                    [attr.aria-selected]="selectedIndex() === 0"
+                    [attr.id]="optionDomId(0)"
+                    role="option"
+                    tabindex="-1"
+                    data-testid="global-search-content-hits-row"
+                    (click)="showContentHits.emit()"
+                    (keydown.enter)="showContentHits.emit()"
+                >
+                    <fa-icon [icon]="faPhotoFilm" class="text-primary" aria-hidden="true" />
+                    <span class="grow min-w-0 truncate">
+                        {{ 'global.search.contentHitsRow' | artemisTranslate: { count: contentPreview().length, lectures: contentLectureNames() } }}
+                    </span>
+                    <span class="content-hits-row-action font-medium">{{ 'global.search.contentHitsRowAction' | artemisTranslate }}</span>
+                </div>
             </div>
-        </div>
-    }
-
-    <!-- Results list when searching or filter is active -->
-    @if (showResults() && !isLoading() && !searchError()) {
-        @if (results().length > 0) {
+        }
+        @if (resultRowsShown()) {
             <div class="search-results-list" [class.mt-3]="irisOccupiesSpace() && !hasContentRow()">
                 @for (result of results(); track result.id; let i = $index) {
                     <div #selectableItem>
@@ -50,51 +49,52 @@
                         />
                     </div>
                 }
-                @if (canShowMore()) {
-                    <button
-                        type="button"
-                        class="show-more-results-btn w-full bg-transparent border-0 p-2 font-medium"
-                        data-testid="global-search-show-more"
-                        (click)="showMore.emit()"
-                    >
-                        {{ 'global.search.showMoreResults' | artemisTranslate }}
-                    </button>
-                }
-            </div>
-        } @else {
-            <div class="no-results-state p-3 text-center text-secondary" [class.mt-3]="irisOccupiesSpace()">
-                @if (isContentSearchPrompt()) {
-                    <p>{{ 'global.search.contentSearchPrompt' | artemisTranslate }}</p>
-                } @else if (isTooShortQuery()) {
-                    <p>{{ 'global.search.tooShortQueryHint' | artemisTranslate }}</p>
-                } @else {
-                    <p>{{ 'global.search.noResultsFound' | artemisTranslate }}</p>
-                    @if (isShortQuery()) {
-                        <p class="text-body-tertiary small">{{ 'global.search.shortQueryHint' | artemisTranslate }}</p>
-                    }
-                }
             </div>
         }
-    } @else if (isLoading()) {
-        <!-- Skeleton loading placeholders -->
-        <div class="search-results-list" [class.mt-3]="irisOccupiesSpace()">
-            @for (_ of skeletonItems; track $index) {
-                <div class="skeleton-result-item p-3" aria-hidden="true">
-                    <div class="d-flex align-items-start gap-3">
-                        <!-- Icon placeholder -->
-                        <p-skeleton width="2.5rem" height="2.5rem" borderRadius="0.375rem" class="flex-shrink-0" />
-                        <!-- Content placeholder -->
-                        <div class="d-flex flex-column flex-grow-1" style="gap: 0.5rem">
-                            <div class="d-flex align-items-center gap-2">
-                                <p-skeleton width="45%" height="1rem" borderRadius="0.25rem" />
-                                <p-skeleton width="4.5rem" height="1.25rem" borderRadius="0.25rem" />
-                            </div>
-                            <p-skeleton width="65%" height="0.75rem" borderRadius="0.25rem" />
-                            <p-skeleton width="80%" height="0.75rem" borderRadius="0.25rem" />
-                        </div>
-                    </div>
-                </div>
+    </div>
+}
+
+<!-- Results list when searching or filter is active -->
+@if (showResults() && !isLoading() && !searchError()) {
+    @if (results().length > 0) {
+        @if (canShowMore()) {
+            <button type="button" class="show-more-results-btn w-full bg-transparent border-0 p-2 font-medium" data-testid="global-search-show-more" (click)="showMore.emit()">
+                {{ 'global.search.showMoreResults' | artemisTranslate }}
+            </button>
+        }
+    } @else {
+        <div class="no-results-state p-3 text-center text-secondary" [class.mt-3]="irisOccupiesSpace()">
+            @if (isContentSearchPrompt()) {
+                <p>{{ 'global.search.contentSearchPrompt' | artemisTranslate }}</p>
+            } @else if (isTooShortQuery()) {
+                <p>{{ 'global.search.tooShortQueryHint' | artemisTranslate }}</p>
+            } @else {
+                <p>{{ 'global.search.noResultsFound' | artemisTranslate }}</p>
+                @if (isShortQuery()) {
+                    <p class="text-body-tertiary small">{{ 'global.search.shortQueryHint' | artemisTranslate }}</p>
+                }
             }
         </div>
     }
-</div>
+} @else if (isLoading()) {
+    <!-- Skeleton loading placeholders -->
+    <div class="search-results-list" [class.mt-3]="irisOccupiesSpace()">
+        @for (_ of skeletonItems; track $index) {
+            <div class="skeleton-result-item p-3" aria-hidden="true">
+                <div class="d-flex align-items-start gap-3">
+                    <!-- Icon placeholder -->
+                    <p-skeleton width="2.5rem" height="2.5rem" borderRadius="0.375rem" class="flex-shrink-0" />
+                    <!-- Content placeholder -->
+                    <div class="d-flex flex-column flex-grow-1" style="gap: 0.5rem">
+                        <div class="d-flex align-items-center gap-2">
+                            <p-skeleton width="45%" height="1rem" borderRadius="0.25rem" />
+                            <p-skeleton width="4.5rem" height="1.25rem" borderRadius="0.25rem" />
+                        </div>
+                        <p-skeleton width="65%" height="0.75rem" borderRadius="0.25rem" />
+                        <p-skeleton width="80%" height="0.75rem" borderRadius="0.25rem" />
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

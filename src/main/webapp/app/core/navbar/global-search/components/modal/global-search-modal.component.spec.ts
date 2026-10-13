@@ -1194,6 +1194,17 @@ describe('GlobalSearchModalComponent', () => {
             vi.useRealTimers();
         });
 
+        it('points the input at no result while skeletons replace the rows', () => {
+            (component as any).results.set([{ id: '1', type: 'exercise', title: 'A' }]);
+            (component as any).isLoading.set(true);
+            (component as any).selectedIndex.set(0);
+            fixture.detectChanges();
+
+            const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+            expect(input.getAttribute('aria-activedescendant')).toBeNull();
+            expect(fixture.nativeElement.querySelector('[role="listbox"]#global-search-results')).toBeNull();
+        });
+
         it('puts letters typed before the input has focus into the search box', () => {
             vi.useFakeTimers();
             (document.activeElement as HTMLElement | null)?.blur();

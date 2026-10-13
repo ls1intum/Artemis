@@ -47,6 +47,9 @@ public final class GlobalSearchResultRanker {
 
     private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^\\p{L}\\p{N}]+");
 
+    /** Channel names hold only lowercase ASCII letters, digits and separators; Artemis replaces every other character. */
+    private static final Pattern NOT_IN_CHANNEL_NAMES = Pattern.compile("[^a-z0-9]+");
+
     /** Item types for which Artemis creates a channel named after the item. */
     private static final List<String> DEFAULT_CHANNEL_TYPES = List.of(SearchableEntitySchema.TypeValues.EXERCISE, SearchableEntitySchema.TypeValues.LECTURE,
             SearchableEntitySchema.TypeValues.EXAM);
@@ -152,8 +155,9 @@ public final class GlobalSearchResultRanker {
         return -1;
     }
 
+    /** Keeps only the characters a channel name can hold, so a title such as "Einführung" matches its channel "einf-hrung". */
     private static String compact(String text) {
-        return NON_ALPHANUMERIC.matcher(text).replaceAll("");
+        return NOT_IN_CHANNEL_NAMES.matcher(text).replaceAll("");
     }
 
     /**
