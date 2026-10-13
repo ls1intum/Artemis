@@ -191,6 +191,11 @@ artemis:
         #     orphan-delete-cap-per-tick: 100        # Most rows one tick may queue for deletion
         #     orphan-repair-cap-per-tick: 100        # Most rows one tick may queue for a content rewrite
         #     orphan-abort-ratio: 0.25               # Abort instead if this share of scanned rows looks orphaned
+    # Metis (development only): a local Ollama server (ollama pull qwen3-coder:30b); production has no default endpoint
+    metis:
+        llm:
+            base-url: http://localhost:11434/v1
+            model: qwen3-coder:30b
 
 # Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
 sentry:

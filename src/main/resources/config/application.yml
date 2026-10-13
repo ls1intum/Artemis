@@ -181,6 +181,37 @@ artemis:
     # Metis asks students comprehension questions about their own solution after the due date of a programming exercise
     metis:
         enabled: false
+        llm:
+            # OpenAI-compatible endpoint root including the version prefix, e.g. http://localhost:11434/v1 (Ollama).
+            # There is deliberately no default endpoint: while base-url or model is empty, generation and rating pause.
+            base-url: ""
+            # May stay empty for servers without authentication (Ollama, vLLM)
+            api-key: ""
+            model: ""
+            # LOCAL: runs on university-owned infrastructure (students with local or cloud AI consent take part)
+            # CLOUD: only students with cloud AI consent take part
+            hosting: LOCAL
+            temperature: 0.2
+            batch-timeout-seconds: 180
+            interactive-timeout-seconds: 60
+            batch-max-retries: 2
+            max-concurrent-calls: 4
+            interactive-permit-wait-seconds: 10
+        generation:
+            scheduler-enabled: true
+            poll-interval-seconds: 30
+            delay-after-due-date-seconds: 60
+            enable-delay-minutes: 10
+            horizon-days: 30
+            max-concurrent-tasks: 2
+            min-changed-lines: 5
+            max-focus-file-characters: 12000
+            max-prompt-characters: 60000
+            max-problem-statement-characters: 6000
+            max-transient-failures: 3
+        conversation:
+            answer-grace-seconds: 15
+            max-answer-characters: 10000
 
     weaviate:
         enabled: false
