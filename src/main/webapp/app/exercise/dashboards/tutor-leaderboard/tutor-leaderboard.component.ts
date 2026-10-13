@@ -47,6 +47,19 @@ export class TutorLeaderboardComponent {
      */
     readonly sortedTutorsData = computed<TutorLeaderboardElement[]>(() => this.sortService.sortByProperty([...this.tutorsData()], this.sortPredicate(), this.reverseOrder()));
 
+    /**
+     * Rank of each tutor by points (standard competition ranking): tutors with the same points share a rank
+     * and the following rank is skipped accordingly. The rank does not depend on the displayed sort order.
+     */
+    readonly ranks = computed<Map<TutorLeaderboardElement, number>>(() => {
+        const tutors = this.tutorsData();
+        const ranks = new Map<TutorLeaderboardElement, number>();
+        for (const tutor of tutors) {
+            ranks.set(tutor, 1 + tutors.filter((other) => other.points > tutor.points).length);
+        }
+        return ranks;
+    });
+
     readonly faExclamationTriangle = faExclamationTriangle;
 
     onSortChange(event: TumAetUiTableSortEvent): void {
