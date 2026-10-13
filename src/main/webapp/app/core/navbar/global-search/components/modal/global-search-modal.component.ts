@@ -22,7 +22,7 @@ import { FilterToken } from '../../models/search-token.model';
 import { removeTokenAt } from '../../models/search-token.util';
 import { IrisSearchAvailabilityService } from '../../services/iris-search-availability.service';
 import { LectureSearchService } from '../../services/lecture-search.service';
-import { mapLectureContentResult } from '../../models/lecture-content-result.util';
+import { LECTURE_CONTENT_TYPE, mapLectureContentResult } from '../../models/lecture-content-result.util';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { matchCoursePages } from '../../models/course-page-results.util';
@@ -114,6 +114,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
     });
     protected readonly results = signal<GlobalSearchResult[]>([]);
     protected readonly isLoading = signal<boolean>(false);
+    /** Slide and video hits for the current query, shown as one row above the results while content search is not active. */
+    protected readonly contentPreview = signal<GlobalSearchResult[]>([]);
+    private readonly contentPreviewSubject = new Subject<SearchState | null>();
     /** The result limit of the search that produced the current results. */
     private readonly resultLimit = signal(DEFAULT_RESULT_LIMIT);
     protected readonly canShowMore = computed(() => !this.contentSearchActive() && this.resultLimit() < EXPANDED_RESULT_LIMIT && this.results().length >= this.resultLimit());
@@ -321,6 +324,32 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 this.hasSearched.set(true);
             });
 
+        // A light, parallel content search: it only feeds the row that offers to switch to the slides-and-videos
+        // search, so a failure just hides the row.
+        this.contentPreviewSubject
+            .pipe(
+                switchMap((event) => {
+                    if (event === null) {
+                        return of([]);
+                    }
+                    const courseIds = this.courseIdsParam();
+                    const excludeCourseIds = this.excludeCourseIdsParam();
+                    return timer(SEARCH_DEBOUNCE_MS).pipe(
+                        switchMap(() =>
+                            this.lectureSearchService
+                                .search(event.query, CONTENT_SEARCH_LIMIT, courseIds.length ? courseIds : undefined, excludeCourseIds.length ? excludeCourseIds : undefined, true)
+                                .pipe(
+                                    timeout(CONTENT_SEARCH_TIMEOUT_MS),
+                                    map((results) => results.map(mapLectureContentResult)),
+                                    catchError(() => of([])),
+                                ),
+                        ),
+                    );
+                }),
+                takeUntilDestroyed(),
+            )
+            .subscribe((hits) => this.setContentPreview(hits));
+
         this.router.events
             .pipe(
                 filter((e) => e instanceof NavigationEnd),
@@ -381,6 +410,39 @@ export class GlobalSearchModalComponent implements OnDestroy {
         return matchCoursePages(this.searchText(), courseId, this.courseStorageService.getCourse(courseId)?.title, (key) => this.translateService.instant(key));
     }
 
+    /**
+     * Asks for the slide and video hits of the query when the content row can be offered: the user opted into AI, the
+     * slides-and-videos search is not already active, and the query is long enough to search.
+     */
+    private requestContentPreview(query: string): void {
+        const offersRow = !this.contentSearchActive() && this.availability.contentSearchAvailable() && query.trim().length >= MIN_SEARCH_QUERY_LENGTH;
+        // The hits of the previous query or scope no longer apply; the row stays hidden until the new ones arrive.
+        this.setContentPreview([]);
+        this.contentPreviewSubject.next(offersRow ? { query: query.trim() } : null);
+    }
+
+    /**
+     * Shows new preview hits. The row is the first selectable item, so a selected result keeps its selection when the
+     * row appears or disappears instead of the selection pointing at whatever now sits at its old index.
+     */
+    private setContentPreview(hits: GlobalSearchResult[]): void {
+        const hadRow = this.contentPreview().length > 0;
+        const hasRow = hits.length > 0;
+        const selected = this.selectedIndex();
+        if (hadRow !== hasRow && selected >= 0) {
+            this.selectedIndex.set(hasRow ? selected + 1 : selected - 1);
+        }
+        this.contentPreview.set(hits);
+    }
+
+    /** Switches to the slides-and-videos search for the current query, keeping the course filters. */
+    protected showContentHits(): void {
+        // A type chip cannot stay next to the slides-and-videos chip, which reads a different index; course chips can.
+        const courseTokens = this.tokens().filter((token) => token.facet !== 'type');
+        this.applyTokens([...courseTokens, { facet: 'type', value: LECTURE_CONTENT_TYPE }]);
+        this.focusInput();
+    }
+
     /** Loads the longer result list for the current search; the next search starts at the default page size again. */
     protected showMoreResults(): void {
         this.isLoading.set(true);
@@ -415,6 +477,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 this.isLoading.set(true);
             }
             this.searchSubject.next({ query: text });
+            this.requestContentPreview(text);
         }
         this.returnHomeIfEmpty();
     }
@@ -578,12 +641,14 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
         this.lastSearchText = query;
         this.searchSubject.next({ query });
+        this.requestContentPreview(query);
     }
 
     private resetSearch() {
         this.lastSearchText = '';
         this.chipKeyOrigin = undefined;
         this.searchSubject.next(null);
+        this.contentPreviewSubject.next(null);
         this.filter.reset();
         this.results.set([]);
         this.selectedIndex.set(-1);

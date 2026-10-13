@@ -133,6 +133,56 @@ describe('GlobalSearchNavigationViewComponent', () => {
             });
         });
 
+        describe('Slides and videos row', () => {
+            const hits = [
+                { id: 'a', type: 'lecture_content', metadata: { lectureName: 'Graphs' } },
+                { id: 'b', type: 'lecture_content', metadata: { lectureName: 'Sorting' } },
+                { id: 'c', type: 'lecture_content', metadata: { lectureName: 'Graphs' } },
+            ] as GlobalSearchResult[];
+
+            beforeEach(() => {
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', [{ id: '123', type: 'exercise', metadata: { courseId: 1 } }] as GlobalSearchResult[]);
+                fixture.componentRef.setInput('contentPreview', hits);
+                fixture.detectChanges();
+            });
+
+            it('shows the row as the first selectable item and names the distinct lectures', () => {
+                expect(fixture.debugElement.query(By.css('[data-testid="global-search-content-hits-row"]'))).not.toBeNull();
+                expect(component.itemCount()).toBe(2);
+                expect(component['contentLectureNames']()).toBe('Graphs, Sorting');
+            });
+
+            it('switches to the slides-and-videos search on Enter when the row is selected', () => {
+                const emitted = vi.fn();
+                component.showContentHits.subscribe(emitted);
+                fixture.componentRef.setInput('selectedIndex', 0);
+                fixture.detectChanges();
+
+                component.handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+                expect(emitted).toHaveBeenCalledOnce();
+                expect(router.navigate).not.toHaveBeenCalled();
+            });
+
+            it('opens the first result one position after the row', () => {
+                fixture.componentRef.setInput('selectedIndex', 1);
+                fixture.detectChanges();
+
+                component.handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 1, 'exercises', '123']);
+            });
+
+            it('hides the row while the slides-and-videos search is active', () => {
+                fixture.componentRef.setInput('contentSearchActive', true);
+                fixture.detectChanges();
+
+                expect(fixture.debugElement.query(By.css('[data-testid="global-search-content-hits-row"]'))).toBeNull();
+                expect(component.itemCount()).toBe(1);
+            });
+        });
+
         describe('getIconForType', () => {
             it('should return correct icons for exercise badges', () => {
                 expect(component['getIconForType']('exercise', 'programming')).toBe(faKeyboard);
