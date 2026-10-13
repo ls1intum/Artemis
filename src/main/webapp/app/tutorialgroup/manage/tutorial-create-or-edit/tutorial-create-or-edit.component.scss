@@ -37,6 +37,18 @@
                 .spacer {
                     flex: 1;
                 }
+
+                .input-cell {
+                    align-self: stretch;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.25rem;
+                }
+
+                .field-error {
+                    font-size: 12px;
+                    color: var(--danger);
+                }
             }
         }
 

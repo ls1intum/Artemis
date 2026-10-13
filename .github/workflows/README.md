@@ -136,6 +136,47 @@ a PR that edits a required check also runs that check. Cascading skips don't byp
 either: `detect-changes` is in the gate's `needs:`, so a change-detection failure fails the
 gate closed.
 
+### Skipping tests on a pull request
+
+The server suite is by far the largest consumer of the self-hosted `aet-large-ubuntu` runners
+(seven shards per run), and E2E is the slowest stage, so a **pull request** skips what it cannot
+affect. `detect-changes` emits `run_server_tests` and `run_client_tests`, which `ci.yml` passes to
+`ci-test.yml`, and `run_e2e`, which gates the `e2e` job. The skipped jobs report `skipped`; the `test` call as a whole still reports `success` when the other
+suite passes, which is all the gate sees. A skipped suite produces no coverage artifact (the
+coverage reporters only fetch an artifact when the matching `has_*_changes` is true, which implies
+the suite ran).
+
+- All three outputs are **deny-lists** in the `relevant` step, so a path nobody has classified runs
+  the suite. The server suite is skipped only if every changed file is markdown, `LICENSE`,
+  documentation, a client file (`src/main/webapp/**`), a client test (`src/test/javascript`,
+  `src/test/vitest`), Playwright (`src/test/playwright`), or under `packages/` or `skills/`. The
+  client suite is skipped only if every changed file is markdown, `LICENSE`, documentation, or under
+  `src/main/java`, `src/main/resources`, `src/test/java` or `src/test/resources`. `build.gradle`
+  and `gradle/` are deliberately in neither list: `supporting_scripts/client/prebuild.mjs` reads the
+  app version from `build.gradle`, and the `test:rules` spec reads `gradle/profile_{dev,prod}.gradle`.
+- Server tests read some files that the deny-lists (and `build`) treat as irrelevant: the
+  translations under `src/main/webapp/i18n/`, `documentation/docs/developer/feature-usage-catalogue.mdx`
+  and the markdown templates under `src/main/resources/` (`has_server_test_inputs`). Changing any of
+  them runs the server suite, and `test` runs for it even when `build` would skip the whole run (a
+  documentation-only change that includes the catalogue runs only the server suite). If a server
+  test starts reading another client, documentation or markdown file, add it there, or the suite can
+  be skipped under it.
+- E2E runs against the built Docker image, so it is skipped only if every changed file is markdown,
+  `LICENSE`, documentation, or a test that is not an E2E test: `src/test/java`, `src/test/resources`,
+  `src/test/javascript`, `src/test/vitest`, and the `*.spec.ts` files under `src/main/webapp` and
+  `packages`. Playwright specs are `*.spec.ts` too, which is why client specs are matched by
+  location, and a change under `src/test/playwright` always runs E2E. `build` and the other required
+  checks still run.
+- Only `pull_request` events skip. A push to `develop`, a merge group, a manual run and a release
+  other than a `@tumaet/*` one run both suites, because the coverage badge and Sonar read both
+  suites' coverage there and `develop` is where anything that slipped past a pull request's own run
+  would show up. `@tumaet/*` release tags skip `detect-changes` and with it `test`, like every other
+  Artemis job.
+- A pull request with 3000 changed files or more never skips: the changed files come from the pulls
+  API, which stops at 3000, so the filters may not have seen all of them.
+- Codacy coverage is uploaded by the server report job only, so an internal pull request that skips
+  the server suite uploads none.
+
 ## Action pinning policy
 
 - **All external actions**, including `actions/*` and `github/*`, are pinned to a
@@ -180,6 +221,7 @@ These workflows are intentionally NOT folded into the umbrella:
 | `test-android.yml` | Different self-hosted runner pool, clones a separate repo, 60-minute job. |
 | `test-mysql.yml` | Manual-only (`workflow_dispatch`). Sibling DB engine to PostgreSQL. |
 | `nightly-lti-interop.yml` | Scheduled default-branch interop check; not part of PR/push CI. |
+| `dependency-submission.yml` | Submits the Gradle dependency graph on `develop` pushes that change a build file, weekly, and on demand (`workflow_dispatch`). Replaces the repository setting "Automatic dependency submission", which ran on every branch and pull request although GitHub discards a snapshot of any non-default branch. Keep that setting off. |
 | `deploy-documentation.yml` | **Split:** the automatic develop-push docs deploy is now ci.yml's `deploy-docs` job (reusing `ci-docs.yml`'s build); this file is the `workflow_dispatch` manual-redeploy fallback. Both share the `pages` concurrency group. |
 | `testserver-deployment.yml`, `prod-like-deployment.yml` | Manual deploy workflows. |
 | `pullrequest-coverage-reporter.yml` | **Fork PRs only.** Posts the coverage table for fork PRs (where an in-run token can't write); hardened against a `workflow_run` pwn-request. Internal PRs use `ci.yml`'s in-run `coverage-report` job instead, so the table appears at ~test time rather than after the run. |
