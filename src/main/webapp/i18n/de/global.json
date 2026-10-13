@@ -46,6 +46,7 @@
         "search": {
             "title": "Suchen",
             "placeholder": "Suchen oder Frage stellen...",
+            "showMoreResults": "Mehr Ergebnisse anzeigen",
             "noResultsFound": "Keine Ergebnisse gefunden",
             "searchPlaceholder": "Suche...",
             "tooShortQueryHint": "Bitte gib einen längeren Suchbegriff ein.",

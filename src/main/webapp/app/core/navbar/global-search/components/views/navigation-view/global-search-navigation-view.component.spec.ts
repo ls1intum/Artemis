@@ -104,6 +104,22 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(preventDefaultSpy).toHaveBeenCalled();
             });
 
+            it('leaves Enter on a focused button to the button', () => {
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', [{ id: '123', type: 'exercise', metadata: { courseId: 1 } }] as GlobalSearchResult[]);
+                fixture.componentRef.setInput('selectedIndex', 0);
+                fixture.detectChanges();
+                const button = document.createElement('button');
+                document.body.appendChild(button);
+                const event = new KeyboardEvent('keydown', { key: 'Enter' });
+                Object.defineProperty(event, 'target', { value: button });
+
+                component.handleKeydown(event);
+
+                expect(router.navigate).not.toHaveBeenCalled();
+                button.remove();
+            });
+
             it('should navigate to the result at the selected index on Enter', () => {
                 fixture.componentRef.setInput('showResults', true);
                 fixture.componentRef.setInput('results', [{ id: '123', type: 'exercise', metadata: { courseId: 1 } }] as GlobalSearchResult[]);
@@ -217,9 +233,9 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'lectures', '2']);
             });
 
-            it('should navigate to lecture unit', () => {
+            it('should open the lecture at the lecture unit', () => {
                 component['navigateToResult']({ type: 'lecture_unit', id: '3', metadata: { courseId: 10, lectureId: 20 } } as GlobalSearchResult);
-                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'lectures', 20]);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'lectures', 20], { queryParams: { unit: '3' }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
             });
 
             it('should navigate to lecture content with a marked deep-link navigation', () => {
@@ -257,9 +273,14 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', '4', 'assessment-dashboard']);
             });
 
-            it('should navigate to faq', () => {
+            it('should open the faq page at the faq', () => {
+                component['navigateToResult']({ type: 'faq', id: '8', metadata: { courseId: 10 } } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'faq'], { queryParams: { faqId: '8' } });
+            });
+
+            it('should open the faq page when the faq id is missing', () => {
                 component['navigateToResult']({ type: 'faq', metadata: { courseId: 10 } } as GlobalSearchResult);
-                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'faq']);
+                expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'faq'], undefined);
             });
 
             it('should navigate to channel', () => {

@@ -30,8 +30,14 @@ export const CONTENT_SEARCH_TIMEOUT_MS = 5_000;
 /** Number of content hits requested per search. */
 const CONTENT_SEARCH_LIMIT = 10;
 
+/** Results per page of the metadata search, and the most the server returns for one search. */
+export const DEFAULT_RESULT_LIMIT = 10;
+export const EXPANDED_RESULT_LIMIT = 25;
+
 interface SearchState {
     query: string;
+    /** How many results to ask for; the default page size when absent. */
+    limit?: number;
 }
 
 /**
@@ -103,6 +109,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
     });
     protected readonly results = signal<GlobalSearchResult[]>([]);
     protected readonly isLoading = signal<boolean>(false);
+    /** The result limit of the search that produced the current results. */
+    private readonly resultLimit = signal(DEFAULT_RESULT_LIMIT);
+    protected readonly canShowMore = computed(() => !this.contentSearchActive() && this.resultLimit() < EXPANDED_RESULT_LIMIT && this.results().length >= this.resultLimit());
     protected readonly hasSearched = signal<boolean>(false);
     protected readonly searchError = signal<string | undefined>(undefined);
     protected readonly selectedIndex = signal(-1);
@@ -266,7 +275,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     const searchQuery = hasValidQuery ? trimmedQuery : '';
                     const courseIdsParam = courseIds.length ? courseIds : undefined;
                     const excludeCourseIdsParam = excludeCourseIds.length ? excludeCourseIds : undefined;
-                    const cacheKey = this.filterCacheKey(types, excludeTypes, courseIds, excludeCourseIds);
+                    const limit = event.limit ?? DEFAULT_RESULT_LIMIT;
+                    this.resultLimit.set(limit);
+                    const cacheKey = this.filterCacheKey(types, excludeTypes, courseIds, excludeCourseIds, limit);
 
                     // Empty query with filter — serve from cache synchronously if available
                     if (!hasValidQuery && hasFilter) {
@@ -281,7 +292,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     this.isLoading.set(true);
                     return timer(SEARCH_DEBOUNCE_MS).pipe(
                         switchMap(() =>
-                            this.searchService.globalSearch(searchQuery, types, excludeTypes, courseIdsParam, excludeCourseIdsParam).pipe(
+                            this.searchService.globalSearch(searchQuery, types, excludeTypes, courseIdsParam, excludeCourseIdsParam, limit).pipe(
                                 tap((results) => {
                                     if (!hasValidQuery && hasFilter) {
                                         this.placeholderCache.set(cacheKey, results);
@@ -350,6 +361,12 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.tokens.set(newTokens);
         this.lastSearchText = '';
         this.searchSubject.next({ query: '' });
+    }
+
+    /** Loads the longer result list for the current search; the next search starts at the default page size again. */
+    protected showMoreResults(): void {
+        this.isLoading.set(true);
+        this.searchSubject.next({ query: this.lastSearchText, limit: EXPANDED_RESULT_LIMIT });
     }
 
     protected onSearchInput(query: string): void {
@@ -523,10 +540,10 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     /** Stable cache key for placeholder (empty-query) results, keyed by the active filter set. */
-    private filterCacheKey(types: string | undefined, excludeTypes: string | undefined, courseIds: number[], excludeCourseIds: number[]): string {
+    private filterCacheKey(types: string | undefined, excludeTypes: string | undefined, courseIds: number[], excludeCourseIds: number[], limit = DEFAULT_RESULT_LIMIT): string {
         const ids = [...courseIds].sort((a, b) => a - b).join('.');
         const excludeIds = [...excludeCourseIds].sort((a, b) => a - b).join('.');
-        return `${types ?? ''}_e${excludeTypes ?? ''}_${ids}_x${excludeIds}`;
+        return `${types ?? ''}_e${excludeTypes ?? ''}_${ids}_x${excludeIds}_l${limit}`;
     }
 
     /**
