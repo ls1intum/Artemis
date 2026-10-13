@@ -1,5 +1,5 @@
 import { OnDestroy, Service, inject } from '@angular/core';
-import { faComments, faPersonChalkboard, faRectangleList, faTriangleExclamation, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faComments, faPersonChalkboard, faRectangleList, faRobot, faTriangleExclamation, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CourseNotification, courseNotificationEnumValueFromName } from 'app/notification/shared/entities/course-notification/course-notification';
 import { HttpClient, HttpResponse } from '@angular/common/http';
@@ -47,6 +47,7 @@ export class CourseNotificationService implements OnDestroy {
         deregisteredFromTutorialGroupNotification: faPersonChalkboard,
         tutorialGroupDeletedNotification: faPersonChalkboard,
         irisResponseNeedsReviewNotification: faComments,
+        irisResponseNotification: faRobot,
         atlasCompetencyUpdateNotification: faWandMagicSparkles,
     };
 
@@ -78,6 +79,8 @@ export class CourseNotificationService implements OnDestroy {
         tutorialGroupDeletedNotification: [],
         // Server only supports the WEBAPP channel for this notification (see IrisResponseNeedsReviewNotification#getSupportedChannels).
         irisResponseNeedsReviewNotification: [CourseNotificationChannel.EMAIL, CourseNotificationChannel.PUSH],
+        // Iris responses are delivered to the native app via push only; email and webapp are unsupported (see IrisResponseNotification.getSupportedChannels).
+        irisResponseNotification: [CourseNotificationChannel.EMAIL, CourseNotificationChannel.WEBAPP],
         // Server only supports the EMAIL channel for this notification (see AtlasCompetencyUpdateNotification#getSupportedChannels).
         atlasCompetencyUpdateNotification: [CourseNotificationChannel.WEBAPP, CourseNotificationChannel.PUSH],
     };
@@ -87,6 +90,10 @@ export class CourseNotificationService implements OnDestroy {
 
     // Parameter keys that should be rendered as markdown
     public static readonly NOTIFICATION_MARKDOWN_PARAMETERS = ['postMarkdownContent', 'replyMarkdownContent'];
+
+    // Parameter key of the message an editor wrote for students. It is plain text, so it is rendered literally and never
+    // as markup, and a notification carrying it is shown with the `contentWithNotificationText` translation of its type.
+    public static readonly NOTIFICATION_TEXT_PARAMETER = 'notificationText';
     private http = inject(HttpClient);
     private readonly accountService = inject(AccountService);
 

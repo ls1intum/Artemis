@@ -9,7 +9,7 @@
         >
             <!--region Left Panel-->
             <div left-body class="text-editor-grid pb-2 w-100" [class.ps-2]="!isExamSummary()">
-                @if (textExercise()?.teamMode && isActive) {
+                @if (teamCollaborationEnabled() && isActive) {
                     <div class="grid-area-team-info pb-6! ps-md-2">
                         <jhi-team-participate-info-box
                             [exercise]="textExercise()"
@@ -53,7 +53,7 @@
                             (input)="onTextEditorInput($event)"
                             [hidden]="submission() && !submission().submitted && isExamSummary()"
                         ></textarea>
-                        @if (textExercise()?.teamMode) {
+                        @if (teamCollaborationEnabled()) {
                             <jhi-team-submission-sync
                                 [exerciseType]="textExercise().type!"
                                 [submissionObservable]="submissionObservable"
