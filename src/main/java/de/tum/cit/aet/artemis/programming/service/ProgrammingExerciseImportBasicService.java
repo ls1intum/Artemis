@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseDefaultConfigurationsRepository;
 import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
@@ -79,6 +80,8 @@ public class ProgrammingExerciseImportBasicService {
 
     private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
 
+    private final ExerciseDefaultConfigurationsRepository exerciseDefaultConfigurationsRepository;
+
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
@@ -109,7 +112,8 @@ public class ProgrammingExerciseImportBasicService {
             ProgrammingExerciseTaskService programmingExerciseTaskService, UriService uriService, ChannelService channelService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyExerciseLinkService competencyExerciseLinkService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService,
-            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository,
+            ExerciseDefaultConfigurationsRepository exerciseDefaultConfigurationsRepository) {
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -129,6 +133,7 @@ public class ProgrammingExerciseImportBasicService {
         this.automaticAfterDueDateService = automaticAfterDueDateService;
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
+        this.exerciseDefaultConfigurationsRepository = exerciseDefaultConfigurationsRepository;
     }
 
     /**
@@ -199,10 +204,12 @@ public class ProgrammingExerciseImportBasicService {
         newExercise = programmingExerciseRepository.save(newExercise);
         // The configurations name the exercise, so they are written once that exercise exists.
         programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, newExercise);
-        // The same two calls ExerciseConfigurationService.initialize makes; this service goes to the repositories because it
-        // is already at the limit of constructor dependencies the code quality check allows.
+        // The same three calls ExerciseConfigurationService.initialize makes; this service goes to the repositories because it
+        // is already at the limit of constructor dependencies the code quality check allows. The import gets its own Metis
+        // configuration with the defaults rather than a copy of the source's.
         final var storedTeamAssignmentConfig = teamAssignmentConfigRepository.initializeFor(newExercise, desiredTeamAssignmentConfig);
         final var storedPlagiarismDetectionConfig = plagiarismDetectionConfigRepository.initializeFor(newExercise, desiredPlagiarismDetectionConfig);
+        exerciseDefaultConfigurationsRepository.ensureDefaultConfigurations(newExercise);
         if (!competencyLinks.isEmpty()) {
             competencyExerciseLinkService.addCompetencyLinksForCreation(newExercise, competencyLinks);
             newExercise = programmingExerciseRepository.save(newExercise);
