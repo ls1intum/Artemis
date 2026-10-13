@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 148 features, 1063 REST endpoints in 28 modules, and 62 interaction overrides.
+Currently 20 product areas, 150 features, 1079 REST endpoints in 29 modules, and 66 interaction overrides.
 
 ## Courses
 
@@ -1051,6 +1051,14 @@ Also recorded outside REST by `CourseNotificationService`.
 
 Also recorded outside REST by `AthenaFeedbackSuggestionsService`.
 
+### Comprehension check
+
+`METIS_COMPREHENSION_CHECK`: Students answering AI-generated questions about their own programming solution.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| metis | `MetisStudentCheckResource` | 2 | 1 | 1 | 0 |
+
 ## AI for instructors and tutors
 
 ### AI problem statement generation
@@ -1164,6 +1172,16 @@ Also recorded outside REST by `AthenaFeedbackSuggestionsService`.
 | atlas | `CompetencyResource` | 3 | 0 | 0 | 0 |
 | atlas | `CourseCompetencyResource` | 1 | 0 | 0 | 0 |
 | iris | `PyrisInternalStatusUpdateResource` | 0 | 0 | 0 | 1 |
+
+### Comprehension check management
+
+`METIS_CHECK_MANAGEMENT`: Configuring comprehension checks, reviewing generated questions and reading the results dashboard.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| metis | `MetisDashboardResource` | 1 | 2 | 0 | 0 |
+| metis | `MetisExerciseConfigResource` | 2 | 0 | 3 | 0 |
+| metis | `MetisQuestionReviewResource` | 4 | 0 | 0 | 0 |
 
 ## Academic integrity
 
@@ -1491,6 +1509,10 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/iris/courses/{courseId}/status` (`IRIS_CHAT`)
 * `GET api/lecture/lectures/{lectureId}/title` (`LECTURE_PAGES`)
 * `GET api/localci/queued-jobs/queue-duration-estimation` (`PROGRAMMING_RESULTS`)
+* `GET api/metis/courses/{courseId}/tutorial-groups` (`METIS_CHECK_MANAGEMENT`)
+* `GET api/metis/exercises/{exerciseId}/config` (`METIS_CHECK_MANAGEMENT`)
+* `GET api/metis/exercises/{exerciseId}/group-windows` (`METIS_CHECK_MANAGEMENT`)
+* `GET api/metis/exercises/{exerciseId}/status` (`METIS_COMPREHENSION_CHECK`)
 * `GET api/modeling/apollon-diagrams/{diagramId}/title` (`QUIZ_AUTHORING`)
 * `GET api/notification/courses/info` (`COURSE_NOTIFICATIONS`)
 * `GET api/notification/public/system-notifications/active` (`SYSTEM_NOTIFICATIONS`)

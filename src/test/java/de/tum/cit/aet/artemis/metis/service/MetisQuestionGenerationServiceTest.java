@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.dao.DataIntegrityViolationException;
 
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.metis.config.MetisProperties;
 import de.tum.cit.aet.artemis.metis.domain.MetisCheckStatus;
@@ -96,7 +96,7 @@ class MetisQuestionGenerationServiceTest {
 
     private final MetisLlmService llmService = mock(MetisLlmService.class);
 
-    private final UserRepository userRepository = mock(UserRepository.class);
+    private final UserTestRepository userRepository = mock(UserTestRepository.class);
 
     @BeforeEach
     void setUp() {

@@ -35,6 +35,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -967,9 +968,12 @@ class MetisGenerationIntegrationTest extends AbstractProgrammingIntegrationLocal
                 return MetisLlmTestResponses.completion(MetisLlmTestResponses.questionsJson(List.of(NEW_QUESTION), List.of(150)));
             });
 
-            MetisQuestionDTO regenerated = generationService.regenerateQuestion(exerciseId, question.getId());
+            // Through the endpoint, so that the resource and the review service that hands the request on are covered as well
+            String path = "/api/metis/exercises/" + exerciseId + "/questions/" + question.getId() + "/regenerate";
+            MetisQuestionDTO regenerated = request.postWithResponseBody(path, null, MetisQuestionDTO.class, HttpStatus.OK);
 
             assertThat(statusDuringTheCall.get()).isEqualTo(MetisCheckStatus.IN_REVIEW);
+            assertThat(regenerated.id()).isEqualTo(question.getId());
             assertThat(regenerated.questionText()).isEqualTo(NEW_QUESTION);
             assertThat(regenerated.timeLimitSeconds()).isEqualTo(150);
             assertThat(regenerated.regenerationCount()).isEqualTo(1);

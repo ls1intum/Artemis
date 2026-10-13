@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.metis.dto;
 
 import java.time.ZonedDateTime;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -12,6 +14,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * window of the exercise (null when no window has an end).
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MetisDashboardSummaryDTO(int participants, int completed, int inProgress, int notStarted, int skippedOrFailed, int awaitingReview, @Nullable Double averageScore,
-        int followUps, @Nullable ZonedDateTime windowEnd) {
+public record MetisDashboardSummaryDTO(@NotNull int participants, @NotNull int completed, @NotNull int inProgress, @NotNull int notStarted, @NotNull int skippedOrFailed,
+        @NotNull int awaitingReview, @Nullable Double averageScore, @NotNull int followUps, @Nullable ZonedDateTime windowEnd) {
 }
