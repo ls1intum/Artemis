@@ -161,7 +161,7 @@
                 "resultPaths": "Ergebnispfade",
                 "resultPathsHelp": "Füge Glob-Muster für Testergebnisdateien hinzu, die in dieser Phase erzeugt werden, zum Beispiel JUnit-XML-Berichte.",
                 "testsExpected": "Tests erwartet",
-                "expectedTestsBeforeDueDateWarning": "Im Klausurmodus wird empfohlen, Phasen mit erwarteten Tests nur nach der Abgabefrist einzubinden. Um dies zu beheben, drücke auf \"Bearbeiten\", wechsle in den \"erweiterten Modus\", aktiviere \"Build Konfiguration anpassen\" und suche nach \"Build Phasen\".",
+                "expectedTestsBeforeDueDateWarning": "Im Klausurmodus wird empfohlen, Phasen mit erwarteten Tests nur nach der Abgabefrist einzubinden. Um dies zu beheben, klicke oben auf dieser Seite auf \"Build-Plan bearbeiten\", setze die \"Inklusionsbedingung\" der Phase auf \"Nach Abgabefrist\" und klicke auf \"Absenden\".",
                 "expectedTestsBeforeDueDateEditorWarning": "Im Klausurmodus wird empfohlen, Phasen mit erwarteten Tests nur nach der Abgabefrist einzubinden.",
                 "resultPathPlaceholder": "z. B. **/results/*.xml",
                 "addResultPath": "Ergebnispfad hinzufügen",
