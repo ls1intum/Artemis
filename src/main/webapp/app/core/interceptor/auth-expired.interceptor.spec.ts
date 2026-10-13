@@ -26,6 +26,7 @@ describe('AuthExpiredInterceptor', () => {
     beforeEach(() => {
         loginServiceMock = {
             logout: vi.fn(),
+            logoutWithServerSession: vi.fn(),
         } as any as LoginService;
         sessionStorageServiceMock = {
             store: vi.fn(),
@@ -62,6 +63,31 @@ describe('AuthExpiredInterceptor', () => {
         expect(isAuthenticatedSpy).toHaveBeenCalledOnce();
         expect(loginServiceMock.logout).toHaveBeenCalledWith(false);
         expect(sessionStorageServiceMock.store).toHaveBeenCalledWith('previousUrl', 'https://example.com');
+    });
+
+    it('should end the server session and store the current url if the session is outdated', () => {
+        const mockHandler = {
+            handle: () => throwError(() => new HttpErrorResponse({ status: 401, error: { errorKey: 'sessionOutdated' } })),
+        };
+        vi.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(true);
+
+        authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe({ error: () => {} });
+
+        expect(loginServiceMock.logoutWithServerSession).toHaveBeenCalledOnce();
+        expect(loginServiceMock.logout).not.toHaveBeenCalled();
+        expect(sessionStorageServiceMock.store).toHaveBeenCalledWith('previousUrl', 'https://example.com');
+    });
+
+    it('should keep the client-only logout for a 401 with another error key', () => {
+        const mockHandler = {
+            handle: () => throwError(() => new HttpErrorResponse({ status: 401, error: { errorKey: 'somethingElse' } })),
+        };
+        vi.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(true);
+
+        authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe({ error: () => {} });
+
+        expect(loginServiceMock.logout).toHaveBeenCalledWith(false);
+        expect(loginServiceMock.logoutWithServerSession).not.toHaveBeenCalled();
     });
 
     it('should ignore if user is not authenticated', () => {
