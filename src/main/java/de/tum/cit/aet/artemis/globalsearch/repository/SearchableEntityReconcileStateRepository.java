@@ -4,7 +4,10 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
@@ -26,4 +29,12 @@ public interface SearchableEntityReconcileStateRepository extends ArtemisJpaRepo
      * @return the persisted position and current-cycle counters, if the pass has run before
      */
     Optional<SearchableEntityReconcileState> findByPass(ReconcilePass pass);
+
+    /**
+     * Clears every pass's position when the index is rebuilt, so each pass starts from the beginning of the corpus.
+     */
+    @Transactional // ok because of the modifying delete
+    @Modifying(flushAutomatically = true)
+    @Query("DELETE FROM SearchableEntityReconcileState s")
+    void deleteAllForRebuild();
 }
