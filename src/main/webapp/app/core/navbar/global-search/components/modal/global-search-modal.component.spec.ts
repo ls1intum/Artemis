@@ -5,7 +5,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { GlobalSearchModalComponent } from './global-search-modal.component';
 import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
@@ -585,8 +585,35 @@ describe('GlobalSearchModalComponent', () => {
             vi.advanceTimersByTime(300);
 
             expect(mockSearchService.globalSearch).toHaveBeenCalled();
-            expect(search).toHaveBeenCalledWith('backpropagation', 10, undefined, undefined);
+            expect(search).toHaveBeenCalledWith('backpropagation', 10, undefined, undefined, true);
             expect(component['contentPreview']()).toHaveLength(1);
+        });
+
+        it('keeps the selected result selected when the row appears above it', () => {
+            const preview = new Subject<LectureSearchResult[]>();
+            vi.spyOn(lectureSearch, 'search').mockReturnValue(preview);
+            mockSearchService.globalSearch.mockReturnValue(of([{ id: '1', type: 'exercise', title: 'Backpropagation' } as GlobalSearchResult]));
+
+            component['onSearchInput']('backpropagation');
+            vi.advanceTimersByTime(300);
+            component['selectedIndex'].set(0);
+            preview.next([contentHit]);
+
+            expect(component['selectedIndex']()).toBe(1);
+        });
+
+        it('hides the hits of the previous query until the new ones arrive', () => {
+            const preview = new Subject<LectureSearchResult[]>();
+            vi.spyOn(lectureSearch, 'search').mockReturnValue(preview);
+
+            component['onSearchInput']('backpropagation');
+            vi.advanceTimersByTime(300);
+            preview.next([contentHit]);
+            expect(component['contentPreview']()).toHaveLength(1);
+
+            component['onSearchInput']('gradient descent');
+
+            expect(component['contentPreview']()).toHaveLength(0);
         });
 
         it('asks for no slide and video hits without the AI opt-in', () => {

@@ -322,7 +322,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     return timer(SEARCH_DEBOUNCE_MS).pipe(
                         switchMap(() =>
                             this.lectureSearchService
-                                .search(event.query, CONTENT_SEARCH_LIMIT, courseIds.length ? courseIds : undefined, excludeCourseIds.length ? excludeCourseIds : undefined)
+                                .search(event.query, CONTENT_SEARCH_LIMIT, courseIds.length ? courseIds : undefined, excludeCourseIds.length ? excludeCourseIds : undefined, true)
                                 .pipe(
                                     timeout(CONTENT_SEARCH_TIMEOUT_MS),
                                     map((results) => results.map(mapLectureContentResult)),
@@ -333,7 +333,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 }),
                 takeUntilDestroyed(),
             )
-            .subscribe((hits) => this.contentPreview.set(hits));
+            .subscribe((hits) => this.setContentPreview(hits));
 
         this.router.events
             .pipe(
@@ -388,10 +388,23 @@ export class GlobalSearchModalComponent implements OnDestroy {
      */
     private requestContentPreview(query: string): void {
         const offersRow = !this.contentSearchActive() && this.availability.contentSearchAvailable() && query.trim().length >= MIN_SEARCH_QUERY_LENGTH;
-        if (!offersRow) {
-            this.contentPreview.set([]);
-        }
+        // The hits of the previous query or scope no longer apply; the row stays hidden until the new ones arrive.
+        this.setContentPreview([]);
         this.contentPreviewSubject.next(offersRow ? { query: query.trim() } : null);
+    }
+
+    /**
+     * Shows new preview hits. The row is the first selectable item, so a selected result keeps its selection when the
+     * row appears or disappears instead of the selection pointing at whatever now sits at its old index.
+     */
+    private setContentPreview(hits: GlobalSearchResult[]): void {
+        const hadRow = this.contentPreview().length > 0;
+        const hasRow = hits.length > 0;
+        const selected = this.selectedIndex();
+        if (hadRow !== hasRow && selected >= 0) {
+            this.selectedIndex.set(hasRow ? selected + 1 : selected - 1);
+        }
+        this.contentPreview.set(hits);
     }
 
     /** Switches to the slides-and-videos search for the current query, keeping the course filters. */
