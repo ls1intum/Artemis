@@ -654,8 +654,16 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     public IrisChatSession createSessionFromGlobalSearch(IrisGlobalSearchHandoffDTO handoff, User user) {
         userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         var course = resolveAndAuthorize(IrisChatMode.COURSE_CHAT, handoff.courseId(), user).course();
-        var session = createCourseSession(course, user);
         var context = handoff.context();
+        if (context != null) {
+            // Validated before the session exists, so a rejected handoff leaves no empty chat behind. The same course is checked like the context switch below checks it
+            // under the session lock.
+            var target = resolveAndAuthorize(context.mode(), context.entityId(), user);
+            if (!course.getId().equals(target.course().getId())) {
+                throw new ConflictException("New context must belong to the same course as the session", "Iris", "irisCourseMismatch");
+            }
+        }
+        var session = createCourseSession(course, user);
         if (context != null) {
             applyContextChange(session, context.mode(), context.entityId(), user);
         }

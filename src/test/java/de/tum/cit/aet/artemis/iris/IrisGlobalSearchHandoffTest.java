@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchHandoffDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisPendingContextDTO;
+import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisLectureMaterialVersionService;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
@@ -51,6 +52,9 @@ class IrisGlobalSearchHandoffTest extends AbstractIrisChatSessionTest {
     @Autowired
     private LectureUnitProcessingStateRepository lectureUnitProcessingStateRepository;
 
+    @Autowired
+    private IrisChatSessionRepository irisChatSessionRepository;
+
     @Override
     protected String getTestPrefix() {
         return TEST_PREFIX;
@@ -80,7 +84,7 @@ class IrisGlobalSearchHandoffTest extends AbstractIrisChatSessionTest {
         materialVersionService.captureForGlobalSearch(runId, TEST_PREFIX + "student1", List.of(course.getId()));
         state.setAttachmentVersion(4);
         lectureUnitProcessingStateRepository.save(state);
-        materialVersionService.keepCitedForGlobalSearch(runId, TEST_PREFIX + "student1", List.of(unit.getId()), List.of(course.getId()));
+        materialVersionService.keepCitedForGlobalSearch(runId, TEST_PREFIX + "student1", List.of(unit.getId()));
 
         var created = handoff(new IrisGlobalSearchHandoffDTO(course.getId(), null, QUESTION, citing(unit.getId()), runId), HttpStatus.CREATED);
 
@@ -95,7 +99,7 @@ class IrisGlobalSearchHandoffTest extends AbstractIrisChatSessionTest {
         ingested(unit, 3);
         var runId = UUID.randomUUID().toString();
         materialVersionService.captureForGlobalSearch(runId, TEST_PREFIX + "student2", List.of(course.getId()));
-        materialVersionService.keepCitedForGlobalSearch(runId, TEST_PREFIX + "student2", List.of(unit.getId()), List.of(course.getId()));
+        materialVersionService.keepCitedForGlobalSearch(runId, TEST_PREFIX + "student2", List.of(unit.getId()));
 
         var created = handoff(new IrisGlobalSearchHandoffDTO(course.getId(), null, QUESTION, citing(unit.getId()), runId), HttpStatus.CREATED);
 
@@ -163,6 +167,22 @@ class IrisGlobalSearchHandoffTest extends AbstractIrisChatSessionTest {
         activateIrisFor(examExercise);
 
         request.post(HANDOFF_URL, handoffDTO(new IrisPendingContextDTO(IrisChatMode.TEXT_EXERCISE_CHAT, examExercise.getId())), HttpStatus.CONFLICT);
+
+        // Rejected before the session is created, so no empty chat is left in the student's history.
+        assertThat(irisChatSessionRepository.countByCourseId(course.getId())).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void handoff_isRejectedForATopicOfAnotherCourse() throws Exception {
+        Course otherCourse = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1).getFirst();
+        activateIrisFor(otherCourse);
+        var otherLecture = lectureUtilService.createLecture(otherCourse);
+
+        request.post(HANDOFF_URL, handoffDTO(new IrisPendingContextDTO(IrisChatMode.LECTURE_CHAT, otherLecture.getId())), HttpStatus.CONFLICT);
+
+        assertThat(irisChatSessionRepository.countByCourseId(course.getId())).isZero();
+        assertThat(irisChatSessionRepository.countByCourseId(otherCourse.getId())).isZero();
     }
 
     @Test

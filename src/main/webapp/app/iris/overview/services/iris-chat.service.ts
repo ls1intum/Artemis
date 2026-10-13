@@ -891,6 +891,11 @@ export class IrisChatService implements OnDestroy {
     protected close(): void {
         this.requestedSessionId = undefined;
         this.markerVersionSubscription?.unsubscribe();
+        // Every caller opens another session, or none, next; a load still on its way must not open its session over that choice.
+        this.sessionLoadingSubscription?.unsubscribe();
+        this.sessionLoadingSubscription = undefined;
+        this.chatSessionByIdSubscription?.unsubscribe();
+        this.chatSessionByIdSubscription = undefined;
         if (this.sessionId) {
             this.irisWebsocketService.unsubscribeFromSession(this.sessionId);
             this.websocketSessionSubscription?.unsubscribe();

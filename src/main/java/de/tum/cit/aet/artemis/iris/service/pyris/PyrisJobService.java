@@ -468,8 +468,7 @@ public class PyrisJobService {
         var citedSources = sources == null ? List.<PyrisLectureSearchResultDTO>of()
                 : sources.stream().filter(Objects::nonNull).filter(source -> source.lectureUnit() != null && source.course() != null).toList();
         if (hasAnswer && !citedSources.isEmpty()) {
-            materialVersionService.keepCitedForGlobalSearch(job.jobId(), job.userLogin(), citedSources.stream().map(source -> source.lectureUnit().id()).toList(),
-                    citedSources.stream().map(source -> source.course().id()).toList());
+            materialVersionService.keepCitedForGlobalSearch(job.jobId(), job.userLogin(), citedSources.stream().map(source -> source.lectureUnit().id()).toList());
         }
         else {
             materialVersionService.removeGlobalSearch(job.jobId(), job.userLogin());

@@ -114,6 +114,18 @@ describe('GlobalSearchIrisHandoffComponent', () => {
         expect(router.navigate).toHaveBeenCalledExactlyOnceWith(['/courses', 1, 'iris'], { queryParams: { irisSession: 77 } });
     });
 
+    it('opens the course chat for an answer citing an exam exercise, which has no Iris chat of its own', async () => {
+        const examExercise: EntitySearchSource = { entityType: 'exercise', entityId: 54, course, title: 'Exam task', exerciseType: 'programming', link: '/courses/1/exams/7' };
+        render({ sources: [], entitySources: [examExercise] }, 'Exam task?', 'Implement it.[1]');
+
+        button()!.click();
+        await fixture.whenStable();
+
+        // No exercise context, which the server would reject; the chat opens on the course instead.
+        expect(createSession).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ courseId: 1, context: undefined }));
+        expect(router.navigate).toHaveBeenCalledExactlyOnceWith(['/courses', 1, 'iris'], { queryParams: { irisSession: 77 } });
+    });
+
     it('opens the chat on the most cited lecture', async () => {
         render(twoLectures);
 

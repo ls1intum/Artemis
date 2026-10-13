@@ -27,7 +27,8 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
 
 /**
  * Keeps the ingested material versions from before a chat run or a global search answer starts. Versions increase monotonically, so an update
- * during retrieval can make an answer conservatively outdated, but cannot relabel old coordinates as current.
+ * during retrieval can make an answer conservatively outdated, but cannot relabel old coordinates as current. A run without such a snapshot is
+ * never pinned to versions read later; its citations stay unverified.
  * Pyris must finish replacing its indexed material before ingestion is marked DONE.
  */
 @Lazy
@@ -38,8 +39,9 @@ public class IrisLectureMaterialVersionService {
     private static final Logger log = LoggerFactory.getLogger(IrisLectureMaterialVersionService.class);
 
     /**
-     * How long the versions of a global search answer's citations are kept once the answer is finished. The answer only exists while the search palette is open, so
-     * continuing it in the chat happens well within this time.
+     * How long the versions of a global search answer are kept, from its capture before retrieval until it is continued in the chat. The job of a running answer is
+     * extended on every status update, so its capture must not expire on the job timeout. The answer only exists while the search palette is open, so continuing it
+     * in the chat happens well within this time.
      */
     private static final Duration GLOBAL_SEARCH_CITED_VERSIONS_TTL = Duration.ofHours(1);
 
@@ -65,7 +67,7 @@ public class IrisLectureMaterialVersionService {
     }
 
     private DistributedMap<String, String> globalSearchSnapshots() {
-        return distributedDataProvider.getExpiringMap("pyris-global-search-material-version-map", Duration.ofSeconds(jobTimeout));
+        return distributedDataProvider.getExpiringMap("pyris-global-search-material-version-map", GLOBAL_SEARCH_CITED_VERSIONS_TTL);
     }
 
     /** A global search snapshot belongs to the user who asked, so a run id alone never reads another user's snapshot. */
@@ -150,22 +152,22 @@ public class IrisLectureMaterialVersionService {
 
     /**
      * Keeps only the versions of the units a finished global search answer cites, for as long as the answer can be continued in the chat. An answer without a
-     * snapshot from before its retrieval, an unscoped search that had no bounded set of courses to capture, is pinned to the versions its cited courses have now.
+     * snapshot from before its retrieval, such as an unscoped search that had no bounded set of courses to capture, keeps nothing: the material may have changed
+     * while it was retrieved, so its citations stay unverified rather than being pinned to versions read now.
      *
-     * @param runId          the global search answer run
-     * @param userLogin      the user who asked
-     * @param citedUnitIds   the lecture units the answer cites
-     * @param citedCourseIds the courses of those units
+     * @param runId        the global search answer run
+     * @param userLogin    the user who asked
+     * @param citedUnitIds the lecture units the answer cites
      */
-    public void keepCitedForGlobalSearch(String runId, String userLogin, Collection<Long> citedUnitIds, Collection<Long> citedCourseIds) {
+    public void keepCitedForGlobalSearch(String runId, String userLogin, Collection<Long> citedUnitIds) {
         var key = globalSearchKey(runId, userLogin);
         try {
-            if (citedUnitIds.isEmpty()) {
+            String captured = citedUnitIds.isEmpty() ? null : globalSearchSnapshots().get(key);
+            if (captured == null) {
                 globalSearchSnapshots().remove(key);
                 return;
             }
-            String captured = globalSearchSnapshots().get(key);
-            var versions = captured != null ? readVersions(captured) : currentVersions(citedCourseIds);
+            var versions = readVersions(captured);
             var cited = new HashSet<>(citedUnitIds);
             var citedVersions = versions.stream().filter(version -> cited.contains(version.lectureUnitId())).toList();
             globalSearchSnapshots().put(key, objectMapper.writeValueAsString(citedVersions), GLOBAL_SEARCH_CITED_VERSIONS_TTL);

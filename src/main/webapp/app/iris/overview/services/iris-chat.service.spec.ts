@@ -474,6 +474,22 @@ describe('IrisChatService', () => {
                 expect(byIdStub).toHaveBeenLastCalledWith(courseId, 777);
             });
 
+            it('should not let a linked session that arrives late replace the session chosen from the history meanwhile', async () => {
+                const linkedLoad = new Subject<IrisSession>();
+                vi.spyOn(httpService, 'getChatSessionById').mockImplementation((_courseId: number, sessionId: number) =>
+                    sessionId === 777 ? linkedLoad.asObservable() : of({ ...handedOffSession, id: sessionId }),
+                );
+
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+                service.switchToSession({ id: 778 } as IrisSessionDTO);
+                await waitForSessionIdValue(778);
+                // The linked session's response arrives after the student already picked another chat.
+                linkedLoad.next(handedOffSession);
+                linkedLoad.complete();
+
+                expect(service.sessionId).toBe(778);
+            });
+
             it('should not reload the session when it is already open', async () => {
                 const byIdStub = vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(handedOffSession));
 

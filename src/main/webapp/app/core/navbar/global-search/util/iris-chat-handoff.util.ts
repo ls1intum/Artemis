@@ -25,9 +25,9 @@ interface Counted<T> {
 
 /**
  * The place the answer's sources point to most: the most cited lecture or exercise of the most cited course, or that course
- * itself. A lecture source belongs to its lecture, an exercise with an Iris chat to its exercise, a lecture entry to its
- * lecture, and every other source (FAQs, exams, channels, course entries) only to its course. Ties keep the order the sources
- * were cited in.
+ * itself. A lecture source belongs to its lecture, a course exercise with an Iris chat to its exercise, a lecture entry to its
+ * lecture, and every other source (FAQs, exams and their exercises, channels, course entries) only to its course. Ties keep the
+ * order the sources were cited in.
  *
  * @returns the target, or undefined when no source names a course
  */
@@ -87,6 +87,11 @@ function entityPlace(source: EntitySearchSource): Place | undefined {
     if (source.entityType === 'lecture') {
         return { context: { mode: ChatServiceMode.LECTURE, entityId: source.entityId }, name: source.title };
     }
+    // Iris has no chat on an exam exercise and the server rejects one as the topic, so it opens its course instead. The source
+    // carries no exam id; its link is the only sign, and every exam exercise link leads into its exam.
+    if (source.entityType === 'exercise' && source.link?.includes('/exams/')) {
+        return undefined;
+    }
     const exerciseMode = source.entityType === 'exercise' ? EXERCISE_TYPE_TO_CHAT_MODE[source.exerciseType?.toLowerCase() ?? ''] : undefined;
     return exerciseMode ? { context: { mode: exerciseMode, entityId: source.entityId }, name: source.title } : undefined;
 }
@@ -112,8 +117,9 @@ const CITATION_SUMMARY_MAX_LENGTH = 200;
 
 /**
  * A chat citation of a lecture unit. The chat opens it with the same page or timestamp the answer card's chip uses, and labels
- * it with the unit's name; the server pins it to the current material version when the chat is created. Its summary is the
- * cited passage, so hovering it shows what the answer drew on, like a citation Iris writes in the chat.
+ * it with the unit's name; when the chat is created, the server pins it to the material version the answer was generated
+ * from, or leaves it unverified when that version was not captured. Its summary is the cited passage, so hovering it shows
+ * what the answer drew on, like a citation Iris writes in the chat.
  */
 function lectureCitation(source: LectureSearchResult): string {
     const unit = source.lectureUnit;

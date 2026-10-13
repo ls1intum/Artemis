@@ -92,6 +92,31 @@ describe('handoffTarget', () => {
         expect(handoffTarget(cited([], [modeling, faq]))).toEqual({ courseId: 1, name: 'Introduction to Algorithms' });
     });
 
+    it('goes to the course itself for an exam exercise, which has no Iris chat, but still to a course exercise with a link', () => {
+        const examExercise = (link: string): EntitySearchSource => ({
+            entityType: 'exercise',
+            entityId: 54,
+            course: algorithms,
+            title: 'Exam task',
+            exerciseType: 'programming',
+            link,
+        });
+        const courseExercise: EntitySearchSource = {
+            entityType: 'exercise',
+            entityId: 50,
+            course: algorithms,
+            title: 'Mergesort',
+            exerciseType: 'programming',
+            link: '/courses/1/exercises/50',
+        };
+
+        // The links a student, a tutor and an editor get for an exam exercise.
+        for (const link of ['/courses/1/exams/7', '/course-management/1/exams/7/assessment-dashboard/54', '/course-management/1/exams/7/exercise-groups']) {
+            expect(handoffTarget(cited([], [examExercise(link)]))).toEqual({ courseId: 1, name: 'Introduction to Algorithms' });
+        }
+        expect(handoffTarget(cited([], [courseExercise]))?.context).toEqual({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 50 });
+    });
+
     it('recognises text exercises and lecture entries as places', () => {
         const textExercise: EntitySearchSource = { entityType: 'exercise', entityId: 53, course: algorithms, title: 'Essay', exerciseType: 'TEXT' };
         const lectureEntry: EntitySearchSource = { entityType: 'lecture', entityId: 10, course: algorithms, title: 'Divide and Conquer' };

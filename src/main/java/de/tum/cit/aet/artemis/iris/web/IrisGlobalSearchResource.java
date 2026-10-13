@@ -211,7 +211,8 @@ public class IrisGlobalSearchResource {
         List<PyrisEntityCandidateDTO> entityCandidates = scope.searchesNothing() ? List.of() : fetchEntityCandidates(user, requestDTO, scope.courseIds(), scope.excludeCourseIds());
         pyrisJobService.addGlobalSearchAnswerJob(principal.getName(), requestDTO.runId().toString());
         // Before dispatch, like a chat run: continuing the answer in the chat pins its citations to the material it was written from. An unrestricted, unscoped search
-        // has no bounded set of courses to capture; its citations are pinned to the cited courses' material when the answer arrives.
+        // has no bounded set of courses to capture, so its citations stay unverified in the chat; reading the material when the answer arrives could pin them to a
+        // version the answer was not written from.
         if (scope.courseIds() != null && !scope.searchesNothing()) {
             pyrisJobService.captureGlobalSearchMaterialVersions(principal.getName(), requestDTO.runId().toString(), scope.courseIds());
         }
