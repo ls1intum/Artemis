@@ -128,10 +128,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
 
     participation = input.required<Participation>();
 
-    // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     private readonly selectedFileValue = signal<string | undefined>(undefined);
     private bypassNextUnloadWarning = false;
-    unsavedFilesValue!: { [fileName: string]: string }; // {[fileName]: fileContent}; set in constructor via initializeProperties()
+    private readonly unsavedFilesValue = signal<{ [fileName: string]: string }>({});
+    private readonly commitStateValue = signal(CommitState.UNDEFINED);
 
     /**
      * File-browser badges for code files and the Problem Statement entry, covering feedback
@@ -167,7 +167,13 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
 
     /** Code Editor State Variables **/
     editorState!: EditorState; // set in constructor via initializeProperties()
-    commitState!: CommitState; // set in constructor via initializeProperties()
+    get commitState(): CommitState {
+        return this.commitStateValue();
+    }
+
+    set commitState(state: CommitState) {
+        this.commitStateValue.set(state);
+    }
 
     readonly errorFiles = signal<string[]>([]);
     readonly annotations = signal<Array<Annotation>>([]);
@@ -189,7 +195,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     get unsavedFiles() {
-        return this.unsavedFilesValue;
+        return this.unsavedFilesValue();
     }
 
     /**
@@ -200,7 +206,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * @param unsavedFiles
      */
     set unsavedFiles(unsavedFiles: { [fileName: string]: string }) {
-        this.unsavedFilesValue = unsavedFiles;
+        this.unsavedFilesValue.set(unsavedFiles);
         if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.SAVING) {
             this.editorState = EditorState.CLEAN;
             if (this.commitState !== CommitState.COMMITTING) {
@@ -270,9 +276,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     /**
-     * Resets all variables of this class.
-     * When a new variable is added, it needs to be added to this method!
-     * Initializing in variable declaration is not allowed.
+     * Resets the repository-scoped editor state when the selected participation changes.
      */
     initializeProperties = () => {
         this.selectedFile = undefined;

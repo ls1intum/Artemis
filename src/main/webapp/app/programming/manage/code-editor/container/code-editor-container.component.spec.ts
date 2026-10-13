@@ -24,7 +24,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { editor } from 'monaco-editor';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { WritableSignal, signal } from '@angular/core';
+import { WritableSignal, computed, signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
@@ -93,6 +93,25 @@ describe('CodeEditorContainerComponent', () => {
         expect(component.commitState).toBe(CommitState.UNDEFINED);
         expect(component.unsavedFiles).toEqual({});
         expect(component.isProblemStatementVisible()).toBe(true);
+    });
+
+    it('updates a cached cleanliness guard after loading, edits, saves and refreshes', () => {
+        const clean = computed(() => component.canDeactivate() && component.hasCleanRepositoryState());
+        expect(clean()).toBe(false);
+        component.commitState = CommitState.CLEAN;
+        expect(clean()).toBe(true);
+        component.onFileContentChange({ fileName: 'App.java', text: 'unsaved' });
+        expect(clean()).toBe(false);
+        component.commitState = CommitState.CLEAN;
+        expect(clean()).toBe(false);
+        component.unsavedFiles = {};
+        expect(clean()).toBe(true);
+        component.commitState = CommitState.UNCOMMITTED_CHANGES;
+        expect(clean()).toBe(false);
+        component.onRefreshFiles();
+        expect(clean()).toBe(true);
+        component.initializeProperties();
+        expect(clean()).toBe(false);
     });
 
     it('should update file badges from all referenced feedback, not only Athena suggestions', () => {
