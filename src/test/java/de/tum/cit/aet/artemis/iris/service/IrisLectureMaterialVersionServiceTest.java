@@ -97,4 +97,48 @@ class IrisLectureMaterialVersionServiceTest {
         service.capture("run", 5L);
         assertThat(service.getSnapshot("run")).isEmpty();
     }
+
+    @Test
+    void globalSearchKeepsOnlyTheCitedUnitsOfTheVersionsCapturedBeforeRetrieval() {
+        storeEntriesWithTheirOwnLifetime();
+        when(repository.findIngestedVersionsByCourseId(5L)).thenReturn(List.of(new LectureUnitIngestedVersionsDTO(42L, 1, null), new LectureUnitIngestedVersionsDTO(43L, 2, null)))
+                .thenReturn(List.of(new LectureUnitIngestedVersionsDTO(42L, 9, null)));
+
+        service.captureForGlobalSearch("run", "student", List.of(5L));
+        service.keepCitedForGlobalSearch("run", "student", List.of(42L), List.of(5L));
+
+        // The versions from before retrieval, reduced to the cited unit; the material is not read again when the answer arrives.
+        assertThat(service.getGlobalSearchSnapshot("run", "student")).containsOnlyKeys(42L);
+        assertThat(service.getGlobalSearchSnapshot("run", "student").get(42L).attachmentVersion()).isEqualTo(1);
+        verify(repository, times(1)).findIngestedVersionsByCourseId(5L);
+        verify(snapshots).put(eq("student:run"), anyString(), eq(Duration.ofHours(1)));
+        // Bound to the user who asked, so another user's run id reads nothing.
+        assertThat(service.getGlobalSearchSnapshot("run", "other")).isEmpty();
+    }
+
+    @Test
+    void unscopedGlobalSearchPinsTheCitedCoursesWhenTheAnswerArrives() {
+        storeEntriesWithTheirOwnLifetime();
+        when(repository.findIngestedVersionsByCourseId(7L)).thenReturn(List.of(new LectureUnitIngestedVersionsDTO(42L, 3, null)));
+
+        service.keepCitedForGlobalSearch("run", "admin", List.of(42L), List.of(7L, 7L));
+
+        assertThat(service.getGlobalSearchSnapshot("run", "admin").get(42L).attachmentVersion()).isEqualTo(3);
+        verify(repository, times(1)).findIngestedVersionsByCourseId(7L);
+    }
+
+    @Test
+    void globalSearchAnswerWithoutCitedUnitsDropsItsSnapshot() {
+        doAnswer(call -> stored.remove(call.getArgument(0))).when(snapshots).remove(anyString());
+        when(repository.findIngestedVersionsByCourseId(5L)).thenReturn(List.of(new LectureUnitIngestedVersionsDTO(42L, 1, null)));
+        service.captureForGlobalSearch("run", "student", List.of(5L));
+
+        service.keepCitedForGlobalSearch("run", "student", List.of(), List.of());
+
+        assertThat(service.getGlobalSearchSnapshot("run", "student")).isEmpty();
+    }
+
+    private void storeEntriesWithTheirOwnLifetime() {
+        doAnswer(call -> stored.put(call.getArgument(0), call.getArgument(1))).when(snapshots).put(anyString(), anyString(), any(Duration.class));
+    }
 }

@@ -267,27 +267,27 @@ class IrisCitationServiceTest {
     }
 
     @Test
-    void stampCitationVersionsWithCurrentMaterial_pinsTheCourseMaterialAsItIsNow() {
-        when(lectureUnitRepositoryApi.findIngestedVersionsByCourseId(COURSE_ID)).thenReturn(List.of(ingested(LECTURE_UNIT_ID, 3, 2), ingested(SECOND_LECTURE_UNIT_ID, 8, null)));
+    void stampCitationVersionsForGlobalSearch_pinsTheVersionsCapturedForTheSearchRun() {
+        when(materialVersionService.getGlobalSearchSnapshot("run", "student"))
+                .thenReturn(Map.of(LECTURE_UNIT_ID, ingested(LECTURE_UNIT_ID, 3, 2), SECOND_LECTURE_UNIT_ID, ingested(SECOND_LECTURE_UNIT_ID, 8, null)));
 
-        var stamped = citationService.stampCitationVersionsWithCurrentMaterial("A [cite:L:42::30::Locks:] and B [cite:L:7:2:::Threads:]", COURSE_ID);
+        var stamped = citationService.stampCitationVersionsForGlobalSearch("A [cite:L:42::30::Locks:] and B [cite:L:7:2:::Threads:]", "run", "student");
 
-        // An answer carried over from global search has no run snapshot, so the run snapshot is never consulted.
+        // Pinned to the material the answer was written from, never to the versions the material has now.
         assertThat(stamped).isEqualTo("A [cite:L:42::30::Locks::vt2] and B [cite:L:7:2:::Threads::va8]");
-        verifyNoInteractions(materialVersionService);
-    }
-
-    @Test
-    void stampCitationVersionsWithCurrentMaterial_marksMaterialOutsideTheCourseUnverified() {
-        when(lectureUnitRepositoryApi.findIngestedVersionsByCourseId(COURSE_ID)).thenReturn(List.of(ingested(SECOND_LECTURE_UNIT_ID, 8, null)));
-
-        assertThat(citationService.stampCitationVersionsWithCurrentMaterial("[cite:L:42:7:::Deadlocks:]", COURSE_ID)).isEqualTo("[cite:L:42:7:::Deadlocks::va0]");
-    }
-
-    @Test
-    void stampCitationVersionsWithCurrentMaterial_loadsNoVersionsWithoutACitation() {
-        assertThat(citationService.stampCitationVersionsWithCurrentMaterial("No citations here.", COURSE_ID)).isEqualTo("No citations here.");
         verifyNoInteractions(lectureUnitRepositoryApi);
+    }
+
+    @Test
+    void stampCitationVersionsForGlobalSearch_marksCitationsUnverifiedWithoutASearchRun() {
+        assertThat(citationService.stampCitationVersionsForGlobalSearch("[cite:L:42:7:::Deadlocks:]", null, "student")).isEqualTo("[cite:L:42:7:::Deadlocks::va0]");
+        verifyNoInteractions(materialVersionService, lectureUnitRepositoryApi);
+    }
+
+    @Test
+    void stampCitationVersionsForGlobalSearch_loadsNoVersionsWithoutACitation() {
+        assertThat(citationService.stampCitationVersionsForGlobalSearch("No citations here.", "run", "student")).isEqualTo("No citations here.");
+        verifyNoInteractions(materialVersionService, lectureUnitRepositoryApi);
     }
 
     /**

@@ -35,6 +35,8 @@ export class GlobalSearchIrisHandoffComponent {
     readonly answer = input.required<string>();
     /** The sources the answer cites, numbered the way its markers are. */
     readonly citedSources = input.required<CitedSources>();
+    /** The global search run that produced the answer, so the chat's citations are pinned to the material the answer was written from. */
+    readonly runId = input<string>();
 
     protected readonly faComment = faComment;
     protected readonly target = computed(() => handoffTarget(this.citedSources()));
@@ -49,7 +51,7 @@ export class GlobalSearchIrisHandoffComponent {
     /** Cmd/Ctrl+Enter, the same as the button; the palette's own Enter handlers leave the modified key alone. */
     protected onWindowKeydown(event: KeyboardEvent): void {
         const target = this.target();
-        if (event.key !== 'Enter' || !this.osDetector.isActionKey(event) || event.repeat || !target) {
+        if (event.key !== 'Enter' || !this.osDetector.isActionKey(event) || event.repeat || event.defaultPrevented || !target) {
             return;
         }
         event.preventDefault();
@@ -67,6 +69,7 @@ export class GlobalSearchIrisHandoffComponent {
                 context: target.context,
                 question: this.question().trim(),
                 answer: chatAnswer(this.answer(), this.citedSources()),
+                runId: this.runId(),
             })
             .subscribe({
                 // Navigating closes the search palette, and this button with it.

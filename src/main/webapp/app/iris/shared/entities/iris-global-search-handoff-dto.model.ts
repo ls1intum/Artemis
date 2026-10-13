@@ -11,4 +11,6 @@ export interface IrisGlobalSearchHandoffDTO {
     question: string;
     /** The answer with its citations already in the chat's citation format. */
     answer: string;
+    /** The global search run that produced the answer; the server pins the answer's citations to the material versions captured for it. */
+    runId?: string;
 }

@@ -46,6 +46,14 @@ const divideAndConquer = { id: 10, name: 'Divide and Conquer' };
 const recurrences = { id: 11, name: 'Recurrences' };
 
 describe('handoffTarget', () => {
+    it('breaks a tie by the order the answer cites its sources in, lecture first only when that order is unknown', () => {
+        const exercise: EntitySearchSource = { entityType: 'exercise', entityId: 53, course: algorithms, title: 'Mergesort', exerciseType: 'TEXT' };
+        const lecture = slide(algorithms, divideAndConquer, 100, 3);
+
+        expect(handoffTarget(cited([lecture], [exercise], ['entity', 'lecture']))?.context).toEqual({ mode: ChatServiceMode.TEXT_EXERCISE, entityId: 53 });
+        expect(handoffTarget(cited([lecture], [exercise]))?.context).toEqual({ mode: ChatServiceMode.LECTURE, entityId: 10 });
+    });
+
     it('goes to the only cited lecture', () => {
         const target = handoffTarget(cited([slide(algorithms, divideAndConquer, 100, 3), slide(algorithms, divideAndConquer, 101, 7)]));
 

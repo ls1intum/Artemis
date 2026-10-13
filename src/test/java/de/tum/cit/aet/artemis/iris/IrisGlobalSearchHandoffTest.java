@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -21,6 +21,11 @@ import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchHandoffDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisPendingContextDTO;
+import de.tum.cit.aet.artemis.iris.service.IrisLectureMaterialVersionService;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
+import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
@@ -40,6 +45,12 @@ class IrisGlobalSearchHandoffTest extends AbstractIrisChatSessionTest {
     @Autowired
     private ExamUtilService examUtilService;
 
+    @Autowired
+    private IrisLectureMaterialVersionService materialVersionService;
+
+    @Autowired
+    private LectureUnitProcessingStateRepository lectureUnitProcessingStateRepository;
+
     @Override
     protected String getTestPrefix() {
         return TEST_PREFIX;
@@ -55,9 +66,40 @@ class IrisGlobalSearchHandoffTest extends AbstractIrisChatSessionTest {
         var messages = loadMessages(created.id());
         assertThat(messages).extracting(IrisMessageResponseDTO::sender).containsExactly(IrisMessageSender.USER, IrisMessageSender.LLM);
         assertThat(textOf(messages.getFirst())).isEqualTo(QUESTION);
-        // The answer keeps its text and its citation; only the version field the stamping appends is new.
-        assertThat(textOf(messages.getLast())).startsWith(ANSWER.substring(0, ANSWER.length() - 2));
-        verify(irisCitationService).stampCitationVersionsWithCurrentMaterial(ANSWER, course.getId());
+        // Without a search run there are no captured versions, so the citation is pinned as unverified rather than to whatever the material is now.
+        assertThat(textOf(messages.getLast())).isEqualTo("It halves the input on every level, and every level merges all n elements [cite:L:1:3:::Divide and Conquer::va0].");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void handoff_pinsCitationsToTheMaterialTheAnswerWasWrittenFrom() throws Exception {
+        var unit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 4, true);
+        var state = ingested(unit, 3);
+        var runId = UUID.randomUUID().toString();
+        // Captured before the answer's retrieval; the slides are replaced and re-ingested after the answer arrived, before Open chat.
+        materialVersionService.captureForGlobalSearch(runId, TEST_PREFIX + "student1", List.of(course.getId()));
+        state.setAttachmentVersion(4);
+        lectureUnitProcessingStateRepository.save(state);
+        materialVersionService.keepCitedForGlobalSearch(runId, TEST_PREFIX + "student1", List.of(unit.getId()), List.of(course.getId()));
+
+        var created = handoff(new IrisGlobalSearchHandoffDTO(course.getId(), null, QUESTION, citing(unit.getId()), runId), HttpStatus.CREATED);
+
+        // Pinned to version 3, so the chat reports the slides as changed instead of opening the old page as if it were current.
+        assertThat(textOf(loadMessages(created.id()).getLast())).isEqualTo("Halves the input [cite:L:" + unit.getId() + ":3:::Slides::va3].");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void handoff_ignoresTheSearchRunOfAnotherUser() throws Exception {
+        var unit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 4, true);
+        ingested(unit, 3);
+        var runId = UUID.randomUUID().toString();
+        materialVersionService.captureForGlobalSearch(runId, TEST_PREFIX + "student2", List.of(course.getId()));
+        materialVersionService.keepCitedForGlobalSearch(runId, TEST_PREFIX + "student2", List.of(unit.getId()), List.of(course.getId()));
+
+        var created = handoff(new IrisGlobalSearchHandoffDTO(course.getId(), null, QUESTION, citing(unit.getId()), runId), HttpStatus.CREATED);
+
+        assertThat(textOf(loadMessages(created.id()).getLast())).isEqualTo("Halves the input [cite:L:" + unit.getId() + ":3:::Slides::va0].");
     }
 
     @ParameterizedTest
@@ -74,12 +116,15 @@ class IrisGlobalSearchHandoffTest extends AbstractIrisChatSessionTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void handoff_reusesTodaysEmptyChatLikeNewChat() throws Exception {
+    void handoff_opensANewChatEvenWhenAnEmptyOneExists() throws Exception {
         var emptyChat = request.postWithResponseBody("/api/iris/chat/sessions?courseId=" + course.getId(), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
 
         var created = handoff(handoffDTO(null), HttpStatus.CREATED);
 
-        assertThat(created.id()).isEqualTo(emptyChat.id());
+        // A handoff never claims the empty chat "New Chat" keeps, so two concurrent handoffs can never land in the same chat.
+        assertThat(created.id()).isNotEqualTo(emptyChat.id());
+        assertThat(loadMessages(emptyChat.id())).isNullOrEmpty();
+        assertThat(loadMessages(created.id())).hasSize(2);
     }
 
     @Test
@@ -107,7 +152,7 @@ class IrisGlobalSearchHandoffTest extends AbstractIrisChatSessionTest {
         Course otherCourse = courseUtilService.createCourse();
         activateIrisFor(otherCourse);
 
-        request.post(HANDOFF_URL, new IrisGlobalSearchHandoffDTO(otherCourse.getId(), null, QUESTION, ANSWER), HttpStatus.FORBIDDEN);
+        request.post(HANDOFF_URL, new IrisGlobalSearchHandoffDTO(otherCourse.getId(), null, QUESTION, ANSWER, null), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -123,13 +168,27 @@ class IrisGlobalSearchHandoffTest extends AbstractIrisChatSessionTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void handoff_rejectsABlankAnswerAndAnOverlongQuestion() throws Exception {
-        request.post(HANDOFF_URL, new IrisGlobalSearchHandoffDTO(course.getId(), null, QUESTION, " "), HttpStatus.BAD_REQUEST);
-        request.post(HANDOFF_URL, new IrisGlobalSearchHandoffDTO(course.getId(), null, "a".repeat(IrisGlobalSearchHandoffDTO.MAX_QUESTION_LENGTH + 1), ANSWER),
+        request.post(HANDOFF_URL, new IrisGlobalSearchHandoffDTO(course.getId(), null, QUESTION, " ", null), HttpStatus.BAD_REQUEST);
+        request.post(HANDOFF_URL, new IrisGlobalSearchHandoffDTO(course.getId(), null, "a".repeat(IrisGlobalSearchHandoffDTO.MAX_QUESTION_LENGTH + 1), ANSWER, null),
+                HttpStatus.BAD_REQUEST);
+        request.post(HANDOFF_URL, new IrisGlobalSearchHandoffDTO(course.getId(), null, QUESTION, ANSWER, "r".repeat(IrisGlobalSearchHandoffDTO.MAX_RUN_ID_LENGTH + 1)),
                 HttpStatus.BAD_REQUEST);
     }
 
     private IrisGlobalSearchHandoffDTO handoffDTO(@Nullable IrisPendingContextDTO context) {
-        return new IrisGlobalSearchHandoffDTO(course.getId(), context, QUESTION, ANSWER);
+        return new IrisGlobalSearchHandoffDTO(course.getId(), context, QUESTION, ANSWER, null);
+    }
+
+    /** Marks the unit's slides as ingested at the given version, which is what citations are pinned to. */
+    private LectureUnitProcessingState ingested(LectureUnit unit, int attachmentVersion) {
+        var state = new LectureUnitProcessingState(unit);
+        state.setPhase(ProcessingPhase.DONE);
+        state.setAttachmentVersion(attachmentVersion);
+        return lectureUnitProcessingStateRepository.save(state);
+    }
+
+    private static String citing(long unitId) {
+        return "Halves the input [cite:L:" + unitId + ":3:::Slides:].";
     }
 
     private IrisChatSessionResponseDTO handoff(IrisGlobalSearchHandoffDTO handoff, HttpStatus expectedStatus) throws Exception {

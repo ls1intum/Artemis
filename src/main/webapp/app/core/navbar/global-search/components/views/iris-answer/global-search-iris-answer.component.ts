@@ -111,6 +111,8 @@ export class GlobalSearchIrisAnswerComponent {
     private readonly answerBody = viewChild<ElementRef<HTMLElement>>('answerBody');
 
     protected readonly irisResult = signal<IrisSearchResult | undefined>(undefined);
+    /** The run that produced the finished answer, handed to the chat so its citations stay pinned to the material the answer was written from. */
+    protected readonly answerRunId = signal<string | undefined>(undefined);
     protected readonly phase = signal<IrisAnswerPhase>('idle');
     private readonly currentRunId = signal<string | undefined>(undefined);
     protected readonly isExpanded = signal(false);
@@ -412,6 +414,7 @@ export class GlobalSearchIrisAnswerComponent {
     private resetRun(): void {
         this.clearTimers();
         this.irisResult.set(undefined);
+        this.answerRunId.set(undefined);
         this.phase.set('idle');
         this.currentRunId.set(undefined);
         this.revealedLength.set(0);
@@ -562,6 +565,7 @@ export class GlobalSearchIrisAnswerComponent {
         this.phase.set('answering');
         this.streamComplete.set(true);
         this.irisResult.set({ answer: update.answer, sources: update.sources ?? [], entitySources: update.entitySources ?? [], citationSourceTypes: update.citationSourceTypes });
+        this.answerRunId.set(update.runId);
         if (this.progressiveReveal()) {
             this.scheduleReveal();
         }

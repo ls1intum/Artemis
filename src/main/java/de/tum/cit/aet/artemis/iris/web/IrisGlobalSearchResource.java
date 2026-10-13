@@ -210,6 +210,11 @@ public class IrisGlobalSearchResource {
         // courseIds list is read as "unscoped" by the access filter, not "scoped to nothing").
         List<PyrisEntityCandidateDTO> entityCandidates = scope.searchesNothing() ? List.of() : fetchEntityCandidates(user, requestDTO, scope.courseIds(), scope.excludeCourseIds());
         pyrisJobService.addGlobalSearchAnswerJob(principal.getName(), requestDTO.runId().toString());
+        // Before dispatch, like a chat run: continuing the answer in the chat pins its citations to the material it was written from. An unrestricted, unscoped search
+        // has no bounded set of courses to capture; its citations are pinned to the cited courses' material when the answer arrives.
+        if (scope.courseIds() != null && !scope.searchesNothing()) {
+            pyrisJobService.captureGlobalSearchMaterialVersions(principal.getName(), requestDTO.runId().toString(), scope.courseIds());
+        }
         // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
         // Pyris may have received the request and already started the pipeline. Removing the token
         // would break WebSocket routing for any callbacks that arrive later.

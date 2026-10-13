@@ -86,9 +86,9 @@ export class IrisChatService implements OnDestroy {
     }
 
     /**
-     * The session the page last asked {@link openChat} for by id. Asking for it again does not reload it, but asking for the
-     * session that happens to be open does: the page opened that one on its own, and a global search handoff may have just
-     * filled it with the question and the answer.
+     * The session a link asked {@link openChat} for by id, while that session is the one open or loading. Asking for it again
+     * does not reload it. Asking for a session the page opened on its own does, since a link may have just changed it. Cleared
+     * by {@link close}, so switching sessions, starting a new chat or deleting the open one makes a later link reload as asked.
      */
     private requestedSessionId?: number;
 
@@ -889,6 +889,7 @@ export class IrisChatService implements OnDestroy {
     }
 
     protected close(): void {
+        this.requestedSessionId = undefined;
         this.markerVersionSubscription?.unsubscribe();
         if (this.sessionId) {
             this.irisWebsocketService.unsubscribeFromSession(this.sessionId);
@@ -1008,11 +1009,16 @@ export class IrisChatService implements OnDestroy {
      */
     public openChat(mode: ChatServiceMode, entityId: number, sessionId?: number): void {
         const ctx: SessionContext = { mode: mode, entityId: entityId };
-        if (sameSessionContext(ctx, this.contextService.page()) && (sessionId === undefined || sessionId === this.requestedSessionId)) return;
+        if (sameSessionContext(ctx, this.contextService.page()) && (sessionId === undefined || this.isRequestedSessionOpenOrLoading(sessionId))) return;
         this.contextService.setPageContext(ctx);
         this.close();
         this.requestedSessionId = sessionId;
         this.start(sessionId);
+    }
+
+    /** Whether the session a link asked for is still the one open, or still loading, because of that link. */
+    private isRequestedSessionOpenOrLoading(sessionId: number): boolean {
+        return sessionId === this.requestedSessionId && (sessionId === this.sessionId || this.sessionLoadingSubscription?.closed === false);
     }
 
     /**

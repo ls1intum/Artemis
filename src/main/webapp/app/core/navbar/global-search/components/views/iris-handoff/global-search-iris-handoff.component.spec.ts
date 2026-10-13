@@ -48,6 +48,7 @@ describe('GlobalSearchIrisHandoffComponent', () => {
         fixture.componentRef.setInput('question', question);
         fixture.componentRef.setInput('answer', answer);
         fixture.componentRef.setInput('citedSources', cited);
+        fixture.componentRef.setInput('runId', 'run-7');
         fixture.detectChanges();
     }
 
@@ -107,6 +108,8 @@ describe('GlobalSearchIrisHandoffComponent', () => {
             context: { mode: ChatServiceMode.LECTURE, entityId: 10 },
             question: 'Why is merge sort O(n log n)?',
             answer: 'It halves the input.[cite:L:100:3:::Slides:Slides]',
+            // The search run whose captured material versions the server pins the citations to.
+            runId: 'run-7',
         });
         expect(router.navigate).toHaveBeenCalledExactlyOnceWith(['/courses', 1, 'iris'], { queryParams: { irisSession: 77 } });
     });
@@ -132,6 +135,16 @@ describe('GlobalSearchIrisHandoffComponent', () => {
         window.dispatchEvent(modified);
         expect(createSession).toHaveBeenCalledOnce();
         expect(modified.defaultPrevented).toBe(true);
+    });
+
+    it('leaves a Cmd+Enter that another control already handled alone', () => {
+        render(oneLecture);
+
+        const handled = new KeyboardEvent('keydown', { key: 'Enter', metaKey: true, cancelable: true });
+        handled.preventDefault();
+        window.dispatchEvent(handled);
+
+        expect(createSession).not.toHaveBeenCalled();
     });
 
     it('creates one chat however often the button is clicked while it is being created', () => {

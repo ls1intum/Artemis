@@ -52,12 +52,19 @@ export function handoffTarget(cited: CitedSources): IrisHandoffTarget | undefine
         }
     };
 
-    cited.sources.forEach((source) => count(source.course, { context: { mode: ChatServiceMode.LECTURE, entityId: source.lecture.id }, name: source.lecture.name }));
-    cited.entitySources.forEach((source) => {
-        if (source.course) {
-            count(source.course, entityPlace(source));
+    // In marker order, resolved like the answer card numbers its chips, so a tie goes to whichever source was cited first.
+    const sourceCount = cited.sources.length + cited.entitySources.length;
+    for (let sourceNumber = 1; sourceNumber <= sourceCount; sourceNumber++) {
+        const lectureSource = citedLectureSource(cited, sourceNumber);
+        if (lectureSource) {
+            count(lectureSource.course, { context: { mode: ChatServiceMode.LECTURE, entityId: lectureSource.lecture.id }, name: lectureSource.lecture.name });
+            continue;
         }
-    });
+        const entitySource = citedEntitySource(cited, sourceNumber);
+        if (entitySource?.course) {
+            count(entitySource.course, entityPlace(entitySource));
+        }
+    }
 
     const course = mostCited([...courses.values()]);
     if (!course) {

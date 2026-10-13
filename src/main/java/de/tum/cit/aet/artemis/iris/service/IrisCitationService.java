@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
@@ -99,19 +98,18 @@ public class IrisCitationService {
     }
 
     /**
-     * Pins every lecture citation of an answer that was written outside a chat run, such as a global search answer carried into a chat, to the versions the course's
-     * material has now.
+     * Pins every lecture citation of a global search answer carried into a chat to the material versions captured for the run that produced it.
      * <p>
-     * Such an answer has no run snapshot. It was generated from the material indexed at this moment, so the current versions are the ones its citations are about.
-     * Citations of material outside the course find no version and are stamped with version 0 (unverified), as in {@link #stampCitationVersions(String, String)}.
+     * The versions were captured before the answer's retrieval, so a slide changed after the answer arrived is still recognised as changed in the chat. Without a run, or
+     * once its versions expired, the citations are stamped with version 0 (unverified), as in {@link #stampCitationVersions(String, String)}.
      *
-     * @param text     the answer; may be {@code null} or blank
-     * @param courseId the course whose current material versions apply
+     * @param text      the answer; may be {@code null} or blank
+     * @param runId     the global search run that produced the answer, or {@code null} when unknown
+     * @param userLogin the user the run belongs to
      * @return the text with pinned-version fields appended, or the unchanged text when there is nothing to stamp
      */
-    public String stampCitationVersionsWithCurrentMaterial(String text, long courseId) {
-        return stampCitationVersions(text, () -> lectureUnitRepositoryApi.map(api -> api.findIngestedVersionsByCourseId(courseId)).orElse(List.of()).stream()
-                .collect(Collectors.toUnmodifiableMap(LectureUnitIngestedVersionsDTO::lectureUnitId, Function.identity())));
+    public String stampCitationVersionsForGlobalSearch(String text, @Nullable String runId, String userLogin) {
+        return stampCitationVersions(text, () -> runId == null ? Map.of() : materialVersionService.getGlobalSearchSnapshot(runId, userLogin));
     }
 
     /**

@@ -157,7 +157,7 @@
 
         <!-- Footer, right after the sources: where the reader ends up once the answer is read. -->
         @if (canContinueInIris()) {
-            <jhi-global-search-iris-handoff [question]="searchQuery()" [answer]="irisResult()?.answer ?? ''" [citedSources]="citedSources()" />
+            <jhi-global-search-iris-handoff [question]="searchQuery()" [answer]="irisResult()?.answer ?? ''" [citedSources]="citedSources()" [runId]="answerRunId()" />
         }
 
         @if (citationPopover(); as popover) {

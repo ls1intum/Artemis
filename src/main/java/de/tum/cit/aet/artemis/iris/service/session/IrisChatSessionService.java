@@ -642,16 +642,19 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     }
 
     /**
-     * Continues a global search answer in the course chat. The session is created exactly like "New Chat" ({@link #findOrCreateEmptySession}), moved to the requested
-     * lecture or exercise exactly like choosing a chat topic ({@link #applyContextChange}), and then holds the question and the answer the student saw, so the chat opens
-     * with both already in it. The answer's citations are pinned to the course's current material, since that is what the answer was written from.
+     * Continues a global search answer in the course chat. The session is always a new one: reusing an empty chat like "New Chat" does would let two concurrent handoffs
+     * both claim it. It is authorized like {@link #findOrCreateEmptySession}, moved to the requested lecture or exercise exactly like choosing a chat topic
+     * ({@link #applyContextChange}), and then holds the question and the answer the student saw, so the chat opens with both already in it. The answer's citations are
+     * pinned to the material versions captured for the search run that produced it.
      *
-     * @param handoff the course, the optional lecture or exercise, and the question and answer to carry over
+     * @param handoff the course, the optional lecture or exercise, the question and answer to carry over, and the search run they came from
      * @param user    the requesting user
      * @return the new session, already on the requested context
      */
     public IrisChatSession createSessionFromGlobalSearch(IrisGlobalSearchHandoffDTO handoff, User user) {
-        var session = findOrCreateEmptySession(handoff.courseId(), user);
+        userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
+        var course = resolveAndAuthorize(IrisChatMode.COURSE_CHAT, handoff.courseId(), user).course();
+        var session = createCourseSession(course, user);
         var context = handoff.context();
         if (context != null) {
             applyContextChange(session, context.mode(), context.entityId(), user);
@@ -659,7 +662,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         var question = new IrisMessage();
         question.addContent(new IrisTextMessageContent(handoff.question()));
         var answer = new IrisMessage();
-        answer.addContent(new IrisTextMessageContent(irisCitationService.stampCitationVersionsWithCurrentMaterial(handoff.answer(), handoff.courseId())));
+        answer.addContent(new IrisTextMessageContent(irisCitationService.stampCitationVersionsForGlobalSearch(handoff.answer(), handoff.runId(), user.getLogin())));
         irisSessionRepository.appendQuestionAndAnswer(session.getId(), question, answer);
         // Named after the question, so the chat history lists it by its topic before Iris names it on the first follow-up.
         setSessionTitle(session, handoff.question(), irisSessionRepository);
@@ -668,7 +671,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     /**
      * Non-authorizing core that finds the user's reusable empty course chat session for today, or creates a
-     * fresh one. The single place a chat session is created.
+     * fresh one through {@link #createCourseSession}.
      * <p>
      * Assumes the caller has already authorized {@code course} for {@code user} (LLM opt-in + student role +
      * Iris enabled). No access check is repeated here: the lookup is scoped to {@code user.getId()}, so the
@@ -686,6 +689,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 return session;
             }
         }
+        return createCourseSession(course, user);
+    }
+
+    /** The single place a course chat session is created. */
+    private IrisChatSession createCourseSession(Course course, User user) {
         var session = new IrisChatSession(course, user);
         session.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
         return irisChatSessionRepository.save(session);
