@@ -142,6 +142,7 @@ export class MonacoTextEditorAdapter implements TextEditor {
 
     /**
      * Adds a capture-phase paste listener to the editor's DOM node that calls the handler with the pasted text before Monaco inserts it.
+     * Only pastes into the editor text are intercepted, not pastes into widgets such as the find input.
      * The handler's edit is kept as its own undo step. If the handler returns true, the paste event is cancelled.
      * @param handler The handler to call with the pasted text. Returns true if it handled the paste.
      * @return A disposable that removes the listener.
@@ -155,7 +156,8 @@ export class MonacoTextEditorAdapter implements TextEditor {
         const listener = (event: ClipboardEvent) => {
             const pastedText = event.clipboardData?.getData('text/plain');
             const selectionCount = this.editor.getSelections()?.length ?? 0;
-            if (!pastedText || this.editor.getOption(monaco.editor.EditorOption.readOnly) || selectionCount > 1) {
+            // Widgets such as the find and replace inputs sit inside the DOM node too; a paste there leaves the text without focus.
+            if (!pastedText || !this.editor.hasTextFocus() || this.editor.getOption(monaco.editor.EditorOption.readOnly) || selectionCount > 1) {
                 return;
             }
             // Undo stops on both sides keep the handler's edit a separate undo step.
