@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MetisService } from 'app/communication/service/metis.service';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
@@ -9,22 +9,28 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { PageType } from 'app/communication/metis.util';
+import { PageType } from 'app/communication/communication.util';
 
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PostComponent } from 'app/communication/post/post.component';
-import { metisCourse, metisExercise, metisPostLectureUser1, metisPostTechSupport, metisPostToCreateUser1 } from 'test/helpers/sample/metis-sample-data';
+import {
+    communicationCourse,
+    communicationExercise,
+    communicationPostLectureUser1,
+    communicationPostTechSupport,
+    communicationPostToCreateUser1,
+} from 'test/helpers/sample/communication-sample-data';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('PostCreateEditModalComponent', () => {
     let component: PostCreateEditModalComponent;
     let fixture: ComponentFixture<PostCreateEditModalComponent>;
-    let metisService: MetisService;
-    let metisServiceGetPageTypeMock: ReturnType<typeof vi.spyOn>;
-    let metisServiceIsAtLeastInstructorStub: ReturnType<typeof vi.spyOn>;
-    let metisServiceCreateStub: ReturnType<typeof vi.spyOn>;
-    let metisServiceUpdateStub: ReturnType<typeof vi.spyOn>;
+    let communicationService: CommunicationService;
+    let communicationServiceGetPageTypeMock: ReturnType<typeof vi.spyOn>;
+    let communicationServiceIsAtLeastInstructorStub: ReturnType<typeof vi.spyOn>;
+    let communicationServiceCreateStub: ReturnType<typeof vi.spyOn>;
+    let communicationServiceUpdateStub: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -38,16 +44,16 @@ describe('PostCreateEditModalComponent', () => {
                 MockComponent(PostingButtonComponent),
                 MockComponent(HelpIconComponent),
             ],
-            providers: [provideHttpClient(), provideHttpClientTesting(), FormBuilder, { provide: MetisService, useClass: MockMetisService }],
+            providers: [provideHttpClient(), provideHttpClientTesting(), FormBuilder, { provide: CommunicationService, useClass: MockCommunicationService }],
         });
         fixture = TestBed.createComponent(PostCreateEditModalComponent);
         component = fixture.componentInstance;
-        metisService = TestBed.inject(MetisService);
-        metisServiceGetPageTypeMock = vi.spyOn(metisService, 'getPageType');
-        metisServiceIsAtLeastInstructorStub = vi.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse');
-        metisServiceIsAtLeastInstructorStub.mockReturnValue(false);
-        metisServiceCreateStub = vi.spyOn(metisService, 'createPost');
-        metisServiceUpdateStub = vi.spyOn(metisService, 'updatePost');
+        communicationService = TestBed.inject(CommunicationService);
+        communicationServiceGetPageTypeMock = vi.spyOn(communicationService, 'getPageType');
+        communicationServiceIsAtLeastInstructorStub = vi.spyOn(communicationService, 'currentUserIsAtLeastInstructorInCourse');
+        communicationServiceIsAtLeastInstructorStub.mockReturnValue(false);
+        communicationServiceCreateStub = vi.spyOn(communicationService, 'createPost');
+        communicationServiceUpdateStub = vi.spyOn(communicationService, 'updatePost');
     });
 
     afterEach(() => {
@@ -56,37 +62,37 @@ describe('PostCreateEditModalComponent', () => {
     });
 
     it('should init modal with correct context, title and content for post without id', () => {
-        metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
-        component.posting.set({ ...metisPostToCreateUser1 });
+        communicationServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
+        component.posting.set({ ...communicationPostToCreateUser1 });
         fixture.detectChanges();
         expect(component.pageType).toEqual(PageType.OVERVIEW);
-        expect(component.modalTitle).toBe('artemisApp.metis.createModalTitlePost');
+        expect(component.modalTitle).toBe('artemisApp.communication.createModalTitlePost');
 
-        // mock metis service will return a course with a default exercise as well as a default lecture
+        // mock communication service will return a course with a default exercise as well as a default lecture
         expect(component.course).not.toBeNull();
-        expect(component.lectures).toHaveLength(metisCourse.lectures!.length);
-        expect(component.exercises).toHaveLength(metisCourse.exercises!.length);
+        expect(component.lectures).toHaveLength(communicationCourse.lectures!.length);
+        expect(component.exercises).toHaveLength(communicationCourse.exercises!.length);
         expect(component.similarPosts).toHaveLength(0);
         // currently the default selection when opening the model in the overview for creating a new post is the course-wide context TECH_SUPPORT
         expect(component.currentContextSelectorOption).toEqual({});
     });
 
     it('should reset context selection on changes', () => {
-        metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
-        component.posting.set({ ...metisPostTechSupport });
+        communicationServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
+        component.posting.set({ ...communicationPostTechSupport });
         fixture.detectChanges();
         component.currentContextSelectorOption.conversation = { id: 1 } as Channel;
         // Trigger a posting change to reset context
-        component.posting.set({ ...metisPostTechSupport });
+        component.posting.set({ ...communicationPostTechSupport });
         fixture.detectChanges();
         // change to Organization as course-wide topic should be reset to Tech Support
-        expect(component.currentContextSelectorOption).toEqual({ conversation: metisPostTechSupport.conversation });
+        expect(component.currentContextSelectorOption).toEqual({ conversation: communicationPostTechSupport.conversation });
     });
 
-    it('should invoke metis service with created post in overview', () => {
+    it('should invoke communication service with created post in overview', () => {
         vi.useFakeTimers();
-        metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
-        component.posting.set(metisPostToCreateUser1);
+        communicationServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
+        component.posting.set(communicationPostToCreateUser1);
         fixture.detectChanges();
         const newContent = 'New Content';
         const newTitle = 'New Title';
@@ -99,7 +105,7 @@ describe('PostCreateEditModalComponent', () => {
         vi.advanceTimersByTime(800);
         expect(component.similarPosts).toEqual([]);
         component.confirm();
-        expect(metisServiceCreateStub).toHaveBeenCalledWith({
+        expect(communicationServiceCreateStub).toHaveBeenCalledWith({
             ...component.posting()!,
             content: newContent,
             title: newTitle,
@@ -110,11 +116,11 @@ describe('PostCreateEditModalComponent', () => {
         vi.useRealTimers();
     });
 
-    it('should invoke metis service with created announcement in overview', () => {
+    it('should invoke communication service with created announcement in overview', () => {
         vi.useFakeTimers();
-        metisServiceIsAtLeastInstructorStub.mockReturnValue(true);
-        metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
-        component.posting.set(metisPostToCreateUser1);
+        communicationServiceIsAtLeastInstructorStub.mockReturnValue(true);
+        communicationServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
+        component.posting.set(communicationPostToCreateUser1);
         fixture.detectChanges();
         const newContent = 'New Content';
         const newTitle = 'New Title';
@@ -122,10 +128,10 @@ describe('PostCreateEditModalComponent', () => {
         component.formGroup.setValue({
             title: newTitle,
             content: newContent,
-            context: { conversationId: metisPostToCreateUser1.conversation?.id, exercise: undefined },
+            context: { conversationId: communicationPostToCreateUser1.conversation?.id, exercise: undefined },
         });
         component.confirm();
-        expect(metisServiceCreateStub).toHaveBeenCalledWith({
+        expect(communicationServiceCreateStub).toHaveBeenCalledWith({
             ...component.posting()!,
             content: newContent,
             title: newTitle,
@@ -136,23 +142,23 @@ describe('PostCreateEditModalComponent', () => {
         vi.useRealTimers();
     });
 
-    it('should invoke metis service with updated post in page section', () => {
+    it('should invoke communication service with updated post in page section', () => {
         vi.useFakeTimers();
-        metisServiceGetPageTypeMock.mockReturnValue(PageType.PAGE_SECTION);
-        component.posting.set(metisPostLectureUser1);
+        communicationServiceGetPageTypeMock.mockReturnValue(PageType.PAGE_SECTION);
+        component.posting.set(communicationPostLectureUser1);
         fixture.detectChanges();
         expect(component.pageType).toEqual(PageType.PAGE_SECTION);
-        expect(component.modalTitle).toBe('artemisApp.metis.editPosting');
+        expect(component.modalTitle).toBe('artemisApp.communication.editPosting');
         const updatedContent = 'Updated Content';
         const updatedTitle = 'Updated Title';
         component.formGroup.setValue({
             content: updatedContent,
             title: updatedTitle,
-            context: { exerciseId: metisExercise.id },
+            context: { exerciseId: communicationExercise.id },
         });
         vi.advanceTimersByTime(800);
         component.confirm();
-        expect(metisServiceUpdateStub).toHaveBeenCalledWith({
+        expect(communicationServiceUpdateStub).toHaveBeenCalledWith({
             ...component.posting()!,
             content: updatedContent,
             title: updatedTitle,

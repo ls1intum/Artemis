@@ -7,7 +7,7 @@ import angularTemplateParser from '@angular-eslint/template-parser';
 import angular from 'angular-eslint';
 import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
-import localRulesPlugin from './rules/index.mjs';
+import localRulesPlugin from './config/eslint/rules/index.mjs';
 
 // Builds `no-restricted-imports` patterns that block importing a sibling client layer
 // (e.g. `shared-ui` or `editor`) from another layer — covering both the absolute alias path
@@ -75,16 +75,16 @@ export default tseslint.config(
             '.venv/',
             'build/',
             'coverage/',
-            'docker/',
+            'deployment/docker/',
             'docs/',
             'documentation/',
             'gradle/',
             'local/',
             'node/',
             'node_modules/',
-            'openapi/',
+            'config/openapi/',
             'out/',
-            'patches/',
+            'config/pnpm/patches/',
             'repos/',
             'repos-download/',
             'supporting_scripts/',
@@ -131,8 +131,8 @@ export default tseslint.config(
                 tsconfigRootDir: import.meta.dirname,
                 project: [
                     './tsconfig.json',
-                    './tsconfig.app.json',
-                    './tsconfig.spec.json',
+                    './config/client/tsconfig.app.json',
+                    './config/client/tsconfig.spec.json',
                     './packages/tum-aet-ui/tsconfig.lib.json',
                     './packages/tum-aet-ui/tsconfig.spec.json',
                     './packages/tum-aet-ui/.storybook/tsconfig.json',
@@ -204,7 +204,7 @@ export default tseslint.config(
             // A computed(), linkedSignal(), effect() or afterRenderEffect() that reads no signal never re-runs: either a
             // signal read is missing (`count` instead of `count()`), or the value is a constant and should be a field.
             // Version 22.5.0 crashes ("config.args is not iterable") on a bare call named like an Object.prototype
-            // member, such as a destructured Signal Forms `valueOf`; patches/@angular-eslint__eslint-plugin@22.5.0.patch
+            // member, such as a destructured Signal Forms `valueOf`; config/pnpm/patches/@angular-eslint__eslint-plugin@22.5.0.patch
             // backports the upstream fix until a release contains it.
             '@angular-eslint/reactive-context-must-read-signal': 'error',
             // A computed() whose function returns nothing is always undefined.
@@ -441,6 +441,16 @@ export default tseslint.config(
             'localRules/no-navigation-in-guard-or-resolver': 'error',
         },
     },
+    // `ComponentRef.setInput(name: string, value: unknown)` is not type checked: a misspelled input only logs NG0303 at runtime. Declare
+    // the component in a template (a `@switch` for a closed set) or use the typed `setInputs` helper. Specs set inputs on fixtures and
+    // stay exempt. Rationale: documentation/docs/developer/guidelines/client-development.mdx ("Setting inputs of a component created in code").
+    {
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-aet-ui/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'localRules/no-component-ref-set-input': 'error',
+        },
+    },
     // Module-boundary rules: enforce the foundation ← shared-ui ← editor layering.
     // foundation/ is the base layer (no DOM/UI), shared-ui/ holds generic UI primitives,
     // editor/ holds the code/markdown editor stacks. The intent:
@@ -543,7 +553,7 @@ export default tseslint.config(
             parser: typescriptParser,
             parserOptions: {
                 tsconfigRootDir: import.meta.dirname,
-                project: ['./tsconfig.spec.json'],
+                project: ['./config/client/tsconfig.spec.json'],
             },
         },
         plugins: {
@@ -673,7 +683,7 @@ export default tseslint.config(
         // Forbid raw Tailwind color palette classes (e.g. text-green-500) and hand-written PrimeNG component root
         // classes (e.g. class="p-button") in ALL client templates: Tailwind + PrimeNG are loaded app-wide, so both
         // are wrong everywhere — use semantic brand tokens and real PrimeNG components instead. The stylelint
-        // hex/--bs- guard (.stylelintrc.json) is scoped per migrated module. See client-development.mdx (### Styling).
+        // hex/--bs- guard (config/stylelint/stylelint.config.json) is scoped per migrated module. See client-development.mdx (### Styling).
         files: ['src/main/webapp/app/**/*.html', 'packages/tum-aet-ui/src/lib/**/*.html'],
         languageOptions: {
             parser: angularTemplateParser,
@@ -715,13 +725,17 @@ export default tseslint.config(
             // Only the modal shell is migrated; its search subcomponents go with the navbar/search follow-up.
             'src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.html',
             'src/main/webapp/app/course/overview/setup-passkey-modal/**/*.html',
-            'src/main/webapp/app/notification/course-notification/course-notification-popup-overlay/**/*.html',
+            'src/main/webapp/app/notification/**/*.html',
+            'src/main/webapp/app/calendar/**/*.html',
+            'src/main/webapp/app/shared-ui/profile-picture/**/*.html',
             'src/main/webapp/app/localci/build-agent-summary/**/*.html',
             'src/main/webapp/app/localci/build-agent-details/**/*.html',
             'src/main/webapp/app/localci/build-job-statistics/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.html',
             'src/main/webapp/app/quiz/manage/apollon-diagrams/**/*.html',
-            'src/main/webapp/app/exam/manage/exercise-groups/**/*.html',
+            // The whole exam mode: instructor pages, student pages and the pieces they share, and the example solution that only the exam summary shows.
+            'src/main/webapp/app/exam/**/*.html',
+            'src/main/webapp/app/exercise/example-solution/**/*.html',
             'src/main/webapp/app/exercise/exercise-action-bar/**/*.html',
             'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.html',
             'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',
@@ -744,6 +758,59 @@ export default tseslint.config(
         },
         rules: {
             'localRules/no-bootstrap-classes': 'error',
+        },
+    },
+    {
+        // Bootstrap and Tailwind define the same spacing class names (`mb-3`, `px-4`, `gap-5`) with different values for
+        // 3 to 5, and Bootstrap wins while it is loaded, so a bare one renders differently once Bootstrap is removed.
+        // These templates of the student exam mode and the pages it shows (the exam, the feedback, the complaints and
+        // the text and file upload editors) are laid out with Tailwind and must say which value they mean. Add a folder
+        // here once it is scanned by tailwind.css (`migration-source-coverage` checks this) and its findings are fixed.
+        // See client-development.mdx (### Styling).
+        files: [
+            'src/main/webapp/app/exam/overview/**/*.html',
+            'src/main/webapp/app/exam/shared/**/*.html',
+            'src/main/webapp/app/assessment/overview/**/*.html',
+            'src/main/webapp/app/assessment/manage/complaints-for-tutor/**/*.html',
+            'src/main/webapp/app/assessment/manage/complaint-response/**/*.html',
+            'src/main/webapp/app/exercise/feedback/**/*.html',
+            'src/main/webapp/app/text/overview/text-editor/**/*.html',
+            'src/main/webapp/app/fileupload/overview/file-upload-submission/**/*.html',
+        ],
+        languageOptions: {
+            parser: angularTemplateParser,
+        },
+        plugins: {
+            localRules: localRulesPlugin,
+        },
+        rules: {
+            'localRules/no-ambiguous-spacing-utility': 'error',
+        },
+    },
+    // The exam mode is migrated to TUM AET UI and Tailwind: neither PrimeNG nor ng-bootstrap may be imported anywhere in it, including specs.
+    // Like the other `no-restricted-imports` blocks, this one overrides the rule, so the shared restrictions are repeated.
+    {
+        files: ['src/main/webapp/app/exam/**/*.ts', 'src/main/webapp/app/notification/**/*.ts', 'src/main/webapp/app/calendar/**/*.ts'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    paths: [
+                        { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
+                        { name: 'lodash', message: "Please import from 'lodash-es' instead." },
+                        noNgZoneImport,
+                        ...noDirectCloneDeepImports,
+                    ],
+                    patterns: [
+                        ...tumAetUiConsumerImportPatterns,
+                        {
+                            group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
+                            message:
+                                'The exam mode, the notifications and the calendar use TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
+                        },
+                    ],
+                },
+            ],
         },
     },
 );

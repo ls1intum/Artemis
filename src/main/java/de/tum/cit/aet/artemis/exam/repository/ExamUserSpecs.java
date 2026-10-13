@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject_;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
+import de.tum.cit.aet.artemis.exam.domain.ExamSession_;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser_;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -251,7 +252,7 @@ public final class ExamUserSpecs {
                 case "numberOfExamSessions" -> {
                     Subquery<Long> sub = query.subquery(Long.class);
                     Root<ExamSession> sess = sub.from(ExamSession.class);
-                    Path<StudentExam> se = sess.get("studentExam");
+                    Path<StudentExam> se = sess.get(ExamSession_.STUDENT_EXAM);
                     sub.select(builder.count(sess));
                     sub.where(builder.and(builder.equal(se.get(StudentExam_.USER), user), builder.equal(se.get(StudentExam_.EXAM), root.get(ExamUser_.EXAM)),
                             builder.or(builder.isNull(se.get(StudentExam_.TEST_RUN)), builder.isFalse(se.get(StudentExam_.TEST_RUN)))));

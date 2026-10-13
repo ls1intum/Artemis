@@ -157,9 +157,7 @@ export class LectureService {
 
     protected convertLectureArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.map((lecture: Lecture) => {
-                return this.convertLectureDatesFromServer(lecture);
-            });
+            res.body.forEach((lecture: Lecture) => this.convertLectureDatesFromServer(lecture));
         }
         return res;
     }

@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -244,11 +245,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
 
-        long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
+        long courseId = course.getId();
 
         // Exam exercises have highest priority, Exercises with due date in the past have lowest priority
         int priority = determinePriority(programmingExercise, participation, triggerAll);
-        priority = addPenaltyIfTestCourse(programmingExercise, priority);
+        priority = addPenaltyIfTestCourse(course, priority);
 
         ZonedDateTime submissionDate = ZonedDateTime.now();
 
@@ -344,9 +346,14 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             }
         }
 
-        String repositoryTypeOrUserName = participation.getVcsRepositoryUri().repositoryNameWithoutProjectKey();
+        LocalVCRepositoryUri vcsRepositoryUri = participation.getVcsRepositoryUri();
+        if (vcsRepositoryUri == null) {
+            throw new LocalCIException("The repository uri of participation " + participation.getId() + " is missing or invalid");
+        }
 
-        String repositoryName = participation.getVcsRepositoryUri().repositorySlug();
+        String repositoryTypeOrUserName = vcsRepositoryUri.repositoryNameWithoutProjectKey();
+
+        String repositoryName = vcsRepositoryUri.repositorySlug();
 
         RepositoryType repositoryType;
         // Only template, solution and user repositories are build
@@ -426,7 +433,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         if (sharedData.resolved()) {
             return sharedData.testCommitHash();
         }
-        return getCommitHashOrNull(participation.getProgrammingExercise().getVcsTestRepositoryUri(), "test repository");
+        return getCommitHashOrNull(participation.getProgrammingExerciseElseThrow().getVcsTestRepositoryUri(), "test repository");
     }
 
     private ProgrammingExerciseBuildStatistics loadBuildStatistics(ProgrammingExercise programmingExercise) {
@@ -472,11 +479,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         return PRIORITY_NORMAL;
     }
 
-    private int addPenaltyIfTestCourse(ProgrammingExercise programmingExercise, int priority) {
-        if (programmingExercise.getCourseViaExerciseGroupOrCourseMember().isTestCourse()) {
-            return priority + TESTCOURSE_PRIORITY_PENALTY;
-        }
-        return priority;
+    private int addPenaltyIfTestCourse(Course course, int priority) {
+        return course.isTestCourse() ? priority + TESTCOURSE_PRIORITY_PENALTY : priority;
     }
 
     /**

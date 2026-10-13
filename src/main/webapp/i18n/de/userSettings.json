@@ -289,7 +289,7 @@
                 "cloudTitle": "Cloud-KI",
                 "cloudDescription": "Deine KI-Funktionen werden von modernsten LLMs (z.B. GPT-5) auf EU-Servern betrieben. Deine Daten werden sicher verarbeitet und niemals für Training verwendet.",
                 "localTitle": "Lokale KI (Experimentell)",
-                "localDescription": "Deine KI-Funktionen laufen auf Open-Source-LLMs (z.B. Llama), die vollständig auf der Infrastruktur der Universität gehostet werden. Deine Daten verlassen niemals die Server der Universität, aber die Antwortqualität kann geringer sein als bei Cloud-KI.",
+                "localDescription": "Deine KI-Funktionen laufen auf Open-Source-LLMs (z.B. Qwen), die vollständig auf der Infrastruktur der Universität gehostet werden. Deine Daten verlassen niemals die Server der Universität, aber die Antwortqualität kann geringer sein als bei Cloud-KI.",
                 "noAiTitle": "Keine KI",
                 "noAiDescription": "KI-Funktionen wie Iris-Tutorium, KI-Feedback und intelligente Vorschläge sind deaktiviert. Alle anderen Artemis-Funktionen funktionieren weiterhin normal.",
                 "noSelectionTitle": "Kein KI-Modus ausgewählt",

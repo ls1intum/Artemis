@@ -26,10 +26,13 @@ import { randomInt } from 'app/foundation/util/utils';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { ChatServiceMode, SessionContext, sameSessionContext } from 'app/iris/shared/entities/iris-session-context.model';
 import { IrisChatContextService } from 'app/iris/overview/services/iris-chat-context.service';
+import { contextFromSwitchMarker, parseContextSwitchMarker } from 'app/iris/overview/context-selection/iris-context.util';
 import { parseJson } from 'app/foundation/util/json.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IrisActivityItem, IrisRunState, IrisStatusError } from 'app/iris/shared/entities/iris-activity.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { IrisMaterialVersionService } from 'app/iris/overview/services/iris-material-version.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 export { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 export type { SessionContext } from 'app/iris/shared/entities/iris-session-context.model';
@@ -57,6 +60,8 @@ export class IrisChatService implements OnDestroy {
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
     private readonly contextService = inject(IrisChatContextService);
+    private readonly materialVersionService = inject(IrisMaterialVersionService);
+    private readonly alertService = inject(AlertService);
 
     private modeRequiresLLMAcceptance = new Map<ChatServiceMode, boolean>([
         [ChatServiceMode.TEXT_EXERCISE, true],
@@ -100,6 +105,8 @@ export class IrisChatService implements OnDestroy {
     public initialLoadComplete$ = this.initialLoadCompleteSubject.asObservable();
 
     rateLimitInfo?: IrisRateLimitInformation;
+
+    private markerVersionSubscription?: Subscription;
 
     private rateLimitSubscription: Subscription;
     private acceptSubscription?: Subscription;
@@ -394,6 +401,9 @@ export class IrisChatService implements OnDestroy {
     }
 
     private replaceOrAddMessage(message: IrisMessage, announceNewAssistantMessage = true) {
+        if (message.sender === IrisSender.SUMMARY) {
+            return;
+        }
         const messageWasReplaced = this.replaceMessage(message);
         if (!messageWasReplaced) {
             if (message.sender === IrisSender.LLM && announceNewAssistantMessage) {
@@ -612,7 +622,8 @@ export class IrisChatService implements OnDestroy {
 
                 this.sessionId = newIrisSession.id;
                 this.citationInfo.next(newIrisSession.citationInfo || []);
-                this.messages.next(newIrisSession.messages || []);
+                // Summaries are for Iris only; the student keeps seeing the original messages.
+                this.messages.next((newIrisSession.messages || []).filter((message) => message.sender !== IrisSender.SUMMARY));
                 this.parseLatestSuggestions(newIrisSession.latestSuggestions);
                 this.resetLiveAssistantDraftTracking();
                 this.resetRunTracking();
@@ -752,6 +763,9 @@ export class IrisChatService implements OnDestroy {
                 this.activities.next([]);
             }
         }
+        if (payload.message?.sender === IrisSender.CTXSWAP) {
+            this.adoptSwitchedContext(this.mapMessageDTO(payload.message));
+        }
         if (payload.message?.id) {
             this.replaceOrAddMessage(this.mapMessageDTO(payload.message), !isIntermediateMessage);
         }
@@ -763,6 +777,26 @@ export class IrisChatService implements OnDestroy {
 
     private isIntermediateMessagePayload(payload: IrisChatWebsocketDTO): boolean {
         return payload.final === false || payload.message?.final === false;
+    }
+
+    /**
+     * The server pushes a CTXSWAP marker for every context switch, including switches it applied
+     * without a client-staged pending context (automatic context switching by the pipeline).
+     * Adopt the marker's target as the committed context so the selector chip and the sidebar
+     * entry follow such switches; for a client-staged switch this re-commits the same context.
+     */
+    private adoptSwitchedContext(message: IrisMessage): void {
+        const ctx = contextFromSwitchMarker(parseContextSwitchMarker(message.content), this.getCourseId());
+        if (!ctx) {
+            return;
+        }
+        this.contextService.commitSentContext(ctx);
+        const updatedSessions = this.chatSessions
+            .getValue()
+            .map((session) =>
+                session.id === this.sessionId ? cloneWith(session, { mode: ctx.mode, entityId: ctx.entityId, entityName: ctx.entityName ?? session.entityName }) : session,
+            );
+        this.chatSessions.next(updatedSessions);
     }
 
     private handlePartialWebsocketMessage(payload: IrisChatWebsocketDTO): void {
@@ -841,6 +875,7 @@ export class IrisChatService implements OnDestroy {
     }
 
     protected close(): void {
+        this.markerVersionSubscription?.unsubscribe();
         if (this.sessionId) {
             this.irisWebsocketService.unsubscribeFromSession(this.sessionId);
             this.websocketSessionSubscription?.unsubscribe();
@@ -1142,6 +1177,84 @@ export class IrisChatService implements OnDestroy {
      * @param pointOut the navigation target (the caller should set forceOpen to reopen a closed view)
      */
     public navigateToPointOut(pointOut: IrisPointOut): void {
+        this.markerVersionSubscription?.unsubscribe();
+        this.navigateToVersionedPointOut(pointOut, true, this.materialVersionService.beginNavigation());
+    }
+
+    /** Checks a pinned point-out against the unit's current material before allowing its exact position to be used. */
+    private navigateToVersionedPointOut(pointOut: IrisPointOut, markerClick: boolean, navigation?: number): void {
+        const pinnedVersion = pointOut.pinnedVersion;
+        if (!pinnedVersion) {
+            this.applyVerifiedPointOut(pointOut, markerClick);
+            return;
+        }
+        const check = this.materialVersionService.getMaterialVersions(pointOut.lectureUnitId).subscribe({
+            next: (versions) => {
+                if (navigation != undefined && !this.materialVersionService.isCurrentNavigation(navigation)) {
+                    return;
+                }
+                if (!markerClick && (pointOut.expiresAt == undefined || pointOut.expiresAt <= Date.now())) {
+                    this.acknowledgeRejectedPointOut(pointOut);
+                    return;
+                }
+                const currentVersion = pinnedVersion.kind === 'video' ? versions.videoVersion : versions.attachmentVersion;
+                if (pinnedVersion.version > 0 && currentVersion != undefined && currentVersion === pinnedVersion.version) {
+                    this.applyVerifiedPointOut(this.keepVerifiedCoordinates(pointOut), markerClick);
+                    return;
+                }
+                if (!markerClick) {
+                    this.acknowledgeRejectedPointOut(pointOut);
+                    return;
+                }
+                if (pinnedVersion.version <= 0) {
+                    this.alertService.warning('artemisApp.iris.pointOut.outdated.unverified');
+                } else if (currentVersion != undefined) {
+                    this.alertService.warning('artemisApp.iris.pointOut.outdated.stale');
+                } else if (pinnedVersion.kind === 'video' && versions.hasVideo) {
+                    this.alertService.warning('artemisApp.iris.pointOut.outdated.unverified');
+                } else {
+                    this.alertService.error('artemisApp.iris.pointOut.outdated.gone');
+                }
+                this.navigateToPointOutUnit(pointOut);
+            },
+            error: (response: HttpErrorResponse) => {
+                if (navigation != undefined && !this.materialVersionService.isCurrentNavigation(navigation)) {
+                    return;
+                }
+                if (!markerClick) {
+                    this.acknowledgeRejectedPointOut(pointOut);
+                    return;
+                }
+                if (![403, 404].includes(response.status)) {
+                    this.alertService.warning('artemisApp.iris.pointOut.outdated.unverified');
+                }
+                this.navigateToPointOutUnit(pointOut);
+            },
+        });
+        if (markerClick) {
+            this.markerVersionSubscription = check;
+        }
+    }
+
+    /** Live commands only address the current view; only a history click may route to another lecture. */
+    private applyVerifiedPointOut(pointOut: IrisPointOut, markerClick: boolean): void {
+        if (markerClick) {
+            this.navigateToPointOutUnchecked(pointOut);
+        } else {
+            this.pointOutSubject.next(pointOut);
+        }
+    }
+
+    /** Keeps only positions covered by the material version that was checked. */
+    private keepVerifiedCoordinates(pointOut: IrisPointOut): IrisPointOut {
+        if (pointOut.pinnedVersion?.kind === 'video') {
+            return cloneWith(pointOut, { page: undefined, displayPage: undefined });
+        }
+        return cloneWith(pointOut, { timestamp: undefined });
+    }
+
+    /** Performs the existing exact navigation after either a successful version check or for a legacy point-out. */
+    private navigateToPointOutUnchecked(pointOut: IrisPointOut): void {
         const courseId = this.getCourseId();
         const pageContext = this.contextService.page();
         const showsMarkersLecture = pageContext?.mode === ChatServiceMode.LECTURE && pageContext.entityId === pointOut.lectureId;
@@ -1163,6 +1276,18 @@ export class IrisChatService implements OnDestroy {
             return;
         }
         this.pointOutSubject.next(pointOut);
+    }
+
+    /** Opens the pointed-out unit without reusing a page or timestamp that could belong to older material. */
+    private navigateToPointOutUnit(pointOut: IrisPointOut): void {
+        this.navigateToPointOutUnchecked(cloneWith(pointOut, { page: undefined, displayPage: undefined, timestamp: undefined, forceOpen: true }));
+    }
+
+    /** Releases a pipeline whose live point-out could not be verified. */
+    private acknowledgeRejectedPointOut(pointOut: IrisPointOut): void {
+        if (pointOut.correlationId) {
+            this.sendCommandAck(pointOut.correlationId, false);
+        }
     }
 
     /**
@@ -1192,7 +1317,7 @@ export class IrisChatService implements OnDestroy {
                     // The pipeline is waiting on this one; the combined view acknowledges once it has actually moved.
                     pointOut.correlationId = command.correlationId;
                     pointOut.expiresAt = command.expiresAt;
-                    this.pointOutSubject.next(pointOut);
+                    this.navigateToVersionedPointOut(pointOut, false);
                     return;
                 }
                 break;

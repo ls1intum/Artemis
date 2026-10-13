@@ -620,6 +620,8 @@ describe('ModelingEditorComponent', () => {
         fixture.detectChanges();
 
         const status = fixture.debugElement.query(By.css(`.modeling-editor__status-island--${state}`));
+        expect(status.nativeElement.getAttribute('data-testid')).toBe('modeling-editor-save-status');
+        expect(status.nativeElement.getAttribute('data-state')).toBe(state);
         expect(status.query(By.css('fa-icon'))).not.toBeNull();
         expect(status.query(By.css('span')).nativeElement.getAttribute('jhiTranslate')).toBe(translationKey);
     });

@@ -4,7 +4,7 @@
             @if (req.icon) {
                 <fa-icon [icon]="req.icon" class="tumaet:size-8 tumaet:shrink-0 tumaet:text-2xl tumaet:text-muted" />
             }
-            <span [id]="messageId" class="tumaet-ui-confirm-dialog-message">{{ req.message }}</span>
+            <span [id]="messageId" class="tumaet-ui-confirm-dialog-message tumaet:whitespace-pre-line">{{ req.message }}</span>
         </div>
         <ng-template #footer>
             <tumaet-ui-button [severity]="req.rejectSeverity ?? 'secondary'" (clicked)="reject()">{{ req.rejectLabel }}</tumaet-ui-button>

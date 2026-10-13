@@ -1,7 +1,7 @@
 import { Page, expect } from '@playwright/test';
 import { Fixtures } from '../../../fixtures/fixtures';
-import { Commands } from '../../commands';
-import { getExercise } from '../../utils';
+import { annotateRecovery, getExercise } from '../../utils';
+import { RELOAD_RENDER_TIMEOUT } from '../../timeouts';
 import { Dayjs } from 'dayjs';
 
 export class ExamParticipationActions {
@@ -12,7 +12,7 @@ export class ExamParticipationActions {
     }
 
     async selectExerciseOnOverview(index: number) {
-        await this.page.locator(`.exercise-table tr:nth-child(${index}) a`).click();
+        await this.page.getByTestId('exercise-table').locator(`tr:nth-child(${index}) a`).click();
     }
 
     async clickSaveAndContinue() {
@@ -53,17 +53,25 @@ export class ExamParticipationActions {
         await expect(this.page.locator('[data-testid="exam-title"]')).toContainText(title);
     }
 
+    /**
+     * Finds the score of an assessed exercise (or of the whole exam) on the page the student is looking at.
+     * <p>
+     * The result is there when the page opens, because callers only look for it after the assessment was submitted. The one recovery is
+     * recorded: the page is loaded once more, in case it was opened while the result was still being written.
+     */
     async getResultScore(exerciseID?: number) {
         const parentComponent = exerciseID ? getExercise(this.page, exerciseID) : this.page;
         const summaryScoreLocator = parentComponent.getByTestId('achieved-percentage');
         const resultComponentScoreLocator = parentComponent.locator('#result-score');
+        const anyScore = summaryScoreLocator.or(resultComponentScoreLocator).first();
         try {
-            await Commands.reloadUntilFound(this.page, summaryScoreLocator, 10000, 60000);
-            return summaryScoreLocator;
+            await expect(anyScore).toBeVisible({ timeout: RELOAD_RENDER_TIMEOUT });
         } catch {
-            await Commands.reloadUntilFound(this.page, resultComponentScoreLocator, 10000, 60000);
-            return resultComponentScoreLocator;
+            annotateRecovery(`getResultScore: no score visible after ${RELOAD_RENDER_TIMEOUT}ms at ${this.page.url()}; reloading`);
+            await this.page.reload();
+            await expect(anyScore).toBeVisible({ timeout: RELOAD_RENDER_TIMEOUT });
         }
+        return (await summaryScoreLocator.count()) > 0 ? summaryScoreLocator : resultComponentScoreLocator;
     }
 
     async checkResultScore(scoreText: string, exerciseID?: number) {

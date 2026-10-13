@@ -5,12 +5,12 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { Course } from 'app/course/shared/entities/course.model';
 
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { Subject, filter, takeUntil } from 'rxjs';
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations-components/other/conversation.util';
 
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { getAsOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
@@ -39,9 +39,9 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 })
 export class ConversationHeaderComponent implements OnInit, OnDestroy {
     private dialogService = inject(DialogService);
-    metisConversationService = inject(MetisConversationService);
+    courseConversationsService = inject(CourseConversationsService);
     conversationService = inject(ConversationService);
-    private metisService = inject(MetisService);
+    private communicationService = inject(CommunicationService);
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
 
     constructor() {
@@ -88,7 +88,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     canAddUsers = canAddUsersToConversation;
 
     ngOnInit(): void {
-        this.course.set(this.metisConversationService.course!);
+        this.course.set(this.courseConversationsService.course!);
         this.subscribeToActiveConversation();
     }
 
@@ -120,12 +120,12 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO | undefined) => {
+        this.courseConversationsService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO | undefined) => {
             this.activeConversation.set(conversation);
             const activeConversationAsChannel = getAsChannelDTO(conversation);
             this.activeConversationAsChannel.set(activeConversationAsChannel);
             this.channelSubTypeReferenceTranslationKey.set(getChannelSubTypeReferenceTranslationKey(activeConversationAsChannel?.subType));
-            this.channelSubTypeReferenceRouterLink.set(this.metisService.getLinkForChannelSubType(activeConversationAsChannel));
+            this.channelSubTypeReferenceRouterLink.set(this.communicationService.getLinkForChannelSubType(activeConversationAsChannel));
             this.getOtherUser();
         });
     }
@@ -147,7 +147,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe(() => {
-                this.metisConversationService.forceRefresh().subscribe({
+                this.courseConversationsService.forceRefresh().subscribe({
                     complete: () => {},
                     // the service already reported the failure to the user, nothing is derived from the refresh here
                     error: () => {},
@@ -172,7 +172,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
                     selectedTab,
                     onUserNameClicked: (userId: number) => {
                         ref?.destroy();
-                        this.metisConversationService.createOneToOneChatWithId(userId).subscribe({
+                        this.courseConversationsService.createOneToOneChatWithId(userId).subscribe({
                             // the chat is created before the conversations are reloaded, and a failed reload is already
                             // reported by the service, so it must not surface as an unhandled error here
                             error: () => {},
@@ -188,7 +188,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe(() => {
-                this.metisConversationService.forceRefresh().subscribe({
+                this.courseConversationsService.forceRefresh().subscribe({
                     complete: () => {},
                     // the service already reported the failure to the user, nothing is derived from the refresh here
                     error: () => {},

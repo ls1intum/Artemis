@@ -195,7 +195,7 @@ public class CourseStatsService {
         usersByDate.forEach((date, users) -> {
             int year = date < getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
             ZonedDateTime firstDateOfYear = ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, startDate.getZone());
-            ZonedDateTime start = getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(date - 1) : firstDateOfYear.plusWeeks(date);
+            ZonedDateTime start = getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks((long) date - 1) : firstDateOfYear.plusWeeks(date);
             StatisticsEntry listElement = new StatisticsEntry(start, users.size());
             returnList.add(listElement);
         });

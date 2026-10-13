@@ -1,12 +1,13 @@
 import { Component, inject, input } from '@angular/core';
 import { Exercise, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Router } from '@angular/router';
+import { TumAetUiButtonDirective, TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-plagiarism-cases-overview',
     templateUrl: './plagiarism-cases-overview.component.html',
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, TumAetUiButtonDirective, TumAetUiTableDirective],
 })
 export class PlagiarismCasesOverviewComponent {
     private router = inject(Router);

@@ -354,7 +354,9 @@ public class SharedQueueManagementService {
         Slice<Long> buildJobIdsSlice = buildJobRepository.findFinishedIdsByFilterCriteria(search.buildStatus(), search.buildAgentAddress(), search.startDate(), search.endDate(),
                 search.pageable().getSearchTerm(), courseId, buildDurationLower, buildDurationUpper, pageRequest);
 
-        log.info("findFinishedIds took {} for search: {}", TimeLogUtil.formatDurationFrom(start), search);
+        log.info("findFinishedIds took {} for course {} (status {}, from {}, to {}, duration {}-{}, agent filter {}, search term {}, page {})",
+                TimeLogUtil.formatDurationFrom(start), courseId, search.buildStatus(), search.startDate(), search.endDate(), buildDurationLower, buildDurationUpper,
+                search.buildAgentAddress() != null, search.pageable().getSearchTerm() != null && !search.pageable().getSearchTerm().isBlank(), search.pageable().getPage());
 
         List<Long> buildJobIds = buildJobIdsSlice.toList();
         // Fetch the build jobs with results. Since this query used "IN" clause, the order of the results is not guaranteed. We need to order them by the order of the ids.
@@ -502,12 +504,6 @@ public class SharedQueueManagementService {
      * @param removedAgent the build agent information that was removed
      */
     private void requeueOrphanedJobsOf(BuildAgentInformation removedAgent) {
-        if (removedAgent.buildAgent() == null) {
-            // An entry without agent details carries no name to match processing jobs against, so there is nothing to
-            // re-queue. Dereferencing it would abort the listener and leave the capacity update half done.
-            log.warn("Removed build agent entry has no agent details, skipping orphaned job handling");
-            return;
-        }
         requeueOrphanedJobsOf(removedAgent.buildAgent().name());
     }
 
@@ -615,7 +611,7 @@ public class SharedQueueManagementService {
      * @return whether the job started early enough that a missing agent means the agent is gone rather than not yet registered
      */
     private static boolean startedBefore(BuildJobQueueItem job, ZonedDateTime deadline) {
-        ZonedDateTime buildStartDate = job.jobTimingInfo() != null ? job.jobTimingInfo().buildStartDate() : null;
+        ZonedDateTime buildStartDate = job.jobTimingInfo().buildStartDate();
         return buildStartDate == null || buildStartDate.isBefore(deadline);
     }
 

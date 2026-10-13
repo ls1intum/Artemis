@@ -19,11 +19,13 @@ public class AttachmentChangedNotification extends CourseNotification {
     private final AttachmentChangedPayloadDTO payload;
 
     /**
-     * Default constructor used when creating a new post notification.
+     * Default constructor used when creating a new attachment changed notification. The notification text is the
+     * message the editor wrote for students about the change, {@code null} when they wrote none.
      */
-    public AttachmentChangedNotification(Long courseId, String courseTitle, String courseImageUrl, String attachmentName, String unitName, Long exerciseId, Long lectureId) {
+    public AttachmentChangedNotification(Long courseId, String courseTitle, String courseImageUrl, String attachmentName, String unitName, Long exerciseId, Long lectureId,
+            String notificationText) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
-        this.payload = new AttachmentChangedPayloadDTO(attachmentName, unitName, exerciseId, lectureId);
+        this.payload = new AttachmentChangedPayloadDTO(attachmentName, unitName, exerciseId, lectureId, notificationText);
     }
 
     /**

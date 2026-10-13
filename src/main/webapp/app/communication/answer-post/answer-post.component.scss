@@ -1,7 +1,7 @@
 @import 'bootstrap/scss/functions';
 @import 'bootstrap/scss/variables';
 @import 'bootstrap/scss/mixins';
-@import '../metis.component';
+@import '../communication.component';
 
 // CSS animations for enter/leave (used with Angular's animate.enter/animate.leave)
 // Reactions bar enter animation using CSS Grid for height + opacity
@@ -102,10 +102,10 @@
     transition:
         opacity 0.2s ease-in-out,
         visibility 0.2s ease-in-out;
-    background: var(--metis-selection-option-background);
+    background: var(--communication-selection-option-background);
     padding: 5px;
     border-radius: 5px;
-    border: 0.01rem solid var(--metis-gray);
+    border: 0.01rem solid var(--communication-gray);
 }
 
 .message-container {
@@ -138,7 +138,7 @@
 }
 
 .hover-container:hover {
-    background: var(--metis-selection-option-hover-background);
+    background: var(--communication-selection-option-hover-background);
     transition: background-color 0.2s ease-in-out;
 }
 
@@ -148,7 +148,7 @@
 }
 
 .message-content:hover {
-    background: var(--metis-selection-option-hover-background);
+    background: var(--communication-selection-option-hover-background);
 }
 
 .message-container:hover .hover-actions {
@@ -177,7 +177,7 @@
         visibility 0.2s ease-in-out,
         opacity 0.2s ease-in-out;
     font-size: 0.75rem;
-    color: var(--metis-gray-dark);
+    color: var(--communication-gray-dark);
 }
 
 .hover-container:hover .post-time {

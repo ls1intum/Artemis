@@ -265,7 +265,7 @@ public class ComplaintResponseService {
 
     private void validateResponseTextLimit(String responseText, Complaint originalComplaint) {
         if (responseText != null) {
-            Course course = originalComplaint.getResult().getSubmission().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
+            Course course = originalComplaint.getResult().getSubmission().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
             int maxLength = course.getMaxComplaintResponseTextLimitForExercise(originalComplaint.getResult().getSubmission().getParticipation().getExercise());
             if (responseText.length() > maxLength) {
                 throw new BadRequestAlertException("You cannot submit a complaint response that exceeds the maximum number of " + maxLength + " characters", ENTITY_NAME,

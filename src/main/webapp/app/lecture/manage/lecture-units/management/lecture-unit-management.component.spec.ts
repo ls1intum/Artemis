@@ -61,14 +61,14 @@ class PdfDropZoneStubComponent {
             [showDropZone]="false"
             [editingUnitId]="editingUnitId()"
             [editorTemplate]="editor"
-            (onSaveEditingClicked)="saved.push($event)"
+            (onDoneEditingClicked)="done.push($event)"
         />
     `,
     imports: [LectureUnitManagementComponent],
 })
 class EditingHostComponent {
     readonly editingUnitId = signal<number | undefined>(undefined);
-    readonly saved: LectureUnit[] = [];
+    readonly done: LectureUnit[] = [];
 }
 
 describe('LectureUnitManagementComponent', () => {
@@ -225,6 +225,25 @@ describe('LectureUnitManagementComponent', () => {
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(mockUnit as unknown as LectureUnit)).toBe('');
     });
 
+    it('should offer orchestration only for supported lecture units with extractable content', () => {
+        attachmentVideoUnit.description = 'Attachment description';
+        textUnit.content = 'Recursion calls itself until a base case is reached.';
+
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(textUnit)).toBe(true);
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(new OnlineUnit())).toBe(true);
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(attachmentVideoUnit)).toBe(true);
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(exerciseUnit)).toBe(false);
+
+        attachmentVideoUnit.description = '   ';
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(attachmentVideoUnit)).toBe(false);
+    });
+
+    it.each([undefined, '', '   ', '\n\t'])('should not offer orchestration for a text unit with blank content %j', (content) => {
+        textUnit.content = content;
+
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(textUnit)).toBe(false);
+    });
+
     it('should give the correct confirmation text translation key', () => {
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new AttachmentVideoUnit())).toBe('artemisApp.attachmentVideoUnit.delete.typeNameToConfirm');
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new ExerciseUnit())).toBe('artemisApp.exerciseUnit.delete.typeNameToConfirm');
@@ -325,6 +344,91 @@ describe('LectureUnitManagementComponent', () => {
             expect(lectureUnitManagementComponent.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.DONE);
         });
 
+        it('keeps a live processing update that races ahead of the initial bulk load', () => {
+            // Drive the initial bulk load through a Subject so it stays pending while a WebSocket update lands.
+            const statuses$ = new Subject<LectureUnitCombinedStatus[]>();
+            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(statuses$.asObservable());
+            const fixture = TestBed.createComponent(LectureUnitManagementComponent);
+            const component = fixture.componentInstance;
+            fixture.detectChanges(); // ngOnInit -> loadData -> loadAllStatuses subscribes, still pending
+
+            // A live WebSocket update arrives before the bulk REST response resolves.
+            component.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.INGESTING,
+                    retryCount: 0,
+                },
+            });
+            // The initial bulk response now resolves with a stale IDLE snapshot.
+            statuses$.next([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: ProcessingPhase.IDLE, retryCount: 0 }]);
+
+            // The initial-load merge preserves the fresher live phase.
+            expect(component.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.INGESTING);
+        });
+
+        it('ignores a superseded status response that resolves after a newer one', () => {
+            // Two loads in flight at once: loadData() is triggered by a delete and by a creation as well as by
+            // init, so this happens whenever a user acts twice in quick succession.
+            const first$ = new Subject<LectureUnitCombinedStatus[]>();
+            const second$ = new Subject<LectureUnitCombinedStatus[]>();
+            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValueOnce(first$.asObservable()).mockReturnValueOnce(second$.asObservable());
+
+            const fixture = TestBed.createComponent(LectureUnitManagementComponent);
+            const component = fixture.componentInstance;
+            fixture.detectChanges(); // load #1 -> its status request is pending
+            component.loadData(); // load #2 -> supersedes #1
+
+            // The newer request answers first with the current truth.
+            second$.next([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: ProcessingPhase.DONE, retryCount: 0 }]);
+            expect(component.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.DONE);
+
+            // The older request answers second, describing the lecture as it was before. Arrival order must not
+            // decide the winner: its stale snapshot has to be dropped rather than replacing the fresher map.
+            first$.next([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: ProcessingPhase.IDLE, retryCount: 0 }]);
+            expect(component.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.DONE);
+        });
+
+        it('lets a later refresh replace a stale live entry after the initial load', () => {
+            // The initial load already ran during setup, so a later refresh is authoritative: it must heal
+            // a live entry that went stale during a WebSocket outage rather than preserve it forever.
+            lectureUnitManagementComponent.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.INGESTING,
+                    retryCount: 0,
+                },
+            });
+            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(of([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: ProcessingPhase.DONE, retryCount: 0 }]));
+
+            lectureUnitManagementComponent.loadData();
+
+            expect(lectureUnitManagementComponent.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.DONE);
+        });
+
+        it('replaces authoritatively on a refresh even if the initial bulk load failed', () => {
+            // The very first bulk load errors; the initial-load window must still close so a later
+            // refresh replaces rather than merges forever.
+            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            const fixture = TestBed.createComponent(LectureUnitManagementComponent);
+            const component = fixture.componentInstance;
+            fixture.detectChanges(); // ngOnInit -> loadData -> loadAllStatuses errors
+
+            // A live entry then goes stale during an outage.
+            component.processingStatus.set({
+                [attachmentVideoUnit.id!]: {
+                    lectureUnitId: attachmentVideoUnit.id!,
+                    phase: ProcessingPhase.INGESTING,
+                    retryCount: 0,
+                },
+            });
+            // A later refresh returns the authoritative DONE and must win.
+            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(of([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: ProcessingPhase.DONE, retryCount: 0 }]));
+            component.loadData();
+
+            expect(component.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.DONE);
+        });
+
         it('should correctly identify processing states', () => {
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: {
@@ -334,7 +438,6 @@ describe('LectureUnitManagementComponent', () => {
                 },
             });
             expect(lectureUnitManagementComponent.isProcessingTranscribing(attachmentVideoUnit)).toBe(false);
-            expect(lectureUnitManagementComponent.isProcessingDone(attachmentVideoUnit)).toBe(false);
 
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: {
@@ -352,7 +455,7 @@ describe('LectureUnitManagementComponent', () => {
                     retryCount: 0,
                 },
             });
-            expect(lectureUnitManagementComponent.isProcessingIngesting(attachmentVideoUnit)).toBe(true);
+            expect(lectureUnitManagementComponent.isProcessingTranscribing(attachmentVideoUnit)).toBe(false);
 
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: {
@@ -361,7 +464,7 @@ describe('LectureUnitManagementComponent', () => {
                     retryCount: 0,
                 },
             });
-            expect(lectureUnitManagementComponent.isProcessingDone(attachmentVideoUnit)).toBe(true);
+            expect(lectureUnitManagementComponent.isProcessingFailed(attachmentVideoUnit)).toBe(false);
 
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: {
@@ -371,18 +474,15 @@ describe('LectureUnitManagementComponent', () => {
                 },
             });
             expect(lectureUnitManagementComponent.isProcessingFailed(attachmentVideoUnit)).toBe(true);
-        });
 
-        it('should return error key from processing status', () => {
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: {
                     lectureUnitId: attachmentVideoUnit.id!,
-                    phase: ProcessingPhase.FAILED,
-                    retryCount: 3,
-                    errorKey: 'artemisApp.attachmentVideoUnit.processing.error.youtubeLive',
+                    phase: ProcessingPhase.SKIPPED,
+                    retryCount: 0,
                 },
             });
-            expect(lectureUnitManagementComponent.getProcessingErrorKey(attachmentVideoUnit)).toBe('artemisApp.attachmentVideoUnit.processing.error.youtubeLive');
+            expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBe(false);
         });
 
         it('should handle error when bulk status endpoint fails', () => {
@@ -826,7 +926,7 @@ describe('LectureUnitManagementComponent', () => {
 
             expect(rows.filter((row) => row.attributes['data-editing'] === 'true')).toHaveLength(1);
             expect(editingRow.query(By.css('[data-testid="lecture-unit-editing-tag"]'))).not.toBeNull();
-            expect(editingRow.query(By.css('[data-testid="lecture-unit-save"]'))).not.toBeNull();
+            expect(editingRow.query(By.css('[data-testid="lecture-unit-done"]'))).not.toBeNull();
             expect(editingRow.query(By.css('[data-testid="lecture-unit-edit"]'))).toBeNull();
             expect(editingRow.query(By.css('[data-testid="lecture-unit-editor"]')).nativeElement.textContent).toContain(`Editing ${textUnit.id}`);
             expect(rows.filter((row) => row !== editingRow).every((row) => row.classes['opacity-60'])).toBe(true);
@@ -834,10 +934,10 @@ describe('LectureUnitManagementComponent', () => {
             expect(hostFixture.debugElement.query(By.directive(CdkDropList)).injector.get(CdkDropList).disabled).toBe(true);
         });
 
-        it('should report Save of the edited unit', () => {
-            queryAll('lecture-unit-save')[0].nativeElement.click();
+        it('should report Done of the edited unit', () => {
+            queryAll('lecture-unit-done')[0].nativeElement.click();
 
-            expect(host.saved).toEqual([expect.objectContaining({ id: textUnit.id })]);
+            expect(host.done).toEqual([expect.objectContaining({ id: textUnit.id })]);
         });
 
         it('should move the keyboard focus to the Edit button of a unit once its form closed', () => {

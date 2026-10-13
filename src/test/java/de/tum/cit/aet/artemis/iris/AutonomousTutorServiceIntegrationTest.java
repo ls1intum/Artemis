@@ -133,7 +133,7 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
 
         // The broadcast is now wrapped in PostBroadcastDTO (cycle-free wire payload)
         verify(websocketMessagingService, timeout(2000)).sendMessage(topic("/topic/communication/courses/" + course.getId()), any(PostBroadcastDTO.class));
-        // One broadcast in total over the whole window: a restored /topic/metis/ mirror would make it two.
+        // One broadcast in total over the whole window: a restored legacy mirror topic would make it two.
         // after(...) rather than timeout(...), which would return at the first send and miss a later mirrored one.
         verify(websocketMessagingService, after(2000).times(1)).sendMessage(any(WebsocketDestination.class), any(PostBroadcastDTO.class));
     }

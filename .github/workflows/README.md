@@ -12,6 +12,13 @@ runs on event X?" is in exactly one file. Scoped package releases (`@tumaet/*`)
 do not run Artemis builds or Android tests. TUM AET UI uses `release-tum-aet-ui.yml`: a manual run on a
 branch validates; a run on an `@tumaet/ui-angular@<version>` tag validates and stages for npm approval.
 
+The one deliberate exception is `ci-gradle-wrapper.yml`: besides being called by `ci.yml` for
+Gradle-related pull requests, it also runs directly on pushes to `develop`, `main`, and `release/*`.
+OpenSSF Scorecard only treats the committed `gradle-wrapper.jar` as a verified binary when it can
+associate a successful Gradle wrapper validation workflow with the latest commit, which it cannot do
+reliably through a reusable-workflow call alone. The direct push trigger provides that evidence while
+the reusable call keeps wrapper validation inside the existing required PR gate.
+
 ```text
 ci.yml                                                            (single entry workflow)
 ├── detect-changes               (dorny/paths-filter, emits per-area booleans)
@@ -86,15 +93,20 @@ so it blocks only on genuine regressions rather than on noise:
 `codeql` is deliberately **advisory** (not in the gate's `needs:`): it runs for signal and reds the
 run on a genuine failure, but never blocks merge.
 
-- **`codeql`.** Static security analysis (Java + JS/TS) on every code-relevant PR/push. It is
-  advisory because CodeQL must build the code itself to trace it (it cannot reuse `build`'s WAR),
-  so it is a slow, heavyweight job that should not pace merge — but it runs on the abundant
+- **`codeql`.** Static security analysis (Java + JS/TS) on every PR/push that changes scanned
+  code. It is advisory because CodeQL must build the code itself to trace it (it cannot reuse
+  `build`'s WAR), so it is a slow, heavyweight job that should not pace merge — but it runs on the
   GitHub-hosted pool, in parallel, so it adds no load on the self-hosted runners and no merge
-  latency. Fork PRs are excluded (the SARIF upload needs `security-events: write`, which fork
-  tokens lack); forks are still covered by the post-merge push scan and the weekly scheduled
-  scan. The `schedule:` cron lives in `codeql-analysis.yml` because cron cannot be expressed in a
-  `workflow_call` reusable; that thin remnant reuses `ci-codeql.yml`, so the scan steps exist in
-  one place.
+  latency. That pool is shared with the required jobs, though, and a scan holds a slot for about
+  12 minutes, so the job is skipped when it has nothing new to look at: for draft PRs (promoting
+  one runs it), and when every changed file is a test, a translation, the generated OpenAPI
+  client, a workflow, a skill or documentation (the `codeql_relevant` output of `detect-changes`).
+  The same paths are excluded from analysis in `.github/codeql/codeql-config.yml`; keep the two
+  lists in sync. Edits to `ci.yml`, `ci-codeql.yml` or the config file still run the scan. Fork
+  PRs are excluded (the SARIF upload needs `security-events: write`, which fork tokens lack); forks
+  are still covered by the post-merge push scan and the weekly scheduled scan. The `schedule:` cron
+  lives in `codeql-analysis.yml` because cron cannot be expressed in a `workflow_call` reusable;
+  that thin remnant reuses `ci-codeql.yml`, so the scan steps exist in one place.
 
 To change the required set, edit `all-required-ci-passed`'s `needs:` (and mirror it in
 `ci-summary`'s `ADVISORY` env, which labels the table). Branch protection still references one
@@ -126,21 +138,26 @@ gate closed.
 
 ## Action pinning policy
 
-- **Third-party actions** (anything outside `actions/*`, `github/*`) are pinned to a
+- **All external actions**, including `actions/*` and `github/*`, are pinned to a
   40-character commit SHA with a `# vX.Y.Z` trailing comment. This is the
   [GitHub-recommended supply-chain mitigation](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-third-party-actions)
   and matches the org policy GitHub now supports enforcing.
-- **First-party `actions/*` and `github/*` actions** may use a major-version tag
-  (`@v6`, `@v9`) because they are governed by GitHub's own release process.
-  `actionlint`'s install script is pinned to a release tag because the script itself
-  is the third party, not the binary it downloads.
+- **Local actions and reusable workflows** use relative paths. The `actionlint` install
+  script uses a release tag and a verified SHA-256 checksum before execution.
 - **Don't hand-bump the SHAs.** Renovate (`renovate.json`) reads the `@<sha> # vX.Y.Z`
   format and opens PRs that update both the SHA and the comment together — keep the comment
   in that exact shape so it stays auto-maintained.
+  The `helpers:pinGitHubActionDigests` preset also pins newly added action references.
+- **The policy is enforced.** `supporting_scripts/check_action_pinning.py` runs in `ci-workflows.yml`
+  and fails on any `uses:` in `.github/workflows` or `.github/actions` that is not a local path,
+  a Docker image digest, or `owner/repo@<40-hex SHA> # vX.Y.Z`. It parses the files with PyYAML,
+  which the Ubuntu runners provide. Run it locally with
+  `python3 supporting_scripts/check_action_pinning.py`; its unit test is
+  `supporting_scripts/test_check_action_pinning.py`.
 
 ## Reusable workflows — `ci-*.yml`
 
-Each `ci-*.yml` file has `on: workflow_call:` and is invoked only by `ci.yml`. Rules:
+Most `ci-*.yml` files have `on: workflow_call:` and are invoked only by `ci.yml`. `ci-gradle-wrapper.yml` also has the direct push trigger documented above. Rules:
 
 1. **No `concurrency:` block inside a reusable.** The parent's group already applies. A
    child-level `concurrency:` block can cancel a queued child while the parent run stays
@@ -256,8 +273,14 @@ stale, which is why the coverage badge is self-hosted (see above).
 
 **SonarQube Cloud** runs from `ci-sonar.yml` on `develop` pushes, after a green `test`, importing the
 `Server JaCoCo XML` and `Vitest Coverage Report` artifacts that job already uploaded — no suite is
-re-run. It exists to be compared against Codacy on the same code before either grade is trusted with
-a badge, so **it currently feeds no badge**. Configuration lives in `gradle/sonar.gradle`.
+re-run. It serves five badges in the root `README.md`, straight from `sonarcloud.io/api/project_badges`
+for the `develop` branch: the **quality gate** (which judges the new code of the last 30 days: ratings,
+coverage, duplication, hotspots), the **reliability**, **security** and **maintainability** ratings, and
+the share of **duplicated lines**. Mind what the ratings measure. The badge service reports
+whole-project values and has no badge for the new-code metrics, so the three rating badges grade every
+open finding of the project, including the ones from before the new-code window, while the quality gate
+keeps new code at A. The reliability badge therefore trails the gate until the older bugs are fixed. The
+coverage badge stays the self-hosted one described above. Configuration lives in `gradle/sonar.gradle`.
 
 Three things about it are worth knowing before changing it:
 
@@ -273,10 +296,13 @@ Three things about it are worth knowing before changing it:
    error, so the job runs `./gradlew compileJava sonar -x webapp`.
 3. **It is dispatchable on its own.** A full CI run takes ~2 h because of the e2e tail, so
    `ci-sonar.yml` also accepts `workflow_dispatch` for an on-demand grade. That trigger declares no
-   inputs — the ref it is dispatched on is the commit analysed, and a dispatched run has no `test`
-   job whose coverage artifacts it could import, so it reports no coverage. The ratings and issue
-   counts still come back, which is what the comparison turns on. Checkov's `CKV_GHA_7` also flags
-   dispatch inputs, so keep that trigger input-free.
+   inputs — the ref it is dispatched on is the commit analysed. A dispatched run has no `test` job of
+   its own, so it looks up the newest `ci.yml` run for exactly that commit that **succeeded** and
+   imports the coverage artifacts of that run; for a pull request branch that is the pull request
+   build. When no such run exists the analysis runs without coverage, and the quality gate then
+   shows 0.0% coverage on new code, which describes the missing report and not the code. Dispatch
+   after the CI run of the commit has finished to get the real figure. Checkov's `CKV_GHA_7` also
+   flags dispatch inputs, so keep that trigger input-free.
 
 The job is `continue-on-error` and never appears in another job's `needs:`, so a Sonar outage, an
 expired `SONAR_TOKEN`, or a missing project cannot fail the run.

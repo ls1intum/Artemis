@@ -31,7 +31,7 @@
                         @if (isUnverifiedIris()) {
                             <p-tag severity="warn">
                                 <fa-icon [icon]="faTriangleExclamation" class="me-1" />
-                                <span jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.badge"></span>
+                                <span jhiTranslate="artemisApp.communication.answerPost.unverifiedIris.badge"></span>
                             </p-tag>
                         }
                     </span>
@@ -60,7 +60,7 @@
                 [icon]="faCheckSquare"
                 iconSize="xs"
                 class="col-auto pe-0 resolved px-1"
-                [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate"
+                [ngbTooltip]="'artemisApp.communication.post.postMarkedAsResolvedTooltip' | artemisTranslate"
             />
         }
         @if (isPostPinned()) {

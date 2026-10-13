@@ -43,7 +43,7 @@ public class LinkPreviewResource {
     private final LinkPreviewService linkPreviewService;
 
     // Regular expression to match valid domain names with a TLD
-    private static final Pattern VALID_DOMAIN_PATTERN = Pattern.compile("^(?!-)([a-zA-Z0-9-]{1,63}\\.)+[a-zA-Z]{2,20}$");
+    private static final Pattern VALID_DOMAIN_PATTERN = Pattern.compile("^(?!-)(?:[a-zA-Z0-9-]{1,63}+\\.)++[a-zA-Z]{2,20}+$");
 
     public LinkPreviewResource(LinkPreviewService linkPreviewService) {
         this.linkPreviewService = linkPreviewService;
@@ -82,7 +82,7 @@ public class LinkPreviewResource {
         log.debug("REST request to get link preview for URL: {}", decodedUrl);
 
         if (!isValidUrl(decodedUrl)) {
-            log.warn("Invalid or potentially unsafe URL {}", decodedUrl);
+            log.warn("Rejected link preview request for an invalid or potentially unsafe URL");
             return ResponseEntity.badRequest().build();
         }
 

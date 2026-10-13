@@ -4,8 +4,7 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { Dialog } from 'primeng/dialog';
+import { TumAetUiDialogComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
@@ -35,10 +34,10 @@ import { AlertService } from 'app/foundation/service/alert.service';
         CommitsInfoComponent,
         TranslateDirective,
         GitDiffLineStatComponent,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
         ButtonComponent,
         ArtemisTranslatePipe,
-        Dialog,
+        TumAetUiDialogComponent,
         GitDiffReportComponent,
     ],
 })

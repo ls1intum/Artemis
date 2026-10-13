@@ -47,6 +47,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { setInputs } from 'app/foundation/util/set-inputs.util';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -537,11 +538,13 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             hostElement: taskHtmlContainer,
             environmentInjector: this.injector,
         });
-        componentRef.setInput('exercise', this.exercise());
-        componentRef.setInput('participation', this.participation());
-        componentRef.setInput('taskName', taskName);
-        componentRef.setInput('latestResult', this.latestResult);
-        componentRef.setInput('testIds', testIds);
+        setInputs(componentRef, {
+            exercise: this.exercise(),
+            participation: this.participation(),
+            taskName,
+            latestResult: this.latestResult,
+            testIds,
+        });
         // Track component ref for cleanup
         this.taskComponentRefs.push(componentRef);
         this.appRef.attachView(componentRef.hostView);

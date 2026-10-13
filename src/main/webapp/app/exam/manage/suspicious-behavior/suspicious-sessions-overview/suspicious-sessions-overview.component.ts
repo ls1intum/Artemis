@@ -1,4 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
 import { SuspiciousSessionsComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -9,8 +10,7 @@ import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/cours
 @Component({
     selector: 'jhi-suspicious-sessions-overview',
     templateUrl: './suspicious-sessions-overview.component.html',
-    styleUrls: ['./suspicious-sessions-overview.component.scss'],
-    imports: [SuspiciousSessionsComponent, TranslateDirective, ArtemisTranslatePipe, CourseTitleBarTitleDirective],
+    imports: [SuspiciousSessionsComponent, TumAetUiTableDirective, TranslateDirective, ArtemisTranslatePipe, CourseTitleBarTitleDirective],
 })
 export class SuspiciousSessionsOverviewComponent implements OnInit {
     suspiciousSessions = signal<SuspiciousExamSessions[]>([]);

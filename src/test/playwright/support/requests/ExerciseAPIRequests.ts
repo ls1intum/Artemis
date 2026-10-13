@@ -112,6 +112,10 @@ export class ExerciseAPIRequests {
         buildPlanConfiguration?: string;
         // Note: the name must not be a reserved repository type name (exercise, solution, tests, auxiliary, user).
         auxiliaryRepositories?: { name: string; checkoutDirectory: string; description?: string }[];
+        /** Whether students may work in the online editor; the server default of the template applies when omitted. */
+        allowOnlineEditor?: boolean;
+        /** Whether students may clone the repository and work in their own IDE; the server default of the template applies when omitted. */
+        allowOfflineIde?: boolean;
     }): Promise<ProgrammingExercise> {
         const {
             course,
@@ -135,6 +139,8 @@ export class ExerciseAPIRequests {
             problemStatement,
             buildPlanConfiguration,
             auxiliaryRepositories,
+            allowOnlineEditor,
+            allowOfflineIde,
         } = options;
 
         let programmingExerciseTemplate = {};
@@ -159,6 +165,8 @@ export class ExerciseAPIRequests {
             ...(problemStatement ? { problemStatement } : {}),
             ...(auxiliaryRepositories ? { auxiliaryRepositories } : {}),
             ...(projectType ? { projectType } : {}),
+            ...(allowOnlineEditor !== undefined ? { allowOnlineEditor } : {}),
+            ...(allowOfflineIde !== undefined ? { allowOfflineIde } : {}),
         } as ProgrammingExercise;
 
         if (!exerciseGroup) {
@@ -656,6 +664,8 @@ export class ExerciseAPIRequests {
         duration?: number;
         quizMode?: QuizMode;
         competencyLinks?: { competency: { id: number }; weight: number }[];
+        /** The background image of a drag and drop question; its name is the `backgroundFilePath` of the question. */
+        backgroundFile?: { name: string; mimeType: string; buffer: Buffer };
     }): Promise<QuizExercise> {
         const {
             body,
@@ -667,6 +677,7 @@ export class ExerciseAPIRequests {
             duration = 600,
             quizMode = QuizMode.SYNCHRONIZED,
             competencyLinks,
+            backgroundFile,
         } = options;
 
         const quizExercise: any = {
@@ -704,12 +715,13 @@ export class ExerciseAPIRequests {
             newQuizExercise.competencyLinks = competencyLinks;
         }
         const quizExerciseDTO = convertQuizExerciseToCreationDTO(newQuizExercise);
-        const multipartData = {
+        const multipartData: Record<string, { name: string; mimeType: string; buffer: Buffer }> = {
             exercise: {
                 name: 'exercise',
                 mimeType: 'application/json',
                 buffer: Buffer.from(JSON.stringify(quizExerciseDTO)),
             },
+            ...(backgroundFile ? { files: backgroundFile } : {}),
         };
 
         const response = await this.page.request.post(url, {
@@ -800,7 +812,10 @@ export class ExerciseAPIRequests {
      * @param exam - The exam for which to evaluate the quiz exercises.
      */
     async evaluateExamQuizzes(exam: Exam) {
-        await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`);
+        const response = await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`);
+        if (!response.ok()) {
+            throw new Error(`Failed to evaluate quiz exercises of exam ${exam.id}: ${response.status()} ${await response.text()}`);
+        }
     }
 
     /**
@@ -867,6 +882,20 @@ export class ExerciseAPIRequests {
         if (!response.ok()) {
             throw new Error(`Failed to trigger instructor build for exercise ${exerciseId}: ${response.status()}`);
         }
+    }
+
+    /**
+     * Gets the participations of an exercise as the participation management lists them (at most one hundred), with the login of the student and
+     * the number of submissions of each.
+     */
+    async getExerciseParticipations(exerciseId: number): Promise<{ participationId: number; studentLogin?: string; submissionCount: number }[]> {
+        const response = await this.page.request.get(
+            `api/exercise/exercises/${exerciseId}/participations/page?page=0&pageSize=100&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
+        );
+        if (!response.ok()) {
+            throw new Error(`Failed to get the participations of exercise ${exerciseId}: ${response.status()}`);
+        }
+        return await response.json();
     }
 
     /**

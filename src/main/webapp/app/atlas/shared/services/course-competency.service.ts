@@ -279,7 +279,7 @@ export class CourseCompetencyService {
      */
     protected convertArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.map((competency: CourseCompetency) => (competency.softDueDate = convertDateFromServer(competency.softDueDate)));
+            res.body.forEach((competency: CourseCompetency) => (competency.softDueDate = convertDateFromServer(competency.softDueDate)));
         }
         return res;
     }
