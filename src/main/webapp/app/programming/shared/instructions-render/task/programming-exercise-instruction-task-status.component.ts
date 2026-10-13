@@ -10,6 +10,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { safeUnescape } from 'app/foundation/util/security.util';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',
@@ -66,7 +67,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
             return;
         }
         this.dialogService.open(FeedbackComponent, {
-            header: this.translateService.instant('artemisApp.result.detail.feedbackForTask', { taskName: this.taskName() }),
+            header: this.translateService.instant('artemisApp.result.detail.feedbackForTask', { taskName: safeUnescape(this.taskName()) ?? this.taskName() }),
             width: '50rem',
             breakpoints: {
                 '850px': '95vw',
