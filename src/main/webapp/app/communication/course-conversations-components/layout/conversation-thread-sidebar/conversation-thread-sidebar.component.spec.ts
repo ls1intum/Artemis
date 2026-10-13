@@ -70,6 +70,39 @@ describe('ConversationThreadSidebarComponent', () => {
         expect(component.createdAnswerPost().post).toEqual(newPost);
     });
 
+    it('should keep the reply input of the thread when the same post is updated, so that a new reply does not reset the cursor', () => {
+        const openedPost = new Post();
+        openedPost.id = 5;
+        fixture.componentRef.setInput('activePost', openedPost);
+        fixture.detectChanges();
+        const replyBeingWritten = component.createdAnswerPost();
+
+        const postWithNewReply = new Post();
+        postWithNewReply.id = 5;
+        fixture.componentRef.setInput('activePost', postWithNewReply);
+        fixture.detectChanges();
+
+        expect(component.createdAnswerPost()).toBe(replyBeingWritten);
+        expect(component.createdAnswerPost().post).toBe(postWithNewReply);
+        expect(component.post()).toBe(postWithNewReply);
+    });
+
+    it('should start a new reply when another post is opened', () => {
+        const openedPost = new Post();
+        openedPost.id = 5;
+        fixture.componentRef.setInput('activePost', openedPost);
+        fixture.detectChanges();
+        const replyToFirstPost = component.createdAnswerPost();
+
+        const otherPost = new Post();
+        otherPost.id = 6;
+        fixture.componentRef.setInput('activePost', otherPost);
+        fixture.detectChanges();
+
+        expect(component.createdAnswerPost()).not.toBe(replyToFirstPost);
+        expect(component.createdAnswerPost().post).toBe(otherPost);
+    });
+
     it.each([true, false])('should determine channel moderation rights based on active conversation', (hasModerationRights: boolean) => {
         const conversation = new ChannelDTO();
         conversation.hasChannelModerationRights = hasModerationRights;
