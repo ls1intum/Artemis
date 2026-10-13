@@ -192,7 +192,7 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
         CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         // A test exam, because that is the only kind whose summary offers the button. The flag used to be on the wire of
         // every exam only because the association was eager; a real exam summary no longer reads it.
@@ -221,7 +221,7 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
         CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         // deliberately not a test exam: the point of this test is that a test run lives on a real exam
         StudentExam testRun = examUtilService.addStudentExamWithUser(exam, instructor);
@@ -282,7 +282,7 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
         CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         StudentExam studentExam = createSubmittedStudentExamWithResult(false).studentExam();
 

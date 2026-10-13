@@ -189,7 +189,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
         athenaConfig.setCourse(course);
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         var unit = (LectureDetailsDTO.TextUnitDTO) request.get("/api/lecture/lecture-units/" + textUnit.getId(), HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class);
 

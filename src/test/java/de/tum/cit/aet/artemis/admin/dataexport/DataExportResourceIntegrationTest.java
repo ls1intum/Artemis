@@ -1,9 +1,12 @@
 package de.tum.cit.aet.artemis.admin.dataexport;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
@@ -22,6 +25,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -36,6 +41,7 @@ import de.tum.cit.aet.artemis.admin.dto.DataExportAdminDTO;
 import de.tum.cit.aet.artemis.admin.dto.DataExportDTO;
 import de.tum.cit.aet.artemis.admin.dto.RequestDataExportDTO;
 import de.tum.cit.aet.artemis.admin.service.export.DataExportService;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.test_repository.DataExportTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
@@ -142,15 +148,42 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDataExportDownload_fileDoesntExist_internalServerError() throws Exception {
-        var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+    void testDataExportDownload_fileDoesntExist_notFoundAndExportUntouched() throws Exception {
+        var dataExport = initDataExportWithMissingFile();
+
+        request.get("/api/core/data-exports/" + dataExport.getId(), HttpStatus.NOT_FOUND, Resource.class);
+
+        assertExportNotMarkedAsDownloaded(dataExport);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDataExportDownload_fileCannotBeOpened_exportUntouched() throws Exception {
+        var dataExport = prepareDataExportForDownload();
+        var filePath = Path.of(dataExport.getFilePath());
+
+        // The file passes the readability check but is gone when it is opened, which is possible between the two calls.
+        try (MockedStatic<Files> files = mockStatic(Files.class, Mockito.CALLS_REAL_METHODS)) {
+            files.when(() -> Files.newInputStream(eq(filePath))).thenThrow(new IOException("file vanished"));
+            assertThatThrownBy(() -> dataExportService.downloadDataExport(dataExport)).isInstanceOf(InternalServerErrorException.class);
+        }
+
+        assertExportNotMarkedAsDownloaded(dataExport);
+    }
+
+    private DataExport initDataExportWithMissingFile() {
         DataExport dataExport = new DataExport();
-        dataExport.setUser(userForExport);
+        dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport.setFilePath("not-existent");
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
-        dataExport = dataExportRepository.save(dataExport);
-        request.get("/api/core/data-exports/" + dataExport.getId(), HttpStatus.INTERNAL_SERVER_ERROR, Resource.class);
+        return dataExportRepository.save(dataExport);
+    }
 
+    /** A download that found no file is not a download: the state and the date it would have set must still be the ones before. */
+    private void assertExportNotMarkedAsDownloaded(DataExport dataExport) {
+        var afterwards = dataExportRepository.findByIdElseThrow(dataExport.getId());
+        assertThat(afterwards.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
+        assertThat(afterwards.getDownloadDate()).isNull();
     }
 
     @ParameterizedTest
@@ -457,6 +490,16 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDownloadDataExportAsAdmin_notFound() throws Exception {
         request.get("/api/admin/data-exports/999999/download", HttpStatus.NOT_FOUND, Resource.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testDownloadDataExportAsAdmin_fileDoesntExist_notFoundAndExportUntouched() throws Exception {
+        var dataExport = initDataExportWithMissingFile();
+
+        request.get("/api/admin/data-exports/" + dataExport.getId() + "/download", HttpStatus.NOT_FOUND, Resource.class);
+
+        assertExportNotMarkedAsDownloaded(dataExport);
     }
 
     @Test

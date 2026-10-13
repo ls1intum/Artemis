@@ -8,7 +8,14 @@
             >
                 Confirm export
             </p>
-            <textarea name="studentIds" class="export-textarea" [(ngModel)]="participantIdentifierList" required [disabled]="exportAllParticipants()"></textarea>
+            <textarea
+                [attr.aria-label]="'accessibility.participantIdentifiers' | artemisTranslate"
+                name="studentIds"
+                class="export-textarea"
+                [(ngModel)]="participantIdentifierList"
+                required
+                [disabled]="exportAllParticipants()"
+            ></textarea>
             <!--
       Only show download all checkbox for instructors & admins.
       -->

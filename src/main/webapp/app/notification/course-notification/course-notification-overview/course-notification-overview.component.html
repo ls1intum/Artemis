@@ -1,4 +1,4 @@
-<span class="course-notification-overview d-inline-block">
+<span class="course-notification-overview inline-block">
     <button type="button" (click)="toggleOverlay()" class="course-notification-overview-toggle">
         <fa-icon [icon]="faBell" />
 
@@ -9,7 +9,7 @@
         <div class="course-notification-overview-triangle"></div>
 
         <div class="course-notification-overview-headline-button-wrap mb-2">
-            <h4 class="course-notification-overview-overlay-headline mb-0" jhiTranslate="artemisApp.courseNotification.overview.title"></h4>
+            <h4 class="course-notification-overview-overlay-headline mb-0!" jhiTranslate="artemisApp.courseNotification.overview.title"></h4>
 
             <div class="course-notification-overview-header-actions">
                 @if (selectableSettingPresets(); as selectableSettingPresets) {
@@ -20,18 +20,19 @@
                         (onPresetSelected)="presetSelected($event)"
                     />
                 }
-                <button
-                    type="button"
-                    pButton
+                <a
+                    tumAetUiButton
                     severity="secondary"
-                    [outlined]="true"
+                    variant="outlined"
                     size="small"
+                    data-testid="course-notification-overview-settings"
                     [routerLink]="['/courses', courseId(), 'settings']"
-                    [pTooltip]="'artemisApp.courseNotification.overview.settingsTooltip' | artemisTranslate"
+                    [tumAetUiTooltip]="'artemisApp.courseNotification.overview.settingsTooltip' | artemisTranslate"
+                    [attr.aria-label]="'artemisApp.courseNotification.overview.settingsTooltip' | artemisTranslate"
                     (click)="closeOverlay()"
                 >
                     <fa-icon [icon]="faCog" />
-                </button>
+                </a>
             </div>
         </div>
 
@@ -57,8 +58,8 @@
             <button
                 type="button"
                 id="mark-all-as-read-button"
-                pButton
-                [text]="true"
+                tumAetUiButton
+                variant="text"
                 size="small"
                 (click)="markAllAsReadClicked()"
                 class="course-notification-overview-mark-all-as-read"
@@ -89,10 +90,10 @@
                 } @else {
                     <div class="course-notification-overview-notification-empty-prompt">
                         <fa-icon class="course-notification-overview-notification-empty-prompt-icon" [icon]="faEnvelopeOpen" />
-                        <div class="mt-3 text-secondary">
+                        <div class="mt-4 text-(--text-body-secondary)">
                             <strong jhiTranslate="artemisApp.courseNotification.overview.emptyTitle"></strong>
                         </div>
-                        <div class="text-secondary text-center">
+                        <div class="text-center text-(--text-body-secondary)">
                             <span jhiTranslate="artemisApp.courseNotification.overview.emptyMessage"></span>
                         </div>
                     </div>

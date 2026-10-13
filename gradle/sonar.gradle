@@ -40,7 +40,7 @@ def sharedExclusions = [
     // Not part of the deployed application and not exposed to untrusted end-user input.
     "supporting_scripts/**",
     // Throwaway OIDC test identity provider used only by the local E2E stack.
-    "docker/oidc-test/**",
+    "deployment/docker/oidc-test/**",
 ]
 
 sonar {

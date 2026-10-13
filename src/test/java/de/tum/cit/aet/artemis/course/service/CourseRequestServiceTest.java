@@ -89,6 +89,7 @@ class CourseRequestServiceTest {
         pendingRequest.setSemester("WS25");
         pendingRequest.setStartDate(ZonedDateTime.now().minusDays(1));
         pendingRequest.setEndDate(ZonedDateTime.now().plusDays(10));
+        pendingRequest.setGradeRelevant(false);
         User requester = new User();
         requester.setId(7L);
         requester.setLogin("instructor1");
@@ -98,7 +99,7 @@ class CourseRequestServiceTest {
         when(courseRequestRepository.findOneWithEagerRelationshipsById(1L)).thenReturn(Optional.of(pendingRequest));
         when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
         when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
-        when(courseRepository.save(any(Course.class))).thenAnswer(invocation -> {
+        when(courseRepository.saveWithDefaultConfigurations(any(Course.class))).thenAnswer(invocation -> {
             Course course = invocation.getArgument(0);
             course.setId(22L);
             return course;
@@ -116,6 +117,9 @@ class CourseRequestServiceTest {
 
         assertThat(result.status()).isEqualTo(CourseRequestStatus.ACCEPTED);
         assertThat(result.createdCourseId()).isEqualTo(22L);
+        assertThat(result.gradeRelevant()).isFalse();
+        assertThat(courseCaptor.getValue().getCourseConfiguration()).isNotNull();
+        assertThat(courseCaptor.getValue().isGradeRelevant()).isFalse();
         assertThat(courseRequestCaptor.getValue().getProcessedDate()).isNotNull();
     }
 
@@ -133,7 +137,7 @@ class CourseRequestServiceTest {
         when(courseRequestRepository.findOneWithEagerRelationshipsById(1L)).thenReturn(Optional.of(pendingRequest));
         when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
         when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
-        when(courseRepository.save(any(Course.class))).thenAnswer(invocation -> {
+        when(courseRepository.saveWithDefaultConfigurations(any(Course.class))).thenAnswer(invocation -> {
             Course course = invocation.getArgument(0);
             course.setId(22L);
             return course;
@@ -231,7 +235,8 @@ class CourseRequestServiceTest {
             return Optional.of(refetched);
         });
 
-        var createDTO = new CourseRequestCreateDTO("New Course", "NEW123", "WS25", ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(10), false, "Need a course");
+        var createDTO = new CourseRequestCreateDTO("New Course", "NEW123", "WS25", ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(10), false, null,
+                "Need a course");
         courseRequestService.createCourseRequest(createDTO);
 
         // Verify received email was sent with the original requester, not from the saved entity

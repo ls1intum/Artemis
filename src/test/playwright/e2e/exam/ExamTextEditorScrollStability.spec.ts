@@ -15,7 +15,7 @@ const course = { id: SEED_COURSES.examParticipation.id } as any;
  * the classes came back, so it stretched again. Because the class was recomputed on every change-detection
  * pass and read the previous frame's layout, the scroll bar appeared and disappeared while nothing on the
  * page changed, and whether it settled or oscillated depended on the exact content height. It is sized by
- * CSS alone now (`min-h-100`).
+ * CSS alone now (`.exam-content__column`: as tall as its scroll container, or taller when the exercise is).
  *
  * A component test cannot catch this. jsdom has no layout engine, so `scrollHeight` and `clientHeight` are
  * both 0 there and every arrangement looks identical; the unit test can only assert which classes are
@@ -68,10 +68,10 @@ test.describe('Exam text editor scroll stability', { tag: '@slow' }, () => {
         expect(new Set(tallViewportSamples).size, `the scroll bar flickered: overflow went through ${JSON.stringify([...new Set(tallViewportSamples)])}`).toBe(1);
         expect(tallViewportSamples[0], 'an exercise that fits its column must not leave a scroll bar behind').toBe(0);
 
-        // `min-h-100` makes the column fill its scroll container's content box, which is what keeps the
-        // connection-status footer at the bottom while an exercise is short. The measurement subtracts the
-        // container's padding, because that is what a percentage height resolves against; the old code
-        // dropped the class whenever it measured overflow, leaving the column sized by its content instead.
+        // The column fills its scroll container's content box, which is what lets a short exercise (the modeling
+        // canvas, the code editor) take the whole area. The measurement subtracts the container's padding,
+        // because that is what a percentage height resolves against; the old code dropped the class whenever
+        // it measured overflow, leaving the column sized by its content instead.
         const [columnHeight, contentHeight] = await scrollContainer.evaluate((container) => {
             const styles = getComputedStyle(container);
             const padding = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);

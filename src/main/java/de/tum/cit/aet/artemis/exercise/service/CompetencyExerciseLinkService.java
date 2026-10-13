@@ -58,18 +58,46 @@ public class CompetencyExerciseLinkService {
      * @param entity the exercise entity to update
      */
     public void updateCompetencyLinks(CompetencyLinksHolderDTO dto, Exercise entity) {
+        updateCompetencyLinks(dto, entity, Set.of());
+    }
+
+    /**
+     * Updates competency links and marks new links selected through Hyperion as AI-generated in the same persistence operation.
+     * Existing links keep their recorded origin: AI provenance is never cleared, and Hyperion IDs never relabel an existing link.
+     *
+     * @param dto                            the DTO containing the new competency link state
+     * @param entity                         the exercise entity to update
+     * @param hyperionGeneratedCompetencyIds IDs of links inferred through Hyperion's checklist
+     */
+    public void updateCompetencyLinks(CompetencyLinksHolderDTO dto, Exercise entity, Set<Long> hyperionGeneratedCompetencyIds) {
         if (competencyRepositoryApi.isEmpty()) {
             return;
         }
         if (dto.competencyLinks() == null) {
+            if (!hyperionGeneratedCompetencyIds.isEmpty()) {
+                throw new BadRequestAlertException("Hyperion-generated competency IDs must refer to submitted links", "exercise", "competencyLinkMissing");
+            }
             // null means "not provided" — do not change existing links (PATCH semantics)
             return;
         }
         if (dto.competencyLinks().isEmpty()) {
+            if (!hyperionGeneratedCompetencyIds.isEmpty()) {
+                throw new BadRequestAlertException("Hyperion-generated competency IDs must refer to submitted links", "exercise", "competencyLinkMissing");
+            }
             // empty set means "remove all" — clear existing links
             entity.getCompetencyLinks().clear();
         }
         else {
+            Set<Long> submittedCompetencyIds = dto.competencyLinks().stream().map(dtoLink -> {
+                if (dtoLink == null || dtoLink.competency() == null) {
+                    throw new BadRequestAlertException("Competency link and its competency must not be null", "exercise", "competencyLinkNull");
+                }
+                return dtoLink.competency().id();
+            }).collect(Collectors.toSet());
+            if (!submittedCompetencyIds.containsAll(hyperionGeneratedCompetencyIds)) {
+                throw new BadRequestAlertException("Hyperion-generated competency IDs must refer to submitted links", "exercise", "competencyLinkMissing");
+            }
+
             final var existingLinksByCompetencyId = entity.getCompetencyLinks().stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), Function.identity()));
 
             Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
@@ -83,6 +111,7 @@ public class CompetencyExerciseLinkService {
 
                 var existingLink = existingLinksByCompetencyId.get(competencyId);
                 if (existingLink != null) {
+                    // An edit keeps the recorded origin, so a Hyperion ID cannot relabel an instructor's link.
                     existingLink.setWeight(weight);
                     updatedLinks.add(existingLink);
                 }
@@ -95,6 +124,7 @@ public class CompetencyExerciseLinkService {
                         throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "exercise", "wrongCourse");
                     }
                     var newLink = new CompetencyExerciseLink(competency, entity, weight);
+                    newLink.setGeneratedByAi(hyperionGeneratedCompetencyIds.contains(competencyId));
                     updatedLinks.add(newLink);
                 }
             }
@@ -149,7 +179,9 @@ public class CompetencyExerciseLinkService {
             if (exerciseCourseId != null && competencyCourseId != null && !Objects.equals(exerciseCourseId, competencyCourseId)) {
                 continue;
             }
-            resolvedLinks.add(new CompetencyExerciseLink(managedCompetency, exercise, link.getWeight()));
+            CompetencyExerciseLink resolvedLink = new CompetencyExerciseLink(managedCompetency, exercise, link.getWeight());
+            resolvedLink.setGeneratedByAi(link.isGeneratedByAi());
+            resolvedLinks.add(resolvedLink);
         }
         exercise.setCompetencyLinks(resolvedLinks);
     }

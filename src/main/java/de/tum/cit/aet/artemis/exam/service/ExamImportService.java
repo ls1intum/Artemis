@@ -572,24 +572,9 @@ public class ExamImportService {
      * @param newExercise      the exam-import skeleton created from {@link de.tum.cit.aet.artemis.exam.dto.ExerciseImportDTO}
      */
     static void copyProgrammingExerciseInformationForExamImport(final ProgrammingExercise originalExercise, final ProgrammingExercise newExercise) {
-        newExercise.setProgrammingLanguage(originalExercise.getProgrammingLanguage());
-        newExercise.setProjectType(originalExercise.getProjectType());
-        newExercise.setPackageName(originalExercise.getPackageName());
-        newExercise.setAllowOnlineEditor(originalExercise.isAllowOnlineEditor());
-        newExercise.setAllowOfflineIde(originalExercise.isAllowOfflineIde());
-        newExercise.setAllowOnlineIde(originalExercise.isAllowOnlineIde());
-        newExercise.setStaticCodeAnalysisEnabled(originalExercise.isStaticCodeAnalysisEnabled());
-        newExercise.setMaxStaticCodeAnalysisPenalty(originalExercise.getMaxStaticCodeAnalysisPenalty());
-        newExercise.setShowTestNamesToStudents(originalExercise.getShowTestNamesToStudents());
-        newExercise.setReleaseTestsWithExampleSolution(originalExercise.isReleaseTestsWithExampleSolution());
-        newExercise.setAssessmentType(originalExercise.getAssessmentType());
-        newExercise.setDifficulty(originalExercise.getDifficulty());
+        newExercise.copyImportSettingsFrom(originalExercise);
         newExercise.setMode(originalExercise.getMode());
-        // covers includedInOverallScore and allowComplaintsForAutomaticAssessments as well
-        copyCallerOwnedSettingsFromSource(originalExercise, newExercise);
         newExercise.setProblemStatement(originalExercise.getProblemStatement());
-        newExercise.setGradingInstructions(originalExercise.getGradingInstructions());
-        newExercise.setCategories(new HashSet<>(originalExercise.getCategories()));
     }
 
     /**

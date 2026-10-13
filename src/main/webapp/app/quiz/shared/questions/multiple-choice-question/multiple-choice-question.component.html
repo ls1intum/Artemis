@@ -155,7 +155,7 @@
                             <span id="answer-option-{{ i }}-invalid" class="wrong" jhiTranslate="artemisApp.quizQuestion.invalid"></span>
                         }
                         @if (answerOption.invalid || question().invalid) {
-                            <fa-icon ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.invalid' | artemisTranslate }}" style="color: black" [icon]="faQuestionCircle" />
+                            <fa-icon ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.invalid' | artemisTranslate }}" [icon]="faQuestionCircle" />
                         }
                     </td>
                     @if (!forceSampleSolution()) {

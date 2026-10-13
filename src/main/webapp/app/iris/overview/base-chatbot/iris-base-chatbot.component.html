@@ -449,6 +449,7 @@
                         </button>
                         <div class="textarea-wrapper">
                             <textarea
+                                [attr.aria-label]="'accessibility.message' | artemisTranslate"
                                 [ngModel]="newMessageTextContent()"
                                 (ngModelChange)="newMessageTextContent.set($event)"
                                 rows="1"

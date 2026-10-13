@@ -30,11 +30,10 @@
     <div class="course-notification-popup-overlay-collapse">
         <button
             type="button"
-            pButton
-            [outlined]="true"
+            tumAetUiButton
+            variant="outlined"
             size="small"
-            [rounded]="true"
-            class="me-2"
+            class="me-2! rounded-full!"
             data-testid="notification-popup-toggle"
             [attr.aria-expanded]="isExpanded()"
             [attr.aria-label]="(isExpanded() ? 'artemisApp.notification.collapsePopup' : 'artemisApp.notification.expandPopup') | artemisTranslate"
@@ -46,11 +45,10 @@
 
         <button
             type="button"
-            pButton
-            [outlined]="true"
+            tumAetUiButton
+            variant="outlined"
             size="small"
-            [rounded]="true"
-            class="notification-popup-clear"
+            class="notification-popup-clear rounded-full!"
             [attr.tabindex]="isExpanded() ? 0 : -1"
             (click)="clearAllNotifications()"
         >

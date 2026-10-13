@@ -7,7 +7,7 @@ import { Fixtures } from '../../../fixtures/fixtures';
 import { expect } from '@playwright/test';
 import { Commands } from '../../../support/commands';
 import { ExerciseAPIRequests } from '../../../support/requests/ExerciseAPIRequests';
-import { newBrowserPage } from '../../../support/utils';
+import { newBrowserPage, readResponseJson } from '../../../support/utils';
 import { SEED_COURSES } from '../../../support/seedData';
 
 // Common primitives
@@ -60,7 +60,7 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
                 page.goto(`/course-management/${course.id}/text-exercises/${exercise.id}/${view.route}`),
             ]);
             expect(response.status()).toBe(200);
-            const participations: Record<string, unknown>[] = await response.json();
+            const participations: Record<string, unknown>[] = await readResponseJson(response);
             expect(participations.map((participation) => participation.participationId)).toContain(participationId);
             for (const participation of participations) {
                 for (const field of ['participantName', 'participantIdentifier', 'studentId', 'studentLogin', 'teamId', 'teamStudents', 'repositoryUri', 'buildPlanId']) {

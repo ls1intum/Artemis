@@ -34,6 +34,7 @@ import com.redis.testcontainers.RedisContainer;
 
 import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.CarriedOverStructure;
 import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.StructureKind;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
 
 /**
@@ -136,7 +137,7 @@ class RedissonDistributedDataMigratorTest {
         redissonClient.getQueue("buildResultQueue").add("result-1");
         redissonClient.getPriorityQueue("buildJobQueue").add("job-1");
         redissonClient.getMap("processingJobs").put("running", "agent-1");
-        redissonClient.getMap("features").put("Science", Boolean.FALSE);
+        redissonClient.<Feature, Boolean>getMap("features").put(Feature.Science, Boolean.FALSE);
 
         migrationService().migrateToCurrentVersion();
 
@@ -144,7 +145,7 @@ class RedissonDistributedDataMigratorTest {
         assertThat(redissonClient.getQueue(keyFor(current, "buildResultQueue")).readAll()).containsExactly("result-1");
         assertThat(redissonClient.getPriorityQueue(keyFor(current, "buildJobQueue")).readAll()).containsExactly("job-1");
         assertThat(redissonClient.getMap(keyFor(current, "processingJobs"))).containsEntry("running", "agent-1");
-        assertThat(redissonClient.getMap(keyFor(current, "features")).get("Science")).isEqualTo(Boolean.FALSE);
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(current, "features"))).containsOnlyKeys(Feature.Science).containsEntry(Feature.Science, Boolean.FALSE);
         // Drained rather than copied, so the plain keys are gone even though no pattern delete ran over them.
         assertThat(redissonClient.getQueue("buildResultQueue").isEmpty()).isTrue();
         assertThat(storedVersion()).isEqualTo(String.valueOf(VERSION));

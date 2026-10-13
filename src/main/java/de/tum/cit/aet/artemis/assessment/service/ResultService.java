@@ -298,7 +298,8 @@ public class ResultService {
             // participant score recalculation here for single-result deletions. For bulk deletions
             // (shouldClearParticipantScore=false), the caller handles scores separately.
             if (shouldClearParticipantScore && participantScoreScheduleService.isPresent() && result.getSubmission() != null
-                    && result.getSubmission().getParticipation() instanceof StudentParticipation participation && participation.getParticipant() != null) {
+                    && result.getSubmission().getParticipation() instanceof StudentParticipation participation
+                    && ParticipantScoreScheduleService.hasParticipantScore(participation)) {
                 participantScoreScheduleService.get().scheduleTask(participation.getExercise().getId(), participation.getParticipant().getId(), resultId);
             }
             assessmentNoteRepository.deleteByResultId(resultId);
@@ -428,9 +429,18 @@ public class ResultService {
      */
     public void filterSensitiveInformationIfNecessary(final Participation participation, final Collection<Result> results, Optional<User> user) {
         results.forEach(Result::filterSensitiveInformation);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user.orElse(null))) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user.orElse(null)) || isOwnExamTestRun(participation, user.orElse(null))) {
             filterInformation(participation, results);
         }
+    }
+
+    /**
+     * An instructor conducting an exam test run is the participant of that run and simulates a student, so the run has to hide what the student exam hides as well. Instructors
+     * who look at the test run of someone else (e.g. to assess it) keep seeing everything.
+     */
+    private boolean isOwnExamTestRun(Participation participation, User user) {
+        return participation instanceof StudentParticipation studentParticipation && studentParticipation.isTestRun() && participation.getExercise().isExamExercise()
+                && authCheckService.isOwnerOfParticipation(studentParticipation, user);
     }
 
     /**

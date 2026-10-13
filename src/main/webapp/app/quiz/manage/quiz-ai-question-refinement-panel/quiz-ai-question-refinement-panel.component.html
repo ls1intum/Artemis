@@ -36,6 +36,7 @@
         @if (isOpen()) {
             <div class="refinement-input-row">
                 <textarea
+                    [attr.aria-label]="promptPlaceholder()"
                     pTextarea
                     class="refinement-textarea"
                     [placeholder]="promptPlaceholder()"

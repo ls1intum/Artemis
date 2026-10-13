@@ -4,7 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -20,8 +23,11 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.AdditionalAnswers;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -42,6 +48,9 @@ import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thymeleaf.TemplateEngine;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.config.OIDCConstants;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -106,13 +115,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     void initManualMocks() {
         ldapUserServiceMock = mock(LdapUserService.class);
         oidcExchangeCodeService = mock(OIDCExchangeCodeService.class);
-        oidcService = new OIDCService(userTestRepository, userCreationService, Optional.of(ldapUserServiceMock));
-
-        ReflectionTestUtils.setField(oidcService, "usernameClaimKey", "preferred_username");
-        ReflectionTestUtils.setField(oidcService, "matriculationClaimKey", "matriculation_number");
-        ReflectionTestUtils.setField(oidcService, "firstNameClaimKey", "given_name");
-        ReflectionTestUtils.setField(oidcService, "lastNameClaimKey", "family_name");
-        ReflectionTestUtils.setField(oidcService, "emailClaimKey", "email");
+        oidcService = createOidcService(userTestRepository);
 
         successHandler = new OIDCAuthenticationSuccessHandler(jwtCookieService, userTestRepository, artemisSuccessfulLoginService, oidcExchangeCodeService, templateEngine);
         failureHandler = new OIDCAuthenticationFailureHandler(templateEngine);
@@ -246,6 +249,108 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         oidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "NewFirstName", "NewLastName")));
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getFirstName()).isEqualTo("NewFirstName");
         assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getLastName()).isEqualTo("NewLastName");
+    }
+
+    @Test
+    void testOidcUpdateSyncsMatriculationNumber() {
+        createUser(STUDENT_NAME + "@other.domain.invalid");
+        assertRegistrationNumber(null);
+
+        oidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName")));
+        assertRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+
+        oidcService.loadUser(createMockUserRequest(createClaimsMap("87654321", "FirstName", "LastName")));
+        assertRegistrationNumber("87654321");
+    }
+
+    @Test
+    void testOidcUpdateKeepsMatriculationNumberWhenClaimIsMissingOrBlank() {
+        createUser(STUDENT_NAME + "@other.domain.invalid");
+        oidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName")));
+        assertRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+
+        Map<String, Object> claimsWithoutMatriculation = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
+        claimsWithoutMatriculation.remove("matriculation_number");
+        oidcService.loadUser(createMockUserRequest(claimsWithoutMatriculation));
+        assertRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+
+        oidcService.loadUser(createMockUserRequest(createClaimsMap("  ", "FirstName", "LastName")));
+        assertRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+    }
+
+    @Test
+    void testOidcUpdateSkipsMatriculationNumberUsedByAnotherAccount() {
+        createUser(STUDENT_NAME + "@other.domain.invalid");
+        createOtherUser(OTHER_STUDENT_NAME + "@other.domain.invalid");
+        User otherUser = userTestRepository.findOneByLogin(OTHER_STUDENT_NAME).orElseThrow();
+        otherUser.setRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+        userTestRepository.save(otherUser);
+
+        // the login must still succeed: the unique constraint on the registration number may not turn a name sync into a failed login
+        assertThatCode(() -> oidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName")))).doesNotThrowAnyException();
+
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getFirstName()).isEqualTo("FirstName");
+        assertRegistrationNumber(null);
+        assertThat(userUtilService.getUserByLogin(OTHER_STUDENT_NAME).getRegistrationNumber()).isEqualTo(STUDENT_REGISTRATION_NUMBER);
+    }
+
+    @Test
+    void testOidcUpdateRecoversWhenAnotherAccountClaimsTheMatriculationNumberConcurrently() {
+        createUser(STUDENT_NAME + "@other.domain.invalid");
+        createOtherUser(OTHER_STUDENT_NAME + "@other.domain.invalid");
+        User otherUser = userTestRepository.findOneByLogin(OTHER_STUDENT_NAME).orElseThrow();
+        otherUser.setRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+        userTestRepository.save(otherUser);
+
+        // The ownership lookup of the signing-in account still sees the number as free, as if the other account had claimed it right after the lookup.
+        // The save then hits the unique constraint. Every later lookup sees the real state.
+        UserRepository racingRepository = mock(UserRepository.class, AdditionalAnswers.delegatesTo(userTestRepository));
+        doReturn(Optional.empty()).doCallRealMethod().when(racingRepository).findUserWithAuthoritiesByRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+        OIDCService racingOidcService = createOidcService(racingRepository);
+
+        assertThatCode(() -> racingOidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName")))).doesNotThrowAnyException();
+
+        // the contested number is skipped and the other profile updates are kept
+        User signedInUser = userUtilService.getUserByLogin(STUDENT_NAME);
+        assertThat(signedInUser.getFirstName()).isEqualTo("FirstName");
+        assertThat(signedInUser.getLastName()).isEqualTo("LastName");
+        assertThat(signedInUser.getRegistrationNumber()).isNull();
+        assertThat(userUtilService.getUserByLogin(OTHER_STUDENT_NAME).getRegistrationNumber()).isEqualTo(STUDENT_REGISTRATION_NUMBER);
+    }
+
+    @Test
+    void testOidcUpdateRethrowsSaveFailureThatIsNotAMatriculationNumberConflict() {
+        createUser(STUDENT_NAME + "@other.domain.invalid");
+
+        UserRepository failingRepository = mock(UserRepository.class, AdditionalAnswers.delegatesTo(userTestRepository));
+        doThrow(new DataIntegrityViolationException("another constraint")).when(failingRepository).save(any(User.class));
+        OIDCService failingOidcService = createOidcService(failingRepository);
+
+        // nobody else owns the number, so the failure cannot be blamed on it and must not be swallowed
+        assertThatExceptionOfType(DataIntegrityViolationException.class)
+                .isThrownBy(() -> failingOidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"))));
+
+        assertRegistrationNumber(null);
+    }
+
+    @Test
+    void testOidcLoginLogsClaimNamesButNoClaimValues() {
+        String message = captureClaimLogMessage(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"));
+
+        assertThat(message).contains("[email, family_name, given_name, matriculation_number, preferred_username, sub] in the ID token", "and [] in the userinfo response",
+                "'matriculation_number' is present");
+        // the values are personal data and must never reach the log, and the login is the value of the username claim
+        assertThat(message).doesNotContain(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName", STUDENT_NAME, STUDENT_NAME + "@artemis.local");
+    }
+
+    @Test
+    void testOidcLoginLogsMissingMatriculationClaim() {
+        Map<String, Object> claimsWithoutMatriculation = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
+        claimsWithoutMatriculation.remove("matriculation_number");
+
+        String message = captureClaimLogMessage(claimsWithoutMatriculation);
+
+        assertThat(message).contains("[email, family_name, given_name, preferred_username, sub] in the ID token", "'matriculation_number' is missing or blank");
     }
 
     @Test
@@ -502,6 +607,38 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         claims.put("email", STUDENT_NAME + "@artemis.local");
         claims.put("matriculation_number", registrationNumber);
         return claims;
+    }
+
+    /**
+     * Creates the service the way Spring wires it, but on the given repository, so that a test can interleave another account's changes with a sign-in.
+     */
+    private OIDCService createOidcService(UserRepository repository) {
+        OIDCService service = new OIDCService(repository, userCreationService, Optional.of(ldapUserServiceMock));
+        ReflectionTestUtils.setField(service, "usernameClaimKey", "preferred_username");
+        ReflectionTestUtils.setField(service, "matriculationClaimKey", "matriculation_number");
+        ReflectionTestUtils.setField(service, "firstNameClaimKey", "given_name");
+        ReflectionTestUtils.setField(service, "lastNameClaimKey", "family_name");
+        ReflectionTestUtils.setField(service, "emailClaimKey", "email");
+        return service;
+    }
+
+    /**
+     * Signs in with the given claims and returns the single log message that reports which claims were received.
+     */
+    private String captureClaimLogMessage(Map<String, Object> claims) {
+        Logger oidcLogger = (Logger) LoggerFactory.getLogger(OIDCService.class);
+        ListAppender<ILoggingEvent> logAppender = new ListAppender<>();
+        logAppender.start();
+        oidcLogger.addAppender(logAppender);
+        try {
+            oidcService.loadUser(createMockUserRequest(claims));
+        }
+        finally {
+            oidcLogger.detachAppender(logAppender);
+        }
+        return logAppender.list.stream().map(ILoggingEvent::getFormattedMessage).filter(message -> message.contains("received the claims")).reduce((first, second) -> {
+            throw new IllegalStateException("Expected exactly one claim log message but found several");
+        }).orElseThrow(() -> new IllegalStateException("No claim log message was written"));
     }
 
     private LoginVM createLoginVM() {

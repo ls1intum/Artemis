@@ -92,7 +92,7 @@ public class ComplaintService {
         Participant participant = studentParticipation.getParticipant(); // Team or Student
 
         // Retrieve course to get Max Complaints, Max Team Complaints and Max Complaint Time
-        final Course course = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        final Course course = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
 
         Long courseId = course.getId();
 

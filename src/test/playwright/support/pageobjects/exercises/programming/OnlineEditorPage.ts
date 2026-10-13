@@ -83,7 +83,7 @@ export class OnlineEditorPage {
         const submitButton = this.page.locator('#submit-exercise, [data-testid="submit-exercise-popover"], #submit_button').first();
         if (waitForResult) {
             await submitButton.click();
-            await expect(this.page.locator('#exercise-header #result-score, jhi-code-editor-container #result-score').first()).toBeVisible({ timeout: 200000 });
+            await expect(this.latestResultScore()).toBeVisible({ timeout: 200000 });
             return;
         }
         // Wait for the commit request triggered by the submit click to complete before returning. Tolerant of
@@ -99,7 +99,15 @@ export class OnlineEditorPage {
 
     async submitPractice(exerciseID: number) {
         await this.page.locator('#submit-exercise, [data-testid="submit-exercise-popover"], #submit_button').first().click();
-        await expect(this.page.locator('#exercise-header #result-score, jhi-code-editor-container #result-score').first()).toBeVisible({ timeout: 200000 });
+        await expect(this.latestResultScore()).toBeVisible({ timeout: 200000 });
+    }
+
+    /**
+     * The score of the build result shown next to the editor: in the exercise header of a course, in the toolbar of the editor, or, in an exam,
+     * in the title row of the page, which takes the result over from the toolbar where there is room for it.
+     */
+    private latestResultScore() {
+        return this.page.locator('#exercise-header #result-score, jhi-code-editor-container #result-score, [data-testid="exam-programming-result"] #result-score').first();
     }
 
     async createFileInRootFolder(exerciseID: number, fileName: string): Promise<string> {

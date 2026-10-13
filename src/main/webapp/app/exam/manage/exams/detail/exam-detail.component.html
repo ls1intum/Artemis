@@ -32,20 +32,12 @@
     <div class="w-full max-w-[91.666667%]">
         @if (exam()) {
             <div>
-                @if (exam()?.course?.isAtLeastInstructor) {
+                @if (exam()?.course?.isAtLeastInstructor && canHaveBonus()) {
                     <div class="flex flex-wrap gap-2">
-                        @if (canHaveBonus()) {
-                            <a tumAetUiButton severity="info" [routerLink]="getExamRoutesByIdentifier('bonus')">
-                                <fa-icon [icon]="faAward" />
-                                <span jhiTranslate="artemisApp.examManagement.bonus"></span>
-                            </a>
-                        }
-                        <jhi-feature-overlay [enabled]="plagiarismEnabled()">
-                            <a tumAetUiButton severity="info" [routerLink]="getExamRoutesByIdentifier('plagiarism-cases')">
-                                <fa-icon [icon]="faHeartBroken" />
-                                <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
-                            </a>
-                        </jhi-feature-overlay>
+                        <a tumAetUiButton severity="info" [routerLink]="getExamRoutesByIdentifier('bonus')">
+                            <fa-icon [icon]="faAward" />
+                            <span jhiTranslate="artemisApp.examManagement.bonus"></span>
+                        </a>
                     </div>
                 }
                 <hr class="my-4 border-(--border-color)" />

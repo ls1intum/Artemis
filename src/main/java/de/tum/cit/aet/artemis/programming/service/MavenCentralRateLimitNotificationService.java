@@ -191,7 +191,7 @@ public class MavenCentralRateLimitNotificationService {
 
     private void notifyInstructors(long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findWithEagerCourseAndExamById(exerciseId).orElseThrow();
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         Set<User> instructors = userRepository.getInstructors(course);
         log.info("Notifying {} instructors of course {} about Maven Central rate limiting in programming exercise {}", instructors.size(), course.getId(), exercise.getId());
         Set<Long> instructorIds = instructors.stream().map(User::getId).collect(Collectors.toSet());

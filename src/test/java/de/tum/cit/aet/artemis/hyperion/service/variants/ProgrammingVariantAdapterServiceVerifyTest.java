@@ -12,6 +12,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
 import de.tum.cit.aet.artemis.hyperion.domain.Severity;
@@ -54,7 +56,8 @@ class ProgrammingVariantAdapterServiceVerifyTest {
                 mock(ProgrammingExerciseValidationService.class), programmingExerciseRepository, mock(ProgrammingExerciseTaskRepository.class),
                 mock(ProgrammingExerciseTaskService.class), mock(ProgrammingExerciseTestCaseRepository.class), mock(UserRepository.class),
                 mock(ProgrammingVariantToolsetService.class), mock(VariantBuildVerificationService.class), consistencyCheckService, mock(VariantPlacementService.class),
-                mock(ExerciseVariantJobService.class), mock(ExerciseDeletionService.class));
+                mock(ExerciseVariantJobService.class), mock(ExerciseDeletionService.class), mock(TeamAssignmentConfigRepository.class),
+                mock(PlagiarismDetectionConfigRepository.class));
 
         // No repository URIs: both build gates report a finding without any build being triggered.
         exercise = mock(ProgrammingExercise.class);

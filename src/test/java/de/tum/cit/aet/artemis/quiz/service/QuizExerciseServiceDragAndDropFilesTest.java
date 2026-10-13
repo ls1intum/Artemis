@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
@@ -52,7 +53,7 @@ class QuizExerciseServiceDragAndDropFilesTest {
         quizExerciseService = new QuizExerciseService(mock(QuizExerciseRepository.class), mock(ResultRepository.class), mock(QuizSubmissionRepository.class),
                 mock(InstanceMessageSendService.class), Optional.empty(), mock(QuizStatisticsService.class), mock(QuizBatchService.class), mock(ExerciseSpecificationService.class),
                 mock(ExerciseService.class), mock(UserRepository.class), mock(QuizBatchRepository.class), mock(ChannelService.class), mock(GroupNotificationScheduleService.class),
-                Optional.empty(), Optional.empty(), mock(CompetencyExerciseLinkService.class), Optional.empty(), Optional.empty());
+                Optional.empty(), Optional.empty(), mock(CompetencyExerciseLinkService.class), Optional.empty(), Optional.empty(), mock(ExerciseConfigurationService.class));
     }
 
     @AfterEach

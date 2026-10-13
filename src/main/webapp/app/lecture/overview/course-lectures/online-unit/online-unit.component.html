@@ -5,7 +5,7 @@
     [showViewIsolatedButton]="true"
     [viewIsolatedButtonLabel]="'artemisApp.onlineUnit.doOpen'"
     [isPresentationMode]="isPresentationMode()"
-    [initiallyExpanded]="initiallyExpanded()"
+    [deepLink]="matchedDeepLink()"
     (onCompletion)="toggleCompletion($event)"
     (onCollapse)="toggleCollapse($event)"
     (onShowIsolated)="handleIsolatedView()"

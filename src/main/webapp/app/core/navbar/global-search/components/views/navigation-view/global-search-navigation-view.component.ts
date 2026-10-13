@@ -28,6 +28,7 @@ import { Router } from '@angular/router';
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 @Component({
     selector: 'jhi-global-search-navigation-view',
@@ -173,7 +174,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             const link = result.metadata?.['link'];
             const queryParams = result.metadata?.['queryParams'];
             if (link) {
-                void this.router.navigate([link], { queryParams });
+                void this.router.navigate([link], { queryParams, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
             }
             this.overlay.close();
             return;
