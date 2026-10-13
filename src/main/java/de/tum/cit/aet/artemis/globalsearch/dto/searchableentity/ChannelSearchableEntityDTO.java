@@ -4,8 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jspecify.annotations.Nullable;
-
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateDateUtil;
@@ -19,7 +17,16 @@ import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateDateUtil;
  * is composed from {@link Channel#getTopic() topic} and {@link Channel#getDescription() description}.
  */
 public record ChannelSearchableEntityDTO(Long channelId, Long courseId, String name, String description, boolean isCourseWide, boolean isPublic,
-        @Nullable ZonedDateTime visibleToStudentsFrom) {
+        ZonedDateTime visibleToStudentsFrom) {
+
+    /**
+     * Stored for a channel students may always see. Every channel row carries a date, so a row without one can only come
+     * from before this field existed; the search hides such a row from students until it is rewritten.
+     */
+    public static final ZonedDateTime ALWAYS_VISIBLE = ZonedDateTime.parse("1970-01-01T00:00:00Z");
+
+    /** Stored for a channel students never see, such as one of an exam exercise. */
+    public static final ZonedDateTime NEVER_VISIBLE = ZonedDateTime.parse("9999-12-31T00:00:00Z");
 
     /**
      * Extracts all required data from a {@link Channel} entity.
@@ -44,17 +51,21 @@ public record ChannelSearchableEntityDTO(Long channelId, Long courseId, String n
     }
 
     /**
-     * When students may see the channel, as on the communication page: the channel of an exercise from its release, the
-     * channel of an exam from its visible date, any other channel always.
+     * When students may see the channel, as on the communication page ({@link Channel#isVisibleToStudents()}): the channel
+     * of an exercise from its release, the channel of an exam from its visible date, any other channel always.
      */
-    private static @Nullable ZonedDateTime visibleToStudentsFrom(Channel channel) {
+    private static ZonedDateTime visibleToStudentsFrom(Channel channel) {
         if (channel.getExercise() != null) {
-            return channel.getExercise().getReleaseDate();
+            if (channel.getExercise().isExamExercise()) {
+                return NEVER_VISIBLE;
+            }
+            ZonedDateTime releaseDate = channel.getExercise().getReleaseDate();
+            return releaseDate != null ? releaseDate : ALWAYS_VISIBLE;
         }
-        if (channel.getExam() != null) {
+        if (channel.getExam() != null && channel.getExam().getVisibleDate() != null) {
             return channel.getExam().getVisibleDate();
         }
-        return null;
+        return ALWAYS_VISIBLE;
     }
 
     private static String buildDescription(Channel channel) {
@@ -87,9 +98,7 @@ public record ChannelSearchableEntityDTO(Long channelId, Long courseId, String n
         properties.put(SearchableEntitySchema.Properties.TITLE, name);
         properties.put(SearchableEntitySchema.Properties.CHANNEL_IS_COURSE_WIDE, isCourseWide);
         properties.put(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC, isPublic);
-        if (visibleToStudentsFrom != null) {
-            properties.put(SearchableEntitySchema.Properties.RELEASE_DATE, WeaviateDateUtil.format(visibleToStudentsFrom));
-        }
+        properties.put(SearchableEntitySchema.Properties.RELEASE_DATE, WeaviateDateUtil.format(visibleToStudentsFrom));
         if (description != null) {
             properties.put(SearchableEntitySchema.Properties.DESCRIPTION, description);
         }

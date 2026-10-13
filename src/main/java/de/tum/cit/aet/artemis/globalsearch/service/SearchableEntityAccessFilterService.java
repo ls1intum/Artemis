@@ -561,8 +561,10 @@ public class SearchableEntityAccessFilterService {
             subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.staffCourseIds()));
         }
         if (!roleSets.studentCourseIds().isEmpty()) {
+            // No null branch: every channel row carries the date, so a row without one predates it and may belong to an
+            // unreleased item; it stays hidden until the startup backfill has rewritten it.
             subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()),
-                    Filter.or(Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).lte(now), Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).isNull())));
+                    Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).lte(now)));
         }
         Filter courseScope = combineOr(subBranches);
         if (courseScope == null) {

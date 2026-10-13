@@ -117,7 +117,7 @@ class SearchableEntityMultiVectorWeaviateTest {
 
     private SearchableEntityIndexRebuildService rebuildService(String model) {
         return new SearchableEntityIndexRebuildService(Optional.of(client), properties(model), new MockEnvironment(), weaviateService, syncStateRepository,
-                reconcileStateRepository);
+                reconcileStateRepository, mock(WeaviateOutboxRepository.class));
     }
 
     /**
@@ -231,8 +231,8 @@ class SearchableEntityMultiVectorWeaviateTest {
         dropCollections();
         client = WeaviateClient.connectToLocal(config -> config.host(weaviate.getHost()).port(weaviate.getMappedPort(8080)).grpcPort(weaviate.getMappedPort(50051)));
         var keywordService = new WeaviateService(Optional.of(client), keywordOnly, new MockEnvironment());
-        assertThat(new SearchableEntityIndexRebuildService(Optional.of(client), keywordOnly, new MockEnvironment(), keywordService, syncStateRepository, reconcileStateRepository)
-                .ensureIndexMatchesConfiguration()).isTrue();
+        assertThat(new SearchableEntityIndexRebuildService(Optional.of(client), keywordOnly, new MockEnvironment(), keywordService, syncStateRepository, reconcileStateRepository,
+                mock(WeaviateOutboxRepository.class)).ensureIndexMatchesConfiguration()).isTrue();
 
         useModel("model-a");
         assertThat(rebuildService("model-a").ensureIndexMatchesConfiguration()).isTrue();
@@ -289,8 +289,8 @@ class SearchableEntityMultiVectorWeaviateTest {
                 config -> config.vectorConfig(io.weaviate.client6.v1.api.collections.VectorConfig.text2vecOpenAi()));
         var keywordService = new WeaviateService(Optional.of(client), keywordOnly, new MockEnvironment());
 
-        assertThat(new SearchableEntityIndexRebuildService(Optional.of(client), keywordOnly, new MockEnvironment(), keywordService, syncStateRepository, reconcileStateRepository)
-                .ensureIndexMatchesConfiguration()).isTrue();
+        assertThat(new SearchableEntityIndexRebuildService(Optional.of(client), keywordOnly, new MockEnvironment(), keywordService, syncStateRepository, reconcileStateRepository,
+                mock(WeaviateOutboxRepository.class)).ensureIndexMatchesConfiguration()).isTrue();
 
         var vectors = client.collections.getConfig(PREFIX + SearchableEntitySchema.COLLECTION_NAME).orElseThrow().vectors().values();
         assertThat(vectors).as("the collection was recreated with vectors provided by Artemis")

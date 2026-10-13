@@ -10,7 +10,9 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryCha
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -44,8 +46,10 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchabl
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexRebuildService;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateUuidUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -85,6 +89,9 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
     @Autowired
     private ChannelService channelService;
+
+    @Autowired
+    private SearchableEntityIndexRebuildService rebuildService;
 
     @Autowired
     private WeaviateService weaviateService;
@@ -1192,6 +1199,32 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             indexChannelOfExercise(ZonedDateTime.now().plusDays(2), "staff-sees-exercise-channel");
 
             assertThat(searchChannelTitles("staff-sees-exercise-channel")).contains("staff-sees-exercise-channel");
+        }
+
+        /**
+         * A channel row written before channel rows carried the visibility date stays hidden from students, and the
+         * startup check of the index queues it for a rewrite that adds the date.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChannelRowWithoutTheVisibilityDateIsHiddenAndRewrittenAtStartup() throws Exception {
+            Channel channel = indexChannelOfExercise(ZonedDateTime.now().minusDays(1), "old-format-channel");
+            Map<String, Object> oldFormat = new HashMap<>(queryChannelProperties(weaviateService, channel.getId()));
+            oldFormat.remove(SearchableEntitySchema.Properties.RELEASE_DATE);
+            weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME).data
+                    .replace(WeaviateUuidUtil.deterministicUuid(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId()), row -> row.properties(oldFormat));
+            assertThat(queryChannelProperties(weaviateService, channel.getId()).get(SearchableEntitySchema.Properties.RELEASE_DATE)).isNull();
+
+            assertThat(searchChannelTitles("old-format-channel")).doesNotContain("old-format-channel");
+
+            assertThat(rebuildService.ensureIndexMatchesConfiguration()).isFalse();
+
+            var securityContext = SecurityContextHolder.getContext();
+            awaitIndexing(() -> {
+                SecurityContextHolder.setContext(securityContext);
+                assertThat(queryChannelProperties(weaviateService, channel.getId()).get(SearchableEntitySchema.Properties.RELEASE_DATE)).isNotNull();
+                assertThat(searchChannelTitles("old-format-channel")).contains("old-format-channel");
+            });
         }
 
         @Test

@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -17,12 +19,16 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.ReconcilePass;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntityReconcileState;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntityReconcileStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
+import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
 import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.Property;
 import io.weaviate.client6.v1.api.collections.VectorConfig;
+import io.weaviate.client6.v1.api.collections.query.Filter;
 import io.weaviate.client6.v1.api.collections.vectorindex.Hnsw;
 import io.weaviate.client6.v1.api.collections.vectorizers.SelfProvidedVectorizer;
 
@@ -71,6 +77,9 @@ public class SearchableEntityIndexRebuildService {
 
     private static final String VERSION_OBJECT_UUID = "00000000-0000-0000-0000-000000000001";
 
+    /** Channel rows read per request while looking for rows written before they carried a visibility date. */
+    private static final int CHANNEL_BACKFILL_PAGE_SIZE = 1000;
+
     private final WeaviateClient client;
 
     private final WeaviateConfigurationProperties properties;
@@ -81,8 +90,11 @@ public class SearchableEntityIndexRebuildService {
 
     private final SearchableEntityReconcileStateRepository reconcileStateRepository;
 
+    private final WeaviateOutboxRepository outboxRepository;
+
     public SearchableEntityIndexRebuildService(Optional<WeaviateClient> clientOptional, WeaviateConfigurationProperties properties, Environment environment,
-            WeaviateService weaviateService, SearchableEntitySyncStateRepository syncStateRepository, SearchableEntityReconcileStateRepository reconcileStateRepository) {
+            WeaviateService weaviateService, SearchableEntitySyncStateRepository syncStateRepository, SearchableEntityReconcileStateRepository reconcileStateRepository,
+            WeaviateOutboxRepository outboxRepository) {
         boolean isOpenApiDocsGeneration = Boolean.parseBoolean(environment.getProperty("artemis.openapi-docs-generation", "false"));
         if (clientOptional.isEmpty() && !isOpenApiDocsGeneration) {
             throw new IllegalStateException("WeaviateClient bean is required when Weaviate is enabled and not in OpenAPI docs generation mode");
@@ -92,6 +104,7 @@ public class SearchableEntityIndexRebuildService {
         this.weaviateService = weaviateService;
         this.syncStateRepository = syncStateRepository;
         this.reconcileStateRepository = reconcileStateRepository;
+        this.outboxRepository = outboxRepository;
     }
 
     /**
@@ -107,6 +120,7 @@ public class SearchableEntityIndexRebuildService {
         String stored = readStoredSignature().orElse(null);
         if (desired.equals(stored)) {
             weaviateService.ensureAllCollectionsExist();
+            queueChannelRowsWithoutVisibilityDate();
             return false;
         }
         log.warn("The global search index was built for '{}' but the configuration needs '{}'. Rebuilding it from the database; search results stay incomplete until the "
@@ -137,6 +151,39 @@ public class SearchableEntityIndexRebuildService {
         boolean embeds = SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(properties.vectorizerModule());
         String signature = "layout=" + INDEX_LAYOUT_VERSION + ";mode=" + properties.vectorizerModule();
         return embeds ? signature + ";model=" + properties.openAiEmbeddingModel() : signature;
+    }
+
+    /**
+     * Queues a rewrite of every channel row written before channel rows carried the date from which students may see the
+     * channel. The search shows students only channel rows with that date, so such a row stays hidden from them until it is
+     * rewritten; once all are, this finds nothing.
+     */
+    private void queueChannelRowsWithoutVisibilityDate() {
+        var collection = client.collections.use(properties.collectionPrefix() + SearchableEntitySchema.COLLECTION_NAME);
+        Filter withoutDate = Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.CHANNEL),
+                Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).isNull());
+        List<WeaviateOutboxEntry> rewrites = new ArrayList<>();
+        int offset = 0;
+        while (true) {
+            int pageOffset = offset;
+            var page = collection.query
+                    .fetchObjects(
+                            query -> query.filters(withoutDate).limit(CHANNEL_BACKFILL_PAGE_SIZE).offset(pageOffset).returnProperties(SearchableEntitySchema.Properties.ENTITY_ID))
+                    .objects();
+            for (var row : page) {
+                if (row.properties().get(SearchableEntitySchema.Properties.ENTITY_ID) instanceof Number channelId) {
+                    rewrites.add(WeaviateOutboxEntry.forUpsert(SearchableEntitySchema.TypeValues.CHANNEL, channelId.longValue(), WeaviateOutboxOrigin.RECONCILE_DRIFT));
+                }
+            }
+            if (page.size() < CHANNEL_BACKFILL_PAGE_SIZE) {
+                break;
+            }
+            offset += CHANNEL_BACKFILL_PAGE_SIZE;
+        }
+        if (!rewrites.isEmpty()) {
+            outboxRepository.saveAll(rewrites);
+            log.info("Queued {} channel rows without the date from which students may see them for a rewrite", rewrites.size());
+        }
     }
 
     private Optional<String> readStoredSignature() throws IOException {
