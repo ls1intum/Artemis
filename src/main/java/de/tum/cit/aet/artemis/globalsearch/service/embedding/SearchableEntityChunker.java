@@ -98,6 +98,8 @@ public final class SearchableEntityChunker {
 
     private static final Pattern WORD_BREAK = Pattern.compile(S + "+", LINES);
 
+    private static final Pattern LEADING_WHITESPACE = Pattern.compile(S + "+", LINES);
+
     private static final Pattern DIGITS = Pattern.compile(DIGIT, LINES);
 
     private static final String[] CUT_SEPARATORS = { "\n\n", "\n", ". ", "! ", "? ", "; " };
@@ -275,21 +277,32 @@ public final class SearchableEntityChunker {
     /**
      * Splits every piece that is still too long, a single word longer than a whole chunk or prose without spaces such as
      * Chinese, into successive bounded pieces, so no text is lost.
+     * <p>
+     * A cursor walks through the piece, and only a window of {@code byteBudget + 1} UTF-16 units after it is measured:
+     * every unit takes at least one byte, so a longer remainder exceeds the byte budget anyway, and {@link #cutBytes} only
+     * reads the first {@code byteBudget} bytes. So the work grows linearly with the length of the text.
      */
     private static List<String> splitOversized(List<String> pieces, int budget, int byteBudget) {
         List<String> bounded = new ArrayList<>();
         for (String piece : pieces) {
-            String rest = piece;
-            while (!fits(rest, budget, byteBudget)) {
-                String head = cutTokens(cutBytes(rest, byteBudget), budget);
+            int position = 0;
+            while (position < piece.length()) {
+                int windowEnd = Math.min(piece.length(), position + byteBudget + 1);
+                if (windowEnd < piece.length() && Character.isHighSurrogate(piece.charAt(windowEnd - 1))) {
+                    windowEnd++;
+                }
+                String window = piece.substring(position, windowEnd);
+                if (windowEnd == piece.length() && fits(window, budget, byteBudget)) {
+                    bounded.add(window);
+                    break;
+                }
+                String head = cutTokens(cutBytes(window, byteBudget), budget);
                 if (head.isEmpty()) {
-                    head = rest.substring(0, rest.offsetByCodePoints(0, 1));
+                    head = window.substring(0, window.offsetByCodePoints(0, 1));
                 }
                 bounded.add(head);
-                rest = strip(rest.substring(head.length()));
-            }
-            if (!rest.isEmpty()) {
-                bounded.add(rest);
+                Matcher whitespace = LEADING_WHITESPACE.matcher(piece).region(position + head.length(), piece.length());
+                position = whitespace.lookingAt() ? whitespace.end() : position + head.length();
             }
         }
         return bounded;

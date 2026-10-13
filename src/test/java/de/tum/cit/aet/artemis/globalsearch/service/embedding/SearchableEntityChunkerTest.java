@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,6 +86,25 @@ class SearchableEntityChunkerTest {
         assertThat(chunks).hasSizeGreaterThan(1);
         assertThat(SearchableEntityChunker.body(chunks.getLast())).endsWith(ending);
         assertThat(chunks.stream().map(SearchableEntityChunker::body).mapToInt(String::length).sum()).as("all text is kept").isGreaterThanOrEqualTo(paragraph.length());
+    }
+
+    @Test
+    void veryLongTextWithoutSpacesIsChunkedInLinearTime() {
+        // About 1.4 MB without a single space, mixed with characters outside the BMP: the cursor must neither repeat work
+        // on the whole remainder nor cut a surrogate pair.
+        String paragraph = "平衡二叉树🌳的旋转与着色规则".repeat(30_000) + "结尾。";
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.EXERCISE);
+        properties.put(SearchableEntitySchema.Properties.TITLE, "Tree");
+        properties.put(SearchableEntitySchema.Properties.DESCRIPTION, paragraph);
+
+        long start = System.nanoTime();
+        List<String> chunks = SearchableEntityChunker.chunk(properties);
+
+        assertThat(Duration.ofNanos(System.nanoTime() - start)).isLessThan(Duration.ofSeconds(20));
+        assertThat(SearchableEntityChunker.body(chunks.getLast())).endsWith("结尾。");
+        // A cut through a surrogate pair would leave a lone surrogate, which codePoints() reports as its own value.
+        assertThat(chunks).allSatisfy(chunk -> assertThat(chunk.codePoints().noneMatch(cp -> cp >= Character.MIN_SURROGATE && cp <= Character.MAX_SURROGATE)).isTrue());
     }
 
     @Test
