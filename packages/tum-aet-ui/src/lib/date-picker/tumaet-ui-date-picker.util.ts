@@ -45,9 +45,9 @@ function normalizeDisplayText(text: string): string {
 }
 
 /** Whether `text` is shaped like a complete entry for that format, used to flag an incomplete one on blur. */
-export function matchesDisplayFormat(text: string, timeOnly: boolean, dateOnly = false): boolean {
-    const normalized = normalizeDisplayText(text);
-    return dateOnly ? DATE_REGEX.test(normalized) : timeOnly ? TIME_REGEX.test(normalized) : DISPLAY_REGEX.test(normalized);
+export function matchesDisplayFormat(entry: string, timeOnly: boolean, dateOnly = false): boolean {
+    const text = normalizeDisplayText(entry);
+    return dateOnly ? DATE_REGEX.test(text) : timeOnly ? TIME_REGEX.test(text) : DISPLAY_REGEX.test(text);
 }
 
 /**
