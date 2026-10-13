@@ -1624,7 +1624,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.programmingExerciseLanguageForAi.set(this.programmingExercise.programmingLanguage);
         // we need to get it from the history object as setting the programming language
         // sets the project type of the programming exercise to the default value for the programming language.
-        this.selectedProjectType = history.state.programmingExerciseForImportFromFile.projectType;
+        const importedProjectType: ProjectType | undefined = history.state.programmingExerciseForImportFromFile.projectType;
+        // The project type setter derives MAVEN_MAVEN and GRADLE_GRADLE from the dependency flag, so it has to match the imported type
+        this.withDependenciesValue = importedProjectType === ProjectType.MAVEN_MAVEN || importedProjectType === ProjectType.GRADLE_GRADLE;
+        this.selectedProjectType = importedProjectType!;
     }
 
     private createProgrammingExerciseForImportFromSharing() {

@@ -1050,6 +1050,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             importFromFileWith((exercise) => (exercise.staticCodeAnalysisEnabled = true));
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(true);
         });
+
+        it.each([ProjectType.MAVEN_MAVEN, ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE])(
+            'should keep the imported project type %s',
+            (projectType) => {
+                importFromFileWith((exercise) => (exercise.projectType = projectType));
+                expect(comp.programmingExercise.projectType).toBe(projectType);
+            },
+        );
     });
 
     describe('import from sharing', () => {
@@ -1105,6 +1113,24 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise.buildConfig?.sequentialTestRuns).toBe(true);
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(true);
         });
+
+        it.each([ProjectType.MAVEN_MAVEN, ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE])(
+            'should keep the imported project type %s',
+            (projectType) => {
+                const programmingExercise = getProgrammingExerciseForImport();
+                programmingExercise.projectType = projectType;
+
+                route.data = of({ programmingExercise });
+                vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation((language: ProgrammingLanguage) =>
+                    getProgrammingLanguageFeature(language),
+                );
+                vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises').mockReturnValue(of(programmingExercise));
+                comp.ngOnInit();
+
+                expect(comp.isImportFromSharing).toBe(true);
+                expect(comp.programmingExercise.projectType).toBe(projectType);
+            },
+        );
 
         it('should also handle exam mode import', () => {
             const examId = 1;
