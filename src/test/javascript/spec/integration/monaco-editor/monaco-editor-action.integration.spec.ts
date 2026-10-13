@@ -394,12 +394,14 @@ describe('MonacoEditorActionIntegration', () => {
         const url = 'https://docs.artemis.tum.de';
 
         /**
-         * Dispatches a paste event on Monaco's own input element, where the browser delivers a real paste.
+         * Focuses the editor text and dispatches a paste event on Monaco's own input element, where the browser delivers a real paste.
          * @return whether the event reached that element, i.e. whether Monaco's own paste handling ran.
          */
         function dispatchPaste(editor: monaco.editor.IStandaloneCodeEditor, text: string): boolean {
             const domNode = editor.getDomNode()!;
             const target = domNode.querySelector('textarea') ?? domNode;
+            // A browser only delivers a paste to the element that has focus.
+            editor.focus();
             let reachedEditorInput = false;
             const inputListener = () => (reachedEditorInput = true);
             target.addEventListener('paste', inputListener);
@@ -450,7 +452,7 @@ describe('MonacoEditorActionIntegration', () => {
 
             expect(dispatchPaste(comp.getActiveEditor(), 'hello')).toBe(true);
 
-            expect(comp.getText()).toBe('see the docs here');
+            expect(comp.getText()).toBe('see the hello here');
         });
 
         it('should not change a read-only editor', () => {
@@ -471,7 +473,7 @@ describe('MonacoEditorActionIntegration', () => {
 
             expect(dispatchPaste(comp.getActiveEditor(), url)).toBe(true);
 
-            expect(comp.getText()).toBe('see the docs here');
+            expect(comp.getText()).toBe(`${url} the ${url} here`);
         });
 
         it('should leave the paste to the editor if no link action is registered', () => {
@@ -480,7 +482,7 @@ describe('MonacoEditorActionIntegration', () => {
 
             expect(dispatchPaste(comp.getActiveEditor(), url)).toBe(true);
 
-            expect(comp.getText()).toBe('see the docs here');
+            expect(comp.getText()).toBe(`see the ${url} here`);
         });
 
         it('should stop intercepting pastes once the link action is disposed', () => {
@@ -491,7 +493,29 @@ describe('MonacoEditorActionIntegration', () => {
 
             expect(dispatchPaste(comp.getActiveEditor(), url)).toBe(true);
 
+            expect(comp.getText()).toBe(`see the ${url} here`);
+        });
+
+        it('should leave a paste into an overlay widget such as the find input to the widget', () => {
+            comp.registerAction(new UrlAction());
+            selectDocs();
+            // Monaco's find widget is an overlay widget with its own input inside the editor DOM node.
+            const widgetInput = document.createElement('input');
+            const widget: monaco.editor.IOverlayWidget = { getId: () => 'test.find-like-widget', getDomNode: () => widgetInput, getPosition: () => null };
+            comp.getActiveEditor().addOverlayWidget(widget);
+            widgetInput.focus();
+            let reachedWidgetInput = false;
+            widgetInput.addEventListener('paste', () => (reachedWidgetInput = true), { once: true });
+            const event = new Event('paste', { bubbles: true, cancelable: true });
+            Object.defineProperty(event, 'clipboardData', { value: { getData: (type: string) => (type === 'text/plain' ? url : '') } });
+
+            widgetInput.dispatchEvent(event);
+
+            expect(comp.getActiveEditor().getDomNode()!.contains(widgetInput)).toBe(true);
+            expect(reachedWidgetInput).toBe(true);
+            expect(event.defaultPrevented).toBe(false);
             expect(comp.getText()).toBe('see the docs here');
+            comp.getActiveEditor().removeOverlayWidget(widget);
         });
 
         it('should move the interception to the modified editor in diff mode', () => {
@@ -510,7 +534,7 @@ describe('MonacoEditorActionIntegration', () => {
             // The standard editor shares the model, but its paste must no longer be turned into a link.
             standardEditor.setSelection(new monaco.Selection(1, 1, 1, 4));
             expect(dispatchPaste(standardEditor, url)).toBe(true);
-            expect(standardEditor.getValue()).toBe(`see the [docs](${url}) here`);
+            expect(standardEditor.getValue()).toBe(`${url} the [docs](${url}) here`);
 
             // Leave diff mode before the fixture is destroyed, as the diff editor still holds the shared model.
             fixture.componentRef.setInput('mode', 'normal');
