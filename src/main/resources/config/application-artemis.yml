@@ -153,6 +153,17 @@ artemis:
       max-concurrent-jobs-per-core-node: 2
       shutdown-drain-timeout: PT11M
       test-case-sync-timeout: PT10M
+    quiz-pool:
+      # Model (for Azure: deployment name) that generates pool questions; blank uses the default chat model configured below.
+      generator-model:
+      # Model (for Azure: deployment name) that judges generated questions; blank uses the default chat model configured below.
+      judge-model:
+      question-types: single-choice,multiple-choice
+      difficulties: easy,medium,hard
+      # Questions requested per generation call; a cell larger than this is filled in several calls.
+      generation-batch-size: 8
+      # A generation or filter claim older than this is treated as abandoned by a dead node and released at the next build.
+      stale-claim-minutes: 30
   aiworker:
     enabled: false # Enable independently of Hyperion after provisioning an isolated worker with provider access.
     # ids: [worker-1]
