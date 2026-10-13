@@ -42,6 +42,8 @@ artemis:
         profile: ${AI_WORKER_PROFILE}
 management:
     tracing:
+        sampling:
+            probability: 1.0
         export:
             otlp:
                 enabled: false
