@@ -342,6 +342,7 @@ configurations.configureEach {
 }
 
 dependencies {
+
     // Required by Sharing Platform
     implementation "org.codeability:SharingPluginPlatformAPI:1.2.1"
     // Required by Spring cloud.
