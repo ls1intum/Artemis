@@ -164,6 +164,68 @@ describe('AssessmentNoteComponent', () => {
         });
     });
 
+    describe('auto-growing textarea', () => {
+        // jsdom does not lay out text, so the content height the browser would report is mocked.
+        const mockScrollHeight = (height: number) => vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(height);
+        const getTextarea = (): HTMLTextAreaElement => fixture.nativeElement.querySelector('textarea');
+        const noteWithText = (text: string) => {
+            const note = new AssessmentNote();
+            note.note = text;
+            return note;
+        };
+
+        it('should size the textarea to a long note that is present on initial load', () => {
+            mockScrollHeight(240);
+
+            fixture.componentRef.setInput('assessmentNote', noteWithText('long note\n'.repeat(20)));
+            fixture.detectChanges();
+
+            expect(getTextarea().style.height).toBe('240px');
+        });
+
+        it('should size the textarea once a note arrives asynchronously', () => {
+            mockScrollHeight(60);
+            fixture.componentRef.setInput('assessmentNote', undefined);
+            fixture.detectChanges();
+            expect(getTextarea().style.height).toBe('60px');
+
+            mockScrollHeight(320);
+            fixture.componentRef.setInput('assessmentNote', noteWithText('late arriving long note\n'.repeat(25)));
+            fixture.detectChanges();
+
+            expect(getTextarea().style.height).toBe('320px');
+        });
+
+        it('should grow and shrink the textarea while the tutor types', () => {
+            mockScrollHeight(80);
+            fixture.componentRef.setInput('assessmentNote', noteWithText('short'));
+            fixture.detectChanges();
+            const textarea = getTextarea();
+            expect(textarea.style.height).toBe('80px');
+
+            mockScrollHeight(400);
+            textarea.value = 'a much longer note\n'.repeat(30);
+            textarea.dispatchEvent(new Event('input'));
+            expect(textarea.style.height).toBe('400px');
+
+            mockScrollHeight(80);
+            textarea.value = 'short again';
+            textarea.dispatchEvent(new Event('input'));
+            expect(textarea.style.height).toBe('80px');
+        });
+
+        it('should include the border in the height so a border-box textarea does not scroll', () => {
+            mockScrollHeight(100);
+            vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(104);
+            vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(102);
+
+            fixture.componentRef.setInput('assessmentNote', noteWithText('note'));
+            fixture.detectChanges();
+
+            expect(getTextarea().style.height).toBe('102px');
+        });
+    });
+
     describe('template rendering', () => {
         it('should display the note text in the textarea', () => {
             const existingNote = new AssessmentNote();
