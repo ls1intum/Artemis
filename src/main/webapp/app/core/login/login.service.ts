@@ -5,6 +5,7 @@ import { finalize } from 'rxjs/operators';
 
 import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
 @Service()
 export class LoginService {
@@ -12,6 +13,7 @@ export class LoginService {
     private authServerProvider = inject(AuthServerProvider);
     private router = inject(Router);
     private alertService = inject(AlertService);
+    private sessionStorageService = inject(SessionStorageService);
 
     logoutWasForceful = false;
 
@@ -92,18 +94,20 @@ export class LoginService {
      * Log out a user whose session was ended by the server although the token itself is still valid (credentials changed after the session started).
      * Unlike a forceful logout without server call, this also asks the server to clear the token cookie, otherwise the old cookie would still
      * authenticate the user on the sign-in page. The logout still counts as forceful, so the sign-in page explains that the session ended.
+     * @param previousUrl the url to return to after signing in again. It is stored only once the logout finished, because the logout clears the session storage.
      */
-    logoutWithServerSession() {
+    logoutWithServerSession(previousUrl: string) {
         this.logoutWasForceful = true;
-        this.logoutOnServer();
+        this.logoutOnServer(() => this.sessionStorageService.store('previousUrl', previousUrl));
     }
 
-    private logoutOnServer(): void {
+    private logoutOnServer(afterLogout?: () => void): void {
         this.authServerProvider
             .logout()
             .pipe(
                 finalize(() => {
                     this.onLogout();
+                    afterLogout?.();
                 }),
             )
             .subscribe();
