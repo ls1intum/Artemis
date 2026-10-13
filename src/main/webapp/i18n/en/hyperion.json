@@ -1,0 +1,78 @@
+{
+    "artemisApp": {
+        "hyperion": {
+            "quizQuestionPool": {
+                "title": "Quiz Question Pool",
+                "sidebarTitle": "Quiz Question Pool",
+                "intro": "Hyperion generates multiple-choice questions for every competency of this course and judges each one before you see it. Approve the questions you want to use in quizzes and exclude the ones you do not.",
+                "progress": {
+                    "title": "Pool",
+                    "total": "{{ count }} questions planned",
+                    "accepted": "{{ count }} accepted by the filter",
+                    "rejected": "{{ count }} rejected by the filter",
+                    "pending": "{{ count }} being generated or judged",
+                    "failed": "{{ count }} failed",
+                    "running": "A build is running",
+                    "idle": "No build is running.",
+                    "empty": "No questions yet. Start a build to fill the pool.",
+                    "build": "Build now",
+                    "refresh": "Refresh",
+                    "started": "Build started, {{ count }} questions were added to the pool.",
+                    "alreadyRunning": "A build of this pool is already running.",
+                    "buildFailed": "The build could not be started."
+                },
+                "settings": {
+                    "title": "Settings",
+                    "candidatesPerCompetency": "Questions per competency",
+                    "candidatesHelp": "How many questions the pool holds for each competency, spread over question types and difficulties. Takes effect at the next build.",
+                    "poolGenerationEnabled": "Generate overnight for new lecture material",
+                    "poolGenerationHelp": "Stored now; takes effect once scheduled generation is available.",
+                    "save": "Save settings",
+                    "saved": "Settings saved.",
+                    "saveFailed": "The settings could not be saved.",
+                    "unsaved": "Unsaved changes"
+                },
+                "filter": {
+                    "competency": "Competency",
+                    "allCompetencies": "All competencies"
+                },
+                "list": {
+                    "needsReview": "Needs review ({{ count }})",
+                    "needsReviewHint": "These questions passed the filter but were flagged on at least one criterion. Check them before approving.",
+                    "accepted": "Accepted by the filter ({{ count }})",
+                    "rejected": "Rejected by the filter ({{ count }})",
+                    "rejectedHint": "These questions failed the filter. You can still approve one if you disagree with the verdict.",
+                    "inProgress": "{{ count }} questions are still being generated or judged.",
+                    "failed": "{{ count }} questions could not be generated or judged.",
+                    "empty": "No questions in this group yet.",
+                    "showRationale": "Show filter verdict",
+                    "hideRationale": "Hide filter verdict",
+                    "score": "Filter score: {{ score }} / 100",
+                    "approve": "Approve",
+                    "exclude": "Exclude",
+                    "reviewFailed": "The decision could not be saved.",
+                    "reviewState": {
+                        "PENDING": "Not reviewed",
+                        "APPROVED": "Approved",
+                        "EXCLUDED": "Excluded"
+                    },
+                    "difficulty": {
+                        "EASY": "Easy",
+                        "MEDIUM": "Medium",
+                        "HARD": "Hard"
+                    },
+                    "failureModes": {
+                        "FACTUAL_ERROR": "Factual error",
+                        "AMBIGUOUS_CORRECT_ANSWER": "Ambiguous answer",
+                        "OFF_TOPIC": "Off topic",
+                        "NEAR_DUPLICATE": "Recall only",
+                        "ILL_FORMED_DISTRACTORS": "Weak distractors"
+                    }
+                },
+                "errors": {
+                    "loadFailed": "The quiz question pool could not be loaded."
+                }
+            }
+        }
+    }
+}

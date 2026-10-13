@@ -1,0 +1,107 @@
+.quiz-question-pool {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.quiz-question-pool .pool-intro {
+    color: var(--text-color-secondary);
+    margin-bottom: 1rem;
+}
+
+.quiz-question-pool .pool-cards {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    margin-bottom: 1.5rem;
+}
+
+.quiz-question-pool .pool-card {
+    background: var(--surface-card);
+    border: 1px solid var(--surface-border);
+    border-radius: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+}
+
+.quiz-question-pool .pool-card-title {
+    color: var(--text-color);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.quiz-question-pool .pool-card-hint {
+    color: var(--text-color-secondary);
+    font-size: 0.85rem;
+}
+
+.quiz-question-pool .pool-progress-counts {
+    color: var(--text-color);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.quiz-question-pool .pool-run-state {
+    margin: 0;
+}
+
+.quiz-question-pool .pool-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: auto;
+}
+
+.quiz-question-pool .pool-setting {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.quiz-question-pool .pool-setting-label {
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+.quiz-question-pool .pool-setting-toggle {
+    align-items: flex-start;
+    flex-direction: row;
+    gap: 0.75rem;
+}
+
+.quiz-question-pool .pool-setting-toggle label {
+    color: var(--text-color);
+}
+
+.quiz-question-pool .pool-filter {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.quiz-question-pool .pool-competency-select {
+    min-width: 18rem;
+}
+
+.quiz-question-pool .pool-group {
+    background: var(--surface-card);
+    border: 1px solid var(--surface-border);
+    border-radius: 0.75rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+
+.quiz-question-pool .pool-group-title {
+    color: var(--text-color);
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}

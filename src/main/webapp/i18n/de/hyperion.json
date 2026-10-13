@@ -1,0 +1,78 @@
+{
+    "artemisApp": {
+        "hyperion": {
+            "quizQuestionPool": {
+                "title": "Quizfragen-Pool",
+                "sidebarTitle": "Quizfragen-Pool",
+                "intro": "Hyperion generiert Multiple-Choice-Fragen zu jeder Kompetenz dieses Kurses und prüft jede Frage, bevor du sie siehst. Übernimm die Fragen, die du in Quizzen verwenden willst, und schließe die anderen aus.",
+                "progress": {
+                    "title": "Pool",
+                    "total": "{{ count }} Fragen geplant",
+                    "accepted": "{{ count }} vom Filter akzeptiert",
+                    "rejected": "{{ count }} vom Filter abgelehnt",
+                    "pending": "{{ count }} werden generiert oder geprüft",
+                    "failed": "{{ count }} fehlgeschlagen",
+                    "running": "Ein Lauf ist aktiv",
+                    "idle": "Kein Lauf ist aktiv.",
+                    "empty": "Noch keine Fragen. Starte einen Lauf, um den Pool zu füllen.",
+                    "build": "Jetzt generieren",
+                    "refresh": "Aktualisieren",
+                    "started": "Lauf gestartet, {{ count }} Fragen wurden dem Pool hinzugefügt.",
+                    "alreadyRunning": "Für diesen Pool läuft bereits ein Lauf.",
+                    "buildFailed": "Der Lauf konnte nicht gestartet werden."
+                },
+                "settings": {
+                    "title": "Einstellungen",
+                    "candidatesPerCompetency": "Fragen pro Kompetenz",
+                    "candidatesHelp": "Wie viele Fragen der Pool je Kompetenz enthält, verteilt auf Fragetypen und Schwierigkeiten. Wirkt beim nächsten Lauf.",
+                    "poolGenerationEnabled": "Über Nacht für neues Vorlesungsmaterial generieren",
+                    "poolGenerationHelp": "Wird jetzt gespeichert und wirkt, sobald die geplante Generierung verfügbar ist.",
+                    "save": "Einstellungen speichern",
+                    "saved": "Einstellungen gespeichert.",
+                    "saveFailed": "Die Einstellungen konnten nicht gespeichert werden.",
+                    "unsaved": "Ungespeicherte Änderungen"
+                },
+                "filter": {
+                    "competency": "Kompetenz",
+                    "allCompetencies": "Alle Kompetenzen"
+                },
+                "list": {
+                    "needsReview": "Prüfung empfohlen ({{ count }})",
+                    "needsReviewHint": "Diese Fragen haben den Filter bestanden, wurden aber in mindestens einem Kriterium markiert. Prüfe sie, bevor du sie übernimmst.",
+                    "accepted": "Vom Filter akzeptiert ({{ count }})",
+                    "rejected": "Vom Filter abgelehnt ({{ count }})",
+                    "rejectedHint": "Diese Fragen sind am Filter gescheitert. Du kannst eine Frage trotzdem übernehmen, wenn du dem Urteil nicht zustimmst.",
+                    "inProgress": "{{ count }} Fragen werden noch generiert oder geprüft.",
+                    "failed": "{{ count }} Fragen konnten nicht generiert oder geprüft werden.",
+                    "empty": "Noch keine Fragen in dieser Gruppe.",
+                    "showRationale": "Filterurteil anzeigen",
+                    "hideRationale": "Filterurteil ausblenden",
+                    "score": "Filterwert: {{ score }} / 100",
+                    "approve": "Übernehmen",
+                    "exclude": "Ausschließen",
+                    "reviewFailed": "Die Entscheidung konnte nicht gespeichert werden.",
+                    "reviewState": {
+                        "PENDING": "Nicht geprüft",
+                        "APPROVED": "Übernommen",
+                        "EXCLUDED": "Ausgeschlossen"
+                    },
+                    "difficulty": {
+                        "EASY": "Leicht",
+                        "MEDIUM": "Mittel",
+                        "HARD": "Schwer"
+                    },
+                    "failureModes": {
+                        "FACTUAL_ERROR": "Sachlicher Fehler",
+                        "AMBIGUOUS_CORRECT_ANSWER": "Mehrdeutige Antwort",
+                        "OFF_TOPIC": "Nicht zum Thema",
+                        "NEAR_DUPLICATE": "Reines Abfragen",
+                        "ILL_FORMED_DISTRACTORS": "Schwache Distraktoren"
+                    }
+                },
+                "errors": {
+                    "loadFailed": "Der Quizfragen-Pool konnte nicht geladen werden."
+                }
+            }
+        }
+    }
+}

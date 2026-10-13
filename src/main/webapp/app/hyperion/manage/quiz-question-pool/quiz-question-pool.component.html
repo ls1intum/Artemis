@@ -1,0 +1,150 @@
+<div *titleBarTitle class="flex items-center">
+    <jhi-course-title-bar-title title="artemisApp.hyperion.quizQuestionPool.title" />
+    @if (isSettingsDirty()) {
+        <span class="ms-3">
+            <p-tag severity="warn">
+                <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.unsaved"></span>
+            </p-tag>
+        </span>
+    }
+</div>
+
+<div class="quiz-question-pool">
+    <p class="pool-intro" jhiTranslate="artemisApp.hyperion.quizQuestionPool.intro"></p>
+
+    <div class="pool-cards">
+        <section class="pool-card" data-testid="pool-progress-card">
+            <h6 class="pool-card-title" jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.title"></h6>
+            @if (progress(); as progressValue) {
+                @if (progressValue.total > 0) {
+                    <p-progressbar [value]="progressPercent()" [showValue]="true" styleClass="pool-progress-bar" />
+                    <ul class="pool-progress-counts">
+                        <li
+                            data-testid="pool-progress-total"
+                            jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.total"
+                            [translateValues]="{ count: progressValue.total }"
+                        ></li>
+                        <li
+                            data-testid="pool-progress-accepted"
+                            jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.accepted"
+                            [translateValues]="{ count: progressValue.accepted }"
+                        ></li>
+                        <li
+                            data-testid="pool-progress-rejected"
+                            jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.rejected"
+                            [translateValues]="{ count: progressValue.rejected }"
+                        ></li>
+                        @if (progressValue.toGenerate + progressValue.toJudge > 0) {
+                            <li
+                                data-testid="pool-progress-pending"
+                                jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.pending"
+                                [translateValues]="{ count: progressValue.toGenerate + progressValue.toJudge }"
+                            ></li>
+                        }
+                        @if (progressValue.failed > 0) {
+                            <li
+                                data-testid="pool-progress-failed"
+                                jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.failed"
+                                [translateValues]="{ count: progressValue.failed }"
+                            ></li>
+                        }
+                    </ul>
+                } @else {
+                    <p class="pool-card-hint" data-testid="pool-progress-empty" jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.empty"></p>
+                }
+                <p class="pool-run-state">
+                    @if (isRunning()) {
+                        <p-tag severity="info" data-testid="pool-running">
+                            <fa-icon [icon]="faRotate" class="me-1" animation="spin" />
+                            <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.running"></span>
+                        </p-tag>
+                    } @else {
+                        <span class="text-muted-color" jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.idle"></span>
+                    }
+                </p>
+            }
+            <div class="pool-card-actions">
+                @if (isInstructor()) {
+                    <button pButton type="button" data-testid="pool-build-button" [disabled]="isStartingBuild() || isRunning()" (click)="startBuild()">
+                        <fa-icon [icon]="faPlay" class="me-1" />
+                        <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.build"></span>
+                    </button>
+                }
+                <button pButton type="button" severity="secondary" [outlined]="true" data-testid="pool-refresh-button" [disabled]="isLoading()" (click)="refresh()">
+                    <fa-icon [icon]="faRotate" class="me-1" />
+                    <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.refresh"></span>
+                </button>
+            </div>
+        </section>
+
+        @if (isInstructor() && settings(); as settingsValue) {
+            <section class="pool-card" data-testid="pool-settings-card">
+                <h6 class="pool-card-title" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.title"></h6>
+                <div class="pool-setting">
+                    <label for="pool-candidates" class="pool-setting-label" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.candidatesPerCompetency"></label>
+                    <p-inputnumber
+                        inputId="pool-candidates"
+                        [ngModel]="settingsValue.candidatesPerCompetency"
+                        (ngModelChange)="setCandidatesPerCompetency($event)"
+                        [min]="1"
+                        [max]="200"
+                        [showButtons]="true"
+                        [useGrouping]="false"
+                        [step]="1"
+                        styleClass="w-100"
+                    />
+                    <small class="pool-card-hint" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.candidatesHelp"></small>
+                </div>
+                <div class="pool-setting pool-setting-toggle">
+                    <p-toggleswitch
+                        inputId="pool-generation-enabled"
+                        [ngModel]="settingsValue.poolGenerationEnabled"
+                        (ngModelChange)="setPoolGenerationEnabled($event)"
+                        [ariaLabel]="'artemisApp.hyperion.quizQuestionPool.settings.poolGenerationEnabled' | artemisTranslate"
+                    />
+                    <label for="pool-generation-enabled">
+                        <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.poolGenerationEnabled"></span>
+                        <small class="pool-card-hint block" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.poolGenerationHelp"></small>
+                    </label>
+                </div>
+                <div class="pool-card-actions">
+                    <button
+                        pButton
+                        type="button"
+                        data-testid="pool-save-settings-button"
+                        [disabled]="!isSettingsDirty() || !isSettingsValid() || isSavingSettings()"
+                        (click)="saveSettings()"
+                    >
+                        <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.save"></span>
+                    </button>
+                </div>
+            </section>
+        }
+    </div>
+
+    @if (competencyOptions().length > 1) {
+        <div class="pool-filter">
+            <label for="pool-competency-filter" class="pool-setting-label" jhiTranslate="artemisApp.hyperion.quizQuestionPool.filter.competency"></label>
+            <p-select
+                inputId="pool-competency-filter"
+                [options]="competencyOptions()"
+                optionLabel="title"
+                optionValue="id"
+                [ngModel]="selectedCompetencyId()"
+                (ngModelChange)="selectCompetency($event)"
+                [showClear]="true"
+                [placeholder]="'artemisApp.hyperion.quizQuestionPool.filter.allCompetencies' | artemisTranslate"
+                styleClass="pool-competency-select"
+                appendTo="body"
+            />
+        </div>
+    }
+
+    @for (group of groups(); track group.id) {
+        <section class="pool-group" [attr.data-testid]="'pool-group-' + group.id">
+            <h5 class="pool-group-title">{{ group.title }}</h5>
+            <jhi-quiz-question-pool-item-list [questions]="group.questions" [canReview]="canReview()" [busyQuestionIds]="busyQuestionIds()" (review)="review($event)" />
+        </section>
+    }
+</div>
