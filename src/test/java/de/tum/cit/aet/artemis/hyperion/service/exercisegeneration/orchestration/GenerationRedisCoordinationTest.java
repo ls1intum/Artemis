@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 
 import java.time.Duration;
@@ -213,6 +214,49 @@ class GenerationRedisCoordinationTest {
                     jobs.clearRevertSlot(42, next);
                     assertThat(slots.get("42")).isNull();
                 }
+            }
+            finally {
+                redis.shutdown();
+            }
+        }
+    }
+
+    @Test
+    void generationAdmissionAndWorkerExitRecoverAfterRedisCleanupFailures() {
+        try (var valkey = ValkeyTestContainerFactory.create()) {
+            valkey.start();
+            var identity = new RedisNodeIdentity("artemis-core", true, true);
+            var redis = client("redis://" + valkey.getHost() + ":" + valkey.getMappedPort(6379), identity);
+            try {
+                var resolver = new RedisClientListResolver(new RedissonConnectionFactory(redis));
+                var provider = spy(new RedissonDistributedDataProviderService(redis, resolver, identity));
+                var slots = spy(provider.<String, GenerationJobService.JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
+                doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
+                var events = new java.util.ArrayList<Object>();
+                var jobs = new GenerationJobService(provider, events::add, org.mockito.Mockito.mock(GenerationTokenUsageService.class));
+                jobs.init();
+                var user = new User();
+                user.setLogin("editor");
+                var exercise = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise();
+                exercise.setId(42L);
+                var failure = new IllegalStateException("unlock response lost");
+                doAnswer(invocation -> {
+                    invocation.callRealMethod();
+                    doThrow(new IllegalStateException("cleanup unavailable")).doCallRealMethod().when(slots).lock("42");
+                    throw failure;
+                }).doCallRealMethod().when(slots).unlock("42");
+                assertThatThrownBy(() -> jobs.startJob(user, exercise, "brief", GenerationMode.GENERATE)).isSameAs(failure);
+                assertThat(events).noneMatch(GenerationStartedEvent.class::isInstance);
+                assertThat(slots.get("42")).isNotNull();
+                jobs.retryPendingCleanup();
+                assertThat(slots.get("42")).isNull();
+                String job = jobs.startJob(user, exercise, "new brief", GenerationMode.GENERATE);
+                doThrow(new IllegalStateException("cleanup unavailable")).doCallRealMethod().when(slots).lock("42");
+                jobs.clearJob(42, job);
+                assertThat(slots.get("42").jobId()).isEqualTo(job);
+                jobs.retryPendingCleanup();
+                assertThat(slots.get("42")).isNull();
+                assertThat(jobs.getStatus(user, exercise)).hasValueSatisfying(status -> assertThat(status.running()).isFalse());
             }
             finally {
                 redis.shutdown();

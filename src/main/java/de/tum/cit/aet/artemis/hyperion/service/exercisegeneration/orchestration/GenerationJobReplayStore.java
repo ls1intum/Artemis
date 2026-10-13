@@ -299,7 +299,8 @@ final class GenerationJobReplayStore {
 
     private void restoreReplayIfStillCurrent(String key, StartedReplay replay) {
         // A rejected start restores its predecessor, but must never repopulate a slot after another run replaced its transcript.
-        boolean restoreArtifacts = replay.previousArtifacts() != null && replay.currentTranscript().equals(transcriptMap().get(key));
+        boolean restoreArtifacts = replay.previousArtifacts() != null
+                && (replay.currentTranscript().equals(transcriptMap().get(key)) || isActiveJob(key, replay.currentTranscript().jobId()));
         restoreTranscriptIfStillCurrent(key, replay.currentTranscript(), replay.previousTranscript());
         restoreFileChangesIfStillCurrent(key, replay.currentFileChanges(), replay.previousFileChanges());
         if (restoreArtifacts) {

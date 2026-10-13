@@ -13,6 +13,7 @@ import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import jakarta.annotation.PostConstruct;
@@ -111,6 +112,8 @@ public class GenerationJobService {
     private GenerationJobReplayStore replayStore;
 
     private GenerationJobReaper reaper;
+
+    private GenerationJobCleanup cleanup;
 
     private final GenerationExternalMutationService externalMutationService;
 
@@ -268,6 +271,7 @@ public class GenerationJobService {
         jobMap = distributedDataProvider.getMap(JOB_MAP_NAME);
         cancellationMap = distributedDataProvider.getExpiringMap(CANCEL_MAP_NAME, longestJobDuration);
         replayStore = new GenerationJobReplayStore(distributedDataProvider, terminalReplayTtl, cancellationMap);
+        cleanup = new GenerationJobCleanup(jobMap, cancellationMap, replayStore, (exerciseId, jobId) -> publishExerciseState(exerciseId, jobId, false));
         cancelHooks.subscribe();
         localNodeId = distributedDataProvider.getLocalNodeId();
         reaper = new GenerationJobReaper(this, distributedDataProvider, jobMap, cancellationMap, replayStore, generationBudgetService, staleJobTimeout, maxJobDuration);
@@ -312,10 +316,10 @@ public class GenerationJobService {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, true, budgetReservationId, mode, exercise.getTitle(),
                 course == null ? null : course.getId());
-        claimSlot(key, newJob, "Exercise generation is already running for this exercise", "exerciseGenerationRunning");
         GenerationJobReplayStore.StartedReplay startedReplay = null;
         boolean publicStatePublished = false;
         try {
+            claimSlot(key, newJob, "Exercise generation is already running for this exercise", "exerciseGenerationRunning");
             startedReplay = replayStore.initializeStart(exercise.getId(), jobId, user.getLogin(), mode, settings == null ? null : settings.name(), input);
             if (!exactProviderUsage) {
                 replayStore.markUsageIncomplete(jobId);
@@ -326,16 +330,16 @@ public class GenerationJobService {
                     budgetReservationId, sourceBrief, settings));
         }
         catch (RejectedExecutionException e) {
-            rollbackUnpublishedStart(exercise.getId(), key, newJob, startedReplay);
+            cleanup.unpublished(newJob, startedReplay);
             if (publicStatePublished) {
                 publishExerciseState(exercise.getId(), jobId, false);
             }
-            log.warn("Exercise generation executor rejected job {} for exercise {}; released the slot", jobId, exercise.getId());
+            log.warn("Exercise generation executor rejected job {} for exercise {}; cleanup was requested", jobId, exercise.getId());
             throw new ServiceUnavailableAlertException("The system is currently busy with too many exercise generations. Please try again in a few minutes.", ENTITY_NAME,
                     "exerciseGenerationCapacityExceeded");
         }
         catch (RuntimeException e) {
-            rollbackUnpublishedStart(exercise.getId(), key, newJob, startedReplay);
+            cleanup.unpublished(newJob, startedReplay);
             if (publicStatePublished) {
                 publishExerciseState(exercise.getId(), jobId, false);
             }
@@ -366,19 +370,6 @@ public class GenerationJobService {
                 }
             }
             throw new ConflictException("Exercise generation is already running for this exercise", ENTITY_NAME, "exerciseGenerationRunning");
-        }
-        finally {
-            unlockJobSlot(key);
-        }
-    }
-
-    private void rollbackUnpublishedStart(long exerciseId, String key, JobInfo newJob, GenerationJobReplayStore.@Nullable StartedReplay startedReplay) {
-        lockJobSlot(key);
-        try {
-            jobMap.remove(key, newJob);
-            if (startedReplay != null) {
-                replayStore.restoreUnpublishedStart(exerciseId, startedReplay);
-            }
         }
         finally {
             unlockJobSlot(key);
@@ -806,24 +797,12 @@ public class GenerationJobService {
      * @param jobId      the completed job identifier
      */
     public void clearJob(long exerciseId, String jobId) {
-        String key = key(exerciseId);
-        boolean released = false;
-        lockJobSlot(key);
-        try {
-            JobInfo job = jobMap.get(key);
-            if (job != null && job.jobId().equals(jobId)) {
-                jobMap.remove(key, job);
-                released = true;
-            }
-            replayStore.retainAfterJobCleared(exerciseId, jobId);
-        }
-        finally {
-            unlockJobSlot(key);
-        }
-        cancellationMap.remove(jobId);
-        if (released) {
-            publishExerciseState(exerciseId, jobId, false);
-        }
+        cleanup.finished(exerciseId, jobId);
+    }
+
+    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.SECONDS)
+    void retryPendingCleanup() {
+        cleanup.retry();
     }
 
     /** Cancels stale jobs and terminalizes jobs whose owner has left the Hazelcast cluster. */
