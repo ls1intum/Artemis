@@ -167,6 +167,21 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCheckSubmissionAllowance_unstartedTestExamAttemptIsNotInTime() {
+        // a re-attempt of a test exam exists before the student starts it, so it has no started date and therefore no individual end date
+        exam.setTestExam(true);
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(90));
+        exam.setEndDate(ZonedDateTime.now().plusMinutes(90));
+        examRepository.save(exam);
+        assertThat(studentExam.getStartedDate()).isNull();
+
+        assertThat(examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false)).isFalse();
+        assertThat(examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, true)).isFalse();
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, student1));
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckSubmissionAllowance_testRun() {
         final var instructor = userRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "instructor1").orElseThrow();
