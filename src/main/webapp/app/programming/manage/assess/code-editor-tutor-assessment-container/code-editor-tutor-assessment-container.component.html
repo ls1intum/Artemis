@@ -72,6 +72,7 @@
                 [referencedFeedback]="referencedFeedbackForBadges()"
                 [showEditorInstructions]="showEditorInstructions"
                 [isTutorAssessment]="true"
+                [commitId]="submission()?.commitHash"
                 [highlightFileChanges]="true"
                 [readOnlyManualFeedback]="readOnly()"
                 [highlightDifferences]="highlightDifferences"
@@ -106,6 +107,18 @@
                 <a class="btn btn-secondary btn-sm me-2 open-repository-button" [routerLink]="localRepositoryLink()" target="_blank" rel="noopener noreferrer">
                     <fa-icon [icon]="faExternalLink" />
                     <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"></span>
+                </a>
+            }
+            @if (commitHistoryLink(); as link) {
+                <a
+                    class="btn btn-secondary btn-sm me-2 open-commit-history-button"
+                    data-testid="open-commit-history-button"
+                    [routerLink]="link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <fa-icon [icon]="faClockRotateLeft" />
+                    <span jhiTranslate="artemisApp.repository.commitHistory.openCommitHistory"></span>
                 </a>
             }
             <jhi-programming-assessment-repo-export

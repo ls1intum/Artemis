@@ -37,6 +37,7 @@ import { ActivatedRoute, ParamMap, Router, UrlTree, convertToParamMap, provideRo
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
+import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -175,6 +176,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         submission.results = [result];
         submission.participation = participation;
         submission.id = 1234;
+        submission.commitHash = '0123456789abcdef0123456789abcdef01234567';
         submission.latestResult = result;
         participation.submissions = [submission];
 
@@ -311,6 +313,23 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         getFilesWithContentStub.mockRestore();
         getFileStub.mockRestore();
+        fixture.destroy();
+    });
+
+    it('should show exactly the submitted commit and not the working copy of the repository', async () => {
+        vi.spyOn(repositoryFileService, 'getFilesWithContent').mockReturnValue(of(templateFileSessionReturn));
+        const feedbackLoaded = firstValueFrom(outputToObservable(comp.onFeedbackLoaded));
+        fixture.detectChanges();
+        await feedbackLoaded;
+        await flushMicrotasks();
+        fixture.changeDetectorRef.detectChanges();
+
+        const codeEditorContainer: CodeEditorContainerComponent = fixture.debugElement.query(By.directive(CodeEditorContainerComponent)).componentInstance;
+        expect(codeEditorContainer.commitId()).toBe(submission.commitHash);
+        const codeEditorFileBrowser: CodeEditorFileBrowserComponent = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
+        expect(codeEditorFileBrowser.commitId()).toBe(submission.commitHash);
+        const codeEditorMonaco: CodeEditorMonacoComponent = fixture.debugElement.query(By.directive(CodeEditorMonacoComponent)).componentInstance;
+        expect(codeEditorMonaco.commitId()).toBe(submission.commitHash);
         fixture.destroy();
     });
 
@@ -1072,6 +1091,52 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
         expect(banner).not.toBeNull();
+    });
+
+    describe('commit history link', () => {
+        const commitHistoryButton = () => fixture.debugElement.query(By.css('[data-testid="open-commit-history-button"]'));
+
+        async function renderAssessmentWithRouteParams(params: Record<string, string | number>) {
+            TestBed.inject(ActivatedRoute).params = of(params);
+            vi.spyOn(repositoryFileService, 'getFilesWithContent').mockReturnValue(of(templateFileSessionReturn));
+            vi.spyOn(repositoryFileService, 'getFile').mockReturnValue(new BehaviorSubject({ fileContent: '' }));
+            fixture.detectChanges();
+            await flushMicrotasks();
+            fixture.changeDetectorRef.detectChanges();
+        }
+
+        it('should link a tutor to the commit history of the assessed participation in the course', async () => {
+            // a tutor is not an editor, so the "go to repository" button is not available to them
+            exercise.isAtLeastEditor = false;
+            const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree');
+
+            await renderAssessmentWithRouteParams({ courseId: 5, exerciseId: 1, submissionId: 123 });
+
+            expect(commitHistoryButton()).not.toBeNull();
+            expect(commitHistoryButton().nativeElement.getAttribute('target')).toBe('_blank');
+            expect(comp.commitHistoryLink()).toEqual(['/course-management', '5', 'programming-exercises', '1', 'repository', 'USER', '1', 'commit-history']);
+            expect(createUrlTreeSpy).toHaveBeenCalledWith(
+                ['/course-management', '5', 'programming-exercises', '1', 'repository', 'USER', '1', 'commit-history'],
+                expect.anything(),
+            );
+        });
+
+        it('should link to the commit history of the exam exercise when assessing an exam', async () => {
+            const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree');
+
+            await renderAssessmentWithRouteParams({ courseId: 5, examId: 7, exerciseGroupId: 9, exerciseId: 1, submissionId: 123 });
+
+            expect(commitHistoryButton()).not.toBeNull();
+            expect(createUrlTreeSpy).toHaveBeenCalledWith(
+                ['/course-management', '5', 'exams', '7', 'exercise-groups', '9', 'programming-exercises', '1', 'repository', 'USER', '1', 'commit-history'],
+                expect.anything(),
+            );
+        });
+
+        it('should not offer the commit history before a participation is loaded', () => {
+            expect(comp.commitHistoryLink()).toBeUndefined();
+            expect(commitHistoryButton()).toBeNull();
+        });
     });
 
     describe('when assessment is not possible yet', () => {
