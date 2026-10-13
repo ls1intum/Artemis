@@ -12,7 +12,7 @@ vi.mock('y-monaco', () => {
 });
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Provider, Signal, WritableSignal, signal } from '@angular/core';
-import { Observable, Subject, of, throwError } from 'rxjs';
+import { Observable, Subject, defer, of, throwError } from 'rxjs';
 import { FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -74,7 +74,7 @@ type ComponentInternals = Omit<CodeEditorInstructorAndEditorContainerComponent, 
 const internals = (c: CodeEditorInstructorAndEditorContainerComponent): ComponentInternals => c as unknown as ComponentInternals;
 
 interface CodeEditorContainerStub {
-    actions?: () => { onSave: ReturnType<typeof vi.fn> };
+    actions?: () => { onSave: ReturnType<typeof vi.fn>; executeRefresh?: () => Observable<boolean> };
     allowNextUnloadWithoutConfirmation?: ReturnType<typeof vi.fn>;
     canDeactivate?: () => boolean;
     hasCleanRepositoryState?: () => boolean;
@@ -919,9 +919,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         vi.spyOn(comp as any, 'isExerciseGenerationActionBlocked').mockReturnValue(true);
         const selectTemplate = vi.spyOn(CodeEditorInstructorBaseContainerComponent.prototype, 'selectTemplateParticipation').mockResolvedValue(true);
 
-        await CodeEditorInstructorAndEditorContainerComponent.prototype.selectTemplateParticipation.call(comp);
+        try {
+            await CodeEditorInstructorAndEditorContainerComponent.prototype.selectTemplateParticipation.call(comp);
 
-        expect(selectTemplate).toHaveBeenCalledOnce();
+            expect(selectTemplate).toHaveBeenCalledOnce();
+        } finally {
+            selectTemplate.mockRestore();
+        }
     });
 
     it('saves and switches domains normally when exercise generation does not lock editing', () => {
@@ -1754,6 +1758,53 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(generationService.generate).toHaveBeenCalledWith(42, { mode: 'ADAPT', prompt: 'Improve the exercise', selectedFeedbackThreadIds: undefined });
         expect((comp as any).generationRefreshPending()).toBe(false);
         expect((comp as any).generationRefreshFailed()).toBe(true);
+    });
+
+    it('subscribes to the cold legacy completion refresh when the editor is clean', () => {
+        const refreshed = vi.fn();
+        const executeRefresh = vi.fn(() =>
+            defer(() => {
+                refreshed();
+                return of(true);
+            }),
+        );
+        setCodeEditorContainer(comp, { actions: () => ({ onSave: vi.fn(), executeRefresh }) });
+        setEditableInstructions(comp, { unsavedChangesValue: () => false, hasReviewCommentDrafts: () => false });
+
+        comp['onLegacyGenerationRefresh']();
+
+        expect(executeRefresh).toHaveBeenCalledOnce();
+        expect(refreshed).toHaveBeenCalledOnce();
+    });
+
+    it('preserves review drafts and new unsaved files instead of auto-refreshing', () => {
+        const draft = signal('pending review comment');
+        const unsavedFiles = signal<Record<string, string>>({});
+        const executeRefresh = vi.fn(() =>
+            defer(() => {
+                draft.set('');
+                unsavedFiles.set({});
+                return of(true);
+            }),
+        );
+        setCodeEditorContainer(comp, {
+            actions: () => ({ onSave: vi.fn(), executeRefresh }),
+            canDeactivate: () => Object.keys(unsavedFiles()).length === 0,
+            hasReviewCommentDrafts: () => !!draft(),
+        });
+        setEditableInstructions(comp, { unsavedChangesValue: () => false, hasReviewCommentDrafts: () => false });
+
+        comp['onLegacyGenerationRefresh']();
+
+        expect(executeRefresh).not.toHaveBeenCalled();
+        expect(draft()).toBe('pending review comment');
+
+        draft.set('');
+        unsavedFiles.set({ 'App.java': 'new local edit' });
+        comp['onLegacyGenerationRefresh']();
+
+        expect(executeRefresh).not.toHaveBeenCalled();
+        expect(unsavedFiles()).toEqual({ 'App.java': 'new local edit' });
     });
 
     it('does not reload while a review comment draft is open', () => {

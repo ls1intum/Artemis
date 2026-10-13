@@ -434,6 +434,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         window.history.replaceState(historyState, '');
     }
 
+    protected onLegacyGenerationRefresh(): void {
+        if (!this.canRefreshAfterHyperionRepositoryChange()) {
+            return;
+        }
+        this.codeEditorContainer()?.actions()?.executeRefresh().pipe(takeUntilDestroyed(this.editorDestroyRef)).subscribe();
+    }
+
     private canRefreshAfterHyperionRepositoryChange(): boolean {
         const codeEditor = this.codeEditorContainer();
         const codeEditorClean =

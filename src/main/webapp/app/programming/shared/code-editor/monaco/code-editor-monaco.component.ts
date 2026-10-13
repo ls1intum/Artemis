@@ -126,7 +126,16 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     );
 
     readonly feedbackInternal = linkedSignal<Feedback[]>(() => this.feedbacks());
-    private reviewCommentManager?: ReviewCommentWidgetManager;
+    // Lazy manager creation must invalidate draft checks made before it exists.
+    private readonly reviewCommentManagerValue = signal<ReviewCommentWidgetManager | undefined>(undefined);
+
+    private get reviewCommentManager(): ReviewCommentWidgetManager | undefined {
+        return this.reviewCommentManagerValue();
+    }
+
+    private set reviewCommentManager(manager: ReviewCommentWidgetManager | undefined) {
+        this.reviewCommentManagerValue.set(manager);
+    }
 
     /**
      * The feedback objects themselves (same references as in {@link feedbackInternal}, not clones) - the template
