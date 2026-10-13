@@ -771,7 +771,7 @@ public class MetisQuestionGenerationService {
     }
 
     /**
-     * Asks the model for a new question about the focus file and stores it, provided nobody changed the question or started the check meanwhile.
+     * Asks the model for a new question about the focus file and stores it, provided nobody regenerated or edited the question or started the check meanwhile.
      */
     private void replace(MetisQuestion question, MetisGenerationTargetDTO target, MetisExerciseConfig config, FocusFileContext focusFile) {
         List<MetisQuestion> questions = questionRepository.findAllByCheckIdOrderByQuestionOrderAsc(target.checkId());
@@ -784,8 +784,9 @@ public class MetisQuestionGenerationService {
         // A regeneration is billed to the editor who asked for it
         var attribution = new MetisLlmService.Attribution(target.courseId(), target.exerciseId(), userRepository.getUserIdElseThrow());
         GeneratedQuestionOutput output = regenerate(systemPrompt, userPrompt, attribution, question.getId());
+        // An editor may have regenerated or edited the question while the model was working; neither may be overwritten unseen
         int replaced = questionRepository.replaceAfterRegeneration(question.getId(), questionText(output.question()), timeLimit(output.timeLimitSeconds(), config),
-                question.getRegenerationCount());
+                question.getRegenerationCount(), question.getQuestionText());
         if (replaced == 0) {
             MetisCheck check = checkRepository.findByIdElseThrow(target.checkId());
             if (check.getStartedAt() != null || !EDITABLE_STATES.contains(check.getStatus())) {
