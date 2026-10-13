@@ -13,6 +13,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * question list is always sent, also when it is empty.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MetisDashboardRowDTO(long participationId, @NotNull String studentName, @NotNull String studentLogin, @Nullable String tutorialGroupTitle,
+public record MetisDashboardRowDTO(@NotNull long participationId, @NotNull String studentName, @NotNull String studentLogin, @Nullable String tutorialGroupTitle,
         @NotNull MetisCheckDTO check, @JsonInclude @NotNull List<MetisQuestionDTO> questions) {
 }
