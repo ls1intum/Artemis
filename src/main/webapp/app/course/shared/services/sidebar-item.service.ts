@@ -13,6 +13,7 @@ import {
     faFileAlt,
     faList,
     faNetworkWired,
+    faPersonChalkboard,
     faPuzzlePiece,
     faQuestion,
     faRobot,
@@ -258,6 +259,18 @@ export class CourseSidebarItemService {
             icon: faUserCheck,
             title: 'Assessment Dashboard',
             translation: 'entity.action.assessmentDashboard',
+            hidden: false,
+        };
+    }
+
+    getPresentationAssessmentsItem(courseId: number): SidebarItem {
+        return {
+            routerLink: `${courseId}/presentations`,
+            icon: faPersonChalkboard,
+            iconColor: 'var(--primary)',
+            title: 'Presentations',
+            translation: 'artemisApp.presentationAssessment.home.title',
+            testId: 'presentations',
             hidden: false,
         };
     }
