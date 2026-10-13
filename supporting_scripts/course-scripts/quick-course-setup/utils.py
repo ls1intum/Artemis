@@ -109,7 +109,8 @@ def get_user_details_by_index(user_index: int) -> Dict[str, Any]:
         "isTestUser": True,
 
         "groups": groups,
-        "password": password
+        "password": password,
+        "internal": True,
     }
 
 def get_student_details_by_index(user_index: int) -> Dict[str, Any]:
@@ -129,5 +130,6 @@ def get_student_details_by_index(user_index: int) -> Dict[str, Any]:
         "lastName": f"User{user_index}",
         "langKey": "en",
         "groups": groups,
-        "password": password
+        "password": password,
+        "internal": True,
     }
