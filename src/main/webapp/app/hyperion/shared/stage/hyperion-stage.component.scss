@@ -2,28 +2,28 @@
 // connector lives inside the marker track, so centring it is `inset-inline-start: 50%` plus `translateX(-50%)` and
 // never arithmetic on spacing tokens. No negative margin takes part in the layout.
 :host {
-    --hyperion-stage-marker-size: calc(var(--tumaet-ui-spacing) * 6);
+    --hyperion-stage-marker-size: calc(var(--spacing) * 6);
     --hyperion-stage-connector-width: 2px;
 
     // Distance the connector travels out of this step into the next one; it is also the step's trailing padding.
-    --hyperion-stage-lead: calc(var(--tumaet-ui-spacing) * 6);
+    --hyperion-stage-lead: calc(var(--spacing) * 6);
 
     // The muted colour, not the border colour: a pending marker is a graphical object a reader needs in order to
     // understand the ladder, so it owes 3:1 against the surface. The border colour measures 1.23:1 in light and
     // 1.24:1 in dark, which is a rail you can only see if you already know it is there.
-    --hyperion-stage-edge-color: var(--tumaet-ui-muted-color);
-    --hyperion-stage-ink-color: var(--tumaet-ui-muted-color);
-    --hyperion-stage-label-color: var(--tumaet-ui-text-color);
+    --hyperion-stage-edge-color: var(--text-body-secondary);
+    --hyperion-stage-ink-color: var(--text-body-secondary);
+    --hyperion-stage-label-color: var(--body-color);
     --hyperion-stage-marker-border-style: solid;
 
     // The connector reports the state of the step it leads into, so it is set from the following sibling below.
     // Same reasoning as the marker edge: the rail is part of the picture, so it carries the muted colour.
-    --hyperion-stage-connector-color: var(--tumaet-ui-muted-color);
+    --hyperion-stage-connector-color: var(--text-body-secondary);
     --hyperion-stage-connector-style: solid;
 
     display: grid;
     grid-template-columns: var(--hyperion-stage-marker-size) 1fr;
-    column-gap: calc(var(--tumaet-ui-spacing) * 3);
+    column-gap: calc(var(--spacing) * 3);
     padding-block-end: var(--hyperion-stage-lead);
 }
 
@@ -33,42 +33,42 @@
 }
 
 :host([data-state='current']) {
-    --hyperion-stage-edge-color: var(--tumaet-ui-primary-color);
-    --hyperion-stage-ink-color: var(--tumaet-ui-primary-color);
+    --hyperion-stage-edge-color: var(--primary);
+    --hyperion-stage-ink-color: var(--primary);
 }
 
 :host([data-state='complete']) {
-    --hyperion-stage-edge-color: var(--tumaet-ui-state-success);
-    --hyperion-stage-ink-color: var(--tumaet-ui-state-success);
+    --hyperion-stage-edge-color: var(--artemis-alert-success-color);
+    --hyperion-stage-ink-color: var(--artemis-alert-success-color);
 }
 
 :host([data-state='failed']) {
-    --hyperion-stage-edge-color: var(--tumaet-ui-state-danger);
-    --hyperion-stage-ink-color: var(--tumaet-ui-state-danger);
+    --hyperion-stage-edge-color: var(--artemis-alert-danger-color);
+    --hyperion-stage-ink-color: var(--artemis-alert-danger-color);
 }
 
 // A skipped stage keeps the solid marker every other stage has, so the ladder reads as one family and the state
 // comes from the skip glyph and the muted colour. "Never travelled" is carried by the dashed rail leading into it.
 :host([data-state='skipped']) {
-    --hyperion-stage-label-color: var(--tumaet-ui-muted-color);
+    --hyperion-stage-label-color: var(--text-body-secondary);
 }
 
 // The skip glyph is a filled shape where the check and the cross are strokes, so at the same size it would carry more
 // ink than a finished stage and pull the eye to the part of the ladder that matters least.
 :host([data-state='skipped']) .hyperion-stage-marker {
-    font-size: calc(var(--tumaet-ui-font-size-xs) * 0.85);
+    font-size: calc(var(--text-xs) * 0.85);
 }
 
 :host(:has(+ jhi-hyperion-stage[data-state='current'])) {
-    --hyperion-stage-connector-color: var(--tumaet-ui-primary-color);
+    --hyperion-stage-connector-color: var(--primary);
 }
 
 :host(:has(+ jhi-hyperion-stage[data-state='complete'])) {
-    --hyperion-stage-connector-color: var(--tumaet-ui-state-success);
+    --hyperion-stage-connector-color: var(--artemis-alert-success-color);
 }
 
 :host(:has(+ jhi-hyperion-stage[data-state='failed'])) {
-    --hyperion-stage-connector-color: var(--tumaet-ui-state-danger);
+    --hyperion-stage-connector-color: var(--artemis-alert-danger-color);
 }
 
 :host(:has(+ jhi-hyperion-stage[data-state='skipped'])) {
@@ -93,10 +93,10 @@
     border-style: var(--hyperion-stage-marker-border-style);
     border-color: var(--hyperion-stage-edge-color);
     border-radius: 50%;
-    background: var(--tumaet-ui-content-background);
+    background: var(--module-bg);
     color: var(--hyperion-stage-ink-color);
-    font-size: var(--tumaet-ui-font-size-xs);
-    line-height: var(--tumaet-ui-line-height-xs);
+    font-size: var(--text-xs);
+    line-height: var(--text-xs--line-height);
 }
 
 // The connector is the leading edge of the step it points at. It starts at the trailing edge of this step's marker
@@ -117,7 +117,7 @@
     display: flex;
     min-width: 0;
     flex-direction: column;
-    gap: var(--tumaet-ui-spacing);
+    gap: var(--spacing);
 }
 
 .hyperion-stage-label {
@@ -128,9 +128,9 @@
 
 .hyperion-stage-detail {
     min-width: 0;
-    color: var(--tumaet-ui-muted-color);
-    font-size: var(--tumaet-ui-font-size-sm);
-    line-height: var(--tumaet-ui-line-height-sm);
+    color: var(--text-body-secondary);
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
 }
 
 .hyperion-stage-detail:empty {
@@ -149,8 +149,8 @@
 
 .hyperion-stage-running-fallback {
     display: block;
-    width: calc(var(--tumaet-ui-spacing) * 2.5);
-    height: calc(var(--tumaet-ui-spacing) * 2.5);
+    width: calc(var(--spacing) * 2.5);
+    height: calc(var(--spacing) * 2.5);
     border-radius: 50%;
     background: currentcolor;
 }
@@ -158,8 +158,8 @@
 @media (prefers-reduced-motion: no-preference) {
     .hyperion-stage-running-indicator {
         display: block;
-        width: calc(var(--tumaet-ui-spacing) * 3.5);
-        height: calc(var(--tumaet-ui-spacing) * 3.5);
+        width: calc(var(--spacing) * 3.5);
+        height: calc(var(--spacing) * 3.5);
         border: 2px solid color-mix(in srgb, currentcolor 25%, transparent);
         border-block-start-color: currentcolor;
         border-radius: 50%;

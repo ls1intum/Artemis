@@ -26,7 +26,7 @@ import { ExerciseTitleChannelNamePrimengComponent } from 'app/exercise/exercise-
 import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency-selection-primeng/competency-selection-primeng.component';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
-import { QuizAiGenerationModalComponent } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
+import { QuizAiGenerationModalComponent } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 

@@ -1,32 +1,24 @@
-// Every rule is nested under `.hyperion-markdown-body` rather than relying on Angular's emulated encapsulation, because the
-// content this component styles usually arrives through `[innerHTML]` and never carries an `_ngcontent` attribute.
-// ---
-// Do not wrap these selectors in `:where()`. `.hyperion-markdown-body h2` is specificity (0,1,1) and beats a host page's bare
-// `h2` rule at (0,0,1) inside the same unlayered origin; `:where()` would zero the class out and the host page would
-// win again. Winning that cascade without `!important` is the entire reason this component exists.
+// Scope styles to rendered Markdown, including content inserted through innerHTML.
 .hyperion-markdown-body {
-    // The comfortable measure for continuous reading. Set it to `none` where the prose shares a row with something
-    // else and has to fill its column.
     --hyperion-markdown-body-measure: 65ch;
-    --hyperion-markdown-body-block-gap: calc(var(--tumaet-ui-spacing) * 4);
+    --hyperion-markdown-body-block-gap: calc(var(--spacing) * 4);
 
     max-width: var(--hyperion-markdown-body-measure);
-    color: var(--tumaet-ui-text-color);
-    font-family: var(--tumaet-ui-font-family);
-    font-size: var(--tumaet-ui-font-size-base);
-    line-height: var(--tumaet-ui-line-height-base);
+    color: var(--body-color);
+    font-family: inherit;
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
     overflow-wrap: break-word;
 }
 
 .hyperion-markdown-body[data-density='compact'] {
-    --hyperion-markdown-body-block-gap: calc(var(--tumaet-ui-spacing) * 3);
+    --hyperion-markdown-body-block-gap: calc(var(--spacing) * 3);
 
-    font-size: var(--tumaet-ui-font-size-sm);
-    line-height: var(--tumaet-ui-line-height-sm);
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
 }
 
-// One rhythm for the whole document: no block carries its own margin, and the gap lives between siblings, so a
-// leading or trailing heading never pushes the container's padding around.
+// Keep block spacing between siblings.
 .hyperion-markdown-body > * {
     margin-block: 0;
 }
@@ -45,39 +37,38 @@
     margin-block-start: calc(var(--hyperion-markdown-body-block-gap) * 1.75);
 }
 
-// The scale ends below a page's own `h1`: a projected document is subordinate to the surface that hosts it, however
-// its author numbered its headings.
+// Keep document headings subordinate to the page heading.
 .hyperion-markdown-body h1,
 .hyperion-markdown-body h2,
 .hyperion-markdown-body h3,
 .hyperion-markdown-body h4,
 .hyperion-markdown-body h5,
 .hyperion-markdown-body h6 {
-    color: var(--tumaet-ui-text-color);
-    font-weight: 600;
+    color: var(--body-color);
+    font-weight: var(--font-weight-semibold);
     text-wrap: balance;
 }
 
 .hyperion-markdown-body h1 {
-    font-size: var(--tumaet-ui-font-size-xl);
-    line-height: var(--tumaet-ui-line-height-xl);
+    font-size: var(--text-xl);
+    line-height: var(--text-xl--line-height);
 }
 
 .hyperion-markdown-body h2 {
-    font-size: var(--tumaet-ui-font-size-lg);
-    line-height: var(--tumaet-ui-line-height-lg);
+    font-size: var(--text-lg);
+    line-height: var(--text-lg--line-height);
 }
 
 .hyperion-markdown-body h3 {
-    font-size: var(--tumaet-ui-font-size-base);
-    line-height: var(--tumaet-ui-line-height-base);
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
 }
 
 .hyperion-markdown-body h4,
 .hyperion-markdown-body h5,
 .hyperion-markdown-body h6 {
-    font-size: var(--tumaet-ui-font-size-sm);
-    line-height: var(--tumaet-ui-line-height-sm);
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
     text-transform: none;
 }
 
@@ -88,7 +79,7 @@
 .hyperion-markdown-body ul,
 .hyperion-markdown-body ol {
     margin-block: 0;
-    padding-inline-start: calc(var(--tumaet-ui-spacing) * 6);
+    padding-inline-start: calc(var(--spacing) * 6);
 }
 
 .hyperion-markdown-body ul {
@@ -100,47 +91,46 @@
 }
 
 .hyperion-markdown-body li + li {
-    margin-block-start: calc(var(--tumaet-ui-spacing) * 1.5);
+    margin-block-start: calc(var(--spacing) * 1.5);
 }
 
 // A nested list belongs to the item above it, so it is spaced as part of that item rather than as a new block.
 .hyperion-markdown-body li > ul,
 .hyperion-markdown-body li > ol {
-    margin-block-start: calc(var(--tumaet-ui-spacing) * 1.5);
+    margin-block-start: calc(var(--spacing) * 1.5);
 }
 
 .hyperion-markdown-body li::marker {
-    color: var(--tumaet-ui-muted-color);
+    color: var(--text-body-secondary);
 }
 
 .hyperion-markdown-body a {
-    color: var(--tumaet-ui-accent-color);
+    color: var(--primary-dark);
     text-decoration: underline;
     text-underline-offset: 2px;
 }
 
 .hyperion-markdown-body a:hover {
-    color: var(--tumaet-ui-primary-color);
+    color: var(--primary);
 }
 
 .hyperion-markdown-body a:focus-visible {
-    outline: 2px solid var(--tumaet-ui-focus-color);
+    outline: 2px solid var(--primary);
     outline-offset: 2px;
-    border-radius: var(--tumaet-ui-radius-sm);
+    border-radius: var(--radius-sm, 0.25rem);
 }
 
 .hyperion-markdown-body strong,
 .hyperion-markdown-body b {
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
 }
 
-// Code sits on its own surface tier, never on the hover background: muted-on-hover measures 4.34:1 in light and
-// 4.11:1 in dark, both below the 4.5:1 a code span needs at this size.
+// Keep code on its own surface.
 .hyperion-markdown-body code {
-    padding: calc(var(--tumaet-ui-spacing) * 0.5) calc(var(--tumaet-ui-spacing) * 1.5);
-    border-radius: var(--tumaet-ui-radius-sm);
-    background: var(--tumaet-ui-control-background);
-    color: var(--tumaet-ui-text-color);
+    padding: calc(var(--spacing) * 0.5) calc(var(--spacing) * 1.5);
+    border-radius: var(--radius-sm, 0.25rem);
+    background: var(--artemis-control-background);
+    color: var(--body-color);
     font-family: monospace;
     font-size: 0.9em;
 }
@@ -148,13 +138,13 @@
 .hyperion-markdown-body pre {
     max-width: 100%;
     overflow-x: auto;
-    padding: calc(var(--tumaet-ui-spacing) * 3) calc(var(--tumaet-ui-spacing) * 4);
-    border-radius: var(--tumaet-ui-radius-md);
-    background: var(--tumaet-ui-control-background);
-    color: var(--tumaet-ui-text-color);
+    padding: calc(var(--spacing) * 3) calc(var(--spacing) * 4);
+    border-radius: var(--radius-md);
+    background: var(--artemis-control-background);
+    color: var(--body-color);
     font-family: monospace;
-    font-size: var(--tumaet-ui-font-size-sm);
-    line-height: var(--tumaet-ui-line-height-sm);
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
     tab-size: 4;
 }
 
@@ -165,42 +155,42 @@
 }
 
 .hyperion-markdown-body blockquote {
-    padding-inline-start: calc(var(--tumaet-ui-spacing) * 4);
-    border-inline-start: 3px solid var(--tumaet-ui-control-border-color);
-    color: var(--tumaet-ui-muted-color);
+    padding-inline-start: calc(var(--spacing) * 4);
+    border-inline-start: 3px solid var(--artemis-control-border);
+    color: var(--text-body-secondary);
 }
 
 .hyperion-markdown-body hr {
     height: 0;
     border: 0;
-    border-block-start: 1px solid var(--tumaet-ui-border-color);
+    border-block-start: 1px solid var(--border-color);
     opacity: 1;
 }
 
 .hyperion-markdown-body table {
     max-width: 100%;
     border-collapse: collapse;
-    font-size: var(--tumaet-ui-font-size-sm);
-    line-height: var(--tumaet-ui-line-height-sm);
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
 }
 
 .hyperion-markdown-body th,
 .hyperion-markdown-body td {
-    padding: calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 3);
-    border-block-end: 1px solid var(--tumaet-ui-border-color);
+    padding: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
+    border-block-end: 1px solid var(--border-color);
     text-align: start;
     vertical-align: top;
 }
 
 .hyperion-markdown-body th {
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
 }
 
 .hyperion-markdown-body img,
 .hyperion-markdown-body video {
     max-width: 100%;
     height: auto;
-    border-radius: var(--tumaet-ui-radius-md);
+    border-radius: var(--radius-md);
 }
 
 // In forced-colors the code surface disappears into the canvas, so the block needs a real boundary to stay a block.

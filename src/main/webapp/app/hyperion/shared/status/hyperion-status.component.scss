@@ -1,46 +1,38 @@
-// Colour alone never separates two states: `neutral`, `queued` and `unknown` share the muted colour and are told
-// apart by their shape — a filled dot, a ring, and a dashed ring.
-// ---
-// The semantic states take the `-foreground` state colours rather than the raw fills. A dot is a graphical object
-// a reader needs in order to understand the state, so it owes 3:1 against the surface behind it, and the raw
-// warning fill measures 1.63:1 on a light surface — a yellow dot nobody can see is not a warning. Every
-// `-foreground` variant clears 7:1 in both themes.
+// Shape and labels distinguish states that share a color.
 :host {
-    --hyperion-status-size: calc(var(--tumaet-ui-spacing) * 2);
-    --hyperion-status-fill: var(--tumaet-ui-muted-color);
+    --hyperion-status-size: calc(var(--spacing) * 2);
+    --hyperion-status-fill: var(--text-body-secondary);
     --hyperion-status-edge: transparent;
     --hyperion-status-edge-style: solid;
 }
 
 :host([data-state='running']) {
-    --hyperion-status-fill: var(--tumaet-ui-state-info-foreground);
+    --hyperion-status-fill: var(--artemis-alert-info-color);
 }
 
 :host([data-state='success']) {
-    --hyperion-status-fill: var(--tumaet-ui-state-success-foreground);
+    --hyperion-status-fill: var(--artemis-alert-success-color);
 }
 
 :host([data-state='warning']) {
-    --hyperion-status-fill: var(--tumaet-ui-state-warning-foreground);
+    --hyperion-status-fill: var(--artemis-alert-warning-color);
 }
 
 :host([data-state='danger']) {
-    --hyperion-status-fill: var(--tumaet-ui-state-danger-foreground);
+    --hyperion-status-fill: var(--artemis-alert-danger-color);
 }
 
-// Waiting to start: an outline, not a filled dot, so a screenshot separates it from `neutral`. A ring needs a little
-// more room than a filled dot to read as a ring at all, hence the slightly larger size.
+// Queued and unknown states use distinct outlines.
 :host([data-state='queued']) {
-    --hyperion-status-size: calc(var(--tumaet-ui-spacing) * 2.5);
+    --hyperion-status-size: calc(var(--spacing) * 2.5);
     --hyperion-status-fill: transparent;
-    --hyperion-status-edge: var(--tumaet-ui-muted-color);
+    --hyperion-status-edge: var(--text-body-secondary);
 }
 
-// The state could not be determined — a broken outline, and deliberately motionless.
 :host([data-state='unknown']) {
-    --hyperion-status-size: calc(var(--tumaet-ui-spacing) * 2.5);
+    --hyperion-status-size: calc(var(--spacing) * 2.5);
     --hyperion-status-fill: transparent;
-    --hyperion-status-edge: var(--tumaet-ui-muted-color);
+    --hyperion-status-edge: var(--text-body-secondary);
     --hyperion-status-edge-style: dashed;
 }
 
@@ -55,8 +47,7 @@
     background: var(--hyperion-status-fill);
 }
 
-// Only the in-flight states pulse, and only when motion is welcome. Terminal states, `neutral` and `unknown` carry no
-// animation at all, so there is nothing to switch off under reduced motion.
+// Animate only in-flight states when motion is welcome.
 @media (prefers-reduced-motion: no-preference) {
     :host([data-state='queued']) .hyperion-status-indicator,
     :host([data-state='running']) .hyperion-status-indicator {
@@ -83,10 +74,7 @@
     }
 }
 
-// Forced colors discards every fill, so the four semantic states would render as one shape in one colour. What
-// survives is what was load-bearing anyway: the three muted states keep their filled / ring / dashed-ring
-// distinction, and the state word — always rendered, visibly or for assistive technology only — carries the rest.
-// Colour was never allowed to be the only signal here, which is why this block can afford to drop it.
+// Preserve state shapes and labels in forced colors.
 @media (forced-colors: active) {
     .hyperion-status-indicator {
         border-color: CanvasText;
@@ -99,7 +87,7 @@
         background: Canvas;
     }
 
-    // The one distinction worth keeping in colour: "in flight" against everything terminal.
+    // Keep the running state distinct.
     :host([data-state='running']) .hyperion-status-indicator {
         border-color: Highlight;
         background: Highlight;

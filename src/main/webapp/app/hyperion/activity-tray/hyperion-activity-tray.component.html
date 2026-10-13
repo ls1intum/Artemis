@@ -3,7 +3,7 @@
         type="button"
         tumAetUiButton
         variant="text"
-        severity="secondary"
+        severity="contrast"
         size="small"
         class="flex items-center gap-2 whitespace-nowrap"
         data-testid="ai-activity-trigger"
@@ -77,7 +77,15 @@
                                 </button>
                             }
                         </div>
-                        <button type="button" class="activity-card-title" (click)="open(row)" data-testid="ai-activity-open">
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            variant="text"
+                            severity="secondary"
+                            class="w-full! justify-start! whitespace-normal! px-0! py-1! text-start!"
+                            (click)="open(row)"
+                            data-testid="ai-activity-open"
+                        >
                             <span class="flex min-w-0 flex-col gap-1 text-start font-semibold leading-snug">
                                 {{ row.title || (row.kindKey | artemisTranslate) }}
                                 @if (row.targetTitle) {

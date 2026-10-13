@@ -72,7 +72,6 @@
 /* The whole exam mode, and the example solution that only its summary shows. */
 @source './app/exam';
 @source './app/exercise/example-solution';
-
 @source './app/localci/build-queue';
 @source './app/course/request';
 @source './app/shared-ui/user-import';
@@ -81,6 +80,7 @@
 @source './app/shared-ui/delete-dialog';
 @source './app/core/alert';
 @source './app/core/about-us';
+
 /* Lecture editor: the page, its sections, its content and the dialogs and pages it opens lay out with Tailwind. */
 @source './app/lecture/manage/lecture-update';
 
@@ -94,7 +94,6 @@
 
 /* A text unit on its own page. */
 @source './app/lecture/overview/course-lectures/text-unit-fullscreen';
-
 @source './app/core/feature-overview';
 @source './app/core/layouts/footer';
 @source './app/core/navbar/global-search/components/modal/global-search-modal.component.html';
@@ -108,6 +107,7 @@
 @source './app/localci/build-job-statistics';
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/quiz/manage/apollon-diagrams';
+
 /* AI exercise variant generation: the navbar progress tray and the wizard modal. */
 @source './app/core/navbar/variant-generation-tray';
 @source './app/account';
@@ -130,6 +130,7 @@
    chrome (course title bar) and the not-yet-migrated import dialog, so it is scanned without being lockable yet. */
 @source './app/tutorialgroup/manage/tutorial-groups-management';
 @source './app/tutorialgroup/manage/tutorial-group-utilization-indicator';
+
 /* Holidays page: TUM AET UI + Tailwind throughout, but it renders the shared Bootstrap course title bar like the list above. */
 @source './app/tutorialgroup/manage/holidays';
 
@@ -205,6 +206,18 @@
     --tumaet-ui-state-warning-contrast: var(--artemis-alert-warning-background);
     --tumaet-ui-state-info: var(--artemis-alert-info-color);
     --tumaet-ui-state-info-contrast: var(--artemis-alert-info-background);
+}
+
+/* Keep usage labels readable on the page background. */
+.hyperion-run-detail {
+    --p-text-muted-color: var(--body-color);
+}
+
+/* Keep navbar trigger colors local; portalled content retains the body theme. */
+.jh-navbar jhi-hyperion-activity-tray > button {
+    --tumaet-ui-contrast-background: var(--navbar-light-active-color);
+    --tumaet-ui-text-color: var(--navbar-light-color);
+    --tumaet-ui-focus-color: var(--navbar-light-active-color);
 }
 
 /* Preflight is disabled, so provide its semantic default for bare Tailwind border utilities. */

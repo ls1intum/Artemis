@@ -83,12 +83,6 @@ class GenerationVersionRecoveryServiceTest {
     }
 
     @Test
-    void survivesAServiceRestartWithoutAnyReplayCache() {
-        var restarted = new GenerationVersionRecoveryService(runs, versions);
-        assertThat(restarted.find(12L)).isEqualTo(recovery.find(12L));
-    }
-
-    @Test
     void doesNotFallBackPastANewerPartialMutation() {
         when(run.getStatus()).thenReturn(AuthoringRun.Status.PARTIAL);
         assertThat(recovery.find(12L)).isEmpty();

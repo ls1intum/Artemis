@@ -147,6 +147,9 @@ describe('ExerciseVariantAiModalWizardComponent (new-group placement availabilit
             imports: [ExerciseVariantAiModalWizardComponent],
             providers: [
                 { provide: Router, useValue: routerMock },
+                { provide: AccountService, useValue: { userIdentity: signal({ login: 'editor' }) } },
+                { provide: HyperionProgrammingVariantApi, useValue: { generateProgrammingVariant: vi.fn().mockReturnValue(NEVER) } },
+                { provide: HyperionJobRegistryService, useValue: { track: vi.fn() } },
                 {
                     provide: ExerciseVariantGenerationService,
                     useValue: {
@@ -245,6 +248,7 @@ describe('ExerciseVariantAiModalWizardComponent (new-group placement availabilit
         component.goToPlacement();
         fixture.detectChanges();
         const generationService = TestBed.inject(ExerciseVariantGenerationService);
+        const programmingApi = TestBed.inject(HyperionProgrammingVariantApi);
         const input = document.body.querySelector<HTMLInputElement>('input#wiz-group-release')!;
         expect(component.canGenerate()).toBe(true);
 
@@ -256,6 +260,7 @@ describe('ExerciseVariantAiModalWizardComponent (new-group placement availabilit
         expect(component.newGroupReleaseDate()?.isSame(release)).toBe(true);
         expect(component.canGenerate()).toBe(false);
         component.startGeneration();
+        expect(programmingApi.generateProgrammingVariant).not.toHaveBeenCalled();
         expect(generationService.startGeneration).not.toHaveBeenCalled();
         expect(component.wizardStep()).toBe(3);
 
@@ -265,7 +270,8 @@ describe('ExerciseVariantAiModalWizardComponent (new-group placement availabilit
 
         expect(component.canGenerate()).toBe(true);
         component.startGeneration();
-        expect(generationService.startGeneration).toHaveBeenCalledOnce();
+        expect(programmingApi.generateProgrammingVariant).toHaveBeenCalledOnce();
+        expect(generationService.startGeneration).not.toHaveBeenCalled();
     });
 
     it('offers the new-group placement for an individual-mode quiz', async () => {
