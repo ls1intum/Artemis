@@ -24,8 +24,11 @@ import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
  */
 public final class PlantUmlTaskColorResolver {
 
-    /** Captures a single test identifier inside {@code testsColor(...)}. */
-    private static final String TESTS_COLOR_INNER = "(\\s*[^()\\s]+(?:\\([^()]*\\))?)";
+    /**
+     * Captures a single test identifier inside {@code testsColor(...)}. The name may contain spaces (e.g. a JUnit DisplayName), but no parentheses except a trailing parameter
+     * list.
+     */
+    private static final String TESTS_COLOR_INNER = "(\\s*[^()\\s]+(?:[ \\t]+[^()\\s]+)*(?:\\([^()]*\\))?)";
 
     /** {@code <color:testsColor(testName)>text</color>}. Group 1: test identifier, Group 2: inner text. */
     private static final Pattern TESTS_COLOR_TAG_PATTERN = Pattern.compile("<color:testsColor\\(" + TESTS_COLOR_INNER + "\\)>(.*?)</color>");

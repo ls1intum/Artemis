@@ -93,15 +93,20 @@ so it blocks only on genuine regressions rather than on noise:
 `codeql` is deliberately **advisory** (not in the gate's `needs:`): it runs for signal and reds the
 run on a genuine failure, but never blocks merge.
 
-- **`codeql`.** Static security analysis (Java + JS/TS) on every code-relevant PR/push. It is
-  advisory because CodeQL must build the code itself to trace it (it cannot reuse `build`'s WAR),
-  so it is a slow, heavyweight job that should not pace merge — but it runs on the abundant
+- **`codeql`.** Static security analysis (Java + JS/TS) on every PR/push that changes scanned
+  code. It is advisory because CodeQL must build the code itself to trace it (it cannot reuse
+  `build`'s WAR), so it is a slow, heavyweight job that should not pace merge — but it runs on the
   GitHub-hosted pool, in parallel, so it adds no load on the self-hosted runners and no merge
-  latency. Fork PRs are excluded (the SARIF upload needs `security-events: write`, which fork
-  tokens lack); forks are still covered by the post-merge push scan and the weekly scheduled
-  scan. The `schedule:` cron lives in `codeql-analysis.yml` because cron cannot be expressed in a
-  `workflow_call` reusable; that thin remnant reuses `ci-codeql.yml`, so the scan steps exist in
-  one place.
+  latency. That pool is shared with the required jobs, though, and a scan holds a slot for about
+  12 minutes, so the job is skipped when it has nothing new to look at: for draft PRs (promoting
+  one runs it), and when every changed file is a test, a translation, the generated OpenAPI
+  client, a workflow, a skill or documentation (the `codeql_relevant` output of `detect-changes`).
+  The same paths are excluded from analysis in `.github/codeql/codeql-config.yml`; keep the two
+  lists in sync. Edits to `ci.yml`, `ci-codeql.yml` or the config file still run the scan. Fork
+  PRs are excluded (the SARIF upload needs `security-events: write`, which fork tokens lack); forks
+  are still covered by the post-merge push scan and the weekly scheduled scan. The `schedule:` cron
+  lives in `codeql-analysis.yml` because cron cannot be expressed in a `workflow_call` reusable;
+  that thin remnant reuses `ci-codeql.yml`, so the scan steps exist in one place.
 
 To change the required set, edit `all-required-ci-passed`'s `needs:` (and mirror it in
 `ci-summary`'s `ADVISORY` env, which labels the table). Branch protection still references one
@@ -143,6 +148,12 @@ gate closed.
   format and opens PRs that update both the SHA and the comment together — keep the comment
   in that exact shape so it stays auto-maintained.
   The `helpers:pinGitHubActionDigests` preset also pins newly added action references.
+- **The policy is enforced.** `supporting_scripts/check_action_pinning.py` runs in `ci-workflows.yml`
+  and fails on any `uses:` in `.github/workflows` or `.github/actions` that is not a local path,
+  a Docker image digest, or `owner/repo@<40-hex SHA> # vX.Y.Z`. It parses the files with PyYAML,
+  which the Ubuntu runners provide. Run it locally with
+  `python3 supporting_scripts/check_action_pinning.py`; its unit test is
+  `supporting_scripts/test_check_action_pinning.py`.
 
 ## Reusable workflows — `ci-*.yml`
 
