@@ -213,6 +213,13 @@ class GenerationRedisCoordinationTest {
                     String next = jobs.claimRevertSlot(user, 42);
                     jobs.clearRevertSlot(42, next);
                     assertThat(slots.get("42")).isNull();
+                    String partialUndo = jobs.claimRevertSlot(user, 42);
+                    doThrow(new IllegalStateException("conversion unavailable")).doCallRealMethod().when(slots).lock("42");
+                    jobs.retainRevertRecoverySlot(42, partialUndo);
+                    assertThat(slots.get("42").jobId()).isEqualTo(partialUndo);
+                    guard.retryPendingReleases();
+                    assertThat(jobs.isRevertRecoveryPending(42)).isTrue();
+                    assertThat(jobs.recoverWedgedSlot(42, slots.get("42").jobId())).isTrue();
                 }
             }
             finally {

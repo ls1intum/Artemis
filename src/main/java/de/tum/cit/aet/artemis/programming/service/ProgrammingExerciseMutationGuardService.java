@@ -30,6 +30,11 @@ public class ProgrammingExerciseMutationGuardService {
         this.hyperionExerciseMutationApi = hyperionExerciseMutationApi;
     }
 
+    /** @return whether external mutations use the distributed generation fence */
+    public boolean isCoordinationEnabled() {
+        return hyperionExerciseMutationApi.map(HyperionExerciseMutationApi::isCoordinationEnabled).orElse(false);
+    }
+
     /**
      * Claims the distributed mutation slot for an exercise, including on writer nodes where generation is disabled.
      *
@@ -37,7 +42,7 @@ public class ProgrammingExerciseMutationGuardService {
      * @return a lease that releases the slot when closed
      */
     public MutationLease claimExternalMutation(long exerciseId) {
-        if (hyperionExerciseMutationApi.isEmpty() || !hyperionExerciseMutationApi.get().isCoordinationEnabled()) {
+        if (!isCoordinationEnabled()) {
             return NO_OP_LEASE;
         }
         HyperionExerciseMutationApi api = hyperionExerciseMutationApi.get();
