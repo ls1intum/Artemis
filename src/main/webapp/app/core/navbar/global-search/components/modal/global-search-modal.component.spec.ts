@@ -19,6 +19,7 @@ import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Router } from '@angular/router';
 import { GlobalSearchNavigationViewComponent } from '../views/navigation-view/global-search-navigation-view.component';
@@ -85,6 +86,19 @@ describe('GlobalSearchModalComponent', () => {
         isMac: vi.fn(() => true),
     };
 
+    const noTabs = {
+        lectures: false,
+        exams: false,
+        competencies: false,
+        tutorialGroups: false,
+        iris: false,
+        faq: false,
+        learningPaths: false,
+        communication: false,
+        training: false,
+    };
+    const mockCourseManagementService = { getCourseAvailableTabs: vi.fn(() => of(noTabs)) };
+
     const mockSearchService = {
         globalSearch: vi.fn(() => of<GlobalSearchResult[]>([])),
     };
@@ -113,6 +127,7 @@ describe('GlobalSearchModalComponent', () => {
                 { provide: GlobalSearchApi, useValue: mockSearchService },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(true) } },
                 { provide: CourseStorageService, useValue: mockCourseStorageService },
+                { provide: CourseManagementService, useValue: mockCourseManagementService },
             ],
         });
 
@@ -1512,6 +1527,23 @@ describe('GlobalSearchModalComponent', () => {
 
             expect(component['results']().map((result) => result.type)).toEqual(['course_page', 'exercise']);
             expect(component['results']()[0].metadata?.['link']).toBe('/courses/42/statistics');
+        });
+
+        it('offers a guarded course page only when the course has that tab', () => {
+            mockCourseManagementService.getCourseAvailableTabs.mockReturnValue(of({ ...noTabs, lectures: true }));
+            mockCourseStorageService.getCourse.mockReturnValue({ id: 42, title: 'Intro to CS' });
+            Object.defineProperty(router, 'url', { get: () => '/courses/42', configurable: true });
+            mockSearchService.globalSearch.mockReturnValue(of([]));
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            component['onSearchInput']('vorlesungen');
+            vi.advanceTimersByTime(300);
+            expect(component['results']().map((result) => result.metadata?.['link'])).toEqual(['/courses/42/lectures']);
+
+            component['onSearchInput']('faq');
+            vi.advanceTimersByTime(300);
+            expect(component['results']()).toEqual([]);
         });
 
         it('offers no course page without a single course in scope', () => {

@@ -25,6 +25,9 @@ import { LectureSearchService } from '../../services/lecture-search.service';
 import { LECTURE_CONTENT_TYPE, mapLectureContentResult } from '../../models/lecture-content-result.util';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
+import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { matchCoursePages } from '../../models/course-page-results.util';
 
 /** Iris content search is a vector search behind a network hop, so it gets its own, longer ceiling. */
@@ -72,6 +75,8 @@ export class GlobalSearchModalComponent implements OnDestroy {
     private readonly lectureSearchService = inject(LectureSearchService);
     private readonly courseStorageService = inject(CourseStorageService);
     private readonly translateService = inject(TranslateService);
+    private readonly courseManagementService = inject(CourseManagementService);
+    private readonly courseOverviewGuard = inject(CourseOverviewGuard);
 
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowDown = faArrowDown;
@@ -207,7 +212,28 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
     }
 
+    /** The available tabs of the one course the search is scoped to, which decide the guarded course pages it may offer. */
+    private readonly scopedCourseTabs = signal<{ courseId: number; tabs: CourseAvailableTabs } | undefined>(undefined);
+
     constructor() {
+        // Read directly from the endpoint rather than through CourseAvailableTabsService, whose held tabs belong to the
+        // course page the user is on and must not be replaced by a course picked in the palette.
+        effect((onCleanup) => {
+            const courseIds = this.courseIdsParam();
+            if (!this.overlay.isOpen() || courseIds.length !== 1) {
+                return;
+            }
+            const courseId = courseIds[0];
+            if (untracked(this.scopedCourseTabs)?.courseId === courseId) {
+                return;
+            }
+            const subscription = this.courseManagementService
+                .getCourseAvailableTabs(courseId)
+                .pipe(catchError(() => EMPTY))
+                .subscribe((tabs) => this.scopedCourseTabs.set({ courseId, tabs }));
+            onCleanup(() => subscription.unsubscribe());
+        });
+
         // Wire the store's side-effects: a token change re-runs the search pipeline; menu/picker actions refocus input.
         this.filter.configure({
             applyTokens: (tokens) => this.applyTokens(tokens),
@@ -407,7 +433,11 @@ export class GlobalSearchModalComponent implements OnDestroy {
             return [];
         }
         const courseId = courseIds[0];
-        return matchCoursePages(this.searchText(), courseId, this.courseStorageService.getCourse(courseId)?.title, (key) => this.translateService.instant(key));
+        const scopedTabs = this.scopedCourseTabs();
+        const tabs = scopedTabs?.courseId === courseId ? scopedTabs.tabs : undefined;
+        // The guard's own rule decides, so the palette offers exactly the tabs the course page would open.
+        const isAvailable = (segment: string) => !!tabs && this.courseOverviewGuard.decideAccess(courseId, tabs, segment) === true;
+        return matchCoursePages(this.searchText(), courseId, this.courseStorageService.getCourse(courseId)?.title, (key) => this.translateService.instant(key), isAvailable);
     }
 
     /**
