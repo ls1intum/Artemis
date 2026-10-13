@@ -241,6 +241,24 @@ class SearchableEntityMultiVectorWeaviateTest {
     }
 
     @Test
+    void aNewWeaviateKeepsTheCollectionCreatedAtStartupInsteadOfDeletingIt() throws Exception {
+        // No Artemis index yet: the collection the startup created is already current, and deleting it would only leave a
+        // window in which searches and writes fail.
+        dropCollections();
+        client = WeaviateClient.connectToLocal(config -> config.host(weaviate.getHost()).port(weaviate.getMappedPort(8080)).grpcPort(weaviate.getMappedPort(50051)));
+        useModel("model-a");
+        weaviateService.ensureAllCollectionsExist();
+        index(exercise(1L, "Sorting", "Bubble sort and merge sort."));
+        clearInvocations(syncStateRepository);
+
+        assertThat(rebuildService("model-a").ensureIndexMatchesConfiguration()).isTrue();
+
+        assertThat(stored(1L)).as("the collection was not deleted").isPresent();
+        verify(syncStateRepository).deleteAllForRebuild();
+        assertThat(rebuildService("model-a").ensureIndexMatchesConfiguration()).isFalse();
+    }
+
+    @Test
     void aRebuildAlsoReplacesTheIndexOfAnInstallationFromBeforeSignatures() throws Exception {
         // The first layout: an Exercises collection and a version object without a signature.
         dropCollections();

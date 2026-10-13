@@ -33,7 +33,8 @@ import io.weaviate.client6.v1.api.collections.VectorConfig;
  * after upgrading from the layout with one vector over the whole row or after a model change, the collection is
  * rebuilt:
  * <ol>
- * <li>the old collections are deleted and the new one is created;</li>
+ * <li>the old collections are deleted and the new one is created (on a Weaviate without an earlier Artemis index, the
+ * collection created at startup is kept);</li>
  * <li>the sync ledger and the reconcile positions are cleared, so the missing pass re-indexes every managed entity
  * from the database;</li>
  * <li>the {@link ReconcilePass#REFILL} pass is started for posts and answer posts, which no other pass manages;</li>
@@ -99,7 +100,7 @@ public class SearchableEntityIndexRebuildService {
      * @throws IOException if Weaviate cannot be reached; the caller retries
      */
     public boolean ensureIndexMatchesConfiguration() throws IOException {
-        ensureVersionCollectionExists();
+        boolean newWeaviate = ensureVersionCollectionExists();
         String desired = desiredSignature();
         String stored = readStoredSignature().orElse(null);
         if (desired.equals(stored)) {
@@ -108,7 +109,9 @@ public class SearchableEntityIndexRebuildService {
         }
         log.warn("The global search index was built for '{}' but the configuration needs '{}'. Rebuilding it from the database; search results stay incomplete until the "
                 + "reconcile passes have re-indexed every entity.", stored, desired);
-        deleteIfExists(properties.collectionPrefix() + SearchableEntitySchema.COLLECTION_NAME);
+        if (!newWeaviate) {
+            deleteIfExists(properties.collectionPrefix() + SearchableEntitySchema.COLLECTION_NAME);
+        }
         deleteIfExists(properties.collectionPrefix() + LEGACY_EXERCISES_COLLECTION);
         weaviateService.ensureAllCollectionsExist();
         syncStateRepository.deleteAllForRebuild();
@@ -148,15 +151,21 @@ public class SearchableEntityIndexRebuildService {
 
     /**
      * Creates the version collection, or adds the signature property to one created before signatures existed.
+     * <p>
+     * Every Artemis version with global search created this collection, so its absence means the Weaviate holds no
+     * Artemis index yet: the {@code SearchableEntities} collection was just created at startup with the current
+     * configuration, and the rebuild does not need to delete it.
+     *
+     * @return whether the collection was created now, that is, whether this Weaviate holds no earlier Artemis index
      */
-    private void ensureVersionCollectionExists() throws IOException {
+    private boolean ensureVersionCollectionExists() throws IOException {
         String name = properties.collectionPrefix() + VERSION_COLLECTION_BASE_NAME;
         if (client.collections.exists(name)) {
             var config = client.collections.getConfig(name);
             if (config.isPresent() && config.get().properties().stream().noneMatch(property -> INDEX_SIGNATURE_PROPERTY.equals(property.propertyName()))) {
                 client.collections.use(name).config.addProperty(Property.text(INDEX_SIGNATURE_PROPERTY));
             }
-            return;
+            return false;
         }
         try {
             client.collections.create(name, config -> {
@@ -165,12 +174,14 @@ public class SearchableEntityIndexRebuildService {
                 return config;
             });
             log.info("Created schema version collection '{}'", name);
+            return true;
         }
         catch (WeaviateApiException exception) {
             if (!isAlreadyExists(exception)) {
                 throw exception;
             }
             log.debug("Collection '{}' was created concurrently, ignoring", name);
+            return false;
         }
     }
 
