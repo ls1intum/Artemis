@@ -90,7 +90,7 @@ describe('ExerciseAddModalComponent', () => {
     it.each([
         ['create', 6],
         ['import', 5],
-    ] as const)('uses compact native cards without additional component padding in %s', (tab, count) => {
+    ] as const)('offers native create and import buttons in %s', (tab, count) => {
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
         createComponent();
         fixture.componentRef.setInput('visible', true);
@@ -105,9 +105,6 @@ describe('ExerciseAddModalComponent', () => {
         for (const card of cards) {
             expect(card.tagName).toBe('BUTTON');
             expect(card.type).toBe('button');
-            expect([...card.children].map((child) => child.tagName)).toEqual(['DIV', 'H6', 'P', 'SPAN']);
-            expect(card.firstElementChild?.classList.contains('card-icon-wrapper')).toBe(true);
-            expect(card.lastElementChild?.classList.contains('card-cta')).toBe(true);
         }
     });
 

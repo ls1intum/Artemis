@@ -91,18 +91,15 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         }));
     });
     readonly isSelectedAsFeedback = computed(() => this.reviewCommentService.isThreadSelectedAsFeedback(this.thread().id));
-    /**
-     * Whether this thread can feed an AI adaptation: the editor offers adaptation (see {@link ExerciseReviewCommentService.connectAdaptation}) and the thread sits in
-     * a repository the adaptation writes to. Auxiliary repositories are outside what it changes.
-     */
-    readonly showFeedbackAction = computed(() => this.reviewCommentService.adaptationOffered() && this.thread().targetType !== CommentThreadLocationType.AUXILIARY_REPO);
+    /** Feedback selection is shared by legacy generation and whole-exercise adaptation. */
+    readonly showFeedbackAction = computed(() => this.reviewCommentService.feedbackSelectionOffered() && this.thread().targetType !== CommentThreadLocationType.AUXILIARY_REPO);
     /** Why the "Adapt with feedback" shortcut is disabled right now (translation key), or `undefined` while it can run. */
     readonly adaptBlockedReason = computed(() => this.reviewCommentService.adaptationBlockedReason());
     readonly firstComment = computed(() => this.orderedComments()[0]);
     readonly firstConsistencyIssueContent = computed(() => consistencyIssueContentOf(this.firstComment()));
     readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
     /** Whether to offer the per-thread "Adapt with feedback" shortcut: an open thread on an editor that offers adaptation. Blocked state disables it with a reason. */
-    readonly canAdaptExercise = computed(() => this.showFeedbackAction() && !this.thread().resolved && !this.thread().outdated);
+    readonly canAdaptExercise = computed(() => this.reviewCommentService.adaptationOffered() && this.showFeedbackAction() && !this.thread().resolved && !this.thread().outdated);
     readonly consistencySuggestedInlineFix = computed<InlineCodeChange | undefined>(() => this.getValidSuggestedInlineFix(this.firstConsistencyIssueContent()?.suggestedFix));
     readonly showInlineFixOutdatedWarning = signal(false);
     readonly canResolveGroup = computed(() => {

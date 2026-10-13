@@ -20,8 +20,6 @@ import {
     faArrowRight,
     faBan,
     faCheckDouble,
-    faCircleExclamation,
-    faCircleInfo,
     faCircleNotch,
     faPlus,
     faSave,
@@ -29,7 +27,6 @@ import {
     faTableColumns,
     faTimes,
     faTimesCircle,
-    faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorHeight } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -234,9 +231,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly faBan = faBan;
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faArrowRight = faArrowRight;
-    protected readonly faCircleExclamation = faCircleExclamation;
-    protected readonly faTriangleExclamation = faTriangleExclamation;
-    protected readonly faCircleInfo = faCircleInfo;
 
     protected readonly faSpinner = faSpinner;
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
@@ -281,7 +275,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
         // Review threads offer feedback selection and the adaptation shortcut through the shared review service, so the
         // generic editors between here and the thread widgets carry no Hyperion inputs.
-        this.exerciseReviewCommentService.connectAdaptation({ offered: this.adaptOffered, blockedReason: this.adaptBlockedReason });
+        this.exerciseReviewCommentService.connectAdaptation({
+            offered: this.adaptOffered,
+            feedbackOffered: computed(() => this.adaptOffered() || this.legacyCodeGenerationOffered()),
+            blockedReason: this.adaptBlockedReason,
+        });
         this.exerciseReviewCommentService.adaptationRequests.pipe(takeUntilDestroyed()).subscribe((request) => this.adaptFromThread(request));
     }
 
@@ -811,28 +809,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-     * Returns the appropriate FontAwesome icon for the given severity.
-     *
-     * @param {ConsistencyIssueSeverityEnum} severity
-     *        The severity that determines the returned icon.
-     *
-     * @returns
-     *          A FontAwesome icon representing high, medium, or low severity.
-     */
-    getSeverityIcon(severity: ConsistencyIssueSeverityEnum | undefined) {
-        switch (severity) {
-            case 'HIGH':
-                return this.faCircleExclamation;
-            case 'MEDIUM':
-                return this.faTriangleExclamation;
-            case 'LOW':
-                return this.faCircleInfo;
-            default:
-                return this.faCircleInfo;
-        }
-    }
-
-    /**
      * Reverts all changes made during the refinement session and restores the original/snapshot state.
      * Syncs the reverted content back to the model.
      */
@@ -869,28 +845,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     onInlineRefinement(event: InlineRefinementEvent): void {
         if (this.isExerciseGenerationActionBlocked()) return;
         this.aiOps.onInlineRefinement(this.exercise(), this.editableInstructions(), event);
-    }
-
-    /**
-     * Returns a Bootstrap text color class based on an issue's severity.
-     *
-     * @param {ConsistencyIssueSeverityEnum} severity
-     *        The severity that determines the color.
-     *
-     * @returns
-     *          A text color class (`text-danger`, `text-warning`, `text-info`, or `text-secondary`).
-     */
-    getSeverityColor(severity: ConsistencyIssueSeverityEnum | undefined) {
-        switch (severity) {
-            case 'HIGH':
-                return 'text-danger';
-            case 'MEDIUM':
-                return 'text-warning';
-            case 'LOW':
-                return 'text-info';
-            default:
-                return 'text-secondary';
-        }
     }
 
     readonly totalLocationsCount = computed(() => this.sortedIssues().length);

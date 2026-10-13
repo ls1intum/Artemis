@@ -35,12 +35,13 @@
             }
 
             @if (rows().length === 0) {
-                <tumaet-ui-empty size="small" data-testid="hyperion-jobs-indicator-empty">
-                    <tumaet-ui-empty-header>
-                        <tumaet-ui-empty-title><span jhiTranslate="artemisApp.hyperion.jobs.empty"></span></tumaet-ui-empty-title>
-                        <tumaet-ui-empty-description><span jhiTranslate="artemisApp.hyperion.jobs.emptyHint"></span></tumaet-ui-empty-description>
-                    </tumaet-ui-empty-header>
-                </tumaet-ui-empty>
+                <tumaet-ui-empty-state
+                    variant="plain"
+                    class="p-4"
+                    data-testid="hyperion-jobs-indicator-empty"
+                    [title]="'artemisApp.hyperion.jobs.empty' | artemisTranslate"
+                    [description]="'artemisApp.hyperion.jobs.emptyHint' | artemisTranslate"
+                />
             } @else {
                 <ul data-testid="hyperion-jobs-list" class="m-0 list-none divide-y divide-border p-0" [attr.aria-label]="'artemisApp.hyperion.jobs.title' | artemisTranslate">
                     @for (row of rows(); track row.jobId) {

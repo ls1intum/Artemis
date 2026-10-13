@@ -6,6 +6,7 @@ import { AdminSidebarComponent } from 'app/admin/admin-sidebar/admin-sidebar.com
 import { AdminTitleBarComponent } from 'app/admin/shared/admin-title-bar/admin-title-bar.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import {
+    MODULE_FEATURE_AIWORKER,
     MODULE_FEATURE_ATLAS,
     MODULE_FEATURE_EXAM,
     MODULE_FEATURE_GLOBAL_SEARCH,
@@ -56,12 +57,14 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
     readonly isSuperAdmin = signal(false);
     readonly irisEnabled = signal(false);
     readonly hyperionGenerationEnabled = signal(false);
+    readonly aiWorkerEnabled = signal(false);
     readonly weaviateEnabled = signal(false);
 
     private standardizedCompetencySubscription?: Subscription;
     private routerSubscription?: Subscription;
 
     ngOnInit() {
+        this.aiWorkerEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_AIWORKER));
         this.hyperionGenerationEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION));
         this.atlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
         this.examEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM));

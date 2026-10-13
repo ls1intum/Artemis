@@ -122,9 +122,10 @@ describe('ExerciseReviewCommentService', () => {
         expect(syncServiceMock.subscribeToUpdates).toHaveBeenCalledTimes(1);
     });
 
-    it('reloadThreads should clear state and show alert on failure', () => {
+    it('reloadThreads should retain feedback after a failed reload until an authoritative response', () => {
         service.setExercise(2);
         service.threads.set([{ id: 99 } as any]);
+        service.selectThreadAsFeedback(99);
 
         service.reloadThreads();
 
@@ -132,6 +133,13 @@ describe('ExerciseReviewCommentService', () => {
         req.flush('failed', { status: 500, statusText: 'Server Error' });
 
         expect(service.threads()).toEqual([]);
+        expect(service.selectedFeedbackThreadIds()).toEqual([99]);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/2/review-threads').flush([{ id: 99 }]);
+        expect(service.selectedFeedbackThreadIds()).toEqual([99]);
+        service.reloadThreads();
+        httpMock.expectOne('api/exercise/exercises/2/review-threads').flush([]);
+        expect(service.selectedFeedbackThreadIds()).toEqual([]);
         expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.review.loadFailed');
         expect(syncServiceMock.subscribeToUpdates).toHaveBeenCalledTimes(1);
     });
@@ -440,6 +448,15 @@ describe('ExerciseReviewCommentService', () => {
             expect(service.adaptationOffered()).toBe(true);
             blockedReason.set('artemisApp.review.adaptExercise.runInProgress');
             expect(service.adaptationBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
+        });
+
+        it('offers legacy feedback independently of whole-exercise adaptation', () => {
+            const feedbackOffered = signal(true);
+            service.connectAdaptation({ offered: signal(false), feedbackOffered, blockedReason: signal(undefined) });
+            expect(service.feedbackSelectionOffered()).toBe(true);
+            expect(service.adaptationOffered()).toBe(false);
+            feedbackOffered.set(false);
+            expect(service.feedbackSelectionOffered()).toBe(false);
         });
 
         it('requestAdaptation should be a no-op when adaptation is not offered', () => {

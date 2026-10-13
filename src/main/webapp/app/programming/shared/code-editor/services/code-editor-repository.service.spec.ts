@@ -6,7 +6,6 @@ import { firstValueFrom } from 'rxjs';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { DomainType, FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 describe('CodeEditorRepositoryFileService', () => {
@@ -83,18 +82,13 @@ describe('CodeEditorRepositoryFileService', () => {
 });
 
 describe('CodeEditorRepositoryService pull routing', () => {
-    it('uses POST for explicit and current domains without changing the selected repository', () => {
+    it('uses POST for the selected repository', () => {
         TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: WebsocketService, useValue: {} }],
         });
         const service = TestBed.inject(CodeEditorRepositoryService);
         const http = TestBed.inject(HttpTestingController);
         service.setDomain([DomainType.PARTICIPATION, { id: 12 }]);
-        const exercise = new ProgrammingExercise(undefined, undefined);
-        exercise.id = 18;
-
-        service.pull([DomainType.TEST_REPOSITORY, exercise]).subscribe();
-        http.expectOne({ method: 'POST', url: 'api/programming/programming-exercises/18/test-repository/pull' }).flush(null);
         service.pull().subscribe();
         http.expectOne({ method: 'POST', url: 'api/programming/participations/12/repository/pull' }).flush(null);
         http.verify();

@@ -24,6 +24,8 @@ type ReviewCommentSuccessCallback = () => void;
 export interface ReviewAdaptationAvailability {
     /** Whether this deployment offers whole-exercise adaptation for the open exercise. */
     offered: Signal<boolean>;
+    /** Whether feedback selection is available, including legacy code generation. */
+    feedbackOffered?: Signal<boolean>;
     /** Translation key for why adaptation cannot start right now; `undefined` when it can. */
     blockedReason: Signal<string | undefined>;
 }
@@ -62,8 +64,9 @@ export class ExerciseReviewCommentService implements OnDestroy {
     readonly selectedFeedbackThreadIds = signal<number[]>([]);
 
     private readonly adaptation = signal<ReviewAdaptationAvailability | undefined>(undefined);
-    /** Whether review threads should offer feedback selection and the adaptation shortcut at all. */
+    /** Whether review threads should offer the whole-exercise adaptation shortcut. */
     readonly adaptationOffered = computed(() => this.adaptation()?.offered() ?? false);
+    readonly feedbackSelectionOffered = computed(() => this.adaptation()?.feedbackOffered?.() ?? this.adaptationOffered());
     /** Why the adaptation shortcut on a thread is disabled right now, or `undefined` when it is available. */
     readonly adaptationBlockedReason = computed(() => this.adaptation()?.blockedReason());
     private readonly adaptationRequestSubject = new Subject<ReviewAdaptationRequest>();
@@ -147,7 +150,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
                 if (this.activeExerciseId !== exerciseId || this.reloadSequence !== reloadId) {
                     return;
                 }
-                this.setThreads(this.applyQueuedSyncUpdates([], this.pendingSyncUpdates));
+                this.threads.set(this.applyQueuedSyncUpdates([], this.pendingSyncUpdates));
                 this.pendingSyncUpdates = [];
                 this.isReloading = false;
                 this.alertService.error('artemisApp.review.loadFailed');

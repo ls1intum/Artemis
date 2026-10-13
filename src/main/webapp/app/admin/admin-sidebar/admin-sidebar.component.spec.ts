@@ -43,6 +43,19 @@ describe('AdminSidebarComponent', () => {
         expect(workerEntries()[0].testId).toBe('admin-hyperion-workers');
     });
 
+    it('hides worker monitoring when disabled and offers it independently of Hyperion', () => {
+        const workers = () =>
+            component
+                .sidebarGroups()
+                .flatMap((group) => group.items)
+                .filter((item) => item.routerLink === '/admin/ai-workers');
+        expect(workers()).toHaveLength(0);
+        fixture.componentRef.setInput('aiWorkerEnabled', true);
+        fixture.detectChanges();
+        expect(workers()).toHaveLength(1);
+        expect(component.hyperionGenerationEnabled()).toBe(false);
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });

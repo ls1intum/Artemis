@@ -54,8 +54,6 @@ export function storybookStoryFromHash(hash: string): string {
             return 'feedback-progress-bar--docs';
         case 'feedback-progress-spinner':
             return 'feedback-progress-spinner--docs';
-        case 'feedback-skeleton':
-            return 'feedback-skeleton--docs';
         case 'feedback-status-dot':
             return 'feedback-status-dot--docs';
         case 'feedback-stepper':

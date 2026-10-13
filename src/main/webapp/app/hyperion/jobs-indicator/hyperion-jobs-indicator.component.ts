@@ -6,10 +6,7 @@ import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import {
     TumAetUiButtonDirective,
-    TumAetUiEmptyComponent,
-    TumAetUiEmptyDescriptionComponent,
-    TumAetUiEmptyHeaderComponent,
-    TumAetUiEmptyTitleComponent,
+    TumAetUiEmptyStateComponent,
     TumAetUiMessageComponent,
     TumAetUiPopoverComponent,
     TumAetUiPopoverTriggerDirective,
@@ -90,10 +87,7 @@ export interface HyperionJobRow {
         ArtemisTranslatePipe,
         TranslateDirective,
         TumAetUiButtonDirective,
-        TumAetUiEmptyComponent,
-        TumAetUiEmptyDescriptionComponent,
-        TumAetUiEmptyHeaderComponent,
-        TumAetUiEmptyTitleComponent,
+        TumAetUiEmptyStateComponent,
         TumAetUiMessageComponent,
         TumAetUiPopoverComponent,
         TumAetUiPopoverTriggerDirective,
