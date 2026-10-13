@@ -46,6 +46,8 @@
         "search": {
             "title": "Search",
             "placeholder": "Search or ask a question...",
+            "contentHitsRow": "Slides & videos: {{ count }} hits in {{ lectures }}",
+            "contentHitsRowAction": "Show",
             "noResultsFound": "No results found",
             "searchPlaceholder": "Search...",
             "tooShortQueryHint": "Please enter a longer search term.",

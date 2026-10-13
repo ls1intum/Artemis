@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, viewChild, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChild, viewChildren } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     faBook,
     faCalendarCheck,
@@ -34,7 +35,7 @@ import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-
     selector: 'jhi-global-search-navigation-view',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [GlobalSearchIrisAnswerComponent, SearchResultItemComponent, SkeletonModule, ArtemisTranslatePipe],
+    imports: [GlobalSearchIrisAnswerComponent, SearchResultItemComponent, SkeletonModule, ArtemisTranslatePipe, FaIconComponent],
     templateUrl: './global-search-navigation-view.component.html',
     styleUrls: ['./global-search-navigation-view.component.scss'],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],
@@ -58,6 +59,19 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly excludeCourseIds = input<number[]>([]);
     /** True while the slides and videos filter is the active one, which searches content instead of metadata. */
     readonly contentSearchActive = input<boolean>(false);
+    /** Slide and video hits for the query, offered as one row above the results. */
+    readonly contentPreview = input<GlobalSearchResult[]>([]);
+    readonly showContentHits = output<void>();
+
+    protected readonly faPhotoFilm = faPhotoFilm;
+    protected readonly hasContentRow = computed(() => !this.contentSearchActive() && this.contentPreview().length > 0);
+    /** The row is the first selectable item, so the results start one position later while it is shown. */
+    protected readonly contentRowOffset = computed(() => (this.hasContentRow() ? 1 : 0));
+    /** The distinct lectures of the hits, the first two by name, in hit order. */
+    protected readonly contentLectureNames = computed(() => {
+        const names = [...new Set(this.contentPreview().map((hit) => hit.metadata?.['lectureName'] as string | undefined))].filter((name): name is string => !!name);
+        return names.length > 2 ? `${names.slice(0, 2).join(', ')}, …` : names.join(', ');
+    });
 
     /**
      * True when the query is too short to send to the server (1-2 chars).
@@ -130,7 +144,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     protected readonly faCalendarCheck = faCalendarCheck;
 
     // Total selectable items reported to the modal to bound ArrowDown/ArrowUp.
-    readonly itemCount = computed(() => this.results().length);
+    readonly itemCount = computed(() => this.results().length + this.contentRowOffset());
 
     protected readonly faHashtag = faHashtag;
 
@@ -308,7 +322,11 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         if (idx < 0) return;
 
         event.preventDefault();
-        const result = this.results()[idx];
+        if (this.hasContentRow() && idx === 0) {
+            this.showContentHits.emit();
+            return;
+        }
+        const result = this.results()[idx - this.contentRowOffset()];
         if (result) {
             this.navigateToResult(result);
         }

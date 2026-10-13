@@ -22,7 +22,7 @@ import { FilterToken } from '../../models/search-token.model';
 import { removeTokenAt } from '../../models/search-token.util';
 import { IrisSearchAvailabilityService } from '../../services/iris-search-availability.service';
 import { LectureSearchService } from '../../services/lecture-search.service';
-import { mapLectureContentResult } from '../../models/lecture-content-result.util';
+import { LECTURE_CONTENT_TYPE, mapLectureContentResult } from '../../models/lecture-content-result.util';
 import { HttpErrorResponse } from '@angular/common/http';
 
 /** Iris content search is a vector search behind a network hop, so it gets its own, longer ceiling. */
@@ -104,6 +104,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
     });
     protected readonly results = signal<GlobalSearchResult[]>([]);
     protected readonly isLoading = signal<boolean>(false);
+    /** Slide and video hits for the current query, shown as one row above the results while content search is not active. */
+    protected readonly contentPreview = signal<GlobalSearchResult[]>([]);
+    private readonly contentPreviewSubject = new Subject<SearchState | null>();
     protected readonly hasSearched = signal<boolean>(false);
     protected readonly searchError = signal<string | undefined>(undefined);
     protected readonly selectedIndex = signal(-1);
@@ -306,6 +309,32 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 this.hasSearched.set(true);
             });
 
+        // A light, parallel content search: it only feeds the row that offers to switch to the slides-and-videos
+        // search, so a failure just hides the row.
+        this.contentPreviewSubject
+            .pipe(
+                switchMap((event) => {
+                    if (event === null) {
+                        return of([]);
+                    }
+                    const courseIds = this.courseIdsParam();
+                    const excludeCourseIds = this.excludeCourseIdsParam();
+                    return timer(SEARCH_DEBOUNCE_MS).pipe(
+                        switchMap(() =>
+                            this.lectureSearchService
+                                .search(event.query, CONTENT_SEARCH_LIMIT, courseIds.length ? courseIds : undefined, excludeCourseIds.length ? excludeCourseIds : undefined)
+                                .pipe(
+                                    timeout(CONTENT_SEARCH_TIMEOUT_MS),
+                                    map((results) => results.map(mapLectureContentResult)),
+                                    catchError(() => of([])),
+                                ),
+                        ),
+                    );
+                }),
+                takeUntilDestroyed(),
+            )
+            .subscribe((hits) => this.contentPreview.set(hits));
+
         this.router.events
             .pipe(
                 filter((e) => e instanceof NavigationEnd),
@@ -353,6 +382,26 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.searchSubject.next({ query: '' });
     }
 
+    /**
+     * Asks for the slide and video hits of the query when the content row can be offered: the user opted into AI, the
+     * slides-and-videos search is not already active, and the query is long enough to search.
+     */
+    private requestContentPreview(query: string): void {
+        const offersRow = !this.contentSearchActive() && this.availability.contentSearchAvailable() && query.trim().length >= MIN_SEARCH_QUERY_LENGTH;
+        if (!offersRow) {
+            this.contentPreview.set([]);
+        }
+        this.contentPreviewSubject.next(offersRow ? { query: query.trim() } : null);
+    }
+
+    /** Switches to the slides-and-videos search for the current query, keeping the course filters. */
+    protected showContentHits(): void {
+        // A type chip cannot stay next to the slides-and-videos chip, which reads a different index; course chips can.
+        const courseTokens = this.tokens().filter((token) => token.facet !== 'type');
+        this.applyTokens([...courseTokens, { facet: 'type', value: LECTURE_CONTENT_TYPE }]);
+        this.focusInput();
+    }
+
     protected onSearchInput(query: string): void {
         this.searchQuery.set(query);
         this.searchError.set(undefined);
@@ -381,6 +430,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 this.isLoading.set(true);
             }
             this.searchSubject.next({ query: text });
+            this.requestContentPreview(text);
         }
         this.returnHomeIfEmpty();
     }
@@ -545,12 +595,14 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
         this.lastSearchText = query;
         this.searchSubject.next({ query });
+        this.requestContentPreview(query);
     }
 
     private resetSearch() {
         this.lastSearchText = '';
         this.chipKeyOrigin = undefined;
         this.searchSubject.next(null);
+        this.contentPreviewSubject.next(null);
         this.filter.reset();
         this.results.set([]);
         this.selectedIndex.set(-1);

@@ -578,6 +578,40 @@ describe('GlobalSearchModalComponent', () => {
             vi.useRealTimers();
         });
 
+        it('offers the slide and video hits of a metadata search as a row', () => {
+            const search = vi.spyOn(lectureSearch, 'search').mockReturnValue(of([contentHit]));
+
+            component['onSearchInput']('backpropagation');
+            vi.advanceTimersByTime(300);
+
+            expect(mockSearchService.globalSearch).toHaveBeenCalled();
+            expect(search).toHaveBeenCalledWith('backpropagation', 10, undefined, undefined);
+            expect(component['contentPreview']()).toHaveLength(1);
+        });
+
+        it('asks for no slide and video hits without the AI opt-in', () => {
+            TestBed.inject(AccountService).userIdentity.set({} as User);
+            const search = vi.spyOn(lectureSearch, 'search').mockReturnValue(of([contentHit]));
+
+            component['onSearchInput']('backpropagation');
+            vi.advanceTimersByTime(300);
+
+            expect(search).not.toHaveBeenCalled();
+            expect(component['contentPreview']()).toHaveLength(0);
+        });
+
+        it('switches to the slides-and-videos search from the row and keeps the course chips', () => {
+            vi.spyOn(lectureSearch, 'search').mockReturnValue(of([contentHit]));
+            component['applyTokens']([
+                { facet: 'course', value: '42' },
+                { facet: 'type', value: 'exercise' },
+            ]);
+
+            component['showContentHits']();
+
+            expect(component['tokens']()).toEqual([{ facet: 'course', value: '42' }, contentToken]);
+        });
+
         it('searches the Iris collections instead of the metadata index', () => {
             const search = vi.spyOn(lectureSearch, 'search').mockReturnValue(of([contentHit]));
             component['applyTokens']([contentToken]);
