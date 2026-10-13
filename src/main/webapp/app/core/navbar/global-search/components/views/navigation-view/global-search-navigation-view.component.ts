@@ -306,7 +306,12 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
     @HostListener('window:keydown', ['$event'])
     handleKeydown(event: KeyboardEvent): void {
-        if (event.key !== 'Enter' || event.defaultPrevented || (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))) {
+        // Enter on a focused control (the Iris card, or "Show more results" reached with Tab) belongs to that control.
+        if (
+            event.key !== 'Enter' ||
+            event.defaultPrevented ||
+            (event.target instanceof Element && (event.target.closest('jhi-global-search-iris-answer') || event.target.closest('button')))
+        ) {
             return;
         }
         const idx = this.selectedIndex();

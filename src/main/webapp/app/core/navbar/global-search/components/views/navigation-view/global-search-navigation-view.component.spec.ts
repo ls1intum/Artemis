@@ -104,6 +104,22 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(preventDefaultSpy).toHaveBeenCalled();
             });
 
+            it('leaves Enter on a focused button to the button', () => {
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', [{ id: '123', type: 'exercise', metadata: { courseId: 1 } }] as GlobalSearchResult[]);
+                fixture.componentRef.setInput('selectedIndex', 0);
+                fixture.detectChanges();
+                const button = document.createElement('button');
+                document.body.appendChild(button);
+                const event = new KeyboardEvent('keydown', { key: 'Enter' });
+                Object.defineProperty(event, 'target', { value: button });
+
+                component.handleKeydown(event);
+
+                expect(router.navigate).not.toHaveBeenCalled();
+                button.remove();
+            });
+
             it('should navigate to the result at the selected index on Enter', () => {
                 fixture.componentRef.setInput('showResults', true);
                 fixture.componentRef.setInput('results', [{ id: '123', type: 'exercise', metadata: { courseId: 1 } }] as GlobalSearchResult[]);

@@ -48,7 +48,8 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     faqElements = viewChildren<ElementRef>('faqElement');
 
     courseId!: number; // set in ngOnInit() from the parent route paramMap
-    referencedFaqId!: number; // set in ngOnInit() from the route queryParamMap
+    /** The FAQ named by the `faqId` query parameter; follows the parameter while the page stays open. */
+    readonly referencedFaqId = signal<number | undefined>(undefined);
     readonly faqs = signal<Faq[]>([]);
     faqState = FaqState.ACCEPTED;
 
@@ -65,18 +66,22 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     readonly faFilter = faFilter;
 
     private tabReselectionSubscription?: Subscription;
+    private queryParamSubscription?: Subscription;
 
     constructor() {
         effect(() => {
-            if (this.referencedFaqId) {
-                this.scrollToFaq(this.referencedFaqId);
+            const referencedFaqId = this.referencedFaqId();
+            if (referencedFaqId) {
+                this.scrollToFaq(referencedFaqId);
             }
         });
     }
 
     ngOnInit(): void {
         this.courseId = Number(this.route.parent!.snapshot.paramMap.get('courseId'));
-        this.referencedFaqId = Number(this.route.snapshot.queryParamMap.get('faqId'));
+        // The router reuses this page when only the query changes, for example when global search opens another FAQ from
+        // here, so the parameter is followed rather than read once.
+        this.queryParamSubscription = this.route.queryParamMap.subscribe((params) => this.referencedFaqId.set(Number(params.get('faqId')) || undefined));
 
         this.loadFaqs();
         this.loadCourseExerciseCategories(this.courseId);
@@ -114,6 +119,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.tabReselectionSubscription?.unsubscribe();
+        this.queryParamSubscription?.unsubscribe();
         this.searchInput.complete();
     }
 

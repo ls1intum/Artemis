@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -40,6 +40,7 @@ describe('CourseFaqs', () => {
     let faq1: Faq;
     let faq2: Faq;
     let faq3: Faq;
+    let queryParams: BehaviorSubject<ParamMap>;
 
     afterEach(() => {
         vi.restoreAllMocks();
@@ -50,6 +51,7 @@ describe('CourseFaqs', () => {
         faq1 = createFaq(1, 'category1', '#94a11c');
         faq2 = createFaq(2, 'category2', '#0ab84f');
         faq3 = createFaq(3, 'category3', '#0ab84f');
+        queryParams = new BehaviorSubject(convertToParamMap({ faqId: '1' }));
 
         TestBed.configureTestingModule({
             imports: [
@@ -76,6 +78,7 @@ describe('CourseFaqs', () => {
                         snapshot: {
                             queryParamMap: convertToParamMap({ faqId: '1' }),
                         },
+                        queryParamMap: queryParams,
                     },
                 },
                 MockProvider(FaqService, {
@@ -206,5 +209,14 @@ describe('CourseFaqs', () => {
         courseFaqComponent.scrollToFaq(1);
 
         expect(nativeElement1.scrollIntoView).toHaveBeenCalledExactlyOnceWith({ behavior: 'smooth', block: 'start' });
+    });
+
+    it('follows a faqId that changes while the page stays open', () => {
+        courseFaqComponentFixture.detectChanges();
+        expect(courseFaqComponent.referencedFaqId()).toBe(1);
+
+        queryParams.next(convertToParamMap({ faqId: '3' }));
+
+        expect(courseFaqComponent.referencedFaqId()).toBe(3);
     });
 });

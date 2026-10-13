@@ -3,11 +3,10 @@ package de.tum.cit.aet.artemis.globalsearch.service;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
@@ -26,7 +25,8 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
  * <li>Without a query (browsing a filter), rows have no relevance order; they are sorted by course, running courses and
  * then the most recently ended first, and by title within a course.</li>
  * <li>The same item in several semesters of a course (same type and title in courses whose titles only differ in the
- * semester) is shown once, from the newest course.</li>
+ * semester) is shown once, from the best-ranked course. Lecture units are never merged: their names, such as "Slides",
+ * repeat across lectures, and a row does not name its lecture.</li>
  * </ul>
  */
 public final class GlobalSearchResultRanker {
@@ -69,15 +69,21 @@ public final class GlobalSearchResultRanker {
         Comparator<Ranked> order = hasQuery ? Comparator.comparingDouble(Ranked::score).reversed().thenComparingInt(Ranked::position) : browseOrder(now);
         ranked.sort(order);
 
-        // Sorting put the newest course first among equally relevant copies; keep only that one. The kept copy is the one
-        // with the best score, which is what the reader wants: the current semester unless an old one matched much better.
-        Set<String> seenTwins = new HashSet<>();
+        // Sorting put the best copy first; keep only that one. It is the copy with the best score, which is what the reader
+        // wants: the current semester unless an old one matched much better. Only copies in other courses are dropped: two
+        // rows with the same key in one course are different items, such as two units named "Slides" in two lectures.
+        Map<String, Long> courseOfKeptCopy = new HashMap<>();
         List<Map<String, Object>> result = new ArrayList<>(ranked.size());
         for (Ranked entry : ranked) {
             String twinKey = twinKey(entry);
-            if (twinKey == null || seenTwins.add(twinKey)) {
-                result.add(entry.row());
+            if (twinKey != null) {
+                long courseId = entry.course().getId();
+                Long keptCourseId = courseOfKeptCopy.putIfAbsent(twinKey, courseId);
+                if (keptCourseId != null && keptCourseId != courseId) {
+                    continue;
+                }
             }
+            result.add(entry.row());
         }
         return result;
     }
@@ -104,12 +110,12 @@ public final class GlobalSearchResultRanker {
     }
 
     /**
-     * The key under which semester copies of an item collapse, or null when the row has no course to compare: course
-     * rows themselves are never collapsed, since each course is its own result.
+     * The key under which semester copies of an item collapse, or null when the row is never merged: a row without a
+     * course, a course row (each course is its own result) and a lecture unit row (see the class description).
      */
     private static @Nullable String twinKey(Ranked entry) {
         String type = entry.row().get(SearchableEntitySchema.Properties.TYPE) instanceof String value ? value : null;
-        if (entry.course() == null || type == null || SearchableEntitySchema.TypeValues.COURSE.equals(type)) {
+        if (entry.course() == null || type == null || SearchableEntitySchema.TypeValues.COURSE.equals(type) || SearchableEntitySchema.TypeValues.LECTURE_UNIT.equals(type)) {
             return null;
         }
         String courseTitle = normalize(SEMESTER.matcher(normalizeCase(entry.course().getTitle())).replaceAll(" "));

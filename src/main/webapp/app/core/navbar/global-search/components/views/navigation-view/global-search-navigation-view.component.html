@@ -25,7 +25,7 @@
                 </div>
             }
             @if (canShowMore()) {
-                <button type="button" class="show-more-results-btn w-full bg-transparent border-0 p-2 fw-medium" data-testid="global-search-show-more" (click)="showMore.emit()">
+                <button type="button" class="show-more-results-btn w-full bg-transparent border-0 p-2 font-medium" data-testid="global-search-show-more" (click)="showMore.emit()">
                     {{ 'global.search.showMoreResults' | artemisTranslate }}
                 </button>
             }

@@ -58,6 +58,23 @@ class GlobalSearchResultRankerTest {
     }
 
     @Test
+    void keepsItemsWithTheSameTitleWithinOneCourse() {
+        var first = row("exercise", 1L, "Bonus");
+        var second = new java.util.HashMap<>(row("exercise", 1L, "Bonus"));
+        second.put(SearchableEntitySchema.Properties.ENTITY_ID, 2L);
+
+        assertThat(GlobalSearchResultRanker.rank(List.<Map<String, Object>>of(first, second), true, courses, NOW)).hasSize(2);
+    }
+
+    @Test
+    void neverMergesLectureUnitsWhoseNamesRepeatAcrossLectures() {
+        var current = row("lecture_unit", 1L, "Slides");
+        var previous = row("lecture_unit", 2L, "Slides");
+
+        assertThat(GlobalSearchResultRanker.rank(List.of(current, previous), true, courses, NOW)).hasSize(2);
+    }
+
+    @Test
     void keepsItemsWithTheSameTitleInDifferentCourses() {
         var softwareEngineering = row("channel", 1L, "general");
         var databases = row("channel", 4L, "general");
