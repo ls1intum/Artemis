@@ -294,7 +294,7 @@
                     "activeEdit": "Sandbox für diese Aufgabe aktiviert. Erzeugung und Durchsetzung der Richtlinie sind an die Ares2-Integration delegiert.",
                     "activeCreate": "Die Sicherheitsrichtlinie wird beim Generieren der Aufgabe committet.",
                     "deleting": "Das Security Framework wird aus dieser Aufgabe entfernt.",
-                    "error": "Die Sicherheitsrichtlinie konnte nicht synchronisiert werden. Die Sandbox ist noch nicht aktiv."
+                    "error": "Der letzte Vorgang des Security Frameworks ist fehlgeschlagen. Wiederhole ihn, um die Sicherheitsrichtlinie zu synchronisieren."
                 },
                 "sync": {
                     "inactive": "Nicht synchronisiert – eine Richtlinie wird beim Aktivieren committet.",
