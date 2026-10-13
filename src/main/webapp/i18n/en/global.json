@@ -169,6 +169,8 @@
             "irisAnswerRetry": "Try again",
             "irisCollapseSources": "Show fewer sources",
             "irisAiBadge": "AI",
+            "irisHandoffFollowUp": "Have a follow-up? Continue chatting with me about",
+            "irisHandoffOpenChat": "Open chat",
             "entityType": {
                 "exercise": "Exercise",
                 "lecture": "Lecture",

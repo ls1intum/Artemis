@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
+import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchHandoffDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
@@ -137,6 +138,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private final IrisChatPipelineExecutionService chatPipelineExecutionService;
 
+    private final IrisCitationService irisCitationService;
+
     /**
      * Instance-wide kill switch for Artemis' own build-triggered proactive events. Deliberately kept alongside the
      * per-course setting: this one is checked before any result, course or DB access, so it can stop the whole
@@ -173,6 +176,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.messageSource = messageSource;
         this.chatPipelineExecutionService = chatPipelineExecutionService;
+        this.irisCitationService = irisCitationService;
         // Snapshot at construction, as before: the guard at the trigger path reads a field, not a live bean, so a
         // rebind cannot flip the switch under a run that already passed it.
         this.globalLegacyBuildTriggersEnabled = proactiveProperties.isLegacyBuildTriggers();
@@ -638,8 +642,36 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     }
 
     /**
+     * Continues a global search answer in the course chat. The session is always a new one: reusing an empty chat like "New Chat" does would let two concurrent handoffs
+     * both claim it. It is authorized like {@link #findOrCreateEmptySession}, moved to the requested lecture or exercise exactly like choosing a chat topic
+     * ({@link #applyContextChange}), and then holds the question and the answer the student saw, so the chat opens with both already in it. The answer's citations are
+     * pinned to the material versions captured for the search run that produced it.
+     *
+     * @param handoff the course, the optional lecture or exercise, the question and answer to carry over, and the search run they came from
+     * @param user    the requesting user
+     * @return the new session, already on the requested context
+     */
+    public IrisChatSession createSessionFromGlobalSearch(IrisGlobalSearchHandoffDTO handoff, User user) {
+        userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
+        var course = resolveAndAuthorize(IrisChatMode.COURSE_CHAT, handoff.courseId(), user).course();
+        var session = createCourseSession(course, user);
+        var context = handoff.context();
+        if (context != null) {
+            applyContextChange(session, context.mode(), context.entityId(), user);
+        }
+        var question = new IrisMessage();
+        question.addContent(new IrisTextMessageContent(handoff.question()));
+        var answer = new IrisMessage();
+        answer.addContent(new IrisTextMessageContent(irisCitationService.stampCitationVersionsForGlobalSearch(handoff.answer(), handoff.runId(), user.getLogin())));
+        irisSessionRepository.appendQuestionAndAnswer(session.getId(), question, answer);
+        // Named after the question, so the chat history lists it by its topic before Iris names it on the first follow-up.
+        setSessionTitle(session, handoff.question(), irisSessionRepository);
+        return session;
+    }
+
+    /**
      * Non-authorizing core that finds the user's reusable empty course chat session for today, or creates a
-     * fresh one. The single place a chat session is created.
+     * fresh one through {@link #createCourseSession}.
      * <p>
      * Assumes the caller has already authorized {@code course} for {@code user} (LLM opt-in + student role +
      * Iris enabled). No access check is repeated here: the lookup is scoped to {@code user.getId()}, so the
@@ -657,6 +689,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 return session;
             }
         }
+        return createCourseSession(course, user);
+    }
+
+    /** The single place a course chat session is created. */
+    private IrisChatSession createCourseSession(Course course, User user) {
         var session = new IrisChatSession(course, user);
         session.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
         return irisChatSessionRepository.save(session);

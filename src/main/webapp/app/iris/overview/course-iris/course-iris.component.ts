@@ -8,6 +8,16 @@ import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
 import { SidebarView } from 'app/course/shared/sidebar-view.interface';
+import { IRIS_SESSION_QUERY_PARAM } from 'app/iris/shared/entities/iris-session.model';
+
+/** Parses a route parameter holding an id, or yields undefined when it is missing or not a number. */
+function toId(value: string | undefined): number | undefined {
+    if (!value) {
+        return undefined;
+    }
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? undefined : parsed;
+}
 
 @Component({
     selector: 'jhi-course-iris',
@@ -27,14 +37,14 @@ export class CourseIrisComponent implements SidebarView {
         initialValue: undefined,
     });
 
-    readonly courseId = computed(() => {
-        const value = this.courseIdParam();
-        if (!value) {
-            return undefined;
-        }
-        const parsed = Number(value);
-        return Number.isNaN(parsed) ? undefined : parsed;
+    private readonly sessionIdParam = toSignal(this.route.queryParamMap.pipe(map((params) => params.get(IRIS_SESSION_QUERY_PARAM) ?? undefined)), {
+        initialValue: undefined,
     });
+
+    readonly courseId = computed(() => toId(this.courseIdParam()));
+
+    /** The session a link asks to open, e.g. the chat a global search answer was continued in. */
+    readonly sessionId = computed(() => toId(this.sessionIdParam()));
 
     readonly isCollapsed = computed<boolean>(() => !(this.courseChatbot()?.isChatHistoryOpen() ?? true));
 

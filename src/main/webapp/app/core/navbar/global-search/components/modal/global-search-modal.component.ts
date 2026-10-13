@@ -641,7 +641,14 @@ export class GlobalSearchModalComponent implements OnDestroy {
             case 'Enter':
                 // Enter on a keyboard-selected chip re-picks it, the same as clicking it. Once focus moved on, for example
                 // with Tab to the Filter button, Enter belongs to the focused control and the chip only stays highlighted.
-                if (event.defaultPrevented || !this.isFocusUnmovedSinceHighlight() || (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))) {
+                // A modified Enter (Cmd/Ctrl+Enter) continues the Iris answer in the chat instead.
+                if (
+                    event.metaKey ||
+                    event.ctrlKey ||
+                    event.defaultPrevented ||
+                    !this.isFocusUnmovedSinceHighlight() ||
+                    (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))
+                ) {
                     break;
                 }
                 if (this.selectedChip() >= 0) {

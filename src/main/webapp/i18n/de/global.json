@@ -169,6 +169,8 @@
             "irisAnswerRetry": "Erneut versuchen",
             "irisCollapseSources": "Weniger Quellen anzeigen",
             "irisAiBadge": "KI",
+            "irisHandoffFollowUp": "Noch Fragen? Chatte mit mir weiter über",
+            "irisHandoffOpenChat": "Chat öffnen",
             "entityType": {
                 "exercise": "Aufgabe",
                 "lecture": "Vorlesung",
