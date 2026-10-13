@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateRead
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureVideoCoverageApi;
 
 /**
  * Loads the two id-sets every ingestion-coverage answer is derived from: what the database expects to be indexed, and
@@ -102,6 +103,8 @@ public class IngestionCoverageSetLoader {
 
     private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
+    private final Optional<LectureVideoCoverageApi> lectureVideoCoverageApi;
+
     private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final Optional<IrisSettingsApi> irisSettingsApi;
@@ -111,11 +114,13 @@ public class IngestionCoverageSetLoader {
     private final Duration ingestionCourseWindow;
 
     public IngestionCoverageSetLoader(IngestionCoverageExpectedIdsRepository expectedIdsRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
-            Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, Optional<ExamRepositoryApi> examRepositoryApi, Optional<IrisSettingsApi> irisSettingsApi,
-            IngestionCoverageWeaviateReadService weaviateReadService, @Value("${artemis.iris.ingestion.course-window:P730D}") Duration ingestionCourseWindow) {
+            Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, Optional<LectureVideoCoverageApi> lectureVideoCoverageApi, Optional<ExamRepositoryApi> examRepositoryApi,
+            Optional<IrisSettingsApi> irisSettingsApi, IngestionCoverageWeaviateReadService weaviateReadService,
+            @Value("${artemis.iris.ingestion.course-window:P730D}") Duration ingestionCourseWindow) {
         this.expectedIdsRepository = expectedIdsRepository;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
+        this.lectureVideoCoverageApi = lectureVideoCoverageApi;
         this.examRepositoryApi = examRepositoryApi;
         this.irisSettingsApi = irisSettingsApi;
         this.weaviateReadService = weaviateReadService;
@@ -137,7 +142,7 @@ public class IngestionCoverageSetLoader {
         Map<Long, Set<Long>> exams = bucket(examRepositoryApi.map(api -> api.findExamIdCourseIdPairsForCourses(courseIds)).orElse(List.of()));
         Map<Long, Set<Long>> lectureUnits = bucket(lectureUnitRepositoryApi.map(api -> api.findIndexableUnitIdCourseIdPairsForCourses(courseIds)).orElse(List.of()));
         Map<Long, Set<Long>> pdfUnits = bucket(lectureUnitRepositoryApi.map(api -> api.findUnitIdCourseIdPairsWithPdfAttachmentForCourses(courseIds)).orElse(List.of()));
-        Map<Long, Set<Long>> videoUnits = bucket(lectureUnitRepositoryApi.map(api -> api.findUnitIdCourseIdPairsWithSupportedVideoForCourses(courseIds)).orElse(List.of()));
+        Map<Long, Set<Long>> videoUnits = bucket(lectureVideoCoverageApi.map(api -> api.findUnitIdCourseIdPairsWithSupportedVideoForCourses(courseIds)).orElse(List.of()));
         return new ExpectedSets(exercises, lectures, lectureUnits, exams, faqs, channels, pdfUnits, videoUnits, contentCourseIds(courseIds));
     }
 
