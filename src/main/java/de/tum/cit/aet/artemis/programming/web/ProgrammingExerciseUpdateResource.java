@@ -457,6 +457,7 @@ public class ProgrammingExerciseUpdateResource {
         buildConfig.setTimeoutSeconds(dto.timeoutSeconds());
         buildConfig.setDockerFlags(dto.dockerFlags());
         buildConfig.setTheiaImage(dto.theiaImage());
+        buildConfig.setOnlineIdeExperienceLevel(dto.onlineIdeExperienceLevel());
         buildConfig.setAllowBranching(dto.allowBranching());
         buildConfig.setBranchRegex(dto.branchRegex());
     }
