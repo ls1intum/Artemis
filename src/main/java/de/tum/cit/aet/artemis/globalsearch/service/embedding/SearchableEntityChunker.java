@@ -35,7 +35,9 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
  * estimate, so the limit of 470 keeps chunks at about 512 Qwen3 tokens.
  * <p>
  * The rules mirror the reference implementation the chunk size was evaluated with, including Python's notion of
- * whitespace and digits, so the character classes below are spelled out instead of using {@code \s} and {@code \d}.
+ * whitespace and digits, so the character classes below are spelled out instead of using {@code \s} and {@code \d}. One
+ * rule goes further: a piece longer than a whole chunk (a single huge word, or prose without spaces such as Chinese) is
+ * split into successive chunks instead of being cut, so no text is lost.
  * Changing any rule changes the chunks of existing rows: bump {@link #CHUNKER_VERSION} so stored vectors are not
  * reused for chunks they were not computed for.
  */
@@ -223,8 +225,8 @@ public final class SearchableEntityChunker {
 
     /**
      * Greedy sentence packing: every chunk meets the token and byte bound on its joined text, over-long sentences are
-     * split into word pieces, and consecutive chunks share about ten percent of trailing sentences. Only a single word
-     * longer than a whole chunk is cut.
+     * split into word pieces, pieces that are still too long into successive bounded pieces, and consecutive chunks share
+     * about ten percent of trailing sentences. No text is dropped.
      */
     private static List<String> chunks(String header, String body) {
         String boundedHeader = cutTokens(cutBytes(header, HEADER_MAX_BYTES), TOKEN_LIMIT / 4);
@@ -254,8 +256,7 @@ public final class SearchableEntityChunker {
         }
         List<String> chunks = new ArrayList<>();
         List<String> current = new ArrayList<>();
-        for (String rawPiece : pieces) {
-            String piece = fits(rawPiece, budget, byteBudget) ? rawPiece : cutTokens(cutBytes(rawPiece, byteBudget), budget);
+        for (String piece : splitOversized(pieces, budget, byteBudget)) {
             if (!current.isEmpty() && !fits(joinWith(current, piece), budget, byteBudget)) {
                 chunks.add(String.join(" ", current));
                 current = overlap(current, piece, budget, byteBudget);
@@ -269,6 +270,29 @@ public final class SearchableEntityChunker {
             return List.of(boundedHeader);
         }
         return chunks.stream().map(chunk -> boundedHeader + "\n" + chunk).toList();
+    }
+
+    /**
+     * Splits every piece that is still too long, a single word longer than a whole chunk or prose without spaces such as
+     * Chinese, into successive bounded pieces, so no text is lost.
+     */
+    private static List<String> splitOversized(List<String> pieces, int budget, int byteBudget) {
+        List<String> bounded = new ArrayList<>();
+        for (String piece : pieces) {
+            String rest = piece;
+            while (!fits(rest, budget, byteBudget)) {
+                String head = cutTokens(cutBytes(rest, byteBudget), budget);
+                if (head.isEmpty()) {
+                    head = rest.substring(0, rest.offsetByCodePoints(0, 1));
+                }
+                bounded.add(head);
+                rest = strip(rest.substring(head.length()));
+            }
+            if (!rest.isEmpty()) {
+                bounded.add(rest);
+            }
+        }
+        return bounded;
     }
 
     private static List<String> overlap(List<String> previous, String next, int budget, int byteBudget) {

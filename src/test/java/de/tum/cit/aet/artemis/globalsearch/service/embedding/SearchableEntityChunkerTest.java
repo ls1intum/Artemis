@@ -71,6 +71,23 @@ class SearchableEntityChunkerTest {
     }
 
     @Test
+    void longTextWithoutSpacesIsSplitWithoutLosingItsEnd() {
+        // Chinese prose has no spaces, so a paragraph is one piece far longer than a chunk; it must be split, not cut.
+        String ending = "最后的独特要求是用颜色翻转实现删除。";
+        String paragraph = "平衡二叉树的旋转与着色规则需要仔细推导".repeat(150) + ending;
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.EXERCISE);
+        properties.put(SearchableEntitySchema.Properties.TITLE, "红黑树");
+        properties.put(SearchableEntitySchema.Properties.DESCRIPTION, paragraph);
+
+        List<String> chunks = SearchableEntityChunker.chunk(properties);
+
+        assertThat(chunks).hasSizeGreaterThan(1);
+        assertThat(SearchableEntityChunker.body(chunks.getLast())).endsWith(ending);
+        assertThat(chunks.stream().map(SearchableEntityChunker::body).mapToInt(String::length).sum()).as("all text is kept").isGreaterThanOrEqualTo(paragraph.length());
+    }
+
+    @Test
     void entityWithoutDescriptionIsItsHeader() {
         Map<String, Object> properties = Map.of(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.CHANNEL, SearchableEntitySchema.Properties.TITLE,
                 "random");
