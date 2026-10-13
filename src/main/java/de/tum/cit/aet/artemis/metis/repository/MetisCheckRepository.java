@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.metis.config.MetisEnabled;
 import de.tum.cit.aet.artemis.metis.domain.MetisCheck;
 import de.tum.cit.aet.artemis.metis.domain.MetisCheckStatus;
+import de.tum.cit.aet.artemis.metis.domain.MetisExerciseConfig;
 import de.tum.cit.aet.artemis.metis.dto.MetisCheckCandidateDTO;
 import de.tum.cit.aet.artemis.metis.dto.MetisCheckOwnerDTO;
 import de.tum.cit.aet.artemis.metis.dto.MetisGenerationTargetDTO;
@@ -360,6 +361,40 @@ public interface MetisCheckRepository extends ArtemisJpaRepository<MetisCheck, L
                 )
             """)
     int markStarted(@Param("checkId") long checkId, @Param("startedAt") ZonedDateTime startedAt);
+
+    /**
+     * Reads the configuration of an exercise and holds a shared lock on its row until the surrounding transaction ends. The starts of the checks of the
+     * exercise share it with each other, while a change of the settings waits for them ({@code MetisExerciseConfigRepository.updateSettingsAfterTheStarts}).
+     *
+     * @param exerciseId the exercise
+     * @return the configuration, or empty if the exercise has none
+     */
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("""
+            SELECT cfg
+            FROM MetisExerciseConfig cfg
+            WHERE cfg.exerciseId = :exerciseId
+            """)
+    Optional<MetisExerciseConfig> findConfigForShare(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Starts a check like {@link #markStarted}, while it holds a shared lock on the configuration of its exercise: the rating scale, which every score is read
+     * against, cannot change between the guard of a settings update and this start. The check is started only while the configuration it reads under the
+     * lock is still enabled, since the service read it before the lock and an editor may have switched the check off in between.
+     *
+     * @param checkId    the check
+     * @param exerciseId the exercise of the check
+     * @param startedAt  when the student started it
+     * @return 1 if the check was started now, 0 if it was not ready or in review (any more), if its effective due date changed since its generation run, or if
+     *         the check of the exercise is switched off
+     */
+    @Transactional // ok because the start has to hold the lock of the configuration that a change of the rating scale waits for, and read the switch under it
+    default int markStartedSharingTheConfig(long checkId, long exerciseId, ZonedDateTime startedAt) {
+        if (!findConfigForShare(exerciseId).map(MetisExerciseConfig::isEnabled).orElse(false)) {
+            return 0;
+        }
+        return markStarted(checkId, startedAt);
+    }
 
     /**
      * Completes a started check.

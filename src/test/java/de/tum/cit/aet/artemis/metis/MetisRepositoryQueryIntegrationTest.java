@@ -399,6 +399,48 @@ class MetisRepositoryQueryIntegrationTest extends AbstractProgrammingIntegration
             assertThat(reload(pending).getFailureReason()).isNull();
             assertThat(reload(pending).getGeneratedAt()).isNull();
             assertThat(reload(pending).getGenerationDueDate()).isNull();
+            assertThat(failed.getGenerationClaim()).isNull();
+        }
+
+        @Test
+        void shouldKeepARunThatLostItsClaimFromWritingTheCheckOrItsQuestions() {
+            MetisCheck check = check("student1", MetisCheckStatus.PENDING);
+            long lost = 1L;
+            long current = 2L;
+            assertThat(checkRepository.claimForGeneration(check.getId(), lost)).isOne();
+            // A restart of the scheduling node puts the check back into the queue while the first run still works, and the next run claims and generates it
+            checkRepository.releaseAllGenerating();
+            assertThat(checkRepository.claimForGeneration(check.getId(), current)).isOne();
+            assertThat(questionRepository.deleteAllOfClaimedCheck(check.getId(), current)).isTrue();
+            assertThat(questionRepository.saveAllOfClaimedCheck(check.getId(), current, List.of(unsavedQuestion(check, 1)))).isTrue();
+
+            // The first run goes on: it can neither delete nor store questions, nor end or release the check
+            assertThat(questionRepository.deleteAllOfClaimedCheck(check.getId(), lost)).isFalse();
+            assertThat(questionRepository.saveAllOfClaimedCheck(check.getId(), lost, List.of(unsavedQuestion(check, 2)))).isFalse();
+            assertThat(checkRepository.markUnavailable(check.getId(), MetisCheckStatus.FAILED, MetisFailureReason.INTERNAL_ERROR.name(), null, DUE.plusMinutes(1), DUE, lost))
+                    .isZero();
+            assertThat(checkRepository.markGenerated(check.getId(), MetisCheckStatus.READY, HASH_A, "model-a", "metis-v1", DUE.plusMinutes(1), DUE, lost)).isZero();
+            assertThat(checkRepository.releaseGeneration(check.getId(), lost)).isZero();
+            assertThat(questionRepository.findAllByCheckIdOrderByQuestionOrderAsc(check.getId())).extracting(MetisQuestion::getQuestionOrder).containsExactly(1);
+
+            // The current run ends the check, which then belongs to no run
+            assertThat(checkRepository.markGenerated(check.getId(), MetisCheckStatus.READY, HASH_A, "model-a", "metis-v1", DUE.plusMinutes(1), DUE, current)).isOne();
+            assertThat(reload(check).getGenerationClaim()).isNull();
+            assertThat(questionRepository.deleteAllOfClaimedCheck(check.getId(), current)).isFalse();
+            assertThat(questionRepository.findAllByCheckIdOrderByQuestionOrderAsc(check.getId())).hasSize(1);
+        }
+
+        @Test
+        void shouldNotStartACheckWhileTheCheckOfItsExerciseIsSwitchedOff() {
+            MetisCheck ready = check("student1", MetisCheckStatus.READY);
+            metisUtilService.saveConfig(exercise.getId(), false, false, null, null);
+
+            assertThat(checkRepository.markStartedSharingTheConfig(ready.getId(), exercise.getId(), DUE.plusHours(1))).isZero();
+            assertThat(reload(ready).getStartedAt()).isNull();
+
+            enable(exercise, null, null);
+            assertThat(checkRepository.markStartedSharingTheConfig(ready.getId(), exercise.getId(), DUE.plusHours(1))).isOne();
+            assertThat(reload(ready).getStatus()).isEqualTo(MetisCheckStatus.IN_PROGRESS);
         }
 
         @Test
