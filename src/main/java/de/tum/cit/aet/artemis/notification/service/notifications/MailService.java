@@ -56,8 +56,20 @@ public class MailService {
 
     private static final String SHOULD_RECOMMEND_UPGRADE = "shouldRecommendUpgrade";
 
+    private static final String ACTIVATION_DEADLINE_AMOUNT = "activationDeadlineAmount";
+
+    private static final String ACTIVATION_DEADLINE_IN_HOURS = "activationDeadlineInHours";
+
+    private static final int MINUTES_PER_HOUR = 60;
+
     @Value("${server.url}")
     private URL artemisServerUrl;
+
+    /**
+     * The time after which {@code UserScheduleService} deletes an account that was not activated, which is the only deadline for the activation link.
+     */
+    @Value("${artemis.user-management.registration.cleanup-time-minutes:60}")
+    private long nonActivatedUserCleanupMinutes;
 
     private final MessageSource messageSource;
 
@@ -110,9 +122,24 @@ public class MailService {
         return context;
     }
 
+    /**
+     * Sends the activation link to a self-registered user. The mail names how long the user has to activate, because the
+     * server deletes accounts that stay non-activated for the configured cleanup time. The sentence is left out when that
+     * time is not positive.
+     *
+     * @param recipient the self-registered user, carrying the activation key
+     */
     public void sendActivationEmail(MailRecipientDTO recipient) {
         log.debug("Sending activation email to '{}'", recipient.email());
-        sendEmailFromTemplate(recipient, "mail/activationEmail", "email.activation.title");
+        Locale locale = Locale.forLanguageTag(recipient.langKey());
+        Context context = createBaseContext(recipient, locale);
+        // A non-positive value would delete the account right away, so there is no time to name.
+        if (nonActivatedUserCleanupMinutes > 0) {
+            boolean inHours = nonActivatedUserCleanupMinutes % MINUTES_PER_HOUR == 0;
+            context.setVariable(ACTIVATION_DEADLINE_IN_HOURS, inHours);
+            context.setVariable(ACTIVATION_DEADLINE_AMOUNT, inHours ? nonActivatedUserCleanupMinutes / MINUTES_PER_HOUR : nonActivatedUserCleanupMinutes);
+        }
+        prepareTemplateAndSendEmail(recipient, "mail/activationEmail", "email.activation.title", context);
     }
 
     public void sendPasswordResetMail(MailRecipientDTO recipient) {
