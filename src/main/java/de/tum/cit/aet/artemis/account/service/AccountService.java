@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.BasicInformationUpdateResultDTO;
+import de.tum.cit.aet.artemis.account.dto.PendingEmailChangeDTO;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
@@ -45,13 +47,16 @@ public class AccountService {
 
     private final AccountSecurityEventService accountSecurityEventService;
 
+    private final EmailChangeService emailChangeService;
+
     public AccountService(UserRepository userRepository, UserService userService, UserCreationService userCreationService, ProfileService profileService,
-            AccountSecurityEventService accountSecurityEventService) {
+            AccountSecurityEventService accountSecurityEventService, EmailChangeService emailChangeService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.profileService = profileService;
         this.accountSecurityEventService = accountSecurityEventService;
+        this.emailChangeService = emailChangeService;
     }
 
     /**
@@ -78,12 +83,16 @@ public class AccountService {
     /**
      * Updates the basic information (name, email, language, image) of the current user's account, enforcing the account-update policy: blocked when registration is disabled for
      * external users, only the language key is updatable while SAML2 is active, and the e-mail must not already be used by a different user.
+     * <p>
+     * A new e-mail address of an internal account is not applied here. It is only requested, and takes effect once the owners of both the current and the new address have
+     * confirmed it, see {@link EmailChangeService}. The other fields are saved immediately.
      *
      * @param userDTO the new account information of the current user
+     * @return the e-mail change that is now waiting for confirmation, which is empty if there is none
      * @throws AccessForbiddenException  if registration is disabled and the current user is not an internal user
      * @throws EmailAlreadyUsedException if the requested e-mail is already used by another user
      */
-    public void updateBasicInformationOfCurrentUser(UserDTO userDTO) {
+    public BasicInformationUpdateResultDTO updateBasicInformationOfCurrentUser(UserDTO userDTO) {
         User currentUser = userRepository.getUser();
 
         // Allow internal users to update their account even when registration is disabled
@@ -95,7 +104,7 @@ public class AccountService {
         if (profileService.isSaml2Active()) {
             currentUser.setLangKey(userDTO.getLangKey());
             userService.saveUser(currentUser);
-            return;
+            return new BasicInformationUpdateResultDTO(null);
         }
 
         final String userLogin = currentUser.getLogin();
@@ -104,13 +113,30 @@ public class AccountService {
         final String previousEmail = currentUser.getEmail();
         final String previousLangKey = currentUser.getLangKey();
 
-        userCreationService.updateBasicInformationOfCurrentUser(userDTO.getFirstName(), userDTO.getLastName(), userDTO.getEmail(), userDTO.getLangKey(), userDTO.getImageUrl());
+        boolean emailDiffers = !Objects.equals(User.canonicalEmail(previousEmail), User.canonicalEmail(userDTO.getEmail()));
+        boolean emailChangeNeedsConfirmation = emailDiffers && emailChangeService.requiresConfirmation(currentUser);
+        PendingEmailChangeDTO pendingEmailChange = null;
+        String emailToSave = userDTO.getEmail();
+        if (emailChangeNeedsConfirmation) {
+            // Asked for before anything is saved, so a refused address leaves the account as it was. What is saved below keeps the
+            // address the account has: the new one is applied when both addresses have confirmed.
+            pendingEmailChange = emailChangeService.requestChange(currentUser, userDTO.getEmail());
+            emailToSave = previousEmail;
+        }
 
-        boolean emailChanged = !Objects.equals(User.canonicalEmail(previousEmail), User.canonicalEmail(userDTO.getEmail()));
-        if (emailChanged) {
+        userCreationService.updateBasicInformationOfCurrentUser(userDTO.getFirstName(), userDTO.getLastName(), emailToSave, userDTO.getLangKey(), userDTO.getImageUrl());
+
+        if (emailChangeNeedsConfirmation) {
+            return new BasicInformationUpdateResultDTO(pendingEmailChange);
+        }
+        if (emailDiffers) {
             User updatedUser = userRepository.getUserByLoginElseThrow(userLogin);
             accountSecurityEventService.recordEmailChanged(updatedUser, previousEmail, previousLangKey);
+            return new BasicInformationUpdateResultDTO(null);
         }
+        // An unchanged address leaves a request that is already waiting as it is: a settings form that is saved for another field
+        // sends the address back, and must not look like withdrawing it.
+        return new BasicInformationUpdateResultDTO(emailChangeService.findPendingChange(currentUser.getId()).orElse(null));
     }
 
 }

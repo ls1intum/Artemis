@@ -75,6 +75,8 @@
         "notEnoughSubmissions": "Es gibt in dieser Aufgabe nicht genügend gültige Abgaben zum Vergleichen. Es werden mindestens zwei Abgaben benötigt, die die konfigurierte Mindestpunktzahl und Mindestgröße erfüllen.",
         "incorrectPassword": "Das aktuelle Passwort ist falsch.",
         "invalidActivationKey": "Der Aktivierungsschlüssel ist ungültig. Bitte benutze die Registrierungsmaske, um dich zu registrieren.",
+        "sessionOutdated": "Du hast dich angemeldet, bevor sich deine Zugangsdaten zuletzt geändert haben. Bitte melde dich erneut an, um einen Passkey, SSH-Schlüssel oder Zugriffstoken hinzuzufügen.",
+        "invalidEmailChangeKey": "Der Link zur Bestätigung der E-Mail-Änderung ist ungültig oder abgelaufen.",
         "internalServerError": "Interner Serverfehler",
         "server.not.reachable": "Server ist nicht erreichbar",
         "url.not.found": "Nicht gefunden",

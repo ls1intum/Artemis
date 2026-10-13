@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
+import de.tum.cit.aet.artemis.core.service.SessionFreshnessService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
@@ -57,14 +58,17 @@ public class RepositoryVcsAccessTokenResource {
 
     private final RepositoryAccessService repositoryAccessService;
 
+    private final SessionFreshnessService sessionFreshnessService;
+
     public RepositoryVcsAccessTokenResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService,
-            RepositoryAccessService repositoryAccessService) {
+            RepositoryAccessService repositoryAccessService, SessionFreshnessService sessionFreshnessService) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
         this.repositoryAccessService = repositoryAccessService;
+        this.sessionFreshnessService = sessionFreshnessService;
     }
 
     /**
@@ -106,13 +110,14 @@ public class RepositoryVcsAccessTokenResource {
      * @param repositoryType        the repository type (TEMPLATE, SOLUTION, TESTS, AUXILIARY or USER)
      * @param auxiliaryRepositoryId the id of the auxiliary repository (required for {@link RepositoryType#AUXILIARY}, otherwise ignored)
      * @param participationId       the id of the student participation (required for {@link RepositoryType#USER}, otherwise ignored)
-     * @return the token string
+     * @return the token string, or status 401 (Unauthorized) if the session was established before the credentials of the account last changed
      */
     @PutMapping("repository-vcs-access-token")
     @EnforceAtLeastTutorInExercise
     public ResponseEntity<String> createRepositoryVcsAccessToken(@RequestParam("exerciseId") long exerciseId, @RequestParam("repositoryType") RepositoryType repositoryType,
             @RequestParam(value = "auxiliaryRepositoryId", required = false) Long auxiliaryRepositoryId,
             @RequestParam(value = "participationId", required = false) Long participationId) {
+        sessionFreshnessService.requireCurrentSession();
         validateRepositoryTypeInput(repositoryType, auxiliaryRepositoryId, participationId);
         User user = userRepository.getUser();
         log.debug("REST request to create a repository VCS access token for user {} for {} repository of exercise {}", user.getLogin(), repositoryType, exerciseId);

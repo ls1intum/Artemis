@@ -481,16 +481,21 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(updated.getEmail()).isEqualTo(email);
     }
 
+    /**
+     * Removing the address would leave an account that needs only the new address to confirm when one is added next, which is the way around the
+     * confirmation of the current one.
+     */
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
-    void saveAccountAllowsRemovingAnEmail() throws Exception {
+    void saveAccountRejectsRemovingTheEmailOfAnInternalUser() throws Exception {
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        String email = user.getEmail();
         UserDTO update = new UserDTO(user);
         update.setEmail(null);
 
-        request.put("/api/account/basic-information", update, HttpStatus.OK);
+        request.put("/api/account/basic-information", update, HttpStatus.BAD_REQUEST);
 
-        assertThat(userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow().getEmail()).isNull();
+        assertThat(userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow().getEmail()).isEqualTo(email);
     }
 
     @Test

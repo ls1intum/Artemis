@@ -964,6 +964,22 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     /**
+     * Writes the e-mail address of an account straight to the column, bypassing {@code User.setEmail}, so that applying a confirmed e-mail change does not write back the rest of
+     * an entity that was read earlier. The caller therefore has to pass the canonical address, see {@code User.canonicalEmail}.
+     *
+     * @param userId the id of the account
+     * @param email  the canonical new address
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.email = :email
+            WHERE user.id = :userId
+            """)
+    void updateEmail(@Param("userId") long userId, @Param("email") String email);
+
+    /**
      * Writes the stored profile picture reference straight to the column, bypassing {@code User.setImageUrl}. The caller therefore has to pass the filename, never the URL the
      * picture is served under.
      *
