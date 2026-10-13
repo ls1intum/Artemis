@@ -19,6 +19,7 @@ import { QuizQuestionPoolProgress } from '../model/quiz-question-pool-progress';
 import { QuizQuestionPoolItem } from '../model/quiz-question-pool-item';
 import { HyperionCourseSettings } from '../model/hyperion-course-settings';
 import { QuizQuestionPoolBuildStart } from '../model/quiz-question-pool-build-start';
+import { QuizQuestionPoolReview } from '../model/quiz-question-pool-review';
 import { appendQueryParam } from './query-params';
 
 @Injectable({ providedIn: 'root' })
@@ -76,6 +77,18 @@ export class HyperionQuizQuestionPoolApi {
      * @param courseId
      * @param hyperionCourseSettings
      */
+    /**
+     *
+     *
+     * @param courseId
+     * @param questionId
+     * @param quizQuestionPoolReview
+     */
+    updateQuizQuestionPoolReview(courseId: number, questionId: number, quizQuestionPoolReview: QuizQuestionPoolReview): Observable<QuizQuestionPoolItem> {
+        const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/questions/${questionId}/review`;
+        return this.http.put<QuizQuestionPoolItem>(url, quizQuestionPoolReview);
+    }
+
     updateQuizQuestionPoolSettings(courseId: number, hyperionCourseSettings: HyperionCourseSettings): Observable<HyperionCourseSettings> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/settings`;
         return this.http.put<HyperionCourseSettings>(url, hyperionCourseSettings);
