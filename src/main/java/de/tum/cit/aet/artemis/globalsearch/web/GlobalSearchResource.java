@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -53,11 +52,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @FeatureUsage(UserFeature.GLOBAL_SEARCH)
 @RestController
 @RequestMapping("api/")
-@Tag(name = "Global Search Resource", description = "Weaviate-based semantic search across courses, exercises, lectures, lecture units, exams, FAQs, and public communication channels including their messages and replies")
+@Tag(name = "Global Search Resource", description = "Weaviate-based semantic search across courses, exercises, lectures, lecture units, exams, FAQs, and communication channels")
 public class GlobalSearchResource {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalSearchResource.class);
 
+    /**
+     * Every discriminator the collection holds, which is what {@code types} and {@code excludeTypes} accept. Posts and answer
+     * posts are among them but are not searchable (see {@link SearchableEntityAccessFilterService#SEARCHABLE_TYPES}): naming
+     * them matches nothing instead of failing the request, so a client built while they were searchable, which still sends
+     * them alongside {@code channel}, keeps getting its channels rather than a 400.
+     */
     private static final Set<String> VALID_TYPES = Set.of(SearchableEntitySchema.TypeValues.EXERCISE, SearchableEntitySchema.TypeValues.LECTURE,
             SearchableEntitySchema.TypeValues.LECTURE_UNIT, SearchableEntitySchema.TypeValues.EXAM, SearchableEntitySchema.TypeValues.FAQ,
             SearchableEntitySchema.TypeValues.CHANNEL, SearchableEntitySchema.TypeValues.COURSE, SearchableEntitySchema.TypeValues.POST,
@@ -80,16 +85,13 @@ public class GlobalSearchResource {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final ChannelRepository channelRepository;
-
     public GlobalSearchResource(SearchableEntityWeaviateService searchableEntityWeaviateService, SearchableEntityAccessFilterService accessFilterService,
-            CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository, ChannelRepository channelRepository) {
+            CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository) {
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
         this.accessFilterService = accessFilterService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
-        this.channelRepository = channelRepository;
     }
 
     /**
@@ -99,8 +101,8 @@ public class GlobalSearchResource {
      * compound {@code OR}-of-{@code AND}s filter so access control cannot leak across types.
      *
      * @param query            the search query (may be empty to browse recent items)
-     * @param types            optional comma-separated list of types to include ({@code exercise,lecture,lecture_unit,exam,faq,channel,course,post,answer_post}
-     *                             or {@code all}; default {@code all})
+     * @param types            optional comma-separated list of types to include ({@code exercise,lecture,lecture_unit,exam,faq,channel,course}
+     *                             or {@code all}; default {@code all}); {@code post} and {@code answer_post} are accepted but match nothing
      * @param excludeTypes     optional comma-separated list of types to hide; a row whose type is listed is dropped
      *                             regardless of {@code types}
      * @param courseIds        optional course ids to scope the search to one or more courses (OR); inaccessible or unknown ids are ignored
@@ -113,14 +115,15 @@ public class GlobalSearchResource {
     @GetMapping("search")
     @EnforceAtLeastStudent
     @Operation(summary = "Perform a unified semantic search across entity types", description = """
-            Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels, courses, posts, answer posts)
-            with a consistent response format. When courseIds is not specified, the search is performed
+            Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels, courses)
+            with a consistent response format. Messages and replies are not searchable; the types post and answer_post are
+            accepted for compatibility but match nothing. When courseIds is not specified, the search is performed
             globally across all courses the authenticated user has access to. Per-type access rules are
             enforced server-side via compound Weaviate filters.""")
     @ApiResponse(responseCode = "200", description = "Search results matching the query")
     @ApiResponse(responseCode = "400", description = "Unsupported entity type requested, or more course IDs than the endpoint accepts")
     public ResponseEntity<List<GlobalSearchResultDTO>> globalSearch(@RequestParam("q") @Parameter(description = "Search query; can be empty to retrieve recent items") String query,
-            @RequestParam(value = "types", required = false) @Parameter(description = "Comma-separated entity type filter (exercise, lecture, lecture_unit, exam, faq, channel, course, post, answer_post) or 'all'; default 'all'") String types,
+            @RequestParam(value = "types", required = false) @Parameter(description = "Comma-separated entity type filter (exercise, lecture, lecture_unit, exam, faq, channel, course) or 'all'; default 'all'. post and answer_post are accepted but match nothing") String types,
             @RequestParam(value = "excludeTypes", required = false) @Parameter(description = "Comma-separated entity types to hide from the results; applied after 'types'") String excludeTypes,
             @RequestParam(value = "courseIds", required = false) @Parameter(description = "Course IDs to restrict the search to one or more courses (OR); inaccessible IDs are ignored") List<Long> courseIds,
             @RequestParam(value = "excludeCourseIds", required = false) @Parameter(description = "Course IDs to exclude from the search; results in these courses are hidden") List<Long> excludeCourseIds,
@@ -191,11 +194,10 @@ public class GlobalSearchResource {
         coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
 
         Map<Long, Long> exerciseGroupIdByExerciseId = resolveExerciseGroupIds(rawResults);
-        Map<Long, String> channelNameById = resolveChannelNames(rawResults);
         List<GlobalSearchResultDTO> resultDTOs = new ArrayList<>();
         for (Map<String, Object> properties : rawResults) {
-            GlobalSearchResultDTO dto = GlobalSearchResultDTO.fromSearchableItemProperties(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds, editorCourseIds,
-                    channelNameById);
+            GlobalSearchResultDTO dto = GlobalSearchResultDTO.fromSearchableItemProperties(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds,
+                    editorCourseIds);
             if (dto != null) {
                 resultDTOs.add(dto);
             }
@@ -251,7 +253,7 @@ public class GlobalSearchResource {
      */
     private static Set<String> parseTypes(String types) {
         if (types == null || types.isBlank() || "all".equalsIgnoreCase(types.trim())) {
-            return new LinkedHashSet<>(VALID_TYPES);
+            return new LinkedHashSet<>(SearchableEntityAccessFilterService.SEARCHABLE_TYPES);
         }
         Set<String> result = new LinkedHashSet<>();
         for (String token : types.split(",")) {
@@ -334,29 +336,6 @@ public class GlobalSearchResource {
         for (var dto : exerciseRepository.findExerciseAndGroupIdsByExerciseIds(examExerciseIds)) {
             result.put(dto.exerciseId(), dto.exerciseGroupId());
         }
-        return result;
-    }
-
-    /**
-     * Resolves channel names for all post and answer_post results in the Weaviate results.
-     */
-    private Map<Long, String> resolveChannelNames(List<Map<String, Object>> rawResults) {
-        Set<Long> channelIds = new HashSet<>();
-        for (Map<String, Object> properties : rawResults) {
-            Object type = properties.get(SearchableEntitySchema.Properties.TYPE);
-            if (!SearchableEntitySchema.TypeValues.POST.equals(type) && !SearchableEntitySchema.TypeValues.ANSWER_POST.equals(type)) {
-                continue;
-            }
-            Object rawId = properties.get(SearchableEntitySchema.Properties.CHANNEL_ID);
-            if (rawId instanceof Number number) {
-                channelIds.add(number.longValue());
-            }
-        }
-        if (channelIds.isEmpty()) {
-            return Map.of();
-        }
-        Map<Long, String> result = new HashMap<>();
-        channelRepository.findAllById(channelIds).forEach(channel -> result.put(channel.getId(), channel.getName()));
         return result;
     }
 }
