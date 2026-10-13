@@ -561,6 +561,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                         ForwardMessageDialogComponent,
                         cloneWith(defaultFirstLayerDialogOptions, {
                             closable: false,
+                            focusOnShow: false,
                             data: {
                                 users: [],
                                 channels: this.channels,
