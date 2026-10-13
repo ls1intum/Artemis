@@ -1558,10 +1558,12 @@ describe('GlobalSearchModalComponent', () => {
             component['onSearchInput']('vorlesungen');
             vi.advanceTimersByTime(300);
             expect(component['results']().map((result) => result.type)).toEqual(['lecture']);
+            component['selectedIndex'].set(0);
 
             tabs.next({ ...noTabs, lectures: true });
 
             expect(component['results']().map((result) => result.type)).toEqual(['course_page', 'lecture']);
+            expect(component['selectedIndex']()).toBe(1);
         });
 
         it('reads the course tabs again when the palette is opened again', () => {

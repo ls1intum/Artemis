@@ -234,7 +234,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     this.scopedCourseTabs.set({ courseId, tabs });
                     // The tabs can arrive after the search results: offer the pages they allow next to the hits already shown.
                     if (this.hasSearched() && !this.contentSearchActive()) {
-                        this.results.set([...this.coursePageResults(), ...this.results().filter((result) => result.type !== COURSE_PAGE_TYPE)]);
+                        this.replaceResultsKeepingSelection([...this.coursePageResults(), ...this.results().filter((result) => result.type !== COURSE_PAGE_TYPE)]);
                     }
                 });
             onCleanup(() => subscription.unsubscribe());
@@ -433,6 +433,21 @@ export class GlobalSearchModalComponent implements OnDestroy {
      * The pages of the one course the search is scoped to whose name matches the typed text, such as "grades" for the
      * statistics page. Offered only for a plain search in a single course, where the course is unambiguous.
      */
+    /**
+     * Replaces the shown results while keeping the selected one selected: the views select by index, and the slides-and-
+     * videos row, when shown, takes the first index before the results.
+     */
+    private replaceResultsKeepingSelection(results: GlobalSearchResult[]): void {
+        const rowOffset = this.contentPreview().length > 0 && !this.contentSearchActive() ? 1 : 0;
+        const selected = this.selectedIndex();
+        const selectedId = selected >= rowOffset ? this.results()[selected - rowOffset]?.id : undefined;
+        this.results.set(results);
+        if (selectedId !== undefined) {
+            const index = results.findIndex((result) => result.id === selectedId);
+            this.selectedIndex.set(index >= 0 ? index + rowOffset : -1);
+        }
+    }
+
     private coursePageResults(): GlobalSearchResult[] {
         const courseIds = this.courseIdsParam();
         if (this.contentSearchActive() || courseIds.length !== 1 || this.typesParam() !== undefined || this.excludeTypesParam() !== undefined) {
