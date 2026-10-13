@@ -46,6 +46,11 @@
                     />
                 </div>
             }
+            @if (canShowMore()) {
+                <button type="button" class="show-more-results-btn w-full bg-transparent border-0 p-2 font-medium" data-testid="global-search-show-more" (click)="showMore.emit()">
+                    {{ 'global.search.showMoreResults' | artemisTranslate }}
+                </button>
+            }
         </div>
     } @else {
         <div class="no-results-state p-3 text-center text-secondary" [class.mt-3]="irisOccupiesSpace()">

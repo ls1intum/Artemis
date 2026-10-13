@@ -72,6 +72,9 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const names = [...new Set(this.contentPreview().map((hit) => hit.metadata?.['lectureName'] as string | undefined))].filter((name): name is string => !!name);
         return names.length > 2 ? `${names.slice(0, 2).join(', ')}, …` : names.join(', ');
     });
+    /** Whether the list was cut at the result limit and more results can be loaded. */
+    readonly canShowMore = input<boolean>(false);
+    readonly showMore = output<void>();
 
     /**
      * True when the query is too short to send to the server (1-2 chars).
@@ -217,7 +220,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
                 if (result.id) this.navigateToExam(result, courseId);
                 break;
             case 'faq':
-                void this.router.navigate(['/courses', courseId, 'faq']);
+                // The FAQ page scrolls to the FAQ named by faqId.
+                void this.router.navigate(['/courses', courseId, 'faq'], result.id ? { queryParams: { faqId: result.id } } : undefined);
                 break;
             case 'channel':
                 if (result.id) this.navigateToChannel(courseId, result.id);
@@ -278,7 +282,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private navigateToLectureUnit(result: GlobalSearchResult, courseId: string) {
         const lectureId = result.metadata?.['lectureId'];
         if (lectureId) {
-            this.navigateToLecture(courseId, lectureId);
+            // The same deep link the slide and video hits use, so the lecture page opens at the unit.
+            void this.router.navigate(['/courses', courseId, 'lectures', lectureId], { queryParams: { unit: result.id }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
         }
     }
 
@@ -315,7 +320,12 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
     @HostListener('window:keydown', ['$event'])
     handleKeydown(event: KeyboardEvent): void {
-        if (event.key !== 'Enter' || event.defaultPrevented || (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))) {
+        // Enter on a focused control (the Iris card, or "Show more results" reached with Tab) belongs to that control.
+        if (
+            event.key !== 'Enter' ||
+            event.defaultPrevented ||
+            (event.target instanceof Element && (event.target.closest('jhi-global-search-iris-answer') || event.target.closest('button')))
+        ) {
             return;
         }
         const idx = this.selectedIndex();

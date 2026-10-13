@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
@@ -95,7 +97,7 @@ class LectureIngestionReconcileServiceTest {
         });
 
         reconcileService = new LectureIngestionReconcileService(processingStateRepository, reconcileStateRepository, attachmentVideoUnitRepository, Optional.of(irisLectureApi),
-                contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10, transcriptionRepository);
+                contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10, transcriptionRepository, Duration.ofDays(730));
 
         course = new Course();
         course.setId(COURSE_ID);
@@ -713,8 +715,7 @@ class LectureIngestionReconcileServiceTest {
         void shouldCleanUpACourseWhoseLastUnitWasDeletedWhileIrisWasUnavailable() {
             // The unit's one-shot Iris deletion failed, then the unit itself was deleted: the course has no units left,
             // but the walk still visits it and the census still reports the unit's rows, so they are deleted now.
-            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
-                    .thenAnswer(invocation -> (long) invocation.getArgument(0) < COURSE_ID ? List.of(COURSE_ID) : List.<Long>of());
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsNewestFirst()).thenReturn(List.of(COURSE_ID));
             when(attachmentVideoUnitRepository.findAllWithAttachmentByCourseId(COURSE_ID)).thenReturn(List.of());
             when(processingStateRepository.findWithLectureUnitByCourseId(COURSE_ID)).thenReturn(List.of());
             when(attachmentVideoUnitRepository.findExistingIds(any())).thenReturn(Set.of());
@@ -799,7 +800,7 @@ class LectureIngestionReconcileServiceTest {
         void shouldResumeAPausedCourseAfterItsLastVisitedUnitInsteadOfSkippingOrRestartingIt() {
             LectureIngestionReconcileService oneRequeuePerPass = new LectureIngestionReconcileService(processingStateRepository, reconcileStateRepository,
                     attachmentVideoUnitRepository, Optional.of(irisLectureApi), contentFingerprintService, processingService, 5, 1, 0.8, Duration.ofHours(1), 10,
-                    transcriptionRepository);
+                    transcriptionRepository, Duration.ofDays(730));
             AttachmentVideoUnit secondUnit = new AttachmentVideoUnit();
             secondUnit.setId(101L);
             secondUnit.setLecture(lecture);
@@ -811,8 +812,7 @@ class LectureIngestionReconcileServiceTest {
             when(contentFingerprintService.computeFingerprint(secondUnit)).thenReturn(FINGERPRINT);
             when(attachmentVideoUnitRepository.findAllWithAttachmentByCourseId(COURSE_ID)).thenReturn(List.of(unit, secondUnit));
             when(processingStateRepository.findWithLectureUnitByCourseId(COURSE_ID)).thenReturn(List.of(state, secondState));
-            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
-                    .thenAnswer(invocation -> (long) invocation.getArgument(0) < COURSE_ID ? List.of(COURSE_ID) : List.<Long>of());
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsNewestFirst()).thenReturn(List.of(COURSE_ID));
             givenCensus();
 
             assertThat(oneRequeuePerPass.walkNextCourses()).isEqualTo(1);
@@ -827,7 +827,8 @@ class LectureIngestionReconcileServiceTest {
             assertThat(oneRequeuePerPass.walkNextCourses()).isEqualTo(1);
             assertThat(secondState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
             assertThat(state.getPhase()).isEqualTo(ProcessingPhase.DONE);
-            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(COURSE_ID - 1), any());
+            // Both steps belong to one pass, which reads the course list once
+            verify(attachmentVideoUnitRepository).findReconcileCourseIdsNewestFirst();
         }
 
         @Test
@@ -836,7 +837,7 @@ class LectureIngestionReconcileServiceTest {
 
             assertThat(reconcileService.walkNextCourses()).isZero();
 
-            verify(attachmentVideoUnitRepository, never()).findReconcileCourseIdsAfter(anyLong(), any());
+            verify(attachmentVideoUnitRepository, never()).findReconcileCourseIdsNewestFirst();
             verify(irisLectureApi, never()).getIngestionCensus(anyLong());
         }
 
@@ -855,8 +856,7 @@ class LectureIngestionReconcileServiceTest {
             when(attachmentVideoUnitRepository.findAllWithAttachmentByCourseId(COURSE_ID)).thenReturn(List.of(unit, secondUnit));
             when(processingStateRepository.findWithLectureUnitByCourseId(COURSE_ID)).thenReturn(List.of(state, secondState));
             when(processingStateRepository.countOpenBackgroundUnits(anyInt())).thenReturn(9L);
-            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
-                    .thenAnswer(invocation -> (long) invocation.getArgument(0) < COURSE_ID ? List.of(COURSE_ID) : List.<Long>of());
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsNewestFirst()).thenReturn(List.of(COURSE_ID));
             givenCensus();
 
             assertThat(reconcileService.backlogBudget()).isEqualTo(1);
@@ -882,34 +882,33 @@ class LectureIngestionReconcileServiceTest {
 
         @Test
         void shouldContinueOnlyAnActivePassAndEndItAtTheWrap() {
-            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
-                    .thenAnswer(invocation -> (long) invocation.getArgument(0) < COURSE_ID ? List.of(COURSE_ID) : List.<Long>of());
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsNewestFirst()).thenReturn(List.of(COURSE_ID));
             state.setPhase(ProcessingPhase.DONE);
             state.setConfirmedFingerprint(FINGERPRINT);
             givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
 
             assertThat(reconcileService.continuePass()).as("no pass is active before the first cron tick").isZero();
-            verify(attachmentVideoUnitRepository, never()).findReconcileCourseIdsAfter(anyLong(), any());
+            verify(attachmentVideoUnitRepository, never()).findReconcileCourseIdsNewestFirst();
 
             reconcileService.startOrContinuePass();
-            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(0L), any());
+            verify(attachmentVideoUnitRepository).findReconcileCourseIdsNewestFirst();
+            verify(irisLectureApi).getIngestionCensus(COURSE_ID);
 
-            // The continuation takes the next step, which finds no course after the cursor and ends the pass
+            // The continuation takes the next step, which finds no course left and ends the pass
             reconcileService.continuePass();
-            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(COURSE_ID), any());
-
             reconcileService.continuePass();
-            verify(attachmentVideoUnitRepository, org.mockito.Mockito.times(2)).findReconcileCourseIdsAfter(anyLong(), any());
+            verify(attachmentVideoUnitRepository).findReconcileCourseIdsNewestFirst();
+            verify(irisLectureApi).getIngestionCensus(COURSE_ID);
 
-            // The next cron tick starts a new pass from the beginning
+            // The next cron tick starts a new pass with the newest course, reading the course list again
             reconcileService.startOrContinuePass();
-            verify(attachmentVideoUnitRepository, org.mockito.Mockito.times(2)).findReconcileCourseIdsAfter(eq(0L), any());
+            verify(attachmentVideoUnitRepository, org.mockito.Mockito.times(2)).findReconcileCourseIdsNewestFirst();
+            verify(irisLectureApi, org.mockito.Mockito.times(2)).getIngestionCensus(COURSE_ID);
         }
 
         @Test
         void shouldKeepTheCursorOfTheActivePassOnACronTick() {
-            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
-                    .thenAnswer(invocation -> (long) invocation.getArgument(0) < COURSE_ID ? List.of(COURSE_ID) : List.<Long>of());
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsNewestFirst()).thenReturn(List.of(COURSE_ID));
             state.setPhase(ProcessingPhase.DONE);
             state.setConfirmedFingerprint(FINGERPRINT);
             givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
@@ -918,36 +917,108 @@ class LectureIngestionReconcileServiceTest {
             // A cron tick while the pass is active continues after the walked course instead of starting over
             reconcileService.startOrContinuePass();
 
-            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(0L), any());
-            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(COURSE_ID), any());
+            verify(attachmentVideoUnitRepository).findReconcileCourseIdsNewestFirst();
+            verify(irisLectureApi).getIngestionCensus(COURSE_ID);
         }
 
         @Test
         void shouldWrapTheCursorAfterAFullPass() {
-            // One answer per cursor position; a second when() stub would consume the first
-            // sequential answer during its own stubbing invocation
-            java.util.concurrent.atomic.AtomicBoolean firstPass = new java.util.concurrent.atomic.AtomicBoolean(true);
-            when(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(anyLong(), any()))
-                    .thenAnswer(invocation -> invocation.getArgument(0).equals(0L) && firstPass.getAndSet(false) ? List.of(COURSE_ID) : List.<Long>of());
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsNewestFirst()).thenReturn(List.of(COURSE_ID));
             state.setPhase(ProcessingPhase.DONE);
             state.setConfirmedFingerprint(FINGERPRINT);
             givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
 
             reconcileService.walkNextCourses();
-            // Second walk continues after the walked course, finds nothing, and wraps
+            // Second walk finds no course left after the walked one and wraps
             reconcileService.walkNextCourses();
-            // Third walk starts from the beginning again
+            // Third walk starts a new pass with the newest course
             reconcileService.walkNextCourses();
 
-            verify(attachmentVideoUnitRepository).findReconcileCourseIdsAfter(eq(COURSE_ID), any());
-            verify(attachmentVideoUnitRepository, org.mockito.Mockito.times(2)).findReconcileCourseIdsAfter(eq(0L), any());
+            verify(attachmentVideoUnitRepository, org.mockito.Mockito.times(2)).findReconcileCourseIdsNewestFirst();
+            verify(irisLectureApi, org.mockito.Mockito.times(2)).getIngestionCensus(COURSE_ID);
+        }
+
+        @Test
+        void shouldWalkTheCoursesInTheOrderOfTheCourseList() {
+            // The repository returns the newest course first; the walk must keep that order instead of sorting by id
+            long newerCourseId = COURSE_ID - 1;
+            when(attachmentVideoUnitRepository.findReconcileCourseIdsNewestFirst()).thenReturn(List.of(newerCourseId, COURSE_ID));
+            when(irisLectureApi.getIngestionCensus(newerCourseId)).thenReturn(new IngestionCensusDTO(newerCourseId, CURRENT_PIPELINE_VERSION, List.of(), false));
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1));
+
+            reconcileService.walkNextCourses();
+
+            InOrder inOrder = inOrder(irisLectureApi);
+            inOrder.verify(irisLectureApi).getIngestionCensus(newerCourseId);
+            inOrder.verify(irisLectureApi).getIngestionCensus(COURSE_ID);
+        }
+    }
+
+    @Nested
+    class CourseWindow {
+
+        @BeforeEach
+        void endTheCourseLongAgo() {
+            course.setEndDate(ZonedDateTime.now().minusYears(3));
+        }
+
+        @Test
+        void shouldNotTriggerAnyIngestionForACourseThatEndedBeforeTheWindow() {
+            when(processingStateRepository.findWithLectureUnitByCourseId(COURSE_ID)).thenReturn(List.of());
+            givenCensus();
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isZero();
+
+            verify(processingService, never()).triggerProcessingAsBacklog(any());
+        }
+
+        @Test
+        void shouldNotRequeueSkippedOrDivergedUnitsOfACourseThatEndedBeforeTheWindow() {
+            for (ProcessingPhase phase : List.of(ProcessingPhase.SKIPPED, ProcessingPhase.DONE)) {
+                state.setPhase(phase);
+                state.setConfirmedFingerprint(null);
+                givenCensus();
+
+                assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).as("phase %s must not be requeued", phase).isZero();
+                assertThat(state.getPhase()).isEqualTo(phase);
+            }
+            verify(reconcileStateRepository, never()).requeueForReconcileIfUnchanged(anyLong(), any(), any(), any(), any(), any(), anyInt(), any());
+        }
+
+        @Test
+        void shouldStillCleanUpOrphanedRowsOfACourseThatEndedBeforeTheWindow() {
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            long orphanUnitId = 999L;
+            when(attachmentVideoUnitRepository.findExistingIds(any())).thenReturn(Set.of(unit.getId()));
+            givenCensus(censusEntry(unit.getId(), FINGERPRINT, 1), censusEntry(orphanUnitId, "v1:whatever", 1));
+
+            reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<List<IngestionJobIdentityDTO>> captor = ArgumentCaptor.forClass(List.class);
+            verify(irisLectureApi).deleteLectureUnitsByIdentity(captor.capture());
+            assertThat(captor.getValue()).singleElement().extracting(IngestionJobIdentityDTO::lectureUnitId).isEqualTo(orphanUnitId);
+        }
+
+        @Test
+        void shouldTriggerIngestionForACourseThatEndedWithinTheWindow() {
+            course.setEndDate(ZonedDateTime.now().minusYears(1));
+            when(processingStateRepository.findWithLectureUnitByCourseId(COURSE_ID)).thenReturn(List.of());
+            givenCensus();
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
+
+            verify(processingService).triggerProcessingAsBacklog(unit);
         }
     }
 
     @Test
     void shouldSpendNothingWithoutIrisApi() {
         LectureIngestionReconcileService withoutIris = new LectureIngestionReconcileService(processingStateRepository, reconcileStateRepository, attachmentVideoUnitRepository,
-                Optional.empty(), contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10, transcriptionRepository);
+                Optional.empty(), contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10, transcriptionRepository, Duration.ofDays(730));
 
         assertThat(withoutIris.walkNextCourses()).isZero();
     }
