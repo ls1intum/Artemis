@@ -56,12 +56,9 @@ class EntityOwnershipArchitectureTest extends AbstractArchitectureTest {
      */
     private static final Set<String> ENTITIES_WITHOUT_A_DECLARED_PARENT = Set.of(
             // one-to-one where the parent holds the pointer, so nothing in the schema ties the child to it
-            "de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig", "de.tum.cit.aet.artemis.course.domain.CourseConfiguration",
-            "de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig", "de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration",
-            "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig", "de.tum.cit.aet.artemis.programming.domain.build.BuildPlan",
-            "de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig", "de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy",
-            "de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy", "de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy",
-            "de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration");
+            "de.tum.cit.aet.artemis.programming.domain.build.BuildPlan", "de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy",
+            "de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy",
+            "de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy");
 
     /**
      * Parents the database still lets be null. Each one is a shape that needs a decision before a constraint: the rows
@@ -110,7 +107,7 @@ class EntityOwnershipArchitectureTest extends AbstractArchitectureTest {
     void theRemainingWorkIsNotGrowing() {
         // The two lists are the backlog this test exists to shrink. Pinning their size makes an addition a deliberate
         // edit with a reviewer attached, rather than the path of least resistance when a new entity does not fit.
-        assertThat(ENTITIES_WITHOUT_A_DECLARED_PARENT).as("entities that cannot name a parent: move the foreign key onto the entity instead of adding to this list").hasSize(11);
+        assertThat(ENTITIES_WITHOUT_A_DECLARED_PARENT).as("entities that cannot name a parent: move the foreign key onto the entity instead of adding to this list").hasSize(4);
         assertThat(PARENTS_THAT_ARE_STILL_NULLABLE).as("parents the database still lets be null: require them instead of adding to this list").hasSize(4);
     }
 

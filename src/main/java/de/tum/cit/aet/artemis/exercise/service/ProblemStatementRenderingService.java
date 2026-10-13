@@ -101,9 +101,9 @@ public class ProblemStatementRenderingService {
 
     private static final int MAX_INLINE_IMAGES = 20;
 
-    private static final long MAX_INLINE_FILE_SIZE = 5 * 1024 * 1024;
+    private static final long MAX_INLINE_FILE_SIZE = 5L * 1024 * 1024;
 
-    private static final long MAX_INLINE_TOTAL_SIZE = 10 * 1024 * 1024;
+    private static final long MAX_INLINE_TOTAL_SIZE = 10L * 1024 * 1024;
 
     private static final String MARKDOWN_FILE_API_PATH = "/api/core/files/markdown/";
 

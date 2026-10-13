@@ -4082,7 +4082,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         // and its submission save stays a merge because it cascades to the submitted answers. It must NOT contain an
         // update of quiz_question: a student's submission may never write a shared question row (see
         // QuizQuestionContent#haveEqualPersistedForm), and this count is what keeps that write from coming back.
-        private final int QUIZ_SUBMISSION_QUERY_COUNT = 17;
+        // The save also reads the ids of the stored answers (one projection, no entities), so that it updates their rows instead of replacing them: the database
+        // allows only one answer per question and submission, and the answers of an exam save arrive without ids.
+        private final int QUIZ_SUBMISSION_QUERY_COUNT = 18;
 
         // exam summary: user with course roles, student exam with its exercises' groups, exam, quiz questions,
         // participations with latest submission and result, submitted answers. A real exam summary does not read the

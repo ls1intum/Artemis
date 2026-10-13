@@ -13,6 +13,8 @@
                     }
                 </span>
             </span>
+        } @else if (isSavingContent()) {
+            <span class="min-w-0 truncate font-semibold" jhiTranslate="artemisApp.lecture.editFooter.savingContent" data-testid="lecture-edit-footer-status"></span>
         } @else if (savedAt(); as saved) {
             <span class="lecture-edit-footer-saved flex min-w-0 items-center gap-2 font-semibold" data-testid="lecture-edit-footer-status">
                 <fa-icon [icon]="faCheck" />

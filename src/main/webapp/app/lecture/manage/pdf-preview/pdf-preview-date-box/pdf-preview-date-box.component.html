@@ -24,7 +24,14 @@
     </div>
     @if (calendarSelected()) {
         <div class="calendar-container mt-3">
-            <input type="datetime-local" class="form-control" [ngModel]="defaultDate()" (ngModelChange)="defaultDate.set($event)" [min]="defaultDate()" />
+            <input
+                [attr.aria-label]="'artemisApp.attachment.pdfPreview.dateBox.selectDate' | artemisTranslate"
+                type="datetime-local"
+                class="form-control"
+                [ngModel]="defaultDate()"
+                (ngModelChange)="defaultDate.set($event)"
+                [min]="defaultDate()"
+            />
         </div>
     }
     @if (exerciseSelected()) {

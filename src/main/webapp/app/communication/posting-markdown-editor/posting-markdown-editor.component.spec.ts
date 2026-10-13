@@ -46,6 +46,9 @@ import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/foundation/service/file.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { PostingEditType } from 'app/communication/communication.util';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -176,6 +179,78 @@ describe('PostingsMarkdownEditor', () => {
         containDefaultActions(component.defaultActions());
         expect(component.defaultActions()).toEqual(expect.arrayContaining([expect.any(UserMentionAction), expect.any(ChannelReferenceAction)]));
         expect(component.lectureAttachmentReferenceAction()).toEqual(new LectureAttachmentReferenceAction(communicationService, lectureService, fileService));
+    });
+
+    describe.each([
+        { editType: PostingEditType.CREATE, suggestsAll: true },
+        { editType: PostingEditType.UPDATE, suggestsAll: false },
+    ])('@all suggestion for edit type $editType', ({ editType, suggestsAll }) => {
+        it(`should ${suggestsAll ? '' : 'not '}offer @all in a group chat`, async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+            vi.spyOn(TestBed.inject(CourseManagementService), 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: [], status: 200 })));
+            fixture.componentRef.setInput('editType', editType);
+            component.ngOnInit();
+            const userMentionAction = component.defaultActions().find((action) => action instanceof UserMentionAction) as UserMentionAction;
+
+            const suggestions = await userMentionAction.loadSuggestionsForSearchTerm('');
+
+            expect(suggestions).toEqual(suggestsAll ? ['all'] : []);
+        });
+    });
+
+    describe('@all suggestion for the conversation of the posting', () => {
+        const suggestionsOfUserMentionAction = async () => {
+            vi.spyOn(TestBed.inject(CourseManagementService), 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: [], status: 200 })));
+            component.ngOnInit();
+            const userMentionAction = component.defaultActions().find((action) => action instanceof UserMentionAction) as UserMentionAction;
+            return userMentionAction.loadSuggestionsForSearchTerm('');
+        };
+
+        it('should offer @all if the posting belongs to a group chat that is not the current conversation', async () => {
+            // e.g. a reply in a thread that is opened from the view with all messages
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(undefined);
+            fixture.componentRef.setInput('activeConversation', new GroupChatDTO());
+
+            expect(await suggestionsOfUserMentionAction()).toEqual(['all']);
+        });
+
+        it('should prefer the conversation of the posting over the current conversation', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+            fixture.componentRef.setInput('activeConversation', new ChannelDTO());
+
+            expect(await suggestionsOfUserMentionAction()).toEqual([]);
+        });
+
+        it('should fall back to the current conversation if the posting provides none', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+
+            expect(await suggestionsOfUserMentionAction()).toEqual(['all']);
+        });
+    });
+
+    it('should follow the conversation and the edit type after the editor is initialized', async () => {
+        vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(undefined);
+        vi.spyOn(TestBed.inject(CourseManagementService), 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: [], status: 200 })));
+        component.ngOnInit();
+        const userMentionAction = component.defaultActions().find((action) => action instanceof UserMentionAction) as UserMentionAction;
+        const suggestions = () => userMentionAction.loadSuggestionsForSearchTerm('');
+
+        // no conversation is known, so there is nobody to ping
+        expect(await suggestions()).toEqual([]);
+
+        // the same action offers @all as soon as the posting belongs to a group chat, it is not registered again
+        fixture.componentRef.setInput('activeConversation', new GroupChatDTO());
+        expect(await suggestions()).toEqual(['all']);
+
+        fixture.componentRef.setInput('activeConversation', new ChannelDTO());
+        expect(await suggestions()).toEqual([]);
+
+        fixture.componentRef.setInput('activeConversation', new GroupChatDTO());
+        fixture.componentRef.setInput('editType', PostingEditType.UPDATE);
+        expect(await suggestions()).toEqual([]);
+
+        fixture.componentRef.setInput('editType', PostingEditType.CREATE);
+        expect(await suggestions()).toEqual(['all']);
     });
 
     it('should have set the correct default commands on init if communication is disabled', () => {
@@ -589,6 +664,118 @@ describe('PostingsMarkdownEditor', () => {
 
         (component as any).handleKeyDown(mockModel, mockPosition.lineNumber);
         expect(handleActionClickSpy).not.toHaveBeenCalled();
+    });
+
+    it('should invoke the ordered list action for an ordered list line', () => {
+        const orderedListAction = new OrderedListAction();
+        component.defaultActions.set([new BulletedListAction(), orderedListAction]);
+        const handleActionClickSpy = vi.spyOn(component.markdownEditor(), 'handleActionClick');
+        const mockModel = { getLineContent: vi.fn().mockReturnValue('  12. Item') } as unknown as monaco.editor.ITextModel;
+
+        (component as any).handleKeyDown(mockModel, 3);
+
+        expect(mockModel.getLineContent).toHaveBeenCalledWith(3);
+        expect(handleActionClickSpy).toHaveBeenCalledExactlyOnceWith(expect.any(MouseEvent), orderedListAction);
+    });
+
+    describe('list continuation on model content changes', () => {
+        let onContentChange: (event: monaco.editor.IModelContentChangedEvent) => void;
+        let monacoEditorMock: { onDidChangeModelContent: ReturnType<typeof vi.fn>; getPosition: ReturnType<typeof vi.fn>; getModel: ReturnType<typeof vi.fn> };
+        let handleKeyDownSpy: ReturnType<typeof vi.spyOn>;
+        let lineContent: string;
+
+        const changeEvent = (...texts: string[]) => ({ changes: texts.map((text) => ({ text })) }) as unknown as monaco.editor.IModelContentChangedEvent;
+
+        beforeEach(() => {
+            lineContent = '';
+            monacoEditorMock = {
+                onDidChangeModelContent: vi.fn().mockImplementation((callback) => {
+                    onContentChange = callback;
+                }),
+                getPosition: vi.fn().mockReturnValue({ lineNumber: 4 }),
+                getModel: vi.fn().mockReturnValue({ getLineContent: vi.fn().mockImplementation(() => lineContent) }),
+            };
+            Object.defineProperty(component.markdownEditor(), 'monacoEditor', { value: () => monacoEditorMock, configurable: true });
+            handleKeyDownSpy = vi.spyOn(component as any, 'handleKeyDown').mockImplementation(() => {});
+            component.ngAfterViewInit();
+        });
+
+        it('should enable the text field mode and listen to the content of the editor', () => {
+            const enableTextFieldModeSpy = vi.spyOn(component.markdownEditor(), 'enableTextFieldMode');
+
+            component.ngAfterViewInit();
+
+            expect(enableTextFieldModeSpy).toHaveBeenCalledOnce();
+            expect(monacoEditorMock.onDidChangeModelContent).toHaveBeenCalledTimes(2);
+        });
+
+        it('should not listen to anything if the monaco editor is not available yet', () => {
+            Object.defineProperty(component.markdownEditor(), 'monacoEditor', { value: () => undefined, configurable: true });
+            monacoEditorMock.onDidChangeModelContent.mockClear();
+
+            component.ngAfterViewInit();
+
+            expect(monacoEditorMock.onDidChangeModelContent).not.toHaveBeenCalled();
+        });
+
+        it.each(['- item', '   - item', '1. item', '  1. item'])('should continue the list for a line with a list prefix: "%s"', (line) => {
+            lineContent = line;
+
+            onContentChange(changeEvent('\n'));
+
+            expect(handleKeyDownSpy).toHaveBeenCalledExactlyOnceWith(expect.anything(), 4);
+        });
+
+        it.each(['plain text', '', '-no space', '2. item'])('should not touch a line without a list prefix: "%s"', (line) => {
+            lineContent = line;
+
+            onContentChange(changeEvent('x'));
+
+            expect(handleKeyDownSpy).not.toHaveBeenCalled();
+        });
+
+        it.each(['- ', '1. '])('should ignore a single change that types the list prefix itself: "%s"', (typedText) => {
+            lineContent = `${typedText}item`;
+
+            onContentChange(changeEvent(typedText));
+
+            expect(handleKeyDownSpy).not.toHaveBeenCalled();
+        });
+
+        it('should continue the list for a single change that does not start with a list prefix', () => {
+            lineContent = '- item';
+
+            onContentChange(changeEvent('\n- '));
+
+            expect(handleKeyDownSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should continue the list if several changes happen at once, even if one starts with a list prefix', () => {
+            lineContent = '- item';
+
+            onContentChange(changeEvent('- ', 'x'));
+
+            expect(handleKeyDownSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should do nothing if the editor has no cursor position', () => {
+            lineContent = '- item';
+            monacoEditorMock.getPosition.mockReturnValue(null);
+
+            onContentChange(changeEvent('x'));
+
+            expect(monacoEditorMock.getModel).not.toHaveBeenCalled();
+            expect(handleKeyDownSpy).not.toHaveBeenCalled();
+        });
+
+        it('should do nothing if the editor has no model', () => {
+            lineContent = '- item';
+            monacoEditorMock.getModel.mockReturnValue(null);
+
+            onContentChange(changeEvent('x'));
+
+            expect(handleKeyDownSpy).not.toHaveBeenCalled();
+        });
     });
 
     it('should keep the cursor position intact when editing text in a list item', () => {

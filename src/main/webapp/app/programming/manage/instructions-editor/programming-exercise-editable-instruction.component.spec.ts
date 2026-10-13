@@ -49,6 +49,10 @@ import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-revie
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 import { MonacoBinding } from 'y-monaco';
+import enProgrammingExercise from '../../../../i18n/en/programmingExercise.json';
+import deProgrammingExercise from '../../../../i18n/de/programmingExercise.json';
+import enEditor from '../../../../i18n/en/editor.json';
+import deEditor from '../../../../i18n/de/editor.json';
 
 /**
  * Typed view onto the protected/private internals the spec needs to read or override without a
@@ -550,9 +554,16 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         comp.saveInstructions(new KeyboardEvent('cmd+s'));
         expect(updateProblemStatementSpy).toHaveBeenCalledOnce();
-        expect(logErrorSpy).toHaveBeenCalledOnce();
+        expect(logErrorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingExercise.problemStatementCouldNotBeUpdated');
         expect(problemStatementSavedSpy).not.toHaveBeenCalled();
         expect(comp.savingInstructions()).toBe(false);
+    });
+
+    it('should translate the save error from the programming exercise translations instead of the code editor translations', () => {
+        expect(enProgrammingExercise.artemisApp.programmingExercise.problemStatementCouldNotBeUpdated).toBeTypeOf('string');
+        expect(deProgrammingExercise.artemisApp.programmingExercise.problemStatementCouldNotBeUpdated).toBeTypeOf('string');
+        expect(enEditor.artemisApp.editor.errors).not.toHaveProperty('problemStatementCouldNotBeUpdated');
+        expect(deEditor.artemisApp.editor.errors).not.toHaveProperty('problemStatementCouldNotBeUpdated');
     });
 
     it('should save on key commands', () => {

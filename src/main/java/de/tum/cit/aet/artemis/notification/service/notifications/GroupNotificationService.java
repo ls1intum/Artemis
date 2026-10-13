@@ -2,10 +2,15 @@ package de.tum.cit.aet.artemis.notification.service.notifications;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.DateTimeException;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -15,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -38,6 +44,19 @@ public class GroupNotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(GroupNotificationService.class);
 
+    /**
+     * The longest message of an editor that a notification delivers. A notification is a short heads-up that links to
+     * what changed, and its stored parameter values are bounded, so a longer message is shortened with an ellipsis. The
+     * notification text field of the attachment form in the client takes no more than this.
+     */
+    private static final int MAX_NOTIFICATION_TEXT_LENGTH = 255;
+
+    /**
+     * Date, time and time zone of a date shown in a notification, e.g. {@code 11.03.2026 00:30 CET}. The locale only affects the
+     * time zone name and is fixed, as a notification is created once for all recipients, independent of their language.
+     */
+    private static final DateTimeFormatter NOTIFICATION_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm z", Locale.ENGLISH);
+
     private final UserRepository userRepository;
 
     private final CourseNotificationService courseNotificationService;
@@ -51,9 +70,10 @@ public class GroupNotificationService {
      * Checks if a notification has to be created for this exercise update and creates one if the situation is appropriate
      *
      * @param exercise         that is updated
-     * @param notificationText that is used for the notification process
+     * @param notificationText the message the editor wrote for the update; {@code null} sends no notification, a blank one
+     *                             sends a notification without a message
      */
-    public void notifyAboutExerciseUpdate(Exercise exercise, String notificationText) {
+    public void notifyAboutExerciseUpdate(Exercise exercise, @Nullable String notificationText) {
         if (exercise.isExamExercise()) {
             // Do not send an exercise-update notification if it's an exam exercise.
             // Exam exercise updates are handled using exam live events.
@@ -67,7 +87,7 @@ public class GroupNotificationService {
 
         if (notificationText != null) {
             // sends an exercise-update notification
-            notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise);
+            notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
         }
     }
 
@@ -78,10 +98,12 @@ public class GroupNotificationService {
      * the lecture in rather than the attachment carrying a reference to one. The exercise id of the payload stays
      * {@code null}: an attachment has never belonged to an exercise on any released version.
      *
-     * @param attachment that has been changed
-     * @param lecture    the lecture the attachment's unit belongs to, loaded with its course
+     * @param attachment       that has been changed
+     * @param lecture          the lecture the attachment's unit belongs to, loaded with its course
+     * @param notificationText the message the editor wrote for students about the change, delivered with the notification
+     *                             unless it is {@code null} or blank
      */
-    public void notifyStudentGroupAboutAttachmentChange(Attachment attachment, Lecture lecture) {
+    public void notifyStudentGroupAboutAttachmentChange(Attachment attachment, Lecture lecture, @Nullable String notificationText) {
         // Do not send a notification before the release date of the attachment.
         if (attachment.getReleaseDate() != null && attachment.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
@@ -91,7 +113,7 @@ public class GroupNotificationService {
         var recipients = userRepository.getStudents(course);
 
         var attachmentChangedNotification = new AttachmentChangedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), attachment.getName(), lecture.getTitle(),
-                null, lecture.getId());
+                null, lecture.getId(), normalizeNotificationText(notificationText));
 
         courseNotificationService.sendCourseNotification(attachmentChangedNotification, recipients.stream().toList());
     }
@@ -107,7 +129,7 @@ public class GroupNotificationService {
             return;
         }
 
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var recipients = userRepository.getStudents(course);
 
         var exerciseOpenForPracticeNotification = new ExerciseOpenForPracticeNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
@@ -154,9 +176,11 @@ public class GroupNotificationService {
      * Tutors will only work on the exercise during the assessment therefore it is not urgent to inform them about changes beforehand.
      * Students, instructors, and editors should be notified about changed as quickly as possible.
      *
-     * @param exercise that has been updated
+     * @param exercise         that has been updated
+     * @param notificationText the message the editor wrote for the update, delivered with the notification unless it is
+     *                             {@code null} or blank
      */
-    public void notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise) {
+    public void notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, @Nullable String notificationText) {
         if (exercise.isExamExercise()) {
             // Do not send exercise update notifications to students for exam exercises.
             // The notification URL points to the course-management page which students cannot access.
@@ -169,11 +193,11 @@ public class GroupNotificationService {
             return;
         }
 
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR, CourseRole.STUDENT));
 
         var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getExerciseNotificationTitle(), null, null, exercise.getType());
+                exercise.getExerciseNotificationTitle(), null, null, exercise.getType(), normalizeNotificationText(notificationText));
 
         courseNotificationService.sendCourseNotification(exerciseUpdatedNotification, recipients.stream().toList());
     }
@@ -190,13 +214,12 @@ public class GroupNotificationService {
             return;
         }
 
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var recipients = userRepository.getUsersInCourse(course);
 
         var newExerciseNotification = new NewExerciseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
                 exercise.getExerciseNotificationTitle(), exercise.getDifficulty() == null ? null : exercise.getDifficulty().toString(),
-                exercise.getReleaseDate() == null ? null : exercise.getReleaseDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
-                exercise.getDueDate() == null ? null : exercise.getDueDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")), exercise.getMaxPoints().longValue());
+                formatDateInCourseTimeZone(exercise.getReleaseDate(), course), formatDateInCourseTimeZone(exercise.getDueDate(), course), exercise.getMaxPoints().longValue());
 
         courseNotificationService.sendCourseNotification(newExerciseNotification, recipients.stream().toList());
     }
@@ -207,13 +230,13 @@ public class GroupNotificationService {
      * @param exercise that has been updated
      */
     public void notifyEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise) {
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR));
 
         ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
         var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
                 exercise.getExerciseNotificationTitle(), exerciseGroup != null ? exerciseGroup.getExam().getId() : null, exerciseGroup != null ? exerciseGroup.getId() : null,
-                exercise.getType());
+                exercise.getType(), null);
 
         courseNotificationService.sendCourseNotification(exerciseUpdatedNotification, recipients.stream().toList());
     }
@@ -224,7 +247,7 @@ public class GroupNotificationService {
      * @param exercise that has been updated
      */
     public void notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(ProgrammingExercise exercise) {
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR));
 
         ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
@@ -240,7 +263,7 @@ public class GroupNotificationService {
      * @param exercise the exercise where the builds status changed
      */
     public void notifyEditorAndInstructorGroupsAboutBuildRunUpdate(ProgrammingExercise exercise) {
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR));
 
         ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
@@ -256,10 +279,10 @@ public class GroupNotificationService {
      * @param exercise that has been updated
      */
     public void notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(Exercise exercise) {
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR));
-        var formattedReleaseDate = exercise.getReleaseDate() != null ? exercise.getReleaseDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "-";
-        var formattedDueDate = exercise.getDueDate() != null ? exercise.getDueDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "-";
+        var formattedReleaseDate = Objects.requireNonNullElse(formatDateInCourseTimeZone(exercise.getReleaseDate(), course), "-");
+        var formattedDueDate = Objects.requireNonNullElse(formatDateInCourseTimeZone(exercise.getDueDate(), course), "-");
 
         ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
         var duplicateTestCaseNotification = new DuplicateTestCaseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
@@ -267,5 +290,59 @@ public class GroupNotificationService {
                 exerciseGroup != null ? exerciseGroup.getId() : null);
 
         courseNotificationService.sendCourseNotification(duplicateTestCaseNotification, recipients.stream().toList());
+    }
+
+    /**
+     * Formats a date for display in a notification with its date, time and time zone, for example {@code 11.03.2026 00:30 CET}.
+     * Notifications, and the e-mails built from them, are shared by all recipients of a course, so the date is shown in the
+     * time zone of the course, as the client does. Without a (valid) course time zone, the time zone of the server is used.
+     *
+     * @param date   the date to format, may be {@code null}
+     * @param course the course the notification belongs to
+     * @return the formatted date, or {@code null} if there is no date
+     */
+    @Nullable
+    private static String formatDateInCourseTimeZone(@Nullable ZonedDateTime date, Course course) {
+        if (date == null) {
+            return null;
+        }
+        ZoneId zone = ZoneId.systemDefault();
+        if (course.getTimeZone() != null) {
+            try {
+                zone = ZoneId.of(course.getTimeZone());
+            }
+            catch (DateTimeException e) {
+                log.warn("Course {} has an invalid time zone '{}', using the server time zone for notification dates", course.getId(), course.getTimeZone());
+            }
+        }
+        return date.withZoneSameInstant(zone).format(NOTIFICATION_DATE_FORMATTER);
+    }
+
+    /**
+     * Turns the text an editor entered into the message a notification delivers.
+     * <p>
+     * Sending the text at all is what asks for a notification, and the in-place lecture editor sends an empty one to
+     * notify students without a message. A blank text therefore delivers no message, and clients show their generic
+     * one instead. The message is plain text, which clients render as text and never as markup.
+     *
+     * @param notificationText the text the editor entered, possibly {@code null} or blank
+     * @return the trimmed text, shortened with an ellipsis beyond {@link #MAX_NOTIFICATION_TEXT_LENGTH} characters, or
+     *         {@code null} when there is no message to deliver
+     */
+    @Nullable
+    private static String normalizeNotificationText(@Nullable String notificationText) {
+        if (notificationText == null || notificationText.isBlank()) {
+            return null;
+        }
+        String text = notificationText.strip();
+        if (text.length() <= MAX_NOTIFICATION_TEXT_LENGTH) {
+            return text;
+        }
+        // Leave room for the ellipsis, and do not cut a character that takes two chars, such as an emoji, in half.
+        int end = MAX_NOTIFICATION_TEXT_LENGTH - 1;
+        if (Character.isHighSurrogate(text.charAt(end - 1))) {
+            end--;
+        }
+        return text.substring(0, end) + "…";
     }
 }

@@ -1,6 +1,5 @@
 import { ActivatedRouteSnapshot, GuardResult, MaybeAsync, RouterStateSnapshot } from '@angular/router';
 import { LectureUnsavedChangesComponent, hasLectureUnsavedChangesGuard } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
-import { signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Observable, firstValueFrom, of } from 'rxjs';
 
@@ -13,8 +12,7 @@ describe('hasLectureUnsavedChanges', () => {
     beforeEach(() => {
         component = {
             shouldDisplayDismissWarning: true,
-            hasUnsavedChanges: signal(true),
-            confirmDiscardChanges: vi.fn().mockReturnValue(of(true)),
+            confirmLeave: vi.fn().mockReturnValue(of(true)),
         };
     });
 
@@ -22,25 +20,18 @@ describe('hasLectureUnsavedChanges', () => {
         vi.restoreAllMocks();
     });
 
-    it('should allow leaving without asking when nothing changed', async () => {
-        component.hasUnsavedChanges = signal(false);
-
-        await expect(runGuard()).resolves.toBe(true);
-        expect(component.confirmDiscardChanges).not.toHaveBeenCalled();
-    });
-
     it('should allow leaving without asking when the warning is turned off', async () => {
         component.shouldDisplayDismissWarning = false;
 
         await expect(runGuard()).resolves.toBe(true);
-        expect(component.confirmDiscardChanges).not.toHaveBeenCalled();
+        expect(component.confirmLeave).not.toHaveBeenCalled();
     });
 
-    it.each([true, false])('should follow the decision of the user (%s) when there are unsaved changes', async (decision) => {
-        component.confirmDiscardChanges = vi.fn().mockReturnValue(of(decision));
+    it.each([true, false])('should follow the decision of the page (%s)', async (decision) => {
+        component.confirmLeave = vi.fn().mockReturnValue(of(decision));
 
         await expect(runGuard()).resolves.toBe(decision);
-        expect(component.confirmDiscardChanges).toHaveBeenCalledOnce();
+        expect(component.confirmLeave).toHaveBeenCalledOnce();
     });
 
     function runGuard(): Promise<GuardResult> {

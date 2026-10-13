@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.lti;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -21,7 +20,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
@@ -211,6 +209,68 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void createNewLtiPlatformConfigurationWithoutCustomName_badRequestWithFieldError() throws Exception {
+        LtiPlatformConfiguration platformToCreate = new LtiPlatformConfiguration();
+        fillLtiPlatformConfig(platformToCreate);
+        platformToCreate.setRegistrationId(null);
+        platformToCreate.setCustomName(null);
+
+        MvcResult result = request.performMvcRequest(post("/api/lti/admin/lti-platforms").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(LtiPlatformConfigurationUpdateDTO.of(platformToCreate)))).andExpect(status().isBadRequest()).andReturn();
+
+        assertFieldError(result, "ltiPlatformConfigurationUpdate", "customName", "NotBlank");
+        verify(ltiPlatformConfigurationRepository, never()).save(any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void createNewLtiPlatformConfigurationWithOverLongFields_badRequestWithFieldErrors() throws Exception {
+        LtiPlatformConfiguration platformToCreate = new LtiPlatformConfiguration();
+        fillLtiPlatformConfig(platformToCreate);
+        platformToCreate.setRegistrationId(null);
+        platformToCreate.setCustomName("n".repeat(LtiPlatformConfiguration.MAX_CUSTOM_NAME_LENGTH + 1));
+        platformToCreate.setTokenUri("t".repeat(LtiPlatformConfiguration.MAX_FIELD_LENGTH + 1));
+
+        MvcResult result = request.performMvcRequest(post("/api/lti/admin/lti-platforms").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(LtiPlatformConfigurationUpdateDTO.of(platformToCreate)))).andExpect(status().isBadRequest()).andReturn();
+
+        assertFieldError(result, "ltiPlatformConfigurationUpdate", "customName", "Size");
+        assertFieldError(result, "ltiPlatformConfigurationUpdate", "tokenUri", "Size");
+        verify(ltiPlatformConfigurationRepository, never()).save(any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateOnlineCourseConfigurationWithBlankUserPrefix_badRequestWithFieldError() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        Course savedCourse = createOnlineCourseWithConfiguration();
+        ObjectNode payload = onlineCourseConfigurationPayload(savedCourse, null);
+        payload.put("userPrefix", " ");
+
+        MvcResult result = request.performMvcRequest(put("/api/lti/courses/{courseId}/online-course-configuration", savedCourse.getId()).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(payload))).andExpect(status().isBadRequest()).andReturn();
+
+        // the client translates this as artemisApp.onlineCourseConfiguration.userPrefix, so the object name must stay in sync with lti.json
+        assertFieldError(result, "onlineCourseConfiguration", "userPrefix", "NotBlank");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateOnlineCourseConfigurationWithOverLongUserPrefix_badRequestWithFieldError() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        Course savedCourse = createOnlineCourseWithConfiguration();
+        ObjectNode payload = onlineCourseConfigurationPayload(savedCourse, null);
+        payload.put("userPrefix", "p".repeat(OnlineCourseConfiguration.MAX_USER_PREFIX_LENGTH + 1));
+
+        MvcResult result = request.performMvcRequest(put("/api/lti/courses/{courseId}/online-course-configuration", savedCourse.getId()).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(payload))).andExpect(status().isBadRequest()).andReturn();
+
+        assertFieldError(result, "onlineCourseConfiguration", "userPrefix", "Size");
+        assertThat(onlineCourseConfigurationRepository.findByCourseId(savedCourse.getId()).orElseThrow().getUserPrefix()).isEqualTo("prefix");
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateOnlineCourseConfigurationAcceptsPlatformReferenceOnly() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
@@ -220,7 +280,6 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         LtiPlatformConfiguration savedPlatform = ltiPlatformConfigurationRepository.save(platform);
         doReturn(Optional.empty()).when(ltiPlatformConfigurationRepository).findByRegistrationId(anyString());
         doReturn(savedPlatform).when(ltiPlatformConfigurationRepository).findByIdElseThrow(savedPlatform.getId());
-        doReturn(savedPlatform).when(ltiPlatformConfigurationRepository).findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(anyLong());
 
         Course savedCourse = createOnlineCourseWithConfiguration();
 
@@ -278,37 +337,23 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         assertThat(ltiPlatformConfigurationRepository.findByIdElseThrow(savedPlatformConfiguration.getId())).isEqualTo(savedPlatformConfiguration);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testFindLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow() {
-        LtiPlatformConfiguration newPlatformConfiguration = new LtiPlatformConfiguration();
-        fillLtiPlatformConfig(newPlatformConfiguration);
-        LtiPlatformConfiguration savedPlatformConfiguration = ltiPlatformConfigurationRepository.save(newPlatformConfiguration);
-
-        LtiPlatformConfiguration fetchedPlatformConfiguration = ltiPlatformConfigurationRepository
-                .findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(savedPlatformConfiguration.getId());
-
-        assertThat(fetchedPlatformConfiguration).isEqualTo(savedPlatformConfiguration);
-        assertThat(Hibernate.isInitialized(fetchedPlatformConfiguration.getOnlineCourseConfigurations())).isTrue();
-    }
-
     private Course createOnlineCourseWithConfiguration() {
         Course course = CourseFactory.generateCourse(null, COURSE_START_DATE, COURSE_END_DATE, new HashSet<>());
         course.setOnlineCourse(true);
 
-        OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
+        Course savedCourse = courseRepository.saveWithDefaultConfigurations(course);
+        OnlineCourseConfiguration onlineCourseConfiguration = onlineCourseConfigurationRepository.findStoredByCourseId(savedCourse.getId()).orElseThrow();
         onlineCourseConfiguration.setUserPrefix("prefix");
         onlineCourseConfiguration.setRequireExistingUser(false);
-        onlineCourseConfiguration.setCourse(course);
-        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
-        Course savedCourse = courseRepository.saveAndFlush(course);
+        onlineCourseConfiguration.setCourse(savedCourse);
+        onlineCourseConfigurationRepository.saveAndFlush(onlineCourseConfiguration);
         userUtilService.enrollPrefixedUsersInCourse(savedCourse, TEST_PREFIX);
         return savedCourse;
     }
 
     private ObjectNode onlineCourseConfigurationPayload(Course savedCourse, ObjectNode platformPayload) {
         ObjectNode payload = objectMapper.createObjectNode();
-        payload.put("id", savedCourse.getOnlineCourseConfiguration().getId());
+        payload.put("id", onlineCourseConfigurationRepository.findByCourseId(savedCourse.getId()).orElseThrow().getId());
         payload.put("userPrefix", "prefix");
         payload.put("requireExistingUser", false);
         payload.set("ltiPlatformConfiguration", platformPayload);
@@ -318,15 +363,28 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     private void fillLtiPlatformConfig(LtiPlatformConfiguration ltiPlatformConfiguration) {
         ltiPlatformConfiguration.setRegistrationId("registrationId-" + UUID.randomUUID());
         ltiPlatformConfiguration.setClientId("platform-" + UUID.randomUUID());
+        ltiPlatformConfiguration.setCustomName("Test platform");
         ltiPlatformConfiguration.setAuthorizationUri("authUri");
         ltiPlatformConfiguration.setTokenUri("tokenUri");
         ltiPlatformConfiguration.setJwkSetUri("jwkUri");
+    }
+
+    private void assertFieldError(MvcResult result, String objectName, String field, String message) throws Exception {
+        JsonNode fieldErrors = objectMapper.readTree(result.getResponse().getContentAsString()).get("fieldErrors");
+        assertThat(fieldErrors).isNotNull();
+        boolean found = false;
+        for (JsonNode fieldError : fieldErrors) {
+            found |= objectName.equals(fieldError.get("objectName").asString()) && field.equals(fieldError.get("field").asString())
+                    && message.equals(fieldError.get("message").asString());
+        }
+        assertThat(found).as("field error %s.%s (%s) in %s", objectName, field, message, fieldErrors).isTrue();
     }
 
     private LtiPlatformConfiguration cloneLtiPlatformConfig(LtiPlatformConfiguration original) {
         LtiPlatformConfiguration copy = new LtiPlatformConfiguration();
         copy.setId(original.getId());
         copy.setClientId(original.getClientId());
+        copy.setCustomName(original.getCustomName());
         copy.setAuthorizationUri(original.getAuthorizationUri());
         copy.setTokenUri(original.getTokenUri());
         copy.setJwkSetUri(original.getJwkSetUri());

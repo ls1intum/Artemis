@@ -25,7 +25,13 @@
                         <fa-icon [icon]="faSpinner" animation="spin" />
                     }
                 </div>
-                <input id="importPDF" type="file" accept=".pdf" (change)="onPDFFileSelect($event)" />
+                <input
+                    id="importPDF"
+                    type="file"
+                    accept=".pdf"
+                    class="cursor-pointer file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-(--border-color) file:bg-(--hover-slightly-darker-body-bg) file:px-3 file:py-2 file:text-base file:text-(--tumaet-ui-text-color) hover:file:bg-(--border-color)"
+                    (change)="onPDFFileSelect($event)"
+                />
             </div>
             @if (hasParsed()) {
                 @if (usersNotFound() > 0 || imagesSaved() === 0) {

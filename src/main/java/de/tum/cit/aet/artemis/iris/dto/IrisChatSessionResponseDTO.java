@@ -54,7 +54,7 @@ public record IrisChatSessionResponseDTO(long id, @Nullable IrisChatMode mode, @
      * @return the corresponding response DTO with messages
      */
     public static IrisChatSessionResponseDTO ofWithMessages(IrisSession session) {
-        List<IrisMessageResponseDTO> messageDTOs = session.getMessages().stream().map(IrisMessageResponseDTO::of).toList();
+        List<IrisMessageResponseDTO> messageDTOs = IrisMessageResponseDTO.ofDisplayed(session.getMessages());
         return new IrisChatSessionResponseDTO(session.getId(), modeOf(session), session.getEntityId(), session.getUserId(), session.getTitle(), session.getCreationDate(),
                 messageDTOs.isEmpty() ? null : messageDTOs, session.getLatestSuggestions(), session.getCitationInfo());
     }

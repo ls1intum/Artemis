@@ -233,7 +233,7 @@ public class ProgrammingSubmissionResource {
         // own membership query.
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
-        programmingTriggerService.logTriggerInstructorBuild(user, exercise, exercise.getCourseViaExerciseGroupOrCourseMember());
+        programmingTriggerService.logTriggerInstructorBuild(user, exercise, exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow());
         programmingTriggerService.triggerInstructorBuildForExercise(exerciseId);
         return ResponseEntity.ok().build();
     }

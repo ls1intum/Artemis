@@ -17,6 +17,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -116,14 +117,46 @@ public class PlagiarismComparison extends DomainObject implements Comparable<Pla
         setSubmission(PlagiarismComparisonSide.SECOND, submissionB);
     }
 
+    @Nullable
     @JsonIgnore
     public PlagiarismSubmission getSubmissionA() {
         return submissionOf(PlagiarismComparisonSide.FIRST);
     }
 
+    @Nullable
     @JsonIgnore
     public PlagiarismSubmission getSubmissionB() {
         return submissionOf(PlagiarismComparisonSide.SECOND);
+    }
+
+    /**
+     * Gets the submission on the first side of this comparison.
+     *
+     * @return the submission on the first side
+     * @throws IllegalStateException if the first side is empty
+     */
+    @JsonIgnore
+    public PlagiarismSubmission getSubmissionAElseThrow() {
+        var submission = getSubmissionA();
+        if (submission == null) {
+            throw new IllegalStateException("Plagiarism comparison " + getId() + " has no submission on the first side");
+        }
+        return submission;
+    }
+
+    /**
+     * Gets the submission on the second side of this comparison.
+     *
+     * @return the submission on the second side
+     * @throws IllegalStateException if the second side is empty
+     */
+    @JsonIgnore
+    public PlagiarismSubmission getSubmissionBElseThrow() {
+        var submission = getSubmissionB();
+        if (submission == null) {
+            throw new IllegalStateException("Plagiarism comparison " + getId() + " has no submission on the second side");
+        }
+        return submission;
     }
 
     public Set<PlagiarismSubmission> getSubmissions() {
@@ -139,6 +172,7 @@ public class PlagiarismComparison extends DomainObject implements Comparable<Pla
         }
     }
 
+    @Nullable
     private PlagiarismSubmission submissionOf(PlagiarismComparisonSide side) {
         return submissions.stream().filter(submission -> submission.getSide() == side).findFirst().orElse(null);
     }

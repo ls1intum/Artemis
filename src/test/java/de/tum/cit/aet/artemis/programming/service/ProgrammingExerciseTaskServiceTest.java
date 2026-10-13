@@ -10,8 +10,11 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -270,6 +273,96 @@ class ProgrammingExerciseTaskServiceTest {
     }
 
     @Test
+    void replaceTestNamesWithIds_alsoRewritesATestsColorReferenceWhoseNameContainsSpaces() {
+        // Java DisplayNames routinely contain spaces, and the diagram must still end up referring to the test by id, otherwise PlantUML receives the raw name and fails to render.
+        ProgrammingExercise exercise = exerciseWith("""
+                @startuml
+                class BubbleSort #testsColor(Test Attributes of Class) {
+                  <color:testsColor(Test Methods of Class(1, 2))>+ sort()</color>
+                  <color:testsColor(testSort)>+ swap()</color>
+                }
+                @enduml
+                """, testCase(1L, "Test Attributes of Class"), testCase(2L, "Test Methods of Class(1, 2)"), testCase(3L, "testSort"));
+
+        taskService.replaceTestNamesWithIds(exercise);
+
+        assertThat(exercise.getProblemStatement()).contains("#testsColor(<testid>1</testid>)").contains("<color:testsColor(<testid>2</testid>)>")
+                .contains("<color:testsColor(<testid>3</testid>)>");
+    }
+
+    @Test
+    void replaceTestIdsWithNames_restoresATestsColorReferenceWhoseNameContainsSpaces() {
+        ProgrammingExercise exercise = exerciseWith("""
+                @startuml
+                class BubbleSort #testsColor(<testid>1</testid>) {
+                }
+                @enduml
+                """, testCase(1L, "Test Attributes of Class"));
+
+        taskService.replaceTestIdsWithNames(exercise);
+
+        assertThat(exercise.getProblemStatement()).contains("#testsColor(Test Attributes of Class)");
+    }
+
+    @Test
+    void testsColorReferenceWhoseNameContainsACommaAndSpaces_roundTripsAsOneReference() {
+        // A JUnit DisplayName may contain a comma. Unlike a task, a testsColor element takes exactly one test, so the comma must not split the reference.
+        String diagram = """
+                @startuml
+                class BubbleSort #testsColor(Adds items, preserves order) {
+                  <color:testsColor(Adds items, preserves order)>+ sort()</color>
+                }
+                @enduml
+                """;
+        ProgrammingExercise exercise = exerciseWith(diagram, testCase(1L, "Adds items, preserves order"));
+
+        taskService.replaceTestNamesWithIds(exercise);
+
+        assertThat(exercise.getProblemStatement()).as("saving stores the id of the matching test").contains("#testsColor(<testid>1</testid>)")
+                .contains("<color:testsColor(<testid>1</testid>)>").doesNotContain("Adds items");
+
+        taskService.replaceTestIdsWithNames(exercise);
+
+        assertThat(exercise.getProblemStatement()).as("reopening restores the name exactly as written").isEqualTo(diagram);
+    }
+
+    @Test
+    void replaceTestNamesWithIds_keepsAnUnknownTestsColorNameWithACommaUnchanged() {
+        String diagram = """
+                @startuml
+                class BubbleSort #testsColor(Unknown test, with comma)
+                @enduml
+                """;
+        ProgrammingExercise exercise = exerciseWith(diagram, testCase(1L, "testBubbleSort"));
+
+        taskService.replaceTestNamesWithIds(exercise);
+
+        assertThat(exercise.getProblemStatement()).isEqualTo(diagram);
+    }
+
+    @Test
+    void updateTestIds_remapsATestsColorReferenceInsideAPlantUmlDiagram() {
+        ProgrammingExercise exercise = exerciseWith("""
+                @startuml
+                class BubbleSort #testsColor(<testid>1</testid>)
+                @enduml
+                """, testCase(1L, "Adds items, preserves order"));
+
+        taskService.updateTestIds(exercise, Map.of(1L, 7L));
+
+        assertThat(exercise.getProblemStatement()).contains("#testsColor(<testid>7</testid>)");
+    }
+
+    @Test
+    void replaceTestNamesWithIds_stillSplitsTheTestListOfATaskAtCommas() {
+        ProgrammingExercise exercise = exerciseWith("[task][Sort](testA, testB)", testCase(1L, "testA"), testCase(2L, "testB"));
+
+        taskService.replaceTestNamesWithIds(exercise);
+
+        assertThat(exercise.getProblemStatement()).isEqualTo("[task][Sort](<testid>1</testid>,<testid>2</testid>)");
+    }
+
+    @Test
     void replaceTestNamesWithIds_forAProblemStatementWithoutTasks_changesNothing() {
         ProgrammingExercise exercise = exerciseWith("Implement the sorting strategies. There is no task here.", testCase(1L, "testBubbleSort()"));
 
@@ -286,5 +379,57 @@ class ProgrammingExerciseTaskServiceTest {
         taskService.replaceTestNamesWithIds(exercise);
 
         assertThat(exercise.getProblemStatement()).isEqualTo("[task][Not wired up yet]()");
+    }
+
+    /**
+     * Runs the task on a thread with a 1 MB stack, which is what a regex that recurses per test case overflows on.
+     */
+    private List<String> findUnresolvedOnSmallStack(String problemStatement) throws InterruptedException {
+        withTestCases();
+        when(exercise.getProblemStatement()).thenReturn(problemStatement);
+        var result = new AtomicReference<List<String>>();
+        var failure = new AtomicReference<Throwable>();
+        Thread thread = new Thread(null, () -> {
+            try {
+                result.set(taskService.findUnresolvedTaskTestReferences(exercise));
+            }
+            catch (Throwable t) {
+                failure.set(t);
+            }
+        }, "task-pattern-small-stack", 1 << 20);
+        thread.start();
+        thread.join();
+        assertThat(failure.get()).isNull();
+        return result.get();
+    }
+
+    @Test
+    void findUnresolvedTaskTestReferences_withManyReferencesCarryingParameters_doesNotOverflowTheStack() throws InterruptedException {
+        int references = 2000;
+        String tests = IntStream.range(0, references).mapToObj(i -> "testMethod" + i + "(" + i + ")").collect(Collectors.joining(","));
+
+        var unresolved = findUnresolvedOnSmallStack("[task][Many tests](" + tests + ")");
+
+        assertThat(unresolved).hasSize(references).startsWith("testMethod0(0)").endsWith("testMethod1999(1999)");
+    }
+
+    @Test
+    void findUnresolvedTaskTestReferences_withManyPlainReferences_doesNotOverflowTheStack() throws InterruptedException {
+        int references = 5000;
+        String tests = IntStream.range(0, references).mapToObj(i -> "testMethod" + i).collect(Collectors.joining(", "));
+
+        var unresolved = findUnresolvedOnSmallStack("[task][Many tests](" + tests + ")");
+
+        assertThat(unresolved).hasSize(references);
+    }
+
+    @Test
+    void findUnresolvedTaskTestReferences_withMixedReferences_matchesExactlyTheWellFormedLists() throws InterruptedException {
+        String problemStatement = String.join("\n", "[task][Valid](a, b(1)x, c,d(2,3))", "[task][EmptyEntry](a,,b)", "[task][LeadingComma](,a)", "[task][TrailingComma](a,)",
+                "[task][TwoBracketsInOneEntry](a(1)b(2))", "[task][NoName](a,(1))", "[task][Empty]()");
+
+        var unresolved = findUnresolvedOnSmallStack(problemStatement);
+
+        assertThat(unresolved).containsExactly("a", "b(1)x", "c", "d(2,3)");
     }
 }

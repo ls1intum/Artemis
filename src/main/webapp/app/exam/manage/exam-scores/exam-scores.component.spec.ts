@@ -10,12 +10,12 @@ import {
     ExerciseResult,
     StudentResult,
 } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { ExamScoresComponent, MedianType } from 'app/exam/manage/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
 import { EMPTY, of } from 'rxjs';
-import { DialogService } from 'primeng/dynamicdialog';
+import { ExportButtonComponent } from 'app/shared-ui/export/button/export-button.component';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
@@ -270,8 +270,6 @@ describe('ExamScoresComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
-                // ExamScoresComponent renders the real ExportButtonComponent, which injects PrimeNG DialogService.
-                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of(undefined) })) } },
                 MockProvider(GradingService, {
                     findGradingScaleForExam: () => {
                         return of(
@@ -296,7 +294,10 @@ describe('ExamScoresComponent', () => {
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        }).compileComponents();
+        })
+            // The tests call the export methods directly, so the export button, which opens a dialog, is not rendered.
+            .overrideComponent(ExamScoresComponent, { remove: { imports: [ExportButtonComponent] }, add: { imports: [MockComponent(ExportButtonComponent)] } })
+            .compileComponents();
 
         fixture = TestBed.createComponent(ExamScoresComponent);
         comp = fixture.componentInstance;

@@ -50,7 +50,6 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
-import { mockThemeSwitcherComponentViewChildren } from 'test/helpers/mocks/mock-instance.helper';
 import { NavbarComponent } from 'app/core/navbar/navbar.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
@@ -109,9 +108,6 @@ describe('NavbarComponent', () => {
         translate: true,
         uri: '/course-management/1/programming-exercises/',
     } as MockBreadcrumb;
-
-    // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
-    mockThemeSwitcherComponentViewChildren();
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -340,6 +336,18 @@ describe('NavbarComponent', () => {
             expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123']);
         });
 
+        it('should link a routed exercise-linked presentation to its exercise in the student view', () => {
+            router.setUrl('/course-management/123/presentations/17/exercises/42');
+
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123', 'exercises', '42']);
+        });
+
+        it('should link a routed standalone presentation to the student course overview', () => {
+            router.setUrl('/course-management/123/presentations/17');
+
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123']);
+        });
+
         it.each(['/admin/upcoming-exams-and-exercises', '/exams/rooms', '/lti/exercises/123'])('should not provide perspective links outside course routes for %s', (url) => {
             router.setUrl(url);
 
@@ -536,6 +544,29 @@ describe('NavbarComponent', () => {
                 translate: true,
                 uri: '/course-management/1/gocast-binding/',
             } as MockBreadcrumb);
+        });
+
+        it.each(['', '?filter=pending'])('translates the presentation breadcrumb with suffix %s', (suffix) => {
+            router.setUrl(`/course-management/1/presentations${suffix}`);
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs().at(-1)).toEqual({
+                label: 'artemisApp.presentationAssessment.home.title',
+                translate: true,
+                uri: '/course-management/1/presentations/',
+            });
+        });
+
+        it.each(['/17', '/17/exercises/42'])('ends the breadcrumbs at the presentations overview for the selected presentation route %s', (suffix) => {
+            router.setUrl(`/course-management/1/presentations${suffix}`);
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs().at(-1)).toEqual({
+                label: 'artemisApp.presentationAssessment.home.title',
+                translate: true,
+                uri: '/course-management/1/presentations/',
+            });
+            expect(component.breadcrumbs().some((crumb) => crumb.uri.includes('/exercises/'))).toBe(false);
         });
 
         it('submissions link to the scores, since there is no list of submissions only', () => {

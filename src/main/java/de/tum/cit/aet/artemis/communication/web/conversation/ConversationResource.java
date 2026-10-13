@@ -32,6 +32,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User_;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -326,7 +327,7 @@ public class ConversationResource extends ConversationManagementResource {
         var resultDTO = new ArrayList<ConversationUserDTO>();
         for (var user : originalPage) {
             var dto = new ConversationUserDTO(user);
-            var courseRolesInitialized = Persistence.getPersistenceUtil().isLoaded(user, "courseRoles") && user.getCourseRoles() != null;
+            var courseRolesInitialized = Persistence.getPersistenceUtil().isLoaded(user, User_.COURSE_ROLES) && user.getCourseRoles() != null;
             if (!courseRolesInitialized) {
                 user = userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(user.getId());
             }

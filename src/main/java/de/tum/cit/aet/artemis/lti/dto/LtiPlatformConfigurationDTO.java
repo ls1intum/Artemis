@@ -1,7 +1,11 @@
 package de.tum.cit.aet.artemis.lti.dto;
 
+import static de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration.MAX_CUSTOM_NAME_LENGTH;
+import static de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration.MAX_FIELD_LENGTH;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.Nullable;
 
@@ -15,8 +19,10 @@ import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LtiPlatformConfigurationDTO(@NotNull Long id, @NotBlank String registrationId, @NotBlank String clientId, @Nullable String originalUrl, @Nullable String customName,
-        @NotBlank String authorizationUri, @NotBlank String jwkSetUri, @NotBlank String tokenUri) {
+public record LtiPlatformConfigurationDTO(@NotNull Long id, @NotBlank @Size(max = MAX_FIELD_LENGTH) String registrationId, @NotBlank @Size(max = MAX_FIELD_LENGTH) String clientId,
+        @Nullable @Size(max = MAX_FIELD_LENGTH) String originalUrl, @Nullable @Size(max = MAX_CUSTOM_NAME_LENGTH) String customName,
+        @NotBlank @Size(max = MAX_FIELD_LENGTH) String authorizationUri, @NotBlank @Size(max = MAX_FIELD_LENGTH) String jwkSetUri,
+        @NotBlank @Size(max = MAX_FIELD_LENGTH) String tokenUri) {
 
     public static LtiPlatformConfigurationDTO of(LtiPlatformConfiguration config) {
         return new LtiPlatformConfigurationDTO(config.getId(), config.getRegistrationId(), config.getClientId(), config.getOriginalUrl(), config.getCustomName(),
