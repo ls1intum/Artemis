@@ -70,16 +70,29 @@ describe('ProgrammingExerciseLanguageComponent', () => {
     });
 
     it('should not load TheiaComponent when online IDE is not allowed', () => {
-        comp.programmingExercise().allowOnlineIde = false;
+        fixture.componentRef.setInput('allowOnlineIde', false);
         fixture.detectChanges();
         expect(comp.programmingExerciseTheiaComponent()).toBeUndefined();
     });
 
     it('should load TheiaComponent when online IDE is allowed', () => {
         theiaServiceMock.getTheiaImages.mockReturnValue(of({}));
-        comp.programmingExercise().allowOnlineIde = true;
+        fixture.componentRef.setInput('allowOnlineIde', true);
         fixture.detectChanges();
         expect(comp.programmingExerciseTheiaComponent()).toBeDefined();
+    });
+
+    it('should show the online IDE settings as soon as the online IDE is allowed', () => {
+        theiaServiceMock.getTheiaImages.mockReturnValue(of({}));
+        fixture.componentRef.setInput('allowOnlineIde', false);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#field_onlineIdeExperienceLevel')).toBeNull();
+
+        // The checkbox in the mode section only changes the exercise in place; the parent passes the new value on.
+        comp.programmingExercise().allowOnlineIde = true;
+        fixture.componentRef.setInput('allowOnlineIde', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#field_onlineIdeExperienceLevel')).not.toBeNull();
     });
 
     it('should mark package name as invalid when it exceeds the maximum length', () => {
