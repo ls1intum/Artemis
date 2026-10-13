@@ -768,6 +768,29 @@ class WeaviateOutboxDispatcherTest {
     }
 
     @Test
+    void testBackgroundStep_aBulkDeleteWhoseAcknowledgementFailsStillStopsWaitingRows() {
+        List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
+        wireInMemoryOutbox(table, new HashMap<>());
+        WeaviateOutboxEntry background = entry(1L, COURSE, 7L, WeaviateOutboxOrigin.RECONCILE_MISSING);
+        table.add(background);
+        wirePreparedUpserts(Map.of(1L, List.of("a")));
+        WeaviateOutboxEntry courseDeletion = WeaviateOutboxEntry.forBulkDelete(WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE, "{\"courseId\":7}", WeaviateOutboxOrigin.LIVE);
+        courseDeletion.setId(2L);
+        doAnswer(invocation -> {
+            table.add(courseDeletion);
+            return invocation.<List<String>>getArgument(0).stream().map(_ -> new float[] { 1f, 0f }).toList();
+        }).when(embeddingClient).embedDocuments(any());
+        // Weaviate applies the delete, but removing its outbox row fails (the database is briefly unavailable).
+        doThrow(new IllegalStateException("database unavailable")).when(outboxRepository).delete(courseDeletion);
+
+        dispatcher.drain();
+
+        verify(searchableEntityWeaviateService).applyOutboxEntry(courseDeletion);
+        verify(searchableEntityWeaviateService, never()).applyPrepared(any(), any());
+        assertThat(table).contains(background);
+    }
+
+    @Test
     void testBackgroundStep_aRowWhoseVectorsAreAllReusedNeedsNoEmbeddingRequest() {
         List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
         wireInMemoryOutbox(table, new HashMap<>());

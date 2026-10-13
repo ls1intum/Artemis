@@ -495,13 +495,15 @@ public class WeaviateOutboxDispatcher {
         if (entry.getAttempts() > 0) {
             log.info("Weaviate outbox entry {} succeeded after {} failed attempt(s)", entry.getId(), entry.getAttempts());
         }
-        confirmWrite(entry, now, writtenContentHash);
+        // Record the write in memory first: Weaviate already holds it, so waiting background rows must respect it even if
+        // acknowledging the outbox row below fails and is retried.
         if (entry.getEntityId() != null) {
             confirmedInTurn.merge(entityKey(entry), entry.getId(), Math::max);
         }
         else {
             confirmedBulkDeletes++;
         }
+        confirmWrite(entry, now, writtenContentHash);
     }
 
     private void recordFailure(WeaviateOutboxEntry entry, Exception e) {
