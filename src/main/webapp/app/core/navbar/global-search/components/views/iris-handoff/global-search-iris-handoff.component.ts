@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faComment } from '@fortawesome/free-regular-svg-icons';
@@ -28,6 +29,7 @@ export class GlobalSearchIrisHandoffComponent {
     private readonly irisChatHttpService = inject(IrisChatHttpService);
     private readonly router = inject(Router);
     private readonly osDetector = inject(OsDetectorService);
+    private readonly destroyRef = inject(DestroyRef);
 
     /** The question the student asked. */
     readonly question = input.required<string>();
@@ -71,6 +73,8 @@ export class GlobalSearchIrisHandoffComponent {
                 answer: chatAnswer(this.answer(), this.citedSources()),
                 runId: this.runId(),
             })
+            // A chat created after the palette was closed or the search changed must not pull the student away from what they do now.
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 // Navigating closes the search palette, and this button with it.
                 next: (session) =>

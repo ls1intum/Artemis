@@ -161,6 +161,18 @@ describe('GlobalSearchIrisHandoffComponent', () => {
         expect(createSession).toHaveBeenCalledOnce();
     });
 
+    it('does not open a chat that is created only after the student has left the palette', () => {
+        const creation = new Subject<IrisSession>();
+        createSession.mockReturnValue(creation);
+        render(oneLecture);
+        button()!.click();
+
+        fixture.destroy();
+        creation.next({ id: 77 } as IrisSession);
+
+        expect(router.navigate).not.toHaveBeenCalled();
+    });
+
     it('becomes usable again when the chat cannot be created', () => {
         createSession.mockReturnValue(throwError(() => new Error('403')));
         render(oneLecture);
