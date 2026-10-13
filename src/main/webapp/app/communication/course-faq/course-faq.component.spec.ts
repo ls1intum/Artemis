@@ -219,4 +219,15 @@ describe('CourseFaqs', () => {
 
         expect(courseFaqComponent.referencedFaqId()).toBe(3);
     });
+
+    it('clears the filters that would hide a newly referenced faq', () => {
+        courseFaqComponentFixture.detectChanges();
+        courseFaqComponent.activeFilters.set(new Set(['category1']));
+
+        queryParams.next(convertToParamMap({ faqId: '3' }));
+
+        expect(courseFaqComponent.activeFilters().size).toBe(0);
+        expect(courseFaqComponent.filteredFaqs()).toContainEqual(faq3);
+        expect(courseFaqComponent.referencedFaqId()).toBe(3);
+    });
 });

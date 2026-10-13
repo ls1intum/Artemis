@@ -178,9 +178,11 @@ public class GlobalSearchResource {
         }
 
         // Over-fetched, because the ranking below moves rows of running courses up and drops older semester copies of an
-        // item; the limit applies after that.
-        List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(),
-                Math.min(MAX_CANDIDATES, effectiveLimit * CANDIDATE_FACTOR));
+        // item; the limit applies after that. A browse without a query has no relevance order, so Weaviate returns an
+        // arbitrary subset; it reads the most candidates, so the course and title order covers as much as possible.
+        boolean hasQuery = query != null && !query.isBlank();
+        int candidateLimit = hasQuery ? Math.min(MAX_CANDIDATES, effectiveLimit * CANDIDATE_FACTOR) : MAX_CANDIDATES;
+        List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), candidateLimit);
 
         Map<Long, Course> coursesById;
         Set<Long> staffCourseIds;
@@ -199,7 +201,21 @@ public class GlobalSearchResource {
         }
         Map<Long, String> courseNameById = new HashMap<>();
         coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
-        List<Map<String, Object>> rankedResults = GlobalSearchResultRanker.rank(rawResults, query != null && !query.isBlank(), coursesById, ZonedDateTime.now());
+        List<Map<String, Object>> rankedResults = GlobalSearchResultRanker.rank(rawResults, hasQuery, coursesById, ZonedDateTime.now());
+        if (rankedResults.size() < effectiveLimit && rawResults.size() == candidateLimit && candidateLimit < MAX_CANDIDATES) {
+            // Merging semester copies shrank a cut-off candidate set below the limit, so more distinct matches may lie
+            // beyond it. Reading the larger set keeps a short result list meaning "no more matches", which is what the
+            // client relies on to offer more results.
+            rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), MAX_CANDIDATES);
+            if (filterResult.accessibleCoursesById() == null) {
+                coursesById = resolveCoursesById(rawResults);
+                courseNameById.clear();
+                coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
+                staffCourseIds = coursesById.keySet();
+                editorCourseIds = coursesById.keySet();
+            }
+            rankedResults = GlobalSearchResultRanker.rank(rawResults, hasQuery, coursesById, ZonedDateTime.now());
+        }
         rawResults = rankedResults.subList(0, Math.min(rankedResults.size(), effectiveLimit));
 
         Map<Long, Long> exerciseGroupIdByExerciseId = resolveExerciseGroupIds(rawResults);
