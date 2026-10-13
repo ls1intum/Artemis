@@ -71,6 +71,15 @@ describe('LoginService', () => {
         expect(authServerProviderLogoutStub).not.toHaveBeenCalled();
     });
 
+    it('should call the server logout and still count as forceful when the session is outdated', () => {
+        navigateByUrlStub.mockReturnValue(Promise.resolve(true));
+        loginService.logoutWithServerSession();
+
+        commonExpects();
+        expect(authServerProviderLogoutStub).toHaveBeenCalledOnce();
+        expect(loginService.lastLogoutWasForceful()).toBe(true);
+    });
+
     describe('test login', () => {
         it('should login successfully with valid credentials', async () => {
             const credentials = new Credentials('testuser', 'password', true);

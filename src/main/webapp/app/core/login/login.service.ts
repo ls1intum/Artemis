@@ -82,17 +82,31 @@ export class LoginService {
         this.logoutWasForceful = !wasInitiatedByUser;
 
         if (wasInitiatedByUser) {
-            this.authServerProvider
-                .logout()
-                .pipe(
-                    finalize(() => {
-                        this.onLogout();
-                    }),
-                )
-                .subscribe();
+            this.logoutOnServer();
         } else {
             this.onLogout();
         }
+    }
+
+    /**
+     * Log out a user whose session was ended by the server although the token itself is still valid (credentials changed after the session started).
+     * Unlike a forceful logout without server call, this also asks the server to clear the token cookie, otherwise the old cookie would still
+     * authenticate the user on the sign-in page. The logout still counts as forceful, so the sign-in page explains that the session ended.
+     */
+    logoutWithServerSession() {
+        this.logoutWasForceful = true;
+        this.logoutOnServer();
+    }
+
+    private logoutOnServer(): void {
+        this.authServerProvider
+            .logout()
+            .pipe(
+                finalize(() => {
+                    this.onLogout();
+                }),
+            )
+            .subscribe();
     }
 
     private onLogout(): void {
