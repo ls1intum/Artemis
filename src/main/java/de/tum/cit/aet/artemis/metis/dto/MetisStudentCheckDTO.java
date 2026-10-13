@@ -16,11 +16,14 @@ import de.tum.cit.aet.artemis.metis.domain.MetisCheckStatus;
  * <p>
  * The status is the presented one, which can differ from the stored status, and {@code failureReason} carries a code of
  * {@link de.tum.cit.aet.artemis.metis.domain.MetisFailureReason}. The window is the student's effective window; the group title is set only when a group window
- * applies. {@code currentQuestion} is the question that is open right now, and {@code answeredQuestions} lists the answered questions in thread order. The list
- * is always sent, also when it is empty, and it carries ratings only while {@code ratingsVisible} is true. Unshown main questions are never part of it.
+ * applies. {@code newQuestionsUntil} is the last moment of the window at which a new question can still be shown, its end less the time one question needs:
+ * after it, a check that was not started can no longer be started, and a started one gets no further question. {@code currentQuestion} is the question that
+ * is open right now, and {@code answeredQuestions} lists the answered questions in thread order. The list is always sent, also when it is empty, and it
+ * carries ratings only while {@code ratingsVisible} is true. Unshown main questions are never part of it.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MetisStudentCheckDTO(@NotNull MetisCheckStatus status, @Nullable ZonedDateTime windowStart, @Nullable ZonedDateTime windowEnd, @Nullable String tutorialGroupTitle,
-        int mainQuestionCount, int likertScalePoints, @Nullable MetisQuestionDTO currentQuestion, @JsonInclude @NotNull List<MetisQuestionDTO> answeredQuestions,
-        boolean ratingsVisible, @Nullable String failureReason) {
+public record MetisStudentCheckDTO(@NotNull MetisCheckStatus status, @Nullable ZonedDateTime windowStart, @Nullable ZonedDateTime windowEnd,
+        @Nullable ZonedDateTime newQuestionsUntil, @Nullable String tutorialGroupTitle, int mainQuestionCount, int likertScalePoints,
+        @Nullable MetisQuestionDTO currentQuestion, @JsonInclude @NotNull List<MetisQuestionDTO> answeredQuestions, boolean ratingsVisible,
+        @Nullable String failureReason) {
 }
