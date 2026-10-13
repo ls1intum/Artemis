@@ -238,6 +238,8 @@ public class UserService {
             // back off the argument would depend on whether the save persisted or merged.
             if (internalAdminPasswordChanged) {
                 userActivityService.recordCredentialsChanged(savedInternalAdmin.getId(), Instant.now());
+                // A request to change the address that was made before the password was rotated must not stay confirmable.
+                userRecoveryKeyService.clearPendingEmailChange(savedInternalAdmin.getId());
             }
         }
         else {
