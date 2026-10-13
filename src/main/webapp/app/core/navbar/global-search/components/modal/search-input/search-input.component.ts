@@ -41,14 +41,19 @@ export class SearchInputComponent {
     chipRemoved = output<number>();
     /** Emitted with the chip index when the chip is clicked, to select (focus) it. */
     chipSelected = output<number>();
-    /** Emitted when Backspace is pressed while the cursor is at the beginning of the input. */
-    backspaceOnEmpty = output<void>();
+    /** Emitted with the key event when Backspace is pressed while the cursor is at the beginning of the input. */
+    backspaceAtStart = output<KeyboardEvent>();
     /** Emitted when the Filter button (or Cmd/Ctrl+F) requests the guided filter picker. */
     filterTrigger = output<void>();
 
     protected searchInputElement = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
     protected hasChips = computed(() => this.chips().length > 0);
+    /** The keyboard-highlighted chip as screen readers announce it; the highlight itself is only visual. */
+    protected selectedChipLabel = computed(() => {
+        const chip = this.chips().find((candidate) => candidate.selected);
+        return chip ? `${chip.facetLabel} ${chip.label}` : undefined;
+    });
     /**
      * The search text in front of the operator. The operator is only the trailing token, so the overlay has to
      * paint the query in ordinary ink before it and colour only the operator itself.
@@ -76,7 +81,7 @@ export class SearchInputComponent {
         // which is always up-to-date (unlike the signal that may lag during keydown).
         const el = this.searchInputElement()?.nativeElement;
         if (event.key === 'Backspace' && el && el.selectionStart === 0 && el.selectionEnd === 0) {
-            this.backspaceOnEmpty.emit();
+            this.backspaceAtStart.emit(event);
         }
         this.searchKeyDown.emit(event);
     }
