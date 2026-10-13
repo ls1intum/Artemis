@@ -135,9 +135,7 @@ class ArtemisConfigHelperTest {
     }
 
     @Test
-    void testAiWorkerRunsOnCoreForGenerationOrExplicitOptIn() {
-        mockProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, false);
-        when(mockEnv.getProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(false);
+    void testAiWorkerRequiresCoreAndExplicitOptIn() {
         when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(true);
         when(mockEnv.getProperty(Constants.AIWORKER_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(true);
         assertThat(artemisConfigHelper.isAiWorkerEnabled(mockEnv)).isTrue();
@@ -149,13 +147,6 @@ class ArtemisConfigHelperTest {
         when(mockEnv.getProperty(Constants.AIWORKER_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(false);
         assertThat(artemisConfigHelper.isAiWorkerEnabled(mockEnv)).isFalse();
 
-        mockProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, true);
-        when(mockEnv.getProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(true);
-        when(mockEnv.getProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(true);
-        assertThat(artemisConfigHelper.isAiWorkerEnabled(mockEnv)).isTrue();
-
-        when(mockEnv.getProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(false);
-        assertThat(artemisConfigHelper.isAiWorkerEnabled(mockEnv)).isFalse();
     }
 
     private void testProperty(Function<Environment, Boolean> propertyTest, String propertyName) {
