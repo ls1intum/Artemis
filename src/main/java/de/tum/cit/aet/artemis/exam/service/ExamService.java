@@ -1372,7 +1372,8 @@ public class ExamService {
         }
 
         // For non-instructors, consider what limited information they should receive and adjust accordingly
-        return new ExamChecklistDTO(Arrays.asList(totalNumberOfAssessmentsFinished), totalNumberOfParticipationsForAssessment, existsUnassessedQuizzes, existsUnsubmittedExercises);
+        return new ExamChecklistDTO(Arrays.asList(totalNumberOfAssessmentsFinished), totalNumberOfParticipationsForAssessment, totalNumberOfComplaints,
+                totalNumberOfComplaintResponse, existsUnassessedQuizzes, existsUnsubmittedExercises);
     }
 
     /**
