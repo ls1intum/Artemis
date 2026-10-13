@@ -62,6 +62,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTitleDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -119,12 +120,16 @@ public class ExerciseResource {
 
     private final CourseAthenaConfigRepository courseAthenaConfigRepository;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository,
             QuizBatchService quizBatchService, ParticipationRepository participationRepository, ExerciseVersionService exerciseVersionService,
-            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, CourseAthenaConfigRepository courseAthenaConfigRepository) {
+            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, CourseAthenaConfigRepository courseAthenaConfigRepository,
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -181,7 +186,9 @@ public class ExerciseResource {
         log.debug("REST request to get Exercise : {}", exerciseId);
 
         User user = userRepository.getUserWithAuthorities();
-        Exercise exercise = exerciseRepository.findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdWithCategoriesElseThrow(exerciseId);
+        // The response reports the team assignment configuration, which an exercise does not carry by itself.
+        teamAssignmentConfigRepository.attachTo(exercise);
 
         // Exam exercise
         if (exercise.isExamExercise()) {
@@ -289,7 +296,8 @@ public class ExerciseResource {
                 throw new BadRequestAlertException("Programming exercises with only automatic assessment should NOT be available on the assessment dashboard", "Exercise",
                         "programmingExerciseWithOnlyAutomaticAssessment");
             }
-            exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
+            exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(exerciseId);
+            teamAssignmentConfigRepository.attachTo(exercise);
         }
         // after the reload above, which answers from its own persistence context and carries no configuration
         courseAthenaConfigRepository.attachToCourseOf(exercise);

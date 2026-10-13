@@ -110,7 +110,7 @@ public class LectureUtilService {
         Lecture lecture = new Lecture();
         lecture.setDescription("Test Lecture");
         lecture.setCourse(course);
-        courseRepo.save(course);
+        courseRepo.saveWithDefaultConfigurations(course);
         if (saveLecture) {
             lectureRepo.save(lecture);
         }

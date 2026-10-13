@@ -335,9 +335,10 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
         onlineCourseConfiguration.setUserPrefix(userPrefix);
         onlineCourseConfiguration.setRequireExistingUser(false);
         onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfigurationRepository.findByRegistrationId(registrationId).orElseThrow());
-        onlineCourseConfiguration.setCourse(initialCourse);
-        initialCourse.setOnlineCourseConfiguration(onlineCourseConfiguration);
         final Course course = courseRepository.save(initialCourse);
+        onlineCourseConfiguration.setCourse(course);
+        onlineCourseConfiguration.setId(onlineCourseConfigurationRepository.findStoredByCourseId(course.getId()).orElseThrow().getId());
+        onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
         createdCourseId = course.getId();
         var textExercise = textExerciseUtilService.createSampleTextExercise(course);
 

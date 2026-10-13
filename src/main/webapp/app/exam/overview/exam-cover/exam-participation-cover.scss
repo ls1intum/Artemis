@@ -6,7 +6,7 @@
 }
 
 .scrollable-content-exam-cover {
-    @include dynamic-content-height;
+    @include shell-content-height;
 
     overflow-y: auto;
 }

@@ -150,6 +150,7 @@
                 "tutorialGroups": "Tutorial Groups",
                 "faqs": "FAQs",
                 "success": "Successfully imported course material",
+                "partialSuccess": "Course material was imported, but some items failed: {{ errors }}",
                 "noOptionsSelected": "Please select at least one option to import"
             },
             "archive": {
@@ -236,6 +237,10 @@
             "learningPaths": {
                 "label": "Learning Paths Enabled",
                 "tooltip": "Enables generation of individualized learning paths for students consisting of competencies and their linked learning materials."
+            },
+            "presentationAssessments": {
+                "label": "Presentations Enabled",
+                "tooltip": "Shows the Presentations entry in the course sidebar and allows instructors to manage course presentations."
             },
             "athenaConfig": {
                 "title": "Athena AI Feedback",

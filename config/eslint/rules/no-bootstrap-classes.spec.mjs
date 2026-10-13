@@ -45,6 +45,8 @@ describe('no-bootstrap-classes', () => {
                 { code: '<div [class]="\'flex gap-2 \' + extra"></div>' },
                 // A template-literal binding whose static chunks are valid Tailwind utilities — no false positive.
                 { code: '<div [class]="`flex gap-2 ${extra}`"></div>' },
+                // A name that an interpolation completes is not known, so a custom family that starts like Bootstrap's is no false positive.
+                { code: '<div [class]="`btn-${size} card-${kind} modal${suffix}`"></div>' },
                 // Component INPUTS that share a Bootstrap class name are not class bindings — must not be flagged.
                 { code: '<my-dialog [close]="onClose" [card]="data"></my-dialog>' },
                 { code: '<div [attr.role]="\'row\'"></div>' },

@@ -35,7 +35,7 @@ repositories {
 }
 
 ext {
-    aresVersion = '2.2.0'
+    aresVersion = '2.2.1'
     aspectjVersion = '1.9.25.1'
 }
 

@@ -20,6 +20,7 @@ import { CodeButtonComponent, RepositoryAuthenticationMethod } from 'app/shared-
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
+import { Tooltip } from 'primeng/tooltip';
 import { Subject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -39,6 +40,8 @@ import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/s
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
+import enExerciseActions from 'src/main/webapp/i18n/en/exercise-actions.json';
+import deExerciseActions from 'src/main/webapp/i18n/de/exercise-actions.json';
 
 describe('CodeButtonComponent', () => {
     let component: CodeButtonComponent;
@@ -926,6 +929,29 @@ describe('CodeButtonComponent', () => {
         component.onCopyFinished(false);
         fixture.detectChanges();
         expect(component.wasCopied()).toBeFalsy();
+    });
+
+    describe('open repository button', () => {
+        const openRepositoryKey = 'artemisApp.exerciseActions.openRepositoryReadOnly';
+
+        it('should describe the icon-only button with an accessible name and a tooltip', () => {
+            fixture.componentRef.setInput('routerLinkForRepositoryView', ['.', 'repository', 'SOLUTION']);
+            fixture.detectChanges();
+            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.detectChanges();
+
+            const openRepositoryButton = fixture.debugElement.query(By.css('.open-repository-button'));
+            expect(openRepositoryButton.nativeElement.getAttribute('aria-label')).toBe(openRepositoryKey);
+            expect(openRepositoryButton.nativeElement.getAttribute('target')).toBe('_blank');
+            expect(openRepositoryButton.injector.get(Tooltip).content).toBe(openRepositoryKey);
+        });
+
+        it.each([
+            ['English', enExerciseActions, 'Open repository in read-only online code view (new tab)'],
+            ['German', deExerciseActions, 'Repository in der schreibgeschützten Online-Codeansicht öffnen (neuer Tab)'],
+        ])('should provide the %s label', (_language, translations, expectedText) => {
+            expect(translations.artemisApp.exerciseActions.openRepositoryReadOnly).toBe(expectedText);
+        });
     });
 
     it('should fetch and store ssh preference', () => {

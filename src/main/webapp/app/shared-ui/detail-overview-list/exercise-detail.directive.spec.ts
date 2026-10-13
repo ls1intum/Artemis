@@ -91,6 +91,18 @@ describe('ExerciseDetailDirective', () => {
         });
     });
 
+    it('should not create a component when the directive is destroyed while the component is being loaded', async () => {
+        const createComponentSpy = vi.spyOn(fixture.directiveInstance.viewContainerRef, 'createComponent');
+        detail.set({ type: DetailType.ProgrammingTestStatus } as ProgrammingTestStatusDetail);
+        fixture.detectChanges();
+
+        const pending = fixture.directiveInstance['initializeExerciseDetailDirective']();
+        fixture.destroy();
+        await pending;
+
+        expect(createComponentSpy).not.toHaveBeenCalled();
+    });
+
     async function checkComponentForDetailWasNotCreated(detailToBeChecked: NotShownDetail) {
         const createComponentSpy = vi.spyOn(fixture.directiveInstance.viewContainerRef, 'createComponent');
         detail.set(detailToBeChecked);
@@ -101,11 +113,15 @@ describe('ExerciseDetailDirective', () => {
     }
 
     async function checkComponentForDetailWasCreated(detailToBeChecked: ShownDetail, expectedComponent: any) {
-        const createComponentSpy = vi.spyOn(fixture.directiveInstance.viewContainerRef, 'createComponent').mockReturnValue({ setInput: vi.fn(), destroy: vi.fn() } as any);
+        const setInput = vi.fn();
+        const createComponentSpy = vi
+            .spyOn(fixture.directiveInstance.viewContainerRef, 'createComponent')
+            .mockReturnValue({ componentType: expectedComponent, setInput, destroy: vi.fn() } as any);
         detail.set(detailToBeChecked);
         fixture.detectChanges();
         await fixture.directiveInstance['initializeExerciseDetailDirective']();
 
         expect(createComponentSpy).toHaveBeenCalledWith(expectedComponent);
+        expect(setInput).toHaveBeenCalledWith('detail', detailToBeChecked);
     }
 });

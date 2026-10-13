@@ -32,6 +32,8 @@
                                 <span class="text-muted-color">{{ request.shortName }}</span>
                                 @if (request.testCourse) {
                                     <tumaet-ui-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
+                                } @else if (request.gradeRelevant === false) {
+                                    <tumaet-ui-tag severity="warn" [rounded]="true" [value]="'artemisApp.courseRequest.admin.notGradeRelevant' | artemisTranslate" />
                                 }
                             </div>
                         </td>
@@ -173,6 +175,8 @@
                                 <span class="text-muted-color">{{ request.shortName }}</span>
                                 @if (request.testCourse) {
                                     <tumaet-ui-tag severity="info" [rounded]="true" [value]="'artemisApp.courseRequest.admin.testCourse' | artemisTranslate" />
+                                } @else if (request.gradeRelevant === false) {
+                                    <tumaet-ui-tag severity="warn" [rounded]="true" [value]="'artemisApp.courseRequest.admin.notGradeRelevant' | artemisTranslate" />
                                 }
                                 <tumaet-ui-tag
                                     [severity]="badgeSeverity(request.status)"

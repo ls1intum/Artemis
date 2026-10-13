@@ -26,7 +26,7 @@ set -euo pipefail
 # actually creates exercises for are listed — pulling every language in application.yml would cost
 # several gigabytes for images no test builds in.
 IMAGES=(
-    "ls1tum/artemis-maven-template:java25-2" # java + kotlin default (also the default exercise language)
+    "ls1tum/artemis-maven-template:java25-3" # java + kotlin default (also the default exercise language)
     "ls1tum/artemis-c-minimal-docker:1.0.0"   # c default
     "ls1tum/artemis-fact-minimal-docker:1.1.0" # c, fact project type
     "ls1tum/artemis-python-docker:v1.1.0"     # python default

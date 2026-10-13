@@ -1,5 +1,6 @@
 import { Component, HostListener, OnDestroy, OnInit, inject, signal, viewChildren } from '@angular/core';
 import { CdkScrollable } from '@angular/cdk/scrolling';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -113,6 +114,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
     private examManagementService = inject(ExamManagementService);
 
+    /**
+     * Whether the shell around the exam is in its exam layout: true from the start of a real exam until its summary is loaded,
+     * which resets the layout. Only then does a screen have to draw the dividers around its card itself, afterwards it fills the
+     * card of the shell it is shown in.
+     */
+    protected readonly examLayoutActive = toSignal(this.examParticipationService.examIsStarted$, { initialValue: false });
+
     /** Set once the component is destroyed, so that a late response does not restart work for the exam that was left. */
     private isDestroyed = false;
 
@@ -126,9 +134,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly MODELING = ExerciseType.MODELING;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly FILEUPLOAD = ExerciseType.FILE_UPLOAD;
-
-    // needed for recalculation of exam content height
-    readonly EXAM_HEIGHT_OFFSET = 88;
 
     readonly courseId = signal<number>(undefined!);
     readonly examId = signal<number>(undefined!);
@@ -1326,13 +1331,5 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             const exercise = this.studentExam().exercises![index];
             exercise.problemStatement = event.problemStatement;
         }
-    }
-
-    /**
-     * Updates the current exam height offset property to recalculate the height of exam sidebar and sidebar content
-     * @param newHeight New exam bar height calculated based on the window resizements
-     */
-    updateHeight(newHeight: number) {
-        document.documentElement.style.setProperty('--exam-height-offset', `${newHeight + this.EXAM_HEIGHT_OFFSET}px`);
     }
 }

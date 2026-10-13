@@ -40,6 +40,8 @@ describe('ExerciseSaveButtonComponent', () => {
 
         const button = fixture.debugElement.query(By.css('#save-exam'));
         expect(button.nativeElement.disabled).toBe(true);
+        // the layout contract of the exam finds the button by this hook
+        expect(button.nativeElement.getAttribute('data-testid')).toBe('exam-save-button');
     });
 
     it('should enable the button if submission is not synced', () => {

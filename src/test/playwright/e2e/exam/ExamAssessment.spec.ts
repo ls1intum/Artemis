@@ -18,6 +18,8 @@ import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
 import examStatisticsSample from '../../fixtures/exam/statistics.json';
 import { ExamScoresPage } from '../../support/pageobjects/exam/ExamScoresPage';
 import { SEED_COURSES } from '../../support/seedData';
+import { expectComplaintAreaLayout, expectComplaintBox, expectExamSummaryLayout, expectQuietRating } from '../../support/examLayoutAssertions';
+import { expectInside, expectScrollPositionKept, forEachViewport } from '../../support/layout';
 
 const course = { id: SEED_COURSES.examAssessment.id } as any;
 let studentOneName: string;
@@ -213,7 +215,27 @@ test.describe('Exam assessment', () => {
         });
 
         test('Complaints about text exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
-            await handleComplaint(course, exam, true, ExerciseType.TEXT, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment, false);
+            await handleComplaint(
+                course,
+                exam,
+                true,
+                ExerciseType.TEXT,
+                page,
+                studentAssessment,
+                examManagement,
+                examAssessment,
+                courseAssessment,
+                exerciseAssessment,
+                false,
+                true,
+            );
+
+            // The student reads the response in the summary, which here holds a result and a complaint as well, and keeps its layout contract with both.
+            await expectQuietRating(page.getByTestId('exercise-rating'));
+            await forEachViewport(page, async (viewport) => {
+                await expectExamSummaryLayout(page, viewport);
+                await expectComplaintAreaLayout(page, viewport);
+            });
         });
 
         test.afterAll('Delete exam', async ({ browser }) => {
@@ -754,12 +776,17 @@ async function handleComplaint(
     courseAssessment: CourseAssessmentDashboardPage,
     exerciseAssessment: ExerciseAssessmentDashboardPage,
     isFirstTimeAssessing: boolean = true,
+    checkLayout: boolean = false,
 ) {
     const complaintText = 'Lorem ipsum dolor sit amet';
     const complaintResponseText = ' consetetur sadipscing elitr';
 
     await Commands.login(page, studentOne, `/courses/${course.id}/exams/${exam.id}`);
-    await studentAssessment.startComplaint();
+    if (checkLayout) {
+        await startComplaintWithoutLeavingThePlace(page, studentAssessment);
+    } else {
+        await studentAssessment.startComplaint();
+    }
     await studentAssessment.enterComplaint(complaintText);
     await studentAssessment.submitComplaint();
     await examAssessment.checkComplaintMessage('Your complaint has been submitted');
@@ -793,4 +820,27 @@ async function handleComplaint(
         await studentAssessment.checkComplaintStatusText('Complaint was accepted');
     }
     await studentAssessment.checkComplaintResponseText(complaintResponseText);
+}
+
+/**
+ * Opens the complaint form like {@link StudentAssessmentPage.startComplaint}, with the Complain button in the upper half of a long summary, and
+ * expects the summary to stay where it is: the click used to carry the page to the top. The form is a box, and its submit button is in view.
+ */
+async function startComplaintWithoutLeavingThePlace(page: Page, studentAssessment: StudentAssessmentPage) {
+    const scroller = page.getByTestId('exam-summary-scroll');
+    const complainButton = page.locator('#complain');
+    await complainButton.waitFor({ state: 'visible', timeout: 60_000 });
+    // The summary of this exam ends with the complaint area. A student with more exercises below it has room to scroll, which is what lets the
+    // page stay where it is when the form opens, so the room is made here.
+    await scroller.evaluate((element) => {
+        const room = document.createElement('div');
+        room.style.height = '2000px';
+        element.appendChild(room);
+    });
+    await expectScrollPositionKept(scroller, () => studentAssessment.startComplaint(), {
+        name: 'the summary while the Complain button opens the form',
+        placed: { element: complainButton, at: 0.25 },
+    });
+    await expectComplaintBox(page.getByTestId('complaint-form-card'), 'the complaint form');
+    await expectInside(page.locator('#submit-complaint'), scroller, ['top', 'bottom'], { name: 'the submit button of the complaint form, in view' });
 }

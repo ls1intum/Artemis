@@ -150,6 +150,7 @@
                 "tutorialGroups": "Übungsgruppen",
                 "faqs": "FAQs",
                 "success": "Kursmaterial erfolgreich importiert",
+                "partialSuccess": "Kursmaterial wurde importiert, aber einige Elemente sind fehlgeschlagen: {{ errors }}",
                 "noOptionsSelected": "Bitte wähle mindestens eine Option zum Importieren aus"
             },
             "archive": {
@@ -236,6 +237,10 @@
             "learningPaths": {
                 "label": "Lernpfade aktiviert",
                 "tooltip": "Ermöglicht es aus Kompetenzen und deren Lerninhalten einen individuellen Lernpfad für Studierende zu generieren."
+            },
+            "presentationAssessments": {
+                "label": "Präsentationen aktiviert",
+                "tooltip": "Zeigt den Menüpunkt Präsentationen in der Kursnavigation und erlaubt Lehrenden, Kurspräsentationen zu verwalten."
             },
             "athenaConfig": {
                 "title": "Athena KI-Feedback",

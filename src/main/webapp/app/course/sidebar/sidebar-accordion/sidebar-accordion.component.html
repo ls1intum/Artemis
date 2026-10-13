@@ -17,7 +17,11 @@
                     @if (showLeadingIcon()) {
                         <fa-icon [fixedWidth]="true" [icon]="iconForGroup(groupKey)" />
                     }
-                    {{ 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
+                    @if (groupedData()[groupKey].translationKey; as translationKey) {
+                        {{ translationKey | artemisTranslate | titlecase }}
+                    } @else {
+                        {{ 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
+                    }
                     @if (!groupedData()[groupKey].isHideCount) {
                         ({{ (groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems')?.length }})
                     }
@@ -54,9 +58,7 @@
                                     track sidebarItem.trackId ?? sidebarItem.id
                                 ) {
                                     <div [ngClass]="{ 'mb-2': !last }">
-                                        <!-- loading sidebarCard with help of a directive depending on its size input-->
-                                        <div
-                                            jhiSidebarCard
+                                        <jhi-sidebar-card
                                             [size]="sidebarItem.size"
                                             [itemSelected]="itemSelected()"
                                             [sidebarType]="sidebarType()"
@@ -64,7 +66,7 @@
                                             [groupKey]="groupKey"
                                             [activeItemId]="selectedItemId()"
                                             (onUpdateSidebar)="onUpdateSidebar.emit()"
-                                        ></div>
+                                        />
                                     </div>
                                 }
                             </div>

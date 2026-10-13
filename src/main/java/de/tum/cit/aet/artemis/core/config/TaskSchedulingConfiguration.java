@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.slf4j.Logger;
@@ -12,7 +13,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_CORE + " | " + PROFILE_AIWORKER)
 @Configuration
 @Lazy
 @EnableScheduling
