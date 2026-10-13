@@ -2,11 +2,11 @@ package de.tum.cit.aet.artemis.lecture.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -71,12 +71,35 @@ class AttachmentVideoUnitReconcileQueryTest extends AbstractSpringIntegrationInd
         Course testCourse = lectureUtilService.createCourseWithLecture(true).getCourse();
         testCourse.setTestCourse(true);
         courseRepository.save(testCourse);
-        long cursor = withUnit.getCourse().getId() - 1;
 
-        List<Long> walked = attachmentVideoUnitRepository.findReconcileCourseIdsAfter(cursor, PageRequest.of(0, 1000));
+        List<Long> walked = attachmentVideoUnitRepository.findReconcileCourseIdsNewestFirst();
 
-        assertThat(walked).contains(withUnit.getCourse().getId(), withoutUnits.getId()).doesNotContain(testCourse.getId()).isSorted();
-        assertThat(attachmentVideoUnitRepository.findReconcileCourseIdsAfter(withoutUnits.getId(), PageRequest.of(0, 1000))).doesNotContain(withoutUnits.getId(),
-                withUnit.getCourse().getId());
+        assertThat(walked).contains(withUnit.getCourse().getId(), withoutUnits.getId()).doesNotContain(testCourse.getId()).doesNotHaveDuplicates();
+    }
+
+    /**
+     * The walk ingests recent material first: courses by end date, latest first, so running courses come before the ones that
+     * ended, and courses with the same end date by start date, latest first.
+     */
+    @Test
+    void testCourseWalkVisitsTheNewestCoursesFirst() {
+        ZonedDateTime now = ZonedDateTime.now();
+        Course endedLongAgo = courseWithDates(now.minusYears(3), now.minusYears(2));
+        Course endedRecentlyStartedEarly = courseWithDates(now.minusYears(1), now.minusDays(10));
+        Course endedRecentlyStartedLate = courseWithDates(now.minusMonths(6), now.minusDays(10));
+        Course running = courseWithDates(now.minusMonths(1), now.plusMonths(3));
+
+        List<Long> walked = attachmentVideoUnitRepository.findReconcileCourseIdsNewestFirst();
+        List<Long> ours = walked.stream()
+                .filter(id -> List.of(endedLongAgo.getId(), endedRecentlyStartedEarly.getId(), endedRecentlyStartedLate.getId(), running.getId()).contains(id)).toList();
+
+        assertThat(ours).containsExactly(running.getId(), endedRecentlyStartedLate.getId(), endedRecentlyStartedEarly.getId(), endedLongAgo.getId());
+    }
+
+    private Course courseWithDates(ZonedDateTime startDate, ZonedDateTime endDate) {
+        Course course = lectureUtilService.createCourseWithLecture(true).getCourse();
+        course.setStartDate(startDate);
+        course.setEndDate(endDate);
+        return courseRepository.save(course);
     }
 }

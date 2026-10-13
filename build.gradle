@@ -545,6 +545,8 @@ dependencies {
 
     implementation "org.springframework.boot:spring-boot-starter-validation:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
+    // The SMTP reply codes of the exceptions the mail sender throws (MailFailureClassifier). The starter only brings the implementation at runtime. Version managed by the Spring Boot BOM.
+    implementation "org.eclipse.angus:angus-mail"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-liquibase:${spring_boot_version}"
@@ -604,6 +606,8 @@ dependencies {
 
     // Weaviate vector database client for semantic search
     implementation "io.weaviate:client6:${weaviate_client_version}"
+    // Token counting that bounds each global search embedding input (also used by Spring AI)
+    implementation "com.knuddels:jtokkit:${jtokkit_version}"
     constraints {
         implementation("com.google.code.gson:gson:2.14.0") {
             because("Required by Weaviate client v6 for JSON serialization")
