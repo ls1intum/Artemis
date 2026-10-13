@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.videosource.service;
 import java.net.URI;
 import java.util.Base64;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,7 +85,9 @@ public class GocastConnectorService {
     public GocastVerifiedCourseDTO redeemApproval(long integrationId, String state, String code) {
         requireId(integrationId, "integrationId");
         requireOpaque(state, "state");
-        requireOpaque(code, "code");
+        if (!isApprovalCode(code)) {
+            throw new IllegalArgumentException("code must be a canonical version 4 UUID");
+        }
         RedeemResponse redeemed = execute("Could not complete TUM.Live approval",
                 () -> restClient.post().uri("/integration/authorizations/redeem").body(new RedeemRequest(code, state)).retrieve().body(RedeemResponse.class));
         if (redeemed == null || !isId(redeemed.grantId()) || !isId(redeemed.courseId())) {
@@ -171,6 +174,19 @@ public class GocastConnectorService {
         }
         try {
             return Base64.getUrlDecoder().decode(value).length == 32;
+        }
+        catch (IllegalArgumentException exception) {
+            return false;
+        }
+    }
+
+    private static boolean isApprovalCode(String value) {
+        if (!StringUtils.hasText(value)) {
+            return false;
+        }
+        try {
+            UUID code = UUID.fromString(value);
+            return code.version() == 4 && code.variant() == 2 && code.toString().equals(value);
         }
         catch (IllegalArgumentException exception) {
             return false;

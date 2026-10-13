@@ -42,7 +42,7 @@ class GocastLoggingSafetyTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String STATE = "KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKio";
 
-    private static final String CODE = "Q0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0M";
+    private static final String CODE = "685aebd3-45ba-4d4c-91a5-b181932f2ff5";
 
     private static final String API_KEY_SENTINEL = "api-key-value-that-must-not-be-logged";
 

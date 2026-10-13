@@ -34,7 +34,7 @@ class GocastConnectorServiceTest {
 
     private static final String STATE = "KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKio";
 
-    private static final String CODE = "Q0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0M";
+    private static final String CODE = "685aebd3-45ba-4d4c-91a5-b181932f2ff5";
 
     private static final String CALLBACK_URL = "https://artemis.example/api/videosource/public/gocast/approval/callback";
 
@@ -157,6 +157,14 @@ class GocastConnectorServiceTest {
         assertThatThrownBy(() -> connector.redeemApproval(17, STATE, "short")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> connector.getGrant(4_294_967_296L)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> connector.revokeGrant(0)).isInstanceOf(IllegalArgumentException.class);
+        server.verify();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "Q0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0M", "685AEBD3-45BA-4D4C-91A5-B181932F2FF5", "{685aebd3-45ba-4d4c-91a5-b181932f2ff5}",
+            "urn:uuid:685aebd3-45ba-4d4c-91a5-b181932f2ff5", "685aebd3-45ba-1d4c-91a5-b181932f2ff5", "685aebd3-45ba-4d4c-c1a5-b181932f2ff5", "1-2-4-8-16" })
+    void rejectsApprovalCodesThatAreNotCanonicalVersion4Uuids(String code) {
+        assertThatThrownBy(() -> connector.redeemApproval(17, STATE, code)).isInstanceOf(IllegalArgumentException.class);
         server.verify();
     }
 
