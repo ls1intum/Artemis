@@ -231,6 +231,32 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(removeFileSpy).not.toHaveBeenCalledWith('other-background.png');
     });
 
+    it('should realign the click layer of every drag and drop question when the window is resized', () => {
+        const secondFixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        const secondComponent = secondFixture.componentInstance;
+        secondFixture.componentRef.setInput('question', clone(question2));
+        secondFixture.componentRef.setInput('questionIndex', 2);
+        secondFixture.componentRef.setInput('reEvaluationInProgress', false);
+        secondFixture.detectChanges();
+        const firstAdjustSpy = vi.spyOn(component, 'adjustClickLayerWidth');
+        const secondAdjustSpy = vi.spyOn(secondComponent, 'adjustClickLayerWidth');
+
+        window.dispatchEvent(new Event('resize'));
+
+        // The drop locations are percentages of the click layer, so a layer that keeps its old width makes them drift away from the background image.
+        expect(firstAdjustSpy).toHaveBeenCalledOnce();
+        expect(secondAdjustSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should stop reacting to window resizes once the question is destroyed', () => {
+        const adjustSpy = vi.spyOn(component, 'adjustClickLayerWidth');
+
+        fixture.destroy();
+        window.dispatchEvent(new Event('resize'));
+
+        expect(adjustSpy).not.toHaveBeenCalled();
+    });
+
     it('should set background file', () => {
         const file1 = { name: 'newFile1.jpg' } as File;
         const file2 = { name: 'newFile2.png' } as File;
