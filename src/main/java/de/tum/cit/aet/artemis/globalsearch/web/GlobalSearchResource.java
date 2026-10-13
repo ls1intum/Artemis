@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseForSearchFilterDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
@@ -200,6 +201,22 @@ public class GlobalSearchResource {
             }
         }
         return ResponseEntity.ok(resultDTOs);
+    }
+
+    /**
+     * GET /api/search/course-options : the courses the user can scope a global search to.
+     * <p>
+     * Lists every course an unscoped search covers, past courses included, so the {@code course:} filter can narrow to
+     * any of them. The client ranks the active ones first.
+     *
+     * @return status 200 with the user's accessible courses and whether each is still active
+     */
+    @GetMapping("search/course-options")
+    @EnforceAtLeastStudent
+    @Operation(summary = "List the courses a global search can be scoped to", description = "Returns every course the user has access to, active and past, with an active flag.")
+    @ApiResponse(responseCode = "200", description = "The courses the user can filter the global search by")
+    public ResponseEntity<List<CourseForSearchFilterDTO>> getCourseFilterOptions() {
+        return ResponseEntity.ok(accessFilterService.findCourseFilterOptions(userRepository.getUserIdElseThrow()));
     }
 
     /**

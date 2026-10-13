@@ -106,6 +106,47 @@ describe('search menu builders', () => {
             expect(options.map((option) => option.id)).toEqual(['2', '3', '1', '4']);
         });
 
+        it('ranks active courses above past ones, and sorts by title within each group', () => {
+            const courseList: MenuCourse[] = [
+                { id: 1, title: 'Algorithms', active: false },
+                { id: 2, title: 'Zoology', active: true },
+                { id: 3, title: 'Databases', active: true },
+                { id: 4, title: 'Compilers', active: false },
+            ];
+            const options = buildFilterMenuOptions({ ...base, operator: courseOp(), courses: () => courseList });
+
+            expect(options.map((option) => option.id)).toEqual(['3', '2', '1', '4']);
+        });
+
+        it('still offers a past course when no active course matches the typed value', () => {
+            const courseList: MenuCourse[] = [
+                { id: 1, title: 'Databases 2023', active: false },
+                { id: 2, title: 'Zoology', active: true },
+            ];
+            const options = buildFilterMenuOptions({ ...base, operator: courseOp('databases'), searchQuery: 'course:databases', courses: () => courseList });
+
+            expect(options.map((option) => option.action)).toEqual([{ kind: 'value', value: '1' }]);
+        });
+
+        it('gives the capped slots to active courses before any past one', () => {
+            const past: MenuCourse[] = Array.from({ length: 8 }, (_, i) => ({ id: i + 1, title: `A past ${i + 1}`, active: false }));
+            const courseList: MenuCourse[] = [...past, { id: 100, title: 'Z current', active: true }];
+            const options = buildFilterMenuOptions({ ...base, operator: courseOp(), courses: () => courseList });
+
+            expect(options).toHaveLength(8);
+            expect(options[0].id).toBe('100');
+        });
+
+        it('ranks a course with an unknown active flag like an active one', () => {
+            const courseList: MenuCourse[] = [
+                { id: 1, title: 'Algorithms', active: false },
+                { id: 2, title: 'Zoology' },
+            ];
+            const options = buildFilterMenuOptions({ ...base, operator: courseOp(), courses: () => courseList });
+
+            expect(options.map((option) => option.id)).toEqual(['2', '1']);
+        });
+
         it('filters course options by title and caps the list at eight', () => {
             const courseList: MenuCourse[] = Array.from({ length: 12 }, (_, i) => ({ id: i + 1, title: `Course ${i + 1}` }));
             const courses = () => courseList;
