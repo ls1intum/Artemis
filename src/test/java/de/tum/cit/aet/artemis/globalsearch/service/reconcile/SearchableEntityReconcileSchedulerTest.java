@@ -27,6 +27,8 @@ class SearchableEntityReconcileSchedulerTest {
 
     private final SearchableEntityOrphanSweep orphanSweep = mock(SearchableEntityOrphanSweep.class);
 
+    private final SearchableEntityRefillSweep refillSweep = mock(SearchableEntityRefillSweep.class);
+
     private static WeaviateReconcileProperties properties() {
         // The individual *SweepEnabled flags only seed the runtime toggle's first-ever value (FeatureToggleService),
         // so they play no role at scheduling time; what runs is decided by FeatureToggleService.isFeatureEnabled.
@@ -34,7 +36,7 @@ class SearchableEntityReconcileSchedulerTest {
     }
 
     private SearchableEntityReconcileScheduler scheduler(FeatureToggleService featureToggleService) {
-        return new SearchableEntityReconcileScheduler(properties(), featureToggleService, missingSweep, driftSweep, orphanSweep);
+        return new SearchableEntityReconcileScheduler(properties(), featureToggleService, missingSweep, driftSweep, orphanSweep, refillSweep);
     }
 
     @Test
@@ -78,10 +80,11 @@ class SearchableEntityReconcileSchedulerTest {
             scheduler.reconcileDrift();
             scheduler.reconcileMissing();
             scheduler.reconcileOrphans();
+            scheduler.reconcileRefill();
             scheduler.logEffectiveConfiguration();
         }).doesNotThrowAnyException();
 
-        verifyNoInteractions(missingSweep, driftSweep, orphanSweep);
+        verifyNoInteractions(missingSweep, driftSweep, orphanSweep, refillSweep);
     }
 
     @Test
@@ -96,9 +99,11 @@ class SearchableEntityReconcileSchedulerTest {
         scheduler.reconcileDrift();
         scheduler.reconcileMissing();
         scheduler.reconcileOrphans();
+        scheduler.reconcileRefill();
 
         verify(driftSweep).sweep();
         verify(missingSweep).sweep();
+        verify(refillSweep).sweep();
         verifyNoInteractions(orphanSweep);
     }
 

@@ -460,7 +460,9 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
 
             Optional<Map<String, Object>> resolved = searchableEntityResolver.resolve(SearchableEntitySchema.TypeValues.POST, post.getId());
 
-            assertThat(resolved).contains(PostSearchableEntityDTO.fromPost(post, channel).toPropertyMap());
+            // The resolver adds the chunk metadata to the scalar projection.
+            assertThat(resolved).hasValueSatisfying(properties -> assertThat(properties).containsAllEntriesOf(PostSearchableEntityDTO.fromPost(post, channel).toPropertyMap())
+                    .containsKeys(SearchableEntitySchema.Properties.CHUNK_HASHES, SearchableEntitySchema.Properties.CHUNKER_VERSION));
             assertThat(statistics.getEntityStatistics(Post.class.getName()).getLoadCount()).as("resolving a post must not load the Post entity").isZero();
             assertThat(statistics.getEntityStatistics(AnswerPost.class.getName()).getLoadCount()).as("resolving a post must not load its answers").isZero();
             assertThat(statistics.getEntityStatistics(Reaction.class.getName()).getLoadCount()).as("resolving a post must not load its reactions").isZero();
@@ -481,7 +483,10 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
 
             Optional<Map<String, Object>> resolved = searchableEntityResolver.resolve(SearchableEntitySchema.TypeValues.ANSWER_POST, answer.getId());
 
-            assertThat(resolved).contains(AnswerPostSearchableEntityDTO.fromAnswerPost(answer, channel).toPropertyMap());
+            // The resolver adds the chunk metadata to the scalar projection.
+            assertThat(resolved)
+                    .hasValueSatisfying(properties -> assertThat(properties).containsAllEntriesOf(AnswerPostSearchableEntityDTO.fromAnswerPost(answer, channel).toPropertyMap())
+                            .containsKeys(SearchableEntitySchema.Properties.CHUNK_HASHES, SearchableEntitySchema.Properties.CHUNKER_VERSION));
             assertThat(statistics.getEntityStatistics(AnswerPost.class.getName()).getLoadCount()).as("resolving an answer post must not load the AnswerPost entity").isZero();
             assertThat(statistics.getEntityStatistics(Post.class.getName()).getLoadCount()).as("resolving an answer post must not load its parent Post entity").isZero();
             assertThat(statistics.getEntityStatistics(Reaction.class.getName()).getLoadCount()).as("resolving an answer post must not load its reactions").isZero();

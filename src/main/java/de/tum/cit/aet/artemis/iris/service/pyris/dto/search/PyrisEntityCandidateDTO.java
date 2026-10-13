@@ -10,14 +10,15 @@ import de.tum.cit.aet.artemis.globalsearch.dto.SearchableEntityCandidateDTO;
  * One pre-fetched, pre-authorized entity candidate for the Pyris global-search answer pipeline
  * ({@code entityCandidates} on the request). Pyris renders each candidate into a text card and
  * reranks it against lecture content on one shared scale; the access filtering happened in Artemis.
- * Field names match the Pyris {@code EntityCandidateDTO} aliases; dates travel as ISO strings.
+ * Field names match the Pyris {@code EntityCandidateDTO} aliases; dates travel as ISO strings. {@code passage} is the part of
+ * the entity that matched the query; Pyris versions that do not know it ignore it and use the description.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisEntityCandidateDTO(String entityType, @Nullable Long entityId, @Nullable Long courseId, @Nullable String courseName, @Nullable String title,
         @Nullable String description, @Nullable String shortName, @Nullable String link, @Nullable String releaseDate, @Nullable String startDate, @Nullable String dueDate,
         @Nullable String endDate, @Nullable String examVisibleDate, @Nullable String examStartDate, @Nullable String examEndDate, @Nullable Double maxPoints,
         @Nullable Long quizDurationSeconds, @Nullable String programmingLanguage, @Nullable String exerciseType, @Nullable String unitType, @Nullable String faqState,
-        @Nullable Boolean channelIsPublic) {
+        @Nullable Boolean channelIsPublic, @Nullable String passage) {
 
     /**
      * Maps a prefetched globalsearch candidate onto the Pyris wire shape.
@@ -29,6 +30,6 @@ public record PyrisEntityCandidateDTO(String entityType, @Nullable Long entityId
         return new PyrisEntityCandidateDTO(candidate.entityType(), candidate.entityId(), candidate.courseId(), candidate.courseName(), candidate.title(), candidate.description(),
                 candidate.shortName(), candidate.link(), candidate.releaseDate(), candidate.startDate(), candidate.dueDate(), candidate.endDate(), candidate.visibleDate(),
                 candidate.examStartDate(), candidate.examEndDate(), candidate.maxPoints(), candidate.quizDurationSeconds(), candidate.programmingLanguage(),
-                candidate.exerciseType(), candidate.unitType(), candidate.faqState(), candidate.channelIsPublic());
+                candidate.exerciseType(), candidate.unitType(), candidate.faqState(), candidate.channelIsPublic(), candidate.passage());
     }
 }
