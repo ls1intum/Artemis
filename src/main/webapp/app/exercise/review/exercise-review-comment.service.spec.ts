@@ -125,7 +125,7 @@ describe('ExerciseReviewCommentService', () => {
     it('reloadThreads should retain feedback after a failed reload until an authoritative response', () => {
         service.setExercise(2);
         service.threads.set([{ id: 99 } as any]);
-        service.selectThreadAsFeedback(99);
+        service.toggleThreadFeedbackSelection(99);
 
         service.reloadThreads();
 
