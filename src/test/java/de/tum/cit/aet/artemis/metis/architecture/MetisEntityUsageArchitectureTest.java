@@ -5,7 +5,9 @@ import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleEntityUsa
 /**
  * Architecture test verifying that REST controllers in the Metis module do not use @Entity types
  * directly (neither as return types nor in request bodies) and that its DTOs do not reference entities.
- * The module has no controllers and no DTOs yet, so every count is expected to stay at zero.
+ * The four Metis resources exchange DTO records only, and the records in the dto package hold ids, values,
+ * enums and other DTOs, never an entity; the stored rows are mapped by the static factories of the records.
+ * Every count therefore stays at zero.
  */
 class MetisEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitectureTest {
 

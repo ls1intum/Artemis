@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.metis.dto;
 
+import jakarta.validation.constraints.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -7,5 +9,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * queue. The questions themselves are generated later by the scheduling node.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MetisGenerateResultDTO(int createdChecks, int requeuedChecks) {
+public record MetisGenerateResultDTO(@NotNull int createdChecks, @NotNull int requeuedChecks) {
 }
