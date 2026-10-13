@@ -108,7 +108,8 @@
                     "faq": "FAQ",
                     "channel": "Channel",
                     "course": "Course",
-                    "message": "Message"
+                    "message": "Message",
+                    "page": "Page"
                 }
             },
             "comingSoon": "Coming soon",

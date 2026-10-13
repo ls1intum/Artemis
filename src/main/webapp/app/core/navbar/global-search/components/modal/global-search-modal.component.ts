@@ -23,6 +23,9 @@ import { removeTokenAt } from '../../models/search-token.util';
 import { IrisSearchAvailabilityService } from '../../services/iris-search-availability.service';
 import { LectureSearchService } from '../../services/lecture-search.service';
 import { LECTURE_CONTENT_TYPE, mapLectureContentResult } from '../../models/lecture-content-result.util';
+import { TranslateService } from '@ngx-translate/core';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { matchCoursePages } from '../../models/course-page-results.util';
 
 /** Iris content search is a vector search behind a network hop, so it gets its own, longer ceiling. */
 export const CONTENT_SEARCH_TIMEOUT_MS = 5_000;
@@ -67,6 +70,8 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly filter = inject(GlobalSearchFilterService);
     private readonly availability = inject(IrisSearchAvailabilityService);
     private readonly lectureSearchService = inject(LectureSearchService);
+    private readonly courseStorageService = inject(CourseStorageService);
+    private readonly translateService = inject(TranslateService);
 
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowDown = faArrowDown;
@@ -313,7 +318,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 takeUntilDestroyed(),
             )
             .subscribe((results) => {
-                this.results.set(results);
+                this.results.set([...this.coursePageResults(), ...results]);
                 this.selectedIndex.set(-1);
                 this.isLoading.set(false);
                 this.hasSearched.set(true);
@@ -390,6 +395,19 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.tokens.set(newTokens);
         this.lastSearchText = '';
         this.searchSubject.next({ query: '' });
+    }
+
+    /**
+     * The pages of the one course the search is scoped to whose name matches the typed text, such as "grades" for the
+     * statistics page. Offered only for a plain search in a single course, where the course is unambiguous.
+     */
+    private coursePageResults(): GlobalSearchResult[] {
+        const courseIds = this.courseIdsParam();
+        if (this.contentSearchActive() || courseIds.length !== 1 || this.typesParam() !== undefined || this.excludeTypesParam() !== undefined) {
+            return [];
+        }
+        const courseId = courseIds[0];
+        return matchCoursePages(this.searchText(), courseId, this.courseStorageService.getCourse(courseId)?.title, (key) => this.translateService.instant(key));
     }
 
     /**
