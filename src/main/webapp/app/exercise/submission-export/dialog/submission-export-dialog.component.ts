@@ -8,10 +8,11 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { SubmissionExportOptions, SubmissionExportService } from '../submission-export.service';
 import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -20,7 +21,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-exercise-submission-export-dialog',
     templateUrl: './submission-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, FormDateTimePickerComponent, FaIconComponent, ArtemisTranslatePipe],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, TumAetUiDatePickerComponent, FaIconComponent, ArtemisTranslatePipe],
 })
 export class SubmissionExportDialogComponent implements OnInit {
     private exerciseService = inject(ExerciseService);
@@ -39,6 +40,10 @@ export class SubmissionExportDialogComponent implements OnInit {
     readonly filterLateSubmissions = model(false);
     readonly filterLateSubmissionsDate = model<SubmissionExportOptions['filterLateSubmissionsDate']>(null);
     readonly participantIdentifierList = model('');
+    /** The picker keeps its last valid date while the typed text is not a date, so the text validity is tracked separately. */
+    readonly isFilterDateTextValid = signal(true);
+    /** The export must not run with a date the picker shows as invalid; while the date is not used (filter off), it cannot matter. */
+    readonly hasInvalidFilterDate = computed(() => this.filterLateSubmissions() && !this.isFilterDateTextValid());
 
     readonly submissionExportOptions = computed<SubmissionExportOptions>(() => ({
         exportAllParticipants: this.exportAllParticipants(),
@@ -68,6 +73,11 @@ export class SubmissionExportDialogComponent implements OnInit {
             .subscribe(() => {
                 this.isLoading.set(false);
             });
+    }
+
+    /** The export options hold no date as `null`, whereas the picker reports it as `undefined`. */
+    onFilterLateSubmissionsDateChange(date: dayjs.Dayjs | undefined) {
+        this.filterLateSubmissionsDate.set(date ?? null);
     }
 
     clear() {
