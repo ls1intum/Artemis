@@ -17,9 +17,10 @@ import de.tum.cit.aet.artemis.metis.domain.MetisQuestion;
  * service allows it ({@link #ofStudent(MetisQuestion, boolean)}).
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MetisQuestionDTO(long id, long checkId, int questionOrder, @Nullable Long parentQuestionId, @Nullable String focusFilePath, @Nullable Integer focusFileChangedLines,
-        @NotNull String questionText, int timeLimitSeconds, int regenerationCount, @Nullable ZonedDateTime approvedAt, @Nullable ZonedDateTime shownAt, @Nullable String answerText,
-        @Nullable ZonedDateTime answeredAt, @Nullable Integer llmScore, @Nullable String llmRationale, @Nullable ZonedDateTime llmRatedAt) {
+public record MetisQuestionDTO(@NotNull long id, @NotNull long checkId, @NotNull int questionOrder, @Nullable Long parentQuestionId, @Nullable String focusFilePath,
+        @Nullable Integer focusFileChangedLines, @NotNull String questionText, @NotNull int timeLimitSeconds, @NotNull int regenerationCount, @Nullable ZonedDateTime approvedAt,
+        @Nullable ZonedDateTime shownAt, @Nullable String answerText, @Nullable ZonedDateTime answeredAt, @Nullable Integer llmScore, @Nullable String llmRationale,
+        @Nullable ZonedDateTime llmRatedAt) {
 
     /**
      * Maps a question for instructors, editors and tutors.

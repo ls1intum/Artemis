@@ -15,8 +15,9 @@ import de.tum.cit.aet.artemis.metis.domain.MetisCheckStatus;
  * and the times of generation, start and completion.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MetisCheckDTO(long id, long participationId, @NotNull MetisCheckStatus status, @Nullable String commitHash, @Nullable String llmModel, @Nullable String promptVersion,
-        @Nullable String failureReason, @Nullable ZonedDateTime generatedAt, @Nullable ZonedDateTime startedAt, @Nullable ZonedDateTime completedAt) {
+public record MetisCheckDTO(@NotNull long id, @NotNull long participationId, @NotNull MetisCheckStatus status, @Nullable String commitHash, @Nullable String llmModel,
+        @Nullable String promptVersion, @Nullable String failureReason, @Nullable ZonedDateTime generatedAt, @Nullable ZonedDateTime startedAt,
+        @Nullable ZonedDateTime completedAt) {
 
     /**
      * Maps the check columns of a dashboard row.
