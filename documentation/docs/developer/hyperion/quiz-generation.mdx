@@ -118,6 +118,13 @@ The generator and the judge model are set by the administrator under `artemis.hy
 | GET    | `courses/{courseId}/quiz-question-pool/questions`        | `competencyId` (query, optional)       | `List<QuizQuestionPoolItemDTO>`         |
 | GET    | `courses/{courseId}/quiz-question-pool/settings`         | –                                      | `HyperionCourseSettingsDTO`             |
 | PUT    | `courses/{courseId}/quiz-question-pool/settings`         | `HyperionCourseSettingsDTO`            | `HyperionCourseSettingsDTO`             |
+| PUT    | `courses/{courseId}/quiz-question-pool/questions/{questionId}/review` | `QuizQuestionPoolReviewDTO` | `QuizQuestionPoolItemDTO`              |
+
+### Pool Page
+
+The pool has its own page in course management, `course-management/:courseId/quiz-question-pool`, reachable for editors and above when Hyperion and Atlas are enabled. `QuizQuestionPoolComponent` loads the course to know the user's role, then progress, questions and, for instructors, the settings through `QuizQuestionPoolService`, which wraps the generated `HyperionQuizQuestionPoolApi`. Instructors start a build from the page and change the two pool settings; editors and instructors review. While a build runs the page polls progress and questions every few seconds and stops when the server reports the build as finished. A `409 Conflict` from the build endpoint is shown as "already running" rather than as an error.
+
+Questions are grouped by competency. Inside a group, `QuizQuestionPoolItemListComponent` shows judged questions in three sections, accepted but flagged on at least one mode first, then accepted, then rejected by the filter, with a badge per flagged mode carrying the filter's justification and an expandable verdict. Approve and exclude set the item's review state through the review endpoint; taking the same decision again returns the question to "not reviewed". Questions that are still being generated or judged, and questions that failed, are only counted.
 
 ## Prompt-Injection Mitigation
 

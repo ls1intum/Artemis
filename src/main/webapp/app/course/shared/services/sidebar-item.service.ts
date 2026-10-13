@@ -12,6 +12,7 @@ import {
     faDumbbell,
     faFileAlt,
     faList,
+    faListCheck,
     faNetworkWired,
     faPersonChalkboard,
     faPuzzlePiece,
@@ -237,6 +238,17 @@ export class CourseSidebarItemService {
             title: 'IRIS Settings',
             translation: 'artemisApp.iris.settings.button.course.title',
             testId: 'iris-settings',
+            hidden: false,
+        };
+    }
+
+    getQuizQuestionPoolItem(courseId: number): SidebarItem {
+        return {
+            routerLink: `${courseId}/quiz-question-pool`,
+            icon: faListCheck,
+            title: 'Quiz Question Pool',
+            translation: 'artemisApp.hyperion.quizQuestionPool.sidebarTitle',
+            testId: 'quiz-question-pool',
             hidden: false,
         };
     }
