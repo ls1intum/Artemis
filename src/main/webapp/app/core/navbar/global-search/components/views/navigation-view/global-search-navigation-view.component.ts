@@ -33,6 +33,7 @@ import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
 import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
+import { SEARCH_RESULTS_LISTBOX_ID, searchResultOptionDomId } from 'app/core/navbar/global-search/models/search-menu.model';
 @Component({
     selector: 'jhi-global-search-navigation-view',
     standalone: true,
@@ -69,6 +70,9 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     protected readonly hasContentRow = computed(() => !this.contentSearchActive() && this.contentPreview().length > 0);
     /** The row is the first selectable item, so the results start one position later while it is shown. */
     protected readonly contentRowOffset = computed(() => (this.hasContentRow() ? 1 : 0));
+
+    protected readonly resultsListboxId = SEARCH_RESULTS_LISTBOX_ID;
+    protected readonly optionDomId = searchResultOptionDomId;
     /** The distinct lectures of the hits, the first two by name, in hit order. */
     protected readonly contentLectureNames = computed(() => {
         const names = [...new Set(this.contentPreview().map((hit) => hit.metadata?.['lectureName'] as string | undefined))].filter((name): name is string => !!name);

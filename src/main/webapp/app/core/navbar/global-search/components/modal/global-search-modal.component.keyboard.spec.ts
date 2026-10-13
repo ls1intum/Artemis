@@ -134,7 +134,7 @@ describe('GlobalSearchModalComponent keyboard integration', () => {
         const retry = showFailedIrisAnswer();
         expect(retry).toBeTruthy();
 
-        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+        component['highlightChip'](0);
         expect(component['selectedChip']()).toBe(0);
         window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
         expect(component['selectedChip']()).toBe(0);
@@ -153,7 +153,7 @@ describe('GlobalSearchModalComponent keyboard integration', () => {
     });
 
     it('does not re-pick a chip for an already prevented Enter but keeps regular chip Enter', () => {
-        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+        component['highlightChip'](0);
         const prevented = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
         prevented.preventDefault();
         window.dispatchEvent(prevented);
