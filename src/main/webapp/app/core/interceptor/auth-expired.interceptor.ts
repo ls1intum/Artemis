@@ -29,7 +29,12 @@ export class AuthExpiredInterceptor implements HttpInterceptor {
                         if (err.status === 401 && this.accountService.isAuthenticated()) {
                             // save the url before the logout navigates to another page in a constant
                             const currentUrl = this.router.routerState.snapshot.url;
-                            this.loginService.logout(false);
+                            if (err.error?.errorKey === 'sessionOutdated') {
+                                // the token is still valid, so the cookie has to be cleared on the server, otherwise the sign-in page would authenticate the user again
+                                this.loginService.logoutWithServerSession();
+                            } else {
+                                this.loginService.logout(false);
+                            }
 
                             // TODO: logging out the user automatically interferes with the canDeactivate functionality.
                             // In such a case the error message should be different or we should even send one additional message to the user
