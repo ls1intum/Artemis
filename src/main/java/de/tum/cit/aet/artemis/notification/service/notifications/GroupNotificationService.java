@@ -2,8 +2,12 @@ package de.tum.cit.aet.artemis.notification.service.notifications;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.DateTimeException;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -16,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -45,6 +50,12 @@ public class GroupNotificationService {
      * notification text field of the attachment form in the client takes no more than this.
      */
     private static final int MAX_NOTIFICATION_TEXT_LENGTH = 255;
+
+    /**
+     * Date, time and time zone of a date shown in a notification, e.g. {@code 11.03.2026 00:30 CET}. The locale only affects the
+     * time zone name and is fixed, as a notification is created once for all recipients, independent of their language.
+     */
+    private static final DateTimeFormatter NOTIFICATION_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm z", Locale.ENGLISH);
 
     private final UserRepository userRepository;
 
@@ -208,8 +219,7 @@ public class GroupNotificationService {
 
         var newExerciseNotification = new NewExerciseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
                 exercise.getExerciseNotificationTitle(), exercise.getDifficulty() == null ? null : exercise.getDifficulty().toString(),
-                exercise.getReleaseDate() == null ? null : exercise.getReleaseDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
-                exercise.getDueDate() == null ? null : exercise.getDueDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")), exercise.getMaxPoints().longValue());
+                formatDateInCourseTimeZone(exercise.getReleaseDate(), course), formatDateInCourseTimeZone(exercise.getDueDate(), course), exercise.getMaxPoints().longValue());
 
         courseNotificationService.sendCourseNotification(newExerciseNotification, recipients.stream().toList());
     }
@@ -271,8 +281,8 @@ public class GroupNotificationService {
     public void notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(Exercise exercise) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR));
-        var formattedReleaseDate = exercise.getReleaseDate() != null ? exercise.getReleaseDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "-";
-        var formattedDueDate = exercise.getDueDate() != null ? exercise.getDueDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "-";
+        var formattedReleaseDate = Objects.requireNonNullElse(formatDateInCourseTimeZone(exercise.getReleaseDate(), course), "-");
+        var formattedDueDate = Objects.requireNonNullElse(formatDateInCourseTimeZone(exercise.getDueDate(), course), "-");
 
         ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
         var duplicateTestCaseNotification = new DuplicateTestCaseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
@@ -280,6 +290,32 @@ public class GroupNotificationService {
                 exerciseGroup != null ? exerciseGroup.getId() : null);
 
         courseNotificationService.sendCourseNotification(duplicateTestCaseNotification, recipients.stream().toList());
+    }
+
+    /**
+     * Formats a date for display in a notification with its date, time and time zone, for example {@code 11.03.2026 00:30 CET}.
+     * Notifications, and the e-mails built from them, are shared by all recipients of a course, so the date is shown in the
+     * time zone of the course, as the client does. Without a (valid) course time zone, the time zone of the server is used.
+     *
+     * @param date   the date to format, may be {@code null}
+     * @param course the course the notification belongs to
+     * @return the formatted date, or {@code null} if there is no date
+     */
+    @Nullable
+    private static String formatDateInCourseTimeZone(@Nullable ZonedDateTime date, Course course) {
+        if (date == null) {
+            return null;
+        }
+        ZoneId zone = ZoneId.systemDefault();
+        if (course.getTimeZone() != null) {
+            try {
+                zone = ZoneId.of(course.getTimeZone());
+            }
+            catch (DateTimeException e) {
+                log.warn("Course {} has an invalid time zone '{}', using the server time zone for notification dates", course.getId(), course.getTimeZone());
+            }
+        }
+        return date.withZoneSameInstant(zone).format(NOTIFICATION_DATE_FORMATTER);
     }
 
     /**
