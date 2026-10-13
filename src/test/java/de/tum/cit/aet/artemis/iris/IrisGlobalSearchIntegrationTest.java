@@ -51,6 +51,19 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
 
     // ==================== /api/iris/lecture-search (synchronous) ====================
 
+    /**
+     * The query is processed by AI models in Pyris, so content search needs the same AI opt-in as the Iris answer.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "nooptin", roles = "USER")
+    void search_withoutAiOptIn_shouldBeForbidden() throws Exception {
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "nooptin");
+        userUtilService.setAiSelectionDecision(user, AiSelectionDecision.NO_AI);
+
+        request.postListWithResponseBody("/api/iris/lecture-search", new GlobalSearchLectureRequestDTO("machine learning", 5, null, null), PyrisLectureSearchResultDTO.class,
+                HttpStatus.FORBIDDEN);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void search_shouldReturnResults() throws Exception {

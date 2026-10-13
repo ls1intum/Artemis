@@ -96,6 +96,8 @@ public class IrisGlobalSearchResource {
      * Courses with Iris switched off in the course settings are dropped from the requested scope, so content search respects the same toggle as every other Iris feature.
      * Disabling a course does not remove what was already ingested, which is why the scope has to be narrowed here rather than relying on an empty index.
      *
+     * Requires the AI opt-in like the Iris answer, because the query is processed by AI models in Pyris.
+     *
      * @param requestDTO the search request containing query, limit, and the optional course filters
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of search results
      */
@@ -103,8 +105,10 @@ public class IrisGlobalSearchResource {
     @UsageInteraction(FeatureInteraction.VIEW)
     @PostMapping("lecture-search")
     @EnforceAtLeastStudent
+    @LimitRequestsPerMinute(type = RateLimitType.CONTENT_SEARCH)
     public ResponseEntity<List<PyrisLectureSearchResultDTO>> search(@RequestBody @Valid GlobalSearchLectureRequestDTO requestDTO) {
         var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         var accessContext = irisAccessContextService.resolveAccessContext(user);
         var excludedCourseIds = requestDTO.excludeCourseIds() == null ? List.<Long>of() : requestDTO.excludeCourseIds();
         var scope = lectureSearchScope(requestDTO.courseIds(), excludedCourseIds, accessContext);
