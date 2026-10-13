@@ -134,8 +134,8 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
             awaitIndexing(() -> {
                 var candidates = searchableEntityWeaviateService.searchEntityCandidatesForAnswer(programmingExercise.getTitle(), null, 10);
-                assertThat(candidates).anySatisfy(
-                        candidate -> assertThat(((Number) candidate.get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue()).isEqualTo(programmingExercise.getId()));
+                assertThat(candidates).anySatisfy(candidate -> assertThat(((Number) candidate.properties().get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue())
+                        .isEqualTo(programmingExercise.getId()));
             });
         }
 

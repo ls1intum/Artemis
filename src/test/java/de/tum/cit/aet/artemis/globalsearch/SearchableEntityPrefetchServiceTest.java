@@ -55,7 +55,11 @@ class SearchableEntityPrefetchServiceTest {
         course.setTitle("Patterns in Software Engineering");
         when(accessFilterService.buildSearchableItemFilter(any(), any(), any(), anySet()))
                 .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, true, Map.of(9L, course), staffCourseIds, editorCourseIds));
-        when(weaviateService.searchEntityCandidatesForAnswer(any(), any(), anyInt())).thenReturn(rows);
+        when(weaviateService.searchEntityCandidatesForAnswer(any(), any(), anyInt())).thenReturn(withoutPassages(rows));
+    }
+
+    private static List<SearchableEntityWeaviateService.AnswerCandidate> withoutPassages(List<Map<String, Object>> rows) {
+        return rows.stream().map(row -> new SearchableEntityWeaviateService.AnswerCandidate(row, null)).toList();
     }
 
     private static Map<String, Object> examRow() {
@@ -91,6 +95,19 @@ class SearchableEntityPrefetchServiceTest {
         assertThat(candidate.maxPoints()).isEqualTo(10.0);
         assertThat(candidate.quizDurationSeconds()).isEqualTo(600L);
         assertThat(candidate.link()).isEqualTo("/courses/9/exercises/42");
+    }
+
+    @Test
+    void passesTheMatchedPassageOfEachHitToTheCandidate() {
+        Map<String, Object> row = new HashMap<>(Map.of(SearchableEntitySchema.Properties.TYPE, "exercise", SearchableEntitySchema.Properties.ENTITY_ID, 42L,
+                SearchableEntitySchema.Properties.COURSE_ID, 9L, SearchableEntitySchema.Properties.TITLE, "Flyweight"));
+        givenAccessibleRows(List.of(row));
+        when(weaviateService.searchEntityCandidatesForAnswer(any(), any(), anyInt()))
+                .thenReturn(List.of(new SearchableEntityWeaviateService.AnswerCandidate(row, "Share intrinsic state between many objects.")));
+
+        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "flyweight", 10, null, List.of());
+
+        assertThat(candidates).singleElement().extracting(SearchableEntityCandidateDTO::passage).isEqualTo("Share intrinsic state between many objects.");
     }
 
     @Test
@@ -195,7 +212,7 @@ class SearchableEntityPrefetchServiceTest {
                 Map.of(SearchableEntitySchema.Properties.TYPE, "exercise", SearchableEntitySchema.Properties.ENTITY_ID, 13L, SearchableEntitySchema.Properties.COURSE_ID, 99L));
         when(accessFilterService.buildSearchableItemFilter(any(), any(), any(), anySet()))
                 .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, true, null, null, null));
-        when(weaviateService.searchEntityCandidatesForAnswer(any(), any(), anyInt())).thenReturn(List.of(secondCourse, firstCourse, deletedCourse));
+        when(weaviateService.searchEntityCandidatesForAnswer(any(), any(), anyInt())).thenReturn(withoutPassages(List.of(secondCourse, firstCourse, deletedCourse)));
 
         var first = new de.tum.cit.aet.artemis.course.domain.Course();
         first.setId(9L);

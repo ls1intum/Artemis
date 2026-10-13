@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseForSearchFilterDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -88,6 +90,17 @@ public class SearchableEntityAccessFilterService {
         Set<Long> registeredExamIds = api.findRegisteredNonTestExamIdsByUserIdAndCourseIds(userId, studentCourseIds);
         Set<Long> assignedExerciseIds = api.findAssignedExamExerciseIdsByUserIdAndCourseIds(userId, studentCourseIds);
         return new StudentExamInfo(registeredExamIds, assignedExerciseIds);
+    }
+
+    /**
+     * The courses the user can scope a search to: exactly the courses an unscoped search covers, active and past alike,
+     * so every course the filter offers is one the search accepts.
+     *
+     * @param userId the id of the requesting user
+     * @return the user's accessible courses with their active flag
+     */
+    public List<CourseForSearchFilterDTO> findCourseFilterOptions(long userId) {
+        return courseRepository.findAllAccessibleCoursesForSearchFilter(userId, authCheckService.isCurrentUserAdminAccessEnabled(), ZonedDateTime.now());
     }
 
     /**
