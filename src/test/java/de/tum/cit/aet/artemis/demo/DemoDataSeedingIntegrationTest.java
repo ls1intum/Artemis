@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.api.UserApi;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.user.UserDemoService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.course.api.CourseApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.service.CourseDemoService;
 import de.tum.cit.aet.artemis.demo.service.DemoDataSeedingService;
 import de.tum.cit.aet.artemis.lecture.api.LectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -92,8 +94,8 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         Course course = demoCourse().orElseThrow();
         assertThat(courseRepository.ensureDefaultConfigurations(course.getId())).as("demo course owns all of its default settings rows").isZero();
         assertThat(course.getSemester()).as("demo course has a semester in the format the client expects").matches("SS\\d{2}|WS\\d{2}/\\d{2}");
-        User student = userTestRepository.findOneByLogin(UserApi.DEMO_STUDENT_LOGIN).orElseThrow();
-        User instructor = userTestRepository.findOneByLogin(UserApi.DEMO_INSTRUCTOR_LOGIN).orElseThrow();
+        User student = userTestRepository.findOneByLogin(UserDemoService.DEMO_STUDENT_LOGIN).orElseThrow();
+        User instructor = userTestRepository.findOneByLogin(UserDemoService.DEMO_INSTRUCTOR_LOGIN).orElseThrow();
 
         assertThat(student.getActivated()).as("demo student can log in").isTrue();
         assertThat(instructor.getActivated()).as("demo instructor can log in").isTrue();
@@ -211,7 +213,7 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     private Optional<Course> demoCourse() {
-        return courseRepository.findAllByShortName(CourseApi.DEMO_COURSE_SHORT_NAME).stream().findFirst();
+        return courseRepository.findAllByShortName(CourseDemoService.DEMO_COURSE_SHORT_NAME).stream().findFirst();
     }
 
     private Set<Lecture> demoLectures(long courseId) {
@@ -233,9 +235,9 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
      * Captures the identities of the demo data instead of naming it, so that the idempotency assertions detect replaced records and keep working as the seeded content grows.
      */
     private DemoDataSnapshot snapshotDemoData() {
-        Set<Long> userIds = Stream.of(UserApi.DEMO_STUDENT_LOGIN, UserApi.DEMO_INSTRUCTOR_LOGIN).flatMap(login -> userTestRepository.findOneByLogin(login).stream())
+        Set<Long> userIds = Stream.of(UserDemoService.DEMO_STUDENT_LOGIN, UserDemoService.DEMO_INSTRUCTOR_LOGIN).flatMap(login -> userTestRepository.findOneByLogin(login).stream())
                 .map(User::getId).collect(Collectors.toSet());
-        Set<Long> courseIds = courseRepository.findAllByShortName(CourseApi.DEMO_COURSE_SHORT_NAME).stream().map(Course::getId).collect(Collectors.toSet());
+        Set<Long> courseIds = courseRepository.findAllByShortName(CourseDemoService.DEMO_COURSE_SHORT_NAME).stream().map(Course::getId).collect(Collectors.toSet());
         Optional<Course> course = demoCourse();
         if (course.isEmpty()) {
             return new DemoDataSnapshot(courseIds, userIds, Set.of(), Set.of(), Set.of(), Set.of(), Set.of());

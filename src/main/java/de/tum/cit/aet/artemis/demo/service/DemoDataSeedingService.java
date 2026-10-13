@@ -15,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.api.UserApi;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -72,14 +73,15 @@ public class DemoDataSeedingService {
     public void seedDemoData(DeferredEagerBeanInitializationCompletedEvent event) {
         log.info("Demo profile is active, seeding demo data");
 
-        Course course = courseApi.createDemo(userApi.createDemoStudent(), userApi.createDemoInstructor());
+        User instructor = userApi.createDemoInstructor();
+        Course course = courseApi.createDemo(userApi.createDemoStudent(), instructor);
 
         // The production creation paths resolve the acting user from the security context (the lecture channel takes its creator from there, for example), but seeding runs at
         // startup outside of any request. Act as the demo instructor, which the step above guarantees to exist, so that the demo content is owned by a plausible user.
         // Like SecurityUtils.runAsSystem, install a fresh context and restore the previous one afterwards, so that the caller's context is left untouched.
         SecurityContext previousContext = SecurityContextHolder.getContext();
         SecurityContext demoInstructorContext = SecurityContextHolder.createEmptyContext();
-        demoInstructorContext.setAuthentication(SecurityUtils.makeAuthorizationObject(UserApi.DEMO_INSTRUCTOR_LOGIN));
+        demoInstructorContext.setAuthentication(SecurityUtils.makeAuthorizationObject(instructor.getLogin()));
         SecurityContextHolder.setContext(demoInstructorContext);
         try {
             List<LectureUnit> lectureUnits = lectureApi.map(api -> api.createDemo(course)).orElse(List.of());
