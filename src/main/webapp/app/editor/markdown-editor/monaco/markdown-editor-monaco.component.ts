@@ -419,13 +419,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         // Forward `aria-describedby` / `aria-invalid` to the inner Monaco textarea once it exists so screen readers
         // announce the described content (such as a form validation error) when focus lands on the editing control.
         effect(() => {
-            const describedBy = this.ariaDescribedBy();
-            const invalid = this.ariaInvalid();
-            const activeEditor = this.monacoEditor()?.getActiveEditor();
-            const textarea = activeEditor?.getDomNode()?.querySelector<HTMLTextAreaElement>('textarea');
-            if (textarea) {
-                this.applyAriaAttributesToTextarea(textarea, describedBy, invalid);
-            }
+            // Depend on the signals so the sync re-runs when either input changes; the sync method reads them again
+            // so a direct call from the mode-change callback (where the new diff-mode textarea has just appeared)
+            // picks up the current values too.
+            this.ariaDescribedBy();
+            this.ariaInvalid();
+            this.monacoEditor();
+            this.syncAriaAttributes();
         });
 
         // Adjust editor dimensions when mode changes (e.g. entering/leaving diff mode).
@@ -440,6 +440,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                         () => {
                             if (this.monacoEditor()) {
                                 this.adjustEditorDimensions();
+                                // Mode changes do not touch the ARIA inputs, so the aria effect does not re-run; a diff
+                                // editor materialised here needs the current values pushed into its new textarea.
+                                this.syncAriaAttributes();
                             }
                         },
                         { injector: this.injector },
@@ -448,6 +451,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             }
             lastObservedMode = currentMode;
         });
+    }
+
+    /**
+     * Pushes the current `ariaDescribedBy` / `ariaInvalid` inputs into the active Monaco editor's inner textarea
+     * (the editing control that actually receives focus and that screen readers describe). Safe to call before the
+     * editor exists; it just no-ops in that case.
+     */
+    private syncAriaAttributes(): void {
+        const textarea = this.monacoEditor()?.getActiveEditor()?.getDomNode()?.querySelector<HTMLTextAreaElement>('textarea');
+        if (textarea) {
+            this.applyAriaAttributesToTextarea(textarea, this.ariaDescribedBy(), this.ariaInvalid());
+        }
     }
 
     /**
