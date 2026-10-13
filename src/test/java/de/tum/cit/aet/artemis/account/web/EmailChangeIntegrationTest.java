@@ -48,6 +48,8 @@ import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.PasswordChangeDTO;
 import de.tum.cit.aet.artemis.core.dto.PasswordResetKeyDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.util.ConfigUtil;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -91,6 +93,9 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @Autowired
     private SpringTemplateEngine templateEngine;
 
+    @Autowired
+    private DistributedDataProvider distributedDataProvider;
+
     private User user;
 
     private String originalEmail;
@@ -105,12 +110,22 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
     void setUp() {
         user = userUtilService.createAndSaveUser(LOGIN, passwordService.hashPassword(UserFactory.USER_PASSWORD));
         originalEmail = user.getEmail();
+        waitOutTheCooldown();
     }
 
     @AfterEach
     void tearDown() {
         // The accounts keep their addresses between tests, and an address is unique, so one test taking NEW_EMAIL would refuse it to all others.
         userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), "emailchange"));
+        waitOutTheCooldown();
+    }
+
+    /**
+     * Lets the pause between two requests of the account pass without waiting a minute, and keeps it from carrying over to the next test.
+     */
+    private void waitOutTheCooldown() {
+        DistributedMap<Long, Long> cooldowns = distributedDataProvider.getExpiringMap(EmailChangeService.REQUEST_COOLDOWN_MAP_NAME, Duration.ofMinutes(1));
+        cooldowns.remove(user.getId());
     }
 
     private UserDTO updateWithEmail(String email) {
@@ -422,7 +437,7 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
     void aDifferentAddressAfterAMinuteReplacesTheRequest() throws Exception {
         requestChangeTo(NEW_EMAIL);
         ConfirmationMail firstToCurrent = mailTo(originalEmail);
-        ageRequestBy(Duration.ofMinutes(2));
+        waitOutTheCooldown();
 
         BasicInformationUpdateResultDTO result = requestChangeTo("another-address@test.de");
 
@@ -457,7 +472,7 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
         request.postWithResponseBody(PENDING_PATH + "/resend", null, Map.class, HttpStatus.BAD_REQUEST, new HttpHeaders(), expectedError("emailChangeRequestedTooRecently"), null);
 
         confirm(oldToCurrent);
-        ageRequestBy(Duration.ofMinutes(2));
+        waitOutTheCooldown();
         PendingEmailChangeDTO renewed = request.postWithResponseBody(PENDING_PATH + "/resend", null, PendingEmailChangeDTO.class, HttpStatus.OK);
 
         assertThat(confirmationMails()).hasSize(4);
@@ -484,6 +499,101 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
         assertThat(storedPendingChange()).isEmpty();
         confirmFailing(toNew, toNew.keySecret(), "invalidEmailChangeKey");
+    }
+
+    /**
+     * The pause must not go away with the request, or alternating a request and a cancellation would mail two addresses every time
+     * without any limit.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void cancellingARequestDoesNotEndThePauseBeforeTheNextOne() throws Exception {
+        requestChangeTo(NEW_EMAIL);
+        request.delete(PENDING_PATH, HttpStatus.OK);
+
+        putFailing(updateWithEmail(NEW_EMAIL), "emailChangeRequestedTooRecently");
+        putFailing(updateWithEmail("another-address@test.de"), "emailChangeRequestedTooRecently");
+
+        assertThat(confirmationMails()).hasSize(2);
+        assertThat(storedPendingChange()).isEmpty();
+        waitOutTheCooldown();
+        assertThat(requestChangeTo(NEW_EMAIL).pendingEmailChange()).isNotNull();
+    }
+
+    /**
+     * A confirmation that was already past the check of its secret when the request was cancelled must not bring the request back:
+     * recording it is a statement that matches only a request that still exists, not a save of the row that was read earlier.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void aConfirmationThatArrivesAfterTheCancellationDoesNotBringTheRequestBack() throws Exception {
+        requestChangeTo(NEW_EMAIL);
+        ConfirmationMail toCurrent = mailTo(originalEmail);
+        request.delete(PENDING_PATH, HttpStatus.OK);
+
+        userRecoveryKeyService.confirmEmailChangeAddress(toCurrent.keyId(), true);
+        userRecoveryKeyService.confirmEmailChangeAddress(mailTo(NEW_EMAIL).keyId(), false);
+
+        assertThat(storedPendingChange()).isEmpty();
+    }
+
+    /**
+     * The address is applied by one statement that matches only while the request exists and has been confirmed from both
+     * addresses, so a copy of the request that was read before it was cancelled, replaced or its account recovered cannot apply it.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void aChangeIsAppliedOnlyWhileTheConfirmedRequestStillExists() throws Exception {
+        requestChangeTo(NEW_EMAIL);
+        userRecoveryKeyService.confirmEmailChangeAddress(mailTo(originalEmail).keyId(), true);
+        userRecoveryKeyService.confirmEmailChangeAddress(mailTo(NEW_EMAIL).keyId(), false);
+        PendingEmailChange confirmed = storedPendingChange().orElseThrow();
+        long userId = user.getId();
+
+        // Cancelled after it was read: nothing is applied.
+        request.delete(PENDING_PATH, HttpStatus.OK);
+        assertThat(userTestRepository.applyConfirmedEmailChange(userId, NEW_EMAIL, confirmed.getCurrentKeyId(), confirmed.getNewKeyId())).isZero();
+        assertThat(emailOfAccount()).isEqualTo(originalEmail);
+
+        // Replaced by another request: the keys of the old one match nothing.
+        waitOutTheCooldown();
+        requestChangeTo("another-address@test.de");
+        userRecoveryKeyService.confirmEmailChangeAddress(mailTo(originalEmail).keyId(), true);
+        userRecoveryKeyService.confirmEmailChangeAddress(mailTo("another-address@test.de").keyId(), false);
+        assertThat(userTestRepository.applyConfirmedEmailChange(userId, NEW_EMAIL, confirmed.getCurrentKeyId(), confirmed.getNewKeyId())).isZero();
+        assertThat(emailOfAccount()).isEqualTo(originalEmail);
+
+        // The request that exists and is confirmed from both addresses is applied, and only once.
+        PendingEmailChange current = storedPendingChange().orElseThrow();
+        assertThat(userTestRepository.applyConfirmedEmailChange(userId, "another-address@test.de", current.getCurrentKeyId(), current.getNewKeyId())).isOne();
+        assertThat(emailOfAccount()).isEqualTo("another-address@test.de");
+        assertThat(userTestRepository.applyConfirmedEmailChange(userId, "another-address@test.de", current.getCurrentKeyId(), current.getNewKeyId())).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = LOGIN)
+    void aChangeConfirmedFromOnlyOneAddressIsNotApplied() throws Exception {
+        requestChangeTo(NEW_EMAIL);
+        userRecoveryKeyService.confirmEmailChangeAddress(mailTo(NEW_EMAIL).keyId(), false);
+        PendingEmailChange pending = storedPendingChange().orElseThrow();
+
+        assertThat(userTestRepository.applyConfirmedEmailChange(user.getId(), NEW_EMAIL, pending.getCurrentKeyId(), pending.getNewKeyId())).isZero();
+        assertThat(emailOfAccount()).isEqualTo(originalEmail);
+    }
+
+    @Test
+    @WithMockUser(username = LOGIN)
+    void aConfirmedChangeIsNotAppliedToADeactivatedAccount() throws Exception {
+        requestChangeTo(NEW_EMAIL);
+        userRecoveryKeyService.confirmEmailChangeAddress(mailTo(originalEmail).keyId(), true);
+        userRecoveryKeyService.confirmEmailChangeAddress(mailTo(NEW_EMAIL).keyId(), false);
+        PendingEmailChange confirmed = storedPendingChange().orElseThrow();
+        User deactivated = userTestRepository.findOneByLogin(LOGIN).orElseThrow();
+        deactivated.setActivated(false);
+        userTestRepository.save(deactivated);
+
+        assertThat(userTestRepository.applyConfirmedEmailChange(user.getId(), NEW_EMAIL, confirmed.getCurrentKeyId(), confirmed.getNewKeyId())).isZero();
+        assertThat(emailOfAccount()).isEqualTo(originalEmail);
     }
 
     @Test

@@ -27,6 +27,8 @@ import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
@@ -68,6 +70,12 @@ public class EmailChangeService {
      */
     static final Duration MIN_INTERVAL_BETWEEN_REQUESTS = Duration.ofMinutes(1);
 
+    /**
+     * Name of the map that remembers when an account last had its confirmation mails sent. Kept apart from the pending request on
+     * purpose: cancelling a request deletes it, and a pause that went with it could be skipped by cancelling after every request.
+     */
+    public static final String REQUEST_COOLDOWN_MAP_NAME = "email-change-request-cooldown";
+
     private final UserRecoveryKeyService userRecoveryKeyService;
 
     private final UserRepository userRepository;
@@ -82,8 +90,12 @@ public class EmailChangeService {
 
     private final Optional<Pattern> allowedEmailPattern;
 
+    /** The accounts whose confirmation mails went out within {@link #MIN_INTERVAL_BETWEEN_REQUESTS}, shared by all nodes. */
+    private final DistributedMap<Long, Long> requestCooldowns;
+
     public EmailChangeService(UserRecoveryKeyService userRecoveryKeyService, UserRepository userRepository, UserCreationService userCreationService,
             PasswordService passwordService, MailSendingService mailSendingService, AccountSecurityEventService accountSecurityEventService,
+            DistributedDataProvider distributedDataProvider,
             @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}") Optional<Pattern> allowedEmailPattern) {
         this.userRecoveryKeyService = userRecoveryKeyService;
         this.userRepository = userRepository;
@@ -92,6 +104,7 @@ public class EmailChangeService {
         this.mailSendingService = mailSendingService;
         this.accountSecurityEventService = accountSecurityEventService;
         this.allowedEmailPattern = allowedEmailPattern;
+        this.requestCooldowns = distributedDataProvider.getExpiringMap(REQUEST_COOLDOWN_MAP_NAME, MIN_INTERVAL_BETWEEN_REQUESTS);
     }
 
     /**
@@ -141,11 +154,8 @@ public class EmailChangeService {
         userCreationService.validateEmailIsAvailable(newEmail, user.getId());
 
         Optional<PendingEmailChange> existing = findValidPendingChange(user.getId());
-        if (existing.isPresent()) {
-            if (Objects.equals(existing.get().getNewEmail(), newEmail)) {
-                return PendingEmailChangeDTO.of(existing.get(), VALIDITY);
-            }
-            requireNotRequestedTooRecently(existing.get());
+        if (existing.isPresent() && Objects.equals(existing.get().getNewEmail(), newEmail)) {
+            return PendingEmailChangeDTO.of(existing.get(), VALIDITY);
         }
         return startRequest(user, newEmail);
     }
@@ -163,7 +173,6 @@ public class EmailChangeService {
         requireMailConfigured();
         PendingEmailChange pending = findValidPendingChange(user.getId())
                 .orElseThrow(() -> new BadRequestAlertException("No e-mail change is pending", ENTITY_NAME, "noPendingEmailChange"));
-        requireNotRequestedTooRecently(pending);
         return startRequest(user, pending.getNewEmail());
     }
 
@@ -179,8 +188,12 @@ public class EmailChangeService {
     /**
      * Confirms one address of a pending change, and applies the change once both have been confirmed.
      * <p>
-     * Idempotent for an address that is already confirmed, so that a link opened twice, or a confirmation that was overwritten by
-     * one made at the same moment from the other mailbox, can simply be followed again.
+     * Idempotent for an address that is already confirmed, so that a link opened twice can simply be followed again.
+     * <p>
+     * What decides the outcome is two statements that each check that the request still exists: recording the confirmation and
+     * applying the address. What this method read before verifying the secret is only used to find the request and is never written
+     * back, so a request that is cancelled, replaced or ended by a password reset while the secret is being verified can neither be
+     * brought back by this confirmation nor be applied by it.
      *
      * @param keyId     the key id from the mail
      * @param keySecret the secret from the mail
@@ -188,13 +201,10 @@ public class EmailChangeService {
      * @throws BadRequestAlertException with {@code invalidEmailChangeKey} if the key is unknown, wrong or expired
      */
     public EmailChangeConfirmationResultDTO confirm(String keyId, String keySecret) {
-        UserRecoveryKey row = userRecoveryKeyService.findByEmailChangeKeyId(keyId).orElseThrow(EmailChangeService::invalidKey);
-        PendingEmailChange change = row.getPendingEmailChange();
-        if (change == null) {
-            throw invalidKey();
-        }
+        long userId = userRecoveryKeyService.findByEmailChangeKeyId(keyId).map(UserRecoveryKey::getUserId).orElseThrow(EmailChangeService::invalidKey);
+        PendingEmailChange change = pendingChangeWithKey(userId, keyId);
         if (isExpired(change)) {
-            userRecoveryKeyService.clearPendingEmailChange(row.getUserId());
+            userRecoveryKeyService.clearPendingEmailChange(userId);
             throw invalidKey();
         }
 
@@ -205,20 +215,20 @@ public class EmailChangeService {
         }
         EmailChangeAddress address = isCurrentAddress ? EmailChangeAddress.CURRENT : EmailChangeAddress.NEW;
 
-        Instant now = Instant.now();
-        if (isCurrentAddress && change.getCurrentConfirmedAt() == null) {
-            change.setCurrentConfirmedAt(now);
-        }
-        else if (!isCurrentAddress && change.getNewConfirmedAt() == null) {
-            change.setNewConfirmedAt(now);
-        }
-        userRecoveryKeyService.save(row);
+        userRecoveryKeyService.confirmEmailChangeAddress(keyId, isCurrentAddress);
 
-        if (!change.isFullyConfirmed()) {
+        // Read again: what the request looks like now, after the confirmation above, decides what happens next.
+        PendingEmailChange confirmed = pendingChangeWithKey(userId, keyId);
+        if (!confirmed.isFullyConfirmed()) {
             return new EmailChangeConfirmationResultDTO(false, address);
         }
-        applyChange(row.getUserId(), change);
+        applyChange(userId, confirmed);
         return new EmailChangeConfirmationResultDTO(true, address);
+    }
+
+    private PendingEmailChange pendingChangeWithKey(long userId, String keyId) {
+        return userRecoveryKeyService.findPendingEmailChange(userId).filter(pending -> keyId.equals(pending.getCurrentKeyId()) || keyId.equals(pending.getNewKeyId()))
+                .orElseThrow(EmailChangeService::invalidKey);
     }
 
     private void applyChange(long userId, PendingEmailChange change) {
@@ -241,7 +251,14 @@ public class EmailChangeService {
 
         String previousEmail = user.getEmail();
         String previousLangKey = user.getLangKey();
-        userRepository.updateEmail(userId, newEmail);
+        if (userRepository.applyConfirmedEmailChange(userId, newEmail, change.getCurrentKeyId(), change.getNewKeyId()) == 0) {
+            // Nothing was left to apply. Either the other confirmation completed the change a moment ago, which is not a failure for
+            // this one, or the request was cancelled or the account recovered in the meantime, which must not apply anything.
+            if (newEmail.equals(userRepository.findById(userId).map(User::getEmail).orElse(null))) {
+                return;
+            }
+            throw invalidKey();
+        }
         userRecoveryKeyService.clearPendingEmailChange(userId);
         user.setEmail(newEmail);
         log.info("Changed the e-mail address of user {} after both addresses confirmed", user.getLogin());
@@ -250,6 +267,7 @@ public class EmailChangeService {
     }
 
     private PendingEmailChangeDTO startRequest(User user, String newEmail) {
+        requireNotRequestedTooRecently(user.getId());
         String currentKeyId = RandomUtil.generateResetKeyId();
         String currentSecret = RandomUtil.generateResetKeySecret();
         String newKeyId = RandomUtil.generateResetKeyId();
@@ -283,8 +301,12 @@ public class EmailChangeService {
         return !change.getRequestedAt().plus(VALIDITY).isAfter(Instant.now());
     }
 
-    private void requireNotRequestedTooRecently(PendingEmailChange pending) {
-        if (pending.getRequestedAt().plus(MIN_INTERVAL_BETWEEN_REQUESTS).isAfter(Instant.now())) {
+    /**
+     * Claims the pause for this account, atomically and across nodes, so that two requests made at the same moment do not both send
+     * their mails. The claim is not released by cancelling the request.
+     */
+    private void requireNotRequestedTooRecently(long userId) {
+        if (requestCooldowns.putIfAbsent(userId, System.currentTimeMillis()) != null) {
             throw new BadRequestAlertException("An e-mail change was requested a moment ago, please wait a minute", ENTITY_NAME, "emailChangeRequestedTooRecently");
         }
     }
