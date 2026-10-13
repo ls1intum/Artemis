@@ -4,11 +4,13 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import com.hazelcast.core.EntryEvent;
+import com.hazelcast.map.ExtendedMapEntry;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
@@ -72,7 +74,13 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public boolean replace(K key, V expectedValue, V replacementValue) {
-        return map.replace(key, expectedValue, replacementValue);
+        return map.executeOnKey(key, entry -> {
+            if (entry.getValue() == null || !Objects.equals(entry.getValue(), expectedValue)) {
+                return false;
+            }
+            ((ExtendedMapEntry<K, V>) entry).setValueWithoutChangingExpiryTime(replacementValue);
+            return true;
+        });
     }
 
     @Override
