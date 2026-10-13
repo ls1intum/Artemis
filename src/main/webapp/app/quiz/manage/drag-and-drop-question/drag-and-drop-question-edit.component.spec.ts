@@ -188,6 +188,49 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(eventDeleteSpy).toHaveBeenCalledOnce();
     });
 
+    it('should only remove its own files from the shared file pool when the question is deleted', () => {
+        // The pool is shared by all drag and drop questions of the quiz and already holds the files of another question.
+        const otherQuestionFiles = new Map<string, { path?: string; file: File }>([
+            ['other-background.png', { file: new File(['bg'], 'other-background.png') }],
+            ['other-item.png', { file: new File(['item'], 'other-item.png') }],
+        ]);
+        fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        component = fixture.componentInstance;
+        const newQuestion = new DragAndDropQuestion();
+        newQuestion.dragItems = [];
+        fixture.componentRef.setInput('question', newQuestion);
+        fixture.componentRef.setInput('questionIndex', 2);
+        fixture.componentRef.setInput('reEvaluationInProgress', false);
+        fixture.componentRef.setInput('filePool', otherQuestionFiles);
+        removeFileSpy = vi.spyOn(component.removeFile, 'emit');
+        fixture.detectChanges();
+
+        component.deleteQuestion();
+
+        expect(removeFileSpy).not.toHaveBeenCalled();
+    });
+
+    it('should remove the background and drag item files of the deleted question', () => {
+        fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        component = fixture.componentInstance;
+        const filePool = new Map<string, { path?: string; file: File }>([['other-background.png', { file: new File(['bg'], 'other-background.png') }]]);
+        fixture.componentRef.setInput('question', clone(question3));
+        fixture.componentRef.setInput('questionIndex', 1);
+        fixture.componentRef.setInput('reEvaluationInProgress', false);
+        fixture.componentRef.setInput('filePool', filePool);
+        removeFileSpy = vi.spyOn(component.removeFile, 'emit');
+        fixture.detectChanges();
+
+        component.deleteQuestion();
+
+        expect(removeFileSpy).toHaveBeenCalledTimes(4);
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/1/image.jpg');
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/2/image.jpg');
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/3/image.jpg');
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/4/image.jpg');
+        expect(removeFileSpy).not.toHaveBeenCalledWith('other-background.png');
+    });
+
     it('should set background file', () => {
         const file1 = { name: 'newFile1.jpg' } as File;
         const file2 = { name: 'newFile2.png' } as File;

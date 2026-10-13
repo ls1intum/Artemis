@@ -794,7 +794,19 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
      * Delete this question from the quiz
      */
     deleteQuestion(): void {
-        this.filePreviewPaths().forEach((_, fileName) => this.removeFile.emit(fileName));
+        // Only release the files of this question. The preview paths also hold the files of every other question, because the
+        // shared file pool is previewed on init, and removing those would leave the other questions without their uploads.
+        const question = this.question();
+        const ownFileNames = new Set<string>();
+        if (question.backgroundFilePath) {
+            ownFileNames.add(question.backgroundFilePath);
+        }
+        question.dragItems?.forEach((dragItem) => {
+            if (dragItem.pictureFilePath) {
+                ownFileNames.add(dragItem.pictureFilePath);
+            }
+        });
+        ownFileNames.forEach((fileName) => this.removeFile.emit(fileName));
         this.questionDeleted.emit();
     }
 
