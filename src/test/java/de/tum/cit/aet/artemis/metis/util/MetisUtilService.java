@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.metis.config.MetisEnabled;
 import de.tum.cit.aet.artemis.metis.domain.MetisCheck;
@@ -29,6 +30,9 @@ import de.tum.cit.aet.artemis.metis.repository.MetisQuestionRepository;
  * completed check its completion time, a generated check its snapshot, and a follow-up is shown from the moment it exists. Timestamps the caller does not pass
  * come from {@link TimeUtil#now()}, so they follow a clock a test has frozen. Everything else keeps the entity's defaults; a test that needs more sets it on the
  * returned entity and saves it again.
+ * <p>
+ * The configuration of an exercise is never created here: every programming exercise owns its row from the moment the fixtures store it, as in production,
+ * and the methods change that row or rely on it.
  */
 @Lazy
 @Service
@@ -59,19 +63,20 @@ public class MetisUtilService {
     }
 
     /**
-     * Creates the configuration of an exercise, or updates the one it has. Only the given settings change; an existing row keeps its other settings, a new row
-     * gets the entity's defaults for them. Tests also use this to switch the check of an exercise off again after a method.
+     * Changes the configuration row the exercise owns in place. Only the given settings change; the row keeps its other settings. Tests also use this to switch
+     * the check of an exercise off again after a method.
      *
-     * @param exerciseId     the exercise
+     * @param exerciseId     the programming exercise, which owns its configuration row from the moment it was stored
      * @param enabled        whether the check runs for the exercise
      * @param reviewRequired whether generated questions wait for an approval
      * @param windowStart    the start of the default window, or null to start at the due date
      * @param windowEnd      the end of the default window, or null for no end
      * @return the saved configuration
+     * @throws EntityNotFoundException if the exercise has no configuration row: it is no programming exercise, or a test removed the row to simulate a creation
+     *                                     that failed half-way
      */
     public MetisExerciseConfig saveConfig(long exerciseId, boolean enabled, boolean reviewRequired, @Nullable ZonedDateTime windowStart, @Nullable ZonedDateTime windowEnd) {
-        MetisExerciseConfig config = configRepository.findById(exerciseId).orElseGet(MetisExerciseConfig::new);
-        config.setExerciseId(exerciseId);
+        MetisExerciseConfig config = configRepository.findByIdElseThrow(exerciseId);
         config.setEnabled(enabled);
         config.setReviewRequired(reviewRequired);
         config.setWindowStart(windowStart);
@@ -146,19 +151,16 @@ public class MetisUtilService {
     }
 
     /**
-     * Creates the window of a tutorial group for an exercise. The window references the exercise's configuration, so a disabled configuration with default
-     * settings is created first when the exercise has none.
+     * Creates the window of a tutorial group for an exercise. The window references the configuration row the exercise owns, which the fixtures created
+     * together with the exercise.
      *
-     * @param exerciseId      the exercise
+     * @param exerciseId      the programming exercise
      * @param tutorialGroupId the tutorial group
      * @param start           the start of the window
      * @param end             the end of the window
      * @return the saved window
      */
     public MetisGroupWindow saveGroupWindow(long exerciseId, long tutorialGroupId, ZonedDateTime start, ZonedDateTime end) {
-        if (!configRepository.existsById(exerciseId)) {
-            saveConfig(exerciseId, false, false, null, null);
-        }
         MetisGroupWindow window = new MetisGroupWindow();
         window.setExerciseId(exerciseId);
         window.setTutorialGroupId(tutorialGroupId);

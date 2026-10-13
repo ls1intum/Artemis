@@ -205,21 +205,6 @@ public interface MetisCheckRepository extends ArtemisJpaRepository<MetisCheck, L
     List<MetisCheckOwnerDTO> findSkippedChecksWithReason(@Param("exerciseIds") Collection<Long> exerciseIds, @Param("failureReason") String failureReason);
 
     /**
-     * How many students of an exercise have started their check. The rating scale must not change once one has.
-     *
-     * @param exerciseId the exercise
-     * @return the number of started checks
-     */
-    @Query("""
-            SELECT COUNT(c)
-            FROM MetisCheck c
-                JOIN StudentParticipation p ON p.id = c.participationId
-            WHERE p.exercise.id = :exerciseId
-                AND c.startedAt IS NOT NULL
-            """)
-    long countStartedChecksOfExercise(@Param("exerciseId") long exerciseId);
-
-    /**
      * Claims a pending check for generation on this node. Of several nodes or tasks that try to claim the same check, exactly one changes the row.
      *
      * @param checkId the check to claim
