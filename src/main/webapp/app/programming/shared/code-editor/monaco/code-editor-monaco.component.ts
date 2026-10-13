@@ -85,6 +85,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly readOnlyManualFeedback = input<boolean>(false);
     readonly highlightDifferences = input<boolean>(false);
     readonly isTutorAssessment = input<boolean>(false);
+    /** The full hash of the commit to show. If set, files are read from exactly this commit instead of the working copy on the server. */
+    readonly commitId = input<string | undefined>(undefined);
     readonly disableActions = input<boolean>(false);
     readonly selectedFile = input<string>();
     readonly selectedRepository = input<RepositoryType>();
@@ -336,9 +338,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 let fileContent = '';
                 let loadingError = false;
                 try {
-                    fileContent = await firstValueFrom(this.repositoryFileService.getFile(fileName).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT))).then(
-                        (fileObj) => fileObj.fileContent,
-                    );
+                    fileContent = await firstValueFrom(
+                        this.repositoryFileService.getFile(fileName, undefined, this.commitId()).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT)),
+                    ).then((fileObj) => fileObj.fileContent);
                 } catch (error) {
                     loadingError = true;
                     const message = error instanceof Error || error instanceof HttpErrorResponse ? error.message : String(error);
@@ -373,7 +375,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         this.binaryFileSelected.set(false);
         this.imagePreviewError.set(false);
         try {
-            const blob = await firstValueFrom(this.repositoryFileService.getFileAsBlob(fileName).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT)));
+            const blob = await firstValueFrom(this.repositoryFileService.getFileAsBlob(fileName, undefined, this.commitId()).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT)));
             // The user may have switched files while the request was in flight.
             if (this.selectedFile() !== fileName) {
                 return;

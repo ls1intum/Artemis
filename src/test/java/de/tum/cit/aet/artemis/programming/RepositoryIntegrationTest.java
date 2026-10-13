@@ -556,6 +556,144 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         }
     }
 
+    /**
+     * The scenario of issue 10008: the student saves an edit in the online editor without committing it, so the server-side working copy carries uncommitted changes, and then
+     * pushes another commit from a local clone. The assessment must show the pushed commit, not the working copy.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFilesAtCommitOfParticipation_ignoresUnsubmittedOnlineEditorChanges() throws Exception {
+        String submittedContent = "submitted from the local clone";
+        String unsubmittedContent = "saved in the online editor but never submitted";
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        request.put(participationsBaseUrl + participation.getId() + "/repository/files?commit=false", getFileSubmissions(unsubmittedContent), HttpStatus.OK);
+        String submittedCommit = pushCommitFromLocalClone(submittedContent);
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+
+        var file = request.get(commitUrl(submittedCommit, "/file"), HttpStatus.OK, byte[].class, fileParams(currentLocalFileName));
+        assertThat(new String(file, StandardCharsets.UTF_8)).isEqualTo(submittedContent);
+
+        var files = request.getMap(commitUrl(submittedCommit, "/files"), HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).containsEntry(currentLocalFileName, FileType.FILE).containsEntry(currentLocalFolderName, FileType.FOLDER).containsEntry(currentLocalFolderName + "/.keep",
+                FileType.FILE);
+        validateFilesExcludeGitAndFolders(files, false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFilesAtCommitOfParticipation_olderCommitIsNotReplacedByNewerOne() throws Exception {
+        String firstContent = "first submitted content";
+        String firstCommit = pushCommitFromLocalClone(firstContent);
+        pushCommitFromLocalClone("second submitted content");
+
+        var file = request.get(commitUrl(firstCommit, "/file"), HttpStatus.OK, byte[].class, fileParams(currentLocalFileName));
+        assertThat(new String(file, StandardCharsets.UTF_8)).isEqualTo(firstContent);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFilesAtCommitOfParticipation_onlyContainsFilesOfTheCommit() throws Exception {
+        String firstCommit = pushCommitFromLocalClone("content");
+        String newFileName = "addedLater.txt";
+        FileUtils.writeStringToFile(studentRepository.workingCopyPath().resolve(newFileName).toFile(), "later", StandardCharsets.UTF_8);
+        studentRepository.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(studentRepository.workingCopy()).setMessage("add file").call();
+        studentRepository.workingCopy().push().setRemote("origin").call();
+
+        var filesOfFirstCommit = request.getMap(commitUrl(firstCommit, "/files"), HttpStatus.OK, String.class, FileType.class);
+        assertThat(filesOfFirstCommit).containsKey(currentLocalFileName).doesNotContainKey(newFileName);
+        request.get(commitUrl(firstCommit, "/file"), HttpStatus.NOT_FOUND, byte[].class, fileParams(newFileName));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFilesWithInformationAboutChangeAtCommit_ignoresUnsubmittedOnlineEditorChanges() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        // an unsubmitted edit of an otherwise unchanged file must not be reported as a change of the submission
+        FileSubmission unsubmittedEdit = new FileSubmission();
+        unsubmittedEdit.setFileName(textFileWithBinaryExtensionName);
+        unsubmittedEdit.setFileContent("edited in the online editor only");
+        request.put(participationsBaseUrl + participation.getId() + "/repository/files?commit=false", List.of(unsubmittedEdit), HttpStatus.OK);
+        String submittedCommit = pushCommitFromLocalClone("submitted from the local clone");
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+
+        var files = request.getMap(commitUrl(submittedCommit, "/files-change"), HttpStatus.OK, String.class, Boolean.class);
+        assertThat(files).containsEntry(currentLocalFileName, true).containsEntry(textFileWithBinaryExtensionName, false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFilesAtCommitOfParticipation_invalidCommitIsBadRequest() throws Exception {
+        request.getMap(commitUrl("HEAD", "/files"), HttpStatus.BAD_REQUEST, String.class, FileType.class);
+        request.getMap(commitUrl("abc", "/files"), HttpStatus.BAD_REQUEST, String.class, FileType.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFilesAtCommitOfParticipation_unknownCommitIsNotFound() throws Exception {
+        request.getMap(commitUrl("0123456789abcdef0123456789abcdef01234567", "/files"), HttpStatus.NOT_FOUND, String.class, FileType.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetFilesAtCommitOfParticipation_otherStudentForbidden() throws Exception {
+        String commit = pushCommitFromLocalClone("content");
+        request.getMap(commitUrl(commit, "/files"), HttpStatus.FORBIDDEN, String.class, FileType.class);
+        request.get(commitUrl(commit, "/file"), HttpStatus.FORBIDDEN, byte[].class, fileParams(currentLocalFileName));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetFilesWithInformationAboutChangeAtCommit_studentForbidden() throws Exception {
+        String commit = pushCommitFromLocalClone("content");
+        request.getMap(commitUrl(commit, "/files-change"), HttpStatus.FORBIDDEN, String.class, Boolean.class);
+    }
+
+    /**
+     * The submitted commit leaves the file untouched that the student edited in the online editor without submitting. The working copy then keeps the unsubmitted edit on top of
+     * the pulled commit and reports "unsubmitted changes", while the submission has the original content.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFilesAtCommitOfParticipation_doesNotShowUnsubmittedEditOfUntouchedFile() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        request.put(participationsBaseUrl + participation.getId() + "/repository/files?commit=false", getFileSubmissions("saved in the online editor but never submitted"),
+                HttpStatus.OK);
+        FileUtils.writeStringToFile(studentRepository.workingCopyPath().resolve(textFileWithBinaryExtensionName).toFile(), "changed in the local clone", StandardCharsets.UTF_8);
+        studentRepository.workingCopy().add().addFilepattern(".").call();
+        String submittedCommit = GitService.commit(studentRepository.workingCopy()).setMessage("local commit").call().getId().getName();
+        studentRepository.workingCopy().push().setRemote("origin").call();
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+
+        var file = request.get(commitUrl(submittedCommit, "/file"), HttpStatus.OK, byte[].class, fileParams(currentLocalFileName));
+        assertThat(new String(file, StandardCharsets.UTF_8)).isEqualTo(currentLocalFileContent);
+        var files = request.getMap(commitUrl(submittedCommit, "/files-change"), HttpStatus.OK, String.class, Boolean.class);
+        assertThat(files).containsEntry(currentLocalFileName, false).containsEntry(textFileWithBinaryExtensionName, true);
+    }
+
+    private String commitUrl(String commitId, String suffix) {
+        return participationsBaseUrl + participation.getId() + "/repository/commits/" + commitId + suffix;
+    }
+
+    private LinkedMultiValueMap<String, String> fileParams(String fileName) {
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", fileName);
+        return params;
+    }
+
+    /**
+     * Changes the tracked file in the clone a student has on their own machine, commits and pushes it.
+     *
+     * @return the hash of the pushed commit
+     */
+    private String pushCommitFromLocalClone(String fileContent) throws Exception {
+        FileUtils.writeStringToFile(studentRepository.workingCopyPath().resolve(currentLocalFileName).toFile(), fileContent, StandardCharsets.UTF_8);
+        studentRepository.workingCopy().add().addFilepattern(".").call();
+        String commitHash = GitService.commit(studentRepository.workingCopy()).setMessage("local commit").call().getId().getName();
+        studentRepository.workingCopy().push().setRemote("origin").call();
+        return commitHash;
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFiles_solutionParticipation() throws Exception {

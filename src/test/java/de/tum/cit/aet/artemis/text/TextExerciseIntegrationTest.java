@@ -73,6 +73,7 @@ import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
@@ -158,6 +159,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private ExamTestRepository examRepository;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -1669,8 +1673,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 var params = pageableSearchUtilService.searchMapping(search);
 
                 // COURSE_TITLE / EXAM_TITLE navigations only make sense for one exercise category, mirroring the shared
-                // helper. With the filter applied each yields a single result, so sorting holds trivially; we still assert
-                // the endpoint returns the sorted page and compare through the DTO fields the client reads.
+                // helper. With the filter applied each yields a single result here, so sorting holds trivially; the order
+                // by course and exam title is checked on several exercises in testSearchSortedByCourseAndExamTitle.
                 if (sort.equals("EXAM_TITLE")) {
                     params.add("isCourseFilter", "false");
                 }
@@ -1686,6 +1690,51 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 }
                 assertThat(result.getResultsOnPage()).as("Sorting by " + sort + " " + order).isSortedAccordingTo(comparator);
             }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testSearchSortedByCourseAndExamTitle() throws Exception {
+        final String searchTerm = "SortedByContainerTitle";
+        // The titles are not created in alphabetical order, so that an order by id cannot pass for an order by title.
+        final List<String> courseTitles = List.of("Sorting course Mu", "Sorting course Alpha", "Sorting course Zeta");
+        final List<String> examTitles = List.of("Sorting exam Kappa", "Sorting exam Beta", "Sorting exam Omega");
+
+        for (int i = 0; i < courseTitles.size(); i++) {
+            Course titledCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise(searchTerm + " course " + i);
+            // the course is loaded again, as the one of the helper still holds its exercises
+            Course courseToRename = courseRepository.findById(titledCourse.getId()).orElseThrow();
+            courseToRename.setTitle(courseTitles.get(i));
+            courseRepository.save(courseToRename);
+        }
+        for (int i = 0; i < examTitles.size(); i++) {
+            TextExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(searchTerm + " exam " + i, TEST_PREFIX);
+            var examToRename = examRepository.findById(examExercise.getExerciseGroup().getExam().getId()).orElseThrow();
+            examToRename.setTitle(examTitles.get(i));
+            examRepository.save(examToRename);
+        }
+
+        for (var order : List.of(SortingOrder.ASCENDING, SortingOrder.DESCENDING)) {
+            final Comparator<String> titleOrder = order == SortingOrder.ASCENDING ? Comparator.naturalOrder() : Comparator.reverseOrder();
+
+            var courseSearch = pageableSearchUtilService.configureSearch(searchTerm);
+            courseSearch.setSortedColumn("COURSE_TITLE");
+            courseSearch.setSortingOrder(order);
+            var courseParams = pageableSearchUtilService.searchMapping(courseSearch);
+            courseParams.add("isExamFilter", "false");
+            var courseResult = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExerciseListItemDTO.class, courseParams);
+            assertThat(courseResult.getResultsOnPage()).as("Sorting by COURSE_TITLE " + order).extracting(dto -> dto.course().title())
+                    .containsExactlyElementsOf(courseTitles.stream().sorted(titleOrder).toList());
+
+            var examSearch = pageableSearchUtilService.configureSearch(searchTerm);
+            examSearch.setSortedColumn("EXAM_TITLE");
+            examSearch.setSortingOrder(order);
+            var examParams = pageableSearchUtilService.searchMapping(examSearch);
+            examParams.add("isCourseFilter", "false");
+            var examResult = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExerciseListItemDTO.class, examParams);
+            assertThat(examResult.getResultsOnPage()).as("Sorting by EXAM_TITLE " + order).extracting(TextExerciseListItemDTO::examTitle)
+                    .containsExactlyElementsOf(examTitles.stream().sorted(titleOrder).toList());
         }
     }
 
