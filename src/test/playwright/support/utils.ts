@@ -407,34 +407,27 @@ export function generateUUID() {
  * Allows to enter date into the UI
  */
 export async function enterDate(page: Page, selector: string, date: dayjs.Dayjs) {
-    await fillDateTimePicker(page.locator(selector).locator('#date-input-field'), date);
+    await fillDateTimePicker(page.locator(selector).getByRole('combobox'), date);
 }
 
 /**
- * Types a date into the input of a date picker: PrimeNG's p-datepicker (the `jhi-date-time-picker` wrapper) or the TUM AET UI date picker.
+ * Types a date into the text input of a TUM AET UI date picker.
  *
- * The picker must be driven with real keystrokes: its `onUserInput` handler ignores any `input`
- * event that is not preceded by a `keydown` (an `isKeydown` guard), so Playwright's `fill()` — which
- * sets the value without keyboard events — is silently dropped. We clear the field and type the value
- * in the picker's display format (DD.MM.YYYY HH:mm), then tab out to commit it to the form model.
+ * The picker parses what is typed and commits the value as soon as the text is a complete date in its display format
+ * (DD.MM.YYYY HH:mm, or DD.MM.YYYY for a date-only picker). We clear the field, type the value key by key as a user does,
+ * and tab out so the form takes the committed value over. The whole sequence is retried until the field holds the
+ * expected text, because a click that lands while the page is still settling can lose the first keystrokes.
  */
 export async function fillDateTimePicker(dateInputField: Locator, date: dayjs.Dayjs, format: string = DATE_TIME_PICKER_FORMAT) {
     const expectedValue = date.format(format);
     await expect(dateInputField).toBeEnabled();
-    // PrimeNG's masked datepicker input can still drop the first keystroke after a clear while the
-    // mask/focus state is settling (worse under load) — e.g. "0.09.2027" instead of "20.09.2027".
-    // Retry the whole clear+type until the field holds the expected value (web-first, self-healing).
     await expect(async () => {
         await dateInputField.click();
         // Wait until the input is actually focused before typing; clear via keyboard so focus is kept.
         await expect(dateInputField).toBeFocused();
         await dateInputField.press('ControlOrMeta+a');
         await dateInputField.press('Delete');
-        // Ensure the clear has actually settled before typing, so the first keystroke is not swallowed while the
-        // mask is still resetting (the root cause of the dropped leading character).
         await expect(dateInputField).toHaveValue('');
-        // PrimeNG's onUserInput only reacts to input events preceded by a keydown, so type real
-        // keystrokes; a small per-key delay keeps the picker from dropping characters under load.
         await dateInputField.pressSequentially(expectedValue, { delay: 30 });
         expect(await dateInputField.inputValue()).toBe(expectedValue);
     }).toPass({ timeout: 15000 });
@@ -499,7 +492,7 @@ export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page
 
 /**
  * This function is necessary to make the server and the client date comparable.
- * Dates are entered through the PrimeNG p-datepicker, which is minute-precision (it has no seconds
+ * Dates are entered through the date picker, which is minute-precision (it has no seconds
  * field), so the persisted value is always truncated to the minute. We therefore compare only down
  * to the minute (YYYY-MM-DDTHH:mm) and ignore seconds/milliseconds, which also avoids the server's
  * varying millisecond digit count.
