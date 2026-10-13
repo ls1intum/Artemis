@@ -294,6 +294,32 @@ class SearchableEntityMultiVectorWeaviateTest {
     }
 
     @Test
+    void storedVectorsOfAnotherChunkerVersionAreNotReused() throws Exception {
+        Map<String, Object> exercise = exercise(1L, "Sorting", longText("sorting arrays", 60));
+        index(exercise);
+        // Mark the stored row as written by an older chunker version.
+        String uuid = WeaviateUuidUtil.deterministicUuid(SearchableEntitySchema.TypeValues.EXERCISE, 1L);
+        weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME).data.update(uuid,
+                update -> update.properties(Map.of(SearchableEntitySchema.Properties.CHUNKER_VERSION, SearchableEntityChunker.CHUNKER_VERSION - 1)));
+        clearInvocations(embeddingClient);
+
+        index(exercise);
+
+        ArgumentCaptor<List<String>> embedded = ArgumentCaptor.captor();
+        verify(embeddingClient, org.mockito.Mockito.atLeastOnce()).embedDocuments(embedded.capture());
+        assertThat(embedded.getAllValues().stream().mapToInt(List::size).sum()).isEqualTo(SearchableEntityChunker.chunk(exercise).size());
+    }
+
+    @Test
+    void writeRefusesARowWithAChunkThatHasNoVector() {
+        var vectorWriter = new SearchableEntityVectorWriter(weaviateService, embeddingClient);
+        var row = vectorWriter.prepare(SearchableEntitySchema.TypeValues.EXERCISE, 3L, exercise(3L, "Graphs", "Breadth first search."));
+
+        assertThatThrownBy(() -> vectorWriter.write(row, Map.of())).isInstanceOf(EmbeddingFailedException.class);
+        assertThat(client.collections.use(PREFIX + SearchableEntitySchema.COLLECTION_NAME).data.exists(row.uuid())).isFalse();
+    }
+
+    @Test
     void aRowIsNeverWrittenWithoutAllItsVectors() throws Exception {
         index(exercise(1L, "Sorting", "Bubble sort and merge sort."));
         doThrow(new EmbeddingFailedException("endpoint down")).when(embeddingClient).embedDocuments(any());
