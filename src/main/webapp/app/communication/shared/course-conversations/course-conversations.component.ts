@@ -48,6 +48,7 @@ import { ConversationGlobalSearchComponent, ConversationGlobalSearchConfig } fro
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { FaqState } from 'app/communication/shared/entities/faq.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting, PostingType, SavedPostStatus, toSavedPostStatus } from 'app/communication/shared/entities/posting.model';
@@ -492,6 +493,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
             if (this.isMobile() && conversation && previousConversation?.id !== conversation.id) {
                 this.courseSidebarService.closeSidebar();
             }
+            if (previousConversation?.id !== conversation?.id && this.isEmptyDirectMessage(this.conversationsOfUser().find((cached) => cached.id === previousConversation?.id))) {
+                // The direct message that was just left has no messages. Reload the conversations so that it drops out of the sidebar,
+                // unless the user has written to it in the meantime and the server now reports it with a message date.
+                this.prepareSidebarData();
+            }
             this.updateQueryParameters();
         });
     }
@@ -605,8 +611,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
     prepareSidebarData() {
         this.courseConversationsService.forceRefresh().subscribe({
             complete: () => {
-                this.sidebarConversations.set(this.courseOverviewService.mapConversationsToSidebarCardElements(this.conversationsOfUser()));
-                this.accordionConversationGroups.set(this.courseOverviewService.groupConversationsByChannelType(this.course()!, this.conversationsOfUser(), this.messagingEnabled));
+                const conversations = this.conversationsToShowInSidebar();
+                this.sidebarConversations.set(this.courseOverviewService.mapConversationsToSidebarCardElements(conversations));
+                this.accordionConversationGroups.set(this.courseOverviewService.groupConversationsByChannelType(this.course()!, conversations, this.messagingEnabled));
                 this.accordionConversationGroups().recents.entityData = this.sidebarConversations()?.filter((item) => item.isCurrent) || [];
                 this.updateSidebarData();
             },
@@ -615,6 +622,19 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
                 // match the server, and the error has already been reported by the service.
             },
         });
+    }
+
+    /**
+     * The server also returns the empty direct messages the user created, so that a freshly created chat can be opened.
+     * Such a chat only belongs in the sidebar while it is open; once the user leaves it without writing, it should disappear.
+     */
+    private conversationsToShowInSidebar(): ConversationDTO[] {
+        const activeConversationId = this.activeConversation()?.id;
+        return this.conversationsOfUser().filter((conversation) => conversation.id === activeConversationId || !this.isEmptyDirectMessage(conversation));
+    }
+
+    private isEmptyDirectMessage(conversation: ConversationDTO | undefined): boolean {
+        return !!conversation && isOneToOneChatDTO(conversation) && !conversation.lastMessageDate;
     }
 
     updateSidebarData() {
