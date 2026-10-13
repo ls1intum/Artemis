@@ -129,6 +129,18 @@ class SearchableEntityWeaviateServiceEnqueueTest {
     }
 
     @Test
+    void testUpsertExam_keepsGoingWhenTheChannelLookupFails() {
+        // The exam is already saved when it is indexed; a failing lookup must not turn the update into an error.
+        when(resolver.findChannelIdOf(SearchableEntitySchema.TypeValues.EXAM, 4L)).thenThrow(new DataAccessResourceFailureException("database down"));
+
+        assertThatCode(() -> service.upsertExamAsync(new ExamSearchableEntityDTO(4L, 10L, "e", null, null, null, null, false))).doesNotThrowAnyException();
+
+        ArgumentCaptor<WeaviateOutboxEntry> captor = ArgumentCaptor.forClass(WeaviateOutboxEntry.class);
+        verify(outboxRepository).save(captor.capture());
+        assertThat(captor.getValue().getEntityType()).isEqualTo(SearchableEntitySchema.TypeValues.EXAM);
+    }
+
+    @Test
     void testUpdateExercises_enqueuesOneUpsertPerExerciseAndSignalsOnce() {
         service.updateExercisesAsync(List.of(exerciseDto(10L), exerciseDto(11L)), 99L);
 

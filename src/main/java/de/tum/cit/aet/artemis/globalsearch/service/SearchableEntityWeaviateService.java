@@ -408,10 +408,20 @@ public class SearchableEntityWeaviateService {
 
     /**
      * Rewrites the channel row of an exercise or exam with it: the row holds the date from which students may see the
-     * channel, which follows the item's release or visible date.
+     * channel, which follows the item's release or visible date. Like {@link #save}, a failure is logged and not thrown:
+     * the item's change is already saved and must not turn into an error for the user. The drift sweep repairs the row.
      */
     private void enqueueChannelOf(String type, long entityId) {
-        resolver.findChannelIdOf(type, entityId).ifPresent(channelId -> enqueueUpsert(SearchableEntitySchema.TypeValues.CHANNEL, channelId, WeaviateOutboxOrigin.LIVE));
+        Optional<Long> channelId;
+        try {
+            channelId = resolver.findChannelIdOf(type, entityId);
+        }
+        catch (RuntimeException e) {
+            log.error("Failed to look up the channel of {} {}; its search row keeps its old visibility date until a reconcile pass repairs it: {}", type, entityId, e.getMessage(),
+                    e);
+            return;
+        }
+        channelId.ifPresent(id -> enqueueUpsert(SearchableEntitySchema.TypeValues.CHANNEL, id, WeaviateOutboxOrigin.LIVE));
     }
 
     // ----- FAQ sync -----
