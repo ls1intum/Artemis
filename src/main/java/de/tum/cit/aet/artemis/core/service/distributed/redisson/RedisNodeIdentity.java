@@ -25,10 +25,6 @@ public class RedisNodeIdentity {
 
     private final String connectionName;
 
-    public RedisNodeIdentity(String displayName) {
-        this(displayName, true, false);
-    }
-
     @Autowired
     public RedisNodeIdentity(@Value("${spring.data.redis.client-name:artemis-node}") String displayName, Environment environment,
             @Value("${artemis.hyperion.generation.cluster-fencing-enabled:${artemis.hyperion.exercise-generation.enabled:false}}") boolean fencingEnabled) {

@@ -89,6 +89,11 @@ def analyze_java_files(base_dir, max_lines=1000, max_params=10, include_repo_dep
 
     bean_annotations = ['Component', 'Service', 'Controller', 'Bean', 'RestController', 'Repository']
     annotation_pattern = re.compile(r'@(?:' + '|'.join(bean_annotations) + r')\b')
+    nested_bean_pattern = re.compile(
+        rf'{annotation_pattern.pattern}(?:\s*\([^)]*\))?'
+        r'(?:\s*@\w+(?:\s*\([^)]*\))?)*\s+'
+        r'((?:(?:public|protected|private|static|abstract|final)\s+)*)class\s+(\w+)\b'
+    )
 
     for root, _, files in os.walk(base_dir):
         for file in files:
@@ -109,8 +114,11 @@ def analyze_java_files(base_dir, max_lines=1000, max_params=10, include_repo_dep
 
             # Check for Spring beans with complex constructors
             if annotation_pattern.search(code):
-                # Only constructors of this bean count, not constructors of nested DTOs or value records.
-                bean_name = re.escape(os.path.splitext(file)[0])
+                # Count the filename's bean and annotated static nested beans, not nested value constructors.
+                bean_names = [re.escape(os.path.splitext(file)[0])]
+                bean_names.extend(re.escape(name) for modifiers, name in nested_bean_pattern.findall(code)
+                                  if 'static' in modifiers.split())
+                bean_name = '(?:' + '|'.join(bean_names) + ')'
                 constructors = re.findall(rf'(?:public|protected)\s+{bean_name}\s*\(([^)]*)\)', code)
                 for params in constructors:
                     # split parameters and strip whitespace

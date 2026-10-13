@@ -30,6 +30,23 @@ class ConstructorAnalysisTest(unittest.TestCase):
         self.assertEqual(1, len(violations))
         self.assertEqual(3, violations[0][1])
 
+    def test_annotated_static_nested_bean_constructor_exceeds_the_limit(self):
+        violations = self.analyze("""
+            @Service public class ExampleService {
+                public ExampleService(Dependency one) {}
+                public static class Value {
+                    public Value(String a, String b, String c) {}
+                }
+                @Component("nestedBean")
+                @Lazy
+                public static final class NestedBean {
+                    public NestedBean(First one, Second two, Third three, Fourth four) {}
+                }
+            }
+        """)
+        self.assertEqual(1, len(violations))
+        self.assertEqual(4, violations[0][1])
+
     def test_repository_exclusion_remains_unchanged(self):
         self.assertEqual([], self.analyze("""
             @Service public class ExampleService {
